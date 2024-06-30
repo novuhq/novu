@@ -259,7 +259,10 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private isClientError(error: unknown): error is NovuError {
-    return Object.values(ErrorCodeEnum).includes((error as NovuError).code);
+    const frameworkThrow = Object.values(ErrorCodeEnum).includes((error as NovuError).code);
+    const externalApiThrow = isBadRequest(error);
+
+    return frameworkThrow || externalApiThrow;
   }
 
   private handleError(error: unknown): IActionResponse {
@@ -270,8 +273,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       }
 
       return this.createError(error);
-    } else if ((error as any).response.status === HttpStatusEnum.BAD_REQUEST) {
-      return this.createError((error as { response: NovuError }).response);
     } else {
       // eslint-disable-next-line no-console
       console.error(error);
@@ -315,4 +316,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private hashHmac(secretKey: string, data: string): string {
     return createHmac('sha256', secretKey).update(data).digest('hex');
   }
+}
+
+function isBadRequest(error: unknown) {
+  return (error as NovuError)?.statusCode >= 400 && (error as NovuError)?.statusCode < 500;
 }

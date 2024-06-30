@@ -1,6 +1,6 @@
 import { DevServer } from '../dev-server';
 import { NtfrTunnel } from '@novu/ntfr-client';
-import { showWelcomeScreen } from './init.consts';
+import { showWelcomeScreen } from './shared';
 import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';

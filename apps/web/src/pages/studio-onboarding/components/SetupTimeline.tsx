@@ -1,9 +1,7 @@
 import { CodeSnippet } from '../../get-started/components/CodeSnippet';
 import { Loader, Timeline as MantineTimeline } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconCheck } from '@novu/novui/icons';
-import { useQuery } from '@tanstack/react-query';
-import { getApiKeys } from '../../../api/environment';
 import { Text } from '@novu/novui';
 import { Timeline } from '../../../components/Timeline/index';
 import { css } from '@novu/novui/css';
@@ -20,10 +18,6 @@ const Icon = () => (
 );
 
 export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boolean; data: BridgeStatus } }) => {
-  // TODO: revisit with consolidation of API fetching via single hook entry point
-  const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
-  const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
-
   const { devSecretKey } = useStudioState();
   const [active, setActive] = useState(0);
   const { colorScheme } = useColorScheme();
@@ -81,13 +75,11 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
       <MantineTimeline.Item
         bullet={<CheckStatusIcon />}
         lineVariant="dashed"
-        title="Connect to the Novu Bridge Endpoint"
+        title="Connect to the Novu Bridge app"
         active={active >= 3}
       >
         <Text variant="main" color="typography.text.secondary">
-          {active < 3
-            ? 'Waiting for you to start the application'
-            : 'Successfully connected to the Novu Bridge Endpoint'}
+          {active < 3 ? 'Waiting for you to start the application' : 'Successfully connected to the Novu Bridge app'}
         </Text>
       </MantineTimeline.Item>
     </Timeline>
