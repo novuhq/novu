@@ -35,7 +35,7 @@ export type DevCommandOptions = {
 };
 
 export async function devCommand(options: DevCommandOptions) {
-  showWelcomeScreen();
+  await showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();
