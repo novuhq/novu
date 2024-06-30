@@ -4,7 +4,7 @@ import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
 import { Center } from '@novu/novui/jsx';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWorkflow, useWorkflowTrigger } from '../../../hooks/useBridgeAPI';
@@ -15,10 +15,10 @@ import { ToSubscriber, WorkflowTestControlsPanel } from './WorkflowTestControlsP
 import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
 import { showNotification } from '@mantine/notifications';
 import { useTemplateFetcher } from '../../../../api/hooks/index';
-import { getApiKeys } from '../../../../api/environment';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../StudioStateProvider';
 import { testTrigger } from '../../../../api/notification-templates';
+import { useApiKeys } from '../../../../hooks/useNovuAPI';
 
 export const WorkflowsTestPage = () => {
   const segment = useSegment();
@@ -29,7 +29,8 @@ export const WorkflowsTestPage = () => {
     subscriberId: '',
     email: '',
   });
-  const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+
+  const { data: apiKeys = [] } = useApiKeys();
   const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
 
   const { template, isLoading: isTemplateLoading } = useTemplateFetcher({
