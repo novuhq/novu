@@ -1,5 +1,5 @@
 import { Skeleton } from '@mantine/core';
-import { Title, type LocalizedMessage } from '@novu/novui';
+import { Title, type WithLoadingSkeleton, type LocalizedMessage } from '@novu/novui';
 import { css, cx } from '@novu/novui/css';
 import { hstack } from '@novu/novui/patterns';
 import { token } from '@novu/novui/tokens';
@@ -12,9 +12,7 @@ interface IStepNodeProps {
   onClick?: MouseEventHandler<HTMLButtonElement>;
 }
 
-type StepNodeComponent = FC<IStepNodeProps> & { LoadingDisplay: FC };
-
-export const StepNode: StepNodeComponent = ({ icon, title, onClick }) => {
+export const StepNode: WithLoadingSkeleton<FC<IStepNodeProps>> = ({ icon, title, onClick }) => {
   return (
     <button
       className={cx(
