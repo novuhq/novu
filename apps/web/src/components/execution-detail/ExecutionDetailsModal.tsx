@@ -3,7 +3,6 @@ import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '
 import { JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
-import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 import { useNotification } from '../../hooks/useNovuAPI';
 import { colors, shadows, Text, Title } from '@novu/design-system';
 import { When } from '../utils/When';
@@ -99,7 +98,6 @@ export function ExecutionDetailsModal({
           </Center>
         </When>
       </When>
-      <ExecutionDetailsFooter />
     </Modal>
   );
 }
