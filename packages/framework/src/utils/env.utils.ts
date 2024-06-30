@@ -25,7 +25,10 @@ export const getBridgeUrl = async (): Promise<string> => {
   // Local environments
   try {
     if (process.env.NODE_ENV === 'development') {
-      return `${(await (await fetch('http://localhost:2022/.well-known/novu')).json()).tunnelOrigin}/api/novu`;
+      const response = await fetch('http://localhost:2022/.well-known/novu');
+      const data = await response.json();
+
+      return `${data.tunnelOrigin}${data.route}`;
     }
   } catch (error) {
     console.error(error);
