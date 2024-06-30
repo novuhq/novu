@@ -42,8 +42,7 @@ export function PrivatePageLayout() {
    */
   const isLocalEnv = useMemo(
     () =>
-      [EnvironmentEnum.DEVELOPMENT, EnvironmentEnum.LOCAL].includes(environment?.name as EnvironmentEnum) &&
-      isStudioRoute(location.pathname),
+      [EnvironmentEnum.DEVELOPMENT].includes(environment?.name as EnvironmentEnum) && isStudioRoute(location.pathname),
     [environment, location]
   );
 

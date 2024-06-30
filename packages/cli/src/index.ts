@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { initCommand, devCommand, DevCommandOptions } from './commands';
+import { devCommand, DevCommandOptions } from './commands';
 import { sync } from './commands/sync';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -17,13 +17,6 @@ const anonymousId = anonymousIdLocalState || uuidv4();
 const program = new Command();
 
 program.name('novu').description(`A CLI tool to interact with Novu Cloud`);
-
-program
-  .command('init')
-  .description('Initialize a new project and create an account')
-  .action(() => {
-    initCommand();
-  });
 
 program
   .command('sync')

@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { ErrorCodeEnum } from '../constants';
+import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
 import { BadRequestError } from './base.errors';
 
 export class ExecutionStateCorruptError extends BadRequestError {
@@ -72,5 +72,28 @@ export class ExecutionProviderOutputInvalidError extends BadRequestError {
       `Workflow with id: \`${workflowId}\` has an invalid state. Step with id: \`${stepId}\` and provider with id: \`${providerId}\` has invalid output. Please provide the correct provider output.`
     );
     this.data = data;
+  }
+}
+
+export class UnknownError extends Error {
+  /**
+   * HTTP status code.
+   */
+  public readonly statusCode: HttpStatusEnum;
+
+  /**
+   * Additional data that can be used to provide more information about the error.
+   */
+  public message: any;
+
+  /**
+   * The error code, which is used to identify the error type.
+   */
+  public readonly code: ErrorCodeEnum;
+
+  constructor(statusCode: HttpStatusEnum, code: ErrorCodeEnum, message: any) {
+    super(message);
+    this.statusCode = statusCode;
+    this.code = code;
   }
 }

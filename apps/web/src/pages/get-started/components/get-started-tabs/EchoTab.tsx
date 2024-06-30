@@ -6,19 +6,9 @@ import { AdditionInformationLink } from '../AdditionInformationLink';
 import { CodeSnippet } from '../CodeSnippet';
 import { text, title } from '@novu/novui/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
-import { DOMAttributes, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useMantineTheme } from '@mantine/core';
-
-type CustomElement<T> = Partial<T & DOMAttributes<T> & { children: any }>;
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      ['nv-echo-terminal']: CustomElement<any>;
-    }
-  }
-}
+import { useEchoTerminalScript } from '../../../../hooks/useEchoTerminalScript';
 
 const link = 'https://docs.novu.co/framework/quickstart';
 
@@ -40,14 +30,7 @@ export const EchoTab = ({ className }: { className?: string }) => {
     segment.track(`Additional Info Link - [Get Started]`, { href: link, tab: OnboardingUseCasesTabsEnum.ECHO });
   };
 
-  useEffect(() => {
-    if (!document.getElementById('echo-terminal-loader')) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/gh/novuhq/docs/echo-terminal.min.js';
-      script.id = 'echo-terminal-loader';
-      document.body.appendChild(script);
-    }
-  }, []);
+  useEchoTerminalScript();
 
   useEffect(() => {
     const tabs = document.getElementsByClassName('nv-terminal-tab');
