@@ -1,7 +1,9 @@
 import { createHmac } from 'node:crypto';
+import { Novu } from '@novu/api';
 
 import { Client } from './client';
 import {
+  DEFAULT_NOVU_API_URL,
   ErrorCodeEnum,
   GetActionEnum,
   HttpHeaderKeysEnum,
@@ -24,7 +26,6 @@ import {
 } from './errors';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 import { Awaitable, EventTriggerParams, Workflow } from './types';
-import { initApiClient } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -63,13 +64,16 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
   public readonly client: Client;
   private readonly hmacEnabled: boolean;
-  private readonly http;
+  private readonly apiClient: Novu;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflows);
-    this.http = initApiClient(this.client.secretKey as string);
+    this.apiClient = new Novu({
+      apiKey: this.client.secretKey as string,
+      serverURL: process.env.NOVU_API_URL || DEFAULT_NOVU_API_URL,
+    });
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
   }
@@ -176,7 +180,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     action: string
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
-      [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
+      [PostActionEnum.TRIGGER]: this.triggerAction({ name: workflowId, ...body }),
       [PostActionEnum.EXECUTE]: async () => {
         const result = await this.client.executeWorkflow({
           ...body,
@@ -200,20 +204,9 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  public triggerAction(triggerEvent: EventTriggerParams) {
+  public triggerAction(event: EventTriggerParams) {
     return async () => {
-      const requestPayload = {
-        name: triggerEvent.workflowId,
-        to: triggerEvent.to,
-        payload: triggerEvent?.payload || {},
-        transactionId: triggerEvent.transactionId,
-        overrides: triggerEvent.overrides || {},
-        ...(triggerEvent.actor && { actor: triggerEvent.actor }),
-        ...(triggerEvent.tenant && { tenant: triggerEvent.tenant }),
-        ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
-      };
-
-      const result = await this.http.post('/events/trigger', requestPayload);
+      const result = await this.apiClient.trigger(event);
 
       return this.createResponse(HttpStatusEnum.OK, result);
     };

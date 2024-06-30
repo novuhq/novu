@@ -1,3 +1,5 @@
+import { Novu } from '@novu/api';
+
 import { ChannelStepEnum } from './constants';
 import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
@@ -12,11 +14,10 @@ import {
   FromSchema,
   Schema,
   StepType,
-  EventTriggerResponse,
   Workflow,
   WorkflowOptions,
 } from './types';
-import { EMOJI, getBridgeUrl, initApiClient, log } from './utils';
+import { EMOJI, getBridgeUrl, log } from './utils';
 import { transformSchema, validateData } from './validators';
 
 /**
@@ -34,14 +35,14 @@ export function workflow<
 ): Workflow<T_Payload> {
   const options = workflowOptions ? workflowOptions : {};
 
-  const apiClient = initApiClient(process.env.NOVU_SECRET_KEY as string);
+  const apiClient = new Novu({ apiKey: process.env.NOVU_SECRET_KEY as string });
 
   const trigger: Workflow<T_Payload>['trigger'] = async (event) => {
     if (!process.env.NOVU_SECRET_KEY) {
       throw new MissingSecretKeyError();
     }
 
-    let validatedData: T_Payload;
+    let validatedData = event.payload;
     if (options.payloadSchema) {
       const validationResult = await validateData(options.payloadSchema, event.payload);
       if (validationResult.success === false) {
@@ -51,23 +52,16 @@ export function workflow<
     }
     const bridgeUrl = await getBridgeUrl();
 
-    const requestPayload = {
+    const result = await apiClient.trigger({
+      ...event,
       name: workflowId,
-      to: event.to,
-      payload: {
-        ...event?.payload,
-      },
-      ...(event.transactionId && { transactionId: event.transactionId }),
-      ...(event.overrides && { overrides: event.overrides }),
-      ...(event.actor && { actor: event.actor }),
-      ...(event.tenant && { tenant: event.tenant }),
-      ...(bridgeUrl && { bridgeUrl }),
-    };
-
-    const result = await apiClient.post<EventTriggerResponse>('/events/trigger', requestPayload);
+      // @ts-expect-error - bridgeUrl is not yet available on @novu/api
+      bridgeUrl,
+      payload: validatedData as Parameters<Novu['trigger']>[0]['payload'],
+    });
 
     const cancel = async () => {
-      return apiClient.delete<CancelEventTriggerResponse>(`/events/trigger/${result.transactionId}`);
+      return apiClient.events.cancel(result.transactionId as string);
     };
 
     return {

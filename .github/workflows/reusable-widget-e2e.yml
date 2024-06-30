@@ -56,7 +56,7 @@ jobs:
         with:
           targets: build
           args: --skip-nx-cache
-          projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'
+          projects: '@novu/widget,@novu/embed,@novu/api-server,@novu/worker,@novu/ws'
 
       - uses: ./.github/actions/run-backend
         with:

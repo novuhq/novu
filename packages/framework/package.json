@@ -139,7 +139,7 @@
     "zod-to-json-schema": "^3.23.0"
   },
   "dependencies": {
-    "@novu/shared": "workspace:*",
+    "@novu/api": "0.0.1-alpha.9",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",

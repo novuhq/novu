@@ -3,7 +3,7 @@ Hi, I'm Jarvis 🤖
 I'm a bot built to help you with your contribution to Novu. 
 I will add instructions and guides on how to run the subset of the Novu platform associated to this issue and make your first contribution.
 
-This issue was tagged as related to `@novu/api` and the related code is located at the `apps/api` folder, here is how I can help you:
+This issue was tagged as related to `@novu/api-server` and the related code is located at the `apps/api` folder, here is how I can help you:
 
 <details>
   <summary>First time contributing to Novu?</summary>
@@ -16,7 +16,7 @@ This issue was tagged as related to `@novu/api` and the related code is located 
 </details>
 
 <details>
-  <summary>Run and test `@novu/api` locally</summary>
+  <summary>Run and test `@novu/api-server` locally</summary>
 
   ### Run API in watch mode
   The easiest way to start the API is to run `npm run start:api` from the root of the repository

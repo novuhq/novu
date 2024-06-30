@@ -1,4 +1,4 @@
-'@novu/api':
+'@novu/api-server':
   - apps/api/**/*
 '@novu/worker':
   - apps/worker/**/*
