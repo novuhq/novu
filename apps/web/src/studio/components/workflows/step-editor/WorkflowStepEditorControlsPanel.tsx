@@ -28,8 +28,11 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   const segment = useSegment();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
-    return Object.keys(workflow?.payload?.schema || workflow?.options?.payloadSchema || {}).length > 0;
-  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema]);
+    return (
+      Object.keys(workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {})
+        .length > 0
+    );
+  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
   const haveControlProperties = useMemo(() => {
     return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
@@ -93,7 +96,9 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                 <When truthy={havePayloadProperties}>
                   <JsonSchemaForm
                     onChange={(data) => onChange('payload', data)}
-                    schema={workflow?.payload?.schema || workflow?.options?.payloadSchema || {}}
+                    schema={
+                      workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {}
+                    }
                     formData={{}}
                   />
                 </When>

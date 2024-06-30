@@ -7,6 +7,7 @@ import { WorkflowStepEditorControlsPanel } from '../../../studio/components/work
 import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const [controls, setStepControls] = useState({});
@@ -57,8 +58,15 @@ export const WorkflowsStepEditorPageV2 = () => {
     }
   }
 
-  function onControlsSave() {
-    saveControls(controls as any);
+  async function onControlsSave() {
+    try {
+      await saveControls(controls as any);
+      successMessage('Successfully saved controls');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        errorMessage(err?.message || 'Failed to save controls');
+      }
+    }
   }
 
   function Icon({ size }) {
@@ -81,7 +89,7 @@ export const WorkflowsStepEditorPageV2 = () => {
         <WorkflowStepEditorControlsPanel
           isLoadingSave={isSavingControls}
           onSave={onControlsSave}
-          step={step}
+          step={step?.template}
           workflow={workflow}
           defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
           onChange={onControlsChange}
