@@ -55,7 +55,7 @@ export function workflow<
     const result = await apiClient.trigger({
       ...event,
       name: workflowId,
-      // @ts-expect-error - bridgUrl is not yet available on @novu/api
+      // @ts-expect-error - bridgeUrl is not yet available on @novu/api
       bridgeUrl,
       payload: validatedData as Parameters<Novu['trigger']>[0]['payload'],
     });
