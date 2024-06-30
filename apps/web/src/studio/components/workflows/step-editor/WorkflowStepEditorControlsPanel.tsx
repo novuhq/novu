@@ -11,7 +11,7 @@ import { useSegment } from '../../../../components/providers/SegmentProvider';
 interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
-  onChange: (type: 'step' | 'payload', data: any) => void;
+  onChange: (type: 'step' | 'payload', data: any, id?: string) => void;
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
@@ -70,7 +70,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   )}
 
                   <JsonSchemaForm
-                    onChange={(data) => onChange('step', data)}
+                    onChange={(data, id) => onChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
                   />

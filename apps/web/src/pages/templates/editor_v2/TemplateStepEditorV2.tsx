@@ -8,8 +8,10 @@ import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { errorMessage, successMessage } from '../../../utils/notifications';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export const WorkflowsStepEditorPageV2 = () => {
+  const segment = useSegment();
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -47,9 +49,13 @@ export const WorkflowsStepEditorPageV2 = () => {
     });
   }, [controls, payload, renderStepPreview, workflow]);
 
-  function onControlsChange(type: string, form: any) {
+  function onControlsChange(type: string, form: any, id?: string) {
     switch (type) {
       case 'step':
+        segment.track('Step Controls Changes', {
+          key: id,
+          origin: 'dashboard',
+        });
         setStepControls(form.formData);
         break;
       case 'payload':
