@@ -7,7 +7,7 @@ interface IOptions {
   absoluteUrl: boolean;
 }
 
-// @deprecated Migrate all api methods to the new buildAPIHTTPClient that allows runtime configuration on the client object.
+// @deprecated Migrate all api methods to the new buildApiHttpClient that allows runtime configuration on the client object.
 export const api = {
   get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
