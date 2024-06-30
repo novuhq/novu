@@ -1,82 +1,88 @@
-import { Component, JSX, Show } from 'solid-js';
-import { Portal } from 'solid-js/web';
-import { useStyle } from '../helpers';
+import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
+import { useUncontrolledState } from '../helpers';
+import { PopoverContent } from './PopoverContent';
+import { PopoverTarget } from './PopoverTarget';
 
 type Direction = 'top' | 'bottom' | 'left' | 'right';
 type AnchorPosition = 'start' | 'end';
+type Position = Direction | `${Direction}-${AnchorPosition}`;
+type Offset = {
+  x: number | string;
+  y: number | string;
+};
 
 export type PopoverProps = {
-  isOpen: boolean;
-  targetRef: HTMLDivElement | null;
+  opened?: boolean;
+  defaultOpened?: boolean;
+  onChange?: (value: boolean) => void;
+  position?: Position;
+  offset?: Offset;
   children?: JSX.Element;
-  placement?: Direction | `${Direction}-${AnchorPosition}`;
-  offset?: number;
 };
 
-export const Popover: Component<PopoverProps> = (props) => {
-  const style = useStyle();
-
-  const placementwithOffsetClass = placementwithOffset(props.placement, props.offset || 0);
-
-  return (
-    <Show when={props.isOpen && props.targetRef !== null}>
-      <Portal mount={props.targetRef as HTMLDivElement}>
-        <div
-          class={style(
-            `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background
-             nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-absolute nt-z-[9999]
-             ${placementwithOffsetClass}`,
-            'popover'
-          )}
-        >
-          <h1>Popup</h1>
-          <p>Some text you might need for something or other.</p>
-        </div>
-        {props.children}
-      </Portal>
-    </Show>
-  );
+type PopoverContextType = {
+  targetRef: Accessor<HTMLElement | null>;
+  contentRef: Accessor<HTMLElement | null>;
+  opened: Accessor<boolean>;
+  setContentRef: Setter<HTMLElement | null>;
+  setTargetRef: Setter<HTMLElement | null>;
+  onToggle: () => void;
+  onClose: () => void;
+  position?: Position;
+  offset?: Offset;
 };
 
-const placementwithOffset = (placement: PopoverProps['placement'], offset: number) => {
-  switch (placement) {
-    case 'top':
-      return `nt-bottom-full nt-left-0 nt-right-0 nt-transform nt-translate-y-0 -nt-translate-x-1/2 nt-translate-y-[${offset}px]`;
+const PopoverContext = createContext<PopoverContextType | undefined>(undefined);
 
-    case 'top-start':
-      return `nt-bottom-full nt-left-0 nt-right-0 nt-transform nt-translate-y-0 nt-translate-x-0 nt-translate-y-[${offset}px]`;
+export function Popover(props: PopoverProps) {
+  const [targetRef, setTargetRef] = createSignal<HTMLElement | null>(null);
+  const [contentRef, setContentRef] = createSignal<HTMLElement | null>(null);
 
-    case 'top-end':
-      return `nt-bottom-full nt-left-0 nt-right-0 nt-transform nt-translate-y-0 -nt-translate-x-full nt-translate-y-[${offset}px]`;
+  const [isOpen, setIsOpen] = useUncontrolledState({
+    value: props.opened,
+    fallbackValue: false,
+    onChange: props.onChange,
+    defaultValue: props.defaultOpened,
+  });
 
-    case 'bottom':
-      return `nt-top-full nt-left-1/2 nt-transform nt-translate-y-0 -nt-translate-x-1/2 nt-translate-y-[${offset}px]`;
+  const onClose = () => {
+    setIsOpen(false);
+    props.onChange?.(false);
+  };
 
-    case 'bottom-start':
-      return `nt-top-full nt-left-1/2 nt-transform nt-translate-y-0 nt-translate-x-0 nt-translate-y-[${offset}px]`;
+  const onToggle = () => {
+    if (isOpen()) {
+      onClose();
+    } else {
+      setIsOpen(true);
+      props.onChange?.(true);
+    }
+  };
 
-    case 'bottom-end':
-      return `nt-top-full nt-left-1/2 nt-transform nt-translate-y-0 -nt-translate-x-full nt-translate-y-[${offset}px]`;
+  const context = {
+    contentRef,
+    onToggle,
+    onClose,
+    setContentRef,
+    setTargetRef,
+    targetRef,
+    opened: isOpen,
+    onChange: setIsOpen,
+    position: props.position,
+    offset: props.offset,
+  };
 
-    case 'left':
-      return `nt-right-full nt-top-1/2 nt-transform nt-translate-x-0 -nt-translate-y-1/2 nt-translate-x-[${offset}px]`;
+  return <PopoverContext.Provider value={context}>{props.children}</PopoverContext.Provider>;
+}
 
-    case 'left-start':
-      return `nt-right-full nt-top-1/2 nt-transform nt-translate-x-0 nt-translate-y-0 nt-translate-x-[${offset}px]`;
-
-    case 'left-end':
-      return `nt-right-full nt-top-1/2 nt-transform nt-translate-x-0 -nt-translate-y-full nt-translate-x-[${offset}px]`;
-
-    case 'right':
-      return `nt-left-full nt-top-1/2 nt-transform nt-translate-x-0 -nt-translate-y-1/2 nt-translate-x-[${offset}px]`;
-
-    case 'right-start':
-      return `nt-left-full nt-top-1/2 nt-transform nt-translate-x-0 nt-translate-y-0 nt-translate-x-[${offset}px]`;
-
-    case 'right-end':
-      return `nt-left-full nt-top-1/2 nt-transform nt-translate-x-0 -nt-translate-y-full nt-translate-x-[${offset}px]`;
-
-    default:
-      return `nt-top-full nt-left-1/2 nt-transform nt-translate-y-0 -nt-translate-x-1/2 nt-translate-y-[${offset}px]`;
+export function usePopover() {
+  const context = useContext(PopoverContext);
+  if (!context) {
+    throw new Error('usePopover must be used within Popover component');
   }
-};
+
+  return context;
+}
+
+Popover.Target = PopoverTarget;
+Popover.Content = PopoverContent;
