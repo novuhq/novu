@@ -22,7 +22,7 @@ export async function showWelcomeScreen() {
                           `;
 
   const items = logo.split('\n').map((row) => logoGradient(row));
-  const animation = chalkAnimation.pulse(logo, 0.3);
+  const animation = chalkAnimation.pulse(logo, 0.6);
 
   await new Promise<void>((resolve) => {
     setTimeout(() => {

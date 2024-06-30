@@ -1,6 +1,10 @@
 import * as chalk from 'chalk';
 import * as gradient from 'gradient-string';
 
+/**
+ * This packages is forked from 'chalk-animation' and modified to work with TypeScript.
+ */
+
 const log = console.log;
 let currentAnimation = null;
 
@@ -34,10 +38,10 @@ const effects = {
   },
   pulse(str, frame) {
     frame = (frame % 120) + 1;
-    const transition = 6;
-    const duration = 10;
+    const transition = 20;
+    const duration = 15;
     const on = '#DD2476';
-    const off = '#1e1e1e';
+    const off = '#474747';
 
     if (frame >= 2 * transition + duration) {
       return chalk.hex(off)(str); // All white

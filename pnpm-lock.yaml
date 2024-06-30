@@ -3209,9 +3209,6 @@ importers:
       chalk:
         specifier: 4.1.2
         version: 4.1.2
-      chalk-animation:
-        specifier: ^1.6.0
-        version: 1.6.0
       commander:
         specifier: ^9.0.0
         version: 9.5.0
