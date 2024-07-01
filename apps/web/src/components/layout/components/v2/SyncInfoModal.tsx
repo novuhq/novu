@@ -2,30 +2,57 @@
 import { Prism } from '@mantine/prism';
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
-import { Tabs, Text, Title } from '@novu/novui';
-import { FC } from 'react';
+import { Button, Checkbox, Tabs, Text, Title } from '@novu/novui';
+import { FC, useState } from 'react';
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
-import { API_ROOT, ENV } from '../../../../config';
+import { API_ROOT, ENV, WEBHOOK_URL } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
+import { buildApiHttpClient } from '../../../../api';
+import { showNotification } from '@mantine/notifications';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
   toggleOpen: () => void;
 };
 
-const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_BRIDGE_URL>';
+const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
-  const { devSecretKey } = useStudioState();
+  const [syncLocalTunnel, setSyncLocalTunnel] = useState(false);
+  const { devSecretKey, isLocalStudio } = useStudioState();
   const bridgeUrl = useBridgeURL(true);
+  const [loadingSync, setLoadingSync] = useState(false);
+  async function handleLocalSync() {
+    const api = buildApiHttpClient({
+      secretKey: devSecretKey,
+    });
 
+    try {
+      setLoadingSync(true);
+      const result = await api.syncBridge(bridgeUrl);
+      toggleOpen();
+      showNotification({
+        color: 'green',
+        message: `Synced successfully. Visit https://web.novu.co`,
+      });
+    } catch (error: any) {
+      showNotification({
+        color: 'red',
+        message: `Error occurred while syncing. ${error?.message}`,
+      });
+    } finally {
+      setLoadingSync(false);
+    }
+  }
+
+  const bridgeUrlToDisplay = syncLocalTunnel ? bridgeUrl : BRIDGE_ENDPOINT_PLACEHOLDER;
   const tabs = [
     {
       value: 'cli',
       label: 'CLI',
       content: (
         <Prism withLineNumbers language="bash">
-          {getOtherCodeContent({ secretKey: devSecretKey || '', bridgeUrl })}
+          {getOtherCodeContent({ secretKey: devSecretKey || '', bridgeUrl: bridgeUrlToDisplay })}
         </Prism>
       ),
     },
@@ -34,7 +61,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       label: 'GitHub Actions',
       content: (
         <Prism withLineNumbers language="yaml">
-          {getGithubYamlContent({ bridgeUrl })}
+          {getGithubYamlContent({ bridgeUrl: bridgeUrlToDisplay })}
         </Prism>
       ),
     },
@@ -52,6 +79,35 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       onClose={toggleOpen}
     >
       <Tabs tabConfigs={tabs} defaultValue={'cli'} colorPalette="mode.local" />
+
+      {isLocalStudio ? (
+        <div
+          style={{
+            marginTop: 15,
+          }}
+        >
+          <Checkbox
+            label={'Sync with my local machine (not recommended)'}
+            checked={syncLocalTunnel}
+            onChange={(e) => setSyncLocalTunnel(e.target.checked as boolean)}
+          />
+          {syncLocalTunnel && (
+            <>
+              <Text variant="secondary" style={{ marginTop: 10, fontSize: 14 }}>
+                This will use your local computer's tunnel URL to forward requests. This may cause issues if your local
+                machine is not running or if the tunnel is not active.
+                <br /> <br />
+                We recommend syncing to a deployed environment on cloud.
+              </Text>
+              <div style={{ textAlign: 'right', marginTop: 10 }}>
+                <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
+                  Sync Anyway
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      ) : null}
     </Modal>
   );
 };
