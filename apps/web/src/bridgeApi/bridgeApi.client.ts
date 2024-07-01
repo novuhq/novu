@@ -12,6 +12,9 @@ export type TriggerParams = {
   bridgeUrl?: string;
   to: { subscriberId: string; email: string };
   payload: Record<string, unknown>;
+  controls?: {
+    steps?: Record<string, unknown>;
+  };
 };
 
 export type BridgeStatus = {
@@ -85,17 +88,15 @@ export function buildBridgeHTTPClient(baseURL: string) {
      */
     async getStepPreview({ workflowId, stepId, controls, payload }: StepPreviewParams): Promise<any> {
       return post(`${baseURL}?action=preview&workflowId=${workflowId}&stepId=${stepId}`, {
-        // TODO: Rename to controls
-        inputs: controls || {},
-        // TODO: Rename to payload
-        data: payload || {},
+        controls: controls || {},
+        payload: payload || {},
       });
     },
 
     /**
      * TODO: Use framework shared types
      */
-    async trigger({ workflowId, bridgeUrl, to, payload }: TriggerParams): Promise<any> {
+    async trigger({ workflowId, bridgeUrl, to, payload, controls }: TriggerParams): Promise<any> {
       payload = payload || {};
       payload.__source = 'studio-test-workflow';
 
@@ -103,6 +104,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
         bridgeUrl,
         to,
         payload,
+        controls,
       });
     },
   };

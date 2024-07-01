@@ -1,7 +1,5 @@
-import { ControlVariablesLevelEnum } from '../../types';
-
 export type ControlsDto = {
-  [K in ControlVariablesLevelEnum]?: StepControl;
+  steps?: StepControl;
 };
 type StepControl = Record<stepId, Data>;
 type stepId = string;
