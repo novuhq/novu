@@ -142,7 +142,7 @@ export const WorkflowsTestPage = () => {
       icon={<IconOutlineCable size="32" />}
       actions={
         <Button loading={isTestLoading} Icon={IconPlayArrow} onClick={handleTestClick}>
-          Run test
+          Trigger test
         </Button>
       }
     >
