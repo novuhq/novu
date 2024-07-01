@@ -9,6 +9,8 @@ import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared'
 import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
+import { useAuthEnterpriseContext } from '../ee/clerk';
+import { IS_CLERK_AUTH_ENABLED } from '../config/index';
 
 // TODO: Add a novu prefix to the local storage key
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -45,7 +47,7 @@ function getTokenClaims(): IJwtClaims | null {
   return token ? jwtDecode<IJwtClaims>(token) : null;
 }
 
-export function useAuth() {
+function useAuthCommunity() {
   const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();
@@ -165,4 +167,9 @@ export function useAuth() {
     environmentId,
     organizationId,
   };
+}
+
+export function useAuth() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return IS_CLERK_AUTH_ENABLED ? useAuthEnterpriseContext() : useAuthCommunity();
 }

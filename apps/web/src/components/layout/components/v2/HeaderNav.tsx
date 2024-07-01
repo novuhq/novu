@@ -2,7 +2,7 @@ import { ActionIcon, Header } from '@mantine/core';
 import { IconHelpOutline, IconOutlineCloudUpload } from '@novu/novui/icons';
 import { Tooltip } from '@novu/design-system';
 import { Button } from '@novu/novui';
-import { IS_DOCKER_HOSTED } from '../../../../config';
+import { IS_CLERK_AUTH_ENABLED, IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
@@ -14,6 +14,7 @@ import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
 import { useLocation } from 'react-router-dom';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { UserProfileButton } from '../../../../ee/clerk';
 
 export function HeaderNav() {
   const { currentUser } = useAuth();
@@ -61,7 +62,7 @@ export function HeaderNav() {
             <IconHelpOutline />
           </ActionIcon>
         )}
-        <HeaderMenuItems />
+        {IS_CLERK_AUTH_ENABLED ? <UserProfileButton /> : <HeaderMenuItems />}
       </HStack>
     </Header>
   );

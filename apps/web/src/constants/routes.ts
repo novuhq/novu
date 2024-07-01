@@ -1,6 +1,7 @@
 export enum ROUTES {
   HOME = '/',
   AUTH_SIGNUP = '/auth/signup',
+  AUTH_SIGNUP_ORGANIZATION_LIST = '/auth/signup/organization-list',
   AUTH_LOGIN = '/auth/login',
   AUTH_RESET_REQUEST = '/auth/reset/request',
   AUTH_RESET_TOKEN = '/auth/reset/:token',

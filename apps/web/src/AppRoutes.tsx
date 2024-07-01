@@ -58,20 +58,26 @@ import {
   WorkflowsTestPage,
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
+import { IS_CLERK_AUTH_ENABLED } from './config/index';
+import { ClerkRoutes } from './ee/clerk/ClerkRoutes';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
 
   return (
     <Routes>
-      <Route element={<PublicPageLayout />}>
-        <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
-        <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
-        <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
-        <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
-        <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-        <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
-      </Route>
+      {!IS_CLERK_AUTH_ENABLED ? (
+        <Route element={<PublicPageLayout />}>
+          <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+          <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+          <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+          <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+          <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+          <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+        </Route>
+      ) : (
+        ClerkRoutes()
+      )}
       <Route element={<PrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
@@ -114,28 +120,30 @@ export const AppRoutes = () => {
         <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
         <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
         <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
-        <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
-          <Route path="" element={<Navigate to={ROUTES.PROFILE} replace />} />
-          {/* TODO: Remove after the next deployment on 2024-06-18 */}
-          <Route path={ROUTES.BRAND_SETTINGS_DEPRECATED} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
-          <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
-          <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
-          <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
-          <Route path={`${ROUTES.BILLING}/*`} element={<BillingPage />} />
-          <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
-          <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />
-          <Route path="permissions" element={<Navigate to={ROUTES.SECURITY} replace />} />
-          <Route path="sso" element={<Navigate to={ROUTES.SETTINGS} replace />} />
-          <Route path="data-integrations" element={<Navigate to={ROUTES.SETTINGS} replace />} />
-          <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
-          <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.SETTINGS} replace />} />
-        </Route>
+        {!IS_CLERK_AUTH_ENABLED ? (
+          <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
+            <Route path="" element={<Navigate to={ROUTES.PROFILE} replace />} />
+            {/* TODO: Remove after the next deployment on 2024-06-18 */}
+            <Route path={ROUTES.BRAND_SETTINGS_DEPRECATED} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
+            <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
+            <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
+            <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
+            <Route path={`${ROUTES.BILLING}/*`} element={<BillingPage />} />
+            <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
+            <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />
+            <Route path="permissions" element={<Navigate to={ROUTES.SECURITY} replace />} />
+            <Route path="sso" element={<Navigate to={ROUTES.SETTINGS} replace />} />
+            <Route path="data-integrations" element={<Navigate to={ROUTES.SETTINGS} replace />} />
+            <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
+            <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.SETTINGS} replace />} />
+          </Route>
+        ) : null}
         <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
           <Route path="create" element={<SelectProviderPage />} />
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
           <Route path=":integrationId" element={<UpdateProviderPage />} />
         </Route>
-        <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
+        {!IS_CLERK_AUTH_ENABLED ? <Route path={ROUTES.TEAM} element={<MembersInvitePage />} /> : null}
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
         <Route path={ROUTES.STUDIO}>

@@ -28,6 +28,8 @@ import { RootNavMenuFooter } from './RootNavMenuFooter';
 import { VisibilityButton } from './VisibilityButton';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { parseUrl } from '../../utils/routeUtils';
+import { OrganizationSwitcher } from '../../ee/clerk';
+import { IS_CLERK_AUTH_ENABLED } from '../../config/index';
 
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
@@ -44,7 +46,7 @@ export const RootNavMenu: React.FC = () => {
   return (
     <NavMenu variant="root">
       <NavMenuSection>
-        <OrganizationSelect />
+        {IS_CLERK_AUTH_ENABLED ? <OrganizationSwitcher /> : <OrganizationSelect />}
         <NavMenuLinkButton
           label="Get started"
           isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding}
@@ -63,12 +65,14 @@ export const RootNavMenu: React.FC = () => {
           label="Integrations"
           testId="side-nav-integrations-link"
         />
-        <NavMenuLinkButton
-          label="Settings"
-          icon={<IconSettings />}
-          link={ROUTES.PROFILE}
-          testId="side-nav-settings-link"
-        />
+        {IS_CLERK_AUTH_ENABLED ? null : (
+          <NavMenuLinkButton
+            label="Settings"
+            icon={<IconSettings />}
+            link={ROUTES.PROFILE}
+            testId="side-nav-settings-link"
+          />
+        )}
       </NavMenuSection>
       <NavMenuSection>
         <EnvironmentSelect />
