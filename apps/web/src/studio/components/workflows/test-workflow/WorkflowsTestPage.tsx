@@ -154,8 +154,8 @@ export const WorkflowsTestPage = () => {
             payloadSchema={
               workflow?.payload?.schema ||
               workflow?.data?.schema ||
-              (template as any)?.rawData?.payload.schema ||
-              (template as any)?.rawData?.data.schema
+              (template as any)?.rawData?.payload?.schema ||
+              (template as any)?.rawData?.data?.schema
             }
             to={{
               subscriberId: testUser?.id || '',
