@@ -9,14 +9,18 @@ import { Container } from '@novu/novui/jsx';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useDebouncedCallback } from '@novu/novui';
 
+export type OnChangeType = 'step' | 'payload';
+
 interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
-  onChange: (type: 'step' | 'payload', data: any, id?: string) => void;
+  onChange: (type: OnChangeType, data: any, id?: string) => void;
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
 }
+
+const TYPING_DEBOUNCE_TIME_MS = 500;
 
 export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPanelProps> = ({
   step,
@@ -39,9 +43,9 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
   }, [step?.controls?.schema, step?.inputs?.schema]);
 
-  const handleOnChange = useDebouncedCallback(async (type: 'payload' | 'step', data: any, id?: string) => {
+  const handleOnChange = useDebouncedCallback(async (type: OnChangeType, data: any, id?: string) => {
     onChange(type, data, id);
-  }, 500);
+  }, TYPING_DEBOUNCE_TIME_MS);
 
   return (
     <>

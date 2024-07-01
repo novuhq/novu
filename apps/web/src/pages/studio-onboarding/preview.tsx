@@ -47,7 +47,7 @@ export const StudioOnboardingPreview = () => {
       return null;
     }
 
-    return workflow?.steps[0];
+    return workflow?.steps?.[0];
   }, [workflow]);
 
   const { data: preview, isLoading: previewLoading } = useWorkflowPreview(
@@ -58,7 +58,7 @@ export const StudioOnboardingPreview = () => {
       controls: controls,
     },
     {
-      enabled: !!(workflow && workflow?.workflowId && step?.stepId),
+      enabled: !!(workflow?.workflowId && step?.stepId),
       refetchOnWindowFocus: 'always',
       refetchInterval: 1000,
     }
@@ -118,12 +118,13 @@ export const StudioOnboardingPreview = () => {
         <VStack
           alignContent="center"
           className={css({
-            height: '100%',
+            height: 'full',
           })}
         >
           <PageContainer
             className={css({
-              width: '100%',
+              width: 'full',
+              // TODO: create and use token
               maxWidth: '1300px',
             })}
           >
