@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../../../studio/components/workflows/layout';
@@ -9,9 +9,15 @@ import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { Button } from '@novu/novui';
+import { IconPlayArrow } from '@novu/novui/icons';
+import { ROUTES } from '../../../constants/routes';
+import { parseUrl } from '../../../utils/routeUtils';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const segment = useSegment();
+  const navigate = useNavigate();
+
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -29,6 +35,10 @@ export const WorkflowsStepEditorPageV2 = () => {
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
     api.put('/v1/bridge/controls/' + workflow?.name + '/' + stepId, { variables: data })
   );
+
+  const handleTestClick = () => {
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
+  };
 
   const {
     data: preview,
@@ -89,7 +99,17 @@ export const WorkflowsStepEditorPageV2 = () => {
   }
 
   return (
-    <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
+    <WorkflowsPageTemplate
+      title={title}
+      icon={<Icon size="32" />}
+      actions={
+        <>
+          <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+            Test workflow
+          </Button>
+        </>
+      }
+    >
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorControlsPanel
