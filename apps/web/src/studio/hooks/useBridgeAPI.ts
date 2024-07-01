@@ -7,6 +7,7 @@ import {
   type BridgeStatus,
 } from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../StudioStateProvider';
+import { api as cloudApi } from '../../api';
 
 function useBridgeAPI() {
   const { bridgeURL } = useStudioState();
@@ -14,7 +15,7 @@ function useBridgeAPI() {
   return useMemo(() => buildBridgeHTTPClient(bridgeURL), [bridgeURL]);
 }
 
-const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 3 * 1000;
+const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 5 * 1000;
 
 export const useDiscover = (options?: any) => {
   const api = useBridgeAPI();
@@ -30,13 +31,17 @@ export const useDiscover = (options?: any) => {
 
 export const useHealthCheck = (options?: any) => {
   const api = useBridgeAPI();
-  const { bridgeURL } = useStudioState();
+  const { bridgeURL, isLocalStudio } = useStudioState();
 
   const res = useQuery<BridgeStatus>(
     ['bridge-health-check', bridgeURL],
     async () => {
       try {
-        return await api.healthCheck();
+        if (isLocalStudio) {
+          return await api.healthCheck();
+        } else {
+          return await cloudApi.get('/v1/bridge/status');
+        }
       } catch (error) {
         throw error;
       }
