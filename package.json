@@ -183,17 +183,17 @@
     }
   },
   "lint-staged": {
-    "apps/**/*.{ts,tsx,json}": [
-      "prettier --ignore-path ./.prettierignore --write",
+    "*.{e2e,e2e-ee,spec}.{js,ts}": [
       "stop-only --file"
+    ],
+    "apps/**/*.{ts,tsx,json}": [
+      "prettier --ignore-path ./.prettierignore --write"
     ],
     "packages/**/*.{ts,tsx,json}": [
-      "prettier --ignore-path ./.prettierignore --write",
-      "stop-only --file"
+      "prettier --ignore-path ./.prettierignore --write"
     ],
     "libs/**/*.{ts,js,json}": [
-      "prettier --ignore-path ./.prettierignore --write",
-      "stop-only --file"
+      "prettier --ignore-path ./.prettierignore --write"
     ]
   },
   "engines": {
