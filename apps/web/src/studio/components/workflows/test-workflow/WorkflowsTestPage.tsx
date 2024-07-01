@@ -22,7 +22,7 @@ import { useApiKeys } from '../../../../hooks/useNovuAPI';
 
 export const WorkflowsTestPage = () => {
   const segment = useSegment();
-  const { local, testUser } = useStudioState() || {};
+  const { isLocalStudio: local, testUser } = useStudioState() || {};
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [payload, setPayload] = useState<Record<string, any>>({});
   const [to, setTo] = useState<ToSubscriber>({

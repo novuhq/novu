@@ -89,7 +89,7 @@ export const useWorkflowTrigger = () => {
 
   const { mutateAsync, ...rest } = useMutation(api.trigger);
 
-  const bridgeUrl = state.local ? state.tunnelBridgeURL : state.storedBridgeURL;
+  const bridgeUrl = state.isLocalStudio ? state.tunnelBridgeURL : state.storedBridgeURL;
 
   async function trigger(params: TriggerParams): Promise<{ data: { transactionId: string } }> {
     return mutateAsync({ ...params, bridgeUrl });
