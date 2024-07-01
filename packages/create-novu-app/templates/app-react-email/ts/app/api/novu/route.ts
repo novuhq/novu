@@ -1,4 +1,6 @@
 import { serve } from "@novu/framework/next";
-import { myWorkflow } from "../../novu/workflows";
+import { welcomeOnboardingEmail } from "../../novu/workflows";
 
-export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });
+export const { GET, POST, OPTIONS } = serve({
+  workflows: [welcomeOnboardingEmail],
+});
