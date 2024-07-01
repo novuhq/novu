@@ -87,7 +87,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
           }}
         >
           <Checkbox
-            label={'Sync with my local machine (not recommended)'}
+            label={'Sync with my local machine'}
             checked={syncLocalTunnel}
             onChange={(e) => setSyncLocalTunnel(e.target.checked as boolean)}
           />
