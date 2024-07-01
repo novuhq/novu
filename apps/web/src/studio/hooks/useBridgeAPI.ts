@@ -25,7 +25,10 @@ export const useDiscover = (options?: any) => {
     async () => {
       return api.discover();
     },
-    options
+    {
+      refetchOnWindowFocus: true,
+      ...(options || {}),
+    }
   );
 };
 
@@ -69,7 +72,10 @@ export const useWorkflow = (templateId: string, options?: any) => {
     async () => {
       return api.getWorkflow(templateId);
     },
-    options
+    {
+      refetchOnWindowFocus: true,
+      ...(options || {}),
+    }
   );
 };
 
@@ -84,7 +90,10 @@ export const useWorkflowPreview = (
     async () => {
       return api.getStepPreview({ workflowId, stepId, payload, controls });
     },
-    options
+    {
+      refetchOnWindowFocus: true,
+      ...(options || {}),
+    }
   );
 };
 
