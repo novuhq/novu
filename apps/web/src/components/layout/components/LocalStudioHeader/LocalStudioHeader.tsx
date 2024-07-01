@@ -35,10 +35,6 @@ export const LocalStudioHeader: FC = () => {
             target="_blank"
             rel="noopener noreferrer"
           />
-
-          {/* This doesn't work because of Discord's popup blocker via the response header:
-          Cross-Origin-Opener-Policy: same-origin-allow-popups. We will likely need a Javascript workaround for Discord's popup blocker. */}
-          <IconButton Icon={IconHelpOutline} as="a" href={discordInviteUrl} target="_blank" rel="noopener noreferrer" />
         </HStack>
       </HStack>
     </Header>
