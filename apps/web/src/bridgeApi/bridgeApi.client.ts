@@ -17,6 +17,9 @@ export type TriggerParams = {
 export type BridgeStatus = {
   status: 'ok';
   bridgeUrl?: string;
+  discovered: {
+    workflows: number;
+  };
 };
 
 export function buildBridgeHTTPClient(baseURL: string) {
@@ -24,6 +27,8 @@ export function buildBridgeHTTPClient(baseURL: string) {
     baseURL,
     headers: {
       'Content-Type': 'application/json',
+      // Required if a custom tunnel is used by developers such as localtunnel.it
+      'Bypass-Tunnel-Reminder': true,
     },
   });
 

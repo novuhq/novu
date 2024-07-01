@@ -79,6 +79,8 @@ export class DevServer {
           function injectIframe(src) {
             const iframe = window.document.createElement('iframe');
             iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin allow-popups'
+            iframe.allow = 'clipboard-read; clipboard-write'
+
             iframe.style = 'width: 100%; height: 100vh; border: none;';
             iframe.setAttribute('src', src);
             document.body.appendChild(iframe);

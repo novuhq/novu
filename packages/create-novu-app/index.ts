@@ -166,7 +166,7 @@ async function run(): Promise<void> {
     if (ciInfo.isCI) {
       program.tailwind = getPrefOrDefault('tailwind');
     } else {
-      const tw = blue('React E-mail');
+      const tw = blue('React Email');
       const { reactEmail } = await prompts({
         onState: onPromptState,
         type: 'toggle',

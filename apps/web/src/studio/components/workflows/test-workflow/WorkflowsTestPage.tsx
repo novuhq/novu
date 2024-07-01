@@ -141,8 +141,8 @@ export const WorkflowsTestPage = () => {
       description="Trigger a test run for this workflow"
       icon={<IconOutlineCable size="32" />}
       actions={
-        <Button loading={isTestLoading} Icon={IconPlayArrow} variant="filled" onClick={handleTestClick}>
-          Run a test
+        <Button loading={isTestLoading} Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          Test workflow
         </Button>
       }
     >
@@ -154,8 +154,8 @@ export const WorkflowsTestPage = () => {
             payloadSchema={
               workflow?.payload?.schema ||
               workflow?.data?.schema ||
-              (template as any)?.rawData?.payload.schema ||
-              (template as any)?.rawData?.data.schema
+              (template as any)?.rawData?.payload?.schema ||
+              (template as any)?.rawData?.data?.schema
             }
             to={{
               subscriberId: testUser?.id || '',

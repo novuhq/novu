@@ -1,26 +1,16 @@
 import * as Sentry from '@sentry/react';
 import { Outlet, useLocation } from 'react-router-dom';
-import styled from '@emotion/styled';
 import { css } from '@novu/novui/css';
 import { LocalStudioHeader } from './LocalStudioHeader/LocalStudioHeader';
 import { LocalStudioSidebar } from './LocalStudioSidebar';
 import { isStudioOnboardingRoute } from '../../../studio/utils/routing';
+import { AppShell } from './AppShell';
+import { ContentShell } from './ContentShell';
+import { WithLoadingSkeleton } from '@novu/novui';
+import { WorkflowsDetailPage } from '../../../studio/components/workflows/index';
+import { Box } from '@novu/novui/jsx';
 
-const AppShell = styled.div`
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  min-width: 1024px;
-`;
-
-const ContentShell = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0%;
-  overflow: hidden; // for appropriate scroll
-`;
-
-export function LocalStudioPageLayout() {
+export const LocalStudioPageLayout: WithLoadingSkeleton = () => {
   const { pathname } = useLocation();
 
   return (
@@ -48,5 +38,19 @@ export function LocalStudioPageLayout() {
         </ContentShell>
       </AppShell>
     </Sentry.ErrorBoundary>
+  );
+};
+
+LocalStudioPageLayout.LoadingDisplay = LoadingDisplay;
+
+function LoadingDisplay() {
+  return (
+    <AppShell>
+      <LocalStudioSidebar.LoadingDisplay />
+      <ContentShell>
+        <Box bg="surface.page" h="250" />
+        <WorkflowsDetailPage.LoadingDisplay />
+      </ContentShell>
+    </AppShell>
   );
 }

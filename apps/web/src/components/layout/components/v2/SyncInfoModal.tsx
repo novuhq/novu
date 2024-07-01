@@ -6,6 +6,7 @@ import { Tabs, Text, Title } from '@novu/novui';
 import { FC } from 'react';
 import { useApiKeysPage } from '../../../../pages/settings/ApiKeysPage/useApiKeysPage';
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
+import { API_ROOT, ENV } from '../../../../config';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
@@ -16,24 +17,24 @@ const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_BRIDGE_URL>';
 
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
   const { secretKey } = useApiKeysPage();
-  const bridgeUrl = useBridgeURL();
+  const bridgeUrl = useBridgeURL(true);
 
   const tabs = [
+    {
+      value: 'cli',
+      label: 'CLI',
+      content: (
+        <Prism withLineNumbers language="bash">
+          {getOtherCodeContent({ secretKey, bridgeUrl })}
+        </Prism>
+      ),
+    },
     {
       value: 'github',
       label: 'GitHub Actions',
       content: (
         <Prism withLineNumbers language="yaml">
           {getGithubYamlContent({ secretKey, bridgeUrl })}
-        </Prism>
-      ),
-    },
-    {
-      value: 'other',
-      label: 'CLI',
-      content: (
-        <Prism withLineNumbers language="bash">
-          {getOtherCodeContent({ secretKey, bridgeUrl })}
         </Prism>
       ),
     },
@@ -44,13 +45,13 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       opened={isOpen}
       title={
         <>
-          <Title variant="section">Sync changes to the Environment</Title>
+          <Title variant="section">Sync changes</Title>
           <Text variant="secondary">Run the following command to publish changes to the desired environment:</Text>
         </>
       }
       onClose={toggleOpen}
     >
-      <Tabs tabConfigs={tabs} defaultValue={'github'} colorPalette="mode.local" />
+      <Tabs tabConfigs={tabs} defaultValue={'cli'} colorPalette="mode.local" />
     </Modal>
   );
 };
@@ -71,12 +72,19 @@ jobs:
       - name: Sync State to Novu
         uses: novuhq/actions-novu-sync@v0.0.4
         with:
-          secret-key: ${secretKey}
+          secret-key: $\{{ secrets.NOVU_SECRET_KEY }}
           bridge-url: ${bridgeUrl || BRIDGE_ENDPOINT_PLACEHOLDER}`;
 }
 
 function getOtherCodeContent({ secretKey, bridgeUrl }: { secretKey: string; bridgeUrl: string }) {
-  return `npx novu@latest sync \\
+  let command = `npx novu@latest sync \\
   --bridge-url ${bridgeUrl || BRIDGE_ENDPOINT_PLACEHOLDER} \\
   --secret-key ${secretKey}`;
+
+  if (ENV !== 'production' && ENV !== 'prod') {
+    command += ` \\
+  --api-url ${API_ROOT}`;
+  }
+
+  return command;
 }
