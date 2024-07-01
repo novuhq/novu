@@ -218,6 +218,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         ...(triggerEvent.actor && { actor: triggerEvent.actor }),
         ...(triggerEvent.tenant && { tenant: triggerEvent.tenant }),
         ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
+        ...(triggerEvent.controls && { controls: triggerEvent.controls }),
       };
 
       const result = await this.http.post('/events/trigger', requestPayload);

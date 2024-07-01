@@ -667,8 +667,8 @@ contexts.forEach((context: Context) => {
         await saveControlVariables(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
       }
 
-      const controls = { controls: { step: { [stepId]: { name: 'stored_control_name' } } } };
-      await triggerEvent(session, workflowId, subscriber, controls, bridge);
+      const controls = { controls: { steps: { [stepId]: { name: 'stored_control_name' } } } };
+      await triggerEvent(session, workflowId, subscriber, undefined, bridge, controls);
       await session.awaitRunningJobs();
 
       const sentMessage = await messageRepository.find({
@@ -699,7 +699,14 @@ async function syncWorkflow(
   if (!foundWorkflow) throw new Error('Workflow not found');
 }
 
-async function triggerEvent(session, workflowId: string, subscriber, payload?: any, bridge?: { url: string }) {
+async function triggerEvent(
+  session,
+  workflowId: string,
+  subscriber,
+  payload?: any,
+  bridge?: { url: string },
+  controls?: Record<string, unknown>
+) {
   const defaultPayload = {
     name: 'test_name',
   };
@@ -713,6 +720,7 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
         email: 'test@subscriber.com',
       },
       payload: payload ?? defaultPayload,
+      controls: controls ?? undefined,
       bridgeUrl: bridge?.url ?? undefined,
     },
     {

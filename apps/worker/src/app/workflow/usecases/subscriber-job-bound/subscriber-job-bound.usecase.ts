@@ -162,7 +162,7 @@ export class SubscriberJobBound {
       ...bridgeWorkflow,
       type: 'ECHO',
       steps: bridgeWorkflow.steps.map((step) => {
-        const stepControlVariables = command.payload.controls?.[ControlVariablesLevelEnum.STEP_CONTROLS]?.[step.stepId];
+        const stepControlVariables = command.controls?.steps?.[step.stepId];
 
         return {
           ...step,

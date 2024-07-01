@@ -90,6 +90,11 @@ export const StudioOnboardingPreview = () => {
       workflowId: workflow?.workflowId,
       to,
       payload: { ...payload, __source: 'studio-onboarding-test-workflow' },
+      controls: {
+        steps: {
+          [step?.stepId]: controls,
+        },
+      },
     });
 
     navigate({
