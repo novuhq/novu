@@ -94,10 +94,10 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
           {syncLocalTunnel && (
             <>
               <Text variant="secondary" style={{ marginTop: 10, fontSize: 14 }}>
-                This will use your local computer's tunnel URL to forward requests. This may cause issues if your local
-                machine is not running or if the tunnel is not active.
+                This command will use your local computer's tunnel URL to forward requests. The tunnel must be running
+                to actively sync with Novu Cloud.
                 <br /> <br />
-                We recommend syncing to a deployed environment on cloud.
+                We recommend syncing to a deployed environment in your cloud with a publicly exposed endpoint.
               </Text>
               <div style={{ textAlign: 'right', marginTop: 10 }}>
                 <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
