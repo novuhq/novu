@@ -1,18 +1,36 @@
-import { ParentComponent, Show } from 'solid-js';
+import { createMemo, JSX, onCleanup, onMount, ParentComponent, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { getOffsetTranslate, getPositionClasses, useStyle } from '../helpers';
 import { usePopover } from './Popover';
-import { clickOutside } from '../directives';
-
-true && clickOutside;
 
 export const PopoverContent: ParentComponent = (props) => {
   const style = useStyle();
-  const { setContentRef, opened, targetRef, position, offset, onClose } = usePopover();
+  const { setContentRef, opened, targetRef, position, offset, onClose, contentRef } = usePopover();
 
-  const positionValue = position || 'bottom-end';
-  const positionClasses = getPositionClasses(positionValue);
-  const offsetvalue = getOffsetTranslate(offset, positionValue);
+  const handleClickOutside = (e: any) => {
+    if (contentRef()?.contains(e.target)) return;
+    onClose();
+  };
+
+  const handleEscapeKey = (e: any) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
+  onMount(() => {
+    document.body.addEventListener('click', handleClickOutside);
+    document.body.addEventListener('keydown', handleEscapeKey);
+  });
+
+  onCleanup(() => {
+    document.body.removeEventListener('click', handleClickOutside);
+    document.body.removeEventListener('keydown', handleEscapeKey);
+  });
+
+  const positionValue = createMemo(() => position || 'bottom-end');
+  const positionClasses = createMemo(() => getPositionClasses(positionValue()));
+  const offsetvalue = createMemo(() => getOffsetTranslate(offset, positionValue()));
 
   return (
     <Show when={opened() && targetRef()}>
@@ -23,14 +41,12 @@ export const PopoverContent: ParentComponent = (props) => {
           class={style(
             `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0
          nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-absolute nt-z-[9999]
-       ${positionClasses}`,
+       ${positionClasses()}`,
             'popover'
           )}
-          style={offsetvalue}
-          data-position={positionValue}
-          use:clickOutside={() => onClose()}
+          style={offsetvalue()}
+          data-position={positionValue()}
         >
-          {offsetvalue.transform}
           {props.children}
         </div>
       </Portal>
