@@ -7,6 +7,7 @@ import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useDebouncedCallback } from '@novu/novui';
 
 interface IWorkflowStepEditorControlsPanelProps {
   step: any;
@@ -37,6 +38,10 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   const haveControlProperties = useMemo(() => {
     return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
   }, [step?.controls?.schema, step?.inputs?.schema]);
+
+  const handleOnChange = useDebouncedCallback(async (type: 'payload' | 'step', data: any, id?: string) => {
+    onChange(type, data, id);
+  }, 500);
 
   return (
     <>
@@ -70,7 +75,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   )}
 
                   <JsonSchemaForm
-                    onChange={(data, id) => onChange('step', data, id)}
+                    onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
                   />
@@ -95,7 +100,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
               <Container className={formContainerClassName}>
                 <When truthy={havePayloadProperties}>
                   <JsonSchemaForm
-                    onChange={(data) => onChange('payload', data)}
+                    onChange={(data, id) => handleOnChange('payload', data, id)}
                     schema={
                       workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {}
                     }
