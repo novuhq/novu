@@ -6,6 +6,17 @@ import {
   TriggerRecipientSubscriber,
 } from '@novu/shared';
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+type EventPayload = ITriggerPayload & {};
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+type Actor = TriggerRecipientSubscriber & {};
+
+type Tenant = ITenantDefine & Record<string, never>;
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+type Recipients = TriggerRecipientsPayload & {};
+
 export type EventTriggerResult = {
   /**
    * Cancel the workflow execution
@@ -17,7 +28,7 @@ export type EventTriggerResult = {
   data: EventTriggerResponse;
 };
 
-export type EventTriggerParams<T_Payload = ITriggerPayload> = {
+export type EventTriggerParams<T_Payload = EventPayload> = {
   /**
    * Workflow id
    */
@@ -25,11 +36,11 @@ export type EventTriggerParams<T_Payload = ITriggerPayload> = {
   /**
    * Recipients to trigger the workflow to
    */
-  to: TriggerRecipientsPayload;
+  to: Recipients;
   /**
    * Actor to trigger the workflow from
    */
-  actor?: TriggerRecipientSubscriber;
+  actor?: Actor;
   /**
    * Bridge url to trigger the workflow to
    */
@@ -41,7 +52,7 @@ export type EventTriggerParams<T_Payload = ITriggerPayload> = {
   /**
    * Tenant to trigger the workflow with
    */
-  tenant?: ITenantDefine;
+  tenant?: Tenant;
   /**
    * Transaction id for trigger
    */
