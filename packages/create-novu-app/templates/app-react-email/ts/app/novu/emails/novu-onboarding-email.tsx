@@ -83,7 +83,10 @@ export const NovuWelcomeEmail = ({
 
                   {component.componentType === "button" ? (
                     <Column>
-                      <Button className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3">
+                      <Button
+                        href={component.href}
+                        className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
+                      >
                         {component.componentText}
                       </Button>
                     </Column>

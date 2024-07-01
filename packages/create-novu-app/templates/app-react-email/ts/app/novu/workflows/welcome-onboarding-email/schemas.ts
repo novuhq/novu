@@ -29,6 +29,7 @@ export const componentTypeSchema = z.discriminatedUnion("componentType", [
   z.object({
     componentType: z.literal("button"),
     componentText: z.string().default(""),
+    href: z.string().url().default(""),
   }),
   z.object({ componentType: z.literal("divider") }),
   z.object({ componentType: z.literal("users") }),
@@ -75,6 +76,7 @@ export const zodControlSchema = z.object({
     {
       componentType: "button",
       componentText: "Edit Email",
+      href: "http://localhost:2022/studio",
     },
   ]),
 });
