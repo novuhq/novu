@@ -667,7 +667,7 @@ contexts.forEach((context: Context) => {
         await saveControlVariables(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
       }
 
-      const controls = { controls: { steps: { [stepId]: { name: 'stored_control_name' } } } };
+      const controls = { steps: { [stepId]: { name: 'stored_control_name' } } };
       await triggerEvent(session, workflowId, subscriber, undefined, bridge, controls);
       await session.awaitRunningJobs();
 
