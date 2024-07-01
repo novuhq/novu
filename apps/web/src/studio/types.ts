@@ -32,12 +32,12 @@ type BaseStudioState = {
 };
 
 type CloudStudioState = BaseStudioState & {
-  local: false;
+  isLocalStudio: false;
   storedBridgeURL: string;
 };
 
 type LocalStudioState = BaseStudioState & {
-  local: true;
+  isLocalStudio: true;
   localBridgeURL: string;
   tunnelBridgeURL: string;
 };

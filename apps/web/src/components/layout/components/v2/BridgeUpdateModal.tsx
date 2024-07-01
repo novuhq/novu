@@ -20,7 +20,7 @@ export type BridgeUpdateModalProps = {
 
 export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOpen }) => {
   const segment = useSegment();
-  const { local, bridgeURL, setBridgeURL } = useStudioState();
+  const { isLocalStudio, bridgeURL, setBridgeURL } = useStudioState();
   const [urlError, setUrlError] = useState<string>('');
   const [url, setUrl] = useState(bridgeURL);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -60,7 +60,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
 
   const storeInProperLocation = async (newUrl: string) => {
     setBridgeURL(newUrl);
-    if (!local) {
+    if (!isLocalStudio) {
       await updateBridgeUrl({ url: newUrl }, environment?._id ?? '');
     }
   };
