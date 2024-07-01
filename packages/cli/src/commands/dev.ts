@@ -55,8 +55,8 @@ export async function devCommand(options: DevCommandOptions) {
   const studioSpinner = ora('Starting local studio server').start();
   await httpServer.listen();
 
-  studioSpinner.succeed(`🧑‍💻 Studio    → ${httpServer.getStudioAddress()}`);
   dashboardSpinner.succeed(`🖥️  Dashboard → ${parsedOptions.dashboardUrl}`);
+  studioSpinner.succeed(`🎨 Studio    → ${httpServer.getStudioAddress()}`);
   if (process.env.NODE_ENV !== 'dev') {
     await open(httpServer.getStudioAddress());
   }
