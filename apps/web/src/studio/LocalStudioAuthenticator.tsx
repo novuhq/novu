@@ -1,8 +1,4 @@
 import { useEffect } from 'react';
-import { Center } from '@novu/novui/jsx';
-import { Loader } from '@mantine/core';
-import { colors } from '@novu/design-system';
-import { css } from '@novu/novui/css';
 import { useAuth, useAPIKeys, useEnvironment } from '../hooks';
 import { ROUTES } from '../constants/routes';
 import { assertProtocol } from '../utils/url';
@@ -10,6 +6,7 @@ import { encodeBase64 } from './utils/base64';
 import { StudioState } from './types';
 import { useLocation } from 'react-router-dom';
 import { novuOnboardedCookie } from '../utils/cookies';
+import { LocalStudioPageLayout } from '../components/layout/components/LocalStudioPageLayout';
 
 function buildBridgeURL(origin: string | null, tunnelPath: string) {
   if (!origin) {
@@ -140,13 +137,5 @@ export function LocalStudioAuthenticator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, environment, apiKey]);
 
-  return (
-    <Center
-      className={css({
-        marginTop: '[4rem]',
-      })}
-    >
-      <Loader color={colors.error} size={32} />
-    </Center>
-  );
+  return <LocalStudioPageLayout.LoadingDisplay />;
 }

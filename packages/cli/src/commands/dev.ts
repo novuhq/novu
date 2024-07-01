@@ -1,6 +1,6 @@
 import { DevServer } from '../dev-server';
 import { NtfrTunnel } from '@novu/ntfr-client';
-import { showWelcomeScreen } from './init.consts';
+import { showWelcomeScreen } from './shared';
 import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
@@ -35,7 +35,7 @@ export type DevCommandOptions = {
 };
 
 export async function devCommand(options: DevCommandOptions) {
-  showWelcomeScreen();
+  await showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();

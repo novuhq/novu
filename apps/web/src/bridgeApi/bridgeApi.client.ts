@@ -17,6 +17,9 @@ export type TriggerParams = {
 export type BridgeStatus = {
   status: 'ok';
   bridgeUrl?: string;
+  discovered: {
+    workflows: number;
+  };
 };
 
 export function buildBridgeHTTPClient(baseURL: string) {

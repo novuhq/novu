@@ -1,6 +1,6 @@
 import { useStudioState } from '../StudioStateProvider';
 
-export function useBridgeURL() {
+export function useBridgeURL(tunnel = false) {
   const studioState = useStudioState();
 
   let bridgeURL;
@@ -12,7 +12,7 @@ export function useBridgeURL() {
      *
      * TODO: Do we need to store it for full page reloads on local studio?
      */
-    bridgeURL = studioState.localBridgeURL || studioState.tunnelBridgeURL;
+    bridgeURL = tunnel ? studioState.tunnelBridgeURL : studioState.localBridgeURL || studioState.tunnelBridgeURL;
   } else {
     // Cloud mode
     bridgeURL = studioState.storedBridgeURL;
