@@ -21,7 +21,7 @@ export const WorkflowTestStepButton = ({
   stepType: ChannelTypeEnum;
 }) => {
   const segment = useSegment();
-  const { local, testUser } = useStudioState();
+  const { isLocalStudio: local, testUser } = useStudioState();
   const { mutateAsync: testSendEmailEvent, isLoading: isTestingEmail } = useMutation(testSendEmailMessage);
 
   const handleTestClick = async () => {
