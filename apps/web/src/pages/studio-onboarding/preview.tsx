@@ -70,10 +70,10 @@ export const StudioOnboardingPreview = () => {
         }).toString(),
       });
     } catch (err) {
-      if (!(err instanceof Error)) {
-        return;
+      if (err instanceof Error) {
+        errorMessage(err.message);
       }
-      errorMessage(err.message);
+      throw err;
     }
   };
 

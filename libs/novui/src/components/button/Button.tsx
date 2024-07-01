@@ -79,6 +79,7 @@ export const Button: PolymorphicComponent = React.forwardRef(
         }
         classNames={styles}
         className={cx(css(cssProps), className)}
+        fullWidth={Boolean(variantProps.fullWidth)}
         {...otherProps}
       >
         {children}
