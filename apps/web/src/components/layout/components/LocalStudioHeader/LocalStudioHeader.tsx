@@ -1,10 +1,9 @@
 import { Header } from '@mantine/core';
 import { IconButton } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { IconHelpOutline, IconOutlineMenuBook } from '@novu/novui/icons';
+import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
-import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { useStudioWorkflowsNavigation } from '../../../../studio/hooks';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { BridgeMenuItems } from '../v2/BridgeMenuItems';
