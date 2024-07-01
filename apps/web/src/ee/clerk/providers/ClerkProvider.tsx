@@ -22,7 +22,7 @@ const localization = {
   userProfile: {
     navbar: {
       title: 'Settings',
-      describtion: 'Manage your account settings',
+      description: 'Manage your account settings',
     },
   },
 };

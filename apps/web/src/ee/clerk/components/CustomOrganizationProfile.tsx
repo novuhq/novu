@@ -1,7 +1,7 @@
 import { OrganizationProfile } from '@clerk/clerk-react';
 import { FC } from 'react';
 
-// Hides OrganizationProfile sidebar + makes it fit the parent containre
+// Hides OrganizationProfile sidebar + makes it fit the parent container
 const OrganizationProfileAppearance = {
   elements: {
     pageScrollBox: {
