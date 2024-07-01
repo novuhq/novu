@@ -43,6 +43,6 @@ export function setNovuOnboardingStepCookie() {
   return novuOnboardedCookie.set('1', {
     expires: ONBOARDING_COOKIE_EXPIRY_DAYS,
     sameSite: 'none',
-    secure: window.location.protocol === 'https',
+    secure: true,
   });
 }
