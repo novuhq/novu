@@ -13,9 +13,9 @@
   to = "/index.html"
   status = 200
 [[headers]]
-  for = "/*"
+  for = "/studio/*"
   [headers.values]
-    Content-Security-Policy = "frame-ancestors 'none'"
+    Content-Security-Policy = "frame-ancestors http://localhost:*"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "no-referrer"
     X-Content-Type-Options = "nosniff"
@@ -24,9 +24,10 @@
     max-age=63072000;
     includeSubDomains;
     preload'''
-  for = "/studio/*"
+  for = "/*"
   [headers.values]
-    Content-Security-Policy = "frame-ancestors http://localhost:*"
+    X-Frame-Options = "Deny"
+    Content-Security-Policy = "frame-ancestors 'none'"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "no-referrer"
     X-Content-Type-Options = "nosniff"
