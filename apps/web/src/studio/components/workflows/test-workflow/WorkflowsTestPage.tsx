@@ -141,8 +141,8 @@ export const WorkflowsTestPage = () => {
       description="Trigger a test run for this workflow"
       icon={<IconOutlineCable size="32" />}
       actions={
-        <Button loading={isTestLoading} Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
-          Test workflow
+        <Button loading={isTestLoading} Icon={IconPlayArrow} onClick={handleTestClick}>
+          Trigger test
         </Button>
       }
     >
