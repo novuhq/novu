@@ -42,7 +42,7 @@ const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 export function setNovuOnboardingStepCookie() {
   return novuOnboardedCookie.set('1', {
     expires: ONBOARDING_COOKIE_EXPIRY_DAYS,
-    sameSite: 'none',
-    secure: true,
+    sameSite: 'None',
+    secure: window.location.protocol === 'https:',
   });
 }
