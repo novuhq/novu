@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { Prism } from '@mantine/prism';
-import { Tabs } from '@novu/design-system';
+import { errorMessage, Tabs } from '@novu/design-system';
 import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,8 +17,6 @@ import { Wrapper } from './components/Wrapper';
 import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
 import { useStudioState } from '../../studio/StudioStateProvider';
 import { Text, Title } from '@novu/novui';
-import { SetupTimeline } from './components/SetupTimeline';
-import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 
 export const StudioOnboardingPreview = () => {
   const { testUser } = useStudioState();
@@ -56,20 +54,27 @@ export const StudioOnboardingPreview = () => {
   }, []);
 
   const onTrigger = async () => {
-    const to = {
-      subscriberId: testUser.id,
-      email: testUser.emailAddress,
-    };
+    try {
+      const to = {
+        subscriberId: testUser.id,
+        email: testUser.emailAddress,
+      };
 
-    const payload = { __source: 'studio-onboarding-test-workflow' };
-    const response = await trigger({ workflowId: template?.workflowId, to, payload });
+      const payload = { __source: 'studio-onboarding-test-workflow' };
+      const response = await trigger({ workflowId: template?.workflowId, to, payload });
 
-    navigate({
-      pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
-      search: createSearchParams({
-        transactionId: response.data.transactionId,
-      }).toString(),
-    });
+      navigate({
+        pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
+        search: createSearchParams({
+          transactionId: response.data.transactionId,
+        }).toString(),
+      });
+    } catch (err) {
+      if (!(err instanceof Error)) {
+        return;
+      }
+      errorMessage(err.message);
+    }
   };
 
   return (
