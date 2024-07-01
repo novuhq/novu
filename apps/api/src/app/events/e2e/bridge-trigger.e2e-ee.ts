@@ -30,7 +30,7 @@ const contexts: Context[] = [
 ];
 
 contexts.forEach((context: Context) => {
-  describe.only('Bridge Trigger', async () => {
+  describe('Bridge Trigger', async () => {
     let session: UserSession;
     let echoServer: EchoServer;
     const messageRepository = new MessageRepository();
