@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
 
-import { API_ROOT } from '../config';
+import { API_ROOT, IS_CLERK_AUTH_ENABLED } from '../config';
+import { getCookies } from '../utils/utils';
 
 interface IOptions {
   absoluteUrl: boolean;
@@ -83,7 +84,8 @@ function buildUrl(url: string, absoluteUrl: boolean) {
 }
 
 function getHeaders() {
-  const token = localStorage.getItem('auth_token');
+  // TODO: change the way we get the clerk token
+  const token = IS_CLERK_AUTH_ENABLED ? getCookies('__session') : localStorage.getItem('auth_token');
 
   return token
     ? {
