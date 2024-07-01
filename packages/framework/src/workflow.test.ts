@@ -149,11 +149,17 @@ describe('workflow function', () => {
     });
 
     it('should make an API call when provided with a valid payload', async () => {
-      const testWorkflow = workflow('test-workflow', async ({ step }) => {
-        await step.custom('custom', async () => ({
-          foo: 'bar',
-        }));
-      });
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: testPayloadSchema,
+        }
+      );
 
       const fetchMock = vi.fn().mockResolvedValueOnce({
         ok: true,
