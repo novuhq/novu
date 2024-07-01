@@ -1,0 +1,17 @@
+name: Novu Sync
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Sync State to Novu
+        uses: novuhq/actions-novu-sync@v2
+        with:
+          secret-key: ${{ secrets.NOVU_SECRET_KEY }}
+          bridge-url: ${{ secrets.NOVU_BRIDGE_URL }}
