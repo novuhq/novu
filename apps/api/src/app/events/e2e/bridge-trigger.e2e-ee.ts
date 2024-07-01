@@ -2,13 +2,13 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 
-import { UserSession, SubscribersService } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import {
-  MessageRepository,
-  SubscriberEntity,
-  NotificationTemplateRepository,
-  JobRepository,
   ExecutionDetailsRepository,
+  JobRepository,
+  MessageRepository,
+  NotificationTemplateRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -566,8 +566,8 @@ contexts.forEach((context: Context) => {
       expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
     });
 
-    it(`should trigger the echo workflow with control variables [${context.name}]`, async () => {
-      const workflowId = `control-variables-workflow-${context.name + '-' + uuidv4()}`;
+    it(`should trigger the echo workflow with control default and payload data [${context.name}]`, async () => {
+      const workflowId = `default-payload-params-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -621,6 +621,64 @@ contexts.forEach((context: Context) => {
       expect(sentMessage.length).to.be.eq(2);
       expect(sentMessage[1].subject).to.include('prefix Hello default_name');
       expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
+    });
+
+    it(`should trigger the echo workflow with control variables [${context.name}]`, async () => {
+      const workflowId = `control-variables-workflow-${context.name + '-' + uuidv4()}`;
+      const stepId = 'send-email';
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.email(
+            stepId,
+            async (controls) => {
+              return {
+                subject: 'email subject ' + controls.name,
+                body: 'Body result',
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: 'control default' },
+                },
+              } as const,
+            }
+          );
+        },
+        {
+          // todo delete
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: 'default_name' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await echoServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await saveControlVariables(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
+      }
+
+      const controls = { controls: { step: [{ stepId: stepId, name: 'stored_control_name' }] } };
+      await triggerEvent(session, workflowId, subscriber, controls, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessage = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(sentMessage.length).to.be.eq(1);
+      expect(sentMessage[0].subject).to.equal('email subject stored_control_name');
     });
   });
 });
@@ -687,6 +745,15 @@ async function discoverAndSyncEcho(
   }
 
   return discoverResponse;
+}
+
+async function saveControlVariables(
+  session: UserSession,
+  workflowIdentifier?: string,
+  stepIdentifier?: string,
+  payloadBody?: any
+) {
+  return await session.testAgent.put(`/v1/bridge/controls/${workflowIdentifier}/${stepIdentifier}`).send(payloadBody);
 }
 
 async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MessagesStatusEnum) {

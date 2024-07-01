@@ -1,5 +1,6 @@
 import {
   AddressingTypeEnum,
+  ControlsDto,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
@@ -35,6 +36,7 @@ export type IWorkflowDataDto = {
   requestCategory?: TriggerRequestCategoryEnum;
   bridgeUrl?: string;
   bridgeWorkflow?: DiscoverWorkflowOutput;
+  controls?: ControlsDto;
 } & Addressing;
 
 export interface IWorkflowJobDto extends IJobParams {
