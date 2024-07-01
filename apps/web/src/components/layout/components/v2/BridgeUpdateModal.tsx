@@ -12,6 +12,7 @@ import { hstack } from '@novu/novui/patterns';
 import { useSegment } from '../../../providers/SegmentProvider';
 import { validateURL } from '../../../../utils/url';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
+import { buildBridgeHTTPClient } from '../../../../bridgeApi/bridgeApi.client';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -33,6 +34,23 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
     setUrl(event.target.value);
   };
 
+  const validateFromLocal = async (bridgeUrl: string): Promise<{ isValid: boolean }> => {
+    try {
+      const client = buildBridgeHTTPClient(bridgeUrl);
+      const response = await client.healthCheck();
+
+      const result = { isValid: response.status === 'ok' };
+
+      return result;
+    } catch {}
+
+    return { isValid: false };
+  };
+  const localDomains = ['localhost', '127.0.0.1'];
+  const isLocalAddress = () => {
+    return localDomains.includes(location.hostname);
+  };
+
   const onUpdateClick = async () => {
     setUrlError('');
     setIsUpdating(true);
@@ -40,7 +58,14 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
       if (url) {
         validateURL(url);
 
-        const result = await validateBridgeUrl({ bridgeUrl: url });
+        let result =
+          isLocalStudio && isLocalAddress()
+            ? await validateFromLocal(url)
+            : await validateBridgeUrl({ bridgeUrl: url });
+
+        if (!result.isValid && isLocalStudio) {
+          result = await validateBridgeUrl({ bridgeUrl: url });
+        }
         if (!result.isValid) {
           throw new Error('The provided URL is not the Novu Endpoint URL');
         }
