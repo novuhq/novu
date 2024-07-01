@@ -15,25 +15,9 @@ import {
   render,
 } from "@react-email/components";
 import * as React from "react";
-import { ControlSchema, EmailComponent, PayloadSchema } from "../workflows";
+import { ControlSchema, PayloadSchema } from "../workflows/";
 
-interface NovuWelcomeEmailProps {
-  steps?: {
-    id: number;
-    Description: React.ReactNode;
-  }[];
-  welcomeHeaderText?: string;
-  belowHeaderText?: string;
-  colorChange?: string;
-  components?: EmailComponent[];
-  userImage: string;
-  teamImage: string;
-  arrowImage: string;
-}
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "";
+type NovuWelcomeEmailProps = ControlSchema & PayloadSchema;
 
 export const NovuWelcomeEmail = ({
   components,
