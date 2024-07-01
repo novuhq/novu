@@ -33,7 +33,7 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
 
   const trigger = isHovered ? (
     <Button {...hoverProps} variant="outline" size="xs" Icon={IconEdit} onClick={onClick}>
-      <Text>Edit endpoint</Text>
+      Edit endpoint
     </Button>
   ) : (
     <ConnectionStatusIndicator status={status} {...hoverProps} onClick={onClick} />
