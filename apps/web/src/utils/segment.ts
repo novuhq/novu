@@ -1,14 +1,26 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
 import * as mixpanel from 'mixpanel-browser';
-import { api } from '../api';
+import { UseMutateFunction } from '@tanstack/react-query';
+
+type TrackFunction = UseMutateFunction<
+  any,
+  unknown,
+  {
+    event: string;
+    data?: Record<string, unknown> | undefined;
+  },
+  unknown
+>;
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
+  private readonly _trackFunction: TrackFunction;
   private _segmentEnabled: boolean;
   public _mixpanelEnabled: boolean;
 
-  constructor() {
+  constructor(trackFunction: TrackFunction) {
+    this._trackFunction = trackFunction;
     this._segmentEnabled = !!process.env.REACT_APP_SEGMENT_KEY;
     this._mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
@@ -68,7 +80,7 @@ export class SegmentService {
       };
     }
 
-    await api.post('/v1/telemetry/measure', {
+    await this._trackFunction({
       event: event + ' - [WEB]',
       data,
     });

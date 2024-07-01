@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { getToken } from './useAuth';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { buildApiHttpClient } from '../api/api.client';
 import { useStudioState } from '../studio/StudioStateProvider';
 
@@ -32,4 +32,12 @@ export const useApiKeys = (options?: any) => {
   const api = useNovuAPI();
 
   return useQuery<{ key: string }[]>(['getApiKeys'], () => api.getApiKeys(), options);
+};
+
+export const useTelemetry = () => {
+  const api = useNovuAPI();
+
+  return useMutation(({ event, data }: { event: string; data?: Record<string, unknown> }) =>
+    api.postTelemetry(event, data)
+  );
 };
