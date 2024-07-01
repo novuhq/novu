@@ -109,12 +109,9 @@ export const StudioOnboardingPreview = () => {
     <Wrapper className={css({ overflow: 'auto' })}>
       <div
         className={css({
-          backgroundImage: {
-            _dark: '[radial-gradient(#292933 1.5px, transparent 0)]',
-            base: '[radial-gradient(#fff 1.5px, transparent 0)]',
-          },
           backgroundSize: '[16px 16px]',
           minHeight: 'calc(100dvh - 4rem)',
+          bg: 'surface.page',
         })}
       >
         <Header activeStepIndex={2} />
