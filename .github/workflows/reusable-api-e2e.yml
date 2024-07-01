@@ -71,8 +71,6 @@ jobs:
         name: Setup project
         with:
           submodules: ${{ inputs.ee && needs.check_submodule_token.outputs.has_token == 'true' }}
-          dockerhub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          dockerhub_token: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - uses: ./.github/actions/setup-redis-cluster
         name: Setup redis cluster

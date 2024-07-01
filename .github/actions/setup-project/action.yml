@@ -11,12 +11,6 @@ inputs:
     description: 'Should link submodules'
     required: false
     default: 'false'
-  dockerhub_username:
-    description: 'Docker Hub username'
-    required: false
-  dockerhub_token:
-    description: 'Docker Hub token'
-    required: false
 outputs:
   cypress_cache_hit:
     description: 'Did cypress use binary cache'
@@ -25,13 +19,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      if: ${{ inputs.dockerhub_username != '' && inputs.dockerhub_token != '' }}
-      with:
-        username: ${{ inputs.dockerhub_username }}
-        password: ${{ inputs.dockerhub_token }}
-
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - name: ⚙️ Setup kernel for react native, increase watchers
       shell: bash
@@ -64,7 +51,7 @@ runs:
       shell: bash
       if: ${{ inputs.submodules == 'true' }}
       run: pnpm symlink:submodules
-
+  
     - name: Install wait-on plugin
       shell: bash
       run: pnpm i -g wait-on
