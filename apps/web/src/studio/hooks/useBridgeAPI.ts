@@ -30,7 +30,7 @@ export const useDiscover = (options?: any) => {
 };
 
 export const useHealthCheck = (options?: any) => {
-  const api = useBridgeAPI();
+  const bridgeAPI = useBridgeAPI();
   const { bridgeURL, isLocalStudio } = useStudioState();
 
   const res = useQuery<BridgeStatus>(
@@ -38,7 +38,7 @@ export const useHealthCheck = (options?: any) => {
     async () => {
       try {
         if (isLocalStudio) {
-          return await api.healthCheck();
+          return await bridgeAPI.healthCheck();
         } else {
           return await cloudApi.get('/v1/bridge/status');
         }
