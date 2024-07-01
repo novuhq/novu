@@ -45,13 +45,7 @@ export class TriggerMulticast {
   @InstrumentUsecase()
   async execute(command: TriggerMulticastCommand) {
     {
-      const {
-        environmentId,
-        organizationId,
-        to: recipients,
-        actor,
-        userId,
-      } = command;
+      const { environmentId, organizationId, to: recipients, actor } = command;
 
       const mappedRecipients = Array.isArray(recipients)
         ? recipients
@@ -266,6 +260,7 @@ export const mapSubscribersToJobs = (
         templateId: command.template._id,
         _subscriberSource: _subscriberSource,
         requestCategory: command.requestCategory,
+        controls: command.controls,
         bridge: {
           url: command.bridgeUrl,
           workflow: command.bridgeWorkflow,

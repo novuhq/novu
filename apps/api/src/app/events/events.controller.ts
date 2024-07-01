@@ -83,6 +83,7 @@ export class EventsController {
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: body.bridgeUrl,
+        controls: body.controls,
       })
     );
 
