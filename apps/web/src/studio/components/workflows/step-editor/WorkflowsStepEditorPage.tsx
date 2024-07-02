@@ -5,8 +5,10 @@ import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPan
 import { useWorkflow, useWorkflowPreview } from '../../../hooks/useBridgeAPI';
 import { useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 
 export const WorkflowsStepEditorPage = () => {
+  const segment = useSegment();
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -22,9 +24,13 @@ export const WorkflowsStepEditorPage = () => {
   const step = workflow?.steps.find((item) => item.stepId === stepId);
   const title = step?.stepId;
 
-  function onControlsChange(type: string, form: any) {
+  function onControlsChange(type: string, form: any, id?: string) {
     switch (type) {
       case 'step':
+        segment.track('Step Controls Changes', {
+          key: id,
+          origin: 'dashboard',
+        });
         setStepControls(form.formData);
         break;
       case 'payload':

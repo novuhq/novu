@@ -3,10 +3,10 @@ import { ConnectionStatus } from '../types';
 import { useHealthCheck } from './useBridgeAPI';
 
 export const useBridgeConnectionStatus = () => {
-  const { data, isFetching, error, bridgeURL } = useHealthCheck();
+  const { data, isLoading, error, bridgeURL } = useHealthCheck();
 
   const status = useMemo<ConnectionStatus>(() => {
-    if (isFetching) {
+    if (isLoading) {
       return 'loading';
     }
 
@@ -15,7 +15,7 @@ export const useBridgeConnectionStatus = () => {
     }
 
     return 'disconnected';
-  }, [bridgeURL, isFetching, data, error]);
+  }, [bridgeURL, isLoading, data, error]);
 
   return {
     bridgeURL,

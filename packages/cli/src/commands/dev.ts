@@ -23,7 +23,7 @@ export enum DashboardUrlEnum {
   STAGING = 'https://dev.dashboard.novu.co',
 }
 
-const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
+const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 
 export type DevCommandOptions = {
   port: string;
@@ -42,7 +42,7 @@ export async function devCommand(options: DevCommandOptions) {
   const tunnelOrigin = await createTunnel(parsedOptions.origin);
   const NOVU_ENDPOINT_PATH = options.route;
 
-  devSpinner.succeed(`Local Tunnel started:\t${tunnelOrigin}`);
+  devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}`);
 
   const opts = {
     ...parsedOptions,
@@ -51,10 +51,12 @@ export async function devCommand(options: DevCommandOptions) {
 
   const httpServer = new DevServer(opts);
 
+  const dashboardSpinner = ora('Opening dashboard').start();
   const studioSpinner = ora('Starting local studio server').start();
   await httpServer.listen();
 
-  studioSpinner.succeed(`Novu Studio started:\t${httpServer.getStudioAddress()}`);
+  dashboardSpinner.succeed(`🖥️  Dashboard → ${parsedOptions.dashboardUrl}`);
+  studioSpinner.succeed(`🎨 Studio    → ${httpServer.getStudioAddress()}`);
   if (process.env.NODE_ENV !== 'dev') {
     await open(httpServer.getStudioAddress());
   }
@@ -84,7 +86,7 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
       healthy = healthResponse.status === 'ok';
 
       if (healthy) {
-        endpointSpinner.succeed(`Bridge Endpoint up:\t${fullEndpoint}`);
+        endpointSpinner.succeed(`🌉 Endpoint  → ${fullEndpoint}`);
       } else {
         await wait(1000);
       }

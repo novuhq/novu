@@ -75,7 +75,7 @@ export class Novu extends EventEmitter {
     const axiosInstance = axios.create({
       baseURL: this.buildBackendUrl(config),
       headers: {
-        Authorization: `secretKey ${this.secretKey}`,
+        Authorization: `ApiKey ${this.secretKey}`,
       },
     });
 

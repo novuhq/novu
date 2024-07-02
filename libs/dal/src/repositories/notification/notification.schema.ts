@@ -44,6 +44,9 @@ const notificationSchema = new Schema<NotificationDBModel>(
     bridge: {
       type: Schema.Types.Mixed,
     },
+    controls: {
+      type: Schema.Types.Mixed,
+    },
   },
   schemaOptions
 );

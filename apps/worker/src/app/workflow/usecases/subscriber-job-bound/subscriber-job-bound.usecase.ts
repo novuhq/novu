@@ -1,13 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  JobRepository,
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-  IntegrationRepository,
-} from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ControlVariablesLevelEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
@@ -26,7 +22,6 @@ import {
   PinoLogger,
   ProcessSubscriber,
   ProcessSubscriberCommand,
-  ProcessTenant,
 } from '@novu/application-generic';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -95,6 +90,7 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
+      statelessWorkflow: !!command.bridge?.url,
     });
 
     const subscriberProcessed = await this.processSubscriber.execute(
@@ -108,11 +104,6 @@ export class SubscriberJobBound {
 
     // If no subscriber makes no sense to try to create notification
     if (!subscriberProcessed) {
-      /**
-       * TODO: Potentially add a CreateExecutionDetails entry. Right now we
-       * have the limitation we need a job to be created for that. Here there
-       * is no job at this point.
-       */
       Logger.warn(
         `Subscriber ${JSON.stringify(subscriber.subscriberId)} of organization ${
           command.organizationId
@@ -152,7 +143,6 @@ export class SubscriberJobBound {
         environmentId: command.environmentId,
         jobs: notificationJobs,
         organizationId: command.organizationId,
-        bridge: command.bridge,
       })
     );
   }
@@ -172,8 +162,12 @@ export class SubscriberJobBound {
       ...bridgeWorkflow,
       type: 'ECHO',
       steps: bridgeWorkflow.steps.map((step) => {
+        const stepControlVariables = command.controls?.steps?.[step.stepId];
+
         return {
           ...step,
+          bridgeUrl: command.bridge?.url,
+          controlVariables: stepControlVariables,
           active: true,
           template: {
             type: step.type,

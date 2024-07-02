@@ -42,6 +42,7 @@ export function ExecutionDetailsModal({
     _digestedNotificationId: digestedNotificationId,
     to: subscriberVariables,
     template,
+    bridge,
   } = response?.data || {};
   const { triggers } = template || {};
   const identifier = triggers ? triggers[0]?.identifier : undefined;
@@ -61,7 +62,7 @@ export function ExecutionDetailsModal({
           paddingInline: '8px',
         },
       }}
-      title={<Title size={2}>Execution Details for {template?.name ?? ''}</Title>}
+      title={<Title size={2}>Execution Details for {template?.name || bridge?.workflow?.workflowId || ''}</Title>}
       sx={{ backdropFilter: 'blur(10px)' }}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"

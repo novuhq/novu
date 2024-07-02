@@ -23,19 +23,19 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
-import { Awaitable, DiscoverWorkflowOutput, TriggerEvent } from './types';
+import { Awaitable, EventTriggerParams, Workflow } from './types';
 import { initApiClient } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
   client?: Client;
-  workflows: Array<DiscoverWorkflowOutput>;
+  workflows: Array<Workflow>;
 }
 
 interface INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
   client?: Client;
-  workflows: Array<DiscoverWorkflowOutput>;
+  workflows: Array<Workflow>;
   handler: Handler<Input, Output>;
 }
 
@@ -133,11 +133,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE)) ||
       (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE_DEPRECATED)) ||
       '';
-    const anonymousHeader =
-      (await actions.headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS)) ||
-      (await actions.headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS_DEPRECATED)) ||
-      '';
-    const source = url.searchParams.get(HttpQueryKeysEnum.SOURCE) || '';
 
     let body: Record<string, unknown> = {};
     try {
@@ -153,7 +148,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         this.validateHmac(body, signatureHeader);
       }
 
-      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action, anonymousHeader, source);
+      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action);
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
       if (method === HttpMethodEnum.POST) {
@@ -178,9 +173,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     body: any,
     workflowId: string,
     stepId: string,
-    action: string,
-    anonymousHeader: string,
-    source: string
+    action: string
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
       [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
@@ -207,7 +200,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  public triggerAction(triggerEvent: TriggerEvent) {
+  public triggerAction(triggerEvent: EventTriggerParams) {
     return async () => {
       const requestPayload = {
         name: triggerEvent.workflowId,
@@ -218,6 +211,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         ...(triggerEvent.actor && { actor: triggerEvent.actor }),
         ...(triggerEvent.tenant && { tenant: triggerEvent.tenant }),
         ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
+        ...(triggerEvent.controls && { controls: triggerEvent.controls }),
       };
 
       const result = await this.http.post('/events/trigger', requestPayload);

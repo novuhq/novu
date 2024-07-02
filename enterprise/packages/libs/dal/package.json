@@ -34,10 +34,5 @@
   },
   "peerDependencies": {
     "@nestjs/common": "10.2.2"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ]
   }
 }

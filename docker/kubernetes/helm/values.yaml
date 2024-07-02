@@ -362,7 +362,7 @@ api:
     ## @param api.env.DISABLE_USER_REGISTRATION If users should not be able to create new accounts. Possible values are: true, false
     ##
     DISABLE_USER_REGISTRATION: true
-    ## @param api.env.FRONT_BASE_URL The base url on which your frontend is accessible for the user. (e.g. web.novu.co)
+    ## @param api.env.FRONT_BASE_URL The base url on which your frontend is accessible for the user. (e.g. dashboard.novu.co)
     ##
     FRONT_BASE_URL: http://novu-web:4200
     ## @param api.env.MONGO_MIN_POOL_SIZE The min pool size of the MongoDB connection
