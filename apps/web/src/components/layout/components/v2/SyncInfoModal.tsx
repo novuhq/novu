@@ -2,13 +2,14 @@
 import { Prism } from '@mantine/prism';
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
-import { Button, Checkbox, Tabs, Text, Title } from '@novu/novui';
-import { FC, useState } from 'react';
+import { Button, Checkbox, Input, Tabs, Text, Title } from '@novu/novui';
+import { FC, useEffect, useState } from 'react';
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
 import { API_ROOT, ENV, WEBHOOK_URL } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildApiHttpClient } from '../../../../api';
 import { showNotification } from '@mantine/notifications';
+import { Code } from '@mantine/core';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
@@ -18,10 +19,16 @@ export type SyncInfoModalProps = {
 const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
-  const [syncLocalTunnel, setSyncLocalTunnel] = useState(false);
   const { devSecretKey, isLocalStudio } = useStudioState();
+  const [manualUrl, setTunnelManualURl] = useState('');
+
   const bridgeUrl = useBridgeURL(true);
   const [loadingSync, setLoadingSync] = useState(false);
+
+  useEffect(() => {
+    setTunnelManualURl(bridgeUrl);
+  }, [bridgeUrl]);
+
   async function handleLocalSync() {
     const api = buildApiHttpClient({
       secretKey: devSecretKey,
@@ -29,8 +36,10 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
 
     try {
       setLoadingSync(true);
-      const result = await api.syncBridge(bridgeUrl);
+      const result = await api.syncBridge(manualUrl);
+
       toggleOpen();
+
       showNotification({
         color: 'green',
         message: `Synced successfully. Visit https://web.novu.co`,
@@ -38,14 +47,15 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
     } catch (error: any) {
       showNotification({
         color: 'red',
-        message: `Error occurred while syncing. ${error?.message}`,
+        message: `Error occurred while syncing. ${error?.response?.data?.message || error?.message}`,
       });
     } finally {
       setLoadingSync(false);
     }
   }
 
-  const bridgeUrlToDisplay = syncLocalTunnel ? bridgeUrl : BRIDGE_ENDPOINT_PLACEHOLDER;
+  const bridgeUrlToDisplay = BRIDGE_ENDPOINT_PLACEHOLDER;
+
   const tabs = [
     {
       value: 'cli',
@@ -65,6 +75,37 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
         </Prism>
       ),
     },
+    {
+      value: 'manual',
+      label: 'Manual',
+      content: (
+        <>
+          <Text style={{ marginTop: 10 }}>
+            <Input
+              onChange={(e) => setTunnelManualURl(e.target.value)}
+              value={manualUrl}
+              description={'Specify a bridge endpoint to sync Novu Cloud with'}
+              label={'Tunnel URL to sync'}
+            />
+          </Text>
+
+          {bridgeUrl === manualUrl ? (
+            <Text variant={'secondary'} style={{ marginTop: 10 }}>
+              This tunnel URL will use your local computer's tunnel URL to forward requests. The tunnel must be running
+              to actively sync with Novu Cloud.
+              <br /> <br />
+              We recommend syncing to a deployed environment in your cloud with a publicly exposed endpoint.
+            </Text>
+          ) : null}
+
+          <div style={{ textAlign: 'right', marginTop: 15 }}>
+            <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
+              Manual Sync
+            </Button>
+          </div>
+        </>
+      ),
+    },
   ];
 
   return (
@@ -79,35 +120,6 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       onClose={toggleOpen}
     >
       <Tabs tabConfigs={tabs} defaultValue={'cli'} colorPalette="mode.local" />
-
-      {isLocalStudio ? (
-        <div
-          style={{
-            marginTop: 15,
-          }}
-        >
-          <Checkbox
-            label={'Sync with my local machine'}
-            checked={syncLocalTunnel}
-            onChange={(e) => setSyncLocalTunnel(e.target.checked as boolean)}
-          />
-          {syncLocalTunnel && (
-            <>
-              <Text variant="secondary" style={{ marginTop: 10, fontSize: 14 }}>
-                This command will use your local computer's tunnel URL to forward requests. The tunnel must be running
-                to actively sync with Novu Cloud.
-                <br /> <br />
-                We recommend syncing to a deployed environment in your cloud with a publicly exposed endpoint.
-              </Text>
-              <div style={{ textAlign: 'right', marginTop: 10 }}>
-                <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
-                  Sync Anyway
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      ) : null}
     </Modal>
   );
 };
