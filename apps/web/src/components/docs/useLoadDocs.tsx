@@ -34,7 +34,8 @@ export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
       documentationPage: path,
       pageURL: window.location.href,
     });
-  }, [path, track]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
 
   return {
     ...queryResults,
