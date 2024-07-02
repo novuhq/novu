@@ -96,16 +96,15 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: mappedCommand.environmentId,
-        triggerIdentifier: mappedCommand.identifier,
-      });
+      let storedWorkflow: NotificationTemplateEntity | null = null;
+      if (!command.bridgeWorkflow) {
+        storedWorkflow = await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: mappedCommand.environmentId,
+          triggerIdentifier: mappedCommand.identifier,
+        });
+      }
 
-      /*
-       * Makes no sense to execute anything if template doesn't exist
-       * TODO: Send a 404?
-       */
-      if (!template && !command.bridgeWorkflow) {
+      if (!storedWorkflow && !command.bridgeWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -151,7 +150,7 @@ export class TriggerEvent {
               ...mappedCommand,
               actor: actorProcessed,
               template:
-                template ||
+                storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -163,7 +162,7 @@ export class TriggerEvent {
               ...mappedCommand,
               actor: actorProcessed,
               template:
-                template ||
+                storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -176,7 +175,7 @@ export class TriggerEvent {
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
               template:
-                template ||
+                storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
