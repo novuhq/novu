@@ -114,7 +114,9 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       title={
         <>
           <Title variant="section">Sync changes</Title>
-          <Text variant="secondary">Run the following command to publish changes to the desired environment:</Text>
+          <Text color="typography.text.secondary">
+            Run the following command to publish changes to the desired environment:
+          </Text>
         </>
       }
       onClose={toggleOpen}

@@ -25,7 +25,7 @@ export const OpenLocalStudioModal: FC<OpenLocalStudioModalProps> = ({ isOpen, to
       title={
         <>
           <Title variant="section">Open local studio</Title>
-          <Text variant="secondary">Run the following command to start your local studio:</Text>
+          <Text color="typography.text.secondary">Run the following command to start your local studio:</Text>
         </>
       }
       onClose={toggleOpen}
