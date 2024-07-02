@@ -13,12 +13,26 @@ import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
 import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../../studio/StudioStateProvider';
 import { capitalizeFirstLetter } from '../../utils/string';
+import { novuOnboardedCookie, setNovuOnboardingStepCookie } from '../../utils';
+
+const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 
 export const StudioOnboarding = () => {
   const segment = useSegment();
   const navigate = useNavigate();
   const { testUser } = useStudioState();
   const { data, isLoading } = useHealthCheck();
+
+  useEffect(() => {
+    /**
+     * User already onboarded to Novu and have more than one workflow
+     */
+    if (data?.discovered?.workflows && data?.discovered?.workflows > 1) {
+      setNovuOnboardingStepCookie();
+      navigate(ROUTES.STUDIO_FLOWS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   useEffect(() => {
     segment.track('Add endpoint step started - [Onboarding - Signup]');
