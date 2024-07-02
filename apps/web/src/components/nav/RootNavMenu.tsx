@@ -5,6 +5,7 @@ import {
   IconDomain,
   IconGroup,
   IconKey,
+  IconLaptop,
   IconOutlineMonitorHeart,
   IconRoute,
   IconSettings,
@@ -12,7 +13,7 @@ import {
   IconTranslate,
   IconViewQuilt,
   IconWebhook,
-} from '@novu/design-system';
+} from '@novu/novui/icons';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
 import { ROUTES } from '../../constants/routes';
 import { useSegment } from '../../components/providers/SegmentProvider';
@@ -31,6 +32,8 @@ import { parseUrl } from '../../utils/routeUtils';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { When } from '../utils/When';
+import { SidebarFooterButton } from '../layout/components/LocalStudioSidebar/SidebarFooterButton';
+import { useNavigate } from 'react-router-dom';
 
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
@@ -39,10 +42,15 @@ export const RootNavMenu: React.FC = () => {
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+  const navigate = useNavigate();
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');
     await updateOnboardingStatus({ showOnboarding: false });
+  };
+
+  const goToStudio = () => {
+    navigate('http://localhost:2022/studio');
   };
 
   return (
@@ -148,7 +156,13 @@ export const RootNavMenu: React.FC = () => {
         ></NavMenuLinkButton>
       </NavMenuSection>
       <FreeTrialSidebarWidget />
-      <RootNavMenuFooter />
+      {isV2Enabled ? (
+        <SidebarFooterButton onClick={goToStudio} Icon={IconLaptop}>
+          Open Local Studio
+        </SidebarFooterButton>
+      ) : (
+        <RootNavMenuFooter />
+      )}
     </NavMenu>
   );
 };
