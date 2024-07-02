@@ -42,7 +42,6 @@ export class Session {
       SelectIntegrationCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
-        userId: command.subscriberId,
         channelType: ChannelTypeEnum.IN_APP,
         providerId: InAppProviderIdEnum.Novu,
         filterData: {},
@@ -75,12 +74,14 @@ export class Session {
       _subscriber: subscriber._id,
     });
 
-    const { count: totalUnreadCount } = await this.notificationsCount.execute(
+    const {
+      data: { count: totalUnreadCount },
+    } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
         environmentId: environment._id,
         subscriberId: command.subscriberId,
-        status: [MessagesStatusEnum.UNREAD],
+        read: false,
       })
     );
 

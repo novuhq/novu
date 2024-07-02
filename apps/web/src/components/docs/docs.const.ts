@@ -12,6 +12,9 @@ export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.STUDIO_ONBOARDING]: 'framework/quickstart',
   [ROUTES.STUDIO_ONBOARDING_PREVIEW]: 'framework/concepts/workflows',
   [ROUTES.STUDIO_FLOWS]: 'framework/concepts/workflows',
+  [ROUTES.STUDIO_FLOWS_VIEW]: 'framework/concepts/workflows',
+  [ROUTES.STUDIO_FLOWS_STEP_EDITOR]: 'framework/concepts/workflows',
+  [ROUTES.STUDIO_FLOWS_TEST]: 'framework/concepts/workflows',
 };
 
 export const DOCS_URL = 'https://docs.novu.co';

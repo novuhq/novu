@@ -1,36 +1,37 @@
-import { For, createSignal, onMount, type Component } from 'solid-js';
-import { Notification } from '../feeds';
-import { Novu } from '../novu';
 import type { NovuOptions } from '../novu';
+import { BellContainer } from './components';
+import { Appearance, AppearanceProvider, NovuProvider } from './context';
+import { Localization, LocalizationProvider, useLocalization } from './context/LocalizationContext';
+import { useStyle } from './helpers';
 
-const Inbox: Component<{
+type InboxProps = {
+  id: string;
   name: string;
   options: NovuOptions;
-}> = (props) => {
-  const [feeds, setFeeds] = createSignal<Notification[]>([]);
+  appearance?: Appearance;
+  localization?: Localization;
+};
 
-  onMount(() => {
-    const novu = new Novu(props.options);
-
-    // eslint-disable-next-line promise/always-return
-    novu.feeds.fetch().then((data) => {
-      setFeeds(data.data);
-    });
-  });
-
+export const Inbox = (props: InboxProps) => {
   return (
-    <div>
-      <header>Hello {props.name} </header>
-      <For each={feeds()}>
-        {(feed) => (
-          <div>
-            <h2>{feed.body}</h2>
-            <p>{feed.createdAt}</p>
-          </div>
-        )}
-      </For>
-    </div>
+    <NovuProvider options={props.options}>
+      <LocalizationProvider localization={props.localization}>
+        <AppearanceProvider id={props.id} appearance={props.appearance}>
+          <InternalInbox />
+        </AppearanceProvider>
+      </LocalizationProvider>
+    </NovuProvider>
   );
 };
 
-export default Inbox;
+const InternalInbox = () => {
+  const style = useStyle();
+  const { t } = useLocalization();
+
+  return (
+    <div class={style('novu', 'root')}>
+      <div class="nt-text-2xl nt-font-bold">{t('inbox.title')}</div>
+      <BellContainer />
+    </div>
+  );
+};

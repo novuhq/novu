@@ -1,21 +1,18 @@
-import { ValidateFunction } from 'ajv';
-
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { Schema } from './schema.types';
-import { ActionStepOptions } from './step.types';
+import { JsonSchema, Schema } from './schema.types';
+import { StepOptions } from './step.types';
 import { Execute, WorkflowOptions } from './workflow.types';
+import { Awaitable } from './util.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
-
-export type Validate = ValidateFunction;
 
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
+  resolve: ({ controls, outputs }: { controls: unknown; outputs: unknown }) => Awaitable<unknown>;
   outputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
 };
 
@@ -23,21 +20,25 @@ export type DiscoverStepOutput = {
   stepId: string;
   type: StepType;
   inputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   outputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   results: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   code: string;
-  resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
+  resolve: (controls: any) => Awaitable<any>;
   providers: Array<DiscoverProviderOutput>;
-  options: ActionStepOptions;
+  options: StepOptions;
 };
 
 export type DiscoverWorkflowOutput = {
@@ -46,13 +47,23 @@ export type DiscoverWorkflowOutput = {
   options: WorkflowOptions<unknown, unknown>;
   code: string;
   steps: Array<DiscoverStepOutput>;
-  data: {
-    schema: Schema;
-    validate: Validate;
+  payload: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
+  /** @deprecated */
+  data: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  /** @deprecated */
   inputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
 };
 

@@ -1,3 +1,3 @@
 import { Awaitable } from './util.types';
 
-export type Skip<T> = (inputs: T) => Awaitable<boolean>;
+export type Skip<T> = (controls: T) => Awaitable<boolean>;

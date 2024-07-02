@@ -10,10 +10,10 @@ export const EditorPreviewSwitch = ({ view, setView, bridge = false }) => {
     const all = Object.values(ViewEnum);
 
     if (bridge) {
-      return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.EDIT && item !== ViewEnum.INPUTS);
+      return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.EDIT && item !== ViewEnum.CONTROLS);
     }
 
-    return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.INPUTS);
+    return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.CONTROLS);
   }, [bridge]);
 
   return (

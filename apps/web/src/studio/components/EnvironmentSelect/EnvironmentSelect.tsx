@@ -9,6 +9,7 @@ export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmen
   isPopoverOpened,
   setIsPopoverOpened,
   handlePopoverLinkClick,
+  readonly,
   ...selectProps
 }) => {
   return (

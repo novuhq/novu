@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+import chalk from 'chalk';
 import { Command } from 'commander';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 import { echo } from '../../commands/echo';
 import { sync } from '../../commands/sync';
@@ -15,7 +16,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const anonymousIdLocalState = config.getValue('anonymousId');
-const anonymousId = anonymousIdLocalState || uuidv4();
+const anonymousId = anonymousIdLocalState || randomUUID();
 
 if (!anonymousIdLocalState) {
   config.setValue('anonymousId', anonymousId);
@@ -47,8 +48,9 @@ export const buildProgram = () => {
     .option('-b, --backend-url <backendUrl>', 'The backend url to use', 'https://api.novu.co')
     .requiredOption('--echo-url <echoUrl>', 'The cho url to use')
     .requiredOption('--api-key <apiKey>', 'The Novu api key to use')
-    .description('Sync your Echo state with Novu Cloud')
+    .description('Sync your Novu Framework state with Novu Cloud')
     .action(async (options) => {
+      printSyncDeprecationWarning();
       analytics.track({
         identity: {
           anonymousId: anonymousId,
@@ -62,3 +64,21 @@ export const buildProgram = () => {
 
   return program;
 };
+
+function printSyncDeprecationWarning() {
+  console.log('');
+  console.log(
+    chalk.yellowBright(chalk.bold('############################# DEPRECATION WARNING ##############################'))
+  );
+  console.log(
+    chalk.yellowBright(chalk.bold('#          The `novu-labs` package is deprecated, please install `novu`        #'))
+  );
+  console.log(
+    chalk.yellowBright(chalk.bold('#                       and use use `novu sync` instead                        #'))
+  );
+
+  console.log(
+    chalk.yellowBright(chalk.bold('################################################################################'))
+  );
+  console.log('');
+}

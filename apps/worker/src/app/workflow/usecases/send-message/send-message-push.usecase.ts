@@ -359,6 +359,7 @@ export class SendMessagePush extends SendMessageBase {
       overrides: overrides as never,
       providerId: integration.providerId,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.executionLogRoute.execute(

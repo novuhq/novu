@@ -1,4 +1,5 @@
 export enum PostActionEnum {
+  TRIGGER = 'trigger',
   EXECUTE = 'execute',
   PREVIEW = 'preview',
 }

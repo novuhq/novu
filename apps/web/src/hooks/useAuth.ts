@@ -5,7 +5,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
-
 import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
@@ -35,14 +34,22 @@ function saveToken(token: string | null) {
   }
 }
 
-function getToken(): string {
+export function getToken(): string {
   return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || '';
 }
 
-function getTokenClaims(): IJwtClaims | null {
+export function getTokenClaims(): IJwtClaims | null {
   const token = getToken();
 
   return token ? jwtDecode<IJwtClaims>(token) : null;
+}
+
+function inIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
 }
 
 export function useAuth() {
@@ -58,7 +65,7 @@ export function useAuth() {
   const hasToken = !!getToken();
 
   useEffect(() => {
-    if (!getToken() && inPrivateRoute) {
+    if (!getToken() && inPrivateRoute && !inIframe()) {
       navigate(ROUTES.AUTH_LOGIN, { state: { redirectTo: location } });
     }
   }, [navigate, inPrivateRoute, location]);
@@ -108,6 +115,27 @@ export function useAuth() {
     navigate(ROUTES.AUTH_LOGIN);
   }, [navigate, queryClient, segment]);
 
+  const redirectTo = useCallback(({ url, redirectURL }: { url: string; redirectURL?: string }) => {
+    const finalURL = new URL(url, window.location.origin);
+
+    if (redirectURL) {
+      finalURL.searchParams.append('redirect_url', redirectURL);
+    }
+
+    // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
+    window.location.replace(finalURL.href);
+  }, []);
+
+  const redirectToLogin = useCallback(
+    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_LOGIN, redirectURL }),
+    [redirectTo]
+  );
+
+  const redirectToSignUp = useCallback(
+    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL }),
+    [redirectTo]
+  );
+
   const { organizationId, environmentId } = getTokenClaims() || {};
 
   const currentOrganization = useMemo(() => {
@@ -144,6 +172,7 @@ export function useAuth() {
         kind: 'organization',
         key: currentOrganization._id,
         name: currentOrganization.name,
+        createdAt: currentOrganization.createdAt,
       });
     } else {
       ldClient.identify({
@@ -156,7 +185,7 @@ export function useAuth() {
   return {
     inPublicRoute,
     inPrivateRoute,
-    isLoading: inPrivateRoute && (isUserLoading || isOrganizationLoading),
+    isLoading: hasToken && (isUserLoading || isOrganizationLoading),
     currentUser: user,
     organizations,
     currentOrganization,
@@ -164,5 +193,7 @@ export function useAuth() {
     logout,
     environmentId,
     organizationId,
+    redirectToLogin,
+    redirectToSignUp,
   };
 }

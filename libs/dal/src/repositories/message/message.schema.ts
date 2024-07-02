@@ -82,12 +82,13 @@ const messageSchema = new Schema<MessageDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    archived: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     lastSeenDate: Schema.Types.Date,
     lastReadDate: Schema.Types.Date,
-    createdAt: {
-      type: Schema.Types.Date,
-      default: Date.now,
-    },
+    archivedAt: Schema.Types.Date,
     status: {
       type: Schema.Types.String,
       default: 'sent',
@@ -113,6 +114,7 @@ const messageSchema = new Schema<MessageDBModel>(
       ref: 'Subscriber',
     },
     expireAt: Schema.Types.Date,
+    tags: [Schema.Types.String],
   },
   schemaOptions
 );

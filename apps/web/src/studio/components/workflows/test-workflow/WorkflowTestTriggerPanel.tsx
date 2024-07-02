@@ -4,29 +4,53 @@ import { IconOutlineBolt } from '@novu/novui/icons';
 import { Tabs, Title } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
+import {
+  createNodeSnippet,
+  createCurlSnippet,
+  createPhpSnippet,
+  createGoSnippet,
+  createPythonSnippet,
+  CodeSnippetProps,
+} from '../../../../utils/codeSnippets';
+import { Language } from 'prism-react-renderer';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IWorkflowTestTriggerPanelProps {}
+type Snippet = {
+  languageLabel: string;
+  language: Language;
+  create: (props: CodeSnippetProps) => string;
+};
 
-// TODO: placeholder for real code
-const CODE = (
-  <Prism withLineNumbers={true} language="javascript" h="100%">
-    {`
-import { Novu } from “@novu/node”; 
+const snippets: Snippet[] = [
+  {
+    languageLabel: 'Node.js',
+    language: 'javascript',
+    create: createNodeSnippet,
+  },
+  {
+    languageLabel: 'Curl',
+    language: 'bash',
+    create: createCurlSnippet,
+  },
+  {
+    languageLabel: 'PHP',
+    language: 'c', // PHP is not supported
+    create: createPhpSnippet,
+  },
+  {
+    languageLabel: 'GOlang',
+    language: 'go',
+    create: createGoSnippet,
+  },
+  {
+    languageLabel: 'Python',
+    language: 'python',
+    create: createPythonSnippet,
+  },
+];
 
-const novu = new Novu(“<APIkey•••••••••••>”);
+const DEFAULT_LANGUAGE: Language = 'javascript';
 
-novu.trigger(“digest-workflow-example”, {
-  to: {
-    “subscriberId”:“63eba45f8c05635c0ab0hjdkhfkHFKdjhfsdjkhf
-    “email”:“nikolay@novu.co”
-  }
-});
-`}
-  </Prism>
-);
-
-export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({}) => {
+export const WorkflowTestTriggerPanel: FC<CodeSnippetProps> = (props) => {
   return (
     <Box>
       <HStack gap="50" mb="margins.layout.page.section.titleBottom">
@@ -35,34 +59,16 @@ export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({})
       </HStack>
       <Tabs
         height={'[100% !important]'}
-        defaultValue="node"
-        tabConfigs={[
-          {
-            value: 'node',
-            label: 'Node.js',
-            content: CODE,
-          },
-          {
-            value: 'curl',
-            label: 'Curl',
-            content: CODE,
-          },
-          {
-            value: 'php',
-            label: 'PHP',
-            content: CODE,
-          },
-          {
-            value: 'golang',
-            label: 'GOlang',
-            content: CODE,
-          },
-          {
-            value: 'python',
-            label: 'Python',
-            content: CODE,
-          },
-        ]}
+        defaultValue={DEFAULT_LANGUAGE}
+        tabConfigs={snippets.map((snippet) => ({
+          value: snippet.language,
+          label: snippet.languageLabel,
+          content: (
+            <Prism withLineNumbers={true} language={snippet.language} h="100%">
+              {snippet.create(props)}
+            </Prism>
+          ),
+        }))}
       />
     </Box>
   );

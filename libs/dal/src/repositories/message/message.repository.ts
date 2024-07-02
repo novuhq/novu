@@ -32,7 +32,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {}
+    query: {
+      feedId?: string[];
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+      payload?: object;
+    } = {}
   ): Promise<MessageQuery & EnforceEnvId> {
     let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -71,6 +78,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = { $in: [true, false] };
     }
 
+    if (query.tags && query.tags?.length > 0) {
+      requestQuery.tags = { $in: query.tags };
+    }
+
+    if (typeof query.archived === 'boolean') {
+      if (!query.archived) {
+        requestQuery.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        requestQuery.archived = true;
+      }
+    } else {
+      requestQuery.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+    }
+
     if (query.payload) {
       requestQuery = {
         ...requestQuery,
@@ -96,23 +117,92 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       sort: '-createdAt',
     })
       .read('secondaryPreferred')
+      .populate('template', '_id tags')
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 
     return this.mapEntities(messages);
   }
 
+  async paginate(
+    {
+      environmentId,
+      channel,
+      subscriberId,
+      tags,
+      read,
+      archived,
+    }: {
+      environmentId: string;
+      subscriberId: string;
+      channel: ChannelTypeEnum;
+      tags?: string[];
+      read?: boolean;
+      archived?: boolean;
+    },
+    options: { limit: number; offset: number; after?: string }
+  ) {
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      channel,
+    };
+
+    if (tags && tags?.length > 0) {
+      query.tags = { $in: tags };
+    }
+
+    if (typeof read === 'boolean') {
+      query.read = read;
+    } else {
+      query.read = { $in: [true, false] };
+    }
+
+    if (typeof archived === 'boolean') {
+      if (!archived) {
+        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        query.archived = true;
+      }
+    } else {
+      query.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+    }
+
+    return await this.cursorPagination({
+      query,
+      limit: options.limit,
+      offset: options.offset,
+      after: options.after,
+      sort: { createdAt: -1, _id: -1 },
+      paginateField: 'createdAt',
+      enhanceQuery: (queryBuilder) =>
+        queryBuilder
+          .read('secondaryPreferred')
+          .populate('subscriber', '_id firstName lastName avatar subscriberId')
+          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId'),
+    });
+  }
+
   async getCount(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {},
+    query: {
+      feedId?: string[];
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+      payload?: object;
+    } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
       seen: query.seen,
+      tags: query.tags,
       read: query.read,
+      archived: query.archived,
       payload: query.payload,
     });
 

@@ -2,18 +2,16 @@ import { text } from '@novu/novui/recipes';
 import { HStack, styled, VStack } from '@novu/novui/jsx';
 import { Tooltip } from '@novu/design-system';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { Button } from '@novu/novui';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ROUTES } from '../../../constants/routes';
 
 const Text = styled('a', text);
 
 export const Footer = ({
-  canSkipSetup = true,
   showLearnMore = true,
   buttonText = 'Continue',
   onClick,
@@ -21,7 +19,6 @@ export const Footer = ({
   tooltip = '',
   disabled = false,
 }: {
-  canSkipSetup?: boolean;
   showLearnMore?: boolean;
   buttonText?: string;
   onClick?: () => void;
@@ -30,7 +27,6 @@ export const Footer = ({
   disabled?: boolean;
 }) => {
   const segment = useSegment();
-  const navigate = useNavigate();
   const { pathname } = useLocation();
 
   return (
@@ -77,20 +73,6 @@ export const Footer = ({
             </When>
           </div>
           <HStack gap="100">
-            <When truthy={canSkipSetup}>
-              <Button
-                disabled={loading}
-                onClick={() => {
-                  segment.track('Skip setup button clicked - [Onboarding - Signup]', {
-                    step: pathname,
-                  });
-                  navigate(ROUTES.WORKFLOWS);
-                }}
-                variant="outline"
-              >
-                Skip setup
-              </Button>
-            </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
               <Button loading={loading} onClick={onClick} disabled={disabled}>
                 {buttonText}

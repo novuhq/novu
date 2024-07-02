@@ -12,7 +12,7 @@
     "sourceMap": true,
     "rootDir": ".",
     "outDir": "./dist",
-    "strictNullChecks": true
+    "strict": true
   },
   "include": ["./src/**/*", "./package.json"],
   "exclude": ["node_modules", "**/*.spec.ts"]

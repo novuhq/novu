@@ -244,7 +244,6 @@ export class CreateWorkflow {
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
       type: command.type,
-      // ...(command.inputs ? { inputs: command.inputs } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema
         ? { payloadSchema: command.payloadSchema }
@@ -294,7 +293,8 @@ export class CreateWorkflow {
             preheader: step.template.preheader,
             senderName: step.template.senderName,
             actor: step.template.actor,
-            inputs: step.template.inputs,
+            inputs: step.template.controls || step.template.inputs,
+            controls: step.template.controls || step.template.inputs,
             output: step.template.output,
             stepId: step.template.stepId,
             parentChangeId,

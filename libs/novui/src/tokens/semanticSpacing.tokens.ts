@@ -246,6 +246,22 @@ export const SEMANTIC_SPACING_TOKENS = defineSemanticTokens.spacing({
           type: 'spacing',
           value: '{spacing.200}',
         },
+        error: {
+          top: {
+            description: "Padding from the top of the Input's error message if shown",
+            type: 'spacing',
+            value: '{spacing.25}',
+          },
+          bottom: {
+            description: "Padding from the bottom of the Input's error message if shown",
+            type: 'spacing',
+            value: '{spacing.25}',
+          },
+        },
+        bottom: {
+          type: 'spacing',
+          value: '{spacing.100}',
+        },
       },
       guideSteps: {
         type: 'spacing',

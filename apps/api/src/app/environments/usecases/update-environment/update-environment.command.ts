@@ -1,6 +1,5 @@
 import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { OrganizationCommand } from '../../../shared/commands/organization.command';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateEnvironmentCommand extends OrganizationCommand {
   @IsDefined()

@@ -27,7 +27,7 @@ import styled from '@emotion/styled/macro';
 import { useDomainParser } from './useDomainHook';
 
 export function QuestionnaireForm() {
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -80,8 +80,8 @@ export function QuestionnaireForm() {
       return;
     }
 
-    if (isV2ExperienceEnabled) {
-      navigate(ROUTES.STUDIO_ONBOARDING);
+    if (isV2Enabled) {
+      navigate(ROUTES.GET_STARTED);
 
       return;
     }

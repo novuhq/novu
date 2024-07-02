@@ -3,11 +3,11 @@ import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
-import { NotificationsCountCommand } from './notifications-count.command';
+import type { NotificationsCountCommand } from './notifications-count.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { constructMessageStatusQuery } from '../../utils/messages';
+import type { NotificationFilter } from '../../utils/types';
 
-const MAX_NOTIFICATIONS_COUNT = 100;
+const MAX_NOTIFICATIONS_COUNT = 99;
 
 @Injectable()
 export class NotificationsCount {
@@ -21,7 +21,7 @@ export class NotificationsCount {
         ...command,
       }),
   })
-  async execute(command: NotificationsCountCommand): Promise<{ count: number }> {
+  async execute(command: NotificationsCountCommand): Promise<{ data: { count: number }; filter: NotificationFilter }> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
       command.subscriberId,
@@ -34,14 +34,15 @@ export class NotificationsCount {
       );
     }
 
+    const filter = { tags: command.tags, read: command.read, archived: command.archived };
     const count = await this.messageRepository.getCount(
       command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP,
-      constructMessageStatusQuery(command.status),
+      filter,
       { limit: MAX_NOTIFICATIONS_COUNT }
     );
 
-    return { count };
+    return { data: { count }, filter };
   }
 }

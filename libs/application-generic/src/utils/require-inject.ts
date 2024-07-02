@@ -133,12 +133,12 @@ export type IBridgeStepResponse =
   | IBridgeChannelResponse
   | IBridgeActionResponse;
 
-export interface IUseCaseInterface<TInput, TResponse> {
-  execute: (arg0: TInput) => Promise<TResponse>;
+export interface IUseCaseInterface<TControl, TResponse> {
+  execute: (arg0: TControl) => Promise<TResponse>;
 }
 
 export interface IUseCaseInterfaceInline {
-  execute: <TInput, TResponse>(arg0: TInput) => Promise<TResponse>;
+  execute: <TControl, TResponse>(arg0: TControl) => Promise<TResponse>;
 }
 
 export type ExecuteOutputMetadata = {

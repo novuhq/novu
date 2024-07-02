@@ -1,7 +1,6 @@
 import { ActionIcon, Header } from '@mantine/core';
-import { IconHelpOutline, IconOutlineCloudUpload } from '@novu/novui/icons';
+import { IconHelpOutline } from '@novu/novui/icons';
 import { Tooltip } from '@novu/design-system';
-import { Button } from '@novu/novui';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
@@ -12,14 +11,12 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
-import { useLocation } from 'react-router-dom';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { BridgeMenuItems } from './BridgeMenuItems';
 
 export function HeaderNav() {
   const { currentUser } = useAuth();
   const isSelfHosted = IS_DOCKER_HOSTED;
-  const location = useLocation();
-
   const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
 
   useBootIntercom();
@@ -39,11 +36,7 @@ export function HeaderNav() {
     >
       {/* TODO: Change position: right to space-between for breadcrumbs */}
       <HStack flexWrap={'nowrap'} justifyContent="flex-end" gap={'100'}>
-        {isV2ExperienceEnabled && (
-          <Button size="xs" Icon={IconOutlineCloudUpload}>
-            Sync
-          </Button>
-        )}
+        {isV2ExperienceEnabled && <BridgeMenuItems />}
         <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
           <Tooltip label={themeLabel}>
             <div>{themeIcon}</div>
