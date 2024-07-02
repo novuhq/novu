@@ -17,8 +17,16 @@ import { Wrapper } from './components/Wrapper';
 import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
 import { useStudioState } from '../../studio/StudioStateProvider';
 import { Text, Title } from '@novu/novui';
+import { SetupTimeline } from './components/SetupTimeline';
+import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
+import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout';
+import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
+import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
+import { PageContainer } from '../../studio/layout';
 
 export const StudioOnboardingPreview = () => {
+  const [controls, setStepControls] = useState({});
+  const [payload, setPayload] = useState({});
   const { testUser } = useStudioState();
   const [tab, setTab] = useState<string>('Preview');
   const segment = useSegment();
@@ -26,7 +34,7 @@ export const StudioOnboardingPreview = () => {
   const { data: bridgeResponse, isLoading: isLoadingList } = useDiscover();
   const { trigger, isLoading } = useWorkflowTrigger();
 
-  const template = useMemo(() => {
+  const workflow = useMemo(() => {
     if (!bridgeResponse?.workflows?.length) {
       return null;
     }
@@ -34,15 +42,23 @@ export const StudioOnboardingPreview = () => {
     return bridgeResponse.workflows[0];
   }, [bridgeResponse]);
 
+  const step = useMemo(() => {
+    if (!workflow) {
+      return null;
+    }
+
+    return workflow?.steps?.[0];
+  }, [workflow]);
+
   const { data: preview, isLoading: previewLoading } = useWorkflowPreview(
     {
-      workflowId: template?.workflowId,
-      stepId: template?.steps[0]?.stepId,
-      payload: {},
-      controls: {},
+      workflowId: workflow?.workflowId,
+      stepId: step?.stepId,
+      payload: payload,
+      controls: controls,
     },
     {
-      enabled: !!(template && template?.workflowId && template?.steps[0]?.stepId),
+      enabled: !!(workflow?.workflowId && step?.stepId),
       refetchOnWindowFocus: 'always',
       refetchInterval: 1000,
     }
@@ -53,6 +69,17 @@ export const StudioOnboardingPreview = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function onControlsChange(type: string, form: any) {
+    switch (type) {
+      case 'step':
+        setStepControls(form.formData);
+        break;
+      case 'payload':
+        setPayload(form.formData);
+        break;
+    }
+  }
+
   const onTrigger = async () => {
     try {
       const to = {
@@ -60,8 +87,16 @@ export const StudioOnboardingPreview = () => {
         email: testUser.emailAddress,
       };
 
-      const payload = { __source: 'studio-onboarding-test-workflow' };
-      const response = await trigger({ workflowId: template?.workflowId, to, payload });
+      const response = await trigger({
+        workflowId: workflow?.workflowId,
+        to,
+        payload: { ...payload, __source: 'studio-onboarding-test-workflow' },
+        controls: {
+          steps: {
+            [step?.stepId]: controls,
+          },
+        },
+      });
 
       navigate({
         pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
@@ -81,26 +116,23 @@ export const StudioOnboardingPreview = () => {
     <Wrapper className={css({ overflow: 'auto' })}>
       <div
         className={css({
-          backgroundImage: {
-            _dark: '[radial-gradient(#292933 1.5px, transparent 0)]',
-            base: '[radial-gradient(#fff 1.5px, transparent 0)]',
-          },
           backgroundSize: '[16px 16px]',
           minHeight: 'calc(100dvh - 4rem)',
+          bg: 'surface.page',
         })}
       >
         <Header activeStepIndex={2} />
         <VStack
           alignContent="center"
           className={css({
-            height: '100%',
+            height: 'full',
           })}
         >
-          <div
+          <PageContainer
             className={css({
-              width: 'onboarding',
-              zIndex: 1,
-              paddingTop: '100',
+              width: 'full',
+              // TODO: create and use token
+              maxWidth: '1300px',
             })}
           >
             <Title variant="page">Preview your workflow</Title>
@@ -116,179 +148,22 @@ export const StudioOnboardingPreview = () => {
               This is a preview of your sample workflow located in the <code>app/novu/workflows</code> directory. You
               can edit this file in your IDE and see the email changes reflected here.
             </Text>
-            <Tabs
-              withIcon={true}
-              value={tab}
-              onTabChange={(value) => {
-                setTab(value as string);
-              }}
-              menuTabs={[
-                {
-                  icon: <IconVisibility />,
-                  value: 'Preview',
-                  content: (
-                    <PreviewWeb
-                      content={preview?.outputs?.body}
-                      subject={preview?.outputs?.subject}
-                      onLocaleChange={() => {}}
-                      locales={[]}
-                      bridge={true}
-                      loading={previewLoading || isLoadingList}
-                      classNames={{
-                        contentContainer: css({
-                          height: 'calc(60vh - 28px) !important',
-                        }),
-                      }}
-                    />
-                  ),
-                },
-                {
-                  icon: <IconCode />,
-                  value: 'Code',
-                  content: (
-                    <Prism withLineNumbers language="typescript">
-                      {`workflow("welcome-onboarding-email", async ({ step, payload }) => {
-    await step.email(
-      "send-email",
-      async (controls) => {
-        return {
-          subject: "A Successful Test on Novu!",
-          body: renderEmail(controls, payload),
-        };
-      },
-      {
-        controlSchema: {
-          type: "object",
-          properties: {
-            components: {
-              title: "Add Custom Fields:",
-              type: "array",
-              default: [{
-                "componentType": "heading",
-                "componentText": "Welcome to Novu"
-              }, {
-                "componentType": "text",
-                "componentText": "Congratulations on receiving your first notification email from Novu! Join the hundreds of thousands of developers worldwide who use Novu to build notification platforms for their products."
-              }, {
-                "componentType": "list",
-                "componentListItems": [
-                  {
-                    title: "Send Multi-channel notifications",
-                    body: "You can send notifications to your users via multiple channels (Email, SMS, Push, and In-App) in a heartbeat."
-                  },
-                  {
-                    title: "Send Multi-channel notifications",
-                    body: "You can send notifications to your users via multiple channels (Email, SMS, Push, and In-App) in a heartbeat."
-                  }
-                ]
-              }, {
-                "componentType": "text",
-                "componentText": "Ready to get started? Click on the button below, and you will see first-hand how easily you can edit this email content."
-              }, {
-                "componentType": "button",
-                "componentText": "Edit Email"
-              }],
-              items: {
-                type: "object",
-                properties: {
-                  componentType: {
-                    type: "string",
-                    enum: [
-                      "text", "divider", "button", "button-link", "image", "image-2", "image-3", "heading", "users", "list"
-                    ],
-                    default: "text",
-                  },
-                  componentText: {
-                    type: "string",
-                    default: "",
-                  },
-                  componentLink: {
-                    type: "string",
-                    default: "https://enterlink.com",
-                    format: "uri",
-                  },
-                  align: {
-                    type: "string",
-                    enum: ["left", "center", "right"],
-                    default: "center",
-                  },
-                  componentListItems: {
-                    type: "array",
-                    default: [],
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: {
-                          type: "string"
-                        },
-                        body: {
-                          type: "string"
-                        }
-                      }
-                    }
-                  }
-                },
-              },
-            },
-            welcomeHeaderText: {
-              type: "string",
-              default: "Welcome to Novu {{helloWorld}}"
-            },
-            belowHeaderText: {
-              title: "Text Under The Welcome Header",
-              type: "string",
-              default: "Congratulations on receiving your first notification email from Novu! Join the hundreds of thousands of developers worldwide who use Novu to build notification platforms for their products."
-            },
-          },
-        },
-      },
-    );
-  },
-  { payloadSchema: {
-      type: "object",
-      properties: {
-        teamImage: {
-          title: "Team Image",
-          type: "string",
-          default:
-            "https://images.spr.so/cdn-cgi/imagedelivery/j42No7y-dcokJuNgXeA0ig/dca73b36-cf39-4e28-9bc7-8a0d0cd8ac70/standalone-gradient2x_2/w=128,quality=90,fit=scale-down",
-          format: "uri",
-        },
-        userImage: {
-          title: "User Image",
-          type: "string",
-          default:
-            "https://react-email-demo-48zvx380u-resend.vercel.app/static/vercel-user.png",
-          format: "uri",
-        },
-        arrowImage: {
-          title: "Arrow",
-          type: "string",
-          default:
-            "https://react-email-demo-bdj5iju9r-resend.vercel.app/static/vercel-arrow.png",
-          format: "uri",
-        },
-        editEmailLink: {
-          title: "Email Link Button Text",
-          type: "string",
-          default: "https://web.novu.co",
-          format: "uri",
-        },
-        helloWorld: {
-          type: "string",
-          default: "Hello World"
-        },
-      }
-    }
-  },
-);
-`}
-                    </Prism>
-                  ),
-                },
-              ]}
-            />
-          </div>
+
+            <WorkflowsPanelLayout>
+              <WorkflowStepEditorContentPanel
+                error={null}
+                step={step}
+                preview={preview}
+                isLoadingPreview={previewLoading || isLoadingList}
+              />
+              <WorkflowStepEditorControlsPanel
+                step={step}
+                workflow={workflow}
+                defaultControls={{}}
+                onChange={onControlsChange}
+              />
+            </WorkflowsPanelLayout>
+          </PageContainer>
         </VStack>
       </div>
       <Footer
@@ -297,7 +172,7 @@ export const StudioOnboardingPreview = () => {
           onTrigger();
         }}
         loading={isLoading}
-        disabled={isLoading || isLoadingList || !template}
+        disabled={isLoading || isLoadingList || !workflow}
         tooltip={`Trigger a test of this workflow, delivered to: ${testUser.emailAddress} address`}
       />
     </Wrapper>

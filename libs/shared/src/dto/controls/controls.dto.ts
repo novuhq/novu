@@ -1,4 +1,6 @@
-import { ControlVariablesLevelEnum } from '../../types';
-
-export type ControlsDto = Record<ControlVariablesLevelEnum, Control[]>;
-type Control = { stepId: string } & Record<string, unknown>;
+export type ControlsDto = {
+  steps?: StepControl;
+};
+type StepControl = Record<stepId, Data>;
+type stepId = string;
+type Data = Record<string, unknown>;
