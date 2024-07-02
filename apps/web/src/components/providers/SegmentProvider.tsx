@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTelemetry } from '../../hooks/useNovuAPI';
 
 import { SegmentService } from '../../utils/segment';
 
@@ -10,8 +9,7 @@ type Props = {
 const SegmentContext = React.createContext<SegmentService>(undefined as any);
 
 export const SegmentProvider = ({ children }: Props) => {
-  const { mutate: track } = useTelemetry();
-  const segment = React.useMemo(() => new SegmentService(track), [track]);
+  const segment = React.useMemo(() => new SegmentService(), []);
 
   return <SegmentContext.Provider value={segment}>{children}</SegmentContext.Provider>;
 };

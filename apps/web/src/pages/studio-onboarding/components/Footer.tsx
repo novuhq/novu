@@ -7,7 +7,7 @@ import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { Button } from '@novu/novui';
-import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
 
 const Text = styled('a', text);
 
@@ -26,7 +26,7 @@ export const Footer = ({
   tooltip?: string;
   disabled?: boolean;
 }) => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const { pathname } = useLocation();
 
   return (
@@ -58,7 +58,7 @@ export const Footer = ({
                     <Text
                       onClick={(e) => {
                         e.preventDefault();
-                        segment.track('Documentation linked clicked - [Onboarding - Signup]', {
+                        track('Documentation linked clicked - [Onboarding - Signup]', {
                           step: pathname,
                         });
                         onDocsClick();

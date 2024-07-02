@@ -7,7 +7,6 @@ import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { ROUTES } from '../../constants/routes';
 import { VStack } from '@novu/novui/jsx';
-import { useSegment } from '../../components/providers/SegmentProvider';
 import { Wrapper } from './components/Wrapper';
 // TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
 import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
@@ -17,13 +16,14 @@ import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
 import { PageContainer } from '../../studio/layout';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 export const StudioOnboardingPreview = () => {
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { testUser } = useStudioState();
   const [tab, setTab] = useState<string>('Preview');
-  const segment = useSegment();
+  const track = useTelemetry();
   const navigate = useNavigate();
   const { data: bridgeResponse, isLoading: isLoadingList } = useDiscover();
   const { trigger, isLoading } = useWorkflowTrigger();
@@ -59,7 +59,7 @@ export const StudioOnboardingPreview = () => {
   );
 
   useEffect(() => {
-    segment.track('Create workflow step started - [Onboarding - Signup]');
+    track('Create workflow step started - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

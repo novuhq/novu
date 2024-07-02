@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import { Title, Text } from '@novu/novui';
 import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
-import { useSegment } from '../../components/providers/SegmentProvider';
 import { Wrapper } from './components/Wrapper';
 import { ROUTES } from '../../constants/routes';
 import { useNavigate } from 'react-router-dom';
@@ -13,12 +12,13 @@ import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
 import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../../studio/StudioStateProvider';
 import { capitalizeFirstLetter } from '../../utils/string';
-import { novuOnboardedCookie, setNovuOnboardingStepCookie } from '../../utils';
+import { setNovuOnboardingStepCookie } from '../../utils';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 
 export const StudioOnboarding = () => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const navigate = useNavigate();
   const { testUser } = useStudioState();
   const { data, isLoading } = useHealthCheck();
@@ -35,7 +35,7 @@ export const StudioOnboarding = () => {
   }, [data]);
 
   useEffect(() => {
-    segment.track('Add endpoint step started - [Onboarding - Signup]');
+    track('Add endpoint step started - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

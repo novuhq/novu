@@ -1,7 +1,7 @@
-import { useSegment } from '../providers/SegmentProvider';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MDX_URL } from './docs.const';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 export type DocsQueryResults = {
   code: string;
@@ -16,7 +16,7 @@ type UseLoadDocsProps = {
 };
 
 export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
-  const segment = useSegment();
+  const track = useTelemetry();
 
   const { data = { code: '', title: '', description: '' }, ...queryResults } = useQuery<DocsQueryResults>(
     ['docs', path],
@@ -30,11 +30,11 @@ export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
   );
 
   useEffect(() => {
-    segment.track('Inline docs opened', {
+    track('Inline docs opened', {
       documentationPage: path,
       pageURL: window.location.href,
     });
-  }, [path, segment]);
+  }, [path, track]);
 
   return {
     ...queryResults,
