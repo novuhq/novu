@@ -35,6 +35,7 @@
     "start": "pnpm run build -- --watch --sourcemap",
     "build": "tsup && pnpm run build:umd && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
+    "build:watch": "tsup --watch",
     "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
