@@ -1,47 +1,28 @@
-import { DevServer } from '../dev-server';
-import { NtfrTunnel } from '@novu/ntfr-client';
-import { showWelcomeScreen } from './shared';
 import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
-import { SERVER_HOST } from '../constants';
-import { config } from '../index';
+
+import { NtfrTunnel } from '@novu/ntfr-client';
+
+import { DevServer } from '../../dev-server';
+import { showWelcomeScreen } from '../shared';
+import { config } from '../../index';
+import { DevCommandOptions, LocalTunnelResponse } from './types';
+import { parseOptions, wait } from './utils';
+import { TUNNEL_URL } from './consts';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
   process.exit();
 });
 
-export enum CloudRegionEnum {
-  US = 'us',
-  EU = 'eu',
-  STAGING = 'staging',
-}
-
-export enum DashboardUrlEnum {
-  US = 'https://dashboard.novu.co',
-  EU = 'https://eu.dashboard.novu.co',
-  STAGING = 'https://dev.dashboard.novu.co',
-}
-
-const TUNNEL_URL = 'https://novu.sh/api/tunnels';
-
-export type DevCommandOptions = {
-  port: string;
-  origin: string;
-  region: `${CloudRegionEnum}`;
-  studioPort: string;
-  dashboardUrl: string;
-  route: string;
-};
-
 export async function devCommand(options: DevCommandOptions) {
   await showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();
-  const tunnelOrigin = await createTunnel(parsedOptions.origin);
   const NOVU_ENDPOINT_PATH = options.route;
+  const tunnelOrigin = await createTunnel(parsedOptions.origin, NOVU_ENDPOINT_PATH);
 
   devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}`);
 
@@ -62,10 +43,10 @@ export async function devCommand(options: DevCommandOptions) {
     await open(httpServer.getStudioAddress());
   }
 
-  await endpointHealthChecker(parsedOptions, NOVU_ENDPOINT_PATH);
+  await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
 }
 
-async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointRoute: string) {
+async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointRoute: string) {
   const fullEndpoint = `${parsedOptions.origin}${endpointRoute}`;
   let healthy = false;
   const endpointText = `Bridge Endpoint scan:\t${fullEndpoint}
@@ -76,15 +57,7 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
   let counter = 0;
   while (!healthy) {
     try {
-      const response = await fetch(`${fullEndpoint}?action=health-check`, {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-      const healthResponse = await response.json();
-      healthy = healthResponse.status === 'ok';
+      healthy = await tunnelHealthCheck(fullEndpoint);
 
       if (healthy) {
         endpointSpinner.succeed(`🌉 Endpoint  → ${fullEndpoint}`);
@@ -109,45 +82,10 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
   }
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function parseOptions(options: DevCommandOptions) {
-  const { origin, port, region } = options || {};
-
-  return {
-    ...options,
-    origin: origin || getDefaultOrigin(port),
-    dashboardUrl: options.dashboardUrl || getDefaultDashboardUrl(region),
-  };
-}
-
-function getDefaultOrigin(port: string) {
-  return `http://${SERVER_HOST}:${port}`;
-}
-
-function getDefaultDashboardUrl(region: string) {
-  switch (region) {
-    case CloudRegionEnum.EU:
-      return DashboardUrlEnum.EU;
-    case CloudRegionEnum.STAGING:
-      return DashboardUrlEnum.STAGING;
-    case CloudRegionEnum.US:
-    default:
-      return DashboardUrlEnum.US;
-  }
-}
-
-type LocalTunnelResponse = {
-  id: string;
-  url: string;
-};
-
-async function tunnelHealthCheck(configTunnelUrl: string) {
+async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
   try {
     const res = await (
-      await fetch(configTunnelUrl + '/api/novu?action=health-check', {
+      await fetch(configTunnelUrl + '?action=health-check', {
         method: 'GET',
         headers: {
           accept: 'application/json',
@@ -162,17 +100,15 @@ async function tunnelHealthCheck(configTunnelUrl: string) {
   }
 }
 
-async function createTunnel(localOrigin: string): Promise<string> {
-  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
+async function createTunnel(localOrigin: string, endpointRoute: string): Promise<string> {
   const configTunnelUrl = config.getValue('tunnelUrl');
   const storeUrl = configTunnelUrl ? new URL(configTunnelUrl) : null;
   const originUrl = new URL(localOrigin);
 
   if (storeUrl) {
     await connectToTunnel(storeUrl, originUrl);
-    await delay(100);
-    const healthCheck = await tunnelHealthCheck(configTunnelUrl);
+    await wait(100);
+    const healthCheck = await tunnelHealthCheck(configTunnelUrl + endpointRoute);
 
     if (healthCheck) {
       return storeUrl.origin;
