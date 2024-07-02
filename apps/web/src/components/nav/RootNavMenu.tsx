@@ -5,6 +5,7 @@ import {
   IconDomain,
   IconGroup,
   IconKey,
+  IconLaptop,
   IconOutlineMonitorHeart,
   IconRoute,
   IconSettings,
@@ -12,7 +13,7 @@ import {
   IconTranslate,
   IconViewQuilt,
   IconWebhook,
-} from '@novu/design-system';
+} from '@novu/novui/icons';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
 import { ROUTES } from '../../constants/routes';
 import { useSegment } from '../../components/providers/SegmentProvider';
@@ -31,6 +32,11 @@ import { parseUrl } from '../../utils/routeUtils';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { When } from '../utils/When';
+import { SidebarFooterButton } from '../layout/components/LocalStudioSidebar/SidebarFooterButton';
+import { useNavigate } from 'react-router-dom';
+import { useNavigateToLocalStudio } from '../../studio/hooks/useNavigateToLocalStudio';
+import { OpenLocalStudioModal } from '../../studio/components/OpenLocalStudioModal';
+import { useToggle } from '@mantine/hooks';
 
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
@@ -39,6 +45,8 @@ export const RootNavMenu: React.FC = () => {
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+  const [isLocalStudioModalOpen, toggleLocalStudioModalOpen] = useToggle();
+  const { navigateToLocalStudio } = useNavigateToLocalStudio({ fallbackFn: toggleLocalStudioModalOpen });
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');
@@ -148,7 +156,17 @@ export const RootNavMenu: React.FC = () => {
         ></NavMenuLinkButton>
       </NavMenuSection>
       <FreeTrialSidebarWidget />
-      <RootNavMenuFooter />
+      {isV2Enabled ? (
+        <>
+          <SidebarFooterButton onClick={navigateToLocalStudio} Icon={IconLaptop}>
+            Open Local Studio
+          </SidebarFooterButton>
+          {/** TODO: refactor when modal manager is available */}
+          {isLocalStudioModalOpen && <OpenLocalStudioModal isOpen toggleOpen={toggleLocalStudioModalOpen} />}
+        </>
+      ) : (
+        <RootNavMenuFooter />
+      )}
     </NavMenu>
   );
 };

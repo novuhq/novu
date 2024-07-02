@@ -29,8 +29,9 @@ const iconButtonStyles = css({
 });
 
 const navStyles = css({
-  h: '100%',
-  display: 'flex',
+  display: 'flex !important',
+  flex: '1',
+  justifyContent: 'stretch',
   flexDirection: 'column',
 });
 

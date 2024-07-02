@@ -13,6 +13,9 @@ export default {
       options: ['xs', 'sm', 'md', 'lg'],
       control: { type: 'select' },
     },
+    fullWidth: {
+      type: 'boolean',
+    },
   },
 } as Meta<typeof Button>;
 

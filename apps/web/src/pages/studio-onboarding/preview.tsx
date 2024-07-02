@@ -1,4 +1,7 @@
 /* eslint-disable max-len */
+import { Prism } from '@mantine/prism';
+import { errorMessage, Tabs } from '@novu/design-system';
+import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
@@ -75,28 +78,35 @@ export const StudioOnboardingPreview = () => {
   }
 
   const onTrigger = async () => {
-    const to = {
-      subscriberId: testUser.id,
-      email: testUser.emailAddress,
-    };
+    try {
+      const to = {
+        subscriberId: testUser.id,
+        email: testUser.emailAddress,
+      };
 
-    const response = await trigger({
-      workflowId: workflow?.workflowId,
-      to,
-      payload: { ...payload, __source: 'studio-onboarding-test-workflow' },
-      controls: {
-        steps: {
-          [step?.stepId]: controls,
+      const response = await trigger({
+        workflowId: workflow?.workflowId,
+        to,
+        payload: { ...payload, __source: 'studio-onboarding-test-workflow' },
+        controls: {
+          steps: {
+            [step?.stepId]: controls,
+          },
         },
-      },
-    });
+      });
 
-    navigate({
-      pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
-      search: createSearchParams({
-        transactionId: response.data.transactionId,
-      }).toString(),
-    });
+      navigate({
+        pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
+        search: createSearchParams({
+          transactionId: response.data.transactionId,
+        }).toString(),
+      });
+    } catch (err) {
+      if (err instanceof Error) {
+        errorMessage(err.message);
+      }
+      throw err;
+    }
   };
 
   return (

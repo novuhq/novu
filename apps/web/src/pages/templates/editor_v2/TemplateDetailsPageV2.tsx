@@ -9,6 +9,7 @@ import { ROUTES } from '../../../constants/routes';
 import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-view/WorkflowFloatingMenu';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -28,9 +29,9 @@ export const TemplateDetailsPageV2 = () => {
       title={title}
       actions={
         <>
-          <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
             Test workflow
-          </Button>
+          </OutlineButton>
         </>
       }
     >
