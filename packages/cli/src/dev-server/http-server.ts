@@ -69,7 +69,7 @@ export class DevServer {
 
   private serveStudio(req: http.IncomingMessage, res: http.ServerResponse) {
     const studioHTML = `
-    <html>
+    <html class="dark">
       <head>
         <title>Novu Studio</title>
       </head>
