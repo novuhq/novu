@@ -201,10 +201,10 @@ function discoverStepFactory<T, U>(
 
 function discoverStep(targetWorkflow: DiscoverWorkflowOutput, stepId: string, step: DiscoverStepOutput): void {
   if (targetWorkflow.steps.some((workflowStep) => workflowStep.stepId === stepId)) {
-    throw new StepAlreadyExistsError(stepId);
-  } else {
-    targetWorkflow.steps.push(step);
+    console.error(`Step with id '${stepId}' defined more than once, stepId needs to be unique`);
   }
+
+  targetWorkflow.steps.push(step);
 }
 
 function discoverProviders(
