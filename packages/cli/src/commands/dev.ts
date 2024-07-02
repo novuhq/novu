@@ -5,6 +5,7 @@ import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
 import { SERVER_HOST } from '../constants';
+import { config } from '../index';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
@@ -143,7 +144,45 @@ type LocalTunnelResponse = {
   url: string;
 };
 
-async function createTunnel(localOrigin: string) {
+async function tunnelHealthCheck(configTunnelUrl: string) {
+  try {
+    const res = await (
+      await fetch(configTunnelUrl + '/api/novu?action=health-check', {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      })
+    ).json();
+
+    return res.status === 'ok';
+  } catch (e) {
+    return false;
+  }
+}
+
+async function createTunnel(localOrigin: string): Promise<string> {
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const configTunnelUrl = config.getValue('tunnelUrl');
+  const storeUrl = configTunnelUrl ? new URL(configTunnelUrl) : null;
+  const originUrl = new URL(localOrigin);
+
+  if (storeUrl) {
+    await connectToTunnel(storeUrl, originUrl);
+    await delay(100);
+    const healthCheck = await tunnelHealthCheck(configTunnelUrl);
+
+    if (healthCheck) {
+      return storeUrl.origin;
+    }
+  }
+
+  return await connectToNewTunnel(originUrl);
+}
+
+async function fetchNewTunnel(): Promise<URL> {
   const response = await fetch(TUNNEL_URL, {
     method: 'POST',
     headers: {
@@ -152,11 +191,14 @@ async function createTunnel(localOrigin: string) {
       authorization: `Bearer 12345`,
     },
   });
+
   const { url } = (await response.json()) as LocalTunnelResponse;
+  config.setValue('tunnelUrl', url);
 
-  const parsedUrl = new URL(url);
-  const parsedOrigin = new URL(localOrigin);
+  return new URL(url);
+}
 
+async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const ws = await import('ws');
   const ntfrTunnel = new NtfrTunnel(
@@ -172,6 +214,11 @@ async function createTunnel(localOrigin: string) {
   );
 
   await ntfrTunnel.connect();
+}
+
+async function connectToNewTunnel(originUrl: URL) {
+  const parsedUrl = await fetchNewTunnel();
+  await connectToTunnel(parsedUrl, originUrl);
 
   return parsedUrl.origin;
 }

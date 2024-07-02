@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AnalyticService, ConfigService } from './services';
 
 const analytics = new AnalyticService();
-const config = new ConfigService();
+export const config = new ConfigService();
 if (process.env.NODE_ENV === 'development') {
   config.clearStore();
 }
