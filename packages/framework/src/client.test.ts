@@ -29,6 +29,61 @@ describe('Novu Client', () => {
     client.addWorkflows([newWorkflow]);
   });
 
+  describe('report errors', () => {
+    it('should report errors when workflow IDs collide', () => {
+      const duplicateName = 'setup-workflow-duplicate';
+      const copiedWorkflow = workflow(duplicateName, async ({ step }) => {
+        await step.email('send-email', async () => ({
+          body: 'Test Body',
+          subject: 'Subject',
+        }));
+      });
+
+      const secondCopiedWorkflow = workflow(duplicateName, async ({ step }) => {
+        await step.email('send-email', async () => ({
+          body: 'Test Body',
+          subject: 'Subject',
+        }));
+      });
+
+      client.addWorkflows([copiedWorkflow, secondCopiedWorkflow]);
+
+      const errors = client.getErrors();
+
+      expect(errors).toContain(
+        `Workflow with identifier '${duplicateName}' is defined ${2} times, identifiers must be unique`
+      );
+    });
+
+    it('should report errors when step IDs collide', async () => {
+      const duplicateName = 'send-email-duplicate';
+      const workflowWithDuplicateStepIds = workflow('workflow-with-duplicate', async ({ step }) => {
+        await step.email(duplicateName, async () => ({
+          body: 'Test Body',
+          subject: 'Subject',
+        }));
+
+        await step.email(duplicateName, async () => ({
+          body: 'Test Body',
+          subject: 'Subject',
+        }));
+      });
+
+      client.addWorkflows([workflowWithDuplicateStepIds]);
+
+      // wait for discovery to finish
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+      const errors = client.getErrors();
+
+      expect(errors).toContain(
+        `Workflow with identifier '${
+          workflowWithDuplicateStepIds.definition.workflowId
+        }' has step '${duplicateName}' defined ${2} times, identifiers must be unique`
+      );
+    });
+  });
+
   describe('client constructor', () => {
     it('should set secretKey to process.env.NOVU_SECRET_KEY by default', () => {
       const originalSecretKey = process.env.NOVU_SECRET_KEY;

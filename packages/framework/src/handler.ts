@@ -176,8 +176,20 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     action: string
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
-      [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
+      [PostActionEnum.TRIGGER]: async () => {
+        const errors = this.client.getErrors();
+
+        if (errors.length !== 0) {
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+        }
+        return this.triggerAction({ workflowId, ...body })();
+      },
       [PostActionEnum.EXECUTE]: async () => {
+        const errors = this.client.getErrors();
+
+        if (errors.length !== 0) {
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+        }
         const result = await this.client.executeWorkflow({
           ...body,
           workflowId,
@@ -188,6 +200,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         return this.createResponse(HttpStatusEnum.OK, result);
       },
       [PostActionEnum.PREVIEW]: async () => {
+        const errors = this.client.getErrors();
+
+        if (errors.length !== 0) {
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+        }
         const result = await this.client.executeWorkflow({
           ...body,
           workflowId,
@@ -223,17 +240,27 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private getGetActionMap(workflowId: string, stepId: string): Record<GetActionEnum, () => Promise<IActionResponse>> {
     return {
       [GetActionEnum.DISCOVER]: async () => {
-        const result = await this.client.discover();
+        const errors = this.client.getErrors();
+
+        if (errors.length !== 0) {
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+        }
+        const result = this.client.discover();
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
       [GetActionEnum.HEALTH_CHECK]: async () => {
-        const result = await this.client.healthCheck();
+        const result = this.client.healthCheck();
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
       [GetActionEnum.CODE]: async () => {
-        const result = await this.client.getCode(workflowId, stepId);
+        const errors = this.client.getErrors();
+
+        if (errors.length !== 0) {
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+        }
+        const result = this.client.getCode(workflowId, stepId);
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },

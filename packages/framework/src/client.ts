@@ -95,10 +95,11 @@ export class Client {
   public addWorkflows(workflows: Array<Workflow>) {
     for (const workflow of workflows) {
       if (this.discoveredWorkflows.some((existing) => existing.workflowId === workflow.definition.workflowId)) {
-        throw new WorkflowAlreadyExistsError(workflow.definition.workflowId);
-      } else {
-        this.discoveredWorkflows.push(workflow.definition);
+        console.error(
+          `Workflow with id '${workflow.definition.workflowId}' defined more than once, workflowId needs to be unique`
+        );
       }
+      this.discoveredWorkflows.push(workflow.definition);
     }
   }
 
@@ -147,6 +148,47 @@ export class Client {
     return {
       workflows: this.getRegisteredWorkflows(),
     };
+  }
+
+  public getErrors(): string[] {
+    const errors: string[] = [];
+
+    const workflowIds = this.discoveredWorkflows.map((w) => w.workflowId);
+
+    const workflowOccuranceMap = this.getOccuranceMap(workflowIds);
+
+    for (const entry of workflowOccuranceMap.entries()) {
+      if (entry[1] > 1) {
+        errors.push(`Workflow with identifier '${entry[0]}' is defined ${entry[1]} times, identifiers must be unique`);
+      }
+    }
+
+    for (const workflow of this.discoveredWorkflows) {
+      const stepIds = workflow.steps.map((s) => s.stepId);
+
+      const stepOccuranceMap = this.getOccuranceMap(stepIds);
+
+      for (const entry of stepOccuranceMap.entries()) {
+        if (entry[1] > 1) {
+          errors.push(
+            `Workflow with identifier '${workflow.workflowId}' has step '${entry[0]}' defined ${entry[1]} times, identifiers must be unique`
+          );
+        }
+      }
+    }
+
+    return errors;
+  }
+
+  private getOccuranceMap(keys: string[]) {
+    const result = new Map<string, number>();
+
+    for (const key of keys) {
+      const currentValue = result.get(key) ?? 0;
+      result.set(key, currentValue + 1);
+    }
+
+    return result;
   }
 
   /**
