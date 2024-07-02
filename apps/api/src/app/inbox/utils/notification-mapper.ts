@@ -1,5 +1,5 @@
 import type { MessageEntity } from '@novu/dal';
-import { ButtonTypeEnum } from '@novu/shared';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 import type { InboxNotification, Subscriber } from './types';
 
@@ -27,6 +27,8 @@ const mapSingleItem = ({
   };
   const primaryCta = cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.PRIMARY);
   const secondaryCta = cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.SECONDARY);
+  const actionType = cta.action?.result?.type;
+  const actionStatus = cta.action?.status;
 
   return {
     id: _id,
@@ -52,10 +54,12 @@ const mapSingleItem = ({
       type: primaryCta.type,
       label: primaryCta.content,
       url: cta?.data.url,
+      isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     secondaryAction: secondaryCta && {
       type: secondaryCta.type,
       label: secondaryCta.content,
+      isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     channelType: channel,
     tags,

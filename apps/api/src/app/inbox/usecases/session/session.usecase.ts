@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum, MessagesStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
   LogDecorator,

@@ -17,6 +17,7 @@ type Action = {
   type: ButtonTypeEnum;
   label: string;
   url?: string;
+  isCompleted: boolean;
 };
 
 export type InboxNotification = {
@@ -27,8 +28,8 @@ export type InboxNotification = {
   read?: boolean;
   archived?: boolean;
   createdAt: string;
-  readAt?: string;
-  archivedAt?: string;
+  readAt?: string | null;
+  archivedAt?: string | null;
   actor?: Subscriber;
   avatar?: Avatar;
   primaryAction?: Action;
