@@ -13,7 +13,7 @@ export const myWorkflow = workflow("onboarding", async ({ step }) => {
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px; background-color:#fff;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <img width="200px" src="https://web.novu.co/static/images/logo.png" />
+              <img width="200px" src="https://dashboard.novu.co/static/images/logo.png" />
             </div>
             <h1 style="margin: 0; margin-bottom: 16px;">Notification workflows rooted in how YOU work</h1>
             <p style="margin: 0; margin-bottom: 8px;">Hi!</p>
