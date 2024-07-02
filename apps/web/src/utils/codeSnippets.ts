@@ -12,7 +12,7 @@ export type CodeSnippetProps = {
 
 const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
 
-export const createNodeSnippet = ({ identifier, to, payload, snippet, secretKey }: CodeSnippetProps) => {
+export const createNodeSnippet = ({ identifier, to, payload, overrides, snippet, secretKey }: CodeSnippetProps) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
 
   return `import { Novu } from '@novu/node'; 
@@ -23,6 +23,7 @@ novu.trigger('${identifier}', ${JSON.stringify(
     {
       to,
       payload,
+      overrides,
       ...snippet,
     },
     null,
@@ -37,6 +38,7 @@ export const createCurlSnippet = ({
   identifier,
   to,
   payload,
+  overrides,
   snippet,
   bridgeUrl,
   secretKey = SECRET_KEY_ENV_KEY,
@@ -49,6 +51,7 @@ export const createCurlSnippet = ({
       name: identifier,
       to,
       payload,
+      overrides,
       bridgeUrl,
       ...snippet,
     },
