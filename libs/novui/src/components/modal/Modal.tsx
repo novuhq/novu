@@ -4,11 +4,13 @@ import { modal } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
 import { css, cx } from '../../../styled-system/css';
 
-interface IModalProps extends ExternalModalProps, CoreProps {
+interface IModalProps extends Pick<ExternalModalProps, 'children' | 'centered' | 'size' | 'title'>, CoreProps {
   opened: boolean;
   onClose: () => void;
 }
-
+/**
+ * Base modal container. Please use Modal.Header and Modal.Body for the component's children.
+ */
 export const Modal = ({ children, ...props }: IModalProps) => {
   const [variantProps, modalProps] = modal.splitVariantProps({ ...props });
   const [cssProps, localProps] = splitCssProps(modalProps);

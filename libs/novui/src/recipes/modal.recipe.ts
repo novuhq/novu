@@ -17,7 +17,7 @@ export const MODAL_RECIPE = defineSlotRecipe({
       width: 'modal.width !important',
     },
     inner: {
-      width: '100%',
+      width: 'full',
     },
     header: {
       background: 'modal.background !important',
@@ -34,7 +34,7 @@ export const MODAL_RECIPE = defineSlotRecipe({
     },
     overlay: {
       background: 'surface.page !important',
-      opacity: '40 !important',
+      opacity: 'overlay !important',
     },
     body: {
       padding: '100 !important',

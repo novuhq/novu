@@ -9,4 +9,8 @@ export const SEMANTIC_OPACITY_TOKENS = defineSemanticTokens.opacity({
     value: '{opacity.80}',
     type: 'opacity',
   },
+  overlay: {
+    value: '{opacity.40}',
+    type: 'opacity',
+  },
 });
