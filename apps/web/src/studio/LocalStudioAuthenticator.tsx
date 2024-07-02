@@ -83,8 +83,6 @@ export function LocalStudioAuthenticator() {
       }
 
       if (environment.name.toLowerCase() !== 'development') {
-        // throw new Error('Local Studio works only with development api keys');
-        console.warn('Local Studio works only with development');
         await setEnvironment(EnvironmentEnum.DEVELOPMENT);
 
         return;
