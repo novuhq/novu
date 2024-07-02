@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { useEnvironment } from '../../hooks/useEnvironment';
+import { EnvironmentEnum } from '../constants/EnvironmentEnum';
 import { LocalStudioWellKnownMetadata } from '../types';
 
 const WELL_KNOWN_URL = 'http://localhost:2022/.well-known/novu';
@@ -17,10 +19,7 @@ type UseNavigateToLocalStudio = {
  * If no well-known response is available, open a modal.
  */
 export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudio = {}) => {
-  const forceStudioNavigation = () => {
-    // use default URL
-    navigateToLocalStudioUrl();
-  };
+  const { setEnvironment, environment } = useEnvironment();
 
   const { data, isError, isLoading } = useQuery<LocalStudioWellKnownMetadata>([WELL_KNOWN_URL], async () => {
     const response = await fetch(WELL_KNOWN_URL);
@@ -28,10 +27,24 @@ export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudi
     return response.json();
   });
 
-  const navigateToLocalStudio = useCallback(() => {
+  const handleBeforeNavigate = useCallback(async () => {
+    if (environment?.name !== EnvironmentEnum.DEVELOPMENT) {
+      await setEnvironment(EnvironmentEnum.DEVELOPMENT);
+    }
+  }, [environment, setEnvironment]);
+
+  const forceStudioNavigation = useCallback(async () => {
+    await handleBeforeNavigate();
+    // use default URL
+    navigateToLocalStudioUrl();
+  }, [handleBeforeNavigate]);
+
+  const navigateToLocalStudio = useCallback(async () => {
     if (isLoading) {
       return;
     }
+
+    await handleBeforeNavigate();
 
     if (isError || !data) {
       fallbackFn?.();
@@ -40,7 +53,7 @@ export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudi
     }
 
     navigateToLocalStudioUrl({ port: data.studioPort });
-  }, [data, isError, isLoading, fallbackFn]);
+  }, [data, isError, isLoading, fallbackFn, handleBeforeNavigate]);
 
   return {
     data,
