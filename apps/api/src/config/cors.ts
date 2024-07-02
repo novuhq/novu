@@ -15,7 +15,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
   if (enableWildcard(req)) {
     corsOptions.origin = '*';
   } else {
-    corsOptions.origin = [process.env.FRONT_BASE_URL];
+    corsOptions.origin = [process.env.FRONT_BASE_URL, process.env.LEGACY_V1_FRONT_BASE_URL];
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
