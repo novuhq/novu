@@ -1,4 +1,4 @@
-import { UserRepository } from '@novu/dal';
+import { CommunityUserRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
@@ -6,9 +6,9 @@ import { stub, SinonStubbedMember } from 'sinon';
 import { subDays, subMinutes } from 'date-fns';
 import { PasswordResetFlowEnum } from '@novu/shared';
 
-describe('Password reset - /auth/reset (POST)', async () => {
+describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const userRepository = new UserRepository();
+  const userRepository = new CommunityUserRepository();
 
   const requestResetToken = async (payload) => {
     let plainToken: string;
@@ -16,11 +16,11 @@ describe('Password reset - /auth/reset (POST)', async () => {
      * Wrapper for method to obtain plain reset token before hashing.
      * Stub is created on Prototype because API and tests use different UserRepository instances.
      */
-    stub(UserRepository.prototype, 'updatePasswordResetToken').callsFake((...args) => {
+    stub(CommunityUserRepository.prototype, 'updatePasswordResetToken').callsFake((...args) => {
       plainToken = args[1];
       (
-        UserRepository.prototype.updatePasswordResetToken as SinonStubbedMember<
-          typeof UserRepository.prototype.updatePasswordResetToken
+        CommunityUserRepository.prototype.updatePasswordResetToken as SinonStubbedMember<
+          typeof CommunityUserRepository.prototype.updatePasswordResetToken
         >
       ).restore();
 
@@ -144,9 +144,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenDate: subDays(new Date(), 20),
-        },
+        resetTokenDate: subDays(new Date(), 20),
       }
     );
 
@@ -189,11 +187,9 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenCount: {
-            reqInMinute: 0,
-            reqInDay: 10,
-          },
+        resetTokenCount: {
+          reqInMinute: 0,
+          reqInDay: 10,
         },
       }
     );
@@ -226,9 +222,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenDate: subMinutes(new Date(), 1),
-        },
+        resetTokenDate: subMinutes(new Date(), 1),
       }
     );
 
@@ -256,12 +250,10 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenDate: subDays(new Date(), 1),
-          resetTokenCount: {
-            reqInMinute: 5,
-            reqInDay: 15,
-          },
+        resetTokenDate: subDays(new Date(), 1),
+        resetTokenCount: {
+          reqInMinute: 5,
+          reqInDay: 15,
         },
       }
     );

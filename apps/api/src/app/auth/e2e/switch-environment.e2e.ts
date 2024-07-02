@@ -4,7 +4,7 @@ import { EnvironmentEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { UserSessionData } from '@novu/shared';
 
-describe('Switch Environment - /auth/environments/:id/switch (POST)', async () => {
+describe('Switch Environment - /auth/environments/:id/switch (POST) @skip-in-ee', async () => {
   let session: UserSession;
 
   describe('user has multiple environments', () => {

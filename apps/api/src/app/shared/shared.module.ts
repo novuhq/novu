@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -40,6 +43,7 @@ import {
   storageService,
   ExecutionLogRoute,
   CreateExecutionDetails,
+  injectRepositories,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -68,6 +72,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
+  ...injectRepositories(),
 ];
 
 const dalService = {

@@ -26,4 +26,5 @@ export * from './product-features';
 export * from './resource-limiting';
 export * from './files';
 export * from './storage';
+export * from './clerk';
 export * from './controls';

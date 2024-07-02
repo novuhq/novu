@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, injectRepositories } from '@novu/application-generic';
 import {
   DalService,
   UserRepository,
@@ -27,6 +27,7 @@ const DAL_MODELS = [
   MemberRepository,
   IntegrationRepository,
   JobRepository,
+  ...injectRepositories(),
 ];
 
 const dalService = new DalService();

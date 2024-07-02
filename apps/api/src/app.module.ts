@@ -43,9 +43,6 @@ import { InboxModule } from './app/inbox/inbox.module';
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    if (require('@novu/ee-auth')?.EEAuthModule) {
-      modules.push(require('@novu/ee-auth')?.EEAuthModule);
-    }
     if (require('@novu/ee-echo-api')?.EchoModule) {
       modules.push(require('@novu/ee-echo-api')?.EchoModule);
     }
@@ -72,11 +69,9 @@ const enterpriseQuotaThrottlerInterceptor =
     : [];
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
-  InboundParseModule,
-  OrganizationModule,
-  SharedModule,
-  UserModule,
   AuthModule,
+  InboundParseModule,
+  SharedModule,
   HealthModule,
   EnvironmentsModule,
   ExecutionDetailsModule,
@@ -85,10 +80,10 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WidgetsModule,
   InboxModule,
   NotificationModule,
-  StorageModule,
   NotificationGroupsModule,
-  InvitesModule,
   ContentTemplatesModule,
+  OrganizationModule,
+  UserModule,
   IntegrationModule,
   ChangeModule,
   SubscribersModule,
@@ -101,11 +96,17 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TenantModule,
   WorkflowOverridesModule,
   RateLimitingModule,
+  WidgetsModule,
   ProfilingModule.register(packageJson.name),
   TracingModule.register(packageJson.name, packageJson.version),
 ];
 
 const enterpriseModules = enterpriseImports();
+
+if (process.env.NOVU_ENTERPRISE !== 'true') {
+  const communityModules = [StorageModule, InvitesModule];
+  baseModules.push(...communityModules);
+}
 
 const modules = baseModules.concat(enterpriseModules);
 

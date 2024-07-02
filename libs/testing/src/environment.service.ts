@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
 import { IApiRateLimitMaximum } from '@novu/shared';
+import { createHash } from 'crypto';
 import { v4 as uuid } from 'uuid';
 
 enum EnvironmentsEnum {
@@ -17,6 +18,9 @@ export class EnvironmentService {
     name?: string,
     parentId?: string
   ): Promise<EnvironmentEntity> {
+    const key = uuid();
+    const hashedApiKey = createHash('sha256').update(key).digest('hex');
+
     return await this.environmentRepository.create({
       identifier: uuid(),
       name: name ?? faker.name.jobTitle(),
@@ -24,8 +28,9 @@ export class EnvironmentService {
       ...(parentId && { _parentId: parentId }),
       apiKeys: [
         {
-          key: uuid(),
+          key: key,
           _userId: userId,
+          hash: hashedApiKey,
         },
       ],
     });

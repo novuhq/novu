@@ -7,6 +7,19 @@ import { bootstrap } from '../src/bootstrap';
 
 const dalService = new DalService();
 
+async function seedClerkMongo() {
+  if (process.env.NOVU_ENTERPRISE) {
+    const clerkClientMock = require('@novu/ee-auth')?.ClerkClientMock;
+
+    if (clerkClientMock) {
+      const clerkClient = new clerkClientMock();
+      await clerkClient.seedDatabase();
+    } else {
+      throw new Error('ClerkClientMock not found');
+    }
+  }
+}
+
 before(async () => {
   /**
    * disable truncating for better error messages - https://www.chaijs.com/guide/styles/#configtruncatethreshold
@@ -15,6 +28,7 @@ before(async () => {
   await testServer.create(await bootstrap());
 
   await dalService.connect(process.env.MONGO_URL);
+  await seedClerkMongo();
 });
 
 after(async () => {

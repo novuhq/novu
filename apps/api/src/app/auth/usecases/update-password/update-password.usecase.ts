@@ -46,9 +46,7 @@ export class UpdatePassword {
         _id: userId,
       },
       {
-        $set: {
-          password: newPasswordHash,
-        },
+        password: newPasswordHash,
       }
     );
   }

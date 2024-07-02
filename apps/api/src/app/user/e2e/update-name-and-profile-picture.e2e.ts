@@ -1,7 +1,7 @@
 import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update user name and profile picture - /users/profile (PUT)', async () => {
+describe('Update user name and profile picture - /users/profile (PUT) @skip-in-ee', async () => {
   let session: UserSession;
 
   before(async () => {
