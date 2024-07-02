@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Patch, Query, UseGuards, Param } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Patch, Query, UseGuards, Param } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriberEntity } from '@novu/dal';
@@ -24,6 +24,9 @@ import { MarkNotificationAs } from './usecases/mark-notification-as/mark-notific
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdateNotificationActionCommand } from './usecases/update-notification-action/update-notification-action.command';
+import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
+import { UpdateAllNotificationsCommand } from './usecases/update-all-notifications/update-all-notifications.command';
+import { UpdateAllNotifications } from './usecases/update-all-notifications/update-all-notifications.usecase';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -34,7 +37,8 @@ export class InboxController {
     private getNotificationsUsecase: GetNotifications,
     private notificationsCountUsecase: NotificationsCount,
     private markNotificationAsUsecase: MarkNotificationAs,
-    private updateNotificationActionUsecase: UpdateNotificationAction
+    private updateNotificationActionUsecase: UpdateNotificationAction,
+    private updateAllNotifications: UpdateAllNotifications
   ) {}
 
   @Post('/session')
@@ -192,6 +196,73 @@ export class InboxController {
         notificationId,
         actionType: body.actionType,
         actionStatus: MessageActionStatusEnum.PENDING,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/notifications/all-read')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateAllStatusToRead(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdateAllNotificationsRequestDto
+  ): Promise<void> {
+    await this.updateAllNotifications.execute(
+      UpdateAllNotificationsCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        from: {
+          tags: body.tags,
+        },
+        to: {
+          read: true,
+        },
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/notifications/all-archived')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateAllStatusToArchived(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdateAllNotificationsRequestDto
+  ): Promise<void> {
+    await this.updateAllNotifications.execute(
+      UpdateAllNotificationsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        from: {
+          tags: body.tags,
+        },
+        to: {
+          archived: true,
+        },
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/notifications/all-read-archived')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateAllReadStatusToArchived(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdateAllNotificationsRequestDto
+  ): Promise<void> {
+    await this.updateAllNotifications.execute(
+      UpdateAllNotificationsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        from: {
+          tags: body.tags,
+          read: true,
+        },
+        to: {
+          archived: true,
+        },
       })
     );
   }
