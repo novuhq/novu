@@ -1,16 +1,26 @@
 import { Button, Text, Title } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { IconGroupAdd, IconOutlineMarkEmailUnread, IconOutlineNotificationsActive } from '@novu/novui/icons';
-import { HStack, VStack } from '@novu/novui/jsx';
+import {
+  IconEditNote,
+  IconGroupAdd,
+  IconLaptopMac,
+  IconOutlineMarkEmailUnread,
+  IconOutlineNotificationsActive,
+  IconVisibility,
+} from '@novu/novui/icons';
+import { HStack, styled, VStack } from '@novu/novui/jsx';
+import { text } from '@novu/novui/recipes';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { CodeSnippet } from '../../../pages/get-started/components/CodeSnippet';
 import { PageContainer } from '../../layout/PageContainer';
-import { Deploy } from './deploy';
-import { Terminal } from './terminal';
-import { Workflow } from './workflow';
+import { Development } from './Development';
+import { Ide } from './ide';
+import { Studio } from './Studio';
+
+const Link = styled('a', text);
 
 export const GetStartedPageV2 = () => {
   const track = useTelemetry();
@@ -23,180 +33,165 @@ export const GetStartedPageV2 = () => {
 
   return (
     <PageContainer>
-      <HStack
+      <VStack
         className={css({
           justifyContent: 'center',
           width: '100%',
         })}
       >
-        <div className={css({ width: '800px' })}>
+        <div className={css({ width: '960px' })}>
           <Title
             className={css({
               marginBottom: '250',
+              color: 'typography.text.secondary',
             })}
             textAlign="center"
           >
-            Start building your workflows in code
+            No workflows yet? Start building workflows locally.
           </Title>
           <HStack
             className={css({
-              marginBottom: '250',
-              justifyContent: 'space-between',
-              width: '100%',
-              flexWrap: 'wrap',
-            })}
-          >
-            <VStack gap="0" className={css({ width: '15rem' })}>
-              <Terminal />
-              <Title
-                variant="subsection"
-                className={css({
-                  color: 'typography.text.secondary',
-                })}
-              >
-                1. Launch local studio
-              </Title>
-            </VStack>
-            <VStack gap="150" className={css({ width: '15rem' })}>
-              <Workflow />
-              <Title
-                variant="subsection"
-                className={css({
-                  color: 'typography.text.secondary',
-                })}
-              >
-                2. Create a workflow
-              </Title>
-            </VStack>
-            <VStack gap="0" className={css({ width: '15rem' })}>
-              <Deploy />
-              <Title
-                variant="subsection"
-                className={css({
-                  color: 'typography.text.secondary',
-                })}
-              >
-                3. Deploy to production
-              </Title>
-            </VStack>
-          </HStack>
-          <HStack
-            className={css({
-              marginBottom: '5rem',
+              marginBottom: '150',
               flexWrap: 'wrap',
             })}
           >
             <VStack
               className={css({
                 width: '100%',
-                alignItems: 'flex-start',
+                alignItems: 'center',
               })}
               gap="50"
             >
-              <Title variant="subsection">Run this in your terminal to get started</Title>
-              <div
-                style={{ width: '100%' }}
-                onDoubleClick={() => {
-                  track('Command copied - [Get Started - V2]');
-                }}
-              >
-                <CodeSnippet
-                  command="npx novu dev"
-                  className={css({
-                    width: '100%',
-                    '& input': {
-                      background: {
-                        base: 'surface.panel !important',
-                        _dark: 'surface.popover !important',
-                      },
-                    },
-                  })}
-                  onClick={() => {
-                    track('Command copied - [Get Started - V2]');
+              <div className={css({ width: '600px' })}>
+                <Title variant="subsection">Run this in your terminal to get started</Title>
+                <div
+                  style={{ width: '100%' }}
+                  onDoubleClick={() => {
+                    segment.track('Command copied - [Get Started - V2]');
                   }}
-                />
+                >
+                  <CodeSnippet
+                    command="npx novu dev"
+                    className={css({
+                      width: '100%',
+                      '& input': {
+                        background: {
+                          base: 'surface.panel !important',
+                          _dark: 'surface.popover !important',
+                        },
+                      },
+                    })}
+                    onClick={() => {
+                      segment.track('Command copied - [Get Started - V2]');
+                    }}
+                  />
+                </div>
               </div>
             </VStack>
           </HStack>
-          <Title
-            className={css({
-              marginBottom: '150',
-              color: 'typography.text.secondary',
-              textAlign: 'center',
-            })}
-            variant="section"
-          >
-            Not an engineer? No problem. With Novu, you can...
-          </Title>
+          <HStack gap="50" className={css({ justifyContent: 'center' })}>
+            <Text
+              className={css({
+                color: 'typography.text.secondary',
+              })}
+            >
+              Not an engineer? Invite your dev team to set up
+            </Text>
+            <Link
+              className={css({
+                color: 'typography.text.secondary !important',
+              })}
+              onClick={() => {
+                segment.track('Invite button clicked - [Get Started - V2]');
+                navigate(ROUTES.TEAM_SETTINGS);
+              }}
+            >
+              <HStack gap="25">
+                <IconGroupAdd /> <span>Invite team</span>
+              </HStack>
+            </Link>
+          </HStack>
           <HStack
             className={css({
+              marginTop: '375',
               justifyContent: 'space-between',
               width: '100%',
               flexWrap: 'wrap',
+              alignItems: 'flex-start',
             })}
-            gap="250"
           >
-            <VStack gap="50" className={css({ alignItems: 'flex-start', width: '15rem' })}>
+            <VStack gap="0" className={css({ width: '17.5rem', alignItems: 'flex-start' })}>
               <HStack gap="50">
-                <IconOutlineMarkEmailUnread />
+                <IconLaptopMac />
                 <Title
-                  className={css({
-                    textAlign: 'center',
-                    color: 'typography.text.secondary',
-                  })}
                   variant="subsection"
+                  className={css({
+                    color: 'typography.text.secondary',
+                    marginBottom: '25',
+                  })}
                 >
-                  Send custom emails
+                  Build notifications in your IDE
                 </Title>
               </HStack>
-              <Text variant="secondary" className={css({ width: '12rem', fontSize: '88' })}>
-                Create customizable email notification workflows.
-              </Text>
-            </VStack>
-            <VStack gap="50" className={css({ alignItems: 'flex-start', width: '15rem' })}>
-              <HStack gap="50">
-                <IconOutlineNotificationsActive />
-                <Title
-                  className={css({
-                    textAlign: 'center',
-                    color: 'typography.text.secondary',
-                  })}
-                  variant="subsection"
-                >
-                  Embed In-App center
-                </Title>
-              </HStack>
-              <Text variant="secondary" className={css({ width: '12rem', fontSize: '88' })}>
-                Embed our out-of-the-box notification center component.
-              </Text>
-            </VStack>
-            <VStack gap="50" className={css({ alignItems: 'flex-start', width: '15rem' })}>
-              <HStack gap="50">
-                <IconGroupAdd />
-                <Title
-                  className={css({
-                    textAlign: 'center',
-                    color: 'typography.text.secondary',
-                  })}
-                  variant="subsection"
-                >
-                  Invite your team
-                </Title>
-              </HStack>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  track('Invite button clicked - [Get Started - V2]');
-                  navigate(ROUTES.TEAM_SETTINGS);
-                }}
-                Icon={IconGroupAdd}
+              <Text
+                className={css({
+                  color: 'typography.text.secondary',
+                  marginBottom: '150',
+                })}
               >
-                Invite engineers
-              </Button>
+                Leverage familiar environment
+              </Text>
+              <Ide />
+            </VStack>
+            <VStack gap="0" className={css({ width: '17.5rem', alignItems: 'flex-start' })}>
+              <HStack gap="50">
+                <IconVisibility />
+                <Title
+                  variant="subsection"
+                  className={css({
+                    color: 'typography.text.secondary',
+                    marginBottom: '25',
+                  })}
+                >
+                  Preview your local builds
+                </Title>
+              </HStack>
+              <Text
+                className={css({
+                  color: 'typography.text.secondary',
+                  marginBottom: '150',
+                })}
+              >
+                Studio mirrors your local development
+              </Text>
+              <Studio />
+            </VStack>
+            <VStack gap="0" className={css({ width: '17.5rem', alignItems: 'flex-start' })}>
+              <HStack gap="50">
+                <IconEditNote />
+                <Title
+                  variant="subsection"
+                  className={css({
+                    color: 'typography.text.secondary',
+                    marginBottom: '25',
+                  })}
+                >
+                  Edit with your product team
+                </Title>
+              </HStack>
+              <Text
+                className={css({
+                  color: 'typography.text.secondary',
+                  marginBottom: '150',
+                })}
+              >
+                Polish content in dev before release.
+              </Text>
+              <Development />
             </VStack>
           </HStack>
         </div>
-      </HStack>
+      </VStack>
     </PageContainer>
   );
 };

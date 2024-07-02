@@ -6,12 +6,12 @@ function isLaunchDarklyEnabled() {
   return !!LAUNCH_DARKLY_CLIENT_SIDE_ID;
 }
 
-export const useFeatureFlag = (key: FeatureFlagsKeysEnum): boolean => {
+export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false): boolean => {
   const flags = useFlags();
 
   if (!isLaunchDarklyEnabled()) {
-    return prepareBooleanStringFeatureFlag(window._env_[key] || process.env[key], false);
+    return prepareBooleanStringFeatureFlag(window._env_[key] || process.env[key], defaultValue);
   }
 
-  return flags[key] ?? false;
+  return flags[key] ?? defaultValue;
 };
