@@ -5,7 +5,7 @@ export function useBridgeURL(tunnel = false) {
 
   let bridgeURL;
 
-  if (studioState.local) {
+  if (studioState.isLocalStudio) {
     /*
      * Local studio mode.
      * Prefer local host for bridge discovery as it's faster

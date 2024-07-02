@@ -68,7 +68,7 @@ export function generatesAlphaShadesFromColor(props: { color: string; key: strin
   const rules = [];
   for (let i = 0; i < shades.length; i++) {
     const shade = shades[i];
-    const cssVariableAlphaRule = `.${props.id} { --nv-${props.id}-${shade}: oklch(from ${props.color} l c h / ${
+    const cssVariableAlphaRule = `.${props.id} { --nv-${props.key}-${shade}: oklch(from ${props.color} l c h / ${
       shade / 1000
     }); }`;
     rules.push(cssVariableAlphaRule);

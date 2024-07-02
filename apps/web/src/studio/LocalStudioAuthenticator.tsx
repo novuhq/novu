@@ -111,7 +111,7 @@ export function LocalStudioAuthenticator() {
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
 
     const state: StudioState = {
-      local: true,
+      isLocalStudio: true,
       devSecretKey: apiKey,
       testUser: {
         id: currentUser._id,

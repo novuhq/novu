@@ -10,16 +10,47 @@ import {
   createPhpSnippet,
   createGoSnippet,
   createPythonSnippet,
+  CodeSnippetProps,
 } from '../../../../utils/codeSnippets';
+import { Language } from 'prism-react-renderer';
 
-interface IWorkflowTestTriggerPanelProps {
-  identifier: string;
-  to: Record<string, unknown>;
-  payload: Record<string, unknown>;
-  apiKey: string;
-}
+type Snippet = {
+  languageLabel: string;
+  language: Language;
+  create: (props: CodeSnippetProps) => string;
+};
 
-export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({ identifier, to, payload, apiKey }) => {
+const snippets: Snippet[] = [
+  {
+    languageLabel: 'Node.js',
+    language: 'javascript',
+    create: createNodeSnippet,
+  },
+  {
+    languageLabel: 'Curl',
+    language: 'bash',
+    create: createCurlSnippet,
+  },
+  {
+    languageLabel: 'PHP',
+    language: 'c', // PHP is not supported
+    create: createPhpSnippet,
+  },
+  {
+    languageLabel: 'GOlang',
+    language: 'go',
+    create: createGoSnippet,
+  },
+  {
+    languageLabel: 'Python',
+    language: 'python',
+    create: createPythonSnippet,
+  },
+];
+
+const DEFAULT_LANGUAGE: Language = 'javascript';
+
+export const WorkflowTestTriggerPanel: FC<CodeSnippetProps> = (props) => {
   return (
     <Box>
       <HStack gap="50" mb="margins.layout.page.section.titleBottom">
@@ -28,54 +59,16 @@ export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({ i
       </HStack>
       <Tabs
         height={'[100% !important]'}
-        defaultValue="node"
-        tabConfigs={[
-          {
-            value: 'node',
-            label: 'Node.js',
-            content: (
-              <Prism withLineNumbers={true} language="javascript" h="100%">
-                {createNodeSnippet(identifier, to, payload, undefined, undefined, apiKey) as any}
-              </Prism>
-            ),
-          },
-          {
-            value: 'curl',
-            label: 'Curl',
-            content: (
-              <Prism withLineNumbers={true} language="bash" h="100%">
-                {createCurlSnippet(identifier, to, payload, undefined, undefined, apiKey) as any}
-              </Prism>
-            ),
-          },
-          {
-            value: 'php',
-            label: 'PHP',
-            content: (
-              <Prism withLineNumbers={true} language="markdown" h="100%">
-                {createPhpSnippet(identifier, to, payload, apiKey) as any}
-              </Prism>
-            ),
-          },
-          {
-            value: 'golang',
-            label: 'GOlang',
-            content: (
-              <Prism withLineNumbers={true} language="go" h="100%">
-                {createGoSnippet(identifier, to, payload, apiKey) as any}
-              </Prism>
-            ),
-          },
-          {
-            value: 'python',
-            label: 'Python',
-            content: (
-              <Prism withLineNumbers={true} language="python" h="100%">
-                {createPythonSnippet(identifier, to, payload, apiKey) as any}
-              </Prism>
-            ),
-          },
-        ]}
+        defaultValue={DEFAULT_LANGUAGE}
+        tabConfigs={snippets.map((snippet) => ({
+          value: snippet.language,
+          label: snippet.languageLabel,
+          content: (
+            <Prism withLineNumbers={true} language={snippet.language} h="100%">
+              {snippet.create(props)}
+            </Prism>
+          ),
+        }))}
       />
     </Box>
   );

@@ -24,6 +24,7 @@ export type TriggerEvent = {
   tenant?: ITenantDefine;
   transactionId?: string;
   overrides?: Record<string, unknown>;
+  controls?: Record<string, unknown>;
 };
 
 export type State = {

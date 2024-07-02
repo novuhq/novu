@@ -2,7 +2,6 @@ import { install } from "../helpers/install";
 import { copy } from "../helpers/copy";
 
 import { async as glob } from "fast-glob";
-import { createHash } from "crypto";
 import os from "os";
 import fs from "fs/promises";
 import path from "path";
@@ -176,7 +175,13 @@ export const installTemplate = async ({
     return `${acc}${key}=${value}${os.EOL}`;
   }, "");
 
-  await fs.writeFile(path.join(root, ".env"), val);
+  await fs.writeFile(path.join(root, ".env.local"), val);
+
+  /* write github action */
+  await copy(copySource, `${root}/.github`, {
+    parents: true,
+    cwd: path.join(__dirname, `./github`),
+  });
 
   /** Copy the version from package.json or override for tests. */
   const version = "14.2.3";
@@ -211,7 +216,6 @@ export const installTemplate = async ({
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
       typescript: "^5",
-      tsx: "^4.15.1",
       "@types/node": "^20",
       "@types/react": "^18",
       "@types/react-dom": "^18",
@@ -231,6 +235,13 @@ export const installTemplate = async ({
       "@react-email/components": "0.0.17",
       "@react-email/tailwind": "0.0.16",
       "react-email": "2.1.2",
+    };
+
+    /* Zod dependencies used in react email example */
+    packageJson.dependencies = {
+      ...packageJson.dependencies,
+      zod: "^3.23.8",
+      "zod-to-json-schema": "^3.23.1",
     };
   }
 

@@ -6,7 +6,7 @@ import * as get from 'lodash.get';
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
 import { colors, Tabs } from '@novu/design-system';
-import { createCurlSnippet, createNodeSnippet } from '../../../utils/codeSnippets';
+import { CodeSnippetProps, createCurlSnippet, createNodeSnippet } from '../../../utils/codeSnippets';
 
 const NODE_JS = 'Node.js';
 const CURL = 'Curl';
@@ -33,47 +33,39 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, reservedValue),
+      content: getNodeTriggerSnippet({
+        identifier: trigger.identifier,
+        to: toValue,
+        payload: payloadValue,
+        snippet: reservedValue,
+      }),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, reservedValue),
+      content: getCurlTriggerSnippet({
+        identifier: trigger.identifier,
+        to: toValue,
+        payload: payloadValue,
+        snippet: reservedValue,
+      }),
     },
   ];
 
   return <Tabs defaultValue={NODE_JS} data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
 }
 
-export const getNodeTriggerSnippet = (
-  identifier: string,
-  to: Record<string, unknown>,
-  payload: Record<string, unknown>,
-  overrides?: Record<string, unknown>,
-  snippet?: Record<string, unknown>,
-  apiKey = '<API_KEY>'
-) => {
-  const triggerCodeSnippet = createNodeSnippet(identifier, to, payload, overrides, snippet, apiKey);
-
+export const getNodeTriggerSnippet = (props: CodeSnippetProps) => {
   return (
     <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
-      {triggerCodeSnippet}
+      {createNodeSnippet(props)}
     </Prism>
   );
 };
 
-export const getCurlTriggerSnippet = (
-  identifier: string,
-  to: Record<string, any>,
-  payload: Record<string, any>,
-  overrides?: Record<string, any>,
-  snippet?: Record<string, unknown>,
-  apiKey = '<REPLACE_WITH_API_KEY>'
-) => {
-  const curlSnippet = createCurlSnippet(identifier, to, payload, overrides, snippet, apiKey);
-
+export const getCurlTriggerSnippet = (props: CodeSnippetProps) => {
   return (
     <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">
-      {curlSnippet}
+      {createCurlSnippet(props)}
     </Prism>
   );
 };

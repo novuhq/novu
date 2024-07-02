@@ -61,7 +61,6 @@ export async function createApp({
 
   process.chdir(root);
 
-  const packageJsonPath = path.join(root, 'package.json');
   let hasPackageJson = false;
 
   /**

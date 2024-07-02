@@ -1,6 +1,7 @@
 import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum, IsObject } from 'class-validator';
 import {
   AddressingTypeEnum,
+  ControlsDto,
   TriggerRecipients,
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
@@ -41,6 +42,8 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   bridgeUrl?: string;
+
+  controls?: ControlsDto;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {

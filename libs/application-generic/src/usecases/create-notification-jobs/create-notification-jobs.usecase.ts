@@ -63,6 +63,7 @@ export class CreateNotificationJobs {
       expireAt: this.calculateExpireAt(command),
       channels,
       bridge: command.bridge,
+      controls: command.controls,
     });
 
     if (!notification) {
@@ -144,6 +145,7 @@ export class CreateNotificationJobs {
       overrides: command.overrides,
       tenant: command.tenant,
       step: {
+        bridgeUrl: command.bridge?.url,
         template: {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,

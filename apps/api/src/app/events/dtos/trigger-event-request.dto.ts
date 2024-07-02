@@ -12,6 +12,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
+  ControlsDto,
   TopicKey,
   TriggerRecipients,
   TriggerRecipientsTypeEnum,
@@ -137,6 +138,8 @@ export class TriggerEventRequestDto {
   @ValidateNested()
   @Type(() => TenantPayloadDto)
   tenant?: TriggerTenantContext;
+
+  controls?: ControlsDto;
 }
 
 export class BulkTriggerEventDto {

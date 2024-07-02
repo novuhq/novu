@@ -170,7 +170,7 @@ const defaultValues: IForm = {
 const TemplateEditorFormProvider = ({ children }) => {
   const { templateId = '' } = useParams<{ templateId?: string }>();
   const methods = useForm<IForm>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues,
     mode: 'onChange',
   });

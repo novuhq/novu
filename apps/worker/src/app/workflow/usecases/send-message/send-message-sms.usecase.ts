@@ -99,7 +99,7 @@ export class SendMessageSms extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
-            i18next: i18nextInstance,
+            // i18next: i18nextInstance,
           })
         );
 

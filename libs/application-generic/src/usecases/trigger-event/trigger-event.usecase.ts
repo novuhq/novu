@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { ModuleRef } from '@nestjs/core';
 
 import {
-  EnvironmentRepository,
   IntegrationRepository,
   JobEntity,
   JobRepository,
@@ -20,13 +18,8 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
-import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
-import {
-  TriggerEventBroadcastCommand,
-  TriggerEventCommand,
-  TriggerEventMulticastCommand,
-} from './trigger-event.command';
+import { TriggerEventCommand } from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
@@ -45,7 +38,6 @@ import {
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '../trigger-multicast';
-import { IUseCaseInterface, requireInject } from '../../utils/require-inject';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -157,8 +149,6 @@ export class TriggerEvent {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
-              bridgeUrl: command.bridgeUrl,
-              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
                 template ||
@@ -171,8 +161,6 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
-              bridgeUrl: command.bridgeUrl,
-              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
                 template ||
@@ -186,8 +174,6 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
-              bridgeUrl: command.bridgeUrl,
-              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
                 template ||

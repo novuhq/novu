@@ -3,6 +3,7 @@ import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ControlsDto,
   ISubscribersDefine,
   ITenantDefine,
   ProvidersIdEnum,
@@ -44,4 +45,6 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   tenant?: ITenantDefine;
 
   bridge?: any;
+
+  controls?: ControlsDto;
 }

@@ -13,9 +13,15 @@ const TriggerTitle = styled(Text)`
 export const ExecutionDetailTrigger = ({ identifier, step, subscriberVariables }) => {
   const { payload, overrides, tenant, actorId } = step || {};
 
-  const curlSnippet = getCurlTriggerSnippet(identifier, subscriberVariables, payload, overrides, {
-    ...(tenant && { tenant }),
-    ...(actorId && { actor: { subscriberId: actorId } }),
+  const curlSnippet = getCurlTriggerSnippet({
+    identifier,
+    to: subscriberVariables,
+    payload,
+    overrides,
+    snippet: {
+      ...(tenant && { tenant }),
+      ...(actorId && { actor: { subscriberId: actorId } }),
+    },
   });
 
   return (

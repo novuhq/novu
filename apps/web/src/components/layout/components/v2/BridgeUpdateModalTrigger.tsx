@@ -1,6 +1,6 @@
 import { FC, useState } from 'react';
 import { Tooltip } from '@novu/design-system';
-import { Text } from '@novu/novui';
+import { Text, Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconEdit, IconLink, IconLinkOff } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
@@ -32,16 +32,9 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
   const { status, bridgeURL } = useBridgeConnectionStatus();
 
   const trigger = isHovered ? (
-    <button
-      {...hoverProps}
-      onClick={onClick}
-      className={css({ '&, & svg': { color: 'typography.text.main !important' } })}
-    >
-      <HStack gap="25">
-        <IconEdit className={css({ color: 'icon.main' })} size="16" />
-        <Text>Edit endpoint</Text>
-      </HStack>
-    </button>
+    <Button {...hoverProps} variant="outline" size="xs" Icon={IconEdit} onClick={onClick}>
+      Edit endpoint
+    </Button>
   ) : (
     <ConnectionStatusIndicator status={status} {...hoverProps} onClick={onClick} />
   );

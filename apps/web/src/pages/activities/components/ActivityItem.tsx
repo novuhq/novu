@@ -108,7 +108,7 @@ export const ActivityItem = ({ item, onClick }) => {
                     }}
                     data-test-id="row-template-name"
                   >
-                    {item?.template?.name ? item.template.name : 'Deleted Template'}
+                    {renderWorkflowName(item)}
                   </h3>
                   <When truthy={isOld}>
                     <Text>Done</Text>
@@ -200,3 +200,11 @@ const ListItem = styled.div<{ dark: boolean }>`
     border-radius: 7px;
   },
 `;
+
+function renderWorkflowName(item: any) {
+  if (!item?.template && item?.bridge?.workflow?.workflowId) {
+    return item.bridge.workflow.workflowId;
+  }
+
+  return item?.template?.name ? item.template.name : 'Deleted Template';
+}

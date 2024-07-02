@@ -12,7 +12,7 @@ export function StudioPageLayout() {
     return <Outlet />;
   }
 
-  if (state?.local) {
+  if (state?.isLocalStudio) {
     return <LocalStudioPageLayout />;
   }
 

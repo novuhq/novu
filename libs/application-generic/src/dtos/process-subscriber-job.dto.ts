@@ -1,4 +1,5 @@
 import {
+  ControlsDto,
   ISubscribersDefine,
   ITenantDefine,
   SubscriberSourceEnum,
@@ -27,6 +28,7 @@ export interface IProcessSubscriberDataDto {
   _subscriberSource: SubscriberSourceEnum;
   requestCategory?: TriggerRequestCategoryEnum;
   bridge?: { url: string; workflow: DiscoverWorkflowOutput };
+  controls?: ControlsDto;
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {

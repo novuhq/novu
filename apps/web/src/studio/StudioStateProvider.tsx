@@ -11,7 +11,7 @@ type BridgeURLGetterSetter = { bridgeURL: string; setBridgeURL: (url: string) =>
 const StudioStateContext = React.createContext<(StudioState & BridgeURLGetterSetter) | undefined>(undefined);
 
 function computeBridgeURL(state: StudioState) {
-  return state.local ? state.localBridgeURL || state.tunnelBridgeURL : state.storedBridgeURL;
+  return state.isLocalStudio ? state.localBridgeURL || state.tunnelBridgeURL : state.storedBridgeURL;
 }
 
 function convertToTestUser(currentUser?: IUserEntity) {
@@ -36,7 +36,7 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
     }
 
     return {
-      local: false,
+      isLocalStudio: false,
       storedBridgeURL: environment?.echo?.url || '',
       testUser: convertToTestUser(currentUser),
       organizationName: currentOrganization?.name || '',
@@ -46,15 +46,15 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
   const [bridgeURL, setBridgeURL] = useState(computeBridgeURL(state));
 
   useEffect(() => {
-    if (!state.local) {
+    if (!state.isLocalStudio) {
       setState({
-        local: false,
+        isLocalStudio: false,
         storedBridgeURL: environment?.echo?.url || '',
         testUser: convertToTestUser(currentUser),
         organizationName: currentOrganization?.name || '',
       });
     }
-  }, [environment, state?.local, currentUser, currentOrganization]);
+  }, [environment, state?.isLocalStudio, currentUser, currentOrganization]);
 
   useEffect(() => {
     setBridgeURL(computeBridgeURL(state));

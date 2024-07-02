@@ -121,10 +121,5 @@
       "**/@babel",
       "**/@babel/**"
     ]
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ]
   }
 }
