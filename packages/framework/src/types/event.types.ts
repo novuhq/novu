@@ -61,6 +61,14 @@ export type EventTriggerParams<T_Payload = EventPayload> = {
    * Overrides for trigger
    */
   overrides?: Record<string, unknown>;
+  /**
+   * Controls for the step execution
+   */
+  controls?: {
+    steps: {
+      [stepId: string]: Record<string, unknown>;
+    };
+  };
 };
 
 export type EventTriggerResponse = {
