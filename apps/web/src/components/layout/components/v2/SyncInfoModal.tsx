@@ -135,9 +135,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Sync State to Novu
         uses: novuhq/actions-novu-sync@v2
         with:
