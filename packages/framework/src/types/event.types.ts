@@ -1,4 +1,4 @@
-import {
+import type {
   ITenantDefine,
   ITriggerPayload,
   TriggerEventStatusEnum,
