@@ -6,6 +6,4 @@ import { EnvironmentCommand } from '@novu/application-generic';
 export class StoreSubscriberJobsCommand extends EnvironmentCommand {
   @IsDefined()
   jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[];
-
-  bridge?: any;
 }
