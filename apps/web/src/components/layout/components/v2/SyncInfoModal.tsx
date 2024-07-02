@@ -2,14 +2,13 @@
 import { Prism } from '@mantine/prism';
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
-import { Button, Checkbox, Input, Tabs, Text, Title } from '@novu/novui';
+import { Button, Input, Tabs, Text, Title } from '@novu/novui';
 import { FC, useEffect, useState } from 'react';
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
-import { API_ROOT, ENV, WEBHOOK_URL } from '../../../../config';
+import { API_ROOT, ENV } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildApiHttpClient } from '../../../../api';
 import { showNotification } from '@mantine/notifications';
-import { Code } from '@mantine/core';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
@@ -19,7 +18,7 @@ export type SyncInfoModalProps = {
 const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
-  const { devSecretKey, isLocalStudio } = useStudioState();
+  const { devSecretKey } = useStudioState();
   const [manualUrl, setTunnelManualURl] = useState('');
 
   const bridgeUrl = useBridgeURL(true);
@@ -42,7 +41,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
 
       showNotification({
         color: 'green',
-        message: `Synced successfully. Visit https://web.novu.co`,
+        message: `Synced successfully. Visit https://dashboard.novu.co`,
       });
     } catch (error: any) {
       showNotification({

@@ -7,15 +7,6 @@ const DEFAULT_STUDIO_PROTOCOL = 'http:';
 const DEFAULT_STUDIO_HOST_NAME = 'localhost';
 const DEFAULT_STUDIO_PORT = '2022';
 
-type LocalStudioUrlParams = {
-  protocol?: string;
-  hostname?: string;
-  port?: string;
-};
-
-const createLocalStudioUrl = ({ protocol, hostname, port }: LocalStudioUrlParams = {}) =>
-  `${protocol || DEFAULT_STUDIO_PROTOCOL}//${hostname || DEFAULT_STUDIO_HOST_NAME}:${port || DEFAULT_STUDIO_PORT}`;
-
 type UseNavigateToLocalStudio = {
   /** Invoked if "smart" navigation isn't available */
   fallbackFn?: () => void;
@@ -27,7 +18,8 @@ type UseNavigateToLocalStudio = {
  */
 export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudio = {}) => {
   const forceStudioNavigation = () => {
-    window.open(createLocalStudioUrl(), '_self');
+    // use default URL
+    navigateToLocalStudioUrl();
   };
 
   const { data, isError, isLoading } = useQuery<LocalStudioWellKnownMetadata>([WELL_KNOWN_URL], async () => {
@@ -47,8 +39,8 @@ export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudi
       return;
     }
 
-    window.open(createLocalStudioUrl({ port: data.studioPort }), '_self');
-  }, [data, isError, isLoading]);
+    navigateToLocalStudioUrl({ port: data.studioPort });
+  }, [data, isError, isLoading, fallbackFn]);
 
   return {
     data,
@@ -58,3 +50,21 @@ export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudi
     forceStudioNavigation,
   };
 };
+
+type LocalStudioUrlParams = {
+  protocol?: string;
+  hostname?: string;
+  port?: string;
+};
+
+function navigateToLocalStudioUrl({ protocol, hostname, port }: LocalStudioUrlParams = {}) {
+  const url = `${protocol || DEFAULT_STUDIO_PROTOCOL}//${hostname || DEFAULT_STUDIO_HOST_NAME}:${
+    port || DEFAULT_STUDIO_PORT
+  }`;
+
+  /**
+   * NOTE: this fails after 1 invocation if opening in the same tab, so _blank is required!
+   * It seems it may be due to the loading of the iFrame: https://stackoverflow.com/a/13459106
+   */
+  window.open(url, '_blank');
+}
