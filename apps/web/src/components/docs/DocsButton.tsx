@@ -1,6 +1,5 @@
 import { Popover } from '@mantine/core';
 import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip } from '@novu/design-system';
-import { useSegment } from '../providers/SegmentProvider';
 import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';
@@ -8,6 +7,7 @@ import { Flex, styled } from '@novu/novui/jsx';
 import { text, title } from '@novu/novui/recipes';
 import { PATHS } from './docs.const';
 import { DocsModal } from './DocsModal';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
@@ -53,7 +53,7 @@ export const DocsButton = ({
   tooltip?: ComponentProps<typeof Tooltip>['label'];
 }) => {
   const [opened, setOpened] = useState<boolean>(false);
-  const segment = useSegment();
+  const track = useTelemetry();
   const [path, setPath] = useState<string>('');
   const shouldShowButton = useMemo(() => path.length > 0, [path]);
   const [docsOpen, setDocsOpen] = useState<boolean>(false);
@@ -80,7 +80,7 @@ export const DocsButton = ({
   const onClose = () => {
     setOpened(false);
     localStorage.setItem('inline-docs-intro', 'false');
-    segment.track('Inline docs tooltip shown', {
+    track('Inline docs tooltip shown', {
       documentationPage: path,
       pageURL: window.location.href,
     });
