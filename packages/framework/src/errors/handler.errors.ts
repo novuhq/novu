@@ -23,6 +23,8 @@ export class MissingSecretKeyError extends BadRequestError {
   code = ErrorCodeEnum.MISSING_SECRET_KEY_ERROR;
 
   constructor() {
-    super(`API Key is missing. Please add the API Key during Client initialization.`);
+    super(
+      'Missing secret key. Set the `NOVU_SECRET_KEY` environment variable or pass `secretKey` to the client options.'
+    );
   }
 }
