@@ -157,5 +157,12 @@ export function buildApiHttpClient({
         bridgeUrl,
       });
     },
+
+    async postTelemetry(event: string, data?: Record<string, unknown>) {
+      return post('/v1/telemetry/measure', {
+        event,
+        data,
+      });
+    },
   };
 }

@@ -12,8 +12,8 @@ import { HStack, styled, VStack } from '@novu/novui/jsx';
 import { text } from '@novu/novui/recipes';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { CodeSnippet } from '../../../pages/get-started/components/CodeSnippet';
 import { PageContainer } from '../../layout/PageContainer';
 import { Development } from './Development';
@@ -23,11 +23,11 @@ import { Studio } from './Studio';
 const Link = styled('a', text);
 
 export const GetStartedPageV2 = () => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const navigate = useNavigate();
 
   useEffect(() => {
-    segment.track('Get Started page visited - [Get started - V2]');
+    track('Get Started page visited - [Get started - V2]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -67,7 +67,7 @@ export const GetStartedPageV2 = () => {
                 <div
                   style={{ width: '100%' }}
                   onDoubleClick={() => {
-                    segment.track('Command copied - [Get Started - V2]');
+                    track('Command copied - [Get Started - V2]');
                   }}
                 >
                   <CodeSnippet
@@ -82,7 +82,7 @@ export const GetStartedPageV2 = () => {
                       },
                     })}
                     onClick={() => {
-                      segment.track('Command copied - [Get Started - V2]');
+                      track('Command copied - [Get Started - V2]');
                     }}
                   />
                 </div>
@@ -102,7 +102,7 @@ export const GetStartedPageV2 = () => {
                 color: 'typography.text.secondary !important',
               })}
               onClick={() => {
-                segment.track('Invite button clicked - [Get Started - V2]');
+                track('Invite button clicked - [Get Started - V2]');
                 navigate(ROUTES.TEAM_SETTINGS);
               }}
             >
