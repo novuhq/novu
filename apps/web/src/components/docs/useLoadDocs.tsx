@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MDX_URL } from './docs.const';
-import { useTelemetry } from '../../hooks/useNovuAPI';
 
 export type DocsQueryResults = {
   code: string;
@@ -16,8 +14,6 @@ type UseLoadDocsProps = {
 };
 
 export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
-  const track = useTelemetry();
-
   const { data = { code: '', title: '', description: '' }, ...queryResults } = useQuery<DocsQueryResults>(
     ['docs', path],
     async () => {
@@ -28,14 +24,6 @@ export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
     },
     { enabled: isEnabled }
   );
-
-  useEffect(() => {
-    track('Inline docs opened', {
-      documentationPage: path,
-      pageURL: window.location.href,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path]);
 
   return {
     ...queryResults,
