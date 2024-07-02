@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
