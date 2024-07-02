@@ -2,6 +2,11 @@ name: Deploy Widget
 
 on:
   workflow_call:
+    inputs:
+      env:
+        description: 'Deployment environment - choose between dev and prod'
+        required: true
+        type: string
 
 jobs:
 
