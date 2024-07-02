@@ -34,6 +34,9 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { When } from '../utils/When';
 import { SidebarFooterButton } from '../layout/components/LocalStudioSidebar/SidebarFooterButton';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateToLocalStudio } from '../../studio/hooks/useNavigateToLocalStudio';
+import { OpenLocalStudioModal } from '../../studio/components/OpenLocalStudioModal';
+import { useToggle } from '@mantine/hooks';
 
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
@@ -42,15 +45,12 @@ export const RootNavMenu: React.FC = () => {
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
-  const navigate = useNavigate();
+  const [isLocalStudioModalOpen, toggleLocalStudioModalOpen] = useToggle();
+  const { navigateToLocalStudio } = useNavigateToLocalStudio({ fallbackFn: toggleLocalStudioModalOpen });
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');
     await updateOnboardingStatus({ showOnboarding: false });
-  };
-
-  const goToStudio = () => {
-    navigate('http://localhost:2022/studio');
   };
 
   return (
@@ -157,9 +157,13 @@ export const RootNavMenu: React.FC = () => {
       </NavMenuSection>
       <FreeTrialSidebarWidget />
       {isV2Enabled ? (
-        <SidebarFooterButton onClick={goToStudio} Icon={IconLaptop}>
-          Open Local Studio
-        </SidebarFooterButton>
+        <>
+          <SidebarFooterButton onClick={navigateToLocalStudio} Icon={IconLaptop}>
+            Open Local Studio
+          </SidebarFooterButton>
+          {/** TODO: refactor when modal manager is available */}
+          {isLocalStudioModalOpen && <OpenLocalStudioModal isOpen toggleOpen={toggleLocalStudioModalOpen} />}
+        </>
       ) : (
         <RootNavMenuFooter />
       )}
