@@ -81,7 +81,7 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      navigate(ROUTES.GET_STARTED);
+      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
 
       return;
     }
