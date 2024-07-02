@@ -63,6 +63,7 @@ export class DevServer {
 
   private serveWellKnownPath(req: http.IncomingMessage, res: http.ServerResponse) {
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', this.options.dashboardUrl);
     res.end(JSON.stringify(this.options));
   }
 
