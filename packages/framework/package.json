@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "0.24.3-alpha.13",
+  "version": "0.24.3-alpha.14",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
