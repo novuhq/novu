@@ -52,7 +52,10 @@ export const IconButton: PolymorphicComponent = React.forwardRef(
         loading={loading}
         {...otherProps}
       >
-        <Icon title="action-icon" color={variant === 'filled' ? token('colors.button.icon.filled') : undefined} />
+        <Icon
+          title={props.title || 'action-icon'}
+          color={variant === 'filled' ? token('colors.button.icon.filled') : undefined}
+        />
       </ActionIcon>
     );
   }
