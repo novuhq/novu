@@ -9,10 +9,10 @@ import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { DocsButton } from '../../../docs/DocsButton';
 import { hstack } from '@novu/novui/patterns';
-import { useSegment } from '../../../providers/SegmentProvider';
 import { validateURL } from '../../../../utils/url';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildBridgeHTTPClient } from '../../../../bridgeApi/bridgeApi.client';
+import { useTelemetry } from '../../../../hooks/useNovuAPI';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export type BridgeUpdateModalProps = {
 };
 
 export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOpen }) => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const { isLocalStudio, bridgeURL, setBridgeURL } = useStudioState();
   const [urlError, setUrlError] = useState<string>('');
   const [url, setUrl] = useState(bridgeURL);
@@ -76,7 +76,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
       }
 
       await storeInProperLocation(url);
-      segment.track('Update endpoint clicked - [Bridge Modal]');
+      track('Update endpoint clicked - [Bridge Modal]');
       successMessage('You have successfuly updated your Novu Endpoint configuration');
       toggleOpen();
     } catch (error) {

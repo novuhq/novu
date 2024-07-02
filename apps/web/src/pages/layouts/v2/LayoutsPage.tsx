@@ -5,8 +5,8 @@ import { colors } from '@novu/design-system';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { useAuth } from '../../../hooks/useAuth';
-import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useEnvironment } from '../../../hooks';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
 
 const LAYOUT = 'Layouts';
 
@@ -14,10 +14,10 @@ export function LayoutsPage() {
   const { currentOrganization, currentUser } = useAuth();
   const { environment } = useEnvironment();
 
-  const segment = useSegment();
+  const track = useTelemetry();
 
   const handleLayoutAnalytics = (event: string, data?: Record<string, unknown>) => {
-    segment.track(`[Layout] - ${event}`, {
+    track(`[Layout] - ${event}`, {
       _organizationId: currentOrganization?._id,
       _environmentId: environment?._id,
       userId: currentUser?._id,

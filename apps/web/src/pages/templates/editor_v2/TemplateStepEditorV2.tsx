@@ -8,16 +8,15 @@ import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useSegment } from '../../../components/providers/SegmentProvider';
 import { IconPlayArrow } from '@novu/novui/icons';
 import { ROUTES } from '../../../constants/routes';
 import { parseUrl } from '../../../utils/routeUtils';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
 
 export const WorkflowsStepEditorPageV2 = () => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const navigate = useNavigate();
-
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -62,7 +61,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   function onControlsChange(type: string, form: any, id?: string) {
     switch (type) {
       case 'step':
-        segment.track('Step Controls Changes', {
+        track('Step Controls Changes', {
           key: id,
           origin: 'dashboard',
         });

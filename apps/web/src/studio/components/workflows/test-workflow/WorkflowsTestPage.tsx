@@ -18,9 +18,10 @@ import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../StudioStateProvider';
 import { testTrigger } from '../../../../api/notification-templates';
 import { OutlineButton } from '../../OutlineButton';
+import { useTelemetry } from '../../../../hooks/useNovuAPI';
 
 export const WorkflowsTestPage = () => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const studioState = useStudioState() || {};
   const { isLocalStudio, testUser, devSecretKey } = studioState;
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -75,7 +76,7 @@ export const WorkflowsTestPage = () => {
   );
 
   const handleTestClick = async () => {
-    segment.track('Workflow test ran - [Workflows Test Page]', {
+    track('Workflow test ran - [Workflows Test Page]', {
       env: isLocalStudio ? 'local' : 'cloud',
     });
 
