@@ -1,22 +1,28 @@
 import { API_ROOT } from '../config/index';
 
-export const createNodeSnippet = (
-  identifier: string,
-  to: Record<string, unknown>,
-  payload: Record<string, unknown>,
-  overrides?: Record<string, unknown>,
-  snippet?: Record<string, unknown>,
-  apiKey = '<API_KEY>'
-) => {
+export type CodeSnippetProps = {
+  identifier: string;
+  to: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  overrides?: Record<string, unknown>;
+  snippet?: Record<string, unknown>;
+  secretKey?: string;
+  bridgeUrl?: string;
+};
+
+const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
+
+export const createNodeSnippet = ({ identifier, to, payload, snippet, secretKey }: CodeSnippetProps) => {
+  const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
+
   return `import { Novu } from '@novu/node'; 
 
-const novu = new Novu('${apiKey}');
+const novu = new Novu(${renderedSecretKey});
 
 novu.trigger('${identifier}', ${JSON.stringify(
     {
       to,
       payload,
-      overrides,
       ...snippet,
     },
     null,
@@ -27,23 +33,23 @@ novu.trigger('${identifier}', ${JSON.stringify(
 `;
 };
 
-export const createCurlSnippet = (
-  identifier: string,
-  to: Record<string, unknown>,
-  payload: Record<string, unknown>,
-  overrides?: Record<string, unknown>,
-  snippet?: Record<string, unknown>,
-  apiKey = '<API_KEY>'
-) => {
-  return `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
---header 'Authorization: ApiKey ${apiKey}' \\
---header 'Content-Type: application/json' \\
---data-raw '${JSON.stringify(
+export const createCurlSnippet = ({
+  identifier,
+  to,
+  payload,
+  snippet,
+  bridgeUrl,
+  secretKey = SECRET_KEY_ENV_KEY,
+}: CodeSnippetProps) => {
+  return `curl -X POST '${API_ROOT}/v1/events/trigger' \\
+-H 'Authorization: ApiKey ${secretKey}' \\
+-H 'Content-Type: application/json' \\
+-d '${JSON.stringify(
     {
       name: identifier,
       to,
       payload,
-      overrides,
+      bridgeUrl,
       ...snippet,
     },
     null,
@@ -52,64 +58,85 @@ export const createCurlSnippet = (
   `;
 };
 
-export const createPhpSnippet = (
-  identifier: string,
-  to: Record<string, any>,
-  payload: Record<string, any>,
-  apiKey = '<API_KEY>'
-) => {
+const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4) => {
+  const entries = Object.entries(data);
+  const indent = ' '.repeat(indentLevel);
+
+  const obj = entries
+    .map(([key, value]) => {
+      return `
+${indent}'${key}' => '${JSON.stringify(value)}',`;
+    })
+    .join('');
+
+  return `${obj}${Object.keys(data).length > 0 ? `\n${new Array(indentLevel - 4).fill(' ').join('')}` : ''}`;
+};
+
+export const createPhpSnippet = ({ identifier, to, payload, secretKey }: CodeSnippetProps) => {
+  const renderedSecretKey = secretKey ? `'${secretKey}'` : `getenv('${SECRET_KEY_ENV_KEY}')`;
+
   return `use Novu\\SDK\\Novu;
 
-$novu = new Novu('${apiKey}');
+$novu = new Novu(${renderedSecretKey});
 
 $response = $novu->triggerEvent([
     'name' => '${identifier}',
-    'payload' => [
-${Object.keys(payload)
-  .map((key) => {
-    return `        '${key}' => '${payload[key]}',`;
-  })
-  .join('\n')}
-    ],
-    'to' => [
-${Object.keys(to)
-  .map((key) => {
-    return `        '${key}' => '${to[key]}',`;
-  })
-  .join('\n')}
-    ]
+    'payload' => [${transformJsonToPhpArray(payload, 8)}],
+    'to' => [${transformJsonToPhpArray(to, 8)}],
 ])->toArray();`;
 };
 
-export const createPythonSnippet = (
-  identifier: string,
-  to: Record<string, any>,
-  payload: Record<string, any>,
-  apiKey = '<API_KEY>'
-) => {
+const transformJsonToPythonDict = (data: Record<string, unknown>, tabSpaces = 4): string => {
+  const entries = Object.entries(data);
+  const indent = ' '.repeat(tabSpaces);
+
+  const obj = entries
+    .map(([key, value]) => {
+      return `
+${indent}"${key}": ${JSON.stringify(value)},`;
+    })
+    .join('');
+
+  return `${obj}${entries.length > 0 ? `\n${new Array(tabSpaces - 2).fill(' ').join('')}` : ''}`;
+};
+
+export const createPythonSnippet = ({
+  identifier,
+  to,
+  payload,
+  snippet = { test: 'value' },
+  secretKey,
+}: CodeSnippetProps) => {
+  const renderedSecretKey = secretKey ? `'${secretKey}'` : `os.environ['${SECRET_KEY_ENV_KEY}']`;
+
   return `from novu.api import EventApi
 
-url = "https://api.novu.co"
+url = "${API_ROOT}"
 
-novu = EventApi(url, "${apiKey}").trigger(
+novu = EventApi(url, ${renderedSecretKey}).trigger(
     name="${identifier}",
-    recipients="${to.subscriberId}",
-    payload={
-${Object.keys(payload)
-  .map((key) => {
-    return `        "${key}":"${payload[key]}",`;
-  })
-  .join('\n')}
-    },
+    recipients={${to.subscriberId as string}},
+    payload={${transformJsonToPythonDict(payload, 6)}},
 )`;
 };
 
-export const createGoSnippet = (
-  identifier: string,
-  to: Record<string, any>,
-  payload: Record<string, any>,
-  apiKey = '<API_KEY>'
-) => {
+const transformJsonToGoMap = (data: Record<string, unknown>, tabSpaces = 4): string => {
+  const entries = Object.entries(data);
+  const indent = ' '.repeat(tabSpaces);
+
+  const obj = entries
+    .map(([key, value]) => {
+      return `
+${indent}"${key}": ${JSON.stringify(value)},`;
+    })
+    .join('');
+
+  return `${obj}${entries.length > 0 ? `\n${new Array(tabSpaces - 4).fill(' ').join('')}` : ''}`;
+};
+
+export const createGoSnippet = ({ identifier, to, payload, snippet, secretKey }: CodeSnippetProps) => {
+  const renderedSecretKey = secretKey ? `"${secretKey}"` : `os.Getenv("${SECRET_KEY_ENV_KEY}")`;
+
   return `package main
 
 import (
@@ -121,24 +148,10 @@ import (
 
 func main() {
 	ctx := context.Background()
-	to := map[string]interface{}{
-${Object.keys(payload)
-  .map((key) => {
-    return `		"${key}": "${payload[key]}",`;
-  })
-  .join('\n')}
-	}
-
-	payload := map[string]interface{}{
-${Object.keys(to)
-  .map((key) => {
-    return `		"${key}": "${to[key]}",`;
-  })
-  .join('\n')}
-	}
-
+	to := map[string]interface{}{${transformJsonToGoMap(to, 8)}}
+	payload := map[string]interface{}{${transformJsonToGoMap(payload, 8)}}
 	data := novu.ITriggerPayloadOptions{To: to, Payload: payload}
-	novuClient := novu.NewAPIClient("${apiKey}", &novu.Config{})
+	novuClient := novu.NewAPIClient(${renderedSecretKey}, &novu.Config{})
 
 	resp, err := novuClient.EventApi.Trigger(ctx, "${identifier}", data)
 	if err != nil {
