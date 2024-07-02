@@ -1,7 +1,8 @@
-import { Button, ButtonProps } from '@novu/novui';
+import { ButtonProps } from '@novu/novui';
 import { css, cx } from '@novu/novui/css';
 import { Box } from '@novu/novui/jsx';
 import { FC } from 'react';
+import { OutlineButton } from '../../../../studio/components/OutlineButton';
 import { NavMenuFooter } from '../../../nav/NavMenuFooter';
 
 export type SidebarFooterButtonProps = ButtonProps & {};
@@ -19,22 +20,9 @@ export const SidebarFooterButton: FC<SidebarFooterButtonProps> = ({ children, cl
         gradientToPosition={'80%'}
       />
       <Box bg="surface.panel">
-        <Button
-          fullWidth
-          variant="outline"
-          className={cx(
-            css({
-              '& .nv-button__label, & .nv-button__section': {
-                '&, & svg': { color: 'typography.text.main !important', fill: 'typography.text.main !important' },
-                WebkitTextFillColor: 'unset !important',
-              },
-            }),
-            className
-          )}
-          {...buttonProps}
-        >
+        <OutlineButton fullWidth variant="outline" className={cx(className)} {...buttonProps}>
           {children}
-        </Button>
+        </OutlineButton>
       </Box>
     </NavMenuFooter>
   );

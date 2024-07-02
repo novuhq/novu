@@ -9,10 +9,10 @@ import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { Button } from '@novu/novui';
 import { IconPlayArrow } from '@novu/novui/icons';
 import { ROUTES } from '../../../constants/routes';
 import { parseUrl } from '../../../utils/routeUtils';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const segment = useSegment();
@@ -104,9 +104,9 @@ export const WorkflowsStepEditorPageV2 = () => {
       icon={<Icon size="32" />}
       actions={
         <>
-          <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
             Test workflow
-          </Button>
+          </OutlineButton>
         </>
       }
     >
