@@ -180,7 +180,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const errors = this.client.getErrors();
 
         if (errors.length !== 0) {
-          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, { errors });
         }
 
         return this.triggerAction({ workflowId, ...body })();
@@ -189,7 +189,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const errors = this.client.getErrors();
 
         if (errors.length !== 0) {
-          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, { errors });
         }
         const result = await this.client.executeWorkflow({
           ...body,
@@ -204,7 +204,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const errors = this.client.getErrors();
 
         if (errors.length !== 0) {
-          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, { errors });
         }
         const result = await this.client.executeWorkflow({
           ...body,
@@ -244,7 +244,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const errors = this.client.getErrors();
 
         if (errors.length !== 0) {
-          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, { errors });
         }
         const result = this.client.discover();
 
@@ -259,7 +259,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const errors = this.client.getErrors();
 
         if (errors.length !== 0) {
-          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
+          return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, { errors });
         }
         const result = this.client.getCode(workflowId, stepId);
 
