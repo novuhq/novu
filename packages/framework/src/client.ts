@@ -153,7 +153,7 @@ export class Client {
   public getErrors(): string[] {
     const errors: string[] = [];
 
-    const workflowIds = this.discoveredWorkflows.map((w) => w.workflowId);
+    const workflowIds = this.discoveredWorkflows.map((discoveredWorkflow) => discoveredWorkflow.workflowId);
 
     const workflowOccuranceMap = this.getOccuranceMap(workflowIds);
 
@@ -164,7 +164,7 @@ export class Client {
     }
 
     for (const workflow of this.discoveredWorkflows) {
-      const stepIds = workflow.steps.map((s) => s.stepId);
+      const stepIds = workflow.steps.map((discoveredStep) => discoveredStep.stepId);
 
       const stepOccuranceMap = this.getOccuranceMap(stepIds);
 
