@@ -20,9 +20,9 @@ export interface ButtonCoreProps
   loading?: boolean;
 }
 
-type IconButtonDefaultElement = 'button';
+type ButtonDefaultElement = 'button';
 
-export type ButtonProps<C extends React.ElementType = IconButtonDefaultElement> = PolymorphicComponentPropWithRef<
+export type ButtonProps<C extends React.ElementType = ButtonDefaultElement> = PolymorphicComponentPropWithRef<
   C,
   JsxStyleProps & Partial<ButtonVariant> & CoreProps & ButtonCoreProps
 >;
@@ -30,7 +30,7 @@ export type ButtonProps<C extends React.ElementType = IconButtonDefaultElement> 
 const DEFAULT_VARIANT: ButtonVariant['variant'] = 'filled';
 const DEFAULT_SIZE: ButtonVariant['size'] = 'md';
 
-type PolymorphicComponent = <C extends React.ElementType = IconButtonDefaultElement>(
+type PolymorphicComponent = <C extends React.ElementType = ButtonDefaultElement>(
   props: ButtonProps<C>
 ) => JSX.Element | null;
 
@@ -57,7 +57,7 @@ const BUTTON_VARIANT_TO_EXTERNAL_BUTTON_VARIANT: Record<ButtonVariant['variant']
 };
 
 export const Button: PolymorphicComponent = React.forwardRef(
-  <C extends React.ElementType = IconButtonDefaultElement>(
+  <C extends React.ElementType = ButtonDefaultElement>(
     { variant = DEFAULT_VARIANT, size = DEFAULT_SIZE, ...props }: ButtonProps<C>,
     ref?: PolymorphicRef<C>
   ) => {
