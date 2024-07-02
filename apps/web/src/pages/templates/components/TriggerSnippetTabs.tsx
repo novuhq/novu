@@ -33,11 +33,21 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet({ identifier: trigger.identifier, to: toValue, payload: payloadValue }),
+      content: getNodeTriggerSnippet({
+        identifier: trigger.identifier,
+        to: toValue,
+        payload: payloadValue,
+        snippet: reservedValue,
+      }),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet({ identifier: trigger.identifier, to: toValue, payload: payloadValue }),
+      content: getCurlTriggerSnippet({
+        identifier: trigger.identifier,
+        to: toValue,
+        payload: payloadValue,
+        snippet: reservedValue,
+      }),
     },
   ];
 
@@ -45,21 +55,17 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
 }
 
 export const getNodeTriggerSnippet = (props: CodeSnippetProps) => {
-  const triggerCodeSnippet = createNodeSnippet(props);
-
   return (
     <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
-      {triggerCodeSnippet}
+      {createNodeSnippet(props)}
     </Prism>
   );
 };
 
 export const getCurlTriggerSnippet = (props: CodeSnippetProps) => {
-  const curlSnippet = createCurlSnippet(props);
-
   return (
     <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">
-      {curlSnippet}
+      {createCurlSnippet(props)}
     </Prism>
   );
 };
