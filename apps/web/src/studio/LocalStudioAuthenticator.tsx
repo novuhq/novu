@@ -7,6 +7,7 @@ import { StudioState } from './types';
 import { useLocation } from 'react-router-dom';
 import { novuOnboardedCookie } from '../utils/cookies';
 import { LocalStudioPageLayout } from '../components/layout/components/LocalStudioPageLayout';
+import { EnvironmentEnum } from './constants/EnvironmentEnum';
 
 function buildBridgeURL(origin: string | null, tunnelPath: string) {
   if (!origin) {
@@ -26,7 +27,7 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 export function LocalStudioAuthenticator() {
   const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
   const location = useLocation();
-  const { environment } = useEnvironment();
+  const { environment, setEnvironment } = useEnvironment();
   const { apiKey } = useAPIKeys();
 
   // TODO: Refactor this to a smaller size function
@@ -74,66 +75,76 @@ export function LocalStudioAuthenticator() {
       return;
     }
 
-    // Wait for environment and apiKeys to be loaded
-    if (!environment || !apiKey) {
-      return;
-    }
+    // async to allow for waiting for dev env to be set
+    const handleEnvCheckAndRedirect = async () => {
+      // Wait for environment and apiKeys to be loaded
+      if (!environment || !apiKey) {
+        return;
+      }
 
-    if (environment.name.toLowerCase() !== 'development') {
-      throw new Error('Local Studio works only with development api keys');
-    }
+      if (environment.name.toLowerCase() !== 'development') {
+        // throw new Error('Local Studio works only with development api keys');
+        console.warn('Local Studio works only with development');
+        await setEnvironment(EnvironmentEnum.DEVELOPMENT);
 
-    // Get the local application origin parameter
-    const applicationOrigin = parsedSearchParams.get('application_origin');
+        return;
+      }
 
-    if (!applicationOrigin) {
-      throw new Error('Failed to load Local Studio: missing application_origin parameter.');
-    }
+      // Get the local application origin parameter
+      const applicationOrigin = parsedSearchParams.get('application_origin');
 
-    const parsedApplicationOrigin = new URL(applicationOrigin);
+      if (!applicationOrigin) {
+        throw new Error('Failed to load Local Studio: missing application_origin parameter.');
+      }
 
-    // Protect against XSS attacks via the javascript: pseudo protocol
-    assertProtocol(parsedApplicationOrigin);
+      const parsedApplicationOrigin = new URL(applicationOrigin);
 
-    // Get the optional tunnel origin parameter
-    const tunnelOrigin = parsedSearchParams.get('tunnel_origin');
-    const tunnelPath = parsedSearchParams.get('tunnel_route');
-    if (!tunnelPath) {
-      throw new Error('Tunnel Path is not defined');
-    }
+      // Protect against XSS attacks via the javascript: pseudo protocol
+      assertProtocol(parsedApplicationOrigin);
 
-    // Protect against XSS attacks via the javascript: pseudo protocol
-    assertProtocol(tunnelOrigin);
+      // Get the optional tunnel origin parameter
+      const tunnelOrigin = parsedSearchParams.get('tunnel_origin');
+      const tunnelPath = parsedSearchParams.get('tunnel_route');
+      if (!tunnelPath) {
+        throw new Error('Tunnel Path is not defined');
+      }
 
-    // Build the state that will be passed to the Local Studio iframe
+      // Protect against XSS attacks via the javascript: pseudo protocol
+      assertProtocol(tunnelOrigin);
 
-    const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
-    const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
+      // Build the state that will be passed to the Local Studio iframe
 
-    const state: StudioState = {
-      isLocalStudio: true,
-      devSecretKey: apiKey,
-      testUser: {
-        id: currentUser._id,
-        emailAddress: currentUser.email || '',
-      },
-      localBridgeURL,
-      tunnelBridgeURL,
-      organizationName: currentOrganization?.name || '',
+      const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
+      const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
+
+      const state: StudioState = {
+        isLocalStudio: true,
+        devSecretKey: apiKey,
+        testUser: {
+          id: currentUser._id,
+          emailAddress: currentUser.email || '',
+        },
+        localBridgeURL,
+        tunnelBridgeURL,
+        organizationName: currentOrganization?.name || '',
+      };
+
+      /*
+       * Construct the final redirect URL pointing to the Local Studio server and add
+       * the iframe src URL as a search param.
+       */
+      const finalRedirectURL = new URL(redirectURL);
+      finalRedirectURL.searchParams.append(
+        'local_studio_url',
+        buildStudioURL(state, currentURL.searchParams.get('studio_path_hint'))
+      );
+
+      // Redirect to Local Studio server
+      window.location.href = finalRedirectURL.href;
     };
 
-    /*
-     * Construct the final redirect URL pointing to the Local Studio server and add
-     * the iframe src URL as a search param.
-     */
-    const finalRedirectURL = new URL(redirectURL);
-    finalRedirectURL.searchParams.append(
-      'local_studio_url',
-      buildStudioURL(state, currentURL.searchParams.get('studio_path_hint'))
-    );
+    handleEnvCheckAndRedirect();
 
-    // Redirect to Local Studio server
-    window.location.href = finalRedirectURL.href;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, environment, apiKey]);
 
