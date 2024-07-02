@@ -67,7 +67,7 @@ export const GetStartedPageV2 = () => {
                 <div
                   style={{ width: '100%' }}
                   onDoubleClick={() => {
-                    segment.track('Command copied - [Get Started - V2]');
+                    track('Command copied - [Get Started - V2]');
                   }}
                 >
                   <CodeSnippet
@@ -82,7 +82,7 @@ export const GetStartedPageV2 = () => {
                       },
                     })}
                     onClick={() => {
-                      segment.track('Command copied - [Get Started - V2]');
+                      track('Command copied - [Get Started - V2]');
                     }}
                   />
                 </div>
@@ -102,7 +102,7 @@ export const GetStartedPageV2 = () => {
                 color: 'typography.text.secondary !important',
               })}
               onClick={() => {
-                segment.track('Invite button clicked - [Get Started - V2]');
+                track('Invite button clicked - [Get Started - V2]');
                 navigate(ROUTES.TEAM_SETTINGS);
               }}
             >
