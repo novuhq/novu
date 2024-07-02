@@ -5,6 +5,7 @@ export * from './input';
 export * from './NovuiProvider';
 export * from './select';
 export * from './table';
+export * from './modal';
 export * from './tabs';
 export * from './text';
 export * from './textarea';
