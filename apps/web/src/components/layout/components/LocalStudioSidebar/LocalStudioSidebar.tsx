@@ -1,9 +1,10 @@
 import { WithLoadingSkeleton } from '@novu/novui';
 import { IconCloudQueue } from '@novu/novui/icons';
+import { OutlineButton } from '../../../../studio/components/OutlineButton';
 import { useDiscover } from '../../../../studio/hooks/useBridgeAPI';
 import { Aside } from '../../../nav/Aside';
 import { LocalStudioSidebarContent } from './LocalStudioSidebarContent';
-import { SidebarFooterButton } from './SidebarFooterButton';
+import { SidebarFooter } from './SidebarFooter';
 
 export const LocalStudioSidebar: WithLoadingSkeleton = () => {
   const { isLoading, data } = useDiscover();
@@ -15,9 +16,11 @@ export const LocalStudioSidebar: WithLoadingSkeleton = () => {
   return (
     <Aside>
       <LocalStudioSidebarContent workflows={data?.workflows ?? []} isLoading={isLoading} />
-      <SidebarFooterButton onClick={goToCloudDashboard} Icon={IconCloudQueue}>
-        Open Cloud Dashboard
-      </SidebarFooterButton>
+      <SidebarFooter>
+        <OutlineButton fullWidth onClick={goToCloudDashboard} Icon={IconCloudQueue}>
+          Open Cloud Dashboard
+        </OutlineButton>
+      </SidebarFooter>
     </Aside>
   );
 };
