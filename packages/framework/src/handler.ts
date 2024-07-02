@@ -182,6 +182,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         if (errors.length !== 0) {
           return this.createResponse(HttpStatusEnum.UNPROCESSABLE_ENTITY, errors);
         }
+
         return this.triggerAction({ workflowId, ...body })();
       },
       [PostActionEnum.EXECUTE]: async () => {
