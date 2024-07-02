@@ -46,3 +46,13 @@ export type StudioState = LocalStudioState | CloudStudioState;
 
 /** Current state of connection to Novu Bridge */
 export type ConnectionStatus = 'connected' | 'disconnected' | 'loading';
+
+/** Payload from our well-known URI */
+export type LocalStudioWellKnownMetadata = {
+  port: string;
+  route: string;
+  dashboardUrl: string;
+  studioPort: string;
+  origin: string;
+  tunnelOrigin: string;
+};

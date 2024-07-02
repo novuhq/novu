@@ -1,44 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { LocalStudioWellKnownMetadata } from '../types';
 
 const WELL_KNOWN_URL = 'http://localhost:2022/.well-known/novu';
-const DEFAULT_STUDIO_URL = 'http://localhost:2022/studio';
+const DEFAULT_STUDIO_PROTOCOL = 'http:';
+const DEFAULT_STUDIO_HOST_NAME = 'localhost';
+const DEFAULT_STUDIO_PORT = '2022';
+
+type LocalStudioUrlParams = {
+  protocol?: string;
+  hostname?: string;
+  port?: string;
+};
+
+const createLocalStudioUrl = ({ protocol, hostname, port }: LocalStudioUrlParams = {}) =>
+  `${protocol || DEFAULT_STUDIO_PROTOCOL}//${hostname || DEFAULT_STUDIO_HOST_NAME}:${port || DEFAULT_STUDIO_PORT}`;
 
 type UseNavigateToLocalStudio = {
-  /** Invoked if "smart" navigation isn't feasible */
+  /** Invoked if "smart" navigation isn't available */
   fallbackFn?: () => void;
 };
 
 /**
- * TODO: repeatedly getting CORS error since origin appears as :4200 when trying to access :2022
- *
- * Get response, and navigate to the appropriate Local Studio URL. If no well-known response is available,
- * open a modal.
+ * Get response, and navigate to the appropriate Local Studio URL.
+ * If no well-known response is available, open a modal.
  */
 export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudio = {}) => {
-  const navigate = useNavigate();
-
   const forceStudioNavigation = () => {
-    navigate(DEFAULT_STUDIO_URL);
+    window.open(createLocalStudioUrl(), '_self');
   };
 
-  const { data, isError, isLoading } = useQuery([WELL_KNOWN_URL], async () => {
-    try {
-      const response = await fetch(WELL_KNOWN_URL, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+  const { data, isError, isLoading } = useQuery<LocalStudioWellKnownMetadata>([WELL_KNOWN_URL], async () => {
+    const response = await fetch(WELL_KNOWN_URL);
 
-      const resp = await response.json();
-
-      return resp;
-    } catch (err) {
-      if (err instanceof Error) {
-        console.error('Error fetching well-known file:', err.message);
-      }
-    }
+    return response.json();
   });
 
   const navigateToLocalStudio = useCallback(() => {
@@ -51,6 +46,8 @@ export const useNavigateToLocalStudio = ({ fallbackFn }: UseNavigateToLocalStudi
 
       return;
     }
+
+    window.open(createLocalStudioUrl({ port: data.studioPort }), '_self');
   }, [data, isError, isLoading]);
 
   return {
