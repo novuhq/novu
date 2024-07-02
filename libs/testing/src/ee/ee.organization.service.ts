@@ -7,19 +7,14 @@ export class EEOrganizationService {
   private memberRepository = getEERepository<MemberRepository>('MemberRepository');
 
   async createOrganization(orgId: string) {
-    // id, name, logo - lives in clerk; rest lives in our db
     const syncExternalOrg = {
       externalId: orgId,
-      jobTitle: JobTitleEnum.ENGINEER,
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
-      domain: 'example.com',
-      productUseCases: {
-        in_app: true,
-        digest: true,
-      },
     };
 
-    // link already existing organization in Clerk
+    /**
+     * Links Clerk organization with internal organization collection
+     * (!) this is without org creation side-effects
+     */
     return this.organizationRepository.create(syncExternalOrg);
   }
 

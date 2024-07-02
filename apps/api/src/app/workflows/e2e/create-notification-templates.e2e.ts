@@ -506,7 +506,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
   }
 });
 
-describe('Create Notification template from blueprint - /notification-templates (POST) @skip-in-ee', async () => {
+describe('Create Notification template from blueprint - /notification-templates (POST)', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
@@ -548,8 +548,14 @@ describe('Create Notification template from blueprint - /notification-templates 
     const { blueprintId } = await buildBlueprint(session, prodEnv, notificationTemplateRepository);
 
     const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
-    const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
-    process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+
+    if (process.env.NOVU_ENTERPRISE === 'true') {
+      process.env.BLUEPRINT_CREATOR = session.organization._id;
+    } else {
+      const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
+      process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+    }
+
     blueprint.notificationGroupId = blueprint._notificationGroupId;
     blueprint.notificationGroup.name = 'New Group Name';
     blueprint.blueprintId = blueprint._id;

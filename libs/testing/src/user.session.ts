@@ -473,7 +473,8 @@ export class UserSession {
   }
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
-    const organizationService = new OrganizationService();
+    const organizationService =
+      process.env.NOVU_ENTERPRISE === 'true' ? new EEOrganizationService() : new OrganizationService();
 
     await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
   }

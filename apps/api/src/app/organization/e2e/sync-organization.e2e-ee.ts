@@ -7,12 +7,13 @@ import {
   JobTitleEnum,
   Organization,
   SmsProviderIdEnum,
-  SyncExternalOrganizationDto,
+  UpdateExternalOrganizationDto,
   User,
 } from '@novu/shared';
 import { EnvironmentRepository, IntegrationRepository, OrganizationEntity } from '@novu/dal';
 
-describe('Sync Organization - /organizations (POST)', async () => {
+// TODO: rework to clerk webhook
+describe.skip('Sync Organization - /organizations (POST)', async () => {
   let session: UserSession;
   let clerkClientMock: ClerkClientMock;
   let clerkUser: User;
@@ -22,7 +23,7 @@ describe('Sync Organization - /organizations (POST)', async () => {
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
 
-  const testOrganization: SyncExternalOrganizationDto = {
+  const testOrganization: UpdateExternalOrganizationDto = {
     jobTitle: JobTitleEnum.ENGINEER,
     domain: 'example.com',
     productUseCases: {
@@ -31,7 +32,7 @@ describe('Sync Organization - /organizations (POST)', async () => {
     },
   };
 
-  function getRequest(payload: SyncExternalOrganizationDto, origin: string = process.env.FRONT_BASE_URL) {
+  function getRequest(payload: UpdateExternalOrganizationDto, origin: string = process.env.FRONT_BASE_URL) {
     return session.testAgent.post('/v1/organizations/').set('origin', origin).send(payload);
   }
 

@@ -1,6 +1,6 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
-import { NotificationRepository, OrganizationRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
@@ -12,11 +12,11 @@ describe('GetPlatformNotificationUsage', () => {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const { GetPlatformNotificationUsage, GetPlatformNotificationUsageCommand } = eeBilling;
 
-  const organizationRepo = new OrganizationRepository();
+  const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
 
   const createUseCase = () => {
-    const useCase = new GetPlatformNotificationUsage(organizationRepo);
+    const useCase = new GetPlatformNotificationUsage(environmentRepo);
 
     return useCase;
   };
