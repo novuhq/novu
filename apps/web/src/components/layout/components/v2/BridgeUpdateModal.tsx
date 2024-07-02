@@ -3,7 +3,7 @@ import { css } from '@novu/novui/css';
 import { Button, Input, Title, Text } from '@novu/novui';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { HStack, Box } from '@novu/novui/jsx';
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { validateBridgeUrl } from '../../../../api/bridge';
 import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
@@ -27,6 +27,10 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
+
+  useEffect(() => {
+    setUrl(bridgeURL);
+  }, [bridgeURL]);
 
   const onBridgeUrlChange = (event) => {
     event.preventDefault();
@@ -97,6 +101,9 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
       <Box colorPalette={'mode.local'}>
         <Input
           label={'Novu Endpoint URL'}
+          description={
+            'This url should be a full URL to the Novu Endpoint including the /api/novu path, e.g. https://your.api.com/api/novu'
+          }
           onChange={onBridgeUrlChange}
           value={url}
           disabled={isLoading}
