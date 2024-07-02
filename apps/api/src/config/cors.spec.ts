@@ -30,6 +30,7 @@ describe('CORS Configuration', () => {
         process.env.NODE_ENV = environment;
 
         process.env.FRONT_BASE_URL = 'https://test.com';
+        process.env.LEGACY_V1_FRONT_BASE_URL = 'https://test-legacy.com';
         process.env.WIDGET_BASE_URL = 'https://widget.com';
         process.env.PR_PREVIEW_ROOT_URL = 'https://pr-preview.com';
       });
@@ -46,9 +47,10 @@ describe('CORS Configuration', () => {
 
         expect(callbackSpy.calledOnce).to.be.ok;
         expect(callbackSpy.firstCall.firstArg).to.be.null;
-        expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(2);
+        expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(3);
         expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal('https://test.com');
-        expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal('https://widget.com');
+        expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal('https://test-legacy.com');
+        expect(callbackSpy.firstCall.lastArg.origin[2]).to.equal('https://widget.com');
       });
 
       it('widget routes should be wildcarded', () => {

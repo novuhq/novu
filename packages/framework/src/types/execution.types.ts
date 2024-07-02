@@ -1,5 +1,4 @@
 import { Subscriber } from './subscriber.types';
-import { ITenantDefine, ITriggerPayload, TriggerRecipientsPayload, TriggerRecipientSubscriber } from '@novu/shared';
 
 export type Event = {
   /** @deprecated */
@@ -13,18 +12,6 @@ export type Event = {
   state: State[];
   action: 'execute' | 'preview';
   subscriber: Subscriber;
-};
-
-export type TriggerEvent = {
-  workflowId: string;
-  to: TriggerRecipientsPayload;
-  actor?: TriggerRecipientSubscriber;
-  bridgeUrl?: string;
-  payload: ITriggerPayload;
-  tenant?: ITenantDefine;
-  transactionId?: string;
-  overrides?: Record<string, unknown>;
-  controls?: Record<string, unknown>;
 };
 
 export type State = {

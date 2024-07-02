@@ -21,6 +21,8 @@ declare global {
       DISABLE_USER_REGISTRATION: `${boolean}`;
       IS_API_IDEMPOTENCY_ENABLED: `${boolean}`;
       FRONT_BASE_URL: string;
+      // @deprecated use FRONT_BASE_URL
+      LEGACY_V1_FRONT_BASE_URL: string;
       API_ROOT_URL: string;
       SENTRY_DSN: string;
       STRIPE_API_KEY: string;

@@ -1,19 +1,23 @@
 import { ChannelStepEnum } from './constants';
-import { StepAlreadyExistsError } from './errors';
+import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
 import {
   ActionStep,
   Awaitable,
+  CancelEventTriggerResponse,
   CustomStep,
   DiscoverStepOutput,
   DiscoverWorkflowOutput,
   Execute,
+  FromSchema,
+  Schema,
   StepType,
+  EventTriggerResponse,
+  Workflow,
   WorkflowOptions,
 } from './types';
-import { FromSchema, Schema } from './types/schema.types';
-import { EMOJI, log } from './utils';
-import { transformSchema } from './validators';
+import { EMOJI, getBridgeUrl, initApiClient, log } from './utils';
+import { transformSchema, validateData } from './validators';
 
 /**
  * Define a new notification workflow.
@@ -27,8 +31,50 @@ export function workflow<
   workflowId: string,
   execute: Execute<T_Payload, T_Control>,
   workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema>
-): DiscoverWorkflowOutput {
+): Workflow<T_Payload> {
   const options = workflowOptions ? workflowOptions : {};
+
+  const apiClient = initApiClient(process.env.NOVU_SECRET_KEY as string);
+
+  const trigger: Workflow<T_Payload>['trigger'] = async (event) => {
+    if (!process.env.NOVU_SECRET_KEY) {
+      throw new MissingSecretKeyError();
+    }
+
+    let validatedData: T_Payload;
+    if (options.payloadSchema) {
+      const validationResult = await validateData(options.payloadSchema, event.payload);
+      if (validationResult.success === false) {
+        throw new WorkflowPayloadInvalidError(workflowId, validationResult.errors);
+      }
+      validatedData = validationResult.data;
+    }
+    const bridgeUrl = await getBridgeUrl();
+
+    const requestPayload = {
+      name: workflowId,
+      to: event.to,
+      payload: {
+        ...event?.payload,
+      },
+      ...(event.transactionId && { transactionId: event.transactionId }),
+      ...(event.overrides && { overrides: event.overrides }),
+      ...(event.actor && { actor: event.actor }),
+      ...(event.tenant && { tenant: event.tenant }),
+      ...(bridgeUrl && { bridgeUrl }),
+    };
+
+    const result = await apiClient.post<EventTriggerResponse>('/events/trigger', requestPayload);
+
+    const cancel = async () => {
+      return apiClient.delete<CancelEventTriggerResponse>(`/events/trigger/${result.transactionId}`);
+    };
+
+    return {
+      cancel,
+      data: result,
+    };
+  };
 
   const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,
@@ -100,7 +146,10 @@ export function workflow<
 
   prettyPrintDiscovery(newWorkflow);
 
-  return newWorkflow;
+  return {
+    trigger,
+    definition: newWorkflow,
+  };
 }
 
 function discoverStepFactory<T, U>(

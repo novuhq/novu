@@ -2,21 +2,18 @@ import { nanoid } from 'nanoid';
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 import { encryptApiKey } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from './create-environment.command';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
-// eslint-disable-next-line max-len
-import { CreateNotificationGroupCommand } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.command';
-import { CreateNotificationGroup } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.usecase';
-import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts/usecases/create-default-layout';
+import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts/usecases';
 
 @Injectable()
 export class CreateEnvironment {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private createNotificationGroup: CreateNotificationGroup,
+    private notificationGroupRepository: NotificationGroupRepository,
     private generateUniqueApiKey: GenerateUniqueApiKey,
     private createDefaultLayoutUsecase: CreateDefaultLayout
   ) {}
@@ -41,14 +38,11 @@ export class CreateEnvironment {
     });
 
     if (!command.parentEnvironmentId) {
-      await this.createNotificationGroup.execute(
-        CreateNotificationGroupCommand.create({
-          organizationId: command.organizationId,
-          environmentId: environment._id,
-          userId: command.userId,
-          name: 'General',
-        })
-      );
+      await this.notificationGroupRepository.create({
+        _environmentId: environment._id,
+        _organizationId: command.organizationId,
+        name: 'General',
+      });
 
       await this.createDefaultLayoutUsecase.execute(
         CreateDefaultLayoutCommand.create({
@@ -57,6 +51,20 @@ export class CreateEnvironment {
           userId: command.userId,
         })
       );
+    }
+
+    if (command.parentEnvironmentId) {
+      const group = await this.notificationGroupRepository.findOne({
+        _organizationId: command.organizationId,
+        _environmentId: command.parentEnvironmentId,
+      });
+
+      await this.notificationGroupRepository.create({
+        _environmentId: environment._id,
+        _organizationId: command.organizationId,
+        name: group?.name,
+        _parentId: group?._id,
+      });
     }
 
     return environment;
