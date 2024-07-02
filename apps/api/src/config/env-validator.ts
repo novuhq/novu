@@ -21,7 +21,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   PORT: port(),
   FRONT_BASE_URL: url(),
-  LEGACY_V1_FRONT_BASE_URL: url(),
+  LEGACY_V1_FRONT_BASE_URL: url({
+    default: '',
+  }),
   DISABLE_USER_REGISTRATION: str({
     default: 'false',
     choices: ['false', 'true'],
