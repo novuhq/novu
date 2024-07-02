@@ -1,13 +1,12 @@
 {
   "name": "novu",
-  "version": "0.24.3-alpha.5",
-  "description": "Novu CLI. Used to sign-up, sync with Novu Cloud, and run Novu Studio.",
+  "version": "0.24.3-alpha.8",
+  "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
   "main": "index.js",
   "scripts": {
-    "build:post": "cross-env mkdir dist/constants/dashboard && ncp src/constants/dashboard/index.html dist/constants/dashboard/index.html",
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.build.json && pnpm build:post",
-    "build:prod": "pnpm prebuild && pnpm build && pnpm build:post",
+    "build": "pnpm prebuild && tsc -p tsconfig.build.json",
+    "build:prod": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
@@ -40,9 +39,11 @@
     "@types/inquirer": "^8.2.0",
     "@types/mocha": "10.0.2",
     "@types/ws": "^8.5.3",
+    "ts-node": "~10.9.1",
     "ncp": "^2.0.0",
     "nodemon": "^3.0.1",
-    "typescript": "4.9.5"
+    "typescript": "4.9.5",
+    "vitest": "^1.2.1"
   },
   "dependencies": {
     "@novu/ntfr-client": "^0.0.3",
@@ -57,12 +58,9 @@
     "gradient-string": "^2.0.0",
     "inquirer": "^8.2.0",
     "jwt-decode": "^3.1.2",
-    "localtunnel": "^2.0.2",
     "open": "^8.4.0",
     "ora": "^5.4.1",
-    "ts-node": "~10.9.1",
     "uuid": "^9.0.0",
-    "vitest": "^1.2.1",
     "ws": "^8.11.0"
   }
 }

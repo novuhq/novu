@@ -405,7 +405,7 @@ async function createWorkflow(page: Page) {
 }
 async function assertCurlSnippet(snippetModal: CodeSnippetSidePanelPageModel) {
   const curlSnippetText = await snippetModal.getCurlSnippet();
-  expect(curlSnippetText).toContain("--header 'Authorization: ApiKey");
+  expect(curlSnippetText).toContain("-H 'Authorization: ApiKey");
   expect(curlSnippetText).toContain('taskName');
 }
 interface DigestTestData {

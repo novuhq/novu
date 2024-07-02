@@ -58,6 +58,7 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
       uiSchema={UI_SCHEMA}
       widgets={WIDGETS}
       validator={validator}
+      autoComplete={'false'}
       liveValidate
       templates={{
         ArrayFieldTitleTemplate,

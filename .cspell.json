@@ -140,6 +140,7 @@
     "domainname",
     "domainsuffix",
     "donefunc",
+    "Dotan",
     "dotenv",
     "doublecolon",
     "dtos",
@@ -151,6 +152,7 @@
     "elif",
     "emailjs",
     "Embeddable",
+    "Emek",
     "EMSA",
     "endgroup",
     "enroute",
@@ -308,6 +310,7 @@
     "mkdocs",
     "mlen",
     "moby",
+    "Modiin",
     "modlen",
     "mongod",
     "mongosh",
@@ -648,7 +651,8 @@
     "liquidjs",
     "tailwindcss",
     "focusable",
-    "textareas"
+    "textareas",
+    "echoterminal"
   ],
   "flagWords": [],
   "patterns": [

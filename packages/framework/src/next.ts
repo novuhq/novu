@@ -24,7 +24,13 @@ export const frameworkName: SupportedFrameworkName = 'next';
  * export const { GET, POST, OPTIONS } = serve({ workflows: [yourWorkflow] });
  * ```
  */
-export const serve = (options: ServeHandlerOptions): any => {
+export const serve = (
+  options: ServeHandlerOptions
+): ((expectedReq: NextRequest, res: NextApiResponse) => Promise<Response>) & {
+  GET: (expectedReq: NextRequest, res: NextApiResponse) => Promise<Response>;
+  POST: (expectedReq: NextRequest, res: NextApiResponse) => Promise<Response>;
+  OPTIONS: (expectedReq: NextRequest, res: NextApiResponse) => Promise<Response>;
+} => {
   const novuHandler = new NovuRequestHandler({
     frameworkName,
     ...options,
@@ -179,12 +185,10 @@ export const serve = (options: ServeHandlerOptions): any => {
   const handlerFunctions = Object.defineProperties(defaultHandler, {
     GET: { value: baseHandler.bind(null, 'GET') },
     POST: { value: baseHandler.bind(null, 'POST') },
-    PUT: { value: baseHandler.bind(null, 'PUT') },
     OPTIONS: { value: baseHandler.bind(null, 'OPTIONS') },
   }) as HandlerFunction & {
     GET: HandlerFunction;
     POST: HandlerFunction;
-    PUT: HandlerFunction;
     OPTIONS: HandlerFunction;
   };
 

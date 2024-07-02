@@ -9,6 +9,7 @@ import {
 
 import {
   AddressingTypeEnum,
+  ControlsDto,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
@@ -53,6 +54,8 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   bridgeWorkflow?: DiscoverWorkflowOutput;
+
+  controls?: ControlsDto;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {

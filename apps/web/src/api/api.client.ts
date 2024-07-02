@@ -7,7 +7,7 @@ interface IOptions {
   absoluteUrl: boolean;
 }
 
-// @deprecated Migrate all api methods to the new buildAPIHTTPClient that allows runtime configuration on the client object.
+// @deprecated Migrate all api methods to the new buildApiHttpClient that allows runtime configuration on the client object.
 export const api = {
   get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
@@ -94,7 +94,7 @@ function getHeaders() {
 }
 
 // WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.
-export function buildAPIHTTPClient({
+export function buildApiHttpClient({
   baseURL = API_ROOT || 'https://api.novu.co',
   secretKey,
   jwt,
@@ -128,6 +128,17 @@ export function buildAPIHTTPClient({
     }
   };
 
+  const post = async (url, data = {}) => {
+    try {
+      const response = await httpClient.post(url, data);
+
+      return response.data;
+    } catch (error) {
+      // TODO: Handle error?.response?.data || error?.response || error;
+      throw error;
+    }
+  };
+
   return {
     async getNotifications(params?: { page?: number; transactionId?: string }) {
       return get(`/v1/notifications`, params);
@@ -135,6 +146,16 @@ export function buildAPIHTTPClient({
 
     async getNotification(notificationId: string) {
       return get(`/v1/notifications/${notificationId}`);
+    },
+
+    async getApiKeys() {
+      return get(`/v1/environments/api-keys`);
+    },
+
+    async syncBridge(bridgeUrl: string) {
+      return post(`/v1/bridge/sync`, {
+        bridgeUrl,
+      });
     },
   };
 }

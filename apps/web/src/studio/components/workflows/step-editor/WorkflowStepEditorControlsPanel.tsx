@@ -7,15 +7,20 @@ import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useDebouncedCallback } from '@novu/novui';
+
+export type OnChangeType = 'step' | 'payload';
 
 interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
-  onChange: (type: 'step' | 'payload', data: any) => void;
+  onChange: (type: OnChangeType, data: any, id?: string) => void;
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
 }
+
+const TYPING_DEBOUNCE_TIME_MS = 500;
 
 export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPanelProps> = ({
   step,
@@ -28,12 +33,19 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   const segment = useSegment();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
-    return Object.keys(workflow?.payload?.schema || workflow?.options?.payloadSchema || {}).length > 0;
-  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema]);
+    return (
+      Object.keys(workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {})
+        .length > 0
+    );
+  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
   const haveControlProperties = useMemo(() => {
     return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
   }, [step?.controls?.schema, step?.inputs?.schema]);
+
+  const handleOnChange = useDebouncedCallback(async (type: OnChangeType, data: any, id?: string) => {
+    onChange(type, data, id);
+  }, TYPING_DEBOUNCE_TIME_MS);
 
   return (
     <>
@@ -67,7 +79,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   )}
 
                   <JsonSchemaForm
-                    onChange={(data) => onChange('step', data)}
+                    onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
                   />
@@ -92,8 +104,10 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
               <Container className={formContainerClassName}>
                 <When truthy={havePayloadProperties}>
                   <JsonSchemaForm
-                    onChange={(data) => onChange('payload', data)}
-                    schema={workflow?.payload?.schema || workflow?.options?.payloadSchema || {}}
+                    onChange={(data, id) => handleOnChange('payload', data, id)}
+                    schema={
+                      workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {}
+                    }
                     formData={{}}
                   />
                 </When>
