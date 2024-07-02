@@ -128,6 +128,17 @@ export function buildApiHttpClient({
     }
   };
 
+  const post = async (url, data = {}) => {
+    try {
+      const response = await httpClient.post(url, data);
+
+      return response.data;
+    } catch (error) {
+      // TODO: Handle error?.response?.data || error?.response || error;
+      throw error;
+    }
+  };
+
   return {
     async getNotifications(params?: { page?: number; transactionId?: string }) {
       return get(`/v1/notifications`, params);
@@ -139,6 +150,12 @@ export function buildApiHttpClient({
 
     async getApiKeys() {
       return get(`/v1/environments/api-keys`);
+    },
+
+    async syncBridge(bridgeUrl: string) {
+      return post(`/v1/bridge/sync`, {
+        bridgeUrl,
+      });
     },
   };
 }

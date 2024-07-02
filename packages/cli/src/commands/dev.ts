@@ -23,7 +23,7 @@ export enum DashboardUrlEnum {
   STAGING = 'https://dev.dashboard.novu.co',
 }
 
-const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
+const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 
 export type DevCommandOptions = {
   port: string;

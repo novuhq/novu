@@ -2,22 +2,59 @@
 import { Prism } from '@mantine/prism';
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
-import { Tabs, Text, Title } from '@novu/novui';
-import { FC } from 'react';
+import { Button, Checkbox, Input, Tabs, Text, Title } from '@novu/novui';
+import { FC, useEffect, useState } from 'react';
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
-import { API_ROOT, ENV } from '../../../../config';
+import { API_ROOT, ENV, WEBHOOK_URL } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
+import { buildApiHttpClient } from '../../../../api';
+import { showNotification } from '@mantine/notifications';
+import { Code } from '@mantine/core';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
   toggleOpen: () => void;
 };
 
-const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_BRIDGE_URL>';
+const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
-  const { devSecretKey } = useStudioState();
+  const { devSecretKey, isLocalStudio } = useStudioState();
+  const [manualUrl, setTunnelManualURl] = useState('');
+
   const bridgeUrl = useBridgeURL(true);
+  const [loadingSync, setLoadingSync] = useState(false);
+
+  useEffect(() => {
+    setTunnelManualURl(bridgeUrl);
+  }, [bridgeUrl]);
+
+  async function handleLocalSync() {
+    const api = buildApiHttpClient({
+      secretKey: devSecretKey,
+    });
+
+    try {
+      setLoadingSync(true);
+      const result = await api.syncBridge(manualUrl);
+
+      toggleOpen();
+
+      showNotification({
+        color: 'green',
+        message: `Synced successfully. Visit https://web.novu.co`,
+      });
+    } catch (error: any) {
+      showNotification({
+        color: 'red',
+        message: `Error occurred while syncing. ${error?.response?.data?.message || error?.message}`,
+      });
+    } finally {
+      setLoadingSync(false);
+    }
+  }
+
+  const bridgeUrlToDisplay = BRIDGE_ENDPOINT_PLACEHOLDER;
 
   const tabs = [
     {
@@ -25,7 +62,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       label: 'CLI',
       content: (
         <Prism withLineNumbers language="bash">
-          {getOtherCodeContent({ secretKey: devSecretKey || '', bridgeUrl })}
+          {getOtherCodeContent({ secretKey: devSecretKey || '', bridgeUrl: bridgeUrlToDisplay })}
         </Prism>
       ),
     },
@@ -34,8 +71,39 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       label: 'GitHub Actions',
       content: (
         <Prism withLineNumbers language="yaml">
-          {getGithubYamlContent({ bridgeUrl })}
+          {getGithubYamlContent({ bridgeUrl: bridgeUrlToDisplay })}
         </Prism>
+      ),
+    },
+    {
+      value: 'manual',
+      label: 'Manual',
+      content: (
+        <>
+          <Text style={{ marginTop: 10 }}>
+            <Input
+              onChange={(e) => setTunnelManualURl(e.target.value)}
+              value={manualUrl}
+              description={'Specify a bridge endpoint to sync Novu Cloud with'}
+              label={'Tunnel URL to sync'}
+            />
+          </Text>
+
+          {bridgeUrl === manualUrl ? (
+            <Text variant={'secondary'} style={{ marginTop: 10 }}>
+              This tunnel URL will use your local computer's tunnel URL to forward requests. The tunnel must be running
+              to actively sync with Novu Cloud.
+              <br /> <br />
+              We recommend syncing to a deployed environment in your cloud with a publicly exposed endpoint.
+            </Text>
+          ) : null}
+
+          <div style={{ textAlign: 'right', marginTop: 15 }}>
+            <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
+              Manual Sync
+            </Button>
+          </div>
+        </>
       ),
     },
   ];
@@ -67,9 +135,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Sync State to Novu
         uses: novuhq/actions-novu-sync@v2
         with:
