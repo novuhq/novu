@@ -1,6 +1,5 @@
 import { Loader } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
 import { Center } from '@novu/novui/jsx';
@@ -18,6 +17,7 @@ import { useTemplateFetcher } from '../../../../api/hooks/index';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../StudioStateProvider';
 import { testTrigger } from '../../../../api/notification-templates';
+import { OutlineButton } from '../../OutlineButton';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 
 export const WorkflowsTestPage = () => {
@@ -139,9 +139,9 @@ export const WorkflowsTestPage = () => {
       description="Trigger a test run for this workflow"
       icon={<IconOutlineCable size="32" />}
       actions={
-        <Button loading={isTestLoading} Icon={IconPlayArrow} onClick={handleTestClick}>
-          Trigger test
-        </Button>
+        <OutlineButton loading={isTestLoading} Icon={IconPlayArrow} onClick={handleTestClick}>
+          Test workflow
+        </OutlineButton>
       }
     >
       <WorkflowsPanelLayout>
