@@ -2,7 +2,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { Input, Switch, Check, Copy } from '@novu/design-system';
+import { Input, Switch, Check, Copy, colors, Tooltip } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
 
 const CopyWrapper = styled.div`
@@ -27,14 +27,36 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
         control={control}
         name="active"
         defaultValue={false}
-        render={({ field }) => (
-          <Switch
-            checked={field.value}
-            label={field.value ? 'Active' : 'Disabled'}
-            data-test-id="is_active_id"
-            {...field}
-          />
-        )}
+        render={({ field }) => {
+          const switchComponent = (
+            <Switch
+              checked={field.value}
+              label={field.value ? 'Active' : 'Disabled'}
+              data-test-id="is_active_id"
+              {...field}
+            />
+          );
+
+          if (field.value && provider.primary) {
+            return (
+              <Tooltip
+                label={
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ color: colors.B60 }}>Disable instance</div>
+                    <div style={{ color: '#EAA900' }}>This action replaces the primary provider flag.</div>
+                  </div>
+                }
+                position="bottom-start"
+                multiline
+                width={147}
+              >
+                <div style={{ width: 'fit-content' }}>{switchComponent}</div>
+              </Tooltip>
+            );
+          }
+
+          return switchComponent;
+        }}
       />
       <Controller
         control={control}
