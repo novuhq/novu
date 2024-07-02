@@ -6,8 +6,8 @@ import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useDebouncedCallback } from '@novu/novui';
+import { useTelemetry } from '../../../../hooks/useNovuAPI';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -30,7 +30,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   defaultControls,
   isLoadingSave,
 }) => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
     return (
@@ -67,7 +67,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                         size={'sm'}
                         Icon={IconOutlineSave}
                         onClick={() => {
-                          segment.track('Step controls saved - [Workflows Step Page]', {
+                          track('Step controls saved - [Workflows Step Page]', {
                             step: step?.type,
                           });
                           onSave();

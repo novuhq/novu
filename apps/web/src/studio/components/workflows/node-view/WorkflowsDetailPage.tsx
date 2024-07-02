@@ -1,5 +1,4 @@
 import { Skeleton } from '@mantine/core';
-import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow } from '@novu/novui/icons';
 import { Stack } from '@novu/novui/jsx';
@@ -7,6 +6,7 @@ import { token } from '@novu/novui/tokens';
 import { useWorkflow } from '../../../hooks/useBridgeAPI';
 import { useStudioWorkflowsNavigation } from '../../../hooks/useStudioWorkflowsNavigation';
 import { PageContainer } from '../../../layout/PageContainer';
+import { OutlineButton } from '../../OutlineButton';
 import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
@@ -28,9 +28,9 @@ export const WorkflowsDetailPage = () => {
       title={title}
       actions={
         <>
-          <Button Icon={IconPlayArrow} variant="outline" onClick={() => goToTest(currentWorkflowId)}>
+          <OutlineButton Icon={IconPlayArrow} onClick={() => goToTest(currentWorkflowId)}>
             Test workflow
-          </Button>
+          </OutlineButton>
         </>
       }
     >

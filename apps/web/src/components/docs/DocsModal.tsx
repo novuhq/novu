@@ -1,5 +1,4 @@
 import { Modal } from '@novu/design-system';
-import { useSegment } from '../providers/SegmentProvider';
 import { useEffect, useState } from 'react';
 import { css } from '@novu/novui/css';
 import { Flex } from '@novu/novui/jsx';
@@ -9,11 +8,12 @@ import { DOCS_URL } from './docs.const';
 import { Voting, VotingWidget } from './VotingWidget';
 import { IconButton } from '@novu/novui';
 import { useLoadDocs } from './useLoadDocs';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 export const DocsModal = ({ open, toggle, path }) => {
   const [voted, setVoted] = useState<Voting | undefined>(undefined);
   const { isLoading, data, hasLoadedSuccessfully } = useLoadDocs({ path, isEnabled: open });
-  const segment = useSegment();
+  const track = useTelemetry();
 
   useEffect(() => {
     return () => {
@@ -23,7 +23,7 @@ export const DocsModal = ({ open, toggle, path }) => {
 
   const onVoteClick = (vote: Voting) => () => {
     if (vote) {
-      segment.track('Inline docs voting used', {
+      track('Inline docs voting used', {
         documentationPage: path,
         pageURL: window.location.href,
         vote,
