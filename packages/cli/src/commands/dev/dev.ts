@@ -1,7 +1,6 @@
 import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
-
 import { NtfrTunnel } from '@novu/ntfr-client';
 
 import { DevServer } from '../../dev-server';
@@ -9,12 +8,16 @@ import { showWelcomeScreen } from '../shared';
 import { config } from '../../index';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
-import { TUNNEL_URL } from './consts';
+import * as packageJson from '../../../package.json';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
   process.exit();
 });
+
+let tunnelClient: NtfrTunnel | null = null;
+export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
+const version = packageJson.version;
 
 export async function devCommand(options: DevCommandOptions) {
   await showWelcomeScreen();
@@ -90,6 +93,7 @@ async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
         headers: {
           accept: 'application/json',
           'Content-Type': 'application/json',
+          'User-Agent': `novu@${version}`,
         },
       })
     ).json();
@@ -106,12 +110,14 @@ async function createTunnel(localOrigin: string, endpointRoute: string): Promise
   const originUrl = new URL(localOrigin);
 
   if (storeUrl) {
-    await connectToTunnel(storeUrl, originUrl);
-    await wait(100);
-    const healthCheck = await tunnelHealthCheck(configTunnelUrl + endpointRoute);
+    try {
+      await connectToTunnel(storeUrl, originUrl);
 
-    if (healthCheck) {
-      return storeUrl.origin;
+      if (tunnelClient.isConnected) {
+        return storeUrl.origin;
+      }
+    } catch (error) {
+      return await connectToNewTunnel(originUrl);
     }
   }
 
@@ -137,7 +143,7 @@ async function fetchNewTunnel(): Promise<URL> {
 async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const ws = await import('ws');
-  const ntfrTunnel = new NtfrTunnel(
+  tunnelClient = new NtfrTunnel(
     parsedUrl.host,
     parsedOrigin.host,
     false,
@@ -149,7 +155,7 @@ async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
     { verbose: false }
   );
 
-  await ntfrTunnel.connect();
+  await tunnelClient.connect();
 }
 
 async function connectToNewTunnel(originUrl: URL) {

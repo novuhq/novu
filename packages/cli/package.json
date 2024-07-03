@@ -2,7 +2,7 @@
   "name": "novu",
   "version": "0.24.3-alpha.9",
   "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "pnpm prebuild && tsc -p tsconfig.build.json",
@@ -19,7 +19,7 @@
     "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon sync",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
     "start:debug": "cross-env TZ=UTC nodemon --config nodemon-debug.json",
-    "start:prod": "cross-env TZ=UTC node dist/index.js"
+    "start:prod": "cross-env TZ=UTC node dist/src/index.js"
   },
   "keywords": [
     "novu",
@@ -32,7 +32,7 @@
   "author": "Novu Team <engineering@novu.co>",
   "license": "ISC",
   "bin": {
-    "novu": "./dist/index.js"
+    "novu": "./dist/src/index.js"
   },
   "devDependencies": {
     "@types/configstore": "^5.0.1",
@@ -46,7 +46,7 @@
     "vitest": "^1.2.1"
   },
   "dependencies": {
-    "@novu/ntfr-client": "^0.0.3",
+    "@novu/ntfr-client": "^0.0.4",
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "axios": "^1.6.2",
