@@ -16,7 +16,6 @@ export class SegmentService {
     if (this._mixpanelEnabled) {
       mixpanel.init(process.env.REACT_APP_MIXPANEL_KEY as string, {
         record_sessions_percent: 100,
-        debug: true,
       });
     }
 
