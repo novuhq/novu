@@ -12,7 +12,10 @@ import { timelineRecipe } from './SetupTimeline.recipe';
 const Icon = () => (
   <IconCheck
     className={css({
-      color: 'typography.text.main !important',
+      color: {
+        base: 'surface.page !important',
+        _dark: 'typography.text.main !important',
+      },
     })}
   />
 );
