@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
-  CommunityMemberRepository,
-  CommunityOrganizationRepository,
-  CommunityUserRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -45,7 +42,7 @@ import {
   CreateExecutionDetails,
   injectRepositories,
 } from '@novu/application-generic';
-
+import { JwtService } from '@nestjs/jwt';
 import * as packageJson from '../../../package.json';
 import { JobTopicNameEnum } from '@novu/shared';
 
@@ -86,6 +83,7 @@ const dalService = {
 };
 
 const PROVIDERS = [
+  JwtService,
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,

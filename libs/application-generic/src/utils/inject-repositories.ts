@@ -111,6 +111,12 @@ export function injectRepositories() {
         jwtService
       );
     },
+    inject: [
+      UserRepository,
+      EnvironmentRepository,
+      SubscriberRepository,
+      JwtService,
+    ],
   };
 
   const eeUserAuthGuard = {
@@ -123,6 +129,7 @@ export function injectRepositories() {
 
       return new eeAuthPackage.EEUserAuthGuard(reflector);
     },
+    inject: [Reflector],
   };
 
   return [
@@ -134,5 +141,6 @@ export function injectRepositories() {
     CommunityOrganizationRepository,
     eeAuthServiceProvider,
     eeUserAuthGuard,
+    // JwtService,
   ];
 }
