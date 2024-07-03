@@ -1,12 +1,7 @@
-import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 import {
   CommunityUserRepository,
   CommunityMemberRepository,
   CommunityOrganizationRepository,
-  EnvironmentRepository,
-  SubscriberRepository,
-  UserRepository,
 } from '@novu/dal';
 
 class PlatformException extends Error {}
@@ -91,47 +86,6 @@ export function injectRepositories() {
     inject: [CommunityOrganizationRepository],
   };
 
-  const eeAuthServiceProvider = {
-    provide: 'AUTH_SERVICE',
-    useFactory: (
-      userRepository: UserRepository,
-      environmentRepository: EnvironmentRepository,
-      subscriberRepository: SubscriberRepository,
-      jwtService: JwtService
-    ) => {
-      const eeAuthPackage = require('@novu/ee-auth');
-      if (!eeAuthPackage?.EEAuthService) {
-        throw new PlatformException('EEAuthService is not loaded');
-      }
-
-      return new eeAuthPackage.EEAuthService(
-        userRepository,
-        environmentRepository,
-        subscriberRepository,
-        jwtService
-      );
-    },
-    inject: [
-      UserRepository,
-      EnvironmentRepository,
-      SubscriberRepository,
-      JwtService,
-    ],
-  };
-
-  const eeUserAuthGuard = {
-    provide: 'USER_AUTH_GUARD',
-    useFactory: (reflector: Reflector) => {
-      const eeAuthPackage = require('@novu/ee-auth');
-      if (!eeAuthPackage?.EEUserAuthGuard) {
-        throw new PlatformException('EEUserAuthGuard is not loaded');
-      }
-
-      return new eeAuthPackage.EEUserAuthGuard(reflector);
-    },
-    inject: [Reflector],
-  };
-
   return [
     eeUserRepositoryProvider,
     CommunityUserRepository,
@@ -139,8 +93,5 @@ export function injectRepositories() {
     CommunityMemberRepository,
     eeOrganizationRepositoryProvider,
     CommunityOrganizationRepository,
-    eeAuthServiceProvider,
-    eeUserAuthGuard,
-    // JwtService,
   ];
 }
