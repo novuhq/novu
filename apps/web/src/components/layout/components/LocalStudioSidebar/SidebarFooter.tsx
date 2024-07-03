@@ -18,7 +18,7 @@ export const SidebarFooter: FC<SidebarFooterProps> = ({ children, className }) =
         gradientTo={'surface.panel/100'}
         gradientToPosition={'80%'}
       />
-      <Stack bg="surface.panel" gap="100">
+      <Stack bg="surface.panel" gap="0">
         {children}
       </Stack>
     </NavMenuFooter>
