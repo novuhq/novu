@@ -22,22 +22,22 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
-import { Awaitable, EventTriggerParams, Workflow } from './types';
+import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { initApiClient } from './utils';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export interface ServeHandlerOptions {
+export type ServeHandlerOptions = {
   client?: Client;
   workflows: Array<Workflow>;
-}
+};
 
-interface INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
+export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
   frameworkName: string;
   client?: Client;
   workflows: Array<Workflow>;
   handler: Handler<Input, Output>;
-}
+};
 
 type Handler<Input extends any[] = any[], Output = any> = (...args: Input) => HandlerResponse<Output>;
 
@@ -50,11 +50,11 @@ type HandlerResponse<Output = any> = {
   transformResponse: (res: IActionResponse<string>) => Output;
 };
 
-interface IActionResponse<TBody extends string = string> {
+export type IActionResponse<TBody extends string = string> = {
   status: number;
   headers: Record<string, string>;
   body: TBody;
-}
+};
 
 export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;

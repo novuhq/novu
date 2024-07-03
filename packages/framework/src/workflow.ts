@@ -1,7 +1,7 @@
 import { ChannelStepEnum } from './constants';
 import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
-import {
+import type {
   ActionStep,
   Awaitable,
   CancelEventTriggerResponse,

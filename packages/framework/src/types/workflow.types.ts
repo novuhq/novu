@@ -1,5 +1,5 @@
-import { Step } from './step.types';
-import { Subscriber } from './subscriber.types';
+import type { Step } from './step.types';
+import type { Subscriber } from './subscriber.types';
 
 /**
  * The parameters for the workflow function.
