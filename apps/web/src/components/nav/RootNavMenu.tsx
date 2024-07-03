@@ -60,7 +60,7 @@ export const RootNavMenu: React.FC = () => {
         <OrganizationSelect />
         <NavMenuLinkButton
           label="Get started"
-          isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding}
+          isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding && !isV2Enabled}
           icon={<IconTaskAlt />}
           link={ROUTES.GET_STARTED}
           testId="side-nav-quickstart-link"

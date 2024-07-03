@@ -85,11 +85,11 @@ export const GetStartedPageV2 = () => {
             })}
             textAlign="center"
           >
-            Start building your workflows in code
+            Start building your notifications in code
           </Title>
           <HStack
             className={css({
-              marginBottom: '150',
+              marginBottom: '5rem',
               flexWrap: 'wrap',
             })}
           >
@@ -104,6 +104,7 @@ export const GetStartedPageV2 = () => {
                 <HStack
                   className={css({
                     justifyContent: 'space-between',
+                    marginBottom: '100',
                   })}
                 >
                   <Title variant="subsection">Run this in your terminal to get started</Title>
@@ -124,7 +125,15 @@ export const GetStartedPageV2 = () => {
                 </HStack>
 
                 <div
-                  style={{ width: '100%' }}
+                  className={css({
+                    width: '100%',
+                    background: 'var(--mantine-color-gradient-outline)',
+                    backgroundClip: 'padding-box',
+                    border: 'none !important',
+                    padding: '1px',
+                    borderRadius: '100',
+                    boxShadow: 'dark !important',
+                  })}
                   onDoubleClick={() => {
                     track('Command copied - [Get Started - V2]');
                   }}
@@ -134,6 +143,8 @@ export const GetStartedPageV2 = () => {
                     className={css({
                       width: '100%',
                       '& input': {
+                        margin: '0 !important',
+                        color: 'typography.text.main !important',
                         background: {
                           base: 'surface.panel !important',
                           _dark: 'surface.popover !important',
@@ -148,26 +159,9 @@ export const GetStartedPageV2 = () => {
               </div>
             </VStack>
           </HStack>
-          <HStack gap="50" className={css({ justifyContent: 'center' })}>
-            <Text
-              className={css({
-                color: 'typography.text.secondary',
-              })}
-            >
-              Not a developer? Invite your dev team to set you up
-            </Text>
-            <BadgeButton
-              onClick={() => {
-                track('Invite devs link clicked - [Workflows empty state]');
-                navigate(ROUTES.TEAM_SETTINGS);
-              }}
-            >
-              <IconGroupAdd size={16} /> <span>Invite devs</span>
-            </BadgeButton>
-          </HStack>
           <HStack
             className={css({
-              marginTop: '375',
+              marginBottom: '375',
               justifyContent: 'space-between',
               width: '100%',
               flexWrap: 'wrap',
@@ -276,6 +270,24 @@ export const GetStartedPageV2 = () => {
               </BadgeButton>
               <GithubAction />
             </VStack>
+          </HStack>
+          <HStack gap="50" className={css({ justifyContent: 'center' })}>
+            <Text
+              className={css({
+                color: 'typography.text.secondary',
+              })}
+            >
+              Not a developer? Invite your developers to start your Novu integration
+            </Text>
+
+            <BadgeButton
+              onClick={() => {
+                track('Invite devs link clicked - [Workflows empty state]');
+                navigate(ROUTES.TEAM_SETTINGS);
+              }}
+            >
+              <IconGroupAdd size={16} /> <span>Invite developers</span>
+            </BadgeButton>
           </HStack>
         </div>
       </VStack>
