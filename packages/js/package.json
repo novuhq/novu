@@ -78,10 +78,12 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.6.7",
     "@novu/client": "workspace:*",
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
+    "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.8.11"
   }
 }

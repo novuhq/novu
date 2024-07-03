@@ -1,22 +1,10 @@
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
-import { useUncontrolledState } from '../helpers';
+import { useUncontrolledState } from '../../helpers';
 import { PopoverContent } from './PopoverContent';
 import { PopoverTarget } from './PopoverTarget';
 
-type Direction = 'top' | 'bottom' | 'left' | 'right';
-type AnchorPosition = 'start' | 'end';
-type Position = Direction | `${Direction}-${AnchorPosition}`;
-type Offset = {
-  x: number | string;
-  y: number | string;
-};
-
 export type PopoverProps = {
-  opened?: boolean;
-  defaultOpened?: boolean;
-  onChange?: (value: boolean) => void;
-  position?: Position;
-  offset?: Offset;
+  open?: boolean;
   children?: JSX.Element;
 };
 
@@ -28,8 +16,6 @@ type PopoverContextType = {
   setTargetRef: Setter<HTMLElement | null>;
   onToggle: () => void;
   onClose: () => void;
-  position?: Position;
-  offset?: Offset;
 };
 
 const PopoverContext = createContext<PopoverContextType | undefined>(undefined);
@@ -39,15 +25,12 @@ export function Popover(props: PopoverProps) {
   const [contentRef, setContentRef] = createSignal<HTMLElement | null>(null);
 
   const [isOpen, setIsOpen] = useUncontrolledState({
-    value: props.opened,
+    value: props.open,
     fallbackValue: false,
-    onChange: props.onChange,
-    defaultValue: props.defaultOpened,
   });
 
   const onClose = () => {
     setIsOpen(false);
-    props.onChange?.(false);
   };
 
   const onToggle = () => {
@@ -55,7 +38,6 @@ export function Popover(props: PopoverProps) {
       onClose();
     } else {
       setIsOpen(true);
-      props.onChange?.(true);
     }
   };
 
@@ -68,8 +50,6 @@ export function Popover(props: PopoverProps) {
     targetRef,
     opened: isOpen,
     onChange: setIsOpen,
-    position: props.position,
-    offset: props.offset,
   };
 
   return <PopoverContext.Provider value={context}>{props.children}</PopoverContext.Provider>;

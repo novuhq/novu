@@ -1,11 +1,20 @@
-import { createMemo, JSX, onCleanup, onMount, ParentComponent, Show } from 'solid-js';
+import { onCleanup, onMount, ParentComponent, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { getOffsetTranslate, getPositionClasses, useStyle } from '../helpers';
+import { useStyle } from '../../helpers';
 import { usePopover } from './Popover';
+import { useFloating } from 'solid-floating-ui';
 
+import { autoUpdate, offset, flip, shift } from '@floating-ui/dom';
 export const PopoverContent: ParentComponent = (props) => {
   const style = useStyle();
-  const { setContentRef, opened, targetRef, position, offset, onClose, contentRef } = usePopover();
+  const { setContentRef, opened, targetRef, onClose, contentRef } = usePopover();
+
+  const position = useFloating(targetRef, contentRef, {
+    placement: 'bottom-end',
+    whileElementsMounted: autoUpdate,
+
+    middleware: [offset(10), flip(), shift()],
+  });
 
   const handleClickOutside = (e: any) => {
     if (contentRef()?.contains(e.target)) return;
@@ -28,10 +37,6 @@ export const PopoverContent: ParentComponent = (props) => {
     document.body.removeEventListener('keydown', handleEscapeKey);
   });
 
-  const positionValue = createMemo(() => position || 'bottom-end');
-  const positionClasses = createMemo(() => getPositionClasses(positionValue()));
-  const offsetvalue = createMemo(() => getOffsetTranslate(offset, positionValue()));
-
   return (
     <Show when={opened() && targetRef()}>
       <Portal mount={targetRef() as HTMLElement}>
@@ -40,12 +45,15 @@ export const PopoverContent: ParentComponent = (props) => {
           ref={setContentRef}
           class={style(
             `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0
-         nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-absolute nt-z-[9999]
-       ${positionClasses()}`,
+         nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999]
+       `,
             'popover'
           )}
-          style={offsetvalue()}
-          data-position={positionValue()}
+          style={{
+            position: position.strategy,
+            top: `${position.y ?? 0}px`,
+            left: `${position.x ?? 0}px`,
+          }}
         >
           {props.children}
         </div>
