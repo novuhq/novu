@@ -22,6 +22,7 @@ describe('env.utils', () => {
     beforeEach(() => {
       delete process.env.NOVU_BRIDGE_ORIGIN;
       delete process.env.NEXT_PUBLIC_VERCEL_URL;
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
       // @ts-expect-error - overriding read-only property
       process.env.NODE_ENV = 'development';
     });
@@ -32,8 +33,10 @@ describe('env.utils', () => {
       expect(url).toBe('http://example.com/api/novu');
     });
 
-    it('should return NEXT_PUBLIC_VERCEL_URL if NOVU_BRIDGE_ORIGIN is not defined', async () => {
+    it('should return NEXT_PUBLIC_VERCEL_URL if NEXT_PUBLIC_VERCEL_ENV is preview', async () => {
       process.env.NEXT_PUBLIC_VERCEL_URL = 'vercel.example.com';
+      process.env.NEXT_PUBLIC_VERCEL_ENV = 'preview';
+
       const url = await getBridgeUrl();
       expect(url).toBe('https://vercel.example.com/api/novu');
     });

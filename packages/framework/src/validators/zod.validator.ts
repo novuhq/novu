@@ -1,8 +1,8 @@
 import { ZodSchema } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import { JsonSchema, Schema } from '../types/schema.types';
-import { ValidateResult, Validator } from '../types/validator.types';
+import type { JsonSchema, Schema } from '../types/schema.types';
+import type { ValidateResult, Validator } from '../types/validator.types';
 
 export class ZodValidator implements Validator<ZodSchema> {
   isSchema(schema: Schema): schema is ZodSchema {

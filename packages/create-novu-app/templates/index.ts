@@ -8,7 +8,11 @@ import path from "path";
 import { cyan, bold } from "picocolors";
 import { Sema } from "async-sema";
 
-import { GetTemplateFileArgs, InstallTemplateArgs } from "./types";
+import {
+  GetTemplateFileArgs,
+  InstallTemplateArgs,
+  TemplateTypeEnum,
+} from "./types";
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -32,7 +36,6 @@ export const installTemplate = async ({
   isOnline,
   template,
   mode,
-  reactEmail,
   eslint,
   srcDir,
   importAlias,
@@ -47,7 +50,7 @@ export const installTemplate = async ({
   const templatePath = path.join(__dirname, template, mode);
   const copySource = ["**"];
   if (!eslint) copySource.push("!eslintrc.json");
-  if (!reactEmail) {
+  if (!template.includes("react")) {
     copySource.push(
       mode == "ts" ? "tailwind.config.ts" : "!tailwind.config.js",
       "!postcss.config.cjs",
@@ -151,7 +154,7 @@ export const installTemplate = async ({
       ),
     );
 
-    if (reactEmail) {
+    if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
       const tailwindConfigFile = path.join(
         root,
         mode === "ts" ? "tailwind.config.ts" : "tailwind.config.js",
@@ -223,7 +226,7 @@ export const installTemplate = async ({
   }
 
   /* Add Tailwind CSS dependencies. */
-  if (reactEmail) {
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
       postcss: "^8",
