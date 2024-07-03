@@ -93,6 +93,9 @@ export const PreviewStep = ({
               minHeight: '72vh',
               flex: '1',
             }),
+            skeleton: css({
+              width: '100%',
+            }),
           }}
           {...props}
         />

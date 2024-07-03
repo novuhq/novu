@@ -1,6 +1,6 @@
 {
   "name": "@novu/novui",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's Design System & Component Library",
   "types": "./dist/index.d.ts",
