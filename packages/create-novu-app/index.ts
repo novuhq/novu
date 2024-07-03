@@ -54,7 +54,6 @@ const program = new Commander.Command(packageJson.name)
     '-s, --secret-key <secret-key>',
     `Your Novu development environment secret key. Note that your novu app won't work outside of local mode without it.`
   )
-  .option('--react-email', `Initialize with React Email config. (default)`)
   .option('--use-npm', `Explicitly tell the CLI to bootstrap the application using npm`)
   .option('--use-pnpm', `Explicitly tell the CLI to bootstrap the application using pnpm`)
   .option('--use-yarn', `Explicitly tell the CLI to bootstrap the application using Yarn`)
@@ -148,7 +147,6 @@ async function run(): Promise<void> {
   const defaults: typeof preferences = {
     typescript: true,
     eslint: true,
-    reactEmail: true,
     app: true,
     srcDir: false,
     importAlias: '@/*',
@@ -162,23 +160,8 @@ async function run(): Promise<void> {
     program.eslint = getPrefOrDefault('eslint');
   }
 
-  if (!process.argv.includes('--react-email') && !process.argv.includes('--no-react-email')) {
-    if (ciInfo.isCI) {
-      program.tailwind = getPrefOrDefault('tailwind');
-    } else {
-      const tw = blue('React Email');
-      const { reactEmail } = await prompts({
-        onState: onPromptState,
-        type: 'toggle',
-        name: 'reactEmail',
-        message: `Would you like to use ${tw}?`,
-        initial: getPrefOrDefault('reactEmail'),
-        active: 'Yes',
-        inactive: 'No',
-      });
-      program.reactEmail = Boolean(reactEmail);
-      preferences.reactEmail = Boolean(reactEmail);
-    }
+  if (ciInfo.isCI) {
+    program.tailwind = getPrefOrDefault('tailwind');
   }
 
   program.srcDir = getPrefOrDefault('srcDir');
@@ -191,7 +174,6 @@ async function run(): Promise<void> {
     packageManager,
     typescript: program.typescript,
     eslint: program.eslint,
-    reactEmail: program.reactEmail,
     srcDir: program.srcDir,
     importAlias: program.importAlias,
     secretKey: program.secretKey,
