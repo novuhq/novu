@@ -53,7 +53,7 @@ export async function devCommand(options: DevCommandOptions) {
       anonymousId: anonymousId,
     },
     data: {},
-    event: 'Studio started - [Studio]',
+    event: 'Studio started - [CLI]',
   });
 
   const parsedOptions = parseOptions(options);
