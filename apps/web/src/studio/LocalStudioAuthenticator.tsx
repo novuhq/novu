@@ -74,7 +74,7 @@ export function LocalStudioAuthenticator() {
     }
 
     // Wait for environments and apiKeys to be loaded
-    if (!environments) {
+    if (!environments || environments?.length === 0) {
       return;
     }
 
@@ -108,7 +108,11 @@ export function LocalStudioAuthenticator() {
     // TODO: Add apiKeys to the IEnvironment interface as they exist in the response
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    const devSecretKey = environments.find((env) => env.name.toLowerCase() === 'development')?.apiKey;
+    const devSecretKey = environments.find((env) => env.name.toLowerCase() === 'development')?.apiKeys[0]?.key;
+
+    if (environments?.length > 0 && !devSecretKey) {
+      throw new Error('Failed to load Local Studio: missing development environment secret key.');
+    }
 
     const state: StudioState = {
       isLocalStudio: true,
