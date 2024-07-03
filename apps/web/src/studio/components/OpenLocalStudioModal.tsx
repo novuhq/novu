@@ -32,7 +32,7 @@ export const OpenLocalStudioModal: FC<OpenLocalStudioModalProps> = ({ isOpen, to
       className={css({ colorPalette: 'mode.cloud' })}
     >
       <Stack gap="100">
-        <CodeSnippet command={'npx novu dev'} />
+        <CodeSnippet command={'npx novu@latest dev'} />
         <HStack justify={'flex-end'}>
           <Button size={'md'} onClick={handlePrimaryClick} variant="outline">
             Open

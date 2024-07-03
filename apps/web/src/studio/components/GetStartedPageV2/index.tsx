@@ -36,7 +36,10 @@ const BadgeButton = ({
     <Link
       className={cx(
         css({
-          color: 'typography.text.secondary !important',
+          color: {
+            _dark: 'legacy.B80 !important',
+            base: 'legacy.B30 !important',
+          },
           backgroundColor: {
             base: 'mauve.80.light !important',
             _dark: 'mauve.80.dark !important',
@@ -115,7 +118,7 @@ export const GetStartedPageV2 = () => {
                     href="https://docs.novu.co/"
                   >
                     <HStack gap="25">
-                      <IconOutlineMenuBook /> <span>Learn more</span>
+                      <IconOutlineMenuBook size={16} /> <span>Learn more</span>
                     </HStack>
                   </Link>
                 </HStack>
@@ -127,7 +130,7 @@ export const GetStartedPageV2 = () => {
                   }}
                 >
                   <CodeSnippet
-                    command="npx novu dev"
+                    command="npx novu@latest dev"
                     className={css({
                       width: '100%',
                       '& input': {
@@ -159,7 +162,7 @@ export const GetStartedPageV2 = () => {
                 navigate(ROUTES.TEAM_SETTINGS);
               }}
             >
-              <IconGroupAdd /> <span>Invite devs</span>
+              <IconGroupAdd size={16} /> <span>Invite devs</span>
             </BadgeButton>
           </HStack>
           <HStack
@@ -198,7 +201,7 @@ export const GetStartedPageV2 = () => {
                   marginBottom: '150',
                 })}
               >
-                <IconFolderOpen /> <span>Discover examples</span>
+                <IconFolderOpen size={16} /> <span>Discover examples</span>
               </BadgeButton>
               <Ide />
             </VStack>
@@ -232,7 +235,7 @@ export const GetStartedPageV2 = () => {
                   marginBottom: '150',
                 })}
               >
-                <IconGroupAdd /> <span>Invite team</span>
+                <IconGroupAdd size={16} /> <span>Invite team</span>
               </BadgeButton>
               <Development />
             </VStack>
@@ -266,7 +269,7 @@ export const GetStartedPageV2 = () => {
                   marginBottom: '150',
                 })}
               >
-                <IconOutlineMenuBook /> <span>Learn more</span>
+                <IconOutlineMenuBook size={16} /> <span>Learn more</span>
               </BadgeButton>
               <GithubAction />
             </VStack>
