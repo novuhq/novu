@@ -105,9 +105,9 @@ async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
 }
 
 async function createTunnel(localOrigin: string, endpointRoute: string): Promise<string> {
-  const configTunnelUrl = config.getValue('tunnelUrl');
-  const storeUrl = configTunnelUrl ? new URL(configTunnelUrl) : null;
   const originUrl = new URL(localOrigin);
+  const configTunnelUrl = config.getValue(`tunnelUrl-${parseInt(originUrl.port)}`);
+  const storeUrl = configTunnelUrl ? new URL(configTunnelUrl) : null;
 
   if (storeUrl) {
     try {
@@ -124,7 +124,7 @@ async function createTunnel(localOrigin: string, endpointRoute: string): Promise
   return await connectToNewTunnel(originUrl);
 }
 
-async function fetchNewTunnel(): Promise<URL> {
+async function fetchNewTunnel(originUrl: URL): Promise<URL> {
   const response = await fetch(TUNNEL_URL, {
     method: 'POST',
     headers: {
@@ -135,7 +135,7 @@ async function fetchNewTunnel(): Promise<URL> {
   });
 
   const { url } = (await response.json()) as LocalTunnelResponse;
-  config.setValue('tunnelUrl', url);
+  config.setValue(`tunnelUrl-${parseInt(originUrl.port)}`, url);
 
   return new URL(url);
 }
@@ -159,7 +159,7 @@ async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
 }
 
 async function connectToNewTunnel(originUrl: URL) {
-  const parsedUrl = await fetchNewTunnel();
+  const parsedUrl = await fetchNewTunnel(originUrl);
   await connectToTunnel(parsedUrl, originUrl);
 
   return parsedUrl.origin;

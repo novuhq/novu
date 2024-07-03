@@ -2,7 +2,8 @@ import * as Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
 import { UserSessionData } from '@novu/shared';
 
-type ConfigKey = 'token' | 'anonymousId' | 'tunnelUrl';
+type OriginPort = number;
+type ConfigKey = 'token' | 'anonymousId' | `tunnelUrl-${OriginPort}`;
 
 export class ConfigService {
   private _config: Configstore;
