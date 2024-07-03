@@ -196,7 +196,10 @@ export const GetStartedPageV2 = () => {
                 Code real-life notification workflows and preview them locally
               </Text>
               <BadgeButton
-                onClick={() => {}}
+                onClick={() => {
+                  track('Examples link clicked - [Workflows empty state]');
+                  window.open('http://docs.novu.co/how-to/introduction', '_blank');
+                }}
                 className={css({
                   marginBottom: '150',
                 })}
