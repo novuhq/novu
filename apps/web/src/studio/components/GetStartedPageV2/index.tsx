@@ -1,26 +1,65 @@
-import { Button, Text, Title } from '@novu/novui';
-import { css } from '@novu/novui/css';
+import { Text, Title } from '@novu/novui';
+import { css, cx } from '@novu/novui/css';
 import {
   IconEditNote,
+  IconFolderOpen,
   IconGroupAdd,
   IconLaptopMac,
-  IconOutlineMarkEmailUnread,
-  IconOutlineNotificationsActive,
-  IconVisibility,
+  IconOutlineMenuBook,
+  IconOutlineRocketLaunch,
 } from '@novu/novui/icons';
 import { HStack, styled, VStack } from '@novu/novui/jsx';
 import { text } from '@novu/novui/recipes';
-import { useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { CodeSnippet } from '../../../pages/get-started/components/CodeSnippet';
 import { PageContainer } from '../../layout/PageContainer';
 import { Development } from './Development';
+import { GithubAction } from './GithubAction';
 import { Ide } from './ide';
 import { Studio } from './Studio';
 
 const Link = styled('a', text);
+
+const BadgeButton = ({
+  children,
+  onClick,
+  className,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  className?: string;
+}) => {
+  return (
+    <Link
+      className={cx(
+        css({
+          color: {
+            _dark: 'legacy.B80 !important',
+            base: 'legacy.B30 !important',
+          },
+          backgroundColor: {
+            base: 'mauve.80.light !important',
+            _dark: 'mauve.80.dark !important',
+          },
+          padding: '25',
+          paddingLeft: '50',
+          paddingRight: '50',
+          fontSize: '75',
+          borderRadius: 's',
+        }),
+        className
+      )}
+      onClick={() => {
+        onClick();
+      }}
+    >
+      <HStack gap="25">{children}</HStack>
+    </Link>
+  );
+};
 
 export const GetStartedPageV2 = () => {
   const track = useTelemetry();
@@ -43,11 +82,10 @@ export const GetStartedPageV2 = () => {
           <Title
             className={css({
               marginBottom: '250',
-              color: 'typography.text.secondary',
             })}
             textAlign="center"
           >
-            No workflows yet? Start building workflows locally.
+            Start building your workflows in code
           </Title>
           <HStack
             className={css({
@@ -63,7 +101,28 @@ export const GetStartedPageV2 = () => {
               gap="50"
             >
               <div className={css({ width: '600px' })}>
-                <Title variant="subsection">Run this in your terminal to get started</Title>
+                <HStack
+                  className={css({
+                    justifyContent: 'space-between',
+                  })}
+                >
+                  <Title variant="subsection">Run this in your terminal to get started</Title>
+
+                  <Link
+                    className={css({
+                      color: 'typography.text.secondary !important',
+                    })}
+                    onClick={() => {
+                      track('Main docs link clicked - [Workflows empty state]');
+                    }}
+                    href="https://docs.novu.co/"
+                  >
+                    <HStack gap="25">
+                      <IconOutlineMenuBook size={16} /> <span>Learn more</span>
+                    </HStack>
+                  </Link>
+                </HStack>
+
                 <div
                   style={{ width: '100%' }}
                   onDoubleClick={() => {
@@ -71,7 +130,7 @@ export const GetStartedPageV2 = () => {
                   }}
                 >
                   <CodeSnippet
-                    command="npx novu dev"
+                    command="npx novu@latest dev"
                     className={css({
                       width: '100%',
                       '& input': {
@@ -95,21 +154,16 @@ export const GetStartedPageV2 = () => {
                 color: 'typography.text.secondary',
               })}
             >
-              Not an engineer? Invite your dev team to set up
+              Not a developer? Invite your dev team to set you up
             </Text>
-            <Link
-              className={css({
-                color: 'typography.text.secondary !important',
-              })}
+            <BadgeButton
               onClick={() => {
-                track('Invite button clicked - [Get Started - V2]');
+                track('Invite devs link clicked - [Workflows empty state]');
                 navigate(ROUTES.TEAM_SETTINGS);
               }}
             >
-              <HStack gap="25">
-                <IconGroupAdd /> <span>Invite team</span>
-              </HStack>
-            </Link>
+              <IconGroupAdd size={16} /> <span>Invite devs</span>
+            </BadgeButton>
           </HStack>
           <HStack
             className={css({
@@ -136,35 +190,23 @@ export const GetStartedPageV2 = () => {
               <Text
                 className={css({
                   color: 'typography.text.secondary',
-                  marginBottom: '150',
+                  marginBottom: '25',
                 })}
               >
-                Leverage familiar environment
+                Code real-life notification workflows and preview them locally
               </Text>
-              <Ide />
-            </VStack>
-            <VStack gap="0" className={css({ width: '17.5rem', alignItems: 'flex-start' })}>
-              <HStack gap="50">
-                <IconVisibility />
-                <Title
-                  variant="subsection"
-                  className={css({
-                    color: 'typography.text.secondary',
-                    marginBottom: '25',
-                  })}
-                >
-                  Preview your local builds
-                </Title>
-              </HStack>
-              <Text
+              <BadgeButton
+                onClick={() => {
+                  track('Examples link clicked - [Workflows empty state]');
+                  window.open('http://docs.novu.co/how-to/introduction', '_blank');
+                }}
                 className={css({
-                  color: 'typography.text.secondary',
                   marginBottom: '150',
                 })}
               >
-                Studio mirrors your local development
-              </Text>
-              <Studio />
+                <IconFolderOpen size={16} /> <span>Discover examples</span>
+              </BadgeButton>
+              <Ide />
             </VStack>
             <VStack gap="0" className={css({ width: '17.5rem', alignItems: 'flex-start' })}>
               <HStack gap="50">
@@ -182,12 +224,57 @@ export const GetStartedPageV2 = () => {
               <Text
                 className={css({
                   color: 'typography.text.secondary',
+                  marginBottom: '25',
+                })}
+              >
+                Give your team control they need to modify notification content and behavior
+              </Text>
+              <BadgeButton
+                onClick={() => {
+                  track('Invite team link clicked - [Workflows empty state]');
+                  navigate(ROUTES.TEAM_SETTINGS);
+                }}
+                className={css({
                   marginBottom: '150',
                 })}
               >
-                Polish content in dev before release.
-              </Text>
+                <IconGroupAdd size={16} /> <span>Invite team</span>
+              </BadgeButton>
               <Development />
+            </VStack>
+            <VStack gap="0" className={css({ width: '17.5rem', alignItems: 'flex-start' })}>
+              <HStack gap="50">
+                <IconOutlineRocketLaunch />
+                <Title
+                  variant="subsection"
+                  className={css({
+                    color: 'typography.text.secondary',
+                    marginBottom: '25',
+                  })}
+                >
+                  Deploy quick and easy
+                </Title>
+              </HStack>
+              <Text
+                className={css({
+                  color: 'typography.text.secondary',
+                  marginBottom: '25',
+                })}
+              >
+                Use the familiar CI/CD pipeline to get your notifications to production
+              </Text>
+              <BadgeButton
+                onClick={() => {
+                  track('Deployment docs link clicked - [Workflows empty state]');
+                  window.open('https://docs.novu.co/deployment/production', '_blank');
+                }}
+                className={css({
+                  marginBottom: '150',
+                })}
+              >
+                <IconOutlineMenuBook size={16} /> <span>Learn more</span>
+              </BadgeButton>
+              <GithubAction />
             </VStack>
           </HStack>
         </div>
