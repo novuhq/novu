@@ -144,7 +144,9 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
         _id: session.user._id,
       },
       {
-        resetTokenDate: subDays(new Date(), 20),
+        $set: {
+          resetTokenDate: subDays(new Date(), 20),
+        },
       }
     );
 
@@ -187,9 +189,11 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
         _id: session.user._id,
       },
       {
-        resetTokenCount: {
-          reqInMinute: 0,
-          reqInDay: 10,
+        $set: {
+          resetTokenCount: {
+            reqInMinute: 0,
+            reqInDay: 10,
+          },
         },
       }
     );
@@ -222,7 +226,9 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
         _id: session.user._id,
       },
       {
-        resetTokenDate: subMinutes(new Date(), 1),
+        $set: {
+          resetTokenDate: subMinutes(new Date(), 1),
+        },
       }
     );
 
@@ -250,10 +256,12 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
         _id: session.user._id,
       },
       {
-        resetTokenDate: subDays(new Date(), 1),
-        resetTokenCount: {
-          reqInMinute: 5,
-          reqInDay: 15,
+        $set: {
+          resetTokenDate: subDays(new Date(), 1),
+          resetTokenCount: {
+            reqInMinute: 5,
+            reqInDay: 15,
+          },
         },
       }
     );

@@ -37,7 +37,9 @@ export class UpdateProfileEmail extends BaseUserProfileUsecase {
         _id: command.userId,
       },
       {
-        email,
+        $set: {
+          email,
+        },
       }
     );
 
