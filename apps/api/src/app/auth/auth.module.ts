@@ -3,7 +3,7 @@ import { getCommunityAuthModuleConfig, configure as configureCommunity } from '.
 import { getEEModuleConfig, configure as configureEE } from './ee.auth.module.config';
 
 function getModuleConfig(): ModuleMetadata {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     return getEEModuleConfig();
   } else {
     return getCommunityAuthModuleConfig();
@@ -14,7 +14,7 @@ function getModuleConfig(): ModuleMetadata {
 @Module(getModuleConfig())
 export class AuthModule {
   public configure(consumer: MiddlewareConsumer) {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       configureEE(consumer);
     } else {
       configureCommunity(consumer);

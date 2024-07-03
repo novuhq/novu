@@ -8,7 +8,7 @@ import { bootstrap } from '../src/bootstrap';
 const dalService = new DalService();
 
 async function seedClerkMongo() {
-  if (process.env.NOVU_ENTERPRISE) {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     const clerkClientMock = require('@novu/ee-auth')?.ClerkClientMock;
 
     if (clerkClientMock) {

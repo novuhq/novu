@@ -94,7 +94,7 @@ export class UserSession {
   }
 
   async initialize(options?: UserSessionOptions) {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
@@ -217,7 +217,7 @@ export class UserSession {
   }
 
   async fetchJWT() {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       await this.fetchJwtEE();
     } else {
       await this.fetchJwtCommunity();
@@ -225,7 +225,7 @@ export class UserSession {
   }
 
   async addOrganization() {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       return await this.addOrganizationEE('clerk_org_1');
     } else {
       return await this.addOrganizationCommunity();
@@ -407,7 +407,7 @@ export class UserSession {
       this.environment = environment;
       await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
 
-      if (process.env.NOVU_ENTERPRISE === 'true') {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         await this.fetchJwtEE();
       } else {
         await this.fetchJwtCommunity();
@@ -474,7 +474,9 @@ export class UserSession {
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
     const organizationService =
-      process.env.NOVU_ENTERPRISE === 'true' ? new EEOrganizationService() : new OrganizationService();
+      process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true'
+        ? new EEOrganizationService()
+        : new OrganizationService();
 
     await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
   }

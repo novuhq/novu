@@ -24,7 +24,10 @@ export function injectRepositories(
     repositoriesOnly: true,
   }
 ) {
-  if (process.env.NOVU_ENTERPRISE !== 'true') {
+  if (
+    process.env.NOVU_ENTERPRISE !== 'true' &&
+    process.env.CI_EE_TEST !== 'true'
+  ) {
     const userRepositoryProvider = {
       provide: 'USER_REPOSITORY',
       useClass: CommunityUserRepository,

@@ -12,7 +12,7 @@ import { SyncExternalOrganization } from './create-organization/sync-external-or
 
 // TODO: move ee.organization.controller.ts to EE package
 function getEnterpriseUsecases() {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     return [
       {
         provide: 'SyncOrganizationUsecase',

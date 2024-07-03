@@ -8,7 +8,7 @@ import { UpdateNameAndProfilePicture } from './update-name-and-profile-picture/u
 import { SyncExternalUser } from './sync-external-user/sync-external-user.usecase';
 
 function getEnterpriseUsecases() {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     return [SyncExternalUser];
   }
 

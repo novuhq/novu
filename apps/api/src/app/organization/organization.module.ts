@@ -35,7 +35,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 function getControllers() {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     return [EEOrganizationController];
   }
 
@@ -57,7 +57,7 @@ function getControllers() {
 })
 export class OrganizationModule implements NestModule {
   configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
       consumer.apply(AuthGuard).exclude({
         method: RequestMethod.GET,
         path: '/organizations/invite/:inviteToken',

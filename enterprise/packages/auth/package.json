@@ -15,6 +15,7 @@
     "@clerk/clerk-sdk-node": "^5.0.9",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
+    "mongoose": "^7.5.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "jwks-rsa": "^3.1.0",
