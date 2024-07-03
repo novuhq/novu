@@ -52,7 +52,8 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   };
   const localDomains = ['localhost', '127.0.0.1'];
   const isLocalAddress = () => {
-    return localDomains.includes(location.hostname);
+    const parsedUrl = new URL(url);
+    return localDomains.includes(parsedUrl.hostname);
   };
 
   const onUpdateClick = async () => {
