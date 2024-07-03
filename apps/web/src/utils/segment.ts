@@ -2,6 +2,7 @@ import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
 import * as mixpanel from 'mixpanel-browser';
 import { api } from '../api';
+import { cleanDoubleQuotedString } from './utils';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -15,6 +16,7 @@ export class SegmentService {
     if (this._mixpanelEnabled) {
       mixpanel.init(process.env.REACT_APP_MIXPANEL_KEY as string, {
         record_sessions_percent: 100,
+        debug: true,
       });
     }
 
@@ -58,8 +60,8 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      const segmentDeviceId = localStorage.getItem('ajs_anonymous_id');
-      const userId = localStorage.getItem('ajs_user_id');
+      const segmentDeviceId = cleanDoubleQuotedString(localStorage.getItem('ajs_anonymous_id'));
+      const userId = cleanDoubleQuotedString(localStorage.getItem('ajs_user_id'));
       if (userId) {
         mixpanel.identify(userId);
       }
