@@ -1,4 +1,4 @@
-import { Subscriber } from './subscriber.types';
+import type { Subscriber } from './subscriber.types';
 
 export type Event = {
   /** @deprecated */

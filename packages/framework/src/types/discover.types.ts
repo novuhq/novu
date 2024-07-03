@@ -1,9 +1,9 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { JsonSchema, Schema } from './schema.types';
-import { StepOptions } from './step.types';
-import { Execute, WorkflowOptions } from './workflow.types';
-import { Awaitable, Prettify } from './util.types';
-import { EventTriggerParams, EventTriggerResult } from './event.types';
+import type { JsonSchema, Schema } from './schema.types';
+import type { StepOptions } from './step.types';
+import type { Execute, WorkflowOptions } from './workflow.types';
+import type { Awaitable, Prettify } from './util.types';
+import type { EventTriggerParams, EventTriggerResult } from './event.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 

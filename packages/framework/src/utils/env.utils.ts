@@ -31,6 +31,7 @@ export const getBridgeUrl = async (): Promise<string> => {
       return `${data.tunnelOrigin}${data.route}`;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
   }
 

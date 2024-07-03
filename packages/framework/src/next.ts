@@ -1,8 +1,8 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
-import { NovuRequestHandler, ServeHandlerOptions } from './handler';
-import { Either } from './types';
+import { NovuRequestHandler, type ServeHandlerOptions } from './handler';
+import { type Either } from './types';
 import { type SupportedFrameworkName } from './types';
 import { getResponse } from './utils';
 
