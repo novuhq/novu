@@ -47,6 +47,10 @@ export const useTelemetry = () => {
 
     if (mixpanelEnabled) {
       const segmentDeviceId = localStorage.getItem('ajs_anonymous_id');
+      const userId = localStorage.getItem('ajs_user_id');
+      if (userId) {
+        mixpanel.identify(userId);
+      }
       mixpanel.register({ $device_id: segmentDeviceId });
       const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
