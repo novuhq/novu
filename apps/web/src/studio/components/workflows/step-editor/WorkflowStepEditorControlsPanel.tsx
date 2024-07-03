@@ -34,8 +34,12 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
     return (
-      Object.keys(workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {})
-        .length > 0
+      Object.keys(
+        workflow?.payload?.schema?.properties ||
+          workflow?.options?.payloadSchema?.properties ||
+          workflow?.payloadSchema?.properties ||
+          {}
+      ).length > 0
     );
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
@@ -88,7 +92,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
-                      setPath('framework/concepts/controls');
+                      setPath('concepts/controls');
                       toggle();
                     }}
                   />
@@ -115,7 +119,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Payload ensures correct formatting and data validity."
                     onDocsClick={() => {
-                      setPath('framework/concepts/payload');
+                      setPath('workflow/introduction#payload-schema');
                       toggle();
                     }}
                   />

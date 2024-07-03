@@ -8,6 +8,7 @@ import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { Button } from '@novu/novui';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { DOCS_URL, PATHS } from '../../../components/docs/docs.const';
 
 const Text = styled('a', text);
 
@@ -61,7 +62,7 @@ export const Footer = ({
                         track('Documentation linked clicked - [Onboarding - Signup]', {
                           step: pathname,
                         });
-                        onDocsClick();
+                        window.open(`${DOCS_URL}/${PATHS[pathname]}`, '_blank');
                       }}
                       href=""
                     >
