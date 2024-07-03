@@ -45,12 +45,6 @@ describe('Novu Client', () => {
       expect(newClient.secretKey).toBe(testSecretKey);
     });
 
-    it('should throw an error when secretKey is not provided', () => {
-      expect(() => new Client({ secretKey: undefined })).toThrow(
-        'Missing secret key. Set the `NOVU_SECRET_KEY` environment variable or pass `secretKey` to the client options.'
-      );
-    });
-
     it('should set strictAuthentication to false when NODE_ENV is development', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'development' };

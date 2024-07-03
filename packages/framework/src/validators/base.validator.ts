@@ -1,5 +1,5 @@
-import { JsonSchema, Schema } from '../types/schema.types';
-import { ValidateResult } from '../types/validator.types';
+import type { JsonSchema, Schema } from '../types/schema.types';
+import type { ValidateResult } from '../types/validator.types';
 import { JsonSchemaValidator } from './json-schema.validator';
 import { ZodValidator } from './zod.validator';
 

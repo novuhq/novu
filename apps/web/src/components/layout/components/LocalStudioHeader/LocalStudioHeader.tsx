@@ -29,6 +29,7 @@ export const LocalStudioHeader: FC = () => {
           <BridgeMenuItems />
           <IconButton
             Icon={IconOutlineMenuBook}
+            title={'Go to docs'}
             as="a"
             href={'https://docs.novu.co?utm_campaign=local_studio'}
             target="_blank"

@@ -18,7 +18,7 @@ export const getBridgeUrl = async (): Promise<string> => {
   }
 
   // Vercel preview deployments
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+  if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' && process.env.NEXT_PUBLIC_VERCEL_URL) {
     return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api/novu`;
   }
 
@@ -31,6 +31,7 @@ export const getBridgeUrl = async (): Promise<string> => {
       return `${data.tunnelOrigin}${data.route}`;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
   }
 

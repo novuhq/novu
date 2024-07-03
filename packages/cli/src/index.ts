@@ -24,10 +24,10 @@ program
     `Sync your state with Novu Cloud
 
   Specifying the Bridge URL and Secret Key:
-  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY)
+  (e.g., npx novu@latest sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY)
 
   Sync with Novu Cloud in Europe:
-  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`
+  (e.g., npx novu@latest sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`
   )
   .usage('-b <url> -s <secret-key> [-a <url>]')
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
@@ -56,10 +56,10 @@ program
     `Start Novu Studio and a local tunnel
 
   Running the Bridge application on port 4000: 
-  (e.g., novu dev -p 4000)
+  (e.g., npx novu@latest dev -p 4000)
 
   Running the Bridge application on a different route: 
-  (e.g., novu dev -r /v1/api/novu)`
+  (e.g., npx novu@latest dev -r /v1/api/novu)`
   )
   .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>]')
   .option('-p, --port <port>', 'The local Bridge endpoint port', '4000')

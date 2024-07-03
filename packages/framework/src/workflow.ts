@@ -1,7 +1,7 @@
 import { ChannelStepEnum } from './constants';
 import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
-import {
+import type {
   ActionStep,
   Awaitable,
   CancelEventTriggerResponse,
@@ -41,7 +41,7 @@ export function workflow<
       throw new MissingSecretKeyError();
     }
 
-    let validatedData: T_Payload;
+    let validatedData: T_Payload = event.payload;
     if (options.payloadSchema) {
       const validationResult = await validateData(options.payloadSchema, event.payload);
       if (validationResult.success === false) {

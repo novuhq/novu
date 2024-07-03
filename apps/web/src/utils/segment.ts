@@ -1,7 +1,7 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
 import * as mixpanel from 'mixpanel-browser';
-import { api } from '../api/api.client';
+import { api } from '../api';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -59,6 +59,10 @@ export class SegmentService {
 
     if (this._mixpanelEnabled) {
       const segmentDeviceId = localStorage.getItem('ajs_anonymous_id');
+      const userId = localStorage.getItem('ajs_user_id');
+      if (userId) {
+        mixpanel.identify(userId);
+      }
       mixpanel.register({ $device_id: segmentDeviceId });
       const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
