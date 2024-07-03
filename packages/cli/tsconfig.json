@@ -1,12 +1,21 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
+    "declaration": false,
+    "declarationMap": false,
+    "noImplicitAny": false,
+    "removeComments": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["node", "mocha", "chai", "sinon"],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "target": "es2017",
-    "allowJs": false,
     "esModuleInterop": false,
-    "declarationMap": true
-  }
+    "sourceMap": false,
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "types": ["node"]
+  },
+  "include": [".eslintrc.js", "src/**/*", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }
