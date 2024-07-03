@@ -25,9 +25,5 @@ export function Bell(props: BellProps) {
     return props.children({ unreadCount: unreadCount() });
   }
 
-  // return <DefaultBellContainer unreadCount={unreadCount()} />;
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  return props.children({ unreadCount: unreadCount() });
+  return <DefaultBellContainer unreadCount={unreadCount()} />;
 }
