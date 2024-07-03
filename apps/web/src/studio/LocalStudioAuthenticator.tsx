@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAuth, useAPIKeys, useEnvironment } from '../hooks';
+import { useAuth, useEnvironment } from '../hooks';
 import { ROUTES } from '../constants/routes';
 import { assertProtocol } from '../utils/url';
 import { encodeBase64 } from './utils/base64';
@@ -26,8 +26,7 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 export function LocalStudioAuthenticator() {
   const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
   const location = useLocation();
-  const { environment } = useEnvironment();
-  const { apiKey } = useAPIKeys();
+  const { environments } = useEnvironment();
 
   // TODO: Refactor this to a smaller size function
   useEffect(() => {
@@ -74,13 +73,9 @@ export function LocalStudioAuthenticator() {
       return;
     }
 
-    // Wait for environment and apiKeys to be loaded
-    if (!environment || !apiKey) {
+    // Wait for environments and apiKeys to be loaded
+    if (!environments) {
       return;
-    }
-
-    if (environment.name.toLowerCase() !== 'development') {
-      throw new Error('Local Studio works only with development api keys');
     }
 
     // Get the local application origin parameter
@@ -110,9 +105,11 @@ export function LocalStudioAuthenticator() {
     const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
 
+    const devSecretKey = environments.find((env) => env.name.toLowerCase() === 'development')?.apiKey;
+
     const state: StudioState = {
       isLocalStudio: true,
-      devSecretKey: apiKey,
+      devSecretKey,
       testUser: {
         id: currentUser._id,
         emailAddress: currentUser.email || '',
@@ -135,7 +132,7 @@ export function LocalStudioAuthenticator() {
     // Redirect to Local Studio server
     window.location.href = finalRedirectURL.href;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, environment, apiKey]);
+  }, [currentUser, environments]);
 
   return <LocalStudioPageLayout.LoadingDisplay />;
 }
