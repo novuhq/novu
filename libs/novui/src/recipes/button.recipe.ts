@@ -17,12 +17,12 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       '&:hover:not(:disabled)': {
         opacity: 'hover',
       },
-      display: 'inline !important',
-      width: '[fit-content !important]',
+
+      minWidth: '[fit-content]',
     },
     label: {
       color: 'typography.text.main',
-      width: '[fit-content]',
+      minWidth: '[fit-content]',
       lineClamp: '1',
       lineHeight: 'md',
     },
@@ -30,7 +30,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       marginRight: '25',
     },
   },
-  defaultVariants: { size: 'md', variant: 'filled' },
+  defaultVariants: { size: 'md', variant: 'filled', fullWidth: false },
   variants: {
     size: {
       xs: {
@@ -150,6 +150,18 @@ export const BUTTON_RECIPE = defineSlotRecipe({
           '& svg': {
             fill: 'button.icon.filled !important',
           },
+        },
+      },
+    },
+    fullWidth: {
+      false: {
+        root: {
+          width: 'fit-content !important',
+        },
+      },
+      true: {
+        root: {
+          width: 'full !important',
         },
       },
     },

@@ -3,11 +3,11 @@ import { Loader, Timeline as MantineTimeline } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IconCheck } from '@novu/novui/icons';
 import { Text } from '@novu/novui';
-import { Timeline } from '../../../components/Timeline/index';
 import { css } from '@novu/novui/css';
 import { BridgeStatus } from '../../../bridgeApi/bridgeApi.client';
 import { useColorScheme } from '@novu/design-system';
 import { useStudioState } from '../../../studio/StudioStateProvider';
+import { timelineRecipe } from './SetupTimeline.recipe';
 
 const Icon = () => (
   <IconCheck
@@ -42,7 +42,7 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
   }
 
   return (
-    <Timeline>
+    <MantineTimeline classNames={timelineRecipe()} lineWidth={1} bulletSize={32}>
       <MantineTimeline.Item
         bullet={active >= 1 ? <Icon /> : 1}
         lineVariant="dashed"
@@ -53,7 +53,7 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
           This will create a new Next.js sample app with React-Email
         </Text>
         <CodeSnippet
-          command={`npx create-novu-app --secret-key=${devSecretKey}`}
+          command={`npx create-novu-app@latest --secret-key=${devSecretKey}`}
           onClick={() => {
             setActive((old) => (old > 1 ? old : 1));
           }}
@@ -82,6 +82,6 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
           {active < 3 ? 'Waiting for you to start the application' : 'Successfully connected to the Novu Bridge app'}
         </Text>
       </MantineTimeline.Item>
-    </Timeline>
+    </MantineTimeline>
   );
 };

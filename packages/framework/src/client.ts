@@ -10,7 +10,6 @@ import {
   ExecutionStateCorruptError,
   ExecutionStateOutputInvalidError,
   ExecutionStateResultInvalidError,
-  MissingSecretKeyError,
   ProviderExecutionFailedError,
   ProviderNotFoundError,
   StepNotFoundError,
@@ -78,10 +77,6 @@ export class Client {
 
     builtConfiguration.secretKey =
       providedOptions?.secretKey || process.env.NOVU_SECRET_KEY || process.env.NOVU_API_KEY;
-
-    if (!isRuntimeInDevelopment() && !builtConfiguration.secretKey) {
-      throw new MissingSecretKeyError();
-    }
 
     if (providedOptions?.strictAuthentication !== undefined) {
       builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;

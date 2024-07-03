@@ -18,7 +18,6 @@ export async function createApp({
   appPath,
   packageManager,
   typescript,
-  reactEmail,
   eslint,
   srcDir,
   importAlias,
@@ -27,7 +26,6 @@ export async function createApp({
   appPath: string;
   packageManager: PackageManager;
   typescript: boolean;
-  reactEmail: boolean;
   eslint: boolean;
   srcDir: boolean;
   importAlias: string;
@@ -35,7 +33,7 @@ export async function createApp({
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
-  const template: TemplateType = reactEmail ? 'app-react-email' : 'app';
+  const template: TemplateType = 'app-react-email';
 
   const root = path.resolve(appPath);
 
@@ -74,7 +72,6 @@ export async function createApp({
     mode,
     packageManager,
     isOnline,
-    reactEmail,
     eslint,
     srcDir,
     importAlias,

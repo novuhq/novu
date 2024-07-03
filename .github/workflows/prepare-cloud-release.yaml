@@ -43,7 +43,7 @@ jobs:
         id: enable-pr-automerge
         if: ${{ steps.create-pr.outputs.pr_url != '' }}
         run: |
-          gh pr merge --auto -r ${{steps.create-pr.outputs.pr_url}}
+          gh pr merge --auto -m ${{steps.create-pr.outputs.pr_url}}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

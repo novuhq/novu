@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../../../studio/components/workflows/layout';
@@ -8,17 +8,22 @@ import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useSegment } from '../../../components/providers/SegmentProvider';
+import { IconPlayArrow } from '@novu/novui/icons';
+import { ROUTES } from '../../../constants/routes';
+import { parseUrl } from '../../../utils/routeUtils';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
 
 export const WorkflowsStepEditorPageV2 = () => {
-  const segment = useSegment();
+  const track = useTelemetry();
+  const navigate = useNavigate();
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
   const { template: workflow } = useTemplateController(templateId);
   const step = (workflow?.steps as any)?.find((item) => item.stepId === stepId);
 
-  const { data: controlVariables } = useQuery(
+  const { data: controlVariables, isInitialLoading } = useQuery(
     ['controls', workflow?.name, stepId],
     () => api.get(`/v1/bridge/controls/${workflow?.name}/${stepId}`),
     {
@@ -29,6 +34,10 @@ export const WorkflowsStepEditorPageV2 = () => {
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
     api.put('/v1/bridge/controls/' + workflow?.name + '/' + stepId, { variables: data })
   );
+
+  const handleTestClick = () => {
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
+  };
 
   const {
     data: preview,
@@ -42,17 +51,27 @@ export const WorkflowsStepEditorPageV2 = () => {
   useEffect(() => {
     if (!workflow) return;
 
+    if (!isInitialLoading) {
+      setStepControls(controlVariables?.controls);
+    }
+  }, [workflow, isInitialLoading, controlVariables, setStepControls]);
+
+  useEffect(() => {
+    if (!workflow) return;
+
+    if (isInitialLoading) return;
+
     renderStepPreview({
       inputs: controls,
       controls,
       payload,
     });
-  }, [controls, payload, renderStepPreview, workflow]);
+  }, [controls, payload, renderStepPreview, workflow, isInitialLoading]);
 
   function onControlsChange(type: string, form: any, id?: string) {
     switch (type) {
       case 'step':
-        segment.track('Step Controls Changes', {
+        track('Step Controls Changes', {
           key: id,
           origin: 'dashboard',
         });
@@ -89,7 +108,17 @@ export const WorkflowsStepEditorPageV2 = () => {
   }
 
   return (
-    <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
+    <WorkflowsPageTemplate
+      title={title}
+      icon={<Icon size="32" />}
+      actions={
+        <>
+          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+            Test workflow
+          </OutlineButton>
+        </>
+      }
+    >
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorControlsPanel

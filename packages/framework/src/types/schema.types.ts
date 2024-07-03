@@ -1,4 +1,4 @@
-import { JSONSchema, FromSchema as JsonSchemaInfer } from 'json-schema-to-ts';
+import type { JSONSchema, FromSchema as JsonSchemaInfer } from 'json-schema-to-ts';
 import * as z from 'zod';
 
 export type Schema = JSONSchema | z.ZodSchema;

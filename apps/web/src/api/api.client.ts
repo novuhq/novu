@@ -104,7 +104,7 @@ export function buildApiHttpClient({
   jwt?: string;
 }) {
   if (!secretKey && !jwt) {
-    throw new Error('An secretKey or jwt is required to create a Novu API client.');
+    throw new Error('A secretKey or jwt is required to create a Novu API client.');
   }
 
   const authHeader = jwt ? `Bearer ${jwt}` : `ApiKey ${secretKey}`;
@@ -155,6 +155,13 @@ export function buildApiHttpClient({
     async syncBridge(bridgeUrl: string) {
       return post(`/v1/bridge/sync`, {
         bridgeUrl,
+      });
+    },
+
+    async postTelemetry(event: string, data?: Record<string, unknown>) {
+      return post('/v1/telemetry/measure', {
+        event,
+        data,
       });
     },
   };

@@ -7,7 +7,7 @@ type Props = {
 export function PageMeta({ title }: Props) {
   return (
     <Helmet>
-      <title>{title ? `${title} | ` : ``}Novu Manage Platform</title>
+      <title>{title ? `${title} | ` : ``}Novu Cloud Dashboard</title>
     </Helmet>
   );
 }
