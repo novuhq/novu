@@ -105,6 +105,9 @@ export function LocalStudioAuthenticator() {
     const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
 
+    // TODO: Add apiKeys to the IEnvironment interface as they exist in the response
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     const devSecretKey = environments.find((env) => env.name.toLowerCase() === 'development')?.apiKey;
 
     const state: StudioState = {
