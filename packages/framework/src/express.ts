@@ -8,7 +8,7 @@ import { type SupportedFrameworkName } from './types';
 export const frameworkName: SupportedFrameworkName = 'express';
 
 /**
- * Serve and register any declared functions with Inngest, making them available
+ * Serve and register any declared workflows with Novu, making them available
  * to be triggered by events.
  *
  * The return type is currently `any` to ensure there's no required type matches

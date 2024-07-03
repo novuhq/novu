@@ -6,7 +6,7 @@ import { type SupportedFrameworkName } from './types';
 export const frameworkName: SupportedFrameworkName = 'h3';
 
 /**
- * In h3, serve and register any declared functions with Inngest, making
+ * In h3, serve and register any declared workflows with Novu, making
  * them available to be triggered by events.
  *
  * @example
