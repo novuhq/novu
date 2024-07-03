@@ -175,7 +175,7 @@ export class UpdateVercelConfiguration {
         target,
         type,
         value: privateKey,
-        key: 'NOVU_API_SECRET',
+        key: 'NOVU_SECRET_KEY',
       },
       {
         target,
@@ -223,7 +223,7 @@ export class UpdateVercelConfiguration {
         const id = curr.id;
         const vercelEnvs = curr?.env;
         const clientEnv = vercelEnvs?.find((e) => e.key === 'NOVU_CLIENT_APP_ID');
-        const secretEnv = vercelEnvs?.find((e) => e.key === 'NOVU_API_SECRET');
+        const secretEnv = vercelEnvs?.find((e) => e.key === 'NOVU_SECRET_KEY');
         if (newAndUpdatedProjectIds.includes(id)) {
           if (clientEnv && secretEnv) {
             acc.updateProjectDetails.push({

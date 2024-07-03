@@ -18,7 +18,7 @@ export const LocalStudioWorkflowLandingPage = () => {
       <WorkflowPlaceholderPage title={'Studio Disconnected'} docsButtonLabel="See our troubleshooting guide">
         Local environment disconnected from Novu Bridge URL.
         <br />
-        Likely due to browser internet loss, but other causes possible.
+        Likely because your application is not running or `npx novu dev` is not running.
       </WorkflowPlaceholderPage>
     );
   }
