@@ -41,7 +41,7 @@ export function workflow<
       throw new MissingSecretKeyError();
     }
 
-    let validatedData: T_Payload;
+    let validatedData: T_Payload = event.payload;
     if (options.payloadSchema) {
       const validationResult = await validateData(options.payloadSchema, event.payload);
       if (validationResult.success === false) {

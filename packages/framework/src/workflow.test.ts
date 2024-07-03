@@ -148,6 +148,49 @@ describe('workflow function', () => {
       );
     });
 
+    it('should make an API call without validating when the payloaSchema is not provided', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      const fetchMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => {
+          return Promise.resolve({
+            transactionId: '123',
+          });
+        },
+      });
+      global.fetch = fetchMock;
+
+      await testWorkflow.trigger({
+        to: 'test@test.com',
+        payload: {
+          free: 'field',
+        },
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching('/events/trigger'),
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: 'test-workflow',
+            to: 'test@test.com',
+            payload: {
+              free: 'field',
+            },
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `ApiKey ${process.env.NOVU_SECRET_KEY}`,
+          },
+          method: 'POST',
+        })
+      );
+    });
+
     it('should make an API call when provided with a valid payload', async () => {
       const testWorkflow = workflow(
         'test-workflow',
