@@ -5,6 +5,14 @@ import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
 import { SERVER_HOST } from '../constants';
+import { v4 as uuidv4 } from 'uuid';
+import { AnalyticService, ConfigService } from '../services';
+
+const analytics = new AnalyticService();
+const config = new ConfigService();
+if (process.env.NODE_ENV === 'development') {
+  config.clearStore();
+}
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
@@ -34,8 +42,19 @@ export type DevCommandOptions = {
   route: string;
 };
 
+const anonymousIdLocalState = config.getValue('anonymousId');
+const anonymousId = anonymousIdLocalState || uuidv4();
+
 export async function devCommand(options: DevCommandOptions) {
   await showWelcomeScreen();
+
+  analytics.track({
+    identity: {
+      anonymousId: anonymousId,
+    },
+    data: {},
+    event: 'Studio started - [Studio]',
+  });
 
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();
