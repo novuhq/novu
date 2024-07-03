@@ -23,7 +23,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   const { template: workflow } = useTemplateController(templateId);
   const step = (workflow?.steps as any)?.find((item) => item.stepId === stepId);
 
-  const { data: controlVariables } = useQuery(
+  const { data: controlVariables, isInitialLoading } = useQuery(
     ['controls', workflow?.name, stepId],
     () => api.get(`/v1/bridge/controls/${workflow?.name}/${stepId}`),
     {
@@ -51,12 +51,22 @@ export const WorkflowsStepEditorPageV2 = () => {
   useEffect(() => {
     if (!workflow) return;
 
+    if (!isInitialLoading) {
+      setStepControls(controlVariables?.controls);
+    }
+  }, [workflow, isInitialLoading, controlVariables, setStepControls]);
+
+  useEffect(() => {
+    if (!workflow) return;
+
+    if (isInitialLoading) return;
+
     renderStepPreview({
       inputs: controls,
       controls,
       payload,
     });
-  }, [controls, payload, renderStepPreview, workflow]);
+  }, [controls, payload, renderStepPreview, workflow, isInitialLoading]);
 
   function onControlsChange(type: string, form: any, id?: string) {
     switch (type) {
