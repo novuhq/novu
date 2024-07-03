@@ -49,6 +49,7 @@ const BadgeButton = ({
           paddingRight: '50',
           fontSize: '75',
           borderRadius: 's',
+          cursor: 'pointer',
         }),
         className
       )}
@@ -192,7 +193,7 @@ export const GetStartedPageV2 = () => {
               <BadgeButton
                 onClick={() => {
                   track('Examples link clicked - [Workflows empty state]');
-                  window.open('http://docs.novu.co/how-to/introduction', '_blank');
+                  window.open('https://docs.novu.co/guides/workflows/introduction', '_blank');
                 }}
                 className={css({
                   marginBottom: '150',
