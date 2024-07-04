@@ -20,15 +20,14 @@ export const Inbox = (props: InboxProps) => {
   const { t } = useLocalization();
 
   return (
-    <div class={style(cn('novu', id), 'root')}>
-      <div class="nt-text-2xl nt-font-bold">{t('inbox.title')}</div>
+    <div class={(style('root'), cn('novu', id))}>
       <Popover open={props?.open}>
         <Popover.Trigger>
           <Bell>{props.renderBell}</Bell>
         </Popover.Trigger>
         <Popover.Content>
           {/* notifications will go here */}
-          <div class="nt-text-lg nt-font-bold">{t('inbox.title')}</div>
+          {t('inbox.title')}
         </Popover.Content>
       </Popover>
     </div>
