@@ -10,18 +10,20 @@ export const useStyle = () => {
     setIsServer(false);
   });
 
-  const styleFuncMemo = createMemo(() => (className: string, descriptor?: keyof Elements | (keyof Elements)[]) => {
+  const styleFuncMemo = createMemo(() => (appearanceKey: keyof Elements | (keyof Elements)[], className?: string) => {
     const appearanceClassname =
-      typeof descriptor === 'string' && typeof appearance.elements?.[descriptor] === 'string'
-        ? (appearance.elements?.[descriptor] as string) || ''
+      typeof appearanceKey === 'string' && typeof appearance.elements?.[appearanceKey] === 'string'
+        ? (appearance.elements?.[appearanceKey] as string) || ''
         : '';
 
-    const descriptors = (Array.isArray(descriptor) ? descriptor : [descriptor]).map((desc) => `nv-${desc}`);
+    const appearanceKeys = (Array.isArray(appearanceKey) ? appearanceKey : [appearanceKey]).map((desc) => `nv-${desc}`);
     const cssInJsClasses =
-      !!descriptors.length && !isServer() ? descriptors.map((des) => appearance.descriptorToCssInJsClass[des]) : [];
+      !!appearanceKeys.length && !isServer()
+        ? appearanceKeys.map((appKey) => appearance.appearanceKeyToCssInJsClass[appKey])
+        : [];
 
     return cn(
-      ...descriptors,
+      ...appearanceKeys,
       className, // default styles
       appearanceClassname, // overrides via appearance prop classes
       ...cssInJsClasses

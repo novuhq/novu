@@ -10,7 +10,7 @@ export const PopoverTrigger: ParentComponent = (props) => {
     <button
       ref={setTargetRef}
       onClick={onToggle}
-      class={style('nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-outline-none', 'popoverTrigger')}
+      class={style('popoverTrigger', 'nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-outline-none')}
     >
       {props.children}
     </button>
