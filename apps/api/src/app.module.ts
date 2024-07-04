@@ -39,6 +39,7 @@ import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
+import { IS_CLERK_ENABLED } from '@novu/shared';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -52,6 +53,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (require('@novu/ee-billing')?.BillingModule) {
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
+  }
+
+  if (IS_CLERK_ENABLED) {
+    Logger.log('Clerk enabled');
   }
 
   return modules;
@@ -103,7 +108,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 
 const enterpriseModules = enterpriseImports();
 
-if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
+if (!IS_CLERK_ENABLED) {
   const communityModules = [StorageModule, InvitesModule];
   baseModules.push(...communityModules);
 }

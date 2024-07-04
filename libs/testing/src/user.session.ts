@@ -13,6 +13,7 @@ import {
   StepTypeEnum,
   TriggerRecipientsPayload,
   ClerkJwtPayload,
+  IS_CLERK_ENABLED,
 } from '@novu/shared';
 import {
   UserEntity,
@@ -94,7 +95,7 @@ export class UserSession {
   }
 
   async initialize(options?: UserSessionOptions) {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (IS_CLERK_ENABLED) {
       // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
@@ -217,7 +218,7 @@ export class UserSession {
   }
 
   async fetchJWT() {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (IS_CLERK_ENABLED) {
       await this.fetchJwtEE();
     } else {
       await this.fetchJwtCommunity();
@@ -225,7 +226,7 @@ export class UserSession {
   }
 
   async addOrganization() {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (IS_CLERK_ENABLED) {
       return await this.addOrganizationEE('clerk_org_1');
     } else {
       return await this.addOrganizationCommunity();
@@ -407,7 +408,7 @@ export class UserSession {
       this.environment = environment;
       await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
 
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (IS_CLERK_ENABLED) {
         await this.fetchJwtEE();
       } else {
         await this.fetchJwtCommunity();
@@ -473,10 +474,7 @@ export class UserSession {
   }
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
-    const organizationService =
-      process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true'
-        ? new EEOrganizationService()
-        : new OrganizationService();
+    const organizationService = IS_CLERK_ENABLED ? new EEOrganizationService() : new OrganizationService();
 
     await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
   }

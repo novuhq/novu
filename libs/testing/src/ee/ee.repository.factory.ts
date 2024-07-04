@@ -1,13 +1,25 @@
-import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, CommunityUserRepository, CommunityMemberRepository } from '@novu/dal';
+import { IS_CLERK_ENABLED } from '@novu/shared';
 
 export function getEERepository<T>(className: 'OrganizationRepository' | 'MemberRepository' | 'UserRepository'): T {
+  if (IS_CLERK_ENABLED) {
+    switch (className) {
+      case 'OrganizationRepository':
+        return getEEOrganizationRepository();
+      case 'MemberRepository':
+        return getEEMemberRepository();
+      case 'UserRepository':
+        return getEEUserRepository();
+    }
+  }
+
   switch (className) {
     case 'OrganizationRepository':
-      return getEEOrganizationRepository();
+      return new CommunityOrganizationRepository() as T;
     case 'MemberRepository':
-      return getEEMemberRepository();
+      return new CommunityMemberRepository() as T;
     case 'UserRepository':
-      return getEEUserRepository();
+      return new CommunityUserRepository() as T;
   }
 }
 

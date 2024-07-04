@@ -8,6 +8,7 @@ import {
   SubscriberRepository,
   UserRepository,
 } from '@novu/dal';
+import { IS_CLERK_ENABLED } from '@novu/shared';
 
 class PlatformException extends Error {}
 
@@ -24,10 +25,7 @@ export function injectRepositories(
     repositoriesOnly: true,
   }
 ) {
-  if (
-    process.env.NOVU_ENTERPRISE !== 'true' &&
-    process.env.CI_EE_TEST !== 'true'
-  ) {
+  if (!IS_CLERK_ENABLED) {
     const userRepositoryProvider = {
       provide: 'USER_REPOSITORY',
       useClass: CommunityUserRepository,
