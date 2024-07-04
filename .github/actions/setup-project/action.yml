@@ -31,7 +31,6 @@ runs:
       name: ⚙️ Setup Node Version
       with:
         node-version: '20.8.1'
-        cache: 'pnpm'
 
     - name: 💵 Start Redis
       if: ${{ inputs.slim == 'false' }}
