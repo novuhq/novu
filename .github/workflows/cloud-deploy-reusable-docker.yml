@@ -131,8 +131,8 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
-            --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
+            --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
+            --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
             --platform=${{ needs.job-setup.outputs.platforms }}
             --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
@@ -160,8 +160,8 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
-            --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
+            --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
+            --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
             --platform=${{ steps.job-setup.outputs.platforms }}
             --output=type=image,name=ghcr.io/novuhq/${{ steps.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
