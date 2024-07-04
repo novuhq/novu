@@ -19,7 +19,6 @@ import { PageContainer } from '../../layout/PageContainer';
 import { Development } from './Development';
 import { GithubAction } from './GithubAction';
 import { Ide } from './ide';
-import { Studio } from './Studio';
 
 const Link = styled('a', text);
 
@@ -37,12 +36,12 @@ const BadgeButton = ({
       className={cx(
         css({
           color: {
-            _dark: 'legacy.B80 !important',
-            base: 'legacy.B30 !important',
+            _dark: 'legacy.BGLight !important',
+            base: 'legacy.B20 !important',
           },
           backgroundColor: {
-            base: 'mauve.80.light !important',
-            _dark: 'mauve.80.dark !important',
+            base: 'legacy.BGLight !important',
+            _dark: 'legacy.B20 !important',
           },
           padding: '25',
           paddingLeft: '50',
@@ -50,10 +49,14 @@ const BadgeButton = ({
           fontSize: '75',
           borderRadius: 's',
           cursor: 'pointer',
+          lineHeight: 'sm',
+          fontWeight: 600,
         }),
         className
       )}
-      onClick={() => {
+      href="#"
+      onClick={(e) => {
+        e.preventDefault();
         onClick();
       }}
     >
@@ -118,6 +121,7 @@ export const GetStartedPageV2 = () => {
                       track('Main docs link clicked - [Workflows empty state]');
                     }}
                     href="https://docs.novu.co/"
+                    target="_blank"
                   >
                     <HStack gap="25">
                       <IconOutlineMenuBook size={16} /> <span>Learn more</span>
@@ -199,7 +203,16 @@ export const GetStartedPageV2 = () => {
                   marginBottom: '150',
                 })}
               >
-                <IconFolderOpen size={16} /> <span>Discover examples</span>
+                <IconFolderOpen
+                  size={16}
+                  className={css({
+                    color: {
+                      _dark: 'legacy.BGLight !important',
+                      base: 'legacy.B20 !important',
+                    },
+                  })}
+                />{' '}
+                <span>Discover examples</span>
               </BadgeButton>
               <Ide />
             </VStack>
@@ -233,7 +246,16 @@ export const GetStartedPageV2 = () => {
                   marginBottom: '150',
                 })}
               >
-                <IconGroupAdd size={16} /> <span>Invite team</span>
+                <IconGroupAdd
+                  size={16}
+                  className={css({
+                    color: {
+                      _dark: 'legacy.BGLight !important',
+                      base: 'legacy.B20 !important',
+                    },
+                  })}
+                />{' '}
+                <span>Invite team</span>
               </BadgeButton>
               <Development />
             </VStack>
@@ -267,7 +289,16 @@ export const GetStartedPageV2 = () => {
                   marginBottom: '150',
                 })}
               >
-                <IconOutlineMenuBook size={16} /> <span>Learn more</span>
+                <IconOutlineMenuBook
+                  size={16}
+                  className={css({
+                    color: {
+                      _dark: 'legacy.BGLight !important',
+                      base: 'legacy.B20 !important',
+                    },
+                  })}
+                />{' '}
+                <span>Learn more</span>
               </BadgeButton>
               <GithubAction />
             </VStack>
@@ -287,7 +318,16 @@ export const GetStartedPageV2 = () => {
                 navigate(ROUTES.TEAM_SETTINGS);
               }}
             >
-              <IconGroupAdd size={16} /> <span>Invite developers</span>
+              <IconGroupAdd
+                size={16}
+                className={css({
+                  color: {
+                    _dark: 'legacy.BGLight !important',
+                    base: 'legacy.B20 !important',
+                  },
+                })}
+              />{' '}
+              <span>Invite developers</span>
             </BadgeButton>
           </HStack>
         </div>

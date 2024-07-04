@@ -5,17 +5,32 @@ import { getResponse } from './utils';
 
 export const frameworkName: SupportedFrameworkName = 'sveltekit';
 
+/**
+ * Using SvelteKit, serve and register any declared workflows with Novu,
+ * making them available to be triggered by events.
+ *
+ * @example
+ * ```ts
+ * // app/routes/api/novu/+server.ts
+ * import { serve } from "@novu/framework/sveltekit";
+ * import { myWorkflow } from "./src/novu/workflows"; // Your workflows
+ *
+ * const handler = serve({ workflows: [myWorkflow] });
+ *
+ * export { handler as action, handler as loader };
+ * ```
+ */
 export const serve = (
   options: ServeHandlerOptions
 ): ((event: RequestEvent) => Promise<Response>) & {
   GET: (event: RequestEvent) => Promise<Response>;
   POST: (event: RequestEvent) => Promise<Response>;
-  PUT: (event: RequestEvent) => Promise<Response>;
+  OPTIONS: (event: RequestEvent) => Promise<Response>;
 } => {
   const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
-    handler: (reqMethod: 'GET' | 'POST' | 'PUT' | undefined, event: RequestEvent) => {
+    handler: (reqMethod: 'GET' | 'POST' | 'OPTIONS' | undefined, event: RequestEvent) => {
       return {
         method: () => reqMethod || event.request.method || '',
         body: () => event.request.json(),
@@ -44,11 +59,11 @@ export const serve = (
   const handlerFn = Object.defineProperties(fn, {
     GET: { value: baseFn.bind(null, 'GET') },
     POST: { value: baseFn.bind(null, 'POST') },
-    PUT: { value: baseFn.bind(null, 'PUT') },
+    OPTIONS: { value: baseFn.bind(null, 'OPTIONS') },
   }) as Fn & {
     GET: Fn;
     POST: Fn;
-    PUT: Fn;
+    OPTIONS: Fn;
   };
 
   return handlerFn;
