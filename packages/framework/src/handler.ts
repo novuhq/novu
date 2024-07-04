@@ -14,13 +14,14 @@ import {
 import {
   InvalidActionError,
   MethodNotAllowedError,
-  NovuError,
-  PlatformError,
+  FrameworkError,
+  BridgeError,
   SignatureExpiredError,
   SignatureInvalidError,
   SignatureMismatchError,
   SignatureNotFoundError,
   SigningKeyNotFoundError,
+  PlatformError,
 } from './errors';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { initApiClient } from './utils';
@@ -111,7 +112,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  private createError<TBody extends string = string>(error: NovuError): IActionResponse<TBody> {
+  private createError<TBody extends string = string>(error: FrameworkError): IActionResponse<TBody> {
     return {
       status: error.statusCode,
       body: JSON.stringify({
@@ -266,26 +267,34 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private isClientError(error: unknown): error is NovuError {
-    const frameworkThrow = Object.values(ErrorCodeEnum).includes((error as NovuError).code);
-    const externalApiThrow = isBadRequest(error);
+  private isBridgeError(error: unknown): error is FrameworkError {
+    return Object.values(ErrorCodeEnum).includes((error as FrameworkError)?.code);
+  }
 
-    return frameworkThrow || externalApiThrow;
+  private isPlatformError(error: unknown): error is PlatformError {
+    // TODO: replace with check against known Platform error codes.
+    return (error as PlatformError)?.statusCode >= 400 && (error as PlatformError)?.statusCode < 500;
   }
 
   private handleError(error: unknown): IActionResponse {
-    if (this.isClientError(error)) {
+    if (this.isBridgeError(error)) {
       if (error.statusCode === HttpStatusEnum.INTERNAL_SERVER_ERROR) {
+        /*
+         * Log bridge application exceptions to assist the Developer in debugging errors with their integration.
+         * This path is reached when the Bridge application throws an error, ensuring they can see the error in their logs.
+         */
         // eslint-disable-next-line no-console
         console.error(error);
       }
 
       return this.createError(error);
+    } else if (this.isPlatformError(error)) {
+      return this.createError(error);
     } else {
       // eslint-disable-next-line no-console
       console.error(error);
 
-      return this.createError(new PlatformError());
+      return this.createError(new BridgeError());
     }
   }
 
@@ -324,8 +333,4 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private hashHmac(secretKey: string, data: string): string {
     return createHmac('sha256', secretKey).update(data).digest('hex');
   }
-}
-
-function isBadRequest(error: unknown) {
-  return (error as NovuError)?.statusCode >= 400 && (error as NovuError)?.statusCode < 500;
 }
