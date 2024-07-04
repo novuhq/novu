@@ -55,7 +55,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
       <Group spacing={8}>
         <Group spacing={4}>
           <When truthy={original.bridge}>
-            <Tooltip label="Workflow is handled by Echo" position="top">
+            <Tooltip label="Workflow is handled by Novu Framework" position="top">
               <div>
                 <Bolt color="#4c6dd4" width="24px" height="24px" />
               </div>
