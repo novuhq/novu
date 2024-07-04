@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { getToken } from './useAuth';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { buildApiHttpClient } from '../api/api.client';
 import { get_session_recording_properties } from 'mixpanel-browser';
 import { useStudioState } from '../studio/StudioStateProvider';
+import { getToken } from '../auth/getToken';
 
 function useNovuAPI() {
   const { devSecretKey } = useStudioState();
