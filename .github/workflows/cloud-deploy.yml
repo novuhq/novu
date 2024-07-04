@@ -128,6 +128,7 @@ jobs:
           - name: 'ws'
             test_port: '1345'
     uses: ./.github/workflows/cloud-deploy-services.yml
+    secrets: inherit
     with:
       env: ${{ needs.pre-release.outputs.environment }}
       service: ${{ matrix.service.name }}
