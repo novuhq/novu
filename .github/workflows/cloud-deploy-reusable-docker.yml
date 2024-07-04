@@ -138,6 +138,7 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
+            --no-cache
             --platform=${{ needs.job-setup.outputs.platforms }}
             --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
