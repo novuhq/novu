@@ -1,16 +1,40 @@
 import { defineConfig, Options } from 'tsup';
-// import { compress } from 'esbuild-plugin-compress';
-import glob from 'tiny-glob';
-import { parsePresetOptions, generateTsupOptions, type PresetOptions } from 'tsup-preset-solid';
+import { solidPlugin } from 'esbuild-plugin-solid';
 import { name, version } from './package.json';
+import inlineImportPlugin from 'esbuild-plugin-inline-import';
+import loadPostcssConfig from 'postcss-load-config';
+import postcss from 'postcss';
+
+const processCSS = async (css: string, filePath: string) => {
+  const { plugins, options } = await loadPostcssConfig({}, filePath);
+  const result = await postcss(plugins).process(css, { ...options, from: filePath });
+  return result.css;
+};
+
+const runAfterLast =
+  (commands: Array<string | false>) =>
+  (...configs: Options[]) => {
+    const [last, ...rest] = configs.reverse();
+    return [...rest.reverse(), { ...last, onSuccess: [last.onSuccess, ...commands].filter(Boolean).join(' && ') }];
+  };
 
 const isProd = process.env?.NODE_ENV === 'production';
 
 const baseConfig: Options = {
-  splitting: false,
+  splitting: true,
   sourcemap: false,
   clean: true,
   dts: true,
+  esbuildPlugins: [
+    inlineImportPlugin({
+      filter: /^directcss:/,
+      transform: async (contents, args) => {
+        const processedCss = processCSS(contents, args.path);
+        return processedCss;
+      },
+    }),
+    solidPlugin(),
+  ],
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
 };
 
@@ -19,7 +43,10 @@ const baseModuleConfig: Options = {
   treeshake: true,
   dts: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
-  entry: await glob('./src/**/!(*.d|*.test).ts'),
+  entry: {
+    index: './src/index.ts',
+    'ui/index': './src/ui/index.ts',
+  },
   outExtension: ({ format }) => {
     return {
       js: format === 'cjs' ? '.cjs' : '.mjs',
@@ -27,58 +54,22 @@ const baseModuleConfig: Options = {
   },
 };
 
-const uiPresetOptions: PresetOptions = {
-  entries: [
-    {
-      // entries with '.tsx' extension will have `solid` export condition generated
-      entry: 'src/ui/index.tsx',
-    },
-  ],
-  out_dir: 'dist/ui',
-  // Set to `true` to remove all `console.*` calls and `debugger` statements in prod builds
-  drop_console: true,
-  // Set to `true` to generate a CommonJS build alongside ESM
-  cjs: true,
-};
-
 export default defineConfig((config: Options) => {
-  const isWatching = !!config.watch;
+  const copyPackageJson = (format: 'esm' | 'cjs') => `cp ./package.${format}.json ./dist/${format}/package.json`;
 
-  const PARSED_DATA = parsePresetOptions(uiPresetOptions, isWatching);
+  const cjs: Options = {
+    ...baseModuleConfig,
+    format: 'esm',
+    outDir: 'dist/esm',
+    tsconfig: 'tsconfig.json',
+  };
 
-  return [
-    {
-      ...baseModuleConfig,
-      format: 'esm',
-      outDir: 'dist/esm',
-      tsconfig: 'tsconfig.json',
-    },
-    {
-      ...baseModuleConfig,
-      format: 'cjs',
-      outDir: 'dist/cjs',
-      tsconfig: 'tsconfig.cjs.json',
-    },
-    ...generateTsupOptions(PARSED_DATA),
-    // {
-    //   ...baseConfig,
-    //   entry: { novu: 'src/umd.ts' },
-    //   format: ['iife'],
-    //   minify: true,
-    //   dts: false,
-    //   outExtension: () => {
-    //     return {
-    //       js: '.min.js',
-    //     };
-    //   },
-    //   esbuildPlugins: [
-    //     compress({
-    //       gzip: true,
-    //       brotli: false,
-    //       outputDir: '.',
-    //       exclude: ['**/*.map'],
-    //     }),
-    //   ],
-    // },
-  ];
+  const esm: Options = {
+    ...baseModuleConfig,
+    format: 'cjs',
+    outDir: 'dist/cjs',
+    tsconfig: 'tsconfig.cjs.json',
+  };
+
+  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs')])(esm, cjs);
 });

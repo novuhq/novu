@@ -1,12 +1,13 @@
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
 import { Appearance } from './context';
-import './index.css';
 import { generateRandomString } from './helpers';
 import { Localization } from './context/LocalizationContext';
-import { NovuComponent, NovuComponentControls, NovuComponentName, Renderer } from './components/Renderer';
+import { NovuComponent, NovuComponentName, Renderer } from './components/Renderer';
 import { NovuProviderProps } from './types';
 import { createSignal } from 'solid-js';
+//@ts-expect-error inline import esbuild syntax
+import css from 'directcss:./index.directcss';
 
 export class NovuUI {
   #dispose: { (): void } | null = null;
@@ -51,6 +52,7 @@ export class NovuUI {
     const dispose = render(
       () => (
         <Renderer
+          defaultCss={css}
           novuUI={this}
           nodes={this.#mountedElements()}
           options={this.#options()}

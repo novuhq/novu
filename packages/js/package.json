@@ -16,12 +16,16 @@
       "default": "./dist/esm/index.mjs"
     },
     "./ui": {
-      "types": "./dist/ui/index.d.ts",
-      "require": "./dist/ui/index.js",
-      "import": "./dist/ui/index.mjs",
-      "default": "./dist/ui/index.mjs"
+      "types": "./dist/types/ui/index.d.ts",
+      "require": "./dist/cjs/ui/index.cjs",
+      "import": "./dist/esm/ui/index.mjs",
+      "default": "./dist/esm/ui/index.mjs"
     },
-    "./ui/index.css": "./dist/ui/index.css"
+    "./ui/index.css": {
+      "require": "./dist/cjs/ui/index.css",
+      "import": "./dist/esm/ui/index.css",
+      "default": "./dist/esm/ui/index.css"
+    }
   },
   "files": [
     "dist/cjs",
@@ -60,9 +64,12 @@
     "chalk": "^5.3.0",
     "compression-webpack-plugin": "^10.0.0",
     "esbuild-plugin-compress": "^1.0.1",
+    "esbuild-plugin-inline-import": "^1.0.4",
+    "esbuild-plugin-solid": "^0.6.0",
     "eslint-plugin-local-rules": "^3.0.2",
     "jest": "^29.3.1",
     "postcss": "^8.4.38",
+    "postcss-load-config": "^6.0.1",
     "postcss-prefix-selector": "^1.16.1",
     "postcss-preset-env": "^9.5.14",
     "solid-devtools": "^0.29.2",
