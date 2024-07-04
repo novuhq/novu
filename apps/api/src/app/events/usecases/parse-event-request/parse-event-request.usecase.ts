@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
