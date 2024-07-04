@@ -121,7 +121,7 @@ jobs:
 
   post-deploy:
     needs:
-      - infrastructure-data
+      - infrastructure_data
       - deploy_service
     runs-on: ubuntu-latest
     permissions:
