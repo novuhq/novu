@@ -38,16 +38,17 @@ import {
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '../trigger-multicast';
+import { GetActionEnum, PostActionEnum } from '@novu/framework';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
 export interface IDoBridgeRequestCommand {
   bridgeUrl: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
   apiKey: string;
-  searchParams?: Record<string, any>;
+  searchParams?: Record<string, string>;
   afterResponse?: any;
-  action: 'execute' | 'preview' | 'discover' | 'health-check' | 'code';
+  action: GetActionEnum | PostActionEnum;
   retriesLimit?: number;
 }
 
