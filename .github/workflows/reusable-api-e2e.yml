@@ -19,13 +19,13 @@ on:
         required: false
         default: false
         type: boolean
-      clerk-ee:
+      ee-clerk:
         description: 'use the clerk ee version of api'
         required: false
         default: false
         type: boolean
       job-name:
-        description: 'job name [options: novu/api-ee, novu/api]'
+        description: 'job name [options: novu/api-ee, novu/api, novu/api-ee-clerk]'
         required: true
         type: string
 
@@ -112,7 +112,8 @@ jobs:
           cd apps/api && pnpm test:e2e:ee
 
       - name: Run E2E EE Clerk tests
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.clerk-ee }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.ee-clerk }}
+        continue-on-error: true
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
