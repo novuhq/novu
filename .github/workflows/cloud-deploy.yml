@@ -135,6 +135,7 @@ jobs:
       project_path: apps/${{ matrix.service.name }}
       test_port: ${{ matrix.service.test_port }}
       local_tag: novu-${{ matrix.service.name }}
+      submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
 
   post-release:
     if: ${{ always() }}
