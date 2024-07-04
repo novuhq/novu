@@ -128,7 +128,6 @@ jobs:
             test_port: '1344'
           - name: 'ws'
             test_port: '1345'
-    name: Deploy ${{ matrix.service.name }}
     uses: ./.github/workflows/cloud-deploy-services.yml
     with:
       env: ${{ needs.pre-release.outputs.environment }}
