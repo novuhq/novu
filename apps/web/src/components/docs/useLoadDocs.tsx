@@ -29,6 +29,6 @@ export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
     ...queryResults,
     data,
     // TODO: we should really be handling this through proper errors in the query, but this will suffice for now
-    hasLoadedSuccessfully: Boolean(!queryResults.isLoading && data.title),
+    hasLoadedSuccessfully: Boolean(!queryResults.isLoading && data.code),
   };
 };

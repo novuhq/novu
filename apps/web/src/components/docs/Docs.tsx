@@ -11,6 +11,9 @@ import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 import { Highlight } from './Highlight';
 import { DocsQueryResults } from './useLoadDocs';
 import { useFrameworkTerminalScript } from '../../hooks/useFrameworkTerminalScript';
+import { useEchoTerminalScript } from '../../hooks/useEchoTerminalScript';
+import { When } from '../utils/When';
+import { ChildDocs } from './ChildDocs';
 
 const Text = styled('p', text);
 const LiText = styled('span', text);
@@ -23,7 +26,8 @@ const DOCS_WRAPPER_ELEMENT_ID = 'embedded-docs';
 type DocsProps = PropsWithChildren<
   DocsQueryResults & {
     isLoading?: boolean;
-    actions: ReactNode;
+    actions?: ReactNode;
+    isChildDocs?: boolean;
   }
 >;
 
@@ -31,7 +35,15 @@ type DocsProps = PropsWithChildren<
  * Render the mdx for our mintlify docs inside of the web.
  * Fetching the compiled mdx from another service and then try to map the markdown to react components.
  */
-export const Docs = ({ code = '', description = '', title = '', isLoading, children, actions }: DocsProps) => {
+export const Docs = ({
+  code = '',
+  description = '',
+  title = '',
+  isLoading,
+  children: docsChildren,
+  actions = null,
+  isChildDocs = false,
+}: DocsProps) => {
   const Component = useMemo(() => {
     if (code.length === 0) {
       return null;
@@ -40,6 +52,14 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
     return getMDXComponent(code, {
       frameworkterminal: {
         FrameworkTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
+      },
+      framework: () => null,
+      NextStepsStep: () => <ChildDocs path="snippets/quickstart/next-steps" />,
+      TestStep: () => <ChildDocs path="snippets/quickstart/test" />,
+      DeployApp: () => <ChildDocs path="snippets/quickstart/deploy" />,
+      LocalStudio: () => <ChildDocs path="snippets/quickstart/start-studio" />,
+      echoterminal: {
+        EchoTerminal: () => <nv-echo-terminal></nv-echo-terminal>,
       },
     });
   }, [code]);
@@ -79,6 +99,10 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
   }
 
   if (Component === null) {
+    if (isChildDocs) {
+      return <Text>We could not load this part of the documentation for you. Please try again.</Text>;
+    }
+
     return (
       <Flex
         className={css({
@@ -88,7 +112,7 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
         align="center"
       >
         <Text>We could not load the documentation for you. Please try again.</Text>
-        {children}
+        {docsChildren}
       </Flex>
     );
   }
@@ -103,15 +127,38 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
           textAlign: 'justify left',
         })}
       >
-        <div>
-          <Flex justify="space-between" align="center">
-            <TitleH1>{title}</TitleH1>
-            {actions}
-          </Flex>
-          <Text>{description}</Text>
-        </div>
+        <When truthy={!isChildDocs}>
+          <div>
+            <Flex justify="space-between" align="center">
+              <TitleH1
+                className={css({
+                  width: '99%',
+                })}
+              >
+                {title}
+              </TitleH1>
+              {actions}
+            </Flex>
+            <Text>{description}</Text>
+          </div>
+        </When>
         <Component
           components={{
+            CodeGroup: ({ children, ...props }: { children: ReactNode }) => {
+              return <div>{children}</div>;
+            },
+            ResponseExample: ({ children }: { children: ReactNode }) => {
+              return <div>{children}</div>;
+            },
+            RequestExample: ({ children }: { children: ReactNode }) => {
+              return <div>{children}</div>;
+            },
+            ParamField: ({ children }: { children: ReactNode }) => {
+              return <div>{children}</div>;
+            },
+            Expandable: ({ children }: { children: ReactNode }) => {
+              return <div>{children}</div>;
+            },
             tr: ({ className, ...props }: any) => {
               return (
                 <tr
@@ -139,9 +186,13 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
               );
             },
             Frame: ({ className, ...props }: any) => {
+              const src = Array.isArray(props.children)
+                ? props.children.find((child) => child.type === 'img')?.props.src
+                : props.children.props?.src;
+
               return (
                 <div {...props}>
-                  <img alt="" src={`${MINTLIFY_IMAGE_URL}${props.children.props.src}`} />
+                  <img alt="" src={`${MINTLIFY_IMAGE_URL}${src}`} />
                   <Text className={css({ textAlign: 'center', fontStyle: 'italic' })}>{props.caption}</Text>
                 </div>
               );
@@ -348,7 +399,7 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
           }}
         />
       </VStack>
-      {children}
+      {docsChildren}
     </>
   );
 };
