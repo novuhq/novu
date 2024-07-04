@@ -117,6 +117,13 @@ jobs:
         with:
           driver-opts: 'image=moby/buildkit:v0.13.1'
 
+      - name: LS
+        id: ls
+        shell: bash
+        run: |
+          ls -la ./
+          ls -la apps/ws/
+
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
