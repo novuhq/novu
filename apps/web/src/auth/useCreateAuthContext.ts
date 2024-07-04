@@ -2,7 +2,7 @@ import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/index';
 import { useSegment } from '../components/providers/SegmentProvider';
@@ -52,6 +52,8 @@ export function useCreateAuthContext() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const [organizationId, setOrganizationId] = useState<string | undefined>();
+  const [environmentId, setEnvironmentId] = useState<string | undefined>();
   const inPublicRoute = Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
     location.pathname.startsWith(prefix)
   );
@@ -96,6 +98,7 @@ export function useCreateAuthContext() {
 
       saveToken(newToken);
       await refetchOrganizations();
+      setOrgAndEnv();
 
       redirectUrl ? navigate(redirectUrl) : void 0;
     },
@@ -104,6 +107,7 @@ export function useCreateAuthContext() {
 
   const logout = useCallback(() => {
     saveToken(null);
+    setOrgAndEnv();
     queryClient.clear();
     segment.reset();
     navigate(ROUTES.AUTH_LOGIN);
@@ -130,7 +134,18 @@ export function useCreateAuthContext() {
     [redirectTo]
   );
 
-  const { organizationId, environmentId } = getTokenClaims() || {};
+  const setOrgAndEnv = () => {
+    const { organizationId: newOrgId, environmentId: newEnvId } = getTokenClaims() || {
+      organizationId: undefined,
+      environmentId: undefined,
+    };
+    setOrganizationId(newOrgId);
+    setEnvironmentId(newEnvId);
+  };
+
+  useEffect(() => {
+    setOrgAndEnv();
+  }, []);
 
   const currentOrganization = useMemo(() => {
     if (organizationId && organizations && organizations?.length > 0) {
