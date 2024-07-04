@@ -10,6 +10,7 @@ export interface IJwtClaims {
   environmentId: string;
   roles: string[];
   exp: number;
+  iss?: string;
 }
 
 // JWT payload + custom claims

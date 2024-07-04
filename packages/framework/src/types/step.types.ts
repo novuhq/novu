@@ -7,12 +7,12 @@ import {
   digestResultSchema,
   digestTimedOutputSchema,
 } from '../schemas';
-import { channelStepSchemas } from '../schemas/steps/channels';
-import { Providers } from './provider.types';
-import { Schema, FromSchema } from './schema.types';
-import { Skip } from './skip.types';
-import { Awaitable } from './util.types';
 import { actionStepSchemas } from '../schemas/steps/actions';
+import { channelStepSchemas } from '../schemas/steps/channels';
+import type { Providers } from './provider.types';
+import type { FromSchema, Schema } from './schema.types';
+import type { Skip } from './skip.types';
+import type { Awaitable } from './util.types';
 
 // @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
 export type StepOptions = {

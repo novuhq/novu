@@ -5,6 +5,11 @@ concurrency:
 
 on:
   pull_request:
+    types:
+      [opened, reopened]
+    branches:
+      - 'next'
+      - 'prod'
   workflow_dispatch:
 
 jobs:
@@ -210,22 +215,6 @@ jobs:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
 
-  test_e2e_api:
-    name: E2E test API
-    needs: [get-affected]
-    strategy:
-      # The order is important for ee to be first, otherwise outputs not work correctly
-      matrix:
-        name: ['novu/api-ee', 'novu/api']
-    uses: ./.github/workflows/reusable-api-e2e.yml
-    with:
-      ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
-      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
-      job-name: ${{ matrix.name }}
-    secrets: inherit
-
-
   validate_openapi:
     name: Validate OpenAPI
     runs-on: ubuntu-latest
@@ -246,6 +235,21 @@ jobs:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       - uses: ./.github/actions/validate-openapi
+
+  test_e2e_api:
+    name: E2E test API
+    needs: [get-affected]
+    strategy:
+      # The order is important for ee to be first, otherwise outputs not work correctly
+      matrix:
+        name: ['novu/api-ee', 'novu/api']
+    uses: ./.github/workflows/reusable-api-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'-ee') }}
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
+      job-name: ${{ matrix.name }}
+    secrets: inherit    
 
   test_e2e_web:
     name: E2E test Web app

@@ -6,6 +6,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { When } from '../../../../components/utils/When';
+import { formContainerClassName } from '../step-editor/WorkflowStepEditorControlsPanel';
 
 export type ToSubscriber = {
   subscriberId: string;
@@ -43,7 +44,7 @@ export const WorkflowTestControlsPanel: FC<IWorkflowTestControlsPanelProps> = ({
   }, [watch]);
 
   return (
-    <Stack gap="margins.layout.page.vertical">
+    <Stack gap="margins.layout.page.vertical" className={formContainerClassName}>
       <Box>
         <HStack gap="50" mb="margins.layout.page.sub-section.titleBottom">
           <IconOutlineSend />

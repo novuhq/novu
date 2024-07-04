@@ -1,8 +1,8 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
-import { NovuRequestHandler, ServeHandlerOptions } from './handler';
-import { Either } from './types';
+import { NovuRequestHandler, type ServeHandlerOptions } from './handler';
+import { type Either } from './types';
 import { type SupportedFrameworkName } from './types';
 import { getResponse } from './utils';
 
@@ -16,12 +16,18 @@ export const frameworkName: SupportedFrameworkName = 'next';
  *
  * @example Next.js <=12 or the pages router can export the handler directly
  * ```ts
- * export default serve({ workflows: [yourWorkflow] });
+ * import { serve } from "@novu/framework/next";
+ * import { myWorkflow } from "./src/novu/workflows"; // Your workflows
+ *
+ * export default serve({ workflows: [myWorkflow] });
  * ```
  *
  * @example Next.js >=13 with the `app` dir must export individual methods
  * ```ts
- * export const { GET, POST, OPTIONS } = serve({ workflows: [yourWorkflow] });
+ * import { serve } from "@novu/framework/next";
+ * import { myWorkflow } from "./src/novu/workflows";
+ *
+ * export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });
  * ```
  */
 export const serve = (
@@ -35,7 +41,7 @@ export const serve = (
     frameworkName,
     ...options,
     handler: (
-      requestMethod: 'GET' | 'POST' | 'PUT' | 'OPTIONS' | undefined,
+      requestMethod: 'GET' | 'POST' | 'OPTIONS' | undefined,
       incomingRequest: NextRequest,
       response: NextApiResponse
     ) => {
@@ -163,7 +169,7 @@ export const serve = (
    *
    * This means that users must now export a function for each method supported
    * by the endpoint. For us, this means requiring a user explicitly exports
-   * `GET`, `POST`, and `PUT` functions.
+   * `GET`, `POST`, and `OPTIONS` functions.
    *
    * Because of this, we'll add circular references to those property names of
    * the returned handler, meaning we can write some succinct code to export

@@ -1,5 +1,5 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
-import { MissingSecretKeyError, WorkflowPayloadInvalidError } from './errors';
+import { MissingSecretKeyError } from './errors';
 import { workflow } from './workflow';
 
 describe('workflow function', () => {
@@ -145,6 +145,49 @@ describe('workflow function', () => {
         })
       ).rejects.toThrowError(
         `Workflow with id: \`test-workflow\` has invalid \`payload\`. Please provide the correct payload`
+      );
+    });
+
+    it('should make an API call without validating when the payloaSchema is not provided', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      const fetchMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => {
+          return Promise.resolve({
+            transactionId: '123',
+          });
+        },
+      });
+      global.fetch = fetchMock;
+
+      await testWorkflow.trigger({
+        to: 'test@test.com',
+        payload: {
+          free: 'field',
+        },
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching('/events/trigger'),
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: 'test-workflow',
+            to: 'test@test.com',
+            payload: {
+              free: 'field',
+            },
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `ApiKey ${process.env.NOVU_SECRET_KEY}`,
+          },
+          method: 'POST',
+        })
       );
     });
 

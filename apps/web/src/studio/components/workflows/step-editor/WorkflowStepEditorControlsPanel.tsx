@@ -6,8 +6,8 @@ import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useDebouncedCallback } from '@novu/novui';
+import { useTelemetry } from '../../../../hooks/useNovuAPI';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -30,12 +30,16 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   defaultControls,
   isLoadingSave,
 }) => {
-  const segment = useSegment();
+  const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
     return (
-      Object.keys(workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {})
-        .length > 0
+      Object.keys(
+        workflow?.payload?.schema?.properties ||
+          workflow?.options?.payloadSchema?.properties ||
+          workflow?.payloadSchema?.properties ||
+          {}
+      ).length > 0
     );
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
@@ -67,7 +71,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                         size={'sm'}
                         Icon={IconOutlineSave}
                         onClick={() => {
-                          segment.track('Step controls saved - [Workflows Step Page]', {
+                          track('Step controls saved - [Workflows Step Page]', {
                             step: step?.type,
                           });
                           onSave();
@@ -88,7 +92,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
-                      setPath('framework/concepts/controls');
+                      setPath('concepts/controls');
                       toggle();
                     }}
                   />
@@ -115,7 +119,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Payload ensures correct formatting and data validity."
                     onDocsClick={() => {
-                      setPath('framework/concepts/payload');
+                      setPath('workflow/introduction#payload-schema');
                       toggle();
                     }}
                   />

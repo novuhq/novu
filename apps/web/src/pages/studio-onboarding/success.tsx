@@ -6,20 +6,19 @@ import { HStack, VStack } from '@novu/novui/jsx';
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
-import { useSegment } from '../../components/providers/SegmentProvider';
 import { When } from '../../components/utils/When';
 import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { Wrapper } from './components/Wrapper';
-import { novuOnboardedCookie, setNovuOnboardingStepCookie } from '../../utils';
-import { useNotifications } from '../../hooks/useNovuAPI';
+import { setNovuOnboardingStepCookie } from '../../utils';
+import { useNotifications, useTelemetry } from '../../hooks/useNovuAPI';
 
 const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 
 export const StudioOnboardingSuccess = () => {
   const [searchParams] = useSearchParams();
-  const segment = useSegment();
+  const track = useTelemetry();
   const navigate = useNavigate();
   const transactionId = searchParams.get('transactionId') || '';
   const { data, isLoading } = useNotifications(transactionId, {
@@ -61,7 +60,7 @@ export const StudioOnboardingSuccess = () => {
   }, [item?.jobs]);
 
   useEffect(() => {
-    segment.track('Test workflow step completed - [Onboarding - Signup]');
+    track('Test workflow step completed - [Onboarding - Signup]');
 
     setNovuOnboardingStepCookie();
 
@@ -138,7 +137,7 @@ export const StudioOnboardingSuccess = () => {
       </VStack>
       <Footer
         onClick={() => {
-          segment.track('Workflows page accessed - [Onboarding - Signup]');
+          track('Workflows page accessed - [Onboarding - Signup]');
           navigate(ROUTES.STUDIO_FLOWS);
         }}
         buttonText="Explore workflows"

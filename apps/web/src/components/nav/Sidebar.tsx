@@ -1,22 +1,9 @@
 import { useLocation } from 'react-router-dom';
-import { css } from '@novu/novui/css';
 import { ROUTES } from '../../constants/routes';
 import { LocalNavMenu } from '../../studio/components/LocalNavMenu';
 import { RootNavMenu } from './RootNavMenu';
 import { SettingsNavMenu } from './SettingsNavMenu';
-
-const className = css({
-  position: 'sticky',
-  top: 0,
-  zIndex: 'auto',
-  backgroundColor: 'transparent',
-  borderRight: 'none',
-  width: '272px',
-  height: '100%',
-  p: '100',
-  bg: 'surface.panel',
-  overflowY: 'auto',
-});
+import { Aside } from './Aside';
 
 export const Sidebar = () => {
   const { pathname } = useLocation();
@@ -38,8 +25,8 @@ export const Sidebar = () => {
   }
 
   return (
-    <aside className={className}>
+    <Aside>
       <Variant />
-    </aside>
+    </Aside>
   );
 };

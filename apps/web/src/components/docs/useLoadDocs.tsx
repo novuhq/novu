@@ -1,5 +1,3 @@
-import { useSegment } from '../providers/SegmentProvider';
-import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MDX_URL } from './docs.const';
 
@@ -16,8 +14,6 @@ type UseLoadDocsProps = {
 };
 
 export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
-  const segment = useSegment();
-
   const { data = { code: '', title: '', description: '' }, ...queryResults } = useQuery<DocsQueryResults>(
     ['docs', path],
     async () => {
@@ -28,13 +24,6 @@ export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
     },
     { enabled: isEnabled }
   );
-
-  useEffect(() => {
-    segment.track('Inline docs opened', {
-      documentationPage: path,
-      pageURL: window.location.href,
-    });
-  }, [path, segment]);
 
   return {
     ...queryResults,

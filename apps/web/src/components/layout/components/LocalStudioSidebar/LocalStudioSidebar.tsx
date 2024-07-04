@@ -1,33 +1,26 @@
 import { WithLoadingSkeleton } from '@novu/novui';
-import { css, cva } from '@novu/novui/css';
-import { styled } from '@novu/novui/jsx';
+import { IconCloudQueue } from '@novu/novui/icons';
+import { OutlineButton } from '../../../../studio/components/OutlineButton';
 import { useDiscover } from '../../../../studio/hooks/useBridgeAPI';
+import { Aside } from '../../../nav/Aside';
 import { LocalStudioSidebarContent } from './LocalStudioSidebarContent';
-
-const Aside = styled(
-  'aside',
-  cva({
-    base: {
-      position: 'sticky',
-      top: '0',
-      zIndex: 'auto',
-      backgroundColor: 'transparent',
-      borderRight: 'none',
-      width: '[272px]',
-      height: 'full',
-      p: '50',
-      bg: 'surface.panel',
-      overflowY: 'auto',
-    },
-  })
-);
+import { SidebarFooter } from './SidebarFooter';
 
 export const LocalStudioSidebar: WithLoadingSkeleton = () => {
   const { isLoading, data } = useDiscover();
 
+  const goToCloudDashboard = () => {
+    window.open(window.location.origin, '_blank');
+  };
+
   return (
     <Aside>
       <LocalStudioSidebarContent workflows={data?.workflows ?? []} isLoading={isLoading} />
+      <SidebarFooter>
+        <OutlineButton fullWidth onClick={goToCloudDashboard} Icon={IconCloudQueue}>
+          Open Cloud Dashboard
+        </OutlineButton>
+      </SidebarFooter>
     </Aside>
   );
 };

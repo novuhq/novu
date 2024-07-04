@@ -1,9 +1,30 @@
-import { NovuRequestHandler, ServeHandlerOptions } from './handler';
+import { NovuRequestHandler, type ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
 import { getResponse } from './utils';
 
 export const frameworkName: SupportedFrameworkName = 'remix';
 
+/**
+ * In Remix, serve and register any declared workflows with Novu, making them
+ * available to be triggered by events.
+ *
+ * Remix requires that you export both a "loader" for serving `GET` requests,
+ * and an "action" for serving other requests, therefore exporting both is
+ * required.
+ *
+ * See {@link https://remix.run/docs/en/v1/guides/resource-routes}
+ *
+ * @example
+ * ```ts
+ * import { serve } from "@novu/framework/remix";
+ * import { myWorkflow } from "./src/novu/workflows";
+ *
+ * const handler = serve({ workflows: [myWorkflow] });
+ *
+ * export { handler as loader, handler as action };
+ * ```
+ */
+// Has explicit return type to avoid JSR-defined "slow types"
 export const serve = (
   options: ServeHandlerOptions
 ): ((ctx: { request: Request; context?: unknown }) => Promise<Response>) => {

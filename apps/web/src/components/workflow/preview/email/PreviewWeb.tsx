@@ -111,6 +111,7 @@ export const PreviewWeb = ({
     frame?: string;
     content?: string;
     contentContainer?: string;
+    skeleton?: string;
   };
   bridge?: boolean;
 }) => {
@@ -188,7 +189,7 @@ export const PreviewWeb = ({
             </When>
             <div className={cx(classes.content, classNames.content)}>
               <When truthy={loading}>
-                <ContentSkeleton />
+                <ContentSkeleton className={classNames.skeleton} />
               </When>
               <When truthy={!loading}>
                 <ErrorBoundary
