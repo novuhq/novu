@@ -9,6 +9,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
 import { NovuiProvider } from '@novu/novui';
+import { AuthContextProvider } from './auth/AuthContextProvider';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -33,9 +34,11 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
         <SegmentProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter basename={CONTEXT_PATH}>
-              <HelmetProvider>
-                <StudioStateProvider>{children}</StudioStateProvider>
-              </HelmetProvider>
+              <AuthContextProvider>
+                <HelmetProvider>
+                  <StudioStateProvider>{children}</StudioStateProvider>
+                </HelmetProvider>
+              </AuthContextProvider>
             </BrowserRouter>
           </QueryClientProvider>
         </SegmentProvider>

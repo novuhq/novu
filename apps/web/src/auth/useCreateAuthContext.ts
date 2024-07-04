@@ -1,16 +1,17 @@
-import { useEffect, useCallback, useMemo } from 'react';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
-import jwtDecode from 'jwt-decode';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import * as Sentry from '@sentry/react';
-import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { api } from '../api/index';
 import { useSegment } from '../components/providers/SegmentProvider';
-import { api } from '../api';
-import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
+import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../constants/routes';
+import { getToken } from './getToken';
+import { getTokenClaims } from './getTokenClaims';
 
 // TODO: Add a novu prefix to the local storage key
-const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
+export const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
 const UNAUTHENTICATED_STATUS_CODE = 401;
 
 export interface IUserWithContext extends IUserEntity {
@@ -34,16 +35,6 @@ function saveToken(token: string | null) {
   }
 }
 
-export function getToken(): string {
-  return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || '';
-}
-
-export function getTokenClaims(): IJwtClaims | null {
-  const token = getToken();
-
-  return token ? jwtDecode<IJwtClaims>(token) : null;
-}
-
 function inIframe() {
   try {
     return window.self !== window.top;
@@ -52,7 +43,10 @@ function inIframe() {
   }
 }
 
-export function useAuth() {
+/**
+ * TODO: this function should be decomposed into smaller, more focused pieces of functionality.
+ */
+export function useCreateAuthContext() {
   const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();
