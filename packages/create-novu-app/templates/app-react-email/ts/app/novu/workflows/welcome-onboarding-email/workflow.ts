@@ -1,6 +1,6 @@
 import { workflow } from "@novu/framework";
 import { renderEmail } from "../../emails/novu-onboarding-email";
-import { zodControlSchema, zodPayloadSchema } from "./schemas";
+import { emailControlSchema, payloadSchema } from "./schemas";
 
 export const welcomeOnboardingEmail = workflow(
   "welcome-onboarding-email",
@@ -9,16 +9,16 @@ export const welcomeOnboardingEmail = workflow(
       "send-email",
       async (controls) => {
         return {
-          subject: "A Successful Test on Novu!",
+          subject: controls.subject,
           body: renderEmail(controls, payload),
         };
       },
       {
-        controlSchema: zodControlSchema,
+        controlSchema: emailControlSchema,
       },
     );
   },
   {
-    payloadSchema: zodPayloadSchema,
+    payloadSchema,
   },
 );

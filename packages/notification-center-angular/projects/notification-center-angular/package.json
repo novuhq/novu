@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "peerDependencies": {
     "@angular/common": "^15.0.0 || ^16.0.0 || ^17.0.0",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0",

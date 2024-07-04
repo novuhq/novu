@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-shared-services",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "Generic service used inside of Novu's different services - can not be depended on application-generic",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
