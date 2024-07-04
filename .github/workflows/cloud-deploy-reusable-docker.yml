@@ -80,9 +80,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-#        with:
-#          submodules: ${{ inputs.enterprise }}
-#          token: ${{ secrets.SUBMODULES_TOKEN }}
+        with:
+          submodules: ${{ inputs.enterprise }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Prepare
         id: prepare
@@ -134,7 +134,7 @@ jobs:
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
             --platform=${{ needs.job-setup.outputs.platforms }}
-            --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
+            --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true --no-cache
         run: |
           echo -n $GH_PASSWORD | wc -c
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
