@@ -117,13 +117,6 @@ jobs:
         with:
           driver-opts: 'image=moby/buildkit:v0.13.1'
 
-      - name: LS
-        id: ls
-        shell: bash
-        run: |
-          ls -la ./
-          ls -la apps/ws/
-
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
@@ -138,7 +131,8 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --no-cache
+            --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
+            --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
             --platform=${{ needs.job-setup.outputs.platforms }}
             --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
@@ -146,7 +140,7 @@ jobs:
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           echo -n $BULL_MQ_PRO_NPM_TOKEN | wc -c
-          cd $PROJECT_PATH && pnpm --silent --workspace-root pnpm-context -- ${{ inputs.project_path }}/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t ${{inputs.local_tag}} --secret id=BULL_MQ_PRO_NPM_TOKEN $DOCKER_BUILD_ARGUMENTS --build-arg PACKAGE_PATH=${{ inputs.project_path }} -
+          cd $PROJECT_PATH && pnpm --silent --workspace-root pnpm-context -- ${{ inputs.project_path }}/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t ${{inputs.local_tag}} --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=${{ inputs.project_path }} - $DOCKER_BUILD_ARGUMENTS
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
           echo "pushing to ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
