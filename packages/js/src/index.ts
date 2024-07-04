@@ -1,2 +1,2 @@
 export { Novu } from './novu';
-export { InboxUI } from './ui';
+export { NovuUI } from './ui';
