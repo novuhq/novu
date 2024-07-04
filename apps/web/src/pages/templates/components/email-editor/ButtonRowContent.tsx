@@ -5,7 +5,7 @@ import { TextInput as MantineInput, Popover, Button as MantineButton, createStyl
 import { TextAlignEnum } from '@novu/shared';
 
 import { colors, shadows, TextAlignment, Wifi } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 
@@ -38,7 +38,7 @@ export function ButtonRowContent({
 
   const content = methods.watch(`${stepFormPath}.template.content.${blockIndex}.content`);
   const textAlign = methods.watch(`${stepFormPath}.template.content.${blockIndex}.styles.textAlign`);
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const [dropDownVisible, setDropDownVisible] = useState<boolean>(false);
   const { classes } = usePopoverStyles();
 

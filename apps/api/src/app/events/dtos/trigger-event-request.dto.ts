@@ -12,6 +12,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
+  ControlsDto,
   TopicKey,
   TriggerRecipients,
   TriggerRecipientsTypeEnum,
@@ -60,6 +61,10 @@ export class TriggerEventRequestDto {
   @IsObject()
   @IsOptional()
   payload?: Record<string, unknown>;
+
+  @IsString()
+  @IsOptional()
+  bridgeUrl?: string;
 
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',
@@ -133,6 +138,8 @@ export class TriggerEventRequestDto {
   @ValidateNested()
   @Type(() => TenantPayloadDto)
   tenant?: TriggerTenantContext;
+
+  controls?: ControlsDto;
 }
 
 export class BulkTriggerEventDto {

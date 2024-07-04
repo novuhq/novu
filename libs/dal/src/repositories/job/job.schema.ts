@@ -97,6 +97,9 @@ const jobSchema = new Schema<JobDBModel>(
         type: Schema.Types.Boolean,
       },
       timed: {
+        cronExpression: {
+          type: Schema.Types.String,
+        },
         atTime: {
           type: Schema.Types.String,
         },

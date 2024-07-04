@@ -102,7 +102,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let resonateResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
-    if (!['digest', 'delay'].includes(stepType as any)) {
+    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
       resonateResponse = await this.resonateUsecase.execute<
         SendMessageCommand & { variables: IFilterVariables },
         ExecuteOutput<IBridgeChannelResponse> | null
@@ -111,20 +111,20 @@ export class SendMessage {
         variables,
       });
     }
-    const endpointSkip = resonateResponse?.options?.skip;
-    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(endpointSkip, command, variables);
+    const bridgeSkip = resonateResponse?.options?.skip;
+    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(bridgeSkip, command, variables);
 
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
-        endpointSkip,
+        bridgeSkip,
         filterResult,
         channelPreferenceResult,
         !!resonateResponse?.outputs
       );
     }
 
-    if (!filterResult?.passed || !channelPreferenceResult || endpointSkip) {
+    if (!filterResult?.passed || !channelPreferenceResult || bridgeSkip) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       await this.executionLogRoute.execute(
@@ -138,7 +138,7 @@ export class SendMessage {
           raw: JSON.stringify({
             ...(filterResult ? { filter: { conditions: filterResult?.conditions, passed: filterResult?.passed } } : {}),
             ...(channelPreferenceResult ? { preferences: { passed: channelPreferenceResult } } : {}),
-            ...(endpointSkip ? { skip: endpointSkip } : {}),
+            ...(bridgeSkip ? { skip: bridgeSkip } : {}),
           }),
         })
       );
@@ -204,12 +204,13 @@ export class SendMessage {
   }
 
   private async getStepExecutionHalt(
-    resonateSkip: boolean | undefined,
+    bridgeSkip: boolean | undefined,
     command: SendMessageCommand,
     variables: IFilterVariables
   ): Promise<{ filterResult: IConditionsFilterResponse | null; channelPreferenceResult: boolean | null }> {
-    if (resonateSkip === true) {
-      return { filterResult: null, channelPreferenceResult: null };
+    const skipHalt = this.shouldSkipHalt(bridgeSkip, command.job?.step?.bridgeUrl);
+    if (skipHalt) {
+      return { filterResult: { passed: true, conditions: [], variables: {} }, channelPreferenceResult: true };
     }
 
     const [filterResult, channelPreferenceResult] = await Promise.all([
@@ -218,6 +219,20 @@ export class SendMessage {
     ]);
 
     return { filterResult, channelPreferenceResult };
+  }
+
+  /**
+   * This function checks if a bridge skip is happening.
+   *
+   * - If `bridgeSkip` is true (highest priority), skips all checks.
+   * - If `bridgeUrl` is provided, skips all checks (use `skip` option in workflow definition instead).
+   *
+   * @param bridgeSkip Whether to skip bridge checks (optional).
+   * @param bridgeUrl URL of the bridge (optional).
+   * @return True if bridge skip is happening, false otherwise.
+   */
+  private shouldSkipHalt(bridgeSkip: boolean | undefined, bridgeUrl: string | undefined): boolean {
+    return bridgeSkip === true || !!bridgeUrl;
   }
 
   private async filter(command: SendMessageCommand, variables: IFilterVariables) {

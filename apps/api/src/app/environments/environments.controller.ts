@@ -83,6 +83,8 @@ export class EnvironmentsController {
         environmentId: user.environmentId,
         userId: user._id,
         organizationId: user.organizationId,
+        // TODO: This is a temporary patch to include API keys when Novu API is accessed via a user JWT token
+        includeApiKeys: user?.iss === 'novu_api',
       })
     );
   }

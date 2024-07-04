@@ -1,12 +1,12 @@
 import { Button } from '@novu/design-system';
 import { IForm } from './formTypes';
 import { useFormContext } from 'react-hook-form';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 export const UpdateButton = () => {
   const { formState } = useFormContext<IForm>();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const { isUpdating } = useTemplateEditorForm();
 
   return (

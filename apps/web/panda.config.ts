@@ -39,6 +39,11 @@ export default defineConfig({
    */
   theme: {
     extend: {
+      tokens: {
+        sizes: {
+          onboarding: { value: '880px' },
+        },
+      },
       semanticTokens: {
         colors: {
           workflow: {

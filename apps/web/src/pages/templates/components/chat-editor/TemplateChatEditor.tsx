@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
 import { useState } from 'react';
 
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
+import { useEnvironment, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
@@ -16,12 +16,9 @@ import { VariableManagementButton } from '../VariableManagementButton';
 import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { When } from '@novu/design-system';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { ControlVariablesForm } from '../ControlVariablesForm';
 
 const templateFields = ['content'];
-
-const PREVIEW = 'Preview';
-const INPUTS = 'Inputs';
 
 export function TemplateChatEditor() {
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
@@ -31,11 +28,10 @@ export function TemplateChatEditor() {
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.CHAT,
   });
-  const [inputVariables, setInputVariables] = useState();
+  const [controlVariables, setControlVariables] = useState();
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
-  const theme = useMantineTheme();
+  const { bridge } = useEnvironment({}, template?.bridge);
 
   return (
     <>
@@ -53,7 +49,7 @@ export function TemplateChatEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
-                  label={bridge ? 'Input variables' : undefined}
+                  label={bridge ? 'Control variables' : undefined}
                 />
                 <When truthy={!bridge}>
                   <CustomCodeEditor
@@ -64,14 +60,14 @@ export function TemplateChatEditor() {
                   />
                 </When>
                 <When truthy={bridge}>
-                  <InputVariablesForm onChange={setInputVariables} />
+                  <ControlVariablesForm onChange={setControlVariables} />
                 </When>
               </Stack>
             )}
           />
         </Grid.Col>
         <Grid.Col span={6}>
-          <ChatPreview inputVariables={inputVariables} showLoading={isPreviewLoading} />
+          <ChatPreview controlVariables={controlVariables} showLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
       <EditVariablesModal

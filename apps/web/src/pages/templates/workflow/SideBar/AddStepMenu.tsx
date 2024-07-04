@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { Stack, Title } from '@mantine/core';
 import { When } from '../../../../components/utils/When';
 import { colors, DragButton, Tooltip } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { channels, NodeTypeEnum } from '../../../../utils/channels';
 import { TOP_ROW_HEIGHT } from '../WorkflowEditor';
 import { StepTypeEnum } from '@novu/shared';
@@ -14,7 +14,7 @@ export function AddStepMenu({
   setDragging: (value: ((prevState: boolean) => boolean) | boolean) => void;
   onDragStart: (event, nodeType) => void;
 }) {
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   return (
     <StyledNav data-test-id="drag-side-menu">

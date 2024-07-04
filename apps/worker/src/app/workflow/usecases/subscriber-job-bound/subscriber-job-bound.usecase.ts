@@ -1,13 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  JobRepository,
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-  IntegrationRepository,
-} from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ControlVariablesLevelEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
@@ -26,7 +22,6 @@ import {
   PinoLogger,
   ProcessSubscriber,
   ProcessSubscriberCommand,
-  ProcessTenant,
 } from '@novu/application-generic';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
@@ -39,9 +34,7 @@ export class SubscriberJobBound {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
   ) {}
@@ -67,10 +60,12 @@ export class SubscriberJobBound {
       requestCategory,
     } = command;
 
-    const template = await this.getNotificationTemplate({
-      _id: templateId,
-      environmentId: environmentId,
-    });
+    const template =
+      this.mapBridgeWorkflow(command) ??
+      (await this.getNotificationTemplate({
+        _id: templateId,
+        environmentId: environmentId,
+      }));
 
     if (!template) {
       throw new ApiException(`Workflow id ${templateId} was not found`);
@@ -95,6 +90,7 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
+      statelessWorkflow: !!command.bridge?.url,
     });
 
     const subscriberProcessed = await this.processSubscriber.execute(
@@ -108,11 +104,6 @@ export class SubscriberJobBound {
 
     // If no subscriber makes no sense to try to create notification
     if (!subscriberProcessed) {
-      /**
-       * TODO: Potentially add a CreateExecutionDetails entry. Right now we
-       * have the limitation we need a job to be created for that. Here there
-       * is no job at this point.
-       */
       Logger.warn(
         `Subscriber ${JSON.stringify(subscriber.subscriberId)} of organization ${
           command.organizationId
@@ -136,6 +127,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
+      bridge: command.bridge,
     };
 
     if (actor) {
@@ -153,6 +145,36 @@ export class SubscriberJobBound {
         organizationId: command.organizationId,
       })
     );
+  }
+
+  private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {
+    const bridgeWorkflow = command.bridge?.workflow;
+
+    if (!bridgeWorkflow) {
+      return null;
+    }
+
+    /*
+     * Cast used to convert data type for further processing.
+     * todo Needs review for potential data corruption.
+     */
+    return {
+      ...bridgeWorkflow,
+      type: 'ECHO',
+      steps: bridgeWorkflow.steps.map((step) => {
+        const stepControlVariables = command.controls?.steps?.[step.stepId];
+
+        return {
+          ...step,
+          bridgeUrl: command.bridge?.url,
+          controlVariables: stepControlVariables,
+          active: true,
+          template: {
+            type: step.type,
+          },
+        };
+      }),
+    } as unknown as NotificationTemplateEntity;
   }
 
   @Instrument()

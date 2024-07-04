@@ -99,6 +99,7 @@ export class SendMessageSms extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
+            // i18next: i18nextInstance,
           })
         );
 
@@ -162,6 +163,7 @@ export class SendMessageSms extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.executionLogRoute.execute(

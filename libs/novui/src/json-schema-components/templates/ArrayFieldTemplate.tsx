@@ -6,12 +6,9 @@ import {
   getUiOptions,
   ArrayFieldTemplateItemType,
 } from '@rjsf/utils';
-import { Grid } from '@mantine/core';
-import { css } from '../../../styled-system/css';
-import { Box, Flex, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
-
-const Title = styled('h2', title);
+import { css, cx } from '../../../styled-system/css';
+import { Box, HStack } from '../../../styled-system/jsx';
+import { formItemClassName, FormGroupTitle } from '../shared';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
@@ -41,14 +38,8 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   );
 }
 
-export function ArrayFieldTitleTemplate(props: ArrayFieldTitleProps) {
-  const { title } = props;
-
-  return (
-    <Title py={'75'} variant={'subsection'}>
-      {title}
-    </Title>
-  );
+export function ArrayFieldTitleTemplate({ title }: ArrayFieldTitleProps) {
+  return <FormGroupTitle>{title}</FormGroupTitle>;
 }
 
 export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
@@ -67,31 +58,39 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
   const { MoveDownButton, MoveUpButton, RemoveButton } = registry.templates.ButtonTemplates;
 
   return (
-    <Grid key={index}>
-      <Grid.Col span={'auto'}>
-        <div className={css({ pl: '125' })}>{children}</div>
-      </Grid.Col>
-      <Grid.Col span={'content'}>
-        <Flex>
-          {(hasMoveUp || hasMoveDown) && (
-            <MoveUpButton
-              disabled={disabled || readonly || !hasMoveUp}
-              onClick={onReorderClick(index, index - 1)}
-              registry={registry}
-            />
-          )}
-          {(hasMoveUp || hasMoveDown) && (
-            <MoveDownButton
-              disabled={disabled || readonly || !hasMoveDown}
-              onClick={onReorderClick(index, index + 1)}
-              registry={registry}
-            />
-          )}
-          {hasRemove && (
-            <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
-          )}
-        </Flex>
-      </Grid.Col>
-    </Grid>
+    <HStack
+      gap="50"
+      // align the buttons with the input itself rather than centered with the input and its label
+      className={cx(
+        formItemClassName,
+        css({
+          '&:has(input[type="text"],input[type="checkbox"],textarea[type="text"]) [role="toolbar"]': {
+            paddingTop: '0',
+            alignSelf: 'flex-start',
+          },
+        })
+      )}
+    >
+      <div className={css({ width: 'full' })}>{children}</div>
+      <HStack role="toolbar" gap="25" py="25">
+        {(hasMoveUp || hasMoveDown) && (
+          <MoveUpButton
+            disabled={disabled || readonly || !hasMoveUp}
+            onClick={onReorderClick(index, index - 1)}
+            registry={registry}
+          />
+        )}
+        {(hasMoveUp || hasMoveDown) && (
+          <MoveDownButton
+            disabled={disabled || readonly || !hasMoveDown}
+            onClick={onReorderClick(index, index + 1)}
+            registry={registry}
+          />
+        )}
+        {hasRemove && (
+          <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
+        )}
+      </HStack>
+    </HStack>
   );
 }

@@ -1,6 +1,6 @@
 {
   "name": "@novu/stateless",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",

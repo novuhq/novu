@@ -188,12 +188,6 @@ export class UpdateWorkflow {
       updatePayload.data = command.data;
     }
 
-    /*
-     * if (command.inputs) {
-     *   updatePayload.inputs = command.inputs;
-     * }
-     */
-
     if (command.rawData) {
       updatePayload.rawData = command.rawData;
     }
@@ -364,7 +358,9 @@ export class UpdateWorkflow {
         senderName: message.template.senderName,
         actor: message.template.actor,
         parentChangeId,
-        inputs: message?.template.inputs,
+        code: message?.template.code,
+        inputs: message?.template.controls || message?.template.inputs,
+        controls: message?.template.controls || message?.template.inputs,
         output: message?.template.output,
         workflowType: command.type,
       };

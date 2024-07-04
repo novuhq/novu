@@ -4,9 +4,9 @@ import { Checkbox } from '../../components/checkbox/Checkbox';
 export const CheckboxWidget = (props: WidgetProps) => {
   return (
     <Checkbox
-      checked={props.value}
+      checked={typeof props.value === 'undefined' ? false : props.value}
       description={props.schema.description}
-      onChange={props.onChange}
+      onChange={({ target }) => props.onChange(target.checked)}
       required={props.required}
       label={props.label}
     />

@@ -7,13 +7,13 @@ import { colors, Input, Switch, Tooltip, inputStyles, Text } from '@novu/design-
 import { IntervalSelect } from './IntervalSelect';
 import { BackOffTooltipIcon } from './icons/BackOffTooltipIcon';
 import { When } from '../../../../components/utils/When';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 const defaultBackoffAmount = '5';
 
 export const BackOffFields = () => {
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const stepFormPath = useStepFormPath();
   const {
     control,

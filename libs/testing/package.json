@@ -1,6 +1,6 @@
 {
   "name": "@novu/testing",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "",
   "private": true,
   "scripts": {
@@ -46,7 +46,6 @@
   },
   "devDependencies": {
     "@types/async": "^3.2.1",
-    "@types/bluebird": "^3.5.30",
     "@types/node": "^14.6.0",
     "@typescript-eslint/parser": "^4.14.2",
     "apollo-boost": "0.4.9",
@@ -54,10 +53,5 @@
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ]
   }
 }

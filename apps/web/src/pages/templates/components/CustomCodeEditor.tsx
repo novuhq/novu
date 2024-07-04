@@ -7,7 +7,7 @@ import { editor as NEditor } from 'monaco-editor';
 
 import { createTranslationMarks } from './createTranslationMarks';
 import { IVariable, useWorkflowVariables } from '../../../api/hooks';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 
 export const CustomCodeEditor = ({
   onChange,
@@ -60,7 +60,7 @@ const CustomCodeEditorBase = ({
   variables: any;
   isDark: boolean;
 }) => {
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);

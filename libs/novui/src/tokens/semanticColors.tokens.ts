@@ -52,6 +52,10 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
           value: { base: '{colors.green.20.light}', _dark: '{colors.green.20.dark}' },
           type: 'color',
         },
+        required: {
+          value: { base: '{colors.red.20.light}', _dark: '{colors.red.20.dark}' },
+          type: 'color',
+        },
       },
     },
   },
@@ -105,6 +109,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  tabs: {
+    border: {
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
+    },
+  },
   badge: {
     border: {
       value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
@@ -131,25 +141,93 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  input: {
+    border: {
+      DEFAULT: {
+        value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+      active: {
+        value: { base: '{colors.legacy.B60}', _dark: '{colors.legacy.B60}' },
+        type: 'color',
+      },
+      disabled: {
+        value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+      error: {
+        value: { base: '{colors.legacy.error}', _dark: '{colors.legacy.error}' },
+        type: 'color',
+      },
+    },
+    surface: {
+      DEFAULT: {
+        value: { base: '{colors.transparent}', _dark: '{colors.transparent}' },
+        type: 'color',
+      },
+      disabled: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+        type: 'color',
+      },
+    },
+  },
+  select: {
+    option: {
+      surface: {
+        hover: {
+          value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+          type: 'color',
+        },
+        selected: {
+          value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B40}' },
+          type: 'color',
+        },
+      },
+    },
+  },
+  codeBlock: {
+    surface: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    text: {
+      value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.white}' },
+      type: 'color',
+    },
+  },
+  loader: {
+    overlay: {
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
+      type: 'color',
+    },
+  },
   // color palette semantic testing
   mode: {
     cloud: {
       start: {
-        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
+        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
+        type: 'color',
+      },
+      middle: {
+        value: { base: '{colors.legacy.gradientMiddle}', _dark: '{colors.legacy.gradientMiddle}' },
         type: 'color',
       },
       end: {
-        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
+        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
         type: 'color',
       },
     },
     local: {
       start: {
-        value: { base: '{colors.green.30.light}', _dark: '{colors.green.30.dark}' },
+        value: { base: '{colors.green.30.light}', _dark: '{colors.green.50.dark}' },
+        type: 'color',
+      },
+      middle: {
+        value: { base: '{colors.green.40.light}', _dark: '{colors.green.40.dark}' },
         type: 'color',
       },
       end: {
-        value: { base: '{colors.green.50.light}', _dark: '{colors.green.50.dark}' },
+        value: { base: '{colors.green.50.light}', _dark: '{colors.green.30.dark}' },
         type: 'color',
       },
     },

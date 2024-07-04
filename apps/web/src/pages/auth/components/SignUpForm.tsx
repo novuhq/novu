@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -9,7 +9,7 @@ import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/desi
 
 import { useAuth } from '../../../hooks/useAuth';
 import { api } from '../../../api/api.client';
-import { useVercelParams } from '../../../hooks';
+import { useRedirectURL, useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { ROUTES } from '../../../constants/routes';
@@ -28,6 +28,9 @@ export type SignUpFormInputType = {
 
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
+  const { setRedirectURL } = useRedirectURL();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setRedirectURL(), []);
 
   const { login } = useAuth();
   const { isLoading: isAcceptInviteLoading, acceptInvite } = useAcceptInvite();

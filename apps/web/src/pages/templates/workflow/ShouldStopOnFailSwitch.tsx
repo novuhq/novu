@@ -2,12 +2,12 @@ import styled from '@emotion/styled';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Switch } from '@novu/design-system';
 
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 
 export const ShouldStopOnFailSwitch = () => {
   const { control } = useFormContext();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const path = useStepFormPath();
 
   return (

@@ -15,9 +15,9 @@ import { api } from '../../../../api';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
 import { useMutation } from '@tanstack/react-query';
-import { useEnvController } from '../../../../hooks/useEnvController';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
+import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const PreviewContainer = styled.div`
@@ -41,7 +41,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const path = useStepFormPath();
   const error = useStepFormErrors();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
 
   const stepId = watch(`${path}.uuid`);
 
@@ -59,20 +59,23 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     content,
   });
 
-  const { mutateAsync: saveInputs, isLoading: isSavingInputs } = useMutation((data) =>
-    api.put('/v1/echo/inputs/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
+  const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
+    api.put('/v1/bridge/controls/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
   );
 
   const {
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-      setBridgeSubject(data.outputs.subject);
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+        setBridgeSubject(data.outputs.subject);
+      },
+    }
+  );
 
   const { getEmailPreview, previewContent, subject, isPreviewContentLoading } = usePreviewEmailTemplate({
     locale: selectedLocale,
@@ -158,7 +161,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           </When>
           <When truthy={bridge}>
             <div style={{ minWidth: 300, maxWidth: 300, marginLeft: 'auto' }}>
-              <InputVariablesForm
+              <ControlVariablesForm
                 onChange={(values) => {
                   mutateAsync(values);
                 }}

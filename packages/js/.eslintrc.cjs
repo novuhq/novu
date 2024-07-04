@@ -1,7 +1,7 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
   rules: {
-    '@typescript-eslint/explicit-module-boundary-types': 'error',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/naming-convention': [
       'error',
       {

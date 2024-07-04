@@ -1,22 +1,35 @@
 {
   "name": "novu",
-  "version": "0.24.2",
-  "description": "On-Boarding Cli",
+  "version": "2.0.0-canary.0",
+  "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
   "main": "index.js",
   "scripts": {
-    "build:post": "cross-env mkdir dist/constants/dashboard && ncp src/constants/dashboard/index.html dist/constants/dashboard/index.html",
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.build.json && pnpm build:post",
-    "build:prod": "pnpm prebuild && pnpm build && pnpm build:post",
+    "build": "pnpm prebuild && tsc -p tsconfig.build.json",
+    "build:prod": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src --ext .ts",
     "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon init",
+    "start:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon",
+    "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon dev --dashboard-url http://localhost:4200",
+    "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon sync",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
     "start:debug": "cross-env TZ=UTC nodemon --config nodemon-debug.json",
     "start:prod": "cross-env TZ=UTC node dist/index.js"
   },
-  "author": "",
+  "keywords": [
+    "novu",
+    "cli",
+    "novu-cli",
+    "cloud",
+    "sync",
+    "studio"
+  ],
+  "author": "Novu Team <engineering@novu.co>",
   "license": "ISC",
   "bin": {
     "novu": "./dist/index.js"
@@ -25,11 +38,15 @@
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "@types/mocha": "10.0.2",
+    "@types/ws": "^8.5.3",
+    "ts-node": "~10.9.1",
     "ncp": "^2.0.0",
     "nodemon": "^3.0.1",
-    "typescript": "4.9.5"
+    "typescript": "4.9.5",
+    "vitest": "^1.2.1"
   },
   "dependencies": {
+    "@novu/ntfr-client": "^0.0.3",
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "axios": "^1.6.2",
@@ -43,7 +60,7 @@
     "jwt-decode": "^3.1.2",
     "open": "^8.4.0",
     "ora": "^5.4.1",
-    "ts-node": "~10.9.1",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "ws": "^8.11.0"
   }
 }

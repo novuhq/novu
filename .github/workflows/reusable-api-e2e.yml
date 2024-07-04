@@ -45,7 +45,7 @@ jobs:
   e2e_api:
     name: Test E2E
     if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-medium
     timeout-minutes: 80
     permissions:
       contents: read
@@ -90,6 +90,7 @@ jobs:
         run: CI='' pnpm build:api --skip-nx-cache
 
       - name: Run E2E tests
+        if: ${{ !inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |

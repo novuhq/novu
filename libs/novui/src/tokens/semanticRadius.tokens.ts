@@ -22,4 +22,8 @@ export const SEMANTIC_RADIUS_TOKENS = defineSemanticTokens.radii({
     value: '{radii.150}',
     type: 'radius',
   },
+  input: {
+    value: '{radii.100}',
+    type: 'radius',
+  },
 });

@@ -1,17 +1,13 @@
-import React from 'react';
 import { ObjectFieldTemplateProps } from '@rjsf/utils';
-import { Box, styled } from '../../../styled-system/jsx';
-import { css } from '../../../styled-system/css';
-import { title } from '../../../styled-system/recipes';
-
-const Title = styled('h2', title);
+import { Box } from '../../../styled-system/jsx';
+import { formItemClassName, FormGroupTitle } from '../shared';
 
 export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   return (
     <Box>
-      <Title variant={'subsection'}>{props.title}</Title>
+      <FormGroupTitle>{props.title}</FormGroupTitle>
       {props.properties.map((element) => (
-        <Box pl={'125'} key={element.name} className={css({ pl: '125' })}>
+        <Box className={formItemClassName} key={element.name}>
           {element.content}
         </Box>
       ))}

@@ -35,10 +35,11 @@ export class UpdateMessageTemplate {
       _id: command.templateId,
       _environmentId: command.environmentId,
     });
-    if (!existingTemplate)
+    if (!existingTemplate) {
       throw new NotFoundException(
         `Message template with id ${command.templateId} not found`
       );
+    }
 
     const updatePayload: Partial<MessageTemplateEntity> = {};
 
@@ -106,11 +107,18 @@ export class UpdateMessageTemplate {
     }
 
     if (command.inputs) {
-      updatePayload.inputs = command.inputs;
+      updatePayload.inputs = command.controls || command.inputs;
+    }
+    if (command.controls) {
+      updatePayload.controls = command.controls || command.inputs;
     }
 
     if (command.output) {
       updatePayload.output = command.output;
+    }
+
+    if (command.code) {
+      updatePayload.code = command.code;
     }
 
     if (!Object.keys(updatePayload).length) {

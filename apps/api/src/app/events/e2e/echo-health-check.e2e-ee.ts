@@ -2,22 +2,30 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
-import { echoServer } from '../../../../e2e/echo.server';
+import { workflow } from '@novu/framework';
+import { EchoServer } from '../../../../e2e/echo.server';
 
 describe('Echo Health Check', async () => {
   let session: UserSession;
+  let frameworkClient: EchoServer;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
   before(async () => {
-    await echoServer.echo.workflow('health-check', async ({ step }) => {
-      await step.email('send-email', async (inputs) => {
+    const healthCheckWorkflow = workflow('health-check', async ({ step }) => {
+      await step.email('send-email', async (controls) => {
         return {
           subject: 'This is an email subject',
           body: 'Body result',
         };
       });
     });
+    frameworkClient = new EchoServer();
+    await frameworkClient.start({ workflows: [healthCheckWorkflow] });
+  });
+
+  after(async () => {
+    await frameworkClient.stop();
   });
 
   beforeEach(async () => {
@@ -28,19 +36,25 @@ describe('Echo Health Check', async () => {
   });
 
   it('should have a status', async () => {
-    const result = await axios.get(echoServer.serverPath + '/echo?action=health-check');
+    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
 
     expect(result.data.status).to.equal('ok');
   });
 
-  it('should have a version', async () => {
-    const result = await axios.get(echoServer.serverPath + '/echo?action=health-check');
+  it('should have an sdk version', async () => {
+    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
 
-    expect(result.data.version).to.be.a('string');
+    expect(result.data.sdkVersion).to.be.a('string');
+  });
+
+  it('should have a framework version', async () => {
+    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
+
+    expect(result.data.frameworkVersion).to.be.a('string');
   });
 
   it('should return the discovered resources', async () => {
-    const result = await axios.get(echoServer.serverPath + '/echo?action=health-check');
+    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
 
     expect(result.data.discovered).to.deep.equal({ workflows: 1, steps: 1 });
   });

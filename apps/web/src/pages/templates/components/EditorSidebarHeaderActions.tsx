@@ -7,7 +7,7 @@ import { ActionButton, Condition, ConditionPlus, Trash, VariantPlus } from '@nov
 
 import { Conditions, IConditions } from '../../../components/conditions';
 import { When } from '../../../components/utils/When';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { useBasePath } from '../hooks/useBasePath';
 import { useFilterPartsList } from '../hooks/useFilterPartsList';
 import { useStepFormPath } from '../hooks/useStepFormPath';
@@ -24,7 +24,7 @@ const variantsCreatePath = '/variants/create';
 export const EditorSidebarHeaderActions = ({ preview = false }: { preview?: boolean }) => {
   const { control, watch, setValue } = useFormContext<IForm>();
   const { deleteStep, deleteVariant, template } = useTemplateEditorForm();
-  const { readonly: isReadonly } = useEnvController({}, template?.bridge);
+  const { readonly: isReadonly } = useEnvironment({}, template?.bridge);
   const {
     stepUuid = '',
     channel = '',

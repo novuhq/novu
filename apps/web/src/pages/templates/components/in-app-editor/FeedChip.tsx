@@ -4,7 +4,7 @@ import { IFeedEntity } from '@novu/shared';
 import type { UseFormSetValue } from 'react-hook-form';
 
 import { colors, shadows, DotsHorizontal } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm } from '../formTypes';
 
@@ -20,7 +20,7 @@ interface IFeedItemProps {
 
 export function FeedChip(props: IFeedItemProps) {
   const { colorScheme } = useMantineTheme();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const path = useStepFormPath();
 
   const selectedItem = props.field.value === props.item._id;

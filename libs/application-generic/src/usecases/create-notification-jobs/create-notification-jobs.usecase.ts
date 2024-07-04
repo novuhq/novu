@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import {
   DigestTypeEnum,
+  NotificationTemplateTypeEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
@@ -61,6 +62,8 @@ export class CreateNotificationJobs {
       payload: command.payload,
       expireAt: this.calculateExpireAt(command),
       channels,
+      bridge: command.bridge,
+      controls: command.controls,
     });
 
     if (!notification) {
@@ -70,9 +73,11 @@ export class CreateNotificationJobs {
       throw error;
     }
 
-    const jobs: NotificationJob[] = [];
+    let jobs: NotificationJob[] = [];
 
     const steps = await this.createSteps(command, activeSteps, notification);
+
+    jobs = this.addTriggerJob(steps, command, notification, jobs);
 
     for (const step of steps) {
       if (!step.template) {
@@ -87,7 +92,12 @@ export class CreateNotificationJobs {
         payload: command.payload,
         overrides: command.overrides,
         tenant: command.tenant,
-        step,
+        step: {
+          ...step,
+          ...(command.bridge?.workflow
+            ? { bridgeUrl: command.bridge?.url }
+            : {}),
+        },
         transactionId: command.transactionId,
         _notificationId: notification._id,
         _environmentId: command.environmentId,
@@ -111,6 +121,61 @@ export class CreateNotificationJobs {
     }
 
     return jobs;
+  }
+
+  private addTriggerJob(
+    steps: NotificationStepEntity[],
+    command: CreateNotificationJobsCommand,
+    notification: NotificationEntity,
+    jobs: NotificationJob[]
+  ): NotificationJob[] {
+    const normalizedJobs = [...jobs];
+
+    const triggerStepExist = steps.some(
+      (step) => step.template.type === StepTypeEnum.TRIGGER
+    );
+
+    if (triggerStepExist) {
+      return normalizedJobs;
+    }
+
+    const job = {
+      identifier: command.identifier,
+      payload: command.payload,
+      overrides: command.overrides,
+      tenant: command.tenant,
+      step: {
+        bridgeUrl: command.bridge?.url,
+        template: {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _creatorId: command.userId,
+          _layoutId: null,
+          type: StepTypeEnum.TRIGGER,
+          content: '',
+        },
+        _templateId: notification._templateId,
+      },
+      type: StepTypeEnum.TRIGGER,
+      _notificationId: notification._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _userId: command.userId,
+      _subscriberId: command.subscriber._id,
+      _templateId: notification._templateId,
+      subscriberId: command.subscriber.subscriberId,
+      transactionId: command.transactionId,
+      status: JobStatusEnum.PENDING,
+      expireAt: notification.expireAt,
+      ...(command.actor && {
+        _actorId: command.actor?._id,
+        actorId: command.actor?.subscriberId,
+      }),
+    };
+
+    normalizedJobs.push(job);
+
+    return normalizedJobs;
   }
 
   private async createSteps(
@@ -163,6 +228,14 @@ export class CreateNotificationJobs {
 
   private calculateExpireAt(command: CreateNotificationJobsCommand) {
     try {
+      /*
+       * If the workflow is a framework workflow, we'll set the expiration date to 1 month from now
+       * todo decide if we want to add another request in order to get more accurate expire at amount
+       */
+      if (command.template.type === NotificationTemplateTypeEnum.ECHO) {
+        return addMonths(Date.now(), 1);
+      }
+
       const delayedSteps = command.template.steps.filter(
         (step) =>
           step.template?.type === StepTypeEnum.DIGEST ||

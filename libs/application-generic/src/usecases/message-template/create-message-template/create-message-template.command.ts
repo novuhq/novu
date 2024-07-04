@@ -76,11 +76,18 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   inputs?: {
     schema: JSONSchema7;
   };
+  @IsOptional()
+  controls?: {
+    schema: JSONSchema7;
+  };
 
   @IsOptional()
   output?: {
     schema: JSONSchema7;
   };
+
+  @IsOptional()
+  code?: string;
 
   @IsOptional()
   stepId?: string;

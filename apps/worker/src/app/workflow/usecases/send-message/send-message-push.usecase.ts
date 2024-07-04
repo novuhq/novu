@@ -31,9 +31,9 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IBridgePushResponse,
 } from '@novu/application-generic';
-import type { IPushOptions } from '@novu/stateless';
+import { IPushOptions } from '@novu/stateless';
+import { PushOutput } from '@novu/framework';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
@@ -295,8 +295,8 @@ export class SendMessagePush extends SendMessageBase {
 
       const result = await pushHandler.send({
         target: [deviceToken],
-        title: (bridgeOutputs as IBridgePushResponse)?.subject || title,
-        content: (bridgeOutputs as IBridgePushResponse)?.body || content,
+        title: (bridgeOutputs as PushOutput)?.subject || title,
+        content: (bridgeOutputs as PushOutput)?.body || content,
         payload: command.payload,
         overrides,
         subscriber,
@@ -359,6 +359,7 @@ export class SendMessagePush extends SendMessageBase {
       overrides: overrides as never,
       providerId: integration.providerId,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.executionLogRoute.execute(

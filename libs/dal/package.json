@@ -1,6 +1,6 @@
 {
   "name": "@novu/dal",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "",
   "private": true,
   "scripts": {
@@ -25,11 +25,7 @@
     "@aws-sdk/s3-request-presigner": "^3.382.0",
     "@faker-js/faker": "^6.0.0",
     "@novu/shared": "workspace:*",
-    "JSONStream": "^1.3.5",
-    "archiver": "^5.0.0",
-    "async": "^3.2.0",
     "aws-sdk": "^2.665.0",
-    "bluebird": "^3.7.2",
     "class-transformer": "^0.5.1",
     "cross-fetch": "^3.0.4",
     "date-fns": "^2.29.2",
@@ -39,16 +35,11 @@
     "jsonfile": "^6.0.1",
     "mongoose": "^7.5.0",
     "mongoose-delete": "^1.0.1",
-    "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
-    "rimraf": "^3.0.2",
     "superagent-defaults": "^0.1.14",
-    "supertest": "^5.0.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
-    "@types/async": "^3.2.1",
-    "@types/bluebird": "^3.5.30",
     "@types/json-schema": "^7.0.15",
     "@types/node": "^14.6.0",
     "@typescript-eslint/parser": "^4.14.2",
@@ -56,11 +47,8 @@
     "nodemon": "^3.0.1",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
-    "typescript": "4.9.5"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ]
+    "typescript": "4.9.5",
+    "rimraf": "^3.0.2",
+    "supertest": "^5.0.0"
   }
 }

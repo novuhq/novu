@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { UserEntity } from '@novu/dal';
 import { Page, selectors } from '@playwright/test';
 import { faker } from '@faker-js/faker';
@@ -8,8 +9,22 @@ export interface SignUpTestData extends Partial<UserEntity> {
 }
 
 export class SignUpPage {
-  static async goTo(page: Page): Promise<SignUpPage> {
-    await page.goto('/auth/signup');
+  static async goTo(
+    page: Page,
+    { token, redirectURL }: { token?: string; redirectURL?: string } = {}
+  ): Promise<SignUpPage> {
+    const searchParams = new URLSearchParams();
+
+    if (redirectURL) {
+      searchParams.append('redirect_url', redirectURL);
+    }
+
+    if (token) {
+      searchParams.append('token', token);
+    }
+
+    await page.goto(`/auth/signup?${searchParams.toString()}`);
+
     return new SignUpPage(page);
   }
 

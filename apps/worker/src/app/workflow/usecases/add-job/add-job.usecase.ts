@@ -1,19 +1,21 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { parseExpression as parseCronExpression } from 'cron-parser';
+import { differenceInMilliseconds } from 'date-fns';
+import { ModuleRef } from '@nestjs/core';
+
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
+  castUnitToDigestUnitEnum,
   DigestCreationResultEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IDigestRegularMetadata,
+  IDigestTimedMetadata,
+  IWorkflowStepMetadata,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { AddDelayJob } from './add-delay-job.usecase';
-import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
-import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
-import { AddJobCommand } from './add-job.command';
-import { validateDigest } from './validation';
-import { ModuleRef } from '@nestjs/core';
+import { DigestOutput } from '@novu/framework';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -21,7 +23,6 @@ import {
   DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IBridgeDigestResponse,
   IFilterVariables,
   InstrumentUsecase,
   IUseCaseInterfaceInline,
@@ -32,7 +33,17 @@ import {
   ExecuteOutput,
   NormalizeVariablesCommand,
   NormalizeVariables,
+  getDigestType,
+  isTimedDigestOutput,
+  isLookBackDigestOutput,
+  isRegularDigestOutput,
 } from '@novu/application-generic';
+
+import { AddDelayJob } from './add-delay-job.usecase';
+import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
+import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
+import { AddJobCommand } from './add-job.command';
+import { validateDigest } from './validation';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -170,7 +181,7 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    command.bridgeResponse = await this.fetchResonateData(command, filterVariables);
+    await this.fetchResonateData(command, filterVariables);
     delayAmount = await this.addDelayJob.execute(command);
 
     Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
@@ -180,29 +191,110 @@ export class AddJob {
 
   private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
     const response = await this.resonateUsecase.execute<
-      AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IBridgeDigestResponse>
+      AddJobCommand & { variables: IFilterVariables; identifier: string },
+      ExecuteOutput<DigestOutput> | null
     >({
+      identifier: command.job.identifier,
       ...command,
       variables: filterVariables,
     });
 
-    await this.jobRepository.updateOne(
-      {
-        _id: command.job._id,
-        _environmentId: command.environmentId,
-      },
-      {
-        $set: {
-          'digest.amount': response?.outputs?.amount,
-          'digest.unit': response?.outputs?.unit,
-          'digest.type': response?.outputs?.type,
-          // TODO: Add other types for scheduled etc..
-        },
-      }
-    );
+    if (!response) {
+      return null;
+    }
+
+    const job = await this.updateJob(response, command);
+
+    // Update the job digest directly to avoid an extra database call
+    command.job.digest = { ...command.job.digest, ...job } as IWorkflowStepMetadata;
 
     return response;
+  }
+
+  private async updateJob(response: ExecuteOutput<DigestOutput>, command: AddJobCommand) {
+    let job = {} as IWorkflowStepMetadata;
+    const outputs = response.outputs;
+    const digestType = getDigestType(response.outputs);
+
+    if (isTimedDigestOutput(outputs)) {
+      job = {
+        type: DigestTypeEnum.TIMED,
+        digestKey: outputs?.digestKey,
+        timed: { cronExpression: outputs?.cron },
+      } as IDigestTimedMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'digest.type': job.type,
+            'digest.digestKey': job.digestKey,
+            'digest.amount': job.amount,
+            'digest.unit': job.unit,
+            'digest.timed.cronExpression': job.timed?.cronExpression,
+          },
+        }
+      );
+    }
+
+    if (isLookBackDigestOutput(outputs)) {
+      job = {
+        type: digestType,
+        amount: outputs?.amount,
+        digestKey: outputs?.digestKey,
+        unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
+        backoff: digestType === DigestTypeEnum.BACKOFF,
+        backoffAmount: outputs.lookBackWindow?.amount,
+        backoffUnit: outputs.lookBackWindow?.unit ? castUnitToDigestUnitEnum(outputs.lookBackWindow.unit) : undefined,
+      } as IDigestRegularMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'digest.type': job.type,
+            'digest.digestKey': job.digestKey,
+            'digest.amount': job.amount,
+            'digest.unit': job.unit,
+            'digest.backoff': job.backoff,
+            'digest.backoffAmount': job.backoffAmount,
+            'digest.backoffUnit': job.backoffUnit,
+          },
+        }
+      );
+    }
+
+    if (isRegularDigestOutput(outputs)) {
+      job = {
+        type: digestType,
+        amount: outputs?.amount,
+        digestKey: outputs?.digestKey,
+        unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
+      } as IDigestRegularMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'digest.type': job.type,
+            'digest.digestKey': job.digestKey,
+            'digest.amount': job.amount,
+            'digest.unit': job.unit,
+          },
+        }
+      );
+    }
+
+    return job;
   }
 
   private async handleDigest(
@@ -214,14 +306,17 @@ export class AddJob {
   ) {
     const resonateResponse = await this.fetchResonateData(command, filterVariables);
 
+    const bridgeAmount = this.mapBridgeTimedDigestAmount(resonateResponse);
+
     validateDigest(job);
 
-    digestAmount = this.computeJobWaitDurationService.calculateDelay({
-      stepMetadata: job.digest,
-      payload: job.payload,
-      overrides: job.overrides,
-      bridgeResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
-    });
+    digestAmount =
+      bridgeAmount ??
+      this.computeJobWaitDurationService.calculateDelay({
+        stepMetadata: job.digest,
+        payload: job.payload,
+        overrides: job.overrides,
+      });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
@@ -229,7 +324,6 @@ export class AddJob {
       MergeOrCreateDigestCommand.create({
         job,
         filtered,
-        bridgeData: resonateResponse?.outputs,
       })
     );
 
@@ -242,6 +336,21 @@ export class AddJob {
     }
 
     return { digestAmount, digestCreationResult };
+  }
+
+  private mapBridgeTimedDigestAmount(resonateResponse: ExecuteOutput<DigestOutput> | null): number | null {
+    let bridgeAmount: number | null = null;
+    const outputs = resonateResponse?.outputs;
+
+    if (!isTimedDigestOutput(outputs)) {
+      return null;
+    }
+
+    const bridgeAmountExpression = parseCronExpression(outputs?.cron);
+    const bridgeAmountDate = bridgeAmountExpression.next();
+    bridgeAmount = differenceInMilliseconds(bridgeAmountDate.toDate(), new Date());
+
+    return bridgeAmount;
   }
 
   private handleDigestMerged() {
@@ -277,21 +386,6 @@ export class AddJob {
     delayAmount: undefined | number
   ) {
     return (filtered ? 0 : digestAmount ?? delayAmount) ?? 0;
-  }
-
-  /*
-   *  Fallback to regular digest type.
-   *  This is a temporary solution until other digest types are implemented.
-   */
-  private fallbackToRegularDigest(outputs: IBridgeDigestResponse | undefined): IBridgeDigestResponse | undefined {
-    let resonateResponseOutput: IBridgeDigestResponse | undefined = undefined;
-
-    if (outputs) {
-      const { type, ...resonateResponseOutputsOmitType } = outputs;
-      resonateResponseOutput = { type: DigestTypeEnum.REGULAR, ...resonateResponseOutputsOmitType };
-    }
-
-    return resonateResponseOutput;
   }
 
   public async queueJob(job: JobEntity, delay: number) {

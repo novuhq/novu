@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 
 import { Buildings, colors } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
 
 const NoDataHolder = styled.div`
@@ -21,7 +21,7 @@ const NoDataText = styled.h2`
 `;
 
 export const TenantsListNoData = () => {
-  const { environment, isLoading } = useEnvController();
+  const { environment, isLoading } = useEnvironment();
   const environmentName = environment?.name?.toLowerCase();
 
   return (

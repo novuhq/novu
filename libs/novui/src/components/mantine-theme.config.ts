@@ -59,6 +59,13 @@ export const MANTINE_THEME: MantineThemeOverride = {
       },
     },
   },
+  fontSizes: {
+    xs: token('fontSizes.75'),
+    sm: token('fontSizes.88'),
+    md: token('fontSizes.100'),
+    lg: token('fontSizes.125'),
+    xl: token('fontSizes.150'),
+  },
 
   // TODO: these are guesses for how they match up
   spacing: {

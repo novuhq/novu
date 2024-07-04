@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ScrollArea } from '@mantine/core';
 import { useParams } from 'react-router-dom';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { StepTypeEnum } from '@novu/shared';
 
 import { FloatingButton } from './FloatingButton';
@@ -24,7 +24,7 @@ export const VariantsList = () => {
     channel: StepTypeEnum;
     stepUuid: string;
   }>();
-  const { readonly: isReadonly } = useEnvController();
+  const { readonly: isReadonly } = useEnvironment();
   const { watch } = useFormContext<IForm>();
   const viewport = useRef<HTMLDivElement | null>(null);
   const [scrollPosition, setScrollPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });

@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 
 import { colors, Input, Switch, Text } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 
 interface VariableManagerProps {
   variablesArray: Record<string, any>;
@@ -131,7 +131,7 @@ export const VariableComponent = ({ index, control, path, readonly }: VariableCo
 };
 
 export function VariableManager({ variablesArray, hideLabel = false, path, control }: VariableManagerProps) {
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   if (!variablesArray.fields.length) return null;
 

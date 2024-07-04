@@ -43,7 +43,6 @@ USER 1000
 WORKDIR /app
 
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
-COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/.env /app/.env
 
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/build /app/build
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/public /app/public

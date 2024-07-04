@@ -5,7 +5,7 @@ import { getHotkeyHandler } from '@mantine/hooks';
 import { TextAlignEnum } from '@novu/shared';
 import { colors } from '@novu/design-system';
 
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm } from '../formTypes';
 import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
@@ -17,7 +17,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
 
   const content = methods.watch(`${stepFormPath}.template.content.${blockIndex}.content`);
   const textAlign = methods.watch(`${stepFormPath}.template.content.${blockIndex}.styles.textAlign`);
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const ref = useRef<HTMLDivElement>(null);
   const [text, setText] = useState<string>(content);
   const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!content);

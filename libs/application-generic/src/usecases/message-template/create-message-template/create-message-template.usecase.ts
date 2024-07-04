@@ -67,9 +67,11 @@ export class CreateMessageTemplate {
         _creatorId: command.userId,
         preheader: command.preheader,
         senderName: command.senderName,
-        inputs: command.inputs,
+        inputs: command.controls || command.inputs,
+        controls: command.controls || command.inputs,
         output: command.output,
         actor: command.actor,
+        code: command.code,
       });
 
     if (item?._id) {

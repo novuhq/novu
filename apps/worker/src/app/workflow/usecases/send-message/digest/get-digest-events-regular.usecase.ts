@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
 import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
+import { IDigestBaseMetadata } from '@novu/shared';
 
 import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEvents } from './get-digest-events.usecase';
@@ -13,18 +14,15 @@ export class GetDigestEventsRegular extends GetDigestEvents {
     const currentJob = command.currentJob;
 
     const { digestKey, digestMeta, digestValue } = getJobDigest(currentJob);
+    const amount = this.castAmount(digestMeta);
+    const unit = digestMeta?.unit;
 
-    const amount = digestMeta
-      ? typeof digestMeta.amount === 'number'
-        ? digestMeta.amount
-        : parseInt(digestMeta.amount, 10)
-      : undefined;
-
-    const subtractedTime = digestMeta
-      ? {
-          [digestMeta.unit]: amount,
-        }
-      : {};
+    const subtractedTime =
+      digestMeta && unit
+        ? {
+            [unit]: amount,
+          }
+        : {};
     const earliest = sub(new Date(currentJob.createdAt), subtractedTime);
 
     const jobs = await this.jobRepository.findJobsToDigest(
@@ -37,5 +35,19 @@ export class GetDigestEventsRegular extends GetDigestEvents {
     );
 
     return this.filterJobs(currentJob, currentJob.transactionId, jobs);
+  }
+
+  private castAmount(digestMeta: IDigestBaseMetadata | undefined): number | undefined {
+    let amount: number | undefined = undefined;
+
+    if (typeof digestMeta?.amount === 'number') {
+      amount = digestMeta.amount;
+    }
+
+    if (typeof digestMeta?.amount === 'string') {
+      amount = parseInt(digestMeta.amount, 10);
+    }
+
+    return amount;
   }
 }

@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { colors, Text, When } from '@novu/design-system';
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
+import { useEnvironment, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
@@ -15,28 +15,23 @@ import { CustomCodeEditor } from './CustomCodeEditor';
 import { EditVariablesModal } from './EditVariablesModal';
 import { VariableManagementButton } from './VariableManagementButton';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { InputVariablesForm } from './InputVariablesForm';
+import { ControlVariablesForm } from './ControlVariablesForm';
 
 const templateFields = ['content', 'title'];
-
-const PREVIEW = 'Preview';
-const INPUTS = 'Inputs';
 
 export function TemplatePushEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
-  const [inputVariables, setInputVariables] = useState();
+  const [controlVariables, setControlVariables] = useState();
 
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.PUSH,
   });
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
-  const [activeTab, setActiveTab] = useState<string>(PREVIEW);
-  const theme = useMantineTheme();
+  const { bridge } = useEnvironment({}, template?.bridge);
 
   return (
     <>
@@ -57,7 +52,7 @@ export function TemplatePushEditor() {
                       openEditVariablesModal={() => {
                         setEditVariablesModalOpen(true);
                       }}
-                      label={bridge ? 'Input variables' : 'Title'}
+                      label={bridge ? 'Control variables' : 'Title'}
                     />
 
                     <CustomCodeEditor
@@ -69,7 +64,7 @@ export function TemplatePushEditor() {
                     />
                   </When>
                   <When truthy={bridge}>
-                    <InputVariablesForm onChange={setInputVariables} />
+                    <ControlVariablesForm onChange={setControlVariables} />
                   </When>
                 </Stack>
               )}
@@ -101,7 +96,7 @@ export function TemplatePushEditor() {
         </Grid.Col>
         <Grid.Col span={'content'}>
           <Flex justify="center">
-            <PushPreview inputVariables={inputVariables} showLoading={isPreviewLoading} showOverlay={false} />
+            <PushPreview controlVariables={controlVariables} showLoading={isPreviewLoading} showOverlay={false} />
           </Flex>
         </Grid.Col>
       </Grid>

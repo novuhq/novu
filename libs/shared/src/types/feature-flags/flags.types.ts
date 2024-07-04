@@ -1,7 +1,7 @@
 /**
  * The required format for a boolean flag key.
  */
-export type IFlagKey = `IS_${Uppercase<string>}_ENABLED`;
+export type IFlagKey = `IS_${Uppercase<string>}_ENABLED` | `IS_${Uppercase<string>}_DISABLED`;
 
 /**
  * Helper function to test that enum keys and values match correct format.

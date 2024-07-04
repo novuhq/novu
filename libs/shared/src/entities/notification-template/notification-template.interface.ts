@@ -5,6 +5,7 @@ import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
 import { INotificationGroup } from '../notification-group';
+import { ControlsDto } from '../../dto';
 
 export enum NotificationTemplateTypeEnum {
   REGULAR = 'REGULAR',
@@ -93,6 +94,15 @@ export interface IStepVariant {
   inputs?: {
     schema: JSONSchema7;
   };
+  controls?: {
+    schema: JSONSchema7;
+  };
+  /*
+   * controlVariables exists
+   * only on none production environment in order to provide stateless control variables on fly
+   */
+  controlVariables?: ControlsDto;
+  bridgeUrl?: string;
 }
 
 export interface INotificationTemplateStep extends IStepVariant {

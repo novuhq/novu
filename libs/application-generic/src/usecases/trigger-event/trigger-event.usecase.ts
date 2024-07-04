@@ -7,6 +7,7 @@ import {
   JobRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
+  NotificationTemplateEntity,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -39,6 +40,16 @@ import {
 } from '../trigger-multicast';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
+
+export interface IDoBridgeRequestCommand {
+  bridgeUrl: string;
+  payload?: any;
+  apiKey: string;
+  searchParams?: Record<string, any>;
+  afterResponse?: any;
+  action: 'execute' | 'preview' | 'discover' | 'health-check' | 'code';
+  retriesLimit?: number;
+}
 
 @Injectable()
 export class TriggerEvent {
@@ -85,16 +96,15 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: mappedCommand.environmentId,
-        triggerIdentifier: mappedCommand.identifier,
-      });
+      let storedWorkflow: NotificationTemplateEntity | null = null;
+      if (!command.bridgeWorkflow) {
+        storedWorkflow = await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: mappedCommand.environmentId,
+          triggerIdentifier: mappedCommand.identifier,
+        });
+      }
 
-      /*
-       * Makes no sense to execute anything if template doesn't exist
-       * TODO: Send a 404?
-       */
-      if (!template) {
+      if (!storedWorkflow && !command.bridgeWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -139,7 +149,9 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              template,
+              template:
+                storedWorkflow ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -149,7 +161,9 @@ export class TriggerEvent {
             TriggerBroadcastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              template,
+              template:
+                storedWorkflow ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -160,7 +174,9 @@ export class TriggerEvent {
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
-              template,
+              template:
+                storedWorkflow ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;

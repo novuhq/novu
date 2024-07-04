@@ -45,6 +45,8 @@ export class StoreSubscriberJobs {
       organizationId: firstJob._organizationId,
       jobId: firstJob._id,
       job: firstJob,
+      bridge: firstJob.bridge,
+      controlVariables: firstJob.controlVariables,
     };
 
     await this.addJob.execute(addJobCommand);

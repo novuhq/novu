@@ -89,17 +89,18 @@ npx novu-labs@latest echo
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
 ## Notification Workflows as Code
-For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/echo/quickstart?utm_campaign=github-readme).
+
+For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/framework/quickstart?utm_campaign=github-readme).
 
 ```ts
 
 client.workflow('comment-on-post', async ({step, subscriber}) => {
-  const inAppResponse = await step.inApp('in-app-step', async (inputs) => {
+  const inAppResponse = await step.inApp('in-app-step', async (controls) => {
     return {
-      body: renderReactComponent(inputs)
+      body: renderReactComponent(controls)
     };
   }, {
-    inputSchema: {
+    controlSchema: {
       // ...JSON Schema or ZOD/Ajv/Class Validators definition
     }
   });
@@ -113,12 +114,12 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
       body: renderReactEmail(<ReactEmailComponent events={digestedEvents} />);
     }
   }, {
-    // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    inputSchema: {
+    // Step-level controls defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
+    controlSchema: {
       // ...JSON Schema
     },
     providers: {
-      sendgrid: async (inputs) => {
+      sendgrid: async (controls) => {
         // Echo runs as part of your application, so you have access to your database or resources
 
         return {
@@ -242,6 +243,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
 
 ## 💪 Thanks To All Contributors
+
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
 <a href="https://novu.co/contributors?utm_source=github">

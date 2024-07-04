@@ -1,16 +1,19 @@
-import { IconOpenInNew, IconOutlineClose, Modal, ActionButton } from '@novu/design-system';
-import { useSegment } from '../providers/SegmentProvider';
+import { Modal } from '@novu/design-system';
 import { useEffect, useState } from 'react';
 import { css } from '@novu/novui/css';
 import { Flex } from '@novu/novui/jsx';
-import { openInNewTab } from '../../utils';
+import { IconOpenInNew, IconClose } from '@novu/novui/icons';
 import { Docs } from './Docs';
 import { DOCS_URL } from './docs.const';
 import { Voting, VotingWidget } from './VotingWidget';
+import { IconButton } from '@novu/novui';
+import { useLoadDocs } from './useLoadDocs';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 export const DocsModal = ({ open, toggle, path }) => {
   const [voted, setVoted] = useState<Voting | undefined>(undefined);
-  const segment = useSegment();
+  const { isLoading, data, hasLoadedSuccessfully } = useLoadDocs({ path, isEnabled: open });
+  const track = useTelemetry();
 
   useEffect(() => {
     return () => {
@@ -20,7 +23,7 @@ export const DocsModal = ({ open, toggle, path }) => {
 
   const onVoteClick = (vote: Voting) => () => {
     if (vote) {
-      segment.track('Inline docs voting used', {
+      track('Inline docs voting used', {
         documentationPage: path,
         pageURL: window.location.href,
         vote,
@@ -62,7 +65,8 @@ export const DocsModal = ({ open, toggle, path }) => {
       withCloseButton={false}
     >
       <Docs
-        path={path}
+        isLoading={isLoading}
+        {...data}
         actions={
           <Flex
             className={css({
@@ -77,23 +81,23 @@ export const DocsModal = ({ open, toggle, path }) => {
             })}
             gap="75"
           >
-            <ActionButton
-              tooltip="Open docs website"
-              onClick={() => {
-                openInNewTab(`${DOCS_URL}/${path}`);
-              }}
-              Icon={() => <IconOpenInNew />}
+            <IconButton
+              as="a"
+              href={`${DOCS_URL}/${path}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              Icon={IconOpenInNew}
             />
-            <ActionButton
+            <IconButton
               onClick={() => {
                 toggle();
               }}
-              Icon={() => <IconOutlineClose />}
+              Icon={IconClose}
             />
           </Flex>
         }
       >
-        <VotingWidget onVoteClick={onVoteClick} voted={voted} />
+        {hasLoadedSuccessfully ? <VotingWidget onVoteClick={onVoteClick} voted={voted} /> : null}
       </Docs>
     </Modal>
   );

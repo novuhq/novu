@@ -7,7 +7,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { colors, Text, ErrorIcon, WarningIcon, CircleArrowRight } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 import { Group } from '@mantine/core';
 import { useSelectPrimaryIntegrationModal } from '../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
@@ -26,7 +26,7 @@ export function LackIntegrationAlert({
   isPrimaryMissing?: boolean;
 }) {
   const segment = useSegment();
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();

@@ -1,7 +1,7 @@
 import { Radio } from '@mantine/core';
 import { DigestUnitEnum } from '@novu/shared';
 import { Controller } from 'react-hook-form';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 
 const options = [
   { value: DigestUnitEnum.SECONDS, label: 'Sec' },
@@ -11,7 +11,7 @@ const options = [
 ];
 
 export const IntervalRadios = ({ control, name, showErrors, testId = 'time-unit' }) => {
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   return (
     <Controller

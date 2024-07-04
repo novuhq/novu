@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MarkMessagesAsEnum } from '@novu/shared';
+import { MessagesStatusEnum } from '@novu/shared';
 import { IsDefined, IsEnum } from 'class-validator';
 
 export class MessageMarkAsRequestDto {
@@ -17,9 +17,9 @@ export class MessageMarkAsRequestDto {
   messageId: string | string[];
 
   @ApiProperty({
-    enum: MarkMessagesAsEnum,
+    enum: MessagesStatusEnum,
   })
   @IsDefined()
-  @IsEnum(MarkMessagesAsEnum)
-  markAs: MarkMessagesAsEnum;
+  @IsEnum(MessagesStatusEnum)
+  markAs: MessagesStatusEnum;
 }

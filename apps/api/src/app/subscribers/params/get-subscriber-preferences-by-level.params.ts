@@ -3,7 +3,7 @@ import { PreferenceLevelEnum } from '@novu/dal';
 
 export class GetSubscriberPreferencesByLevelParams {
   @IsEnum(PreferenceLevelEnum)
-  level: PreferenceLevelEnum;
+  parameter: PreferenceLevelEnum;
 
   @IsString()
   subscriberId: string;

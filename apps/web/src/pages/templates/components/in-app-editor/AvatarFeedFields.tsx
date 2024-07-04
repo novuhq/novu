@@ -7,7 +7,7 @@ import { showNotification } from '@mantine/notifications';
 import type { IResponseError, IFeedEntity } from '@novu/shared';
 
 import { Checkbox, colors, Input, PlusGradient } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { createFeed, getFeeds } from '../../../../api/feeds';
 import { QueryKeys } from '../../../../api/query.keys';
 import { FeedItems } from './FeedItems';
@@ -17,7 +17,7 @@ import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 export const AvatarFeedFields = () => {
   const queryClient = useQueryClient();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const [newFeed, setNewFeed] = useInputState('');
   const { control, setValue, getValues } = useFormContext<IForm>();
   const path = useStepFormPath();

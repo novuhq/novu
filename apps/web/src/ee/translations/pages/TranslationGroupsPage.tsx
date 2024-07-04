@@ -1,7 +1,7 @@
 import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { colors, PageContainer, Text, Title, When, IRow } from '@novu/design-system';
-import { useAuth, useEnvController } from '../../../hooks';
+import { useAuth, useEnvironment } from '../../../hooks';
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { FlagIcon } from '../components/shared';
@@ -12,6 +12,8 @@ import { TranslationGroupEmptyList } from '../components/TranslationGroup/Transl
 import { TranslationGroupListToolbar } from '../components/TranslationGroup/TranslationGroupListToolbar';
 import { TranslationGroupsList } from '../components/TranslationGroup/TranslationGroupsList';
 import { ROUTES } from '../routes';
+import { DocsButton } from '../../../components/docs/DocsButton';
+import { Flex } from '@novu/novui/jsx';
 
 export const TranslationGroupsPage = () => {
   const [page, setPage] = useState(0);
@@ -40,14 +42,17 @@ export const TranslationGroupsPage = () => {
     navigate(ROUTES.TRANSLATION_GROUP_EDIT.replace(':identifier', row.original.identifier));
   };
 
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   return (
     <PageContainer>
       <Group position="apart" mx={24} mt={24} mb={16} align="center">
-        <Title size={2} data-test-id="translation-title">
-          Translations
-        </Title>
+        <Flex align="center" gap="75">
+          <Title size={2} data-test-id="translation-title">
+            Translations
+          </Title>
+          <DocsButton />
+        </Flex>
 
         <When truthy={currentOrganization && hasTranslationGroups}>
           <Group spacing={12} align="center">

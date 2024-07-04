@@ -39,10 +39,9 @@ export class AddDelayJob {
 
     try {
       delay = this.computeJobWaitDurationService.calculateDelay({
-        stepMetadata: data.step.metadata,
+        stepMetadata: data.step.bridgeUrl ? data.digest : data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        bridgeResponse: command.bridgeResponse?.outputs,
       });
 
       await this.jobRepository.updateStatus(command.environmentId, data._id, JobStatusEnum.DELAYED);

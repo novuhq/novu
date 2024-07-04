@@ -1,23 +1,7 @@
 import styled from '@emotion/styled';
-import { ColorScheme } from '@mantine/core';
 import { colors, IconNotifications } from '@novu/design-system';
-import { NotificationBell } from '@novu/notification-center';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
-export function NotificationCenterBell({
-  unseenCount,
-  colorScheme,
-}: {
-  unseenCount?: number;
-  colorScheme: ColorScheme;
-}) {
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
-
-  if (!isInformationArchitectureEnabled) {
-    return <NotificationBell unseenCount={unseenCount} colorScheme={colorScheme} />;
-  }
-
+export function NotificationCenterBell({ unseenCount }: { unseenCount?: number }) {
   return (
     <span style={{ position: 'relative' }}>
       <IconNotifications />

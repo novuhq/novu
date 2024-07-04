@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-echo-worker",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
+    "@novu/framework": "workspace:*",
     "axios": "^1.6.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",

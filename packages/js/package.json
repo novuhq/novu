@@ -1,56 +1,86 @@
 {
   "name": "@novu/js",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "type": "module",
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/esm/index.mjs",
+  "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/cjs/index.cjs",
+      "import": "./dist/esm/index.mjs",
+      "default": "./dist/esm/index.mjs"
     },
-    "./package.json": "./package.json"
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "require": "./dist/ui/index.js",
+      "import": "./dist/ui/index.mjs",
+      "default": "./dist/ui/index.mjs"
+    },
+    "./ui/index.css": "./dist/ui/index.css"
   },
   "files": [
-    "dist/*"
+    "dist/cjs",
+    "dist/esm",
+    "dist/types",
+    "dist/ui"
   ],
   "sideEffects": false,
   "private": true,
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
-    "build": "tsup && pnpm run post:build",
-    "post:build": "node scripts/size-limit.js",
+    "build": "tsup && pnpm run build:umd && pnpm run post:build",
+    "build:umd": "webpack --config webpack.config.cjs",
+    "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
-    "@size-limit/esbuild": "^11.1.4",
-    "@size-limit/file": "^11.1.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.12",
+    "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
+    "compression-webpack-plugin": "^10.0.0",
     "esbuild-plugin-compress": "^1.0.1",
     "jest": "^29.3.1",
-    "size-limit": "^11.1.4",
+    "postcss": "^8.4.38",
+    "postcss-prefix-selector": "^1.16.1",
+    "postcss-preset-env": "^9.5.14",
+    "solid-devtools": "^0.29.2",
+    "tailwindcss": "^3.4.4",
+    "terser-webpack-plugin": "^5.3.9",
+    "tiny-glob": "^0.2.9",
     "ts-jest": "^29.0.3",
+    "ts-loader": "~9.4.0",
     "tsup": "^8.0.2",
-    "typescript": "4.9.5"
+    "tsup-preset-solid": "^2.2.0",
+    "typescript": "4.9.5",
+    "webpack": "^5.74.0",
+    "webpack-bundle-analyzer": "^4.9.0",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "@novu/client": "workspace:*",
-    "@novu/shared": "workspace:*",
-    "mitt": "^3.0.1"
+    "clsx": "^2.1.1",
+    "mitt": "^3.0.1",
+    "socket.io-client": "4.7.2",
+    "solid-js": "^1.8.11"
   }
 }

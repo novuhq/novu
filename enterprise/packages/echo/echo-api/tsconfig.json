@@ -10,6 +10,7 @@
     "strict": true,
     "types": ["node", "mocha", "chai", "sinon"],
     "skipLibCheck": true,
+    "sourceMap": true,
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
   "include": ["src/**/*.ts"],

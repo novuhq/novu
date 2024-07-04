@@ -7,7 +7,7 @@ import { useFetchLocales } from '../../hooks';
 import { TranslateIcon } from '../../icons';
 import { LocalesFormSchema } from '../EditTranslationsSidebar';
 import { FlagIcon, SelectItem } from '../shared';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 
 type Props = {
   control: Control<LocalesFormSchema>;
@@ -32,7 +32,7 @@ export function LanguageSelect({ control, index }: Props) {
     setIsHovered(hoverState);
   };
 
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   if (!locales) {
     return null;

@@ -1,56 +1,59 @@
-import { ColorScheme, Popover } from '@mantine/core';
-import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip, useColorScheme } from '@novu/design-system';
-import { useSegment } from '../providers/SegmentProvider';
-import { useEffect, useMemo, useState } from 'react';
+import { Popover } from '@mantine/core';
+import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip } from '@novu/design-system';
+import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
-import { css, cva } from '@novu/novui/css';
+import { css } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
 import { text, title } from '@novu/novui/recipes';
-import { SystemStyleObject } from '@novu/novui/types';
 import { PATHS } from './docs.const';
 import { DocsModal } from './DocsModal';
+import { useTelemetry } from '../../hooks/useNovuAPI';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
 
-const popoverDropdownRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObject> }>({
-  base: {
-    borderRadius: '75',
+const popoverDropdownClassName = css({
+  borderRadius: '75',
+  _light: {
+    boxShadow: 'dark !important',
   },
-  variants: {
-    colorScheme: {
-      light: {
-        boxShadow: 'dark !important',
-      },
-      dark: {
-        background: 'legacy.B30 !important',
-      },
-    },
+  _dark: {
+    background: 'legacy.B30 !important',
   },
 });
 
-const popoverTextRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObject> }>({
-  base: {
-    fontSize: '100',
-    lineHeight: '125',
-    maxWidth: '268px',
+const popoverTextClassName = css({
+  fontSize: '100',
+  lineHeight: '125',
+  maxWidth: '[268px]',
+  _light: {
+    color: 'typography.text.secondary',
   },
-  variants: {
-    colorScheme: {
-      light: {
-        color: 'typography.text.secondary',
-      },
-      dark: {
-        color: 'legacy.B80',
-      },
-    },
+  _dark: {
+    color: 'legacy.B80',
   },
 });
 
-export const DocsButton = () => {
-  const { colorScheme } = useColorScheme();
+const DefaultButton = ({ onClick }: { onClick: () => void }) => (
+  <ActionButton
+    className={css({
+      height: '150 !important',
+      minHeight: '150  !important',
+    })}
+    Icon={() => <IconOutlineMenuBook />}
+    onClick={onClick}
+  />
+);
+
+export const DocsButton = ({
+  TriggerButton = DefaultButton,
+  tooltip,
+}: {
+  TriggerButton?: React.FC<{ onClick: () => void }>;
+  tooltip?: ComponentProps<typeof Tooltip>['label'];
+}) => {
   const [opened, setOpened] = useState<boolean>(false);
-  const segment = useSegment();
+  const track = useTelemetry();
   const [path, setPath] = useState<string>('');
   const shouldShowButton = useMemo(() => path.length > 0, [path]);
   const [docsOpen, setDocsOpen] = useState<boolean>(false);
@@ -77,7 +80,7 @@ export const DocsButton = () => {
   const onClose = () => {
     setOpened(false);
     localStorage.setItem('inline-docs-intro', 'false');
-    segment.track('Inline docs tooltip shown', {
+    track('Inline docs tooltip shown', {
       documentationPage: path,
       pageURL: window.location.href,
     });
@@ -99,7 +102,7 @@ export const DocsButton = () => {
 
   return (
     <>
-      <Tooltip disabled={opened} position="bottom" label="Inline documentation">
+      <Tooltip disabled={opened} position="bottom" label={tooltip ?? 'Inline documentation'}>
         <div>
           <Popover
             closeOnClickOutside={false}
@@ -110,16 +113,9 @@ export const DocsButton = () => {
             withArrow
           >
             <Popover.Target>
-              <ActionButton
-                className={css({
-                  height: '150 !important',
-                  minHeight: '150  !important',
-                })}
-                Icon={() => <IconOutlineMenuBook />}
-                onClick={() => toggle()}
-              />
+              <TriggerButton onClick={() => toggle()} />
             </Popover.Target>
-            <Popover.Dropdown className={popoverDropdownRecipe({ colorScheme })}>
+            <Popover.Dropdown className={popoverDropdownClassName}>
               <Flex gap="125" justify="space-between">
                 <QuickGuide />
                 <div>
@@ -132,7 +128,7 @@ export const DocsButton = () => {
                   >
                     Discover inline documentation
                   </Title>
-                  <Text className={popoverTextRecipe({ colorScheme })}>
+                  <Text className={popoverTextClassName}>
                     Need help? Get details and dive deeper with our inline docs.
                   </Text>
                 </div>
@@ -158,7 +154,7 @@ export const DocsButton = () => {
         </div>
       </Tooltip>
       {/* TODO: extract the Modal root out when modal management is improved */}
-      <DocsModal open={docsOpen} toggle={toggle} path={path} />
+      {docsOpen && <DocsModal open={docsOpen} toggle={toggle} path={path} />}
     </>
   );
 };

@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "private": true,
   "scripts": {
     "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 PORT=4200 react-app-rewired start",
@@ -88,6 +88,7 @@
     "handlebars": "^4.7.7",
     "highlight.js": "11.9.0",
     "html-webpack-plugin": "5.5.3",
+    "js-cookie": "^3.0.5",
     "jwt-decode": "^3.1.2",
     "launchdarkly-react-client-sdk": "^3.3.2",
     "less": "^4.1.0",
@@ -99,6 +100,7 @@
     "lodash.isequal": "^4.5.0",
     "lodash.set": "^4.3.2",
     "mdx-bundler": "10.0.2",
+    "mixpanel-browser": "^2.52.0",
     "monaco-editor": "^0.45.0",
     "polished": "^4.1.3",
     "react": "^18.3.1",
@@ -151,9 +153,11 @@
     "@storybook/react": "^7.4.2",
     "@storybook/react-webpack5": "^7.4.2",
     "@testing-library/jest-dom": "^4.2.4",
+    "@types/mixpanel-browser": "^2.49.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/testing-library__jest-dom": "^5.14.5",
+    "@types/js-cookie": "^3.0.6",
     "eslint-plugin-storybook": "^0.6.13",
     "http-server": "^0.13.0",
     "less-loader": "4.1.0",
@@ -178,11 +182,6 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
-    ]
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
     ]
   },
   "eslintConfig": {

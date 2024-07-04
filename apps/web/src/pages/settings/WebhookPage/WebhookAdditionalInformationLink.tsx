@@ -12,7 +12,7 @@ export const WebhookAdditionalInformationLink: FC = () => {
         justifyContent: 'flex-start',
         gap: '50',
       })}
-      href="https://docs.novu.co/platform/inbound-parse-webhook"
+      href="https://v0.x-docs.novu.co/platform/inbound-parse-webhook"
       target="_blank"
       rel="noopener noreferrer"
     >

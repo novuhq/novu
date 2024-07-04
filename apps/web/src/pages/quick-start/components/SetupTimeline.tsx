@@ -6,7 +6,7 @@ import { getApiKeys } from '../../../api/environment';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
 import { colors, shadows, Text } from '@novu/design-system';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
 import { API_KEY, APPLICATION_IDENTIFIER, BACKEND_API_URL, BACKEND_SOCKET_URL, frameworkInstructions } from '../consts';
@@ -24,7 +24,7 @@ export const SetupTimeline = ({
   onDone: () => void;
   onConfigureLater?: () => void;
 }) => {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const { data: apiKeys } = useQuery<{ key: string }[]>([QueryKeys.getApiKeys], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const { colorScheme } = useMantineColorScheme();

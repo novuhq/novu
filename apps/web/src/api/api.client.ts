@@ -7,6 +7,7 @@ interface IOptions {
   absoluteUrl: boolean;
 }
 
+// @deprecated Migrate all api methods to the new buildApiHttpClient that allows runtime configuration on the client object.
 export const api = {
   get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
@@ -90,4 +91,78 @@ function getHeaders() {
         Authorization: `Bearer ${token}`,
       }
     : {};
+}
+
+// WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.
+export function buildApiHttpClient({
+  baseURL = API_ROOT || 'https://api.novu.co',
+  secretKey,
+  jwt,
+}: {
+  baseURL?: string;
+  secretKey?: string;
+  jwt?: string;
+}) {
+  if (!secretKey && !jwt) {
+    throw new Error('A secretKey or jwt is required to create a Novu API client.');
+  }
+
+  const authHeader = jwt ? `Bearer ${jwt}` : `ApiKey ${secretKey}`;
+
+  const httpClient = axios.create({
+    baseURL,
+    headers: {
+      Authorization: authHeader,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const get = async (url, params?: Record<string, string | string[] | number>) => {
+    try {
+      const response = await httpClient.get(url, { params });
+
+      return response.data;
+    } catch (error) {
+      // TODO: Handle error?.response?.data || error?.response || error;
+      throw error;
+    }
+  };
+
+  const post = async (url, data = {}) => {
+    try {
+      const response = await httpClient.post(url, data);
+
+      return response.data;
+    } catch (error) {
+      // TODO: Handle error?.response?.data || error?.response || error;
+      throw error;
+    }
+  };
+
+  return {
+    async getNotifications(params?: { page?: number; transactionId?: string }) {
+      return get(`/v1/notifications`, params);
+    },
+
+    async getNotification(notificationId: string) {
+      return get(`/v1/notifications/${notificationId}`);
+    },
+
+    async getApiKeys() {
+      return get(`/v1/environments/api-keys`);
+    },
+
+    async syncBridge(bridgeUrl: string) {
+      return post(`/v1/bridge/sync`, {
+        bridgeUrl,
+      });
+    },
+
+    async postTelemetry(event: string, data?: Record<string, unknown>) {
+      return post('/v1/telemetry/measure', {
+        event,
+        data,
+      });
+    },
+  };
 }

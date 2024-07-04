@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 

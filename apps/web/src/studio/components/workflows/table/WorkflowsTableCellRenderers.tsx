@@ -37,8 +37,7 @@ export const NameCell: CellRendererComponent<WorkflowTableRow, string> = ({ getV
         />
       }
       <Flex direction={'column'}>
-        <Text variant={'main'}>{getValue()}</Text>
-        <Text variant={'secondary'}>{original.triggers ? original.triggers[0].identifier : 'Unknown'}</Text>
+        <Text variant={'main'}>{original.workflowId}</Text>
       </Flex>
     </HStack>
   );

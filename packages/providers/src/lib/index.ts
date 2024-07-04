@@ -68,3 +68,4 @@ export * from './twilio/twilio.provider';
 export * from './zulip/zulip.provider';
 export * from './eazy-sms/eazy-sms.provider';
 export * from './whatsapp-business/whatsapp-business.provider';
+export * from './mobishastra/mobishastra.provider';

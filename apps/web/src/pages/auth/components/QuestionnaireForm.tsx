@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
 
-import type { ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
 import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
 import {
   Button,
@@ -20,13 +20,14 @@ import {
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useDomainParser } from './useDomainHook';
 
 export function QuestionnaireForm() {
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -79,6 +80,11 @@ export function QuestionnaireForm() {
       return;
     }
 
+    if (isV2Enabled) {
+      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
+
+      return;
+    }
     const firstUsecase = findFirstUsecase(data.productUseCases) ?? '';
     const mappedUsecase = firstUsecase.replace('_', '-');
     navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);

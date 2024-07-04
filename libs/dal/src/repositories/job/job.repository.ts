@@ -184,7 +184,11 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     digestValue?: string | number,
     digestMeta?: IDigestRegularMetadata
   ): Promise<IDelayOrDigestJobResult> {
-    const isBackoff = job.digest?.type === DigestTypeEnum.BACKOFF || (job.digest as IDigestRegularMetadata)?.backoff;
+    const isBackoff =
+      job.digest?.type === DigestTypeEnum.BACKOFF ||
+      (job.digest as IDigestRegularMetadata)?.backoff ||
+      (digestMeta?.backoff && digestMeta?.backoff);
+
     if (isBackoff) {
       const trigger = await this.getTrigger(job, digestMeta, digestKey, digestValue);
       if (!trigger) {

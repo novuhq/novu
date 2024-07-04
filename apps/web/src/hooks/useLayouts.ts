@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { ILayoutEntity } from '@novu/shared';
 
-import { useEnvController } from './useEnvController';
+import { useEnvironment } from './useEnvironment';
 
 import { QueryKeys } from '../api/query.keys';
 import { getLayoutsList } from '../api/layouts';
 
 export function useLayouts(page = 0, pageSize = 10) {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const { data, isLoading, refetch } = useQuery<{
     data: ILayoutEntity[];
     totalCount: number;

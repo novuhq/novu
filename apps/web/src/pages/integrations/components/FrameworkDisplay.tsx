@@ -4,11 +4,11 @@ import { colors } from '@novu/notification-center';
 import { AngularGradient, Copy, ReactGradient, VueGradient, JsGradient, CodeGradient } from '@novu/design-system';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { FrameworkEnum } from '../../quick-start/consts';
 
 export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: string) => void }) => {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const theme = useMantineTheme();
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
   const environmentIdentifier = environment?.identifier ?? '';

@@ -1,7 +1,7 @@
-import { Meta } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 import { Grid } from '../../../styled-system/jsx';
-import { IconSettings } from '../../icons';
+import { Icon123, IconSettings } from '../../icons';
 import { Title } from '../title';
 import { IconButton } from './IconButton';
 
@@ -11,26 +11,29 @@ export default {
   argTypes: {},
 } as Meta<typeof IconButton>;
 
-export const all = () => (
-  <Grid gridTemplateColumns="4">
-    <Title variant="subsection">Default</Title>
-    <IconButton Icon={IconSettings} />
-    <IconButton Icon={IconSettings} disabled />
-    <IconButton Icon={IconSettings} loading />
+const Template: StoryFn<typeof IconButton> = ({ ...args }) => {
+  return (
+    <Grid gridTemplateColumns="4">
+      <Title variant="subsection">Default</Title>
+      <IconButton {...args} Icon={IconSettings} />
+      <IconButton {...args} Icon={IconSettings} disabled />
+      <IconButton {...args} Icon={IconSettings} loading />
 
-    <Title variant="subsection">Transparent</Title>
-    <IconButton Icon={IconSettings} variant="transparent" />
-    <IconButton Icon={IconSettings} variant="transparent" disabled />
-    <IconButton Icon={IconSettings} variant="transparent" loading />
+      <Title variant="subsection">Transparent</Title>
+      <IconButton {...args} Icon={IconSettings} variant="transparent" />
+      <IconButton {...args} Icon={IconSettings} variant="transparent" disabled />
+      <IconButton {...args} Icon={IconSettings} variant="transparent" loading />
 
-    <Title variant="subsection">Filled</Title>
-    <IconButton Icon={IconSettings} variant="filled" />
-    <IconButton Icon={IconSettings} variant="filled" disabled />
-    <IconButton Icon={IconSettings} variant="filled" loading />
+      <Title variant="subsection">Filled</Title>
+      <IconButton {...args} Icon={IconSettings} variant="filled" />
+      <IconButton {...args} Icon={IconSettings} variant="filled" disabled />
+      <IconButton {...args} Icon={IconSettings} variant="filled" loading />
 
-    <Title variant="subsection">Outline</Title>
-    <IconButton Icon={IconSettings} variant="outline" />
-    <IconButton Icon={IconSettings} variant="outline" disabled />
-    <IconButton Icon={IconSettings} variant="outline" loading />
-  </Grid>
-);
+      <Title variant="subsection">Outline</Title>
+      <IconButton {...args} Icon={IconSettings} variant="outline" />
+      <IconButton {...args} Icon={IconSettings} variant="outline" disabled />
+      <IconButton {...args} Icon={IconSettings} variant="outline" loading />
+    </Grid>
+  );
+};
+export const Default = Template.bind({});

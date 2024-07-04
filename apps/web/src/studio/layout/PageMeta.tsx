@@ -1,7 +1,8 @@
+import { type LocalizedString } from '@novu/novui';
 import { Helmet } from 'react-helmet-async';
 
-interface IPageMetaProps {
-  title?: string;
+export interface IPageMetaProps {
+  title?: LocalizedString;
 }
 
 export const PageMeta: React.FC<IPageMetaProps> = ({ title }) => {

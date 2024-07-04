@@ -1,81 +1,152 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 import { Grid } from '../../../styled-system/jsx';
-import { Icon10K, IconAddBox, IconInfo } from '../../icons';
+import { IconSettings, IconOutlineInfo } from '../../icons';
+import { Title } from '../title';
 import { Button } from './Button';
 
 export default {
   title: 'Components/Button',
   component: Button,
-  argTypes: {},
+  argTypes: {
+    size: {
+      options: ['xs', 'sm', 'md', 'lg'],
+      control: { type: 'select' },
+    },
+    fullWidth: {
+      type: 'boolean',
+    },
+  },
 } as Meta<typeof Button>;
 
-const Template: StoryFn<typeof Button> = ({ ...args }) => <Button {...args}>Click Me</Button>;
+const Template: StoryFn<typeof Button> = ({ ...args }) => {
+  return (
+    <Grid gridTemplateColumns="5">
+      <Title variant="subsection">Default</Title>
+      <Button {...args}>Test</Button>
+      <Button {...args} Icon={IconSettings}>
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} disabled>
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} loading>
+        Test
+      </Button>
 
-export const Default = Template.bind({});
-Default.args = {};
+      <Title variant="subsection">Filled</Title>
+      <Button {...args} variant="filled">
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="filled">
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="filled" disabled>
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="filled" loading>
+        Test
+      </Button>
 
-export const Loading = Template.bind({});
-Loading.args = {
-  loading: true,
+      <Title variant="subsection">Transparent</Title>
+      <Button {...args} variant="transparent">
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="transparent">
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="transparent" disabled>
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="transparent" loading>
+        Test
+      </Button>
+
+      <Title variant="subsection">Outline</Title>
+      <Button {...args} variant="outline">
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="outline">
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="outline" disabled>
+        Test
+      </Button>
+      <Button {...args} Icon={IconSettings} variant="outline" loading>
+        Test
+      </Button>
+    </Grid>
+  );
 };
 
-export const icon = () => (
-  <Grid>
-    <Button size="lg" Icon={Icon10K}>
-      Large
-    </Button>
-    <Button Icon={IconInfo}>Medium</Button>
-  </Grid>
-);
+export const Default = Template.bind({});
 
-export const filled = () => (
-  <Grid>
-    <Button size="lg">Large</Button>
-    <Button size="md">Medium</Button>
-    <Button size="sm">Small</Button>
-    <Button>Default</Button>
-  </Grid>
-);
+const SizeTemplate: StoryFn<typeof Button> = ({ ...args }) => {
+  return (
+    <Grid gridTemplateColumns="5">
+      <Title variant="subsection"></Title>
+      <Title variant="subsection">xs</Title>
+      <Title variant="subsection">sm</Title>
+      <Title variant="subsection">md</Title>
+      <Title variant="subsection">lg</Title>
 
-export const outline = () => (
-  <Grid>
-    <Button size="lg" variant="outline">
-      Large
-    </Button>
-    <Button variant="outline">Medium</Button>
-    <Button size="lg" Icon={Icon10K} variant="outline">
-      Large
-    </Button>
-    <Button Icon={IconInfo} variant="outline">
-      Medium
-    </Button>
-  </Grid>
-);
+      <Title variant="subsection">Default</Title>
+      <Button {...args} Icon={IconOutlineInfo} size="xs">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="sm">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="md">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="lg">
+        Button copy
+      </Button>
 
-export const transparent = () => (
-  <Grid>
-    <Button size="lg" variant="transparent">
-      Large
-    </Button>
-    <Button variant="transparent">Medium</Button>
-    <Button size="lg" Icon={IconAddBox} variant="transparent">
-      Large
-    </Button>
-    <Button Icon={IconAddBox} variant="transparent">
-      Medium
-    </Button>
-    <Button Icon={IconAddBox} variant="transparent" disabled>
-      Disabled
-    </Button>
-  </Grid>
-);
+      <Title variant="subsection">Filled</Title>
+      <Button {...args} Icon={IconOutlineInfo} size="xs" variant="filled">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="sm" variant="filled">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="md" variant="filled">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="lg" variant="filled">
+        Button copy
+      </Button>
 
-export const disabled = () => (
-  <Grid>
-    <Button disabled>Filled</Button>
-    <Button variant="outline" disabled>
-      Outline
-    </Button>
-  </Grid>
-);
+      <Title variant="subsection">Transparent</Title>
+      <Button {...args} Icon={IconOutlineInfo} size="xs" variant="transparent">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="sm" variant="transparent">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="md" variant="transparent">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="lg" variant="transparent">
+        Button copy
+      </Button>
+
+      <Title variant="subsection">Outline</Title>
+      <Button {...args} Icon={IconOutlineInfo} size="xs" variant="outline">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="sm" variant="outline">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="md" variant="outline">
+        Button copy
+      </Button>
+      <Button {...args} Icon={IconOutlineInfo} size="lg" variant="outline">
+        Button copy
+      </Button>
+    </Grid>
+  );
+};
+
+export const Sizes = SizeTemplate.bind({});

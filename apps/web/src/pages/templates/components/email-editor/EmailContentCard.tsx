@@ -4,7 +4,7 @@ import { IOrganizationEntity } from '@novu/shared';
 import { Tabs } from '@novu/design-system';
 
 import { useStepFormPath } from '../../hooks/useStepFormPath';
-import { useActiveIntegrations, useEnvController } from '../../../../hooks';
+import { useActiveIntegrations, useEnvironment } from '../../../../hooks';
 import { EmailInboxContent } from './EmailInboxContent';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { CustomCodeEditor } from '../CustomCodeEditor';
@@ -15,7 +15,7 @@ const CUSTOM_CODE = 'Custom Code';
 
 export function EmailContentCard({ organization }: { organization: IOrganizationEntity | undefined }) {
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvController({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({}, template?.bridge);
   const stepFormPath = useStepFormPath();
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`${stepFormPath}.template.contentType`);

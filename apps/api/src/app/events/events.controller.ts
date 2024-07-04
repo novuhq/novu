@@ -82,6 +82,8 @@ export class EventsController {
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        bridgeUrl: body.bridgeUrl,
+        controls: body.controls,
       })
     );
 
@@ -93,6 +95,8 @@ export class EventsController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk')
   @SdkMethodName('triggerBulk')
+  @SdkUsageExample('Trigger Notification Events in Bulk')
+  @SdkGroupName('')
   @ApiResponse(TriggerEventResponseDto, 201, true)
   @ApiOperation({
     summary: 'Bulk trigger event',
@@ -121,6 +125,8 @@ export class EventsController {
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
   @SdkMethodName('triggerBroadcast')
+  @SdkUsageExample('Broadcast Event to All')
+  @SdkGroupName('')
   @ApiOperation({
     summary: 'Broadcast event to all',
     description: `Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc.
@@ -166,7 +172,8 @@ export class EventsController {
         workflowId: body.workflowId,
         stepId: body.stepId,
         bridge: body.bridge,
-        inputs: body.inputs,
+        inputs: body.controls || body.inputs,
+        controls: body.controls || body.inputs,
       })
     );
   }
@@ -185,6 +192,8 @@ export class EventsController {
     `,
   })
   @SdkMethodName('cancel')
+  @SdkUsageExample('Cancel Triggered Event')
+  @SdkGroupName('')
   async cancel(@UserSession() user: UserSessionData, @Param('transactionId') transactionId: string): Promise<boolean> {
     return await this.cancelDelayedUsecase.execute(
       CancelDelayedCommand.create({

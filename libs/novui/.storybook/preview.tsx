@@ -1,6 +1,6 @@
 import React from 'react';
 import { lightTheme, darkTheme } from './NovuTheme';
-import { Parameters, Decorator } from '@storybook/react';
+import { Parameters, Decorator, Preview } from '@storybook/react';
 import { css } from '../styled-system/css';
 import { MantineThemeProvider } from '@mantine/core';
 import { NovuiProvider } from '../src/components';
@@ -32,10 +32,17 @@ export const parameters: Parameters = {
   },
 };
 
-// const channel = addons.getChannel();
+const DEFAULT_COLOR_PALETTE = 'mode.cloud';
+
 function ColorSchemeThemeWrapper({ children }) {
   // wraps the component preview in a full-page container with proper bg color
-  return <section className={css({ padding: '250', bg: 'surface.page', height: '[100dvh]' })}>{children}</section>;
+  return (
+    <section
+      className={css({ padding: '250', bg: 'surface.page', colorPalette: DEFAULT_COLOR_PALETTE, height: '[100dvh]' })}
+    >
+      {children}
+    </section>
+  );
 }
 
 export const decorators: Decorator[] = [
@@ -47,3 +54,19 @@ export const decorators: Decorator[] = [
     </ColorSchemeThemeWrapper>
   ),
 ];
+
+/** Global controls  */
+export const preview: Preview = {
+  // The default value of the theme arg for all stories
+  argTypes: {
+    colorPalette: {
+      options: ['mode.cloud', 'mode.local'],
+      control: { type: 'select' },
+    },
+  },
+  args: {
+    colorPalette: DEFAULT_COLOR_PALETTE,
+  },
+};
+
+export default preview;

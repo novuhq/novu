@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import * as inlineCss from 'inline-css';
+import * as Sentry from '@sentry/node';
 
 import {
   MessageRepository,
@@ -19,7 +21,6 @@ import {
   IEmailOptions,
   LogCodeEnum,
 } from '@novu/shared';
-import * as Sentry from '@sentry/node';
 import {
   InstrumentUsecase,
   DetailEnum,
@@ -31,9 +32,9 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IBridgeEmailResponse,
 } from '@novu/application-generic';
-import * as inlineCss from 'inline-css';
+import { EmailOutput } from '@novu/framework';
+
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
@@ -154,7 +155,7 @@ export class SendMessageEmail extends SendMessageBase {
     const bridgeOutputs = command.bridgeData?.outputs;
 
     let html;
-    let subject = (bridgeOutputs as IBridgeEmailResponse)?.subject || step?.template?.subject || '';
+    let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
 
@@ -187,6 +188,7 @@ export class SendMessageEmail extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     let replyToAddress: string | undefined;
@@ -268,7 +270,7 @@ export class SendMessageEmail extends SendMessageBase {
       {
         to: email,
         subject: subject,
-        html: (bridgeOutputs as IBridgeEmailResponse)?.body || html,
+        html: (bridgeOutputs as EmailOutput)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,

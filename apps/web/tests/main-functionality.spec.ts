@@ -304,7 +304,7 @@ test('should show the brand logo on main page', async ({ page }) => {
   await workflowEditorPage.addAndEditChannel(ChannelType.EMAIL);
 
   const brandLogo = page.getByTestId('brand-logo');
-  await expect(brandLogo).toHaveAttribute('src', 'https://web.novu.co/static/images/logo-light.png');
+  await expect(brandLogo).toHaveAttribute('src', 'https://dashboard.novu.co/static/images/logo-light.png');
 });
 
 test('should support RTL text content', async ({ page }) => {

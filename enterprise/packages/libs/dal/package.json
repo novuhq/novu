@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-dal",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "",
   "private": true,
   "scripts": {
@@ -34,10 +34,5 @@
   },
   "peerDependencies": {
     "@nestjs/common": "10.2.2"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ]
   }
 }

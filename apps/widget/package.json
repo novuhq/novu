@@ -1,6 +1,6 @@
 {
   "name": "@novu/widget",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "private": true,
   "scripts": {
     "start": "react-app-rewired start",
@@ -120,11 +120,6 @@
       "**/@storybook",
       "**/@babel",
       "**/@babel/**"
-    ]
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
     ]
   }
 }

@@ -18,7 +18,7 @@ import {
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../../../hooks';
+import { useEnvironment, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../../../hooks';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
@@ -89,7 +89,7 @@ export function WorkflowNode({
   const segment = useSegment();
 
   const { template } = useTemplateEditorForm();
-  const { readonly: readonlyEnv, environment, bridge } = useEnvController({}, template?.bridge);
+  const { readonly: readonlyEnv, environment, bridge } = useEnvironment({}, template?.bridge);
   const { cx, classes, theme } = useTemplateButtonStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);

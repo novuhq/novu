@@ -208,10 +208,8 @@ describe('@novu/notification-center - general export interface', () => {
   it('validate ButtonTypeEnum interface', () => {
     const buttonTypeEnumPrimary: ButtonTypeEnum = ButtonTypeEnum.PRIMARY;
     const buttonTypeEnumSecondary: ButtonTypeEnum = ButtonTypeEnum.SECONDARY;
-    const buttonTypeEnumClicked: ButtonTypeEnum = ButtonTypeEnum.CLICKED;
 
     expect(buttonTypeEnumPrimary).toBe('primary');
     expect(buttonTypeEnumSecondary).toBe('secondary');
-    expect(buttonTypeEnumClicked).toBe('clicked');
   });
 });

@@ -2,11 +2,11 @@ import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
 import { API_ROOT, WS_URL } from '../../../config';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { inAppSandboxSubscriberId } from '../../../pages/quick-start/consts';
 
 export function SandboxNotificationCenter() {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   return (
     <NovuProvider

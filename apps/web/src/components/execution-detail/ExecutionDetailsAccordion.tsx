@@ -34,7 +34,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariables }) => {
+export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariables, defaultOpen = undefined }) => {
   const { classes } = useStyles();
 
   if (!steps || steps.length <= 0) {
@@ -42,7 +42,12 @@ export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariabl
   }
 
   return (
-    <Accordion key="execution-details-accordion" chevronPosition="right" classNames={classes}>
+    <Accordion
+      key="execution-details-accordion"
+      chevronPosition="right"
+      defaultValue={defaultOpen}
+      classNames={classes}
+    >
       {steps.map((step) => (
         <Accordion.Item key={`execution-details-step-${step.id}`} value={step.id}>
           <Accordion.Control>

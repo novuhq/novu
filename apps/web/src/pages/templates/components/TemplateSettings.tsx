@@ -7,7 +7,7 @@ import { useFormContext } from 'react-hook-form';
 import { Button, colors, Trash } from '@novu/design-system';
 import { NotificationSettingsForm } from './notification-setting-form/NotificationSettingsForm';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { deleteTemplateById } from '../../../api/notification-templates';
 import { ROUTES } from '../../../constants/routes';
@@ -18,7 +18,7 @@ import { WorkflowSidebar } from './WorkflowSidebar';
 export const TemplateSettings = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const { trigger, template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.bridge);
+  const { readonly } = useEnvironment({}, template?.bridge);
   const [toDelete, setToDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);

@@ -41,6 +41,12 @@ const notificationSchema = new Schema<NotificationDBModel>(
       type: Schema.Types.Mixed,
     },
     expireAt: Schema.Types.Date,
+    bridge: {
+      type: Schema.Types.Mixed,
+    },
+    controls: {
+      type: Schema.Types.Mixed,
+    },
   },
   schemaOptions
 );

@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
 
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
@@ -81,7 +81,7 @@ export class CompleteVercelIntegration {
   private mapProjectKeys(envData: EnvironmentEntity[], projectData: Record<string, string[]>) {
     return envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
       acc[curr._organizationId] = {
-        privateKey: curr.apiKeys[0].key,
+        privateKey: decryptApiKey(curr.apiKeys[0].key),
         clientKey: curr.identifier,
         projectIds: projectData[curr._organizationId],
       };
@@ -112,7 +112,7 @@ export class CompleteVercelIntegration {
         target,
         type,
         value: privateKey,
-        key: 'NOVU_API_SECRET',
+        key: 'NOVU_SECRET_KEY',
       },
     ];
 

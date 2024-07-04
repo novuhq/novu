@@ -4,11 +4,11 @@ import { DigestUnitEnum, OrdinalEnum, OrdinalValueEnum, MonthlyTypeEnum, DigestT
 
 import { colors, Select, When } from '@novu/design-system';
 import { DaySelect } from './DaySelect';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 export const ScheduleMonthlyFields = () => {
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const { watch, control } = useFormContext();
   const stepFormPath = useStepFormPath();
 

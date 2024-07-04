@@ -1,6 +1,6 @@
 {
   "name": "@novu/worker",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -34,6 +34,7 @@
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
+    "@novu/framework": "workspace:*",
     "@novu/testing": "workspace:*",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
@@ -42,6 +43,7 @@
     "body-parser": "^1.20.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cron-parser": "^4.9.0",
     "cross-env": "^7.0.3",
     "date-fns": "^2.29.2",
     "dotenv": "^8.2.0",
@@ -89,10 +91,5 @@
     "@novu/ee-echo-worker": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/ee-translation": "workspace:*"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ]
   }
 }

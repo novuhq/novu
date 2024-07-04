@@ -1,7 +1,7 @@
 import { TextInput, useMantineColorScheme } from '@mantine/core';
 import { colors } from '@novu/notification-center';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 
@@ -11,7 +11,7 @@ export const NameInput = () => {
     formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.bridge);
+  const { readonly } = useEnvironment({}, template?.bridge);
   const showErrors = isSubmitted && errors?.steps;
   const { colorScheme } = useMantineColorScheme();
 

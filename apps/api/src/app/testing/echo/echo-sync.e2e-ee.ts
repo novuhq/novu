@@ -2,6 +2,8 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import { EchoServer } from '../../../../e2e/echo.server';
+import { workflow } from '@novu/framework';
 
 describe('Echo Sync - /echo/sync (POST)', async () => {
   let session: UserSession;
@@ -26,281 +28,255 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     },
   };
 
+  let echoServer: EchoServer;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    echoServer = new EchoServer();
+  });
+
+  afterEach(async () => {
+    await echoServer.stop();
   });
 
   it('should update echo url', async () => {
-    const result = await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [],
+    await echoServer.start({ workflows: [] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: echoServer.serverPath,
     });
 
     expect(result.body.data?.length).to.equal(0);
 
     const environment = await environmentRepository.findOne({ _id: session.environment._id });
 
-    expect(environment?.echo.url).to.equal('https://bridge.novu.com');
+    expect(environment?.echo.url).to.equal(echoServer.serverPath);
 
     const workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
     expect(workflows.length).to.equal(0);
   });
 
   it('should create a workflow', async () => {
-    const result = await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [
-            {
-              stepId: 'send-email',
-              type: StepTypeEnum.EMAIL,
-              inputs: {},
-              outputs: {},
-              options: {},
-              code: 'testCode',
-            },
-          ],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
+    const workflowId = 'hello-world';
+    const newWorkflow = workflow(
+      workflowId,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (controls) => {
+            return {
+              subject: 'This is an email subject ' + controls.name,
+              body: 'Body result ' + payload.name,
+            };
+          },
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'TEST' },
+              },
+            } as const,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+    await echoServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: echoServer.serverPath,
     });
     expect(result.body.data?.length).to.equal(1);
 
     const workflowsCount = await workflowsRepository.find({ _environmentId: session.environment._id });
-    const workflow = await workflowsRepository.findById(result.body.data[0]._id, session.environment._id);
+    const workflowData = await workflowsRepository.findById(result.body.data[0]._id, session.environment._id);
 
-    expect(workflow).to.be.ok;
-    if (!workflow) {
+    expect(workflowData).to.be.ok;
+    if (!workflowData) {
       throw new Error('Workflow not found');
     }
 
     expect(workflowsCount.length).to.equal(1);
 
-    expect(workflow.name).to.equal('test-workflow');
-    expect(workflow.type).to.equal('ECHO');
-    expect(workflow.rawData.workflowId).to.equal('test-workflow');
-    expect(workflow.triggers[0].identifier).to.equal('test-workflow');
+    expect(workflowData.name).to.equal(workflowId);
+    expect(workflowData.type).to.equal('ECHO');
+    expect(workflowData.rawData.workflowId).to.equal(workflowId);
+    expect(workflowData.triggers[0].identifier).to.equal(workflowId);
 
-    expect(workflow.steps.length).to.equal(1);
-    expect(workflow.steps[0].stepId).to.equal('send-email');
-    expect(workflow.steps[0].uuid).to.equal('send-email');
-    expect(workflow.steps[0].template?.name).to.equal('send-email');
+    expect(workflowData.steps.length).to.equal(1);
+    expect(workflowData.steps[0].stepId).to.equal('send-email');
+    expect(workflowData.steps[0].uuid).to.equal('send-email');
+    expect(workflowData.steps[0].template?.name).to.equal('send-email');
   });
 
   it('should create a message template', async () => {
-    const result = await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [
-            {
-              stepId: 'send-email',
-              type: StepTypeEnum.EMAIL,
-              inputs: inputPostPayload,
-              outputs: outputPostPayload,
-              options: {},
-              code: 'new-test-code',
-            },
-          ],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
+    const workflowId = 'hello-world';
+    const newWorkflow = workflow(
+      workflowId,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (controls) => {
+            return {
+              subject: 'This is an email subject ',
+              body: 'Body result ',
+            };
+          },
+          {
+            controlSchema: inputPostPayload.schema as any,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+    await echoServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: echoServer.serverPath,
     });
     expect(result.body.data?.length).to.equal(1);
 
     const workflowsCount = await workflowsRepository.find({ _environmentId: session.environment._id });
     expect(workflowsCount.length).to.equal(1);
 
-    const workflow = await workflowsRepository.findById(result.body.data[0]._id, session.environment._id);
-    expect(workflow).to.be.ok;
-    if (!workflow) {
+    const workflowData = await workflowsRepository.findById(result.body.data[0]._id, session.environment._id);
+    expect(workflowData).to.be.ok;
+    if (!workflowData) {
       throw new Error('Workflow not found');
     }
 
     const messageTemplates = await messageTemplateRepository.find({
-      _id: workflow.steps[0]._id,
+      _id: workflowData.steps[0]._id,
       _environmentId: session.environment._id,
     });
     expect(messageTemplates.length).to.equal(1);
     const messageTemplatesToTest = messageTemplates[0];
 
-    expect(messageTemplatesToTest.inputs).to.deep.equal(inputPostPayload);
-    expect(messageTemplatesToTest.output).to.deep.equal(outputPostPayload);
+    expect(messageTemplatesToTest.controls).to.deep.equal(inputPostPayload);
   });
 
   it('should update a workflow', async () => {
-    await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [
-            {
-              stepId: 'send-email',
-              type: StepTypeEnum.EMAIL,
-              inputs: {},
-              output: {},
-              options: {},
-              code: 'testCode',
-            },
-          ],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
+    const workflowId = 'hello-world';
+    const newWorkflow = workflow(
+      workflowId,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (controls) => {
+            return {
+              subject: 'This is an email subject ' + controls.name,
+              body: 'Body result ' + payload.name,
+            };
+          },
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'TEST' },
+              },
+            } as const,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+    await echoServer.start({ workflows: [newWorkflow] });
+
+    await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: echoServer.serverPath,
     });
 
-    await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [
-            {
-              stepId: 'send-email-2',
-              type: StepTypeEnum.EMAIL,
-              inputs: {},
-              outputs: {},
-              options: {},
-              code: 'testCode',
-            },
-            {
-              stepId: 'send-sms',
-              type: StepTypeEnum.SMS,
-              inputs: {},
-              outputs: {},
-              options: {},
-              code: 'testCode',
-            },
-          ],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
+    await echoServer.stop();
+
+    echoServer = new EchoServer();
+    const workflowId2 = 'hello-world-2';
+    const newWorkflow2 = workflow(
+      workflowId2,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email-2',
+          async (controls) => {
+            return {
+              subject: 'This is an email subject ' + controls.name,
+              body: 'Body result ' + payload.name,
+            };
+          },
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'TEST' },
+              },
+            } as const,
+          }
+        );
+
+        await step.sms('send-sms-2', async () => {
+          return {
+            body: 'test',
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+    await echoServer.start({ workflows: [newWorkflow2] });
+
+    await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: echoServer.serverPath,
     });
 
     const workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
     expect(workflows.length).to.equal(1);
 
-    const workflow = workflows[0];
+    const workflowData = workflows[0];
 
-    expect(workflow.name).to.equal('test-workflow');
-    expect(workflow.type).to.equal('ECHO');
-    expect(workflow.rawData.workflowId).to.equal('test-workflow');
-    expect(workflow.triggers[0].identifier).to.equal('test-workflow');
+    expect(workflowData.name).to.equal(workflowId2);
+    expect(workflowData.type).to.equal('ECHO');
+    expect(workflowData.rawData.workflowId).to.equal(workflowId2);
+    expect(workflowData.triggers[0].identifier).to.equal(workflowId2);
 
-    expect(workflow.steps[0].stepId).to.equal('send-email-2');
-    expect(workflow.steps[0].uuid).to.equal('send-email-2');
-    expect(workflow.steps[0].name).to.equal('send-email-2');
+    expect(workflowData.steps[0].stepId).to.equal('send-email-2');
+    expect(workflowData.steps[0].uuid).to.equal('send-email-2');
+    expect(workflowData.steps[0].name).to.equal('send-email-2');
 
-    expect(workflow.steps[1].stepId).to.equal('send-sms');
-    expect(workflow.steps[1].uuid).to.equal('send-sms');
-    expect(workflow.steps[1].name).to.equal('send-sms');
-
-    await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
-    });
-
-    const updatedWorkflows = await workflowsRepository.find({ _environmentId: session.environment._id });
-    const updatedWorkflow = updatedWorkflows[0];
-    expect(updatedWorkflow.steps.length).to.equal(0);
-  });
-
-  it('should update a existing steps', async () => {
-    await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [
-            {
-              stepId: 'send-email',
-              type: StepTypeEnum.EMAIL,
-              inputs: {},
-              outputs: {},
-              options: {},
-              code: 'testCode',
-            },
-          ],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
-    });
-
-    let workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
-    expect(workflows.length).to.equal(1);
-    let messageTemplates = await messageTemplateRepository.find({
-      _id: workflows[0].steps[0]._id,
-      _environmentId: session.environment._id,
-    });
-    expect(messageTemplates.length).to.equal(1);
-    let messageTemplatesToTest = messageTemplates[0];
-    expect(messageTemplatesToTest.inputs).to.equal(undefined);
-    expect(messageTemplatesToTest.output).to.equal(undefined);
-
-    await session.testAgent.post(`/v1/echo/sync`).send({
-      bridgeUrl: 'https://bridge.novu.com',
-      workflows: [
-        {
-          workflowId: 'test-workflow',
-          steps: [
-            {
-              stepId: 'new-send-email',
-              type: StepTypeEnum.EMAIL,
-              inputs: {},
-              outputs: {},
-              options: {},
-              code: 'testCode',
-            },
-            {
-              stepId: 'send-email',
-              type: StepTypeEnum.EMAIL,
-              inputs: inputPostPayload,
-              outputs: outputPostPayload,
-              options: {},
-              code: 'new-test-code',
-            },
-          ],
-          code: 'testCode',
-          inputs: {},
-          options: {},
-        },
-      ],
-    });
-
-    workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
-    expect(workflows.length).to.equal(1);
-    const updatedWorkflows = await workflowsRepository.find({ _environmentId: session.environment._id });
-    messageTemplates = await messageTemplateRepository.find({
-      _id: updatedWorkflows[0].steps.find((step) => step.stepId === 'send-email')?._id,
-      _environmentId: session.environment._id,
-    });
-
-    expect(messageTemplates.length).to.equal(1);
-    messageTemplatesToTest = messageTemplates[0];
-
-    expect(messageTemplatesToTest.inputs).to.deep.equal(inputPostPayload);
-    expect(messageTemplatesToTest.output).to.deep.equal(outputPostPayload);
+    expect(workflowData.steps[1].stepId).to.equal('send-sms-2');
+    expect(workflowData.steps[1].uuid).to.equal('send-sms-2');
+    expect(workflowData.steps[1].name).to.equal('send-sms-2');
   });
 });

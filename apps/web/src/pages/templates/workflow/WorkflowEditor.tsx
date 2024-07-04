@@ -12,7 +12,7 @@ import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
 import { Bolt, Button, Settings } from '@novu/design-system';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
@@ -59,7 +59,7 @@ const WorkflowEditor = () => {
     trigger,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
-  const { readonly, bridge } = useEnvController({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({}, template?.bridge);
   const steps = useWatch({
     name: 'steps',
     control,

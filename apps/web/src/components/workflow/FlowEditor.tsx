@@ -22,7 +22,7 @@ import { StepTypeEnum } from '@novu/shared';
 
 import { colors } from '@novu/design-system';
 import { getChannel } from '../../utils/channels';
-import { useEnvController } from '../../hooks';
+import { useEnvironment } from '../../hooks';
 import type { IEdge, IFlowStep, INode } from './types';
 import { useTemplateEditorForm } from '../../pages/templates/components/TemplateEditorFormProvider';
 
@@ -93,7 +93,7 @@ export function FlowEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>([]);
   const reactFlowInstance = useReactFlow();
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.bridge);
+  const { readonly } = useEnvironment({}, template?.bridge);
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;

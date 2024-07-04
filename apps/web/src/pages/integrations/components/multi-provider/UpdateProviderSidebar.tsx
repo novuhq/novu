@@ -15,11 +15,10 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 import { Button, colors, Input, Sidebar, Text, Check, Copy } from '@novu/design-system';
-
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
-import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
+import { useEnvironment } from '../../../../hooks';
 import { useUpdateIntegration } from '../../../../api/hooks/useUpdateIntegration';
 import { successMessage } from '../../../../utils/notifications';
 import { UpdateIntegrationSidebarHeader } from '../UpdateIntegrationSidebarHeader';
@@ -61,7 +60,7 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
+  const { isLoading: areEnvironmentsLoading } = useEnvironment();
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();

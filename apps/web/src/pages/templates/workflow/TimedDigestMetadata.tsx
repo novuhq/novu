@@ -8,7 +8,7 @@ import { WeekDaySelect } from './digest/WeekDaySelect';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 import { When } from '../../../components/utils/When';
 import { useStepFormPath } from '../hooks/useStepFormPath';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
@@ -30,7 +30,7 @@ const convertUnitToLabel = (unit: DigestUnitEnum) => {
 
 export const TimedDigestMetadata = () => {
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.bridge);
+  const { readonly } = useEnvironment({}, template?.bridge);
   const { control, watch, setValue } = useFormContext();
   const stepFormPath = useStepFormPath();
   const unit: DigestUnitEnum =

@@ -1,8 +1,8 @@
 import { Group, Skeleton, Stack } from '@mantine/core';
 
-export function ContentSkeleton() {
+export function ContentSkeleton({ className }: { className?: string }) {
   return (
-    <Stack spacing={40} py={40} px={30} h="100%">
+    <Stack className={className} spacing={40} py={40} px={30} h="100%">
       <Group position="center" noWrap>
         <Skeleton height={40} width={80} radius="sm" />
       </Group>

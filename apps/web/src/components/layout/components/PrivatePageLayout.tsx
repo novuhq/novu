@@ -1,20 +1,21 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 
-import { HeaderNav } from './HeaderNav';
-import { SideNav } from './SideNav';
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
-import { useFeatureFlag } from '../../../hooks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { HeaderNav as HeaderNavNew } from './v2/HeaderNav';
-import { MainNav } from '../../nav/MainNav';
+import { useEnvironment } from '../../../hooks';
+// TODO: Move sidebar under layout folder as it belongs here
+import { Sidebar } from '../../nav/Sidebar';
+import { HeaderNav } from './v2/HeaderNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
+import { css } from '@novu/novui/css';
+import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
+import { isStudioRoute } from '../../../studio/utils/routing';
 
 const AppShell = styled.div`
   display: flex;
@@ -32,8 +33,18 @@ const ContentShell = styled.div`
 
 export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
+  const { environment } = useEnvironment();
+  const location = useLocation();
 
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  /**
+   * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.
+   * Eventually, we will want to only include 'LOCAL' in the conditional.
+   */
+  const isLocalEnv = useMemo(
+    () =>
+      [EnvironmentEnum.DEVELOPMENT].includes(environment?.name as EnvironmentEnum) && isStudioRoute(location.pathname),
+    [environment, location]
+  );
 
   return (
     <EnsureOnboardingComplete>
@@ -60,15 +71,11 @@ export function PrivatePageLayout() {
             )}
           >
             <SpotLight>
-              <AppShell>
-                {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
+              <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
+                <Sidebar />
                 <ContentShell>
                   <FreeTrialBanner />
-                  {isInformationArchitectureEnabled ? (
-                    <HeaderNavNew />
-                  ) : (
-                    <HeaderNav isIntercomOpened={isIntercomOpened} />
-                  )}
+                  <HeaderNav />
                   <Outlet />
                 </ContentShell>
               </AppShell>

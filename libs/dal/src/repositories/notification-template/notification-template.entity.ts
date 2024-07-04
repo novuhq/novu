@@ -16,6 +16,7 @@ import {
   INotificationTemplateStep,
   IMessageTemplate,
   NotificationTemplateTypeEnum,
+  ControlsDto,
 } from '@novu/shared';
 
 import { NotificationGroupEntity } from '../notification-group';
@@ -125,6 +126,10 @@ export class StepVariantEntity implements IStepVariant {
   metadata?: IWorkflowStepMetadata;
 
   shouldStopOnFail?: boolean;
+
+  bridgeUrl?: string;
+
+  controlVariables?: ControlsDto;
 }
 
 export class NotificationStepEntity extends StepVariantEntity implements INotificationTemplateStep {

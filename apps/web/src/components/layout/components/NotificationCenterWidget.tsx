@@ -9,7 +9,7 @@ import {
 } from '@novu/shared';
 import { useAuth } from '../../../hooks/useAuth';
 import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { NotificationCenterBell } from './NotificationCenterBell';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
@@ -19,7 +19,7 @@ const BACKEND_URL = IS_EU_ENV ? 'https://api.novu.co' : API_ROOT;
 const SOCKET_URL = IS_EU_ENV ? 'https://ws.novu.co' : WS_URL;
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   return (
     <>
@@ -67,7 +67,7 @@ function PopoverWrapper() {
       onActionClick={handlerOnActionClick}
     >
       {({ unseenCount }) => {
-        return <NotificationCenterBell colorScheme={colorScheme} unseenCount={unseenCount} />;
+        return <NotificationCenterBell unseenCount={unseenCount} />;
       }}
     </PopoverNotificationCenter>
   );

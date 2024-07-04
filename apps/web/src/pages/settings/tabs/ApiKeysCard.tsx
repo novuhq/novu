@@ -14,7 +14,7 @@ import {
   IconOutlineVisibilityOff,
 } from '@novu/design-system';
 import { getApiKeys } from '../../../api/environment';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
 import { When } from '../../../components/utils/When';
 import { useState } from 'react';
@@ -25,7 +25,7 @@ export const ApiKeysCard = () => {
   const clipboardEnvironmentId = useClipboard({ timeout: 1000 });
   const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
 
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';

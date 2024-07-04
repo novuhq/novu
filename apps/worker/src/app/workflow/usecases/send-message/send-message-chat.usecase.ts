@@ -16,7 +16,8 @@ import {
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  PushProviderIdEnum,
+  ProvidersIdEnum,
+  ITenantDefine,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -171,7 +172,18 @@ export class SendMessageChat extends SendMessageBase {
     chatChannel: NotificationStepEntity,
     content: string
   ) {
-    const integrationCommand: SelectIntegrationCommand = {
+    const getIntegrationParams: {
+      id?: string;
+      providerId?: ProvidersIdEnum;
+      identifier?: string;
+      organizationId: string;
+      environmentId: string;
+      channelType: ChannelTypeEnum;
+      userId: string;
+      filterData: {
+        tenant: ITenantDefine | undefined;
+      };
+    } = {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       providerId: subscriberChannel.providerId,
@@ -186,10 +198,10 @@ export class SendMessageChat extends SendMessageBase {
      * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
      */
     if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
-      integrationCommand.id = subscriberChannel._integrationId;
+      getIntegrationParams.id = subscriberChannel._integrationId;
     }
 
-    const integration = await this.getIntegration(integrationCommand);
+    const integration = await this.getIntegration(getIntegrationParams);
 
     if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
       if (!integration) {
@@ -237,6 +249,7 @@ export class SendMessageChat extends SendMessageBase {
       content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
