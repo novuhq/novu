@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, NotFoundException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
@@ -43,7 +43,7 @@ import {
   EnvironmentEntity,
 } from '@novu/dal';
 import { Novu } from '@novu/node';
-import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
+import { DiscoverOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import {
   ParseEventRequestBroadcastCommand,
@@ -199,12 +199,8 @@ export class ParseEventRequest {
     const discover = await this.doBridgeRequest.execute({
       bridgeUrl: command.bridgeUrl,
       apiKey: environment.apiKeys[0].key,
-      action: 'discover',
+      action: GetActionEnum.DISCOVER,
     });
-
-    if (!discover) {
-      return null;
-    }
 
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
