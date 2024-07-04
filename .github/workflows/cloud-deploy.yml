@@ -131,6 +131,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug
+        id: debug
+        run: |
+          pwd
+          ls -la
+          ls -la ./.github/workflows/
+
       - name: Deploy ${{ matrix.service.name }}
         uses: ./.github/workflows/cloud-deploy-services.yml
         with:
