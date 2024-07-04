@@ -29,7 +29,7 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
 
   return (
     <>
-      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '25' }), className)}>
+      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '50' }), className)}>
         <WorkflowFloatingMenuSection title="Actions">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAutoAwesomeMotion}

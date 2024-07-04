@@ -29,7 +29,7 @@ export const WorkflowsStepEditorPage = () => {
       case 'step':
         track('Step Controls Changes', {
           key: id,
-          origin: 'dashboard',
+          origin: 'local',
         });
         setStepControls(form.formData);
         break;
