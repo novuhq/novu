@@ -80,9 +80,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: ${{ inputs.enterprise }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
+#        with:
+#          submodules: ${{ inputs.enterprise }}
+#          token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Prepare
         id: prepare
