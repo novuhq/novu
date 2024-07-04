@@ -27,9 +27,6 @@ on:
         description: 'Local Docker image tag'
         required: true
         type: string
-      submodule_token:
-        description: 'Submodule token to use for checkout'
-        required: true
 
 jobs:
   set_environment:
@@ -60,7 +57,6 @@ jobs:
       local_tag: ${{ inputs.local_tag }}
       env_tag: ${{ inputs.env }}
       enterprise: true
-      submodule_token: ${{ inputs.submodule_token }}
 
   deploy_dev_service:
     needs:
