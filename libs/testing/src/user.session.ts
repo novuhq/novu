@@ -374,14 +374,7 @@ export class UserSession {
 
   private async addOrganizationEE(orgId: string) {
     const organizationService = new EEOrganizationService();
-
-    try {
-      // is not linked
-      this.organization = await organizationService.createOrganization(orgId);
-    } catch (e) {
-      // is already linked
-      this.organization = (await organizationService.getOrganization(orgId)) as OrganizationEntity;
-    }
+    this.organization = await organizationService.createOrganization(orgId);
 
     return this.organization;
   }
