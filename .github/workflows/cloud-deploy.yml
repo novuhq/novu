@@ -23,18 +23,18 @@ jobs:
         id: setenvname
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "::set-output name=envName::Prod"
+            echo "envName=Prod" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=envName::Dev"
+            echo "envName=Dev" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check branch and set environment
         id: setenv
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "::set-output name=envValue::prod"   
+            echo "envValue=prod" >> "$GITHUB_OUTPUT"
           else
-             echo "::set-output name=envValue::dev"
+             echo "envValue=dev" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check output values
