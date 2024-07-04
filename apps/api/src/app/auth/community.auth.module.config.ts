@@ -47,7 +47,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     providers: [
       ...USE_CASES,
       ...AUTH_STRATEGIES,
-      ...injectRepositories(),
+      ...injectRepositories({ repositoriesOnly: false }),
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,
