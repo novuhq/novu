@@ -1,7 +1,7 @@
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
 import { useUncontrolledState } from '../../helpers';
 import { PopoverContent } from './PopoverContent';
-import { PopoverTarget } from './PopoverTarget';
+import { PopoverTrigger } from './PopoverTrigger';
 
 export type PopoverProps = {
   open?: boolean;
@@ -64,5 +64,5 @@ export function usePopover() {
   return context;
 }
 
-Popover.Target = PopoverTarget;
+Popover.Trigger = PopoverTrigger;
 Popover.Content = PopoverContent;

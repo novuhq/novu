@@ -47,7 +47,7 @@ export const PopoverContent: ParentComponent = (props) => {
             `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0
          nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999]
        `,
-            'popover'
+            'popoverContent'
           )}
           style={{
             position: position.strategy,
