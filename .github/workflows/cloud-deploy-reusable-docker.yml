@@ -79,6 +79,9 @@ jobs:
       deployments: write
       id-token: write
     steps:
+      - name: Debug secrets
+        run: echo "Token is set"
+        if: ${{ secrets.SUBMODULES_TOKEN != '' }}
 
       - uses: actions/checkout@v4
         with:
