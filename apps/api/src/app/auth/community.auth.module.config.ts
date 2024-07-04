@@ -26,16 +26,6 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
 }
 
-const authServiceProvider = {
-  provide: 'AUTH_SERVICE',
-  useClass: CommunityAuthService,
-};
-
-const userAuthGuardProvider = {
-  provide: 'USER_AUTH_GUARD',
-  useClass: CommunityUserAuthGuard,
-};
-
 export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
     imports: [
@@ -61,8 +51,6 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,
-      authServiceProvider,
-      userAuthGuardProvider,
     ],
     exports: [
       RolesGuard,
