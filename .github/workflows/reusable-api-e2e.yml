@@ -19,6 +19,11 @@ on:
         required: false
         default: false
         type: boolean
+      clerk-ee:
+        description: 'use the clerk ee version of api'
+        required: false
+        default: false
+        type: boolean
       job-name:
         description: 'job name [options: novu/api-ee, novu/api]'
         required: true
@@ -105,6 +110,23 @@ jobs:
           CI_EE_TEST: true
         run: |
           cd apps/api && pnpm test:e2e:ee
+
+      - name: Run E2E EE Clerk tests
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.clerk-ee }}
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          CI_EE_TEST: true
+          CLERK_ENABLED: true
+          CLERK_ISSUER_URL: ${{ secrets.CLERK_ISSUER_URL }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PRIVATE_KEY: ${{ secrets.CLERK_PRIVATE_KEY }}
+          CLERK_PEM_PUBLIC_KEY: ${{ secrets.CLERK_PEM_PUBLIC_KEY }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          CLERK_LONG_LIVED_TOKEN: ${{ secrets.CLERK_LONG_LIVED_TOKEN }}
+        run: |
+          cd apps/api && pnpm test:e2e:clerk
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
