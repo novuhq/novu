@@ -29,7 +29,6 @@ on:
         type: string
 
 jobs:
-
   set_environment:
     runs-on: ubuntu-latest
     outputs:
