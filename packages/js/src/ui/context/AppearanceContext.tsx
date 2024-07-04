@@ -23,6 +23,8 @@ export type Elements = {
   root?: ElementStyles;
   bell?: ElementStyles;
   bellContainer?: ElementStyles;
+  popoverContent?: ElementStyles;
+  popoverTrigger?: ElementStyles;
 };
 
 export type Variables = {

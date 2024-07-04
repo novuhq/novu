@@ -25,6 +25,7 @@ import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useDomainParser } from './useDomainHook';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function QuestionnaireForm() {
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
@@ -39,6 +40,7 @@ export function QuestionnaireForm() {
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
+  const segment = useSegment();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -60,8 +62,11 @@ export function QuestionnaireForm() {
     const { organizationName, ...rest } = data;
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
     const organization = await createOrganizationMutation(createDto);
+
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
+
+    segment.track('Create Organization Form Submitted');
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {

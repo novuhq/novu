@@ -3,9 +3,14 @@
   "version": "2.0.0-canary.0",
   "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
   "main": "index.js",
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.build.json",
+    "build": "pnpm prebuild && tsc -p tsconfig.json",
     "build:prod": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",

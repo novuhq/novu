@@ -6,6 +6,8 @@ on:
       - opened
       - edited
       - synchronize
+    branches:
+      - '!prod'
 
   # Use the following event if you want edit and test setting regarding conventional commits
   # pull_request:
