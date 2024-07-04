@@ -53,17 +53,17 @@ jobs:
       - id: set-docker-name
         run: |
           if [[ "${{ inputs.enterprise }}" == "true" ]]; then
-            echo "::set-output name=dockerName::${{ inputs.package_name }}-ee"
+            echo "dockerName=${{ inputs.package_name }}-ee" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=dockerName::${{ inputs.package_name }}"
+            echo "dockerName=${{ inputs.package_name }}" >> "$GITHUB_OUTPUT"
           fi
 
       - id: set-platforms
         run: |
           if [[ "${{ inputs.environment }}" == "Production" ]]; then
-            echo "::set-output name=platforms::linux/amd64,linux/arm64"
+            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=platforms::linux/amd64"
+            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
           fi
 
   reusable_docker:
@@ -90,7 +90,7 @@ jobs:
         run: |
           service=${{ inputs.package_name }}
           servicename=${service#*/} 
-          echo "::set-output name=SERVICE_NAME::$servicename"
+          echo "SERVICE_NAME=$servicename" >> "$GITHUB_OUTPUT"
 
       - uses: ./.github/actions/setup-project
         with:
@@ -184,7 +184,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           OUTPUT_NAME: ${{ needs.job-setup.outputs.dockerName }}
         run: |
-          echo "::set-output name=docker_image::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "docker_image=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Health check test
         id: health-check
