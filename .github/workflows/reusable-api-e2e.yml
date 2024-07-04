@@ -122,11 +122,13 @@ jobs:
           CLERK_ENABLED: true
           CLERK_ISSUER_URL: ${{ secrets.CLERK_ISSUER_URL }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          CLERK_PRIVATE_KEY: ${{ secrets.CLERK_PRIVATE_KEY }}
-          CLERK_PEM_PUBLIC_KEY: ${{ secrets.CLERK_PEM_PUBLIC_KEY }}
+          CLERK_PRIVATE_KEY_BASE64: ${{ secrets.CLERK_PRIVATE_KEY_BASE64 }}
+          CLERK_PEM_PUBLIC_KEY_BASE64: ${{ secrets.CLERK_PEM_PUBLIC_KEY_BASE64 }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
           CLERK_LONG_LIVED_TOKEN: ${{ secrets.CLERK_LONG_LIVED_TOKEN }}
         run: |
+          export CLERK_PEM_PUBLIC_KEY=$(echo $CLERK_PEM_PUBLIC_KEY_BASE64 | base64 -d)
+          export CLERK_PRIVATE_KEY=$(echo $CLERK_PRIVATE_KEY_BASE64 | base64 -d)
           cd apps/api && pnpm test:e2e:clerk
 
       - name: Kill port for worker 1342 for unit tests
