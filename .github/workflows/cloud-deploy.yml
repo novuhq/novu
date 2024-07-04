@@ -109,7 +109,6 @@ jobs:
 
   release-services:
     needs: [ pre-release ]
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
