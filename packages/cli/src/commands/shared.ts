@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
 import * as gradient from 'gradient-string';
-import chalkAnimation from '../animation';
+import chalkAnimation from './animation';
 
 export async function showWelcomeScreen() {
   const textGradient = gradient('#0099F7', '#ff3432');
