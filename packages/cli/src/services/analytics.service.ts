@@ -44,7 +44,7 @@ export class AnalyticService {
     });
   }
 
-  identify(user: UserSessionData) {
+  identify(user: UserSessionData & { createdAt: string }) {
     if (!this.isAnalyticsEnabled()) {
       return;
     }
@@ -55,7 +55,7 @@ export class AnalyticService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        created: (user as any).createdAt,
+        created: user.createdAt,
       },
     });
   }
