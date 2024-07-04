@@ -153,7 +153,7 @@ export function buildApiHttpClient({
     },
 
     async syncBridge(bridgeUrl: string) {
-      return post(`/v1/bridge/sync`, {
+      return post(`/v1/bridge/sync?source=studio`, {
         bridgeUrl,
       });
     },
