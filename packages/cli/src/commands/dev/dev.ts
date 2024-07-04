@@ -1,46 +1,31 @@
-import { DevServer } from '../dev-server';
-import { NtfrTunnel } from '@novu/ntfr-client';
-import { showWelcomeScreen } from './shared';
 import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
-import { SERVER_HOST } from '../constants';
+import { NtfrTunnel } from '@novu/ntfr-client';
+
+import { DevServer } from '../../dev-server';
+import { showWelcomeScreen } from '../shared';
+import { config } from '../../index';
+import { DevCommandOptions, LocalTunnelResponse } from './types';
+import { parseOptions, wait } from './utils';
+import * as packageJson from '../../../package.json';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
   process.exit();
 });
 
-export enum CloudRegionEnum {
-  US = 'us',
-  EU = 'eu',
-  STAGING = 'staging',
-}
-
-export enum DashboardUrlEnum {
-  US = 'https://dashboard.novu.co',
-  EU = 'https://eu.dashboard.novu.co',
-  STAGING = 'https://dev.dashboard.novu.co',
-}
-
-const TUNNEL_URL = 'https://novu.sh/api/tunnels';
-
-export type DevCommandOptions = {
-  port: string;
-  origin: string;
-  region: `${CloudRegionEnum}`;
-  studioPort: string;
-  dashboardUrl: string;
-  route: string;
-};
+let tunnelClient: NtfrTunnel | null = null;
+export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
+const version = packageJson.version;
 
 export async function devCommand(options: DevCommandOptions) {
   await showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();
-  const tunnelOrigin = await createTunnel(parsedOptions.origin);
   const NOVU_ENDPOINT_PATH = options.route;
+  const tunnelOrigin = await createTunnel(parsedOptions.origin, NOVU_ENDPOINT_PATH);
 
   devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}`);
 
@@ -61,10 +46,10 @@ export async function devCommand(options: DevCommandOptions) {
     await open(httpServer.getStudioAddress());
   }
 
-  await endpointHealthChecker(parsedOptions, NOVU_ENDPOINT_PATH);
+  await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
 }
 
-async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointRoute: string) {
+async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointRoute: string) {
   const fullEndpoint = `${parsedOptions.origin}${endpointRoute}`;
   let healthy = false;
   const endpointText = `Bridge Endpoint scan:\t${fullEndpoint}
@@ -75,15 +60,7 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
   let counter = 0;
   while (!healthy) {
     try {
-      const response = await fetch(`${fullEndpoint}?action=health-check`, {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-      const healthResponse = await response.json();
-      healthy = healthResponse.status === 'ok';
+      healthy = await tunnelHealthCheck(fullEndpoint);
 
       if (healthy) {
         endpointSpinner.succeed(`🌉 Endpoint  → ${fullEndpoint}`);
@@ -108,42 +85,46 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
   }
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
+  try {
+    const res = await (
+      await fetch(configTunnelUrl + '?action=health-check', {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          'User-Agent': `novu@${version}`,
+        },
+      })
+    ).json();
 
-function parseOptions(options: DevCommandOptions) {
-  const { origin, port, region } = options || {};
-
-  return {
-    ...options,
-    origin: origin || getDefaultOrigin(port),
-    dashboardUrl: options.dashboardUrl || getDefaultDashboardUrl(region),
-  };
-}
-
-function getDefaultOrigin(port: string) {
-  return `http://${SERVER_HOST}:${port}`;
-}
-
-function getDefaultDashboardUrl(region: string) {
-  switch (region) {
-    case CloudRegionEnum.EU:
-      return DashboardUrlEnum.EU;
-    case CloudRegionEnum.STAGING:
-      return DashboardUrlEnum.STAGING;
-    case CloudRegionEnum.US:
-    default:
-      return DashboardUrlEnum.US;
+    return res.status === 'ok';
+  } catch (e) {
+    return false;
   }
 }
 
-type LocalTunnelResponse = {
-  id: string;
-  url: string;
-};
+async function createTunnel(localOrigin: string, endpointRoute: string): Promise<string> {
+  const originUrl = new URL(localOrigin);
+  const configTunnelUrl = config.getValue(`tunnelUrl-${parseInt(originUrl.port)}`);
+  const storeUrl = configTunnelUrl ? new URL(configTunnelUrl) : null;
 
-async function createTunnel(localOrigin: string) {
+  if (storeUrl) {
+    try {
+      await connectToTunnel(storeUrl, originUrl);
+
+      if (tunnelClient.isConnected) {
+        return storeUrl.origin;
+      }
+    } catch (error) {
+      return await connectToNewTunnel(originUrl);
+    }
+  }
+
+  return await connectToNewTunnel(originUrl);
+}
+
+async function fetchNewTunnel(originUrl: URL): Promise<URL> {
   const response = await fetch(TUNNEL_URL, {
     method: 'POST',
     headers: {
@@ -152,14 +133,17 @@ async function createTunnel(localOrigin: string) {
       authorization: `Bearer 12345`,
     },
   });
+
   const { url } = (await response.json()) as LocalTunnelResponse;
+  config.setValue(`tunnelUrl-${parseInt(originUrl.port)}`, url);
 
-  const parsedUrl = new URL(url);
-  const parsedOrigin = new URL(localOrigin);
+  return new URL(url);
+}
 
+async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const ws = await import('ws');
-  const ntfrTunnel = new NtfrTunnel(
+  tunnelClient = new NtfrTunnel(
     parsedUrl.host,
     parsedOrigin.host,
     false,
@@ -171,7 +155,12 @@ async function createTunnel(localOrigin: string) {
     { verbose: false }
   );
 
-  await ntfrTunnel.connect();
+  await tunnelClient.connect();
+}
+
+async function connectToNewTunnel(originUrl: URL) {
+  const parsedUrl = await fetchNewTunnel(originUrl);
+  await connectToTunnel(parsedUrl, originUrl);
 
   return parsedUrl.origin;
 }
