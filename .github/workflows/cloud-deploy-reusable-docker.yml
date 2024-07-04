@@ -38,6 +38,9 @@ on:
       enterprise:
         required: false
         type: boolean
+      submodule_token:
+        description: 'Submodule token to use for checkout'
+        required: true
     outputs:
       docker_image:
         description: 'The image that was built'
@@ -82,7 +85,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: ${{ inputs.enterprise }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
+          token: ${{ inputs.submodule_token }}
 
       - name: Prepare
         id: prepare

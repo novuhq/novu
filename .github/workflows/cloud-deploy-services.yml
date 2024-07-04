@@ -57,6 +57,7 @@ jobs:
       local_tag: ${{ inputs.local_tag }}
       env_tag: ${{ inputs.env }}
       enterprise: true
+      submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
 
   deploy_dev_service:
     needs:
