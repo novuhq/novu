@@ -128,25 +128,15 @@ jobs:
             test_port: '1344'
           - name: 'ws'
             test_port: '1345'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Debug
-        id: debug
-        run: |
-          pwd
-          ls -la
-          ls -la ./.github/workflows/
-
-      - name: Deploy ${{ matrix.service.name }}
-        uses: ./.github/workflows/cloud-deploy-services.yml
-        with:
-          env: ${{ needs.pre-release.outputs.environment }}
-          service: ${{ matrix.service.name }}
-          package_name: novu/${{ matrix.service.name }}
-          project_path: apps/${{ matrix.service.name }}
-          test_port: ${{ matrix.service.test_port }}
-          local_tag: novu-${{ matrix.service.name }}
+    name: Deploy ${{ matrix.service.name }}
+    uses: ./.github/workflows/cloud-deploy-services.yml
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
+      service: ${{ matrix.service.name }}
+      package_name: novu/${{ matrix.service.name }}
+      project_path: apps/${{ matrix.service.name }}
+      test_port: ${{ matrix.service.test_port }}
+      local_tag: novu-${{ matrix.service.name }}
 
   post-release:
     if: ${{ always() }}
