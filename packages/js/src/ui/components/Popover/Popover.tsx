@@ -34,11 +34,7 @@ export function Popover(props: PopoverProps) {
   };
 
   const onToggle = () => {
-    if (isOpen()) {
-      onClose();
-    } else {
-      setIsOpen(true);
-    }
+    setIsOpen((prev) => !prev);
   };
 
   const context = {

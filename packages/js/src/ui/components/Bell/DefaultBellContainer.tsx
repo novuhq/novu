@@ -1,21 +1,26 @@
 import { Show } from 'solid-js';
-import { useStyle } from '../../helpers';
+import { useAppearance } from '../../context';
+import { cn, useStyle } from '../../helpers';
 import { BellIcon } from '../../icons';
 
 type DefaultBellContainerProps = {
   unreadCount: number;
 };
 
-export const DefaultBellContainer = (props: DefaultBellContainerProps) => {
+export const BellContainer = (props: DefaultBellContainerProps) => {
   const style = useStyle();
+  const { id } = useAppearance();
 
   return (
     <span
       class={style(
-        `nt-h-6 nt-w-6 nt-flex nt-justify-center
-   nt-items-center nt-rounded-md nt-relative
-   hover:nt-bg-foreground-alpha-50
-   nt-text-foreground-alpha-600`,
+        cn(
+          id,
+          `nt-h-6 nt-w-6 nt-flex nt-justify-center
+        nt-items-center nt-rounded-md nt-relative
+        hover:nt-bg-foreground-alpha-50
+        nt-text-foreground-alpha-600 nt-cursor-pointer`
+        ),
         'bellContainer'
       )}
     >

@@ -1,33 +1,26 @@
-import { Accessor, createSignal } from 'solid-js';
+import { Accessor, createSignal, Setter } from 'solid-js';
 
 type UseUncontrolledState = {
   value?: boolean;
   fallbackValue?: boolean;
 };
 
-type UseUncontrolledStateOutput = [Accessor<boolean>, (value: boolean) => void];
+type UseUncontrolledStateOutput = [Accessor<boolean>, Setter<boolean>];
 
-export function useUncontrolledState({
-  value,
-
-  fallbackValue,
-}: UseUncontrolledState): UseUncontrolledStateOutput {
+export function useUncontrolledState({ value, fallbackValue }: UseUncontrolledState): UseUncontrolledStateOutput {
   const [uncontrolledValue, setUncontrolledValue] = createSignal(!!fallbackValue);
 
-  const handleUncontrolledChange = (val: boolean) => {
-    setUncontrolledValue(val);
-  };
   /**
    * If value is provided, return controlled state
    */
   if (value !== undefined) {
     const accessor: Accessor<boolean> = () => value;
 
-    return [accessor, handleUncontrolledChange];
+    return [accessor, setUncontrolledValue];
   }
 
   /**
    * If value is not provided, return uncontrolled state
    */
-  return [uncontrolledValue, handleUncontrolledChange];
+  return [uncontrolledValue, setUncontrolledValue];
 }

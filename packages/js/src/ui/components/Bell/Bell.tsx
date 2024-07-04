@@ -1,6 +1,6 @@
 import { createSignal, JSX, onCleanup, onMount } from 'solid-js';
 import { useNovu } from '../../context';
-import { DefaultBellContainer } from './DefaultBellContainer';
+import { BellContainer } from './DefaultBellContainer';
 
 type BellProps = {
   children?: ({ unreadCount }: { unreadCount: number }) => JSX.Element;
@@ -25,5 +25,5 @@ export function Bell(props: BellProps) {
     return props.children({ unreadCount: unreadCount() });
   }
 
-  return <DefaultBellContainer unreadCount={unreadCount()} />;
+  return <BellContainer unreadCount={unreadCount()} />;
 }
