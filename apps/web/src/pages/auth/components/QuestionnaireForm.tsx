@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
@@ -41,6 +41,7 @@ export function QuestionnaireForm() {
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
   const segment = useSegment();
+  const location = useLocation();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -66,7 +67,9 @@ export function QuestionnaireForm() {
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
 
-    segment.track('Create Organization Form Submitted');
+    segment.track('Create Organization Form Submitted', {
+      location: (location.state as any)?.origin || 'web',
+    });
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -197,7 +200,7 @@ export function QuestionnaireForm() {
 
           return (
             <MantineInput.Wrapper
-              label="What do you plan to use Novu for?"
+              label="Choose your back-end stack"
               styles={inputStyles}
               error={fieldState.error?.message}
               mt={32}
@@ -206,16 +209,14 @@ export function QuestionnaireForm() {
               <Group
                 mt={8}
                 mx={'8px'}
-                style={{ marginLeft: '-12px', marginRight: '-12px', gap: '0', justifyContent: 'space-between' }}
+                style={{ marginLeft: '-1px', marginRight: '-3px', gap: '0', justifyContent: 'space-between' }}
               >
                 <>
                   {checkBoxData.map((item) => (
                     <DynamicCheckBox
-                      Icon={item.icon}
                       label={item.label}
-                      onChange={(e) => handleCheckboxChange(e, item.type)}
-                      key={item.type}
-                      type={item.type}
+                      onChange={(e) => handleCheckboxChange(e, item.label)}
+                      key={item.label}
                     />
                   ))}
                 </>
@@ -232,11 +233,13 @@ export function QuestionnaireForm() {
 }
 
 const checkBoxData = [
-  { type: ProductUseCasesEnum.IN_APP, icon: RingingBell, label: 'In-app' },
-  { type: ProductUseCasesEnum.MULTI_CHANNEL, icon: MultiChannel, label: 'Multi-channel' },
-  { type: ProductUseCasesEnum.DIGEST, icon: Digest, label: 'Digest' },
-  { type: ProductUseCasesEnum.DELAY, icon: HalfClock, label: 'Delay' },
-  { type: ProductUseCasesEnum.TRANSLATION, icon: Translation, label: 'Translate' },
+  { label: 'Node.js' },
+  { label: 'Python' },
+  { label: 'Go' },
+  { label: 'PHP' },
+  { label: 'Rust' },
+  { label: 'Java' },
+  { label: 'Other' },
 ];
 
 interface IOrganizationCreateForm {

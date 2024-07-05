@@ -67,7 +67,7 @@ export function LocalStudioAuthenticator() {
          */
         // currentURL.searchParams.append('studio_path_hint', ROUTES.STUDIO_ONBOARDING);
 
-        return redirectToSignUp({ redirectURL: currentURL.href });
+        return redirectToSignUp({ redirectURL: currentURL.href, origin: 'cli' });
       }
 
       return;

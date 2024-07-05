@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
@@ -31,6 +31,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const { setRedirectURL } = useRedirectURL();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setRedirectURL(), []);
+  const location = useLocation();
 
   const { login } = useAuth();
   const { isLoading: isAcceptInviteLoading, acceptInvite } = useAcceptInvite();
@@ -49,12 +50,16 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   >((data) => api.post('/v1/auth/register', data));
 
   const onSubmit = async (data) => {
+    const parsedSearchParams = new URLSearchParams(location.search);
+    const origin = parsedSearchParams.get('origin');
+
     const [firstName, lastName] = data?.fullName.trim().split(' ');
     const itemData = {
       firstName,
       lastName,
       email: data.email,
       password: data.password,
+      origin: origin,
     };
 
     const response = await mutateAsync(itemData);
@@ -68,7 +73,11 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       }
       navigate(ROUTES.AUTH_APPLICATION);
     } else {
-      navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
+      navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION, {
+        state: {
+          origin,
+        },
+      });
     }
   };
 
