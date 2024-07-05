@@ -67,6 +67,16 @@ program
   .option('-o, --origin <origin>', 'The Bridge endpoint origin')
   .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
-  .action((options: DevCommandOptions) => devCommand(options));
+  .action(async (options: DevCommandOptions) => {
+    analytics.track({
+      identity: {
+        anonymousId: anonymousId,
+      },
+      data: {},
+      event: 'Open Dev Server',
+    });
+
+    return await devCommand(options);
+  });
 
 program.parse(process.argv);

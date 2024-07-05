@@ -27,7 +27,7 @@ export async function devCommand(options: DevCommandOptions) {
   const NOVU_ENDPOINT_PATH = options.route;
   const tunnelOrigin = await createTunnel(parsedOptions.origin, NOVU_ENDPOINT_PATH);
 
-  devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}`);
+  devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}${NOVU_ENDPOINT_PATH}`);
 
   const opts = {
     ...parsedOptions,

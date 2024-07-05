@@ -78,7 +78,7 @@ export class OrganizationController {
         name: body.name,
         jobTitle: body.jobTitle,
         domain: body.domain,
-        productUseCases: body.productUseCases,
+        language: body.language,
       })
     );
   }
