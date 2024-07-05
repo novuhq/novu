@@ -75,9 +75,9 @@ jobs:
         working-directory: cloud-infra/terraform/novu/aws
         id: terraform
         env:
-          SERVICE_NAME: ${{ inputs.service_name_under }}
+          SERVICE_NAME: ${{ env.service_name_under }}
         run: |
-          echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_OUTPUT
+          echo "ecs_container_name=$(terraform output -js on ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_OUTPUT
           echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_OUTPUT
           echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
           echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_OUTPUT
