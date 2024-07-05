@@ -1,7 +1,7 @@
 import { RequestEvent } from '@sveltejs/kit';
-import { NovuRequestHandler, type ServeHandlerOptions } from './handler';
-import { type SupportedFrameworkName } from './types';
-import { getResponse } from './utils';
+import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
+import { type SupportedFrameworkName } from '../types';
+import { getResponse } from '../utils';
 
 export const frameworkName: SupportedFrameworkName = 'sveltekit';
 
