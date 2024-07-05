@@ -108,7 +108,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
 
-
       - name: Download task definition
         run: |
           aws ecs describe-task-definition --task-definition ${{ matrix.worker.task_name }} \
@@ -150,7 +149,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.aws_region }}
+          aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
 
       - name: Download task definition
         run: |
