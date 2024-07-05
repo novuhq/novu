@@ -35,7 +35,6 @@ const notificationStyles = (theme: MantineTheme) => {
       backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
       border: 'none',
       boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
-      height: '65px',
       width: '460px',
       borderRadius: '7px',
       padding: '20px',

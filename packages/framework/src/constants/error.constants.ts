@@ -24,7 +24,7 @@ export enum ErrorCodeEnum {
   SIGNATURE_INVALID_ERROR = 'SignatureInvalidError',
   SIGNATURE_EXPIRED_ERROR = 'SignatureExpiredError',
   SIGNING_KEY_NOT_FOUND_ERROR = 'SigningKeyNotFoundError',
-  PLATFORM_ERROR = 'PlatformError',
+  BRIDGE_ERROR = 'BridgeError',
   SIGNATURE_VERSION_INVALID_ERROR = 'SignatureVersionInvalidError',
   WORKFLOW_PAYLOAD_INVALID_ERROR = 'WorkflowPayloadInvalidError',
 }

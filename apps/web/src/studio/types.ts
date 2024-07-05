@@ -29,6 +29,7 @@ type BaseStudioState = {
   };
   organizationName?: string;
   devSecretKey?: string;
+  anonymousId?: string | null;
 };
 
 type CloudStudioState = BaseStudioState & {

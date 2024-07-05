@@ -1,5 +1,6 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
+  plugins: ['local-rules'],
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/naming-convention': [
@@ -11,6 +12,7 @@ module.exports = {
         format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
       },
     ],
+    'local-rules/no-class-without-style': 'error',
   },
   parserOptions: {
     project: './tsconfig.json',

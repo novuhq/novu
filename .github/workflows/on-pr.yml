@@ -5,11 +5,6 @@ concurrency:
 
 on:
   pull_request:
-    types:
-      [opened, reopened]
-    branches:
-      - 'next'
-      - 'prod'
   workflow_dispatch:
 
 jobs:

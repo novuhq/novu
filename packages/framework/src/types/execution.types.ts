@@ -1,3 +1,4 @@
+import { PostActionEnum } from '../constants';
 import type { Subscriber } from './subscriber.types';
 
 export type Event = {
@@ -10,7 +11,7 @@ export type Event = {
   inputs: Record<string, unknown>;
   controls: Record<string, unknown>;
   state: State[];
-  action: 'execute' | 'preview';
+  action: Exclude<PostActionEnum, PostActionEnum.TRIGGER>;
   subscriber: Subscriber;
 };
 
