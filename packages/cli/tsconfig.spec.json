@@ -1,7 +1,13 @@
 {
-  "extends": "packages/cli/tsconfig.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["mocha", "node"],
-    "esModuleInterop": false
-  }
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "types": ["node", "mocha", "chai", "sinon"],
+    "target": "es2017",
+    "allowJs": false,
+    "esModuleInterop": false,
+    "declarationMap": false
+  },
+  "exclude": ["node_modules"]
 }

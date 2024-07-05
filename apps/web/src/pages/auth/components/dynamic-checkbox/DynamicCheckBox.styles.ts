@@ -9,7 +9,7 @@ export const checkboxStyles = createStyles((theme, _params, getRef) => {
       position: 'absolute',
 
       backgroundColor: 'transparent',
-      borderColor: 'transparent',
+      border: `1px solid grey`,
 
       '&:hover': {
         border: `1px solid white`,

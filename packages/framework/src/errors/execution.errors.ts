@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
-import { BadRequestError } from './base.errors';
+import { BadRequestError, FrameworkError } from './base.errors';
 
 export class ExecutionStateCorruptError extends BadRequestError {
   code = ErrorCodeEnum.EXECUTION_STATE_CORRUPT_ERROR;
@@ -84,25 +84,26 @@ export class WorkflowPayloadInvalidError extends BadRequestError {
   }
 }
 
-export class UnknownError extends Error {
+export class PlatformError extends FrameworkError {
   /**
    * HTTP status code.
    */
-  public readonly statusCode: HttpStatusEnum;
+  public statusCode: HttpStatusEnum;
 
   /**
    * Additional data that can be used to provide more information about the error.
    */
-  public message: any;
+  public data: any;
 
   /**
    * The error code, which is used to identify the error type.
    */
-  public readonly code: ErrorCodeEnum;
+  public code: ErrorCodeEnum;
 
-  constructor(statusCode: HttpStatusEnum, code: ErrorCodeEnum, message: any) {
-    super(message);
+  constructor(statusCode: HttpStatusEnum, code: string, message: string) {
+    super();
+    this.data = { message };
     this.statusCode = statusCode;
-    this.code = code;
+    this.code = code as ErrorCodeEnum; // TODO: Throw known error codes from Platform.
   }
 }

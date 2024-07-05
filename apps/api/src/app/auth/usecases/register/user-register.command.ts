@@ -41,4 +41,6 @@ export class UserRegisterCommand extends BaseCommand {
 
   @IsOptional()
   productUseCases?: ProductUseCases;
+
+  language?: string[];
 }

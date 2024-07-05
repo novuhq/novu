@@ -22,9 +22,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes';
 import { ProductLead } from '../../components/utils/ProductLead';
+import { useSegment } from '../../components/providers/SegmentProvider';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
+  const segment = useSegment();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
   const { currentOrganization, currentUser } = useAuth();
@@ -57,6 +59,8 @@ export function MembersInvitePage() {
         });
       } else throw e;
     }
+
+    segment.track('Team Member Invite Sent');
 
     if (!selfHosted) {
       showNotification({

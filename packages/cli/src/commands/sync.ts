@@ -12,6 +12,7 @@ export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string)
 
   if (!apiUrl) {
     throw new Error(
+      // eslint-disable-next-line max-len
       'An API url is required for the sync command, please omit the configuration option entirely or supply a valid API url when running the command'
     );
   }
@@ -26,7 +27,7 @@ export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string)
 }
 
 export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: string) {
-  const url = apiUrl + '/v1/bridge/sync?source=cli';
+  const url = `${apiUrl}/v1/bridge/sync?source=cli`;
 
   return await axios.post(
     url,
@@ -36,8 +37,8 @@ export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: 
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'ApiKey ' + secretKey,
-      } as any,
+        Authorization: `ApiKey ${secretKey}`,
+      },
     }
   );
 }

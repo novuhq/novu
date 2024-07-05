@@ -27,6 +27,8 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   productUseCases?: ProductUseCases;
 
+  language?: string[];
+
   createdAt: string;
 
   updatedAt: string;

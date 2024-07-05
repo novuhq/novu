@@ -115,16 +115,37 @@ export function useAuth() {
     navigate(ROUTES.AUTH_LOGIN);
   }, [navigate, queryClient, segment]);
 
-  const redirectTo = useCallback(({ url, redirectURL }: { url: string; redirectURL?: string }) => {
-    const finalURL = new URL(url, window.location.origin);
+  const redirectTo = useCallback(
+    ({
+      url,
+      redirectURL,
+      origin,
+      anonymousId,
+    }: {
+      url: string;
+      redirectURL?: string;
+      origin?: string;
+      anonymousId?: string | null;
+    }) => {
+      const finalURL = new URL(url, window.location.origin);
 
-    if (redirectURL) {
-      finalURL.searchParams.append('redirect_url', redirectURL);
-    }
+      if (redirectURL) {
+        finalURL.searchParams.append('redirect_url', redirectURL);
+      }
 
-    // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
-    window.location.replace(finalURL.href);
-  }, []);
+      if (origin) {
+        finalURL.searchParams.append('origin', origin);
+      }
+
+      if (anonymousId) {
+        finalURL.searchParams.append('anonymous_id', anonymousId);
+      }
+
+      // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
+      window.location.replace(finalURL.href);
+    },
+    []
+  );
 
   const redirectToLogin = useCallback(
     ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_LOGIN, redirectURL }),
@@ -132,7 +153,12 @@ export function useAuth() {
   );
 
   const redirectToSignUp = useCallback(
-    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL }),
+    ({
+      redirectURL,
+      origin,
+      anonymousId,
+    }: { redirectURL?: string; origin?: string; anonymousId?: string | null } = {}) =>
+      redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL, origin, anonymousId }),
     [redirectTo]
   );
 
