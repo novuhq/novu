@@ -55,7 +55,7 @@ export class UserRegister {
           userId: user._id,
           jobTitle: command.jobTitle,
           domain: command.domain,
-          productUseCases: command.productUseCases,
+          language: command.language,
         })
       );
     }

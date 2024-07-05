@@ -22,5 +22,5 @@ export class CreateOrganizationCommand extends AuthenticatedCommand {
   domain?: string;
 
   @IsOptional()
-  productUseCases?: ProductUseCases;
+  language?: string[];
 }

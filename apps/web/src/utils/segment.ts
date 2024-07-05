@@ -53,6 +53,26 @@ export class SegmentService {
     this._segment?.identify(user?._id);
   }
 
+  alias(anonymousId: string, userId: string) {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
+    if (this._mixpanelEnabled) {
+      mixpanel.alias(userId, anonymousId);
+    }
+
+    this._segment?.alias(userId, anonymousId);
+  }
+
+  setAnonymousId(anonymousId: string) {
+    if (!this.isSegmentEnabled() || !anonymousId) {
+      return;
+    }
+
+    this._segment?.setAnonymousId(anonymousId);
+  }
+
   async track(event: string, data?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;

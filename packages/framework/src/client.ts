@@ -1,6 +1,7 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
+import { PostActionEnum } from './constants';
 
 import {
   ExecutionEventControlsInvalidError,
@@ -305,8 +306,8 @@ export class Client {
 
   public async executeWorkflow(event: Event): Promise<ExecuteOutput> {
     const actionMessages = {
-      execute: 'Executing',
-      preview: 'Previewing',
+      [PostActionEnum.EXECUTE]: 'Executing',
+      [PostActionEnum.PREVIEW]: 'Previewing',
     };
 
     const actionMessage = actionMessages[event.action];

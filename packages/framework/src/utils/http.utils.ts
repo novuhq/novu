@@ -1,4 +1,5 @@
-import { UnknownError } from '../errors';
+import { BridgeError, PlatformError } from '../errors';
+import { checkIsResponseError } from '@novu/shared';
 
 export const initApiClient = (apiKey: string, baseURL = 'https://api.novu.co') => {
   const apiUrl = process.env.NOVU_API_URL || baseURL;
@@ -19,7 +20,11 @@ export const initApiClient = (apiKey: string, baseURL = 'https://api.novu.co') =
       if (response.ok) {
         return resJson as T;
       } else {
-        throw new UnknownError(resJson.statusCode, resJson.error, resJson.message);
+        if (checkIsResponseError(resJson)) {
+          throw new PlatformError(resJson.statusCode, resJson.error, resJson.message);
+        } else {
+          throw new BridgeError('Error processing API request to Novu Cloud from Bridge application.');
+        }
       }
     },
     delete: async <T = any>(route: string): Promise<T> => {

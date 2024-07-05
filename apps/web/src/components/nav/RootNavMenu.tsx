@@ -145,16 +145,18 @@ export const RootNavMenu: React.FC = () => {
           )}
           testId="side-nav-settings-api-keys"
         ></NavMenuLinkButton>
-        <NavMenuLinkButton
-          label="Inbound webhook"
-          isVisible
-          icon={<IconWebhook />}
-          link={getEnvPageRoute(
-            ROUTES.WEBHOOK,
-            (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
-          )}
-          testId="side-nav-settings-inbound-webhook"
-        ></NavMenuLinkButton>
+        <When truthy={!isV2Enabled}>
+          <NavMenuLinkButton
+            label="Inbound webhook"
+            isVisible
+            icon={<IconWebhook />}
+            link={getEnvPageRoute(
+              ROUTES.WEBHOOK,
+              (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
+            )}
+            testId="side-nav-settings-inbound-webhook"
+          ></NavMenuLinkButton>
+        </When>
       </NavMenuSection>
       {isV2ExperienceEnabled ? (
         <>

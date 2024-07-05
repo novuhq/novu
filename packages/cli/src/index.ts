@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AnalyticService, ConfigService } from './services';
 
 const analytics = new AnalyticService();
-const config = new ConfigService();
+export const config = new ConfigService();
 if (process.env.NODE_ENV === 'development') {
   config.clearStore();
 }
@@ -67,6 +67,16 @@ program
   .option('-o, --origin <origin>', 'The Bridge endpoint origin')
   .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
-  .action((options: DevCommandOptions) => devCommand(options));
+  .action(async (options: DevCommandOptions) => {
+    analytics.track({
+      identity: {
+        anonymousId: anonymousId,
+      },
+      data: {},
+      event: 'Open Dev Server',
+    });
+
+    return await devCommand(options, anonymousId);
+  });
 
 program.parse(process.argv);
