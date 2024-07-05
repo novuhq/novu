@@ -116,7 +116,17 @@ export function useAuth() {
   }, [navigate, queryClient, segment]);
 
   const redirectTo = useCallback(
-    ({ url, redirectURL, origin }: { url: string; redirectURL?: string; origin?: string }) => {
+    ({
+      url,
+      redirectURL,
+      origin,
+      anonymousId,
+    }: {
+      url: string;
+      redirectURL?: string;
+      origin?: string;
+      anonymousId?: string | null;
+    }) => {
       const finalURL = new URL(url, window.location.origin);
 
       if (redirectURL) {
@@ -125,6 +135,10 @@ export function useAuth() {
 
       if (origin) {
         finalURL.searchParams.append('origin', origin);
+      }
+
+      if (anonymousId) {
+        finalURL.searchParams.append('anonymous_id', anonymousId);
       }
 
       // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
@@ -139,8 +153,12 @@ export function useAuth() {
   );
 
   const redirectToSignUp = useCallback(
-    ({ redirectURL, origin }: { redirectURL?: string; origin?: string } = {}) =>
-      redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL, origin }),
+    ({
+      redirectURL,
+      origin,
+      anonymousId,
+    }: { redirectURL?: string; origin?: string; anonymousId?: string | null } = {}) =>
+      redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL, origin, anonymousId }),
     [redirectTo]
   );
 
