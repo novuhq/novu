@@ -1,9 +1,10 @@
 import { ParentProps, createContext, createMemo, useContext } from 'solid-js';
-import { defaultLocalization } from '../config/default-localization';
+import { defaultLocalization } from '../config/defaultLocalization';
 import { Path } from '../helpers/types';
 
 export type Localization = {
   'inbox.title': string;
+  'notifications.emptyNotice': string;
 };
 
 type LocalizationPath = Path<Localization>;
