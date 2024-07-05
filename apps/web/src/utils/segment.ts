@@ -53,6 +53,14 @@ export class SegmentService {
     this._segment?.identify(user?._id);
   }
 
+  setAnonymousId(anonymousId: string) {
+    if (!this.isSegmentEnabled() || !anonymousId) {
+      return;
+    }
+
+    this._segment?.setAnonymousId(anonymousId);
+  }
+
   async track(event: string, data?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;

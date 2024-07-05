@@ -8,7 +8,7 @@ export const WELL_KNOWN_ROUTE = '/.well-known/novu';
 export const STUDIO_PATH = '/studio';
 import { DevCommandOptions } from '../commands';
 
-export type DevServerOptions = { tunnelOrigin: string } & Partial<
+export type DevServerOptions = { tunnelOrigin: string; anonymousId?: string } & Partial<
   Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'dashboardUrl' | 'route'>
 >;
 
@@ -95,6 +95,7 @@ export class DevServer {
             url.searchParams.set('application_origin', '${this.options.origin}');
             url.searchParams.set('tunnel_origin', '${this.options.tunnelOrigin}');
             url.searchParams.set('tunnel_route', '${this.options.route}');
+            url.searchParams.set('anonymous_id', '${this.options.anonymousId}');
 
             window.location.href = url.href;
           }

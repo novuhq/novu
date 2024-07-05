@@ -104,6 +104,7 @@ export function LocalStudioAuthenticator() {
 
     const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
+    const anonymousId = parsedSearchParams.get('anonymous_id');
 
     // TODO: Add apiKeys to the IEnvironment interface as they exist in the response
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -124,6 +125,7 @@ export function LocalStudioAuthenticator() {
       localBridgeURL,
       tunnelBridgeURL,
       organizationName: currentOrganization?.name || '',
+      anonymousId,
     };
 
     /*

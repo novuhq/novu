@@ -19,7 +19,7 @@ let tunnelClient: NtfrTunnel | null = null;
 export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 const version = packageJson.version;
 
-export async function devCommand(options: DevCommandOptions) {
+export async function devCommand(options: DevCommandOptions, anonymousId?: string) {
   await showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
@@ -32,6 +32,7 @@ export async function devCommand(options: DevCommandOptions) {
   const opts = {
     ...parsedOptions,
     tunnelOrigin,
+    anonymousId,
   };
 
   const httpServer = new DevServer(opts);
