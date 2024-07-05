@@ -76,7 +76,7 @@ program
       event: 'Open Dev Server',
     });
 
-    return await devCommand(options);
+    return await devCommand(options, anonymousId);
   });
 
 program.parse(process.argv);
