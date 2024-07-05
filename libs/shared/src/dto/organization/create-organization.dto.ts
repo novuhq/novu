@@ -8,7 +8,7 @@ export interface ICreateOrganizationDto {
   taxIdentifier?: string;
   jobTitle?: JobTitleEnum;
   domain?: string;
-  productUseCases?: ProductUseCases;
+  language?: string[];
 }
 
 export interface IOrganizationDTO {

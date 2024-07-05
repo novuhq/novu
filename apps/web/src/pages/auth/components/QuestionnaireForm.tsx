@@ -61,7 +61,9 @@ export function QuestionnaireForm() {
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
-    const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
+    const selectedLanguages = Object.keys(data.language || {}).filter((key) => data.language && data.language[key]);
+
+    const createDto: ICreateOrganizationDto = { ...rest, name: organizationName, language: selectedLanguages };
     const organization = await createOrganizationMutation(createDto);
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
@@ -69,6 +71,8 @@ export function QuestionnaireForm() {
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',
+      language: selectedLanguages,
+      jobTitle: data.jobTitle,
     });
   }
 
@@ -93,7 +97,7 @@ export function QuestionnaireForm() {
 
       return;
     }
-    const firstUsecase = findFirstUsecase(data.productUseCases) ?? '';
+    const firstUsecase = findFirstUsecase(data.language) ?? '';
     const mappedUsecase = firstUsecase.replace('_', '-');
     navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);
   };
@@ -186,15 +190,17 @@ export function QuestionnaireForm() {
       />
 
       <Controller
-        name="productUseCases"
+        name="language"
         control={control}
         rules={{
           required: 'Please specify your use case',
         }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
-            const newUseCases: ProductUseCases = field.value || {};
+            const newUseCases = field.value || {};
+
             newUseCases[channelType] = e.currentTarget.checked;
+
             field.onChange(newUseCases);
           }
 
@@ -246,7 +252,7 @@ interface IOrganizationCreateForm {
   organizationName: string;
   jobTitle: JobTitleEnum;
   domain?: string;
-  productUseCases?: ProductUseCases;
+  language?: ProductUseCases;
 }
 
 function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCasesEnum | undefined {

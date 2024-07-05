@@ -77,7 +77,7 @@ describe('Create Organization - /organizations (POST)', async () => {
     it('should create organization with questionnaire data', async () => {
       const testOrganization: ICreateOrganizationDto = {
         name: 'Org Name',
-        productUseCases: {
+        language: {
           in_app: true,
           multi_channel: true,
         },
@@ -89,8 +89,8 @@ describe('Create Organization - /organizations (POST)', async () => {
 
       expect(dbOrganization?.name).to.eq(testOrganization.name);
       expect(dbOrganization?.domain).to.eq(testOrganization.domain);
-      expect(dbOrganization?.productUseCases?.in_app).to.eq(testOrganization.productUseCases?.in_app);
-      expect(dbOrganization?.productUseCases?.multi_channel).to.eq(testOrganization.productUseCases?.multi_channel);
+      expect(dbOrganization?.productUseCases?.in_app).to.eq(testOrganization.language?.in_app);
+      expect(dbOrganization?.productUseCases?.multi_channel).to.eq(testOrganization.language?.multi_channel);
     });
 
     it('should update user job title on organization creation', async () => {

@@ -40,7 +40,7 @@ export class CreateOrganization {
       name: command.name,
       apiServiceLevel: ApiServiceLevelEnum.FREE,
       domain: command.domain,
-      productUseCases: command.productUseCases,
+      language: command.language,
     });
 
     if (command.jobTitle) {
@@ -92,6 +92,8 @@ export class CreateOrganization {
 
     this.analyticsService.track('[Authentication] - Create Organization', user._id, {
       _organization: createdOrganization._id,
+      language: command.language,
+      creatorJobTitle: command.jobTitle,
     });
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(
