@@ -40,9 +40,12 @@ jobs:
       contents: read
       deployments: write
     outputs:
-      services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
+      ecs_container_name: ${{ steps.terraform.outputs.ecs_container_name }}
+      ecs_service: ${{ steps.terraform.outputs.ecs_service }}
       ecs_cluster: ${{ steps.terraform.outputs.ecs_cluster }}
+      task_name: ${{ steps.terraform.outputs.task_name }}
       aws_region: ${{ steps.terraform.outputs.aws_region }}
+      services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
     steps:
       - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
 
@@ -74,12 +77,10 @@ jobs:
         env:
           SERVICE_NAME: ${{ inputs.service_name_under }}
         run: |
-          echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_OUTPUT
+          echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_OUTPUT
           echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
-          echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_ENV
-          echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_ENV
+          echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_OUTPUT
           echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
           echo "queue_workers_services=$(terraform output -json queue_workers_services)" >> $GITHUB_OUTPUT
 
@@ -153,7 +154,7 @@ jobs:
 
       - name: Download task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.task_name }} \
+          aws ecs describe-task-definition --task-definition ${{ needs.infrastructure_data.outputs.task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
@@ -161,15 +162,15 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.ecs_container_name }}
+          container-name: ${{ needs.infrastructure_data.outputs.ecs_container_name }}
           image: ${{ inputs.docker_image }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: ${{ env.ecs_service }}
-          cluster: ${{ env.ecs_cluster }}
+          service: ${{ needs.infrastructure_data.outputs.ecs_service }}
+          cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
           wait-for-service-stability: true
 
   post-deploy:
