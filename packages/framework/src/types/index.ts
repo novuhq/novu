@@ -1,6 +1,5 @@
 export * from './code.types';
 export * from './config.types';
-export * from './cron.types';
 export * from './discover.types';
 export * from './event.types';
 export * from './execution.types';
