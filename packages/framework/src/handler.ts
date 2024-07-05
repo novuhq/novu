@@ -97,7 +97,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: SDK_VERSION,
-      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_API]: this.frameworkName,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SERVER]: this.frameworkName,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
     };
   }
