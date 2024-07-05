@@ -1,8 +1,6 @@
-import { createMemo, createRenderEffect, createSignal } from 'solid-js';
-import { createStore } from 'solid-js/store';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
-import { Novu, NovuOptions } from '../../novu';
+import { NovuOptions } from '../../novu';
 import { Appearance, AppearanceProvider, Localization, LocalizationProvider, NovuProvider } from '../context';
 import { Bell } from './Bell';
 import { Inbox } from './Inbox';
@@ -38,8 +36,7 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           {[...props.nodes].map(([node, component]) => (
-            //@ts-expect-error props not typed
-            <Portal mount={node}>{NovuComponents[component.name](component.props)}</Portal>
+            <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
           ))}
         </AppearanceProvider>
       </LocalizationProvider>
