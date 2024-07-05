@@ -160,7 +160,7 @@ jobs:
         with:
           notification_title: "Release has failed"
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
+          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
 
 
       - name: Success Deployment Notification
@@ -169,4 +169,4 @@ jobs:
         with:
           notification_title: "Release was successful"
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
+          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
