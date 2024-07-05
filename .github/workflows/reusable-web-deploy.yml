@@ -95,7 +95,7 @@ jobs:
         run: CI='' pnpm build:web --skip-nx-cache
 
       - name: Deploy WEB
-        uses: nwtgck/actions-netlify@v1.2
+        uses: nwtgck/actions-netlify@v3.0
         with:
           publish-dir: apps/web/build
           github-token: ${{ secrets.GITHUB_TOKEN }}
