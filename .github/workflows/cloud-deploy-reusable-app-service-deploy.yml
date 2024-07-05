@@ -90,7 +90,7 @@ jobs:
           echo "ecs_cluster=$(terraform output -json worker_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
           echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
 
-  deploy_service:
+  deploy_service_worker:
     if: inputs.service_name == 'worker'
     needs:
       - infrastructure_data
@@ -184,6 +184,7 @@ jobs:
     needs:
       - infrastructure_data
       - deploy_service
+      - deploy_service_worker
     runs-on: ubuntu-latest
     permissions:
       contents: read
