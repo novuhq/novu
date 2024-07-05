@@ -69,7 +69,7 @@ jobs:
       environment: ${{ needs.set_environment.outputs.environment }}
       service_name: ${{ inputs.service }}
       terraform_workspace: novu-dev
-      docker_image: ghcr.io/novuhq/novu/${{ inputs.local_tag }}-ee:${{ github.sha }}
+      docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
 
   deploy_prod_service_eu:
     needs:
@@ -82,7 +82,7 @@ jobs:
       environment: ${{ needs.set_environment.outputs.environment }}
       service_name: ${{ inputs.service }}
       terraform_workspace: novu-prod-eu
-      docker_image: ghcr.io/novuhq/novu/${{ inputs.local_tag }}-ee:${{ github.sha }}
+      docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
 
   deploy_prod_service_us:
     needs:
@@ -95,6 +95,6 @@ jobs:
       environment: ${{ needs.set_environment.outputs.environment }}
       service_name: ${{ inputs.service }}
       terraform_workspace: novu-prod
-      docker_image: ghcr.io/novuhq/novu/${{ inputs.local_tag }}-ee:${{ github.sha }}
+      docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
       deploy_sentry_release: true
       sentry_project: ${{ inputs.service }}
