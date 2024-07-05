@@ -53,7 +53,7 @@ jobs:
         with:
           notification_title: "Release has started for ${{ steps.env_name.outputs.env }} "
         env:
-          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
 
 # Unique deploy process
   release-embed:
@@ -160,7 +160,7 @@ jobs:
         with:
           notification_title: "Release has failed"
         env:
-          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
 
 
       - name: Success Deployment Notification
@@ -169,4 +169,4 @@ jobs:
         with:
           notification_title: "Release was successful"
         env:
-          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
