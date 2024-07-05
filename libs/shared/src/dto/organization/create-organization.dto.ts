@@ -9,6 +9,7 @@ export interface ICreateOrganizationDto {
   jobTitle?: JobTitleEnum;
   domain?: string;
   language?: string[];
+  frontend?: string[];
 }
 
 export interface IOrganizationDTO {

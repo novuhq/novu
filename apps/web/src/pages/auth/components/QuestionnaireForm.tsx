@@ -63,7 +63,11 @@ export function QuestionnaireForm() {
     const { organizationName, ...rest } = data;
     const selectedLanguages = Object.keys(data.language || {}).filter((key) => data.language && data.language[key]);
 
-    const createDto: ICreateOrganizationDto = { ...rest, name: organizationName, language: selectedLanguages };
+    const createDto: ICreateOrganizationDto = {
+      ...rest,
+      name: organizationName,
+      language: selectedLanguages,
+    };
     const organization = await createOrganizationMutation(createDto);
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
@@ -97,9 +101,8 @@ export function QuestionnaireForm() {
 
       return;
     }
-    const firstUsecase = findFirstUsecase(data.language) ?? '';
-    const mappedUsecase = firstUsecase.replace('_', '-');
-    navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);
+
+    navigate(`${ROUTES.GET_STARTED}`);
   };
 
   /**
@@ -115,6 +118,27 @@ export function QuestionnaireForm() {
 
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>
+      <Controller
+        name="organizationName"
+        control={control}
+        rules={{
+          required: 'Please specify your company name',
+        }}
+        render={({ field }) => {
+          return (
+            <Input
+              label="Company name"
+              {...field}
+              error={errors.organizationName?.message}
+              placeholder="Enter your company name"
+              data-test-id="questionnaire-company-name"
+              mt={32}
+              required
+            />
+          );
+        }}
+      />
+
       <Controller
         name="jobTitle"
         control={control}
@@ -141,67 +165,15 @@ export function QuestionnaireForm() {
       />
 
       <Controller
-        name="organizationName"
-        control={control}
-        rules={{
-          required: 'Please specify your company name',
-        }}
-        render={({ field }) => {
-          return (
-            <Input
-              label="Company name"
-              {...field}
-              error={errors.organizationName?.message}
-              placeholder="Enter your company name"
-              data-test-id="questionnaire-company-name"
-              mt={32}
-              required
-            />
-          );
-        }}
-      />
-
-      <Controller
-        name="domain"
-        control={control}
-        rules={{
-          validate: {
-            isValiDomain: (value) => {
-              const val = parse(value as string);
-
-              if (value && !val.isIcann) {
-                return 'Please provide a valid domain';
-              }
-            },
-          },
-        }}
-        render={({ field }) => {
-          return (
-            <Input
-              label="Company domain"
-              {...field}
-              error={errors.domain?.message}
-              placeholder="my-company.com"
-              data-test-id="questionnaire-company-domain"
-              mt={32}
-            />
-          );
-        }}
-      />
-
-      <Controller
         name="language"
         control={control}
-        rules={{
-          required: 'Please specify your use case',
-        }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
-            const newUseCases = field.value || {};
+            const languages = field.value || {};
 
-            newUseCases[channelType] = e.currentTarget.checked;
+            languages[channelType] = e.currentTarget.checked;
 
-            field.onChange(newUseCases);
+            field.onChange(languages);
           }
 
           return (
@@ -218,7 +190,7 @@ export function QuestionnaireForm() {
                 style={{ marginLeft: '-1px', marginRight: '-3px', gap: '0', justifyContent: 'space-between' }}
               >
                 <>
-                  {checkBoxData.map((item) => (
+                  {backendLanguages.map((item) => (
                     <DynamicCheckBox
                       label={item.label}
                       onChange={(e) => handleCheckboxChange(e, item.label)}
@@ -238,7 +210,7 @@ export function QuestionnaireForm() {
   );
 }
 
-const checkBoxData = [
+const backendLanguages = [
   { label: 'Node.js' },
   { label: 'Python' },
   { label: 'Go' },
@@ -248,11 +220,21 @@ const checkBoxData = [
   { label: 'Other' },
 ];
 
+const frontendFrameworks = [
+  { label: 'React' },
+  { label: 'Vue' },
+  { label: 'Angular' },
+  { label: 'Flutter' },
+  { label: 'React Native' },
+  { label: 'Other' },
+];
+
 interface IOrganizationCreateForm {
   organizationName: string;
   jobTitle: JobTitleEnum;
   domain?: string;
-  language?: ProductUseCases;
+  language?: string[];
+  frontendStack?: string[];
 }
 
 function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCasesEnum | undefined {
