@@ -7,7 +7,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { usePageViewTracking } from '../../hooks/usePageViewTracking';
 import { css } from '@novu/novui/css';
-import { EchoTab } from './components/get-started-tabs/EchoTab';
+import { EchoTab } from './components/get-started-tabs/FrameworkTab';
 
 const PAGE_TITLE = 'Get started';
 

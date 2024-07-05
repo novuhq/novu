@@ -8,11 +8,11 @@ import { text, title } from '@novu/novui/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 import { useEffect } from 'react';
 import { useMantineTheme } from '@mantine/core';
-import { useEchoTerminalScript } from '../../../../hooks/useEchoTerminalScript';
+import { useFrameworkTerminalScript } from '../../../../hooks/useFrameworkTerminalScript';
 
 const link = 'https://docs.novu.co/framework/quickstart';
 
-const COMMAND = 'npx novu-labs@latest echo';
+const COMMAND = 'npx novu@latest dev';
 
 const Text = styled('p', text);
 const Title = styled('h2', title);
@@ -27,10 +27,10 @@ export const EchoTab = ({ className }: { className?: string }) => {
   const segment = useSegment();
 
   const handleDocsLinkClick = () => {
-    segment.track(`Additional Info Link - [Get Started]`, { href: link, tab: OnboardingUseCasesTabsEnum.ECHO });
+    segment.track(`Additional Info Link - [Get Started]`, { href: link, tab: OnboardingUseCasesTabsEnum.FRAMEWORK });
   };
 
-  useEchoTerminalScript();
+  useFrameworkTerminalScript();
 
   useEffect(() => {
     const tabs = document.getElementsByClassName('nv-terminal-tab');
@@ -63,7 +63,7 @@ export const EchoTab = ({ className }: { className?: string }) => {
         </Text>
         <div
           onClick={() => {
-            segment.track(`Copy Echo command - [Get Started]`);
+            segment.track(`Copy Bridge command - [Get Started]`);
           }}
         >
           <CodeSnippet
@@ -87,7 +87,7 @@ export const EchoTab = ({ className }: { className?: string }) => {
 
         <div className={css({ marginBottom: '300' })}>
           <AdditionInformationLink
-            channel={OnboardingUseCasesTabsEnum.ECHO}
+            channel={OnboardingUseCasesTabsEnum.FRAMEWORK}
             href={link}
             onClick={handleDocsLinkClick}
           />

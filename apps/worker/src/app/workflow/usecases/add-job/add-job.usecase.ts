@@ -70,7 +70,7 @@ export class AddJob {
     private normalizeVariablesUsecase: NormalizeVariables,
     private moduleRef: ModuleRef
   ) {
-    this.resonateUsecase = requireInject('resonate', this.moduleRef);
+    this.resonateUsecase = requireInject('execute-bridge-job', this.moduleRef);
   }
 
   @InstrumentUsecase()

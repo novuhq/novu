@@ -14,10 +14,10 @@ export function AdditionInformationLink({ channel, ...linkProps }: IAdditionInfo
   return (
     <StyledLink {...linkProps}>
       <IconMenuBook />
-      <When truthy={channel !== OnboardingUseCasesTabsEnum.ECHO}>
+      <When truthy={channel !== OnboardingUseCasesTabsEnum.FRAMEWORK}>
         <StyledText>Learn about {channel}</StyledText>
       </When>
-      <When truthy={channel === OnboardingUseCasesTabsEnum.ECHO}>
+      <When truthy={channel === OnboardingUseCasesTabsEnum.FRAMEWORK}>
         <StyledText>Learn more</StyledText>
       </When>
     </StyledLink>

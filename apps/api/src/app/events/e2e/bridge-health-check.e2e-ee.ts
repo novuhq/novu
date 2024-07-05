@@ -3,11 +3,11 @@ import { expect } from 'chai';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
 import { workflow } from '@novu/framework';
-import { EchoServer } from '../../../../e2e/echo.server';
+import { BridgeServer } from '../../../../e2e/bridge.server';
 
-describe('Echo Health Check', async () => {
+describe('Bridge Health Check', async () => {
   let session: UserSession;
-  let frameworkClient: EchoServer;
+  let frameworkClient: BridgeServer;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
@@ -20,7 +20,7 @@ describe('Echo Health Check', async () => {
         };
       });
     });
-    frameworkClient = new EchoServer();
+    frameworkClient = new BridgeServer();
     await frameworkClient.start({ workflows: [healthCheckWorkflow] });
   });
 
@@ -36,25 +36,25 @@ describe('Echo Health Check', async () => {
   });
 
   it('should have a status', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
+    const result = await axios.get(frameworkClient.serverPath + '/bridge?action=health-check');
 
     expect(result.data.status).to.equal('ok');
   });
 
   it('should have an sdk version', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
+    const result = await axios.get(frameworkClient.serverPath + '/bridge?action=health-check');
 
     expect(result.data.sdkVersion).to.be.a('string');
   });
 
   it('should have a framework version', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
+    const result = await axios.get(frameworkClient.serverPath + '/bridge?action=health-check');
 
     expect(result.data.frameworkVersion).to.be.a('string');
   });
 
   it('should return the discovered resources', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
+    const result = await axios.get(frameworkClient.serverPath + '/bridge?action=health-check');
 
     expect(result.data.discovered).to.deep.equal({ workflows: 1, steps: 1 });
   });

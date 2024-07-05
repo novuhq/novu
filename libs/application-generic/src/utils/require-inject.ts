@@ -15,9 +15,9 @@ import {
 } from '@novu/framework';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
-  if (inject === RequireInjectEnum.RESONATE) {
+  if (inject === RequireInjectEnum.EXECUTE_BRIDGE_JOB) {
     return initiateResonateProvider(moduleRef);
-  } else if (inject === RequireInjectEnum.DO_BRIDGE_REQUEST) {
+  } else if (inject === RequireInjectEnum.EXECUTE_BRIDGE_REQUEST) {
     return initiateDoBridgeRequestProvider(moduleRef);
   }
 };
@@ -28,13 +28,16 @@ const initiateResonateProvider = (moduleRef: ModuleRef) => {
       process.env.NOVU_ENTERPRISE === 'true' ||
       process.env.CI_EE_TEST === 'true'
     ) {
-      if (!require('@novu/ee-bridge-worker')?.Resonate) {
-        throw new PlatformException('Resonate provider is not loaded');
+      if (!require('@novu/ee-bridge-worker')?.ExecuteBridgeJob) {
+        throw new PlatformException('ExecuteBridgeJob provider is not loaded');
       }
 
-      return moduleRef.get(require('@novu/ee-bridge-worker')?.Resonate, {
-        strict: false,
-      });
+      return moduleRef.get(
+        require('@novu/ee-bridge-worker')?.ExecuteBridgeJob,
+        {
+          strict: false,
+        }
+      );
     } else {
       return {
         execute: () => {
@@ -46,7 +49,7 @@ const initiateResonateProvider = (moduleRef: ModuleRef) => {
     Logger.error(
       e,
       `Unexpected error while importing enterprise modules`,
-      'Resonate'
+      'ExecuteBridgeJob'
     );
     throw e;
   }
@@ -58,13 +61,16 @@ const initiateDoBridgeRequestProvider = (moduleRef: ModuleRef) => {
       process.env.NOVU_ENTERPRISE === 'true' ||
       process.env.CI_EE_TEST === 'true'
     ) {
-      if (!require('@novu/ee-bridge-worker')?.DoBridgeRequest) {
-        throw new PlatformException('Resonate provider is not loaded');
+      if (!require('@novu/ee-bridge-worker')?.ExecuteBridgeRequest) {
+        throw new PlatformException('ExecuteBridgeJob provider is not loaded');
       }
 
-      return moduleRef.get(require('@novu/ee-bridge-worker')?.DoBridgeRequest, {
-        strict: false,
-      });
+      return moduleRef.get(
+        require('@novu/ee-bridge-worker')?.ExecuteBridgeRequest,
+        {
+          strict: false,
+        }
+      );
     } else {
       return {
         execute: () => {
@@ -76,7 +82,7 @@ const initiateDoBridgeRequestProvider = (moduleRef: ModuleRef) => {
     Logger.error(
       e,
       `Unexpected error while importing enterprise modules`,
-      'DoBridgeRequest'
+      'ExecuteBridgeRequest'
     );
     throw e;
   }
@@ -85,8 +91,8 @@ const initiateDoBridgeRequestProvider = (moduleRef: ModuleRef) => {
 type RequireInject = `${RequireInjectEnum}`;
 
 enum RequireInjectEnum {
-  RESONATE = 'resonate',
-  DO_BRIDGE_REQUEST = 'do_bridge_request',
+  EXECUTE_BRIDGE_JOB = 'execute-bridge-job',
+  EXECUTE_BRIDGE_REQUEST = 'execute-bridge-request',
 }
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export const useEchoTerminalScript = () => {
+export const useFrameworkTerminalScript = () => {
   useEffect(() => {
     if (!document.getElementById('echo-terminal-loader')) {
       const script = document.createElement('script');

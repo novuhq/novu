@@ -80,7 +80,7 @@ export class SendMessage {
     private normalizeVariablesUsecase: NormalizeVariables,
     protected moduleRef: ModuleRef
   ) {
-    this.resonateUsecase = requireInject('resonate', this.moduleRef);
+    this.resonateUsecase = requireInject('execute-bridge-job', this.moduleRef);
   }
 
   @InstrumentUsecase()
