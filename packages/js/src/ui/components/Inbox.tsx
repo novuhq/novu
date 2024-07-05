@@ -6,10 +6,6 @@ import { Bell } from './Bell';
 import { Popover } from './Popover';
 
 type InboxProps = {
-  name: string;
-  options: NovuOptions;
-  appearance?: Appearance;
-  localization?: Localization;
   open?: boolean;
   renderBell?: ({ unreadCount }: { unreadCount: number }) => JSX.Element;
 };
