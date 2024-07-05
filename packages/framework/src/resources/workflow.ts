@@ -1,6 +1,12 @@
-import { ChannelStepEnum } from './constants';
-import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from './errors';
-import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
+import { ChannelStepEnum } from '../constants';
+import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from '../errors';
+import {
+  channelStepSchemas,
+  delayChannelSchemas,
+  digestChannelSchemas,
+  emptySchema,
+  providerSchemas,
+} from '../schemas';
 import type {
   ActionStep,
   Awaitable,
@@ -15,9 +21,9 @@ import type {
   EventTriggerResponse,
   Workflow,
   WorkflowOptions,
-} from './types';
-import { EMOJI, getBridgeUrl, initApiClient, log } from './utils';
-import { transformSchema, validateData } from './validators';
+} from '../types';
+import { EMOJI, getBridgeUrl, initApiClient, log } from '../utils';
+import { transformSchema, validateData } from '../validators';
 
 /**
  * Define a new notification workflow.

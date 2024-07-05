@@ -7,12 +7,10 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import { workflow } from './workflow';
-import { Event, Step } from './types';
-import { delayOutputSchema } from './schemas';
-import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
-import { FromSchema } from './types/schema.types';
-import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
+import { workflow } from './resources';
+import { Event, Step, FromSchema } from './types';
+import { delayOutputSchema, channelStepSchemas } from './schemas';
+import { FRAMEWORK_VERSION, SDK_VERSION, ChannelStepEnum, PostActionEnum } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -341,7 +339,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const emailEvent: Event = {
-        action: 'preview',
+        action: PostActionEnum.PREVIEW,
         data: { name: 'John' },
         payload: { name: 'John' },
         workflowId: 'test-workflow',
@@ -367,7 +365,7 @@ describe('Novu Client', () => {
   describe('executeWorkflow method', () => {
     it('should execute workflow successfully when action is execute and payload is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
-      const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
+      const emailConfiguration: FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['output']> = {
         body: 'Test Body',
         subject: 'Subject',
       };
@@ -377,7 +375,7 @@ describe('Novu Client', () => {
       });
 
       const emailEvent: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         data: {},
         payload: {},
         workflowId: 'test-workflow',
@@ -406,7 +404,7 @@ describe('Novu Client', () => {
       expect(metadata.duration).toEqual(expect.any(Number));
 
       const delayEvent: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         data: {},
         payload: {},
         workflowId: 'test-workflow',
@@ -489,7 +487,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const emailEvent: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         data: { role: 'product manager', elements: ['cat', 'dog'] },
         payload: { role: 'product manager', elements: ['cat', 'dog'] },
         workflowId: 'test-workflow',
@@ -522,7 +520,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const event: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -558,7 +556,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const event: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -597,7 +595,7 @@ describe('Novu Client', () => {
       client.addWorkflows([workflowMock]);
 
       const event: Event = {
-        action: 'preview',
+        action: PostActionEnum.PREVIEW,
         workflowId: 'mock-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -623,7 +621,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const event: Event = {
-        action: 'preview',
+        action: PostActionEnum.PREVIEW,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -664,7 +662,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const event: Event = {
-        action: 'preview',
+        action: PostActionEnum.PREVIEW,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -698,7 +696,7 @@ describe('Novu Client', () => {
     it('should throw an error when workflow ID is invalid', async () => {
       // non-existing workflow ID
       const event: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         workflowId: 'non-existent-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -719,7 +717,7 @@ describe('Novu Client', () => {
 
       // no workflow ID
       const event2 = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         stepId: 'send-email',
         subscriber: {},
         state: [],
@@ -735,7 +733,7 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       const event: Event = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         workflowId: 'test-workflow',
         stepId: 'non-existing-step',
         subscriber: {},

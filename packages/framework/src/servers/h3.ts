@@ -1,7 +1,7 @@
 import { getHeader, getQuery, type H3Event, readBody, send, setHeaders, type EventHandlerRequest } from 'h3';
 
-import { NovuRequestHandler, type ServeHandlerOptions } from './handler';
-import { type SupportedFrameworkName } from './types';
+import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
+import { type SupportedFrameworkName } from '../types';
 
 export const frameworkName: SupportedFrameworkName = 'h3';
 

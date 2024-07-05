@@ -1,8 +1,8 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
-import { PostActionEnum } from './constants';
 
+import { FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -35,7 +35,6 @@ import type {
 } from './types';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
-import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 /**
  * We want to respond with a consistent string value for preview

@@ -1,8 +1,8 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { getHeader, getQuery, H3Event, readBody, send, setHeaders } from 'h3';
 
-import { NovuRequestHandler, type ServeHandlerOptions } from './handler';
-import { type SupportedFrameworkName } from './types';
+import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
+import { type SupportedFrameworkName } from '../types';
 
 export const frameworkName: SupportedFrameworkName = 'nuxt';
 
