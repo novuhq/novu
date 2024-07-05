@@ -137,7 +137,7 @@ export const EchoTab = ({ className }: { className?: string }) => {
           })
         )}
       >
-        <nv-echo-terminal></nv-echo-terminal>
+        <nv-framework-terminal></nv-framework-terminal>
       </div>
     </Flex>
   );
