@@ -7,3 +7,4 @@ export * from './http-query.constants';
 export * from './http-status.constants';
 export * from './resource.constants';
 export * from './step.constants';
+export * from './version.constants';

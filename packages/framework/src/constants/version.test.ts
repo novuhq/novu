@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest';
-import { SDK_VERSION } from './version';
+import { SDK_VERSION } from './version.constants';
 
 describe('version', () => {
   test('should export the current version', () => {

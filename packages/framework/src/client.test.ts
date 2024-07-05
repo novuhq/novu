@@ -12,7 +12,7 @@ import { Event, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 import { FromSchema } from './types/schema.types';
-import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
