@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.0.0-canary.1",
+  "version": "2.0.0-canary.4",
   "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
   "main": "src/index.js",
   "files": [

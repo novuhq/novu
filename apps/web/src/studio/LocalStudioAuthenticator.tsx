@@ -31,6 +31,7 @@ export function LocalStudioAuthenticator() {
   // TODO: Refactor this to a smaller size function
   useEffect(() => {
     const parsedSearchParams = new URLSearchParams(location.search);
+    const anonymousId = parsedSearchParams.get('anonymous_id');
 
     // Get the redirect URL of the Local Studio server
     const redirectURL = parsedSearchParams.get('redirect_url');
@@ -67,7 +68,7 @@ export function LocalStudioAuthenticator() {
          */
         // currentURL.searchParams.append('studio_path_hint', ROUTES.STUDIO_ONBOARDING);
 
-        return redirectToSignUp({ redirectURL: currentURL.href, origin: 'cli' });
+        return redirectToSignUp({ redirectURL: currentURL.href, origin: 'cli', anonymousId });
       }
 
       return;
@@ -104,7 +105,6 @@ export function LocalStudioAuthenticator() {
 
     const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
-    const anonymousId = parsedSearchParams.get('anonymous_id');
 
     // TODO: Add apiKeys to the IEnvironment interface as they exist in the response
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
