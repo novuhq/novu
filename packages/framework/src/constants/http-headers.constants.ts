@@ -4,7 +4,7 @@ export enum HttpHeaderKeysEnum {
   NOVU_SIGNATURE_DEPRECATED = 'x-novu-signature',
   NOVU_ANONYMOUS_DEPRECATED = 'x-novu-anonymous',
   NOVU_FRAMEWORK_SDK = 'novu-framework-sdk',
-  NOVU_FRAMEWORK_API = 'novu-framework-api',
+  NOVU_FRAMEWORK_SERVER = 'novu-framework-server',
   NOVU_FRAMEWORK_VERSION = 'novu-framework-version',
   USER_AGENT = 'user-agent',
   CONTENT_TYPE = 'content-type',

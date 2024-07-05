@@ -1,7 +1,7 @@
 import { expect, it, describe, beforeEach } from 'vitest';
 import { Client } from './client';
 import { z } from 'zod';
-import { workflow } from './workflow';
+import { workflow } from './resources/workflow';
 import { ExecutionStateControlsInvalidError } from './errors';
 
 describe('validation', () => {

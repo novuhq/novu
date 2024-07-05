@@ -1,5 +1,6 @@
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
+import type { Prettify } from './util.types';
 
 /**
  * The parameters for the workflow function.
@@ -10,7 +11,7 @@ export type ExecuteInput<T_Payload, T_Control> = {
   /** The payload for the event, provided during trigger. */
   payload: T_Payload;
   /** The subscriber for the event, provided during trigger. */
-  subscriber: Subscriber;
+  subscriber: Prettify<Subscriber>;
   /** The environment the workflow is running in. */
   environment: Record<string, unknown>;
   /**
