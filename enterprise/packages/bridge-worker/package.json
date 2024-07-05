@@ -1,5 +1,5 @@
 {
-  "name": "@novu/ee-echo-api",
+  "name": "@novu/ee-bridge-worker",
   "version": "2.0.0-canary.0",
   "private": true,
   "main": "dist/index.js",
@@ -12,26 +12,22 @@
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@nestjs/swagger": "^7.3.1",
-    "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/ee-dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
-    "@novu/framework": "workspace:*",
     "@novu/testing": "workspace:*",
-    "@novu/ee-echo-worker": "workspace:*",
+    "@novu/framework": "workspace:*",
     "axios": "^1.6.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "json-schema-defaults": "^0.4.0",
-    "lodash": "^4.17.15",
-    "passport-google-oauth": "^2.0.0",
+    "got": "^11.8.6",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
+    "@types/got": "^9.6.12",
     "@types/json-schema": "^7.0.15",
     "@types/mocha": "^8.0.1",
     "@types/node": "^14.6.0",

@@ -28,11 +28,11 @@ const initiateResonateProvider = (moduleRef: ModuleRef) => {
       process.env.NOVU_ENTERPRISE === 'true' ||
       process.env.CI_EE_TEST === 'true'
     ) {
-      if (!require('@novu/ee-echo-worker')?.Resonate) {
+      if (!require('@novu/ee-bridge-worker')?.Resonate) {
         throw new PlatformException('Resonate provider is not loaded');
       }
 
-      return moduleRef.get(require('@novu/ee-echo-worker')?.Resonate, {
+      return moduleRef.get(require('@novu/ee-bridge-worker')?.Resonate, {
         strict: false,
       });
     } else {
@@ -58,11 +58,11 @@ const initiateDoBridgeRequestProvider = (moduleRef: ModuleRef) => {
       process.env.NOVU_ENTERPRISE === 'true' ||
       process.env.CI_EE_TEST === 'true'
     ) {
-      if (!require('@novu/ee-echo-worker')?.DoBridgeRequest) {
+      if (!require('@novu/ee-bridge-worker')?.DoBridgeRequest) {
         throw new PlatformException('Resonate provider is not loaded');
       }
 
-      return moduleRef.get(require('@novu/ee-echo-worker')?.DoBridgeRequest, {
+      return moduleRef.get(require('@novu/ee-bridge-worker')?.DoBridgeRequest, {
         strict: false,
       });
     } else {
