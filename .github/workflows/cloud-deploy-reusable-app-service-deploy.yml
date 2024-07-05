@@ -70,7 +70,6 @@ jobs:
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform/novu/aws
-        if: inputs.service_name != 'worker'
         id: terraform
         env:
           SERVICE_NAME: ${{ inputs.service_name_under }}
@@ -78,17 +77,11 @@ jobs:
           echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_ENV
           echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_ENV
           echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
           echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_ENV
           echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_ENV
-
-      - name: Terraform get output
-        working-directory: cloud-infra/terraform/novu/aws
-        if: inputs.service_name == 'worker'
-        id: terraform
-        run: |
-          echo "queue_workers_services=$(terraform output -json queue_workers_services)" >> $GITHUB_OUTPUT
-          echo "ecs_cluster=$(terraform output -json worker_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
           echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
+          echo "queue_workers_services=$(terraform output -json queue_workers_services)" >> $GITHUB_OUTPUT
 
   deploy_service_worker:
     if: inputs.service_name == 'worker'
