@@ -4,7 +4,7 @@ import { SDK_VERSION } from './version.constants';
 describe('version', () => {
   test('should export the current version', () => {
     const importVersion = SDK_VERSION;
-    const packageJsonVersion = require('../package.json').version;
+    const packageJsonVersion = require('../../package.json').version;
     expect(importVersion).toEqual(packageJsonVersion);
   });
 });

@@ -7,7 +7,7 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import { workflow } from './workflow';
+import { workflow } from './resources/workflow';
 import { Event, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
