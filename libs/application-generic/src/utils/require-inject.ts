@@ -16,13 +16,13 @@ import {
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.EXECUTE_BRIDGE_JOB) {
-    return initiateResonateProvider(moduleRef);
+    return initiateExecuteBridgeJobProvider(moduleRef);
   } else if (inject === RequireInjectEnum.EXECUTE_BRIDGE_REQUEST) {
-    return initiateDoBridgeRequestProvider(moduleRef);
+    return initiateExecuteBridgeRequestProvider(moduleRef);
   }
 };
 
-const initiateResonateProvider = (moduleRef: ModuleRef) => {
+const initiateExecuteBridgeJobProvider = (moduleRef: ModuleRef) => {
   try {
     if (
       process.env.NOVU_ENTERPRISE === 'true' ||
@@ -55,7 +55,7 @@ const initiateResonateProvider = (moduleRef: ModuleRef) => {
   }
 };
 
-const initiateDoBridgeRequestProvider = (moduleRef: ModuleRef) => {
+const initiateExecuteBridgeRequestProvider = (moduleRef: ModuleRef) => {
   try {
     if (
       process.env.NOVU_ENTERPRISE === 'true' ||

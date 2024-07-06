@@ -58,7 +58,7 @@ import { ExecuteStepCustom } from './execute-step-custom.usecase';
 
 @Injectable()
 export class SendMessage {
-  private resonateUsecase: IUseCaseInterface<
+  private executeBridgeJob: IUseCaseInterface<
     SendMessageCommand & { variables: IFilterVariables },
     ExecuteOutput<IBridgeChannelResponse> | null
   >;
@@ -84,7 +84,7 @@ export class SendMessage {
     private normalizeVariablesUsecase: NormalizeVariables,
     protected moduleRef: ModuleRef
   ) {
-    this.resonateUsecase = requireInject('execute-bridge-job', this.moduleRef);
+    this.executeBridgeJob = requireInject('execute-bridge-job', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -105,14 +105,14 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    let resonateResponse: Awaited<ReturnType<typeof this.resonateUsecase.execute>> = null;
+    let bridgeResponse: Awaited<ReturnType<typeof this.executeBridgeJob.execute>> = null;
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
-      resonateResponse = await this.resonateUsecase.execute({
+      bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
       });
     }
-    const isBridgeSkipped = resonateResponse?.options?.skip;
+    const isBridgeSkipped = bridgeResponse?.options?.skip;
     const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(
       isBridgeSkipped,
       command,
@@ -125,7 +125,7 @@ export class SendMessage {
         isBridgeSkipped,
         filterResult,
         channelPreferenceResult,
-        !!resonateResponse?.outputs
+        !!bridgeResponse?.outputs
       );
     }
 
@@ -167,7 +167,7 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      bridgeData: resonateResponse,
+      bridgeData: bridgeResponse,
     });
 
     switch (stepType) {
