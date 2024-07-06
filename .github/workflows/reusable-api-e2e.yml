@@ -113,7 +113,6 @@ jobs:
 
       - name: Run E2E EE Clerk tests
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.ee-clerk }}
-        continue-on-error: true
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
