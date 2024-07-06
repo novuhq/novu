@@ -11,6 +11,19 @@ import { EventsModule } from '../../events.module';
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ParseEventRequest } from './parse-event-request.usecase';
 
+function getEchoGatewayModule() {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    const eeEchoWorker = require('@novu/ee-echo-worker');
+    if (!eeEchoWorker.EchoGatewayModule) {
+      throw new Error("EchoGatewayModule doesn't exist");
+    }
+
+    return [eeEchoWorker.EchoGatewayModule];
+  }
+
+  return [];
+}
+
 describe('ParseEventRequest Usecase', () => {
   let session: UserSession;
   let subscribersService: SubscribersService;
@@ -19,7 +32,7 @@ describe('ParseEventRequest Usecase', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, EventsModule],
+      imports: [SharedModule, EventsModule, ...getEchoGatewayModule()],
       providers: [],
     }).compile();
 
