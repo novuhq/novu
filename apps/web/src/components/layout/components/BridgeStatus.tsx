@@ -1,10 +1,10 @@
 import { Badge, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/api.client';
-import { useEnvironment } from '../../../hooks/index';
+import { useEnvironment } from '../../../hooks';
 import { Popover } from '@novu/design-system';
 import { useDisclosure } from '@mantine/hooks';
-import { IS_DOCKER_HOSTED } from '../../../config/index';
+import { IS_DOCKER_HOSTED } from '../../../config';
 
 export function EchoStatus() {
   const [opened, { close, open }] = useDisclosure(false);
