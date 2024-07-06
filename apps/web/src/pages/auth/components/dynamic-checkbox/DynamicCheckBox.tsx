@@ -7,12 +7,9 @@ import { ProductUseCasesEnum } from '@novu/shared';
 
 import { checkboxStyles, tooltipStyles } from './DynamicCheckBox.styles';
 
-interface IDynamicCheckBoxProps extends CheckboxProps {
-  Icon: (props: Omit<SVGProps<SVGSVGElement>, 'ref'>) => JSX.Element;
-  type: ProductUseCasesEnum;
-}
+type IDynamicCheckBoxProps = CheckboxProps;
 
-export function DynamicCheckBox({ Icon, type, ...props }: IDynamicCheckBoxProps) {
+export function DynamicCheckBox({ ...props }: IDynamicCheckBoxProps) {
   const { classes: checkboxClasses } = checkboxStyles();
   const { classes: tooltipClasses } = tooltipStyles();
   const [isHovered, setIsHovered] = useState(false);
@@ -27,40 +24,15 @@ export function DynamicCheckBox({ Icon, type, ...props }: IDynamicCheckBoxProps)
   };
 
   return (
-    <Tooltip multiline arrowSize={8} width={280} label={tooltipLabel[type]} classNames={tooltipClasses}>
-      <Container
-        checked={isChecked}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        data-test-id={`check-box-container${type ? `-${type}` : ''}`}
-      >
-        <UnselectedIcon
-          as={Icon}
-          ishovered={isHovered}
-          ischecked={isChecked}
-          data-test-id={`unselectedIcon${type ? `-${type}` : ''}`}
-        />
-        <Checkbox
-          checked={isChecked}
-          className="innerCheckbox"
-          classNames={checkboxClasses}
-          label={props.label}
-          onChange={handleCheckboxChange}
-          data-test-id={`check-box${type ? `-${type}` : ''}`}
-        />
-      </Container>
-    </Tooltip>
+    <Checkbox
+      checked={isChecked}
+      className="innerCheckbox"
+      classNames={checkboxClasses}
+      label={props.label}
+      onChange={handleCheckboxChange}
+    />
   );
 }
-
-const UnselectedIcon = styled.svg<{ ishovered: boolean; ischecked: boolean }>`
-  position: absolute;
-  height: 20px;
-  width: 20px;
-  opacity: ${({ ishovered, ischecked }) => (ishovered || ischecked ? 0 : 1)};
-  transition: opacity 0.5s ease;
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B70)};
-`;
 
 const Container = styled.div<{ checked: boolean }>`
   border-radius: 8px;

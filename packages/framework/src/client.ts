@@ -2,6 +2,7 @@ import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
+import { FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -34,7 +35,6 @@ import type {
 } from './types';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
-import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 /**
  * We want to respond with a consistent string value for preview
@@ -305,8 +305,8 @@ export class Client {
 
   public async executeWorkflow(event: Event): Promise<ExecuteOutput> {
     const actionMessages = {
-      execute: 'Executing',
-      preview: 'Previewing',
+      [PostActionEnum.EXECUTE]: 'Executing',
+      [PostActionEnum.PREVIEW]: 'Previewing',
     };
 
     const actionMessage = actionMessages[event.action];

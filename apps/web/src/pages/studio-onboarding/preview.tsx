@@ -20,6 +20,7 @@ import { WorkflowStepEditorContentPanel } from '../../studio/components/workflow
 import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
 import { PageContainer } from '../../studio/layout';
 import { useTelemetry } from '../../hooks/useNovuAPI';
+import { isAxiosError } from 'axios';
 
 export const StudioOnboardingPreview = () => {
   const [controls, setStepControls] = useState({});
@@ -102,7 +103,10 @@ export const StudioOnboardingPreview = () => {
         }).toString(),
       });
     } catch (err) {
-      if (err instanceof Error) {
+      // TODO: Add error handling layer with known error codes to the common HTTP client.
+      if (isAxiosError(err)) {
+        errorMessage(err.response?.data?.data?.message || err.message);
+      } else if (err instanceof Error) {
         errorMessage(err.message);
       }
       throw err;

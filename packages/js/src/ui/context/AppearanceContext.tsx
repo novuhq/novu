@@ -23,6 +23,8 @@ export type Elements = {
   root?: ElementStyles;
   bell?: ElementStyles;
   bellContainer?: ElementStyles;
+  popoverContent?: ElementStyles;
+  popoverTrigger?: ElementStyles;
 };
 
 export type Variables = {
@@ -40,7 +42,7 @@ export type Variables = {
 type AppearanceContextType = {
   variables?: Variables;
   elements?: Elements;
-  descriptorToCssInJsClass: Record<string, string>;
+  appearanceKeyToCssInJsClass: Record<string, string>;
   id: string;
 };
 
@@ -53,8 +55,8 @@ type AppearanceProviderProps = ParentProps & { appearance?: Appearance } & { id:
 
 export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const [store, setStore] = createStore<{
-    descriptorToCssInJsClass: Record<string, string>;
-  }>({ descriptorToCssInJsClass: {} });
+    appearanceKeyToCssInJsClass: Record<string, string>;
+  }>({ appearanceKeyToCssInJsClass: {} });
   const [styleElement, setStyleElement] = createSignal<HTMLStyleElement | null>(null);
   const [elementRules, setElementRules] = createSignal<string[]>([]);
   const [variableRules, setVariableRules] = createSignal<string[]>([]);
@@ -114,7 +116,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
 
     const elementsStyleData = parseElements({ ...baseElements, ...(props.appearance?.elements || {}) });
-    setStore('descriptorToCssInJsClass', (obj) => ({
+    setStore('appearanceKeyToCssInJsClass', (obj) => ({
       ...obj,
       ...elementsStyleData.reduce<Record<string, string>>((acc, item) => {
         acc[item.key] = item.className;
@@ -139,7 +141,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     <AppearanceContext.Provider
       value={{
         elements: props.appearance?.elements || {},
-        descriptorToCssInJsClass: store.descriptorToCssInJsClass,
+        appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass,
         id: props.id,
       }}
     >

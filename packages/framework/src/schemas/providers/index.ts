@@ -31,9 +31,9 @@ type ProvidersSchemas =
   | SmsProvidersSchemas;
 
 export const providerSchemas = {
-  chat: chatProviderSchemas,
-  sms: smsProviderSchemas,
-  email: emailProviderSchemas,
-  push: pushProviderSchemas,
-  in_app: inAppProviderSchemas,
+  [ChannelStepEnum.CHAT]: chatProviderSchemas,
+  [ChannelStepEnum.SMS]: smsProviderSchemas,
+  [ChannelStepEnum.EMAIL]: emailProviderSchemas,
+  [ChannelStepEnum.PUSH]: pushProviderSchemas,
+  [ChannelStepEnum.IN_APP]: inAppProviderSchemas,
 } satisfies Record<ChannelStepEnum, ProvidersSchemas>;

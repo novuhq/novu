@@ -9,9 +9,22 @@ import { ContentShell } from './ContentShell';
 import { WithLoadingSkeleton } from '@novu/novui';
 import { WorkflowsDetailPage } from '../../../studio/components/workflows/index';
 import { Box } from '@novu/novui/jsx';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { useEffect } from 'react';
+import { useStudioState } from '../../../studio/hooks';
+import { useSegment } from '../../providers/SegmentProvider';
 
 export const LocalStudioPageLayout: WithLoadingSkeleton = () => {
   const { pathname } = useLocation();
+  const state = useStudioState();
+  const segment = useSegment();
+
+  useEffect(() => {
+    if (state.anonymousId) {
+      segment.setAnonymousId(state.anonymousId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <Sentry.ErrorBoundary
