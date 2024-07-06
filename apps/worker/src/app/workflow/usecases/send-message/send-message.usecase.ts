@@ -8,6 +8,7 @@ import {
   IDigestRegularMetadata,
   IPreferenceChannels,
   StepTypeEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import {
   AnalyticsService,
@@ -29,10 +30,10 @@ import {
   Instrument,
   InstrumentUsecase,
   IBridgeChannelResponse,
-  IUseCaseInterfaceInline,
   NormalizeVariables,
   NormalizeVariablesCommand,
   requireInject,
+  IUseCaseInterface,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -57,7 +58,10 @@ import { ExecuteStepCustom } from './execute-step-custom.usecase';
 
 @Injectable()
 export class SendMessage {
-  private resonateUsecase: IUseCaseInterfaceInline;
+  private resonateUsecase: IUseCaseInterface<
+    SendMessageCommand & { variables: IFilterVariables },
+    ExecuteOutput<IBridgeChannelResponse> | null
+  >;
 
   constructor(
     private sendMessageEmail: SendMessageEmail,
@@ -101,30 +105,31 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    let resonateResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
+    let resonateResponse: Awaited<ReturnType<typeof this.resonateUsecase.execute>> = null;
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
-      resonateResponse = await this.resonateUsecase.execute<
-        SendMessageCommand & { variables: IFilterVariables },
-        ExecuteOutput<IBridgeChannelResponse> | null
-      >({
+      resonateResponse = await this.resonateUsecase.execute({
         ...command,
         variables,
       });
     }
-    const bridgeSkip = resonateResponse?.options?.skip;
-    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(bridgeSkip, command, variables);
+    const isBridgeSkipped = resonateResponse?.options?.skip;
+    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(
+      isBridgeSkipped,
+      command,
+      variables
+    );
 
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
-        bridgeSkip,
+        isBridgeSkipped,
         filterResult,
         channelPreferenceResult,
         !!resonateResponse?.outputs
       );
     }
 
-    if (!filterResult?.passed || !channelPreferenceResult || bridgeSkip) {
+    if (!filterResult?.passed || !channelPreferenceResult || isBridgeSkipped) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       await this.executionLogRoute.execute(
@@ -138,7 +143,7 @@ export class SendMessage {
           raw: JSON.stringify({
             ...(filterResult ? { filter: { conditions: filterResult?.conditions, passed: filterResult?.passed } } : {}),
             ...(channelPreferenceResult ? { preferences: { passed: channelPreferenceResult } } : {}),
-            ...(bridgeSkip ? { skip: bridgeSkip } : {}),
+            ...(isBridgeSkipped ? { skip: isBridgeSkipped } : {}),
           }),
         })
       );
@@ -251,10 +256,10 @@ export class SendMessage {
 
   private sendProcessStepEvent(
     command: SendMessageCommand,
-    resonateSkip: boolean | undefined,
+    isBridgeSkipped: boolean | undefined,
     filterResult: IConditionsFilterResponse | null,
     preferredResult: boolean | null,
-    isEcho: boolean
+    isBridgeWorkflow: boolean
   ) {
     const usedFilters = filterResult?.conditions?.reduce(ConditionsFilter.sumFilters, {
       filters: [],
@@ -280,7 +285,7 @@ export class SendMessage {
      * This is intentional, so that mixpanel can automatically reshard it.
      */
     this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-      workflowType: isEcho ? 'ECHO' : 'REGULAR',
+      workflowType: isBridgeWorkflow ? WorkflowTypeEnum.BRIDGE : WorkflowTypeEnum.REGULAR,
       _template: command.job._templateId,
       _organization: command.organizationId,
       _environment: command.environmentId,
@@ -296,7 +301,7 @@ export class SendMessage {
       ...timedInfo,
       filterPassed: filterResult?.passed,
       preferencesPassed: preferredResult,
-      echoSkip: resonateSkip,
+      isBridgeSkipped,
       ...(usedFilters || {}),
       source: command.payload.__source || 'api',
     });

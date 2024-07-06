@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowTypeEnum } from '@novu/shared';
 import { BridgeServer } from '../../../../e2e/bridge.server';
 import { workflow } from '@novu/framework';
 
@@ -108,7 +108,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
     expect(workflowsCount.length).to.equal(1);
 
     expect(workflowData.name).to.equal(workflowId);
-    expect(workflowData.type).to.equal('ECHO');
+    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId);
 
@@ -267,7 +267,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
     const workflowData = workflows[0];
 
     expect(workflowData.name).to.equal(workflowId2);
-    expect(workflowData.type).to.equal('ECHO');
+    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId2);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId2);
 

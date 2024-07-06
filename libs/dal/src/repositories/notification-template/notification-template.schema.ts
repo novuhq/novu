@@ -1,3 +1,4 @@
+import { WorkflowTypeEnum } from '@novu/shared';
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
@@ -23,7 +24,7 @@ const variantSchemePart = {
   name: Schema.Types.String,
   type: {
     type: Schema.Types.String,
-    default: 'REGULAR',
+    default: WorkflowTypeEnum.REGULAR,
   },
   filters: [
     {
@@ -110,7 +111,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     },
     type: {
       type: Schema.Types.String,
-      default: 'REGULAR',
+      default: WorkflowTypeEnum.REGULAR,
     },
     draft: {
       type: Schema.Types.Boolean,
