@@ -209,7 +209,7 @@ export class CreateWorkflow {
     item,
     parentChangeId: string
   ) {
-    if (isBridgeWorkflow(command.type)) {
+    if (!isBridgeWorkflow(command.type)) {
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
