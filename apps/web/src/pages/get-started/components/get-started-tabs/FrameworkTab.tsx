@@ -22,7 +22,7 @@ const columnText = css({ textStyle: 'text.main', marginTop: '50', maxW: '214px' 
 const columnIcon = css({ marginBottom: '50' });
 const mainText = css({ textStyle: 'text.main', maxW: '645px' });
 
-export const EchoTab = ({ className }: { className?: string }) => {
+export const FrameworkTab = ({ className }: { className?: string }) => {
   const theme = useMantineTheme();
   const segment = useSegment();
 

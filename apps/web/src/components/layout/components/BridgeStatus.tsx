@@ -6,7 +6,7 @@ import { Popover } from '@novu/design-system';
 import { useDisclosure } from '@mantine/hooks';
 import { IS_DOCKER_HOSTED } from '../../../config';
 
-export function EchoStatus() {
+export function BridgeStatus() {
   const [opened, { close, open }] = useDisclosure(false);
 
   const { environment } = useEnvironment();

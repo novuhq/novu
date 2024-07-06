@@ -126,7 +126,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
 
         const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
         expect(foundWorkflow).to.be.ok;
@@ -308,7 +308,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -389,7 +389,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -467,7 +467,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, { name: 'John' }, bridge);
@@ -549,7 +549,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, null, bridge);
@@ -604,7 +604,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -663,7 +663,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, bridgeServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
         await saveControlVariables(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
       }
 
@@ -731,7 +731,7 @@ async function triggerEvent(
   );
 }
 
-async function discoverAndSyncEcho(
+async function discoverAndSyncBridge(
   session: UserSession,
   workflowsRepository?: NotificationTemplateRepository,
   workflowIdentifier?: string,

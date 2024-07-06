@@ -7,7 +7,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { usePageViewTracking } from '../../hooks/usePageViewTracking';
 import { css } from '@novu/novui/css';
-import { EchoTab } from './components/get-started-tabs/FrameworkTab';
+import { FrameworkTab } from './components/get-started-tabs/FrameworkTab';
 
 const PAGE_TITLE = 'Get started';
 
@@ -25,7 +25,7 @@ export function GetStartedPage() {
     <PageContainer title={PAGE_TITLE}>
       <PageHeader title={PAGE_TITLE} />
       {currentOrganization ? (
-        <EchoTab
+        <FrameworkTab
           className={css({ marginTop: '-100', paddingLeft: '150', paddingRight: '150', paddingBottom: '100' })}
         />
       ) : (
