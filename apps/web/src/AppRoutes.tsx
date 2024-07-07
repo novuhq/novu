@@ -67,20 +67,6 @@ import { novuOnboardedCookie } from './utils/cookies';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
-  const isMixpanelRecordingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MIXPANEL_RECORDING_ENABLED);
-  const segment = useSegment();
-  const { inPrivateRoute } = useAuth();
-
-  useEffect(() => {
-    if (!segment._mixpanelEnabled) {
-      return;
-    }
-
-    if (isMixpanelRecordingEnabled && inPrivateRoute) {
-      mixpanel.start_session_recording();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMixpanelRecordingEnabled, inPrivateRoute]);
 
   return (
     <Routes>
