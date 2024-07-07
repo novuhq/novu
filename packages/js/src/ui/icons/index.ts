@@ -6,3 +6,6 @@ export * from './Check';
 export * from './Archive';
 export * from './Inbox';
 export * from './Unread';
+export * from './ReadAll';
+export * from './ArchiveRead';
+export * from './Novu';

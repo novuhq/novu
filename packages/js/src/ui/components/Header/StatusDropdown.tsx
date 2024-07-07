@@ -153,7 +153,7 @@ const Statusitem = (props: { label: string; onClick: () => void; isSelected?: bo
           'inboxStatusDropdownItem',
           cn(
             id,
-            'focus:nt-outline-none nt-flex nt-items-center nt-justify-end hover:nt-bg-neutral-alpha-100 nt-py-1 nt-px-3 nt-w-[210px]'
+            'focus:nt-outline-none nt-flex nt-items-center nt-justify-between hover:nt-bg-neutral-alpha-100 nt-py-1 nt-px-3 nt-w-[210px]'
           )
         )}
         onClick={props.onClick}
