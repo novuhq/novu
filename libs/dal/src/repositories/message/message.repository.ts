@@ -439,19 +439,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
   }
 
-  /**
-   * Allows to update the status of multiple messages at once.
-   * The status can be updated to seen, unseen, read, unread, archived or unarchived.
-   * Depending on the flag passed, the other flags will be updated accordingly.
-   * For example:
-   * seen -> { seen: true }
-   * read -> { seen: true, read: true }
-   * archived -> { seen: true, read: true, archived: true }
-   * unseen -> { seen: false, read: false, archived: false }
-   * unread -> { seen: true, read: false, archived: false }
-   * unarchived -> { seen: true, read: true, archived: false }
-   */
-  async updateMessagesStatus({
+  async updateMessagesStatusByIds({
     environmentId,
     subscriberId,
     ids,
@@ -462,6 +450,94 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string;
     subscriberId: string;
     ids: string[];
+    seen?: boolean;
+    read?: boolean;
+    archived?: boolean;
+  }) {
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: {
+        $in: ids.map((id) => {
+          return new Types.ObjectId(id);
+        }),
+      },
+    };
+
+    await this.updateMessagesStatus({
+      query,
+      seen,
+      read,
+      archived,
+    });
+  }
+
+  async updateMessagesFromToStatus({
+    environmentId,
+    subscriberId,
+    from,
+    to,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    from: {
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+    };
+    to: {
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+    };
+  }) {
+    const isFromSeen = from.seen !== undefined;
+    const isFromRead = from.read !== undefined;
+    const isFromArchived = from.archived !== undefined;
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      ...(from.tags && from.tags?.length > 0 && { tags: { $in: from.tags } }),
+    };
+
+    if (isFromArchived) {
+      if (!from.archived) {
+        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        query.archived = true;
+      }
+    } else if (isFromRead) {
+      query.read = from.read;
+    } else if (isFromSeen) {
+      query.seen = from.seen;
+    }
+
+    await this.updateMessagesStatus({
+      query,
+      ...to,
+    });
+  }
+
+  /**
+   * Allows to update the status of queried messages at once.
+   * The status can be updated to seen, unseen, read, unread, archived or unarchived.
+   * Depending on the flag passed, the other flags will be updated accordingly.
+   * For example:
+   * seen -> { seen: true }
+   * read -> { seen: true, read: true }
+   * archived -> { seen: true, read: true, archived: true }
+   * unseen -> { seen: false, read: false, archived: false }
+   * unread -> { seen: true, read: false, archived: false }
+   * unarchived -> { seen: true, read: true, archived: false }
+   */
+  private async updateMessagesStatus({
+    query,
+    seen,
+    read,
+    archived,
+  }: {
+    query: MessageQuery & EnforceEnvId;
     seen?: boolean;
     read?: boolean;
     archived?: boolean;
@@ -500,20 +576,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
-    await this.update(
-      {
-        _environmentId: environmentId,
-        _subscriberId: subscriberId,
-        _id: {
-          $in: ids.map((id) => {
-            return new Types.ObjectId(id);
-          }),
-        },
-      },
-      {
-        $set: updatePayload,
-      }
-    );
+    await this.update(query, {
+      $set: updatePayload,
+    });
   }
 
   async updateActionStatus({
