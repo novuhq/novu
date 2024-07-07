@@ -13,8 +13,6 @@ import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { mapToDto } from '../../utils/notification-mapper';
-import { AnalyticsEventsEnum } from '../../utils';
 
 const mockSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber' };
 const mockMessage: any = {
@@ -30,27 +28,6 @@ const mockMessage: any = {
   cta: {
     type: ChannelCTATypeEnum.REDIRECT,
     data: {},
-  },
-};
-const mockMessageWithButtons: any = {
-  _id: '_id',
-  content: '',
-  read: false,
-  archived: false,
-  createdAt: new Date(),
-  lastReadAt: new Date(),
-  channel: ChannelTypeEnum.IN_APP,
-  subscriber: mockSubscriber,
-  actorSubscriber: mockSubscriber,
-  cta: {
-    type: ChannelCTATypeEnum.REDIRECT,
-    data: {},
-    action: {
-      buttons: [
-        { type: ButtonTypeEnum.PRIMARY, content: '' },
-        { type: ButtonTypeEnum.SECONDARY, content: '' },
-      ],
-    },
   },
 };
 
@@ -98,7 +75,7 @@ describe('MarkManyNotificationsAs', () => {
     }
   });
 
-  it('should call the updateMessagesStatus on the repository', async () => {
+  it('should call the updateMessagesStatusByIds on the repository', async () => {
     const command: MarkManyNotificationsAsCommand = {
       environmentId: 'env-1',
       organizationId: 'org-1',
@@ -108,12 +85,12 @@ describe('MarkManyNotificationsAs', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.updateMessagesStatus.resolves(mockMessage);
+    messageRepositoryMock.updateMessagesStatusByIds.resolves(mockMessage);
 
     await markManyNotificationsAs.execute(command);
 
-    expect(messageRepositoryMock.updateMessagesStatus.calledOnce).to.be.true;
-    expect(messageRepositoryMock.updateMessagesStatus.firstCall.args).to.deep.equal([
+    expect(messageRepositoryMock.updateMessagesStatusByIds.calledOnce).to.be.true;
+    expect(messageRepositoryMock.updateMessagesStatusByIds.firstCall.args).to.deep.equal([
       {
         environmentId: command.environmentId,
         subscriberId: mockSubscriber._id,
