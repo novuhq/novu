@@ -24,6 +24,8 @@ export enum JobTitleEnum {
   DESIGNER = 'designer',
   FOUNDER = 'cxo_founder',
   MARKETING_MANAGER = 'marketing_manager',
+  STUDENT = 'student',
+  CXO = 'cxo',
   OTHER = 'other',
 }
 
@@ -33,7 +35,9 @@ export const jobTitleToLabelMapper = {
   [JobTitleEnum.PRODUCT_MANAGER]: 'Product Manager',
   [JobTitleEnum.DESIGNER]: 'Designer',
   [JobTitleEnum.ENGINEERING_MANAGER]: 'Engineering Manager',
-  [JobTitleEnum.FOUNDER]: 'CXO Founder',
+  [JobTitleEnum.FOUNDER]: 'Founder',
+  [JobTitleEnum.STUDENT]: 'Student',
+  [JobTitleEnum.CXO]: 'CXO (CTO/CEO/other...)',
   [JobTitleEnum.MARKETING_MANAGER]: 'Marketing Manager',
   [JobTitleEnum.OTHER]: 'Other',
 };
