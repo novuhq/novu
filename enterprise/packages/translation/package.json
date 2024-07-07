@@ -27,7 +27,7 @@
     "@types/chai": "^4.2.11",
     "@types/mocha": "^8.0.1",
     "@types/multer": "^1.4.10",
-    "@types/node": "^14.6.0",
+    "@types/node": "^20.14.10",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",

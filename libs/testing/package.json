@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@types/async": "^3.2.1",
-    "@types/node": "^14.6.0",
+    "@types/node": "^20.14.10",
     "@typescript-eslint/parser": "^4.14.2",
     "apollo-boost": "0.4.9",
     "nodemon": "^3.0.1",

@@ -90,7 +90,7 @@
     "@swc/core": "~1.3.85",
     "@types/inquirer": "8.2.10",
     "@types/jest": "29.5.2",
-    "@types/node": "16.11.7",
+    "@types/node": "^20.14.10",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
