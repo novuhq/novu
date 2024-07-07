@@ -85,6 +85,9 @@ export default async () => {
       '../../../libs/shared/dist/cjs/dto/workflows/workflow.dto'
     ),
     ['./app/workflow-overrides/dto/shared']: await import('./app/workflow-overrides/dto/shared'),
+    ['../../../libs/shared/dist/cjs/entities/messages/action.enum']: await import(
+      '../../../libs/shared/dist/cjs/entities/messages/action.enum'
+    ),
     ['./app/environments/dtos/environment-response.dto']: await import(
       './app/environments/dtos/environment-response.dto'
     ),
@@ -1821,8 +1824,34 @@ export default async () => {
           },
         ],
         [
+          import('./app/inbox/dtos/action-type-request.dto'),
+          {
+            ActionTypeRequestDto: {
+              actionType: {
+                required: true,
+                enum: t['../../../libs/shared/dist/cjs/entities/messages/action.enum'].ButtonTypeEnum,
+              },
+            },
+          },
+        ],
+        [
+          import('./app/inbox/dtos/update-all-notifications-request.dto'),
+          { UpdateAllNotificationsRequestDto: { tags: { required: false, type: () => [String] } } },
+        ],
+        [
           import('./app/partner-integrations/dtos/get-vercel-projects-request.dto'),
           { SetVercelConfigurationRequestDto: { configurationId: { required: true, type: () => String } } },
+        ],
+        [
+          import('./app/inbox/dtos/button-type-request.dto'),
+          {
+            ButtonTypeRequestDto: {
+              buttonType: {
+                required: true,
+                enum: t['../../../libs/shared/dist/cjs/entities/messages/action.enum'].ButtonTypeEnum,
+              },
+            },
+          },
         ],
       ],
       controllers: [
@@ -2324,6 +2353,15 @@ export default async () => {
               getNotificationsCount: {
                 type: t['./app/inbox/dtos/get-notifications-count-response.dto'].GetNotificationsCountResponseDto,
               },
+              markNotificationAsRead: { type: Object },
+              markNotificationAsUnread: { type: Object },
+              markNotificationAsArchived: { type: Object },
+              markNotificationAsUnarchived: { type: Object },
+              completeAction: { type: Object },
+              revertAction: { type: Object },
+              markAllAsRead: {},
+              markAllAsArchived: {},
+              markAllAsReadArchived: {},
             },
           },
         ],
