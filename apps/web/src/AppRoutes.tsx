@@ -66,6 +66,8 @@ import { useEffect } from 'react';
 import { novuOnboardedCookie } from './utils/cookies';
 
 export const AppRoutes = () => {
+  const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
+
   return (
     <Routes>
       <Route element={<PublicPageLayout />}>
