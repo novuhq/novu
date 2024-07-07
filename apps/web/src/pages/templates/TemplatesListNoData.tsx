@@ -9,7 +9,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
 import { useHoverOverItem } from '../../hooks';
-import { EchoProjectCardTile } from './components/EchoProjectWaitList';
+import { FrameworkProjectCardTile } from './components/FrameworkProjectWaitList';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -90,7 +90,7 @@ export const TemplatesListNoData = ({
           <FontAwesomeIcon icon={faFile} />
           <span>Blank Workflow</span>
         </CardTile>
-        <EchoProjectCardTile />
+        <FrameworkProjectCardTile />
         {isLoading
           ? Array.from({ length: 3 }).map((_, index) => (
               <CardTile key={index} data-can-be-hidden={index === 2} data-test-id="second-workflow-tile">

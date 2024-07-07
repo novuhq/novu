@@ -75,10 +75,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
       }
 
-      if (require('@novu/ee-echo-worker')?.EchoGatewayModule) {
+      if (require('@novu/ee-bridge-worker')?.BridgeGatewayModule) {
         Logger.log('Importing enterprise bridge connector module', 'EnterpriseImport');
 
-        modules.push(require('@novu/ee-echo-worker')?.EchoGatewayModule);
+        modules.push(require('@novu/ee-bridge-worker')?.BridgeGatewayModule);
       }
     }
   } catch (e) {

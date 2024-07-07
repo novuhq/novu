@@ -5,14 +5,14 @@ import { TemplateItem } from './templates-store/templateStoreStyles';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useAuth } from '../../../hooks/useAuth';
 
-const SEGMENT_EVENT = 'Button Clicked - [Echo promotion]';
+const SEGMENT_EVENT = 'Button Clicked - [Bridge promotion]';
 const segmentEventAction = {
-  dropDownItem: 'Workflows > Dropdown > Echo item',
-  modalItem: 'Workflows > Dropdown > All templates > Echo item',
-  cardTile: 'Workflows > No workflows yet > Echo item',
+  dropDownItem: 'Workflows > Dropdown > Bridge item',
+  modalItem: 'Workflows > Dropdown > All templates > Bridge item',
+  cardTile: 'Workflows > No workflows yet > Bridge item',
 };
 
-const handleEchoClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+const handleFrameworkClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
   event.preventDefault();
   window.open('https://docs.novu.co/framework/introduction', '_blank');
 };
@@ -56,7 +56,7 @@ const ToolTip = ({ children }) => {
   );
 };
 
-export const EchoProjectDropDownItem = () => {
+export const FrameworkProjectDropDownItem = () => {
   const segment = useSegment();
   const { currentOrganization } = useAuth();
 
@@ -69,9 +69,9 @@ export const EchoProjectDropDownItem = () => {
             _organization: currentOrganization?._id,
           });
 
-          handleEchoClick(event);
+          handleFrameworkClick(event);
         }}
-        data-test-id="echo-project-demand-check-experiment-dropdown-item"
+        data-test-id="framework-project-demand-check-experiment-dropdown-item"
       >
         <NewBadge />
       </Dropdown.Item>
@@ -79,21 +79,21 @@ export const EchoProjectDropDownItem = () => {
   );
 };
 
-export const EchoProjectModalItem = () => {
+export const FrameworkProjectModalItem = () => {
   const segment = useSegment();
   const { currentOrganization } = useAuth();
 
   return (
     <ToolTip>
       <TemplateItem
-        key="new-echo-project"
+        key="new-framework-project"
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
             _organization: currentOrganization?._id,
           });
 
-          handleEchoClick(event);
+          handleFrameworkClick(event);
         }}
       >
         <NewBadge marginRight={1} />
@@ -102,7 +102,7 @@ export const EchoProjectModalItem = () => {
   );
 };
 
-export const EchoProjectCardTile = () => {
+export const FrameworkProjectCardTile = () => {
   const segment = useSegment();
   const { currentOrganization } = useAuth();
 
@@ -110,14 +110,14 @@ export const EchoProjectCardTile = () => {
     <ToolTip>
       <CardTile
         disabled={false}
-        data-test-id="echo-project-demand-check-experiment-tile"
+        data-test-id="framework-project-demand-check-experiment-tile"
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
             _organization: currentOrganization?._id,
           });
 
-          handleEchoClick(event);
+          handleFrameworkClick(event);
         }}
       >
         <NewBadge marginRight={0} />

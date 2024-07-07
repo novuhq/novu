@@ -1,11 +1,11 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import { EchoServer } from '../../../../e2e/echo.server';
+import { StepTypeEnum, WorkflowTypeEnum } from '@novu/shared';
+import { BridgeServer } from '../../../../e2e/bridge.server';
 import { workflow } from '@novu/framework';
 
-describe('Echo Sync - /echo/sync (POST)', async () => {
+describe('Bridge Sync - /bridge/sync (POST)', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const workflowsRepository = new NotificationTemplateRepository();
@@ -28,29 +28,29 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     },
   };
 
-  let echoServer: EchoServer;
+  let bridgeServer: BridgeServer;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    echoServer = new EchoServer();
+    bridgeServer = new BridgeServer();
   });
 
   afterEach(async () => {
-    await echoServer.stop();
+    await bridgeServer.stop();
   });
 
-  it('should update echo url', async () => {
-    await echoServer.start({ workflows: [] });
+  it('should update bridge url', async () => {
+    await bridgeServer.start({ workflows: [] });
 
     const result = await session.testAgent.post(`/v1/bridge/sync`).send({
-      bridgeUrl: echoServer.serverPath,
+      bridgeUrl: bridgeServer.serverPath,
     });
 
     expect(result.body.data?.length).to.equal(0);
 
     const environment = await environmentRepository.findOne({ _id: session.environment._id });
 
-    expect(environment?.echo.url).to.equal(echoServer.serverPath);
+    expect(environment?.echo.url).to.equal(bridgeServer.serverPath);
 
     const workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
     expect(workflows.length).to.equal(0);
@@ -90,10 +90,10 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
         } as const,
       }
     );
-    await echoServer.start({ workflows: [newWorkflow] });
+    await bridgeServer.start({ workflows: [newWorkflow] });
 
     const result = await session.testAgent.post(`/v1/bridge/sync`).send({
-      bridgeUrl: echoServer.serverPath,
+      bridgeUrl: bridgeServer.serverPath,
     });
     expect(result.body.data?.length).to.equal(1);
 
@@ -108,7 +108,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     expect(workflowsCount.length).to.equal(1);
 
     expect(workflowData.name).to.equal(workflowId);
-    expect(workflowData.type).to.equal('ECHO');
+    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId);
 
@@ -147,10 +147,10 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
         } as const,
       }
     );
-    await echoServer.start({ workflows: [newWorkflow] });
+    await bridgeServer.start({ workflows: [newWorkflow] });
 
     const result = await session.testAgent.post(`/v1/bridge/sync`).send({
-      bridgeUrl: echoServer.serverPath,
+      bridgeUrl: bridgeServer.serverPath,
     });
     expect(result.body.data?.length).to.equal(1);
 
@@ -207,15 +207,15 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
         } as const,
       }
     );
-    await echoServer.start({ workflows: [newWorkflow] });
+    await bridgeServer.start({ workflows: [newWorkflow] });
 
     await session.testAgent.post(`/v1/bridge/sync`).send({
-      bridgeUrl: echoServer.serverPath,
+      bridgeUrl: bridgeServer.serverPath,
     });
 
-    await echoServer.stop();
+    await bridgeServer.stop();
 
-    echoServer = new EchoServer();
+    bridgeServer = new BridgeServer();
     const workflowId2 = 'hello-world-2';
     const newWorkflow2 = workflow(
       workflowId2,
@@ -255,10 +255,10 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
         } as const,
       }
     );
-    await echoServer.start({ workflows: [newWorkflow2] });
+    await bridgeServer.start({ workflows: [newWorkflow2] });
 
     await session.testAgent.post(`/v1/bridge/sync`).send({
-      bridgeUrl: echoServer.serverPath,
+      bridgeUrl: bridgeServer.serverPath,
     });
 
     const workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
@@ -267,7 +267,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     const workflowData = workflows[0];
 
     expect(workflowData.name).to.equal(workflowId2);
-    expect(workflowData.type).to.equal('ECHO');
+    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId2);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId2);
 

@@ -10,7 +10,7 @@ import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
 import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 import { Highlight } from './Highlight';
 import { DocsQueryResults } from './useLoadDocs';
-import { useEchoTerminalScript } from '../../hooks/useEchoTerminalScript';
+import { useFrameworkTerminalScript } from '../../hooks/useFrameworkTerminalScript';
 
 const Text = styled('p', text);
 const LiText = styled('span', text);
@@ -40,13 +40,13 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
     }
 
     return getMDXComponent(code, {
-      echoterminal: {
-        EchoTerminal: () => <nv-echo-terminal></nv-echo-terminal>,
+      frameworkterminal: {
+        FrameworkTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
       },
     });
   }, [code]);
 
-  useEchoTerminalScript();
+  useFrameworkTerminalScript();
 
   // Workaround for img tags that is not parsed correctly by mdx-bundler
   useEffect(() => {
