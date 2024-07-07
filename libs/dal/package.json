@@ -44,7 +44,6 @@
     "@types/node": "^20.14.10",
     "@typescript-eslint/parser": "^4.14.2",
     "apollo-boost": "0.4.9",
-    "nodemon": "^3.0.1",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5",

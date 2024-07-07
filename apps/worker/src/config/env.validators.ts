@@ -30,6 +30,7 @@ const str32 = makeValidator((variable) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const envValidators = {
+  TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local', 'staging'], default: 'local' }),
   PORT: port(),
   STORE_ENCRYPTION_KEY: str32(),

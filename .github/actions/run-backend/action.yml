@@ -33,7 +33,7 @@ runs:
         GITHUB_OAUTH_REDIRECT: "http://127.0.0.1:1336/v1/auth/github/callback"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
         CI_EE_TEST: ${{ inputs.ci_ee_test }}
-      run: cd apps/api && pnpm start:build &
+      run: cd apps/api && pnpm start:prod &
 
     - name: Start Worker
       shell: bash

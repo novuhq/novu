@@ -15,6 +15,7 @@ export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 const processEnv = process.env as Record<string, string>; // Hold the initial process.env to avoid circular reference
 
 export const envValidators = {
+  TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
   PORT: port(),
   FRONT_BASE_URL: url(),

@@ -1,7 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
+    "typeCheck": true,
+    "deleteOutDir": true,
+    "builder": {
+      "type": "swc",
+      "options": {
+        "stripLeadingPaths": true
+      }
+    },
     "assets": [
       {
         "include": ".env",
@@ -19,25 +28,6 @@
         "include": ".env.production",
         "outDir": "dist"
       }
-    ],
-    "plugins": [],
-    "builder": {
-      "type": "swc",
-      "options": {
-        "stripLeadingPaths": true
-      }
-    },
-    "typeCheck": true
-  },
-  "projects": {
-    "dal": {
-      "type": "library",
-      "root": "../../../libs/dal",
-      "entryFile": "index",
-      "sourceRoot": "../../../libs/dal/src",
-      "compilerOptions": {
-        "tsConfigPath": "../../../libs/dal/tsconfig.build.json"
-      }
-    }
+    ]
   }
 }

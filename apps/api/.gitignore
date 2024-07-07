@@ -118,6 +118,3 @@ fabric.properties
 newrelic_agent.log
 
 backups/
-
-# NestJS Build Metadata
-src/metadata.ts
