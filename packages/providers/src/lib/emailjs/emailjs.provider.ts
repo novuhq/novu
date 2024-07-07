@@ -28,7 +28,7 @@ export class EmailJsProvider implements IEmailProvider {
   async sendMessage(
     emailOptions: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const headers: Partial<Message['header']> = {
+    const headers: Message['header'] = {
       from: emailOptions.from || this.config.from,
       to: emailOptions.to,
       subject: emailOptions.subject,
