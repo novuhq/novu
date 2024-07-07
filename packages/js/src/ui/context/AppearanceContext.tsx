@@ -25,6 +25,16 @@ export type Elements = {
   bellContainer?: ElementStyles;
   popoverContent?: ElementStyles;
   popoverTrigger?: ElementStyles;
+  moreActionsIconContainer?: ElementStyles;
+  settingsIconContainer?: ElementStyles;
+  inboxHeader?: ElementStyles;
+  inboxStatusDropdownTrigger?: ElementStyles;
+  inboxStatusDropdownContent?: ElementStyles;
+  inboxStatusDropdownItem?: ElementStyles;
+  inboxStatusDropdownItemLabel?: ElementStyles;
+  inboxStatusDropdownItemLeftIcon?: ElementStyles;
+  inboxStatusDropdownItemRightIcon?: ElementStyles;
+  inboxStatusTitle?: ElementStyles;
 };
 
 export type Variables = {

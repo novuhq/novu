@@ -3,6 +3,7 @@ import { NovuOptions } from '../../novu';
 import { Appearance, Localization, useAppearance, useLocalization } from '../context';
 import { cn, useStyle } from '../helpers';
 import { Bell } from './Bell';
+import { Header } from './Header';
 import { Popover } from './Popover';
 
 type InboxProps = {
@@ -22,6 +23,7 @@ export const Inbox = (props: InboxProps) => {
           <Bell>{props.renderBell}</Bell>
         </Popover.Trigger>
         <Popover.Content>
+          <Header />
           {/* notifications will go here */}
           {t('inbox.title')}
         </Popover.Content>
