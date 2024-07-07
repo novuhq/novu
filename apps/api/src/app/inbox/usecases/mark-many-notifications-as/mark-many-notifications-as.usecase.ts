@@ -15,7 +15,7 @@ import { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.com
 @Injectable()
 export class MarkManyNotificationsAs {
   constructor(
-    private invalidateCache: InvalidateCacheService,
+    private invalidateCacheService: InvalidateCacheService,
     private webSocketsQueueService: WebSocketsQueueService,
     private getSubscriber: GetSubscriber,
     private messageRepository: MessageRepository
@@ -39,14 +39,14 @@ export class MarkManyNotificationsAs {
       archived: command.archived,
     });
 
-    await this.invalidateCache.invalidateQuery({
+    await this.invalidateCacheService.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
-    await this.invalidateCache.invalidateQuery({
+    await this.invalidateCacheService.invalidateQuery({
       key: buildMessageCountKey().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,

@@ -81,7 +81,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: 'notification-id',
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
 
@@ -101,7 +101,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: 'notification-id',
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
 
@@ -122,7 +122,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: mockMessage._id,
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
 
@@ -143,7 +143,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: mockMessage._id,
-      buttonType: ButtonTypeEnum.SECONDARY,
+      actionType: ButtonTypeEnum.SECONDARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
 
@@ -164,7 +164,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: mockMessageWithButtons._id,
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
     const updatedMessageWithButtonsMock = {
@@ -192,7 +192,7 @@ describe('UpdateNotificationAction', () => {
         environmentId: command.environmentId,
         subscriberId: mockSubscriber._id,
         id: command.notificationId,
-        buttonType: command.buttonType,
+        actionType: command.actionType,
         actionStatus: command.actionStatus,
       },
     ]);
@@ -207,7 +207,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: mockMessage._id,
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
 
@@ -234,7 +234,7 @@ describe('UpdateNotificationAction', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       notificationId: mockMessage._id,
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
       actionStatus: MessageActionStatusEnum.DONE,
     };
 
@@ -252,7 +252,7 @@ describe('UpdateNotificationAction', () => {
         _organization: command.organizationId,
         _subscriber: mockSubscriber._id,
         _notification: command.notificationId,
-        buttonType: ButtonTypeEnum.PRIMARY,
+        actionType: ButtonTypeEnum.PRIMARY,
         actionStatus: MessageActionStatusEnum.DONE,
       },
     ]);

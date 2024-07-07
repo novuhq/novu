@@ -520,17 +520,17 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId,
     subscriberId,
     id,
-    buttonType,
+    actionType,
     actionStatus,
   }: {
     environmentId: string;
     subscriberId: string;
     id: string;
-    buttonType: ButtonTypeEnum;
+    actionType: ButtonTypeEnum;
     actionStatus: MessageActionStatusEnum;
   }) {
-    const isUpdatingPrimaryCta = buttonType === ButtonTypeEnum.PRIMARY;
-    const isUpdatingSecondaryCta = buttonType === ButtonTypeEnum.SECONDARY;
+    const isUpdatingPrimaryCta = actionType === ButtonTypeEnum.PRIMARY;
+    const isUpdatingSecondaryCta = actionType === ButtonTypeEnum.SECONDARY;
     const updatePayload: Partial<MessageEntity> = {};
 
     if (isUpdatingPrimaryCta) {

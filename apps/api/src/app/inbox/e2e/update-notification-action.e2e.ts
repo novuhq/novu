@@ -29,16 +29,16 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
   const updateNotificationAction = async ({
     id,
     action,
-    buttonType,
+    actionType,
   }: {
     id: string;
     action: 'complete' | 'revert';
-    buttonType: ButtonTypeEnum;
+    actionType: ButtonTypeEnum;
   }) => {
     return await session.testAgent
       .patch(`/v1/inbox/notifications/${id}/${action}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`)
-      .send({ buttonType });
+      .send({ actionType });
   };
 
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
@@ -115,7 +115,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     const { body, status } = await updateNotificationAction({
       id,
       action: 'complete',
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
     });
 
     expect(status).to.equal(400);
@@ -127,7 +127,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     const { body, status } = await updateNotificationAction({
       id,
       action: 'complete',
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
     });
 
     expect(status).to.equal(404);
@@ -154,7 +154,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     const { body, status } = await updateNotificationAction({
       id: newMessage._id,
       action: 'complete',
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
     });
 
     expect(status).to.equal(400);
@@ -181,7 +181,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     const { body, status } = await updateNotificationAction({
       id: newMessage._id,
       action: 'complete',
-      buttonType: ButtonTypeEnum.SECONDARY,
+      actionType: ButtonTypeEnum.SECONDARY,
     });
 
     expect(status).to.equal(400);
@@ -192,7 +192,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     const { body, status } = await updateNotificationAction({
       id: message._id,
       action: 'complete',
-      buttonType: ButtonTypeEnum.PRIMARY,
+      actionType: ButtonTypeEnum.PRIMARY,
     });
     const updatedMessage = (await messageRepository.findOne({
       _environmentId: session.environment._id,
@@ -210,7 +210,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     const { body, status } = await updateNotificationAction({
       id: message._id,
       action: 'complete',
-      buttonType: ButtonTypeEnum.SECONDARY,
+      actionType: ButtonTypeEnum.SECONDARY,
     });
     const updatedMessage = (await messageRepository.findOne({
       _environmentId: session.environment._id,

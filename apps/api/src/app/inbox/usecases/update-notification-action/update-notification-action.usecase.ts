@@ -38,8 +38,8 @@ export class UpdateNotificationAction {
       throw new NotFoundException(`Notification with id: ${command.notificationId} is not found.`);
     }
 
-    const isUpdatingPrimaryCta = command.buttonType === ButtonTypeEnum.PRIMARY;
-    const isUpdatingSecondaryCta = command.buttonType === ButtonTypeEnum.SECONDARY;
+    const isUpdatingPrimaryCta = command.actionType === ButtonTypeEnum.PRIMARY;
+    const isUpdatingSecondaryCta = command.actionType === ButtonTypeEnum.SECONDARY;
     const primaryCta = message.cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.PRIMARY);
     const secondaryCta = message.cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.SECONDARY);
     if ((isUpdatingPrimaryCta && !primaryCta) || (isUpdatingSecondaryCta && !secondaryCta)) {
@@ -54,7 +54,7 @@ export class UpdateNotificationAction {
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
       id: command.notificationId,
-      buttonType: command.buttonType,
+      actionType: command.actionType,
       actionStatus: command.actionStatus,
     });
 
@@ -69,7 +69,7 @@ export class UpdateNotificationAction {
       _organization: command.organizationId,
       _subscriber: subscriber._id,
       _notification: command.notificationId,
-      buttonType: command.buttonType,
+      actionType: command.actionType,
       actionStatus: command.actionStatus,
     });
 

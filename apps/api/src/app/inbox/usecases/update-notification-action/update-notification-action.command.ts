@@ -14,5 +14,5 @@ export class UpdateNotificationActionCommand extends EnvironmentWithSubscriber {
 
   @IsEnum(ButtonTypeEnum)
   @IsDefined()
-  readonly buttonType: ButtonTypeEnum;
+  readonly actionType: ButtonTypeEnum;
 }

@@ -21,7 +21,7 @@ import { NotificationsCountCommand } from './usecases/notifications-count/notifi
 import { InboxNotification } from './utils/types';
 import { MarkNotificationAsCommand } from './usecases/mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from './usecases/mark-notification-as/mark-notification-as.usecase';
-import { ButtonTypeRequestDto } from './dtos/button-type-request.dto';
+import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdateNotificationActionCommand } from './usecases/update-notification-action/update-notification-action.command';
 
@@ -163,7 +163,7 @@ export class InboxController {
   async completeAction(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('id') notificationId: string,
-    @Body() body: ButtonTypeRequestDto
+    @Body() body: ActionTypeRequestDto
   ): Promise<InboxNotification> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
@@ -171,7 +171,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         notificationId,
-        buttonType: body.buttonType,
+        actionType: body.actionType,
         actionStatus: MessageActionStatusEnum.DONE,
       })
     );
@@ -182,7 +182,7 @@ export class InboxController {
   async revertAction(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('id') notificationId: string,
-    @Body() body: ButtonTypeRequestDto
+    @Body() body: ActionTypeRequestDto
   ): Promise<InboxNotification> {
     return await this.updateNotificationActionUsecase.execute(
       UpdateNotificationActionCommand.create({
@@ -190,7 +190,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         notificationId,
-        buttonType: body.buttonType,
+        actionType: body.actionType,
         actionStatus: MessageActionStatusEnum.PENDING,
       })
     );
