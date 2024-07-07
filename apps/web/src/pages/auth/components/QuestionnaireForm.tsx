@@ -167,6 +167,9 @@ export function QuestionnaireForm() {
       <Controller
         name="language"
         control={control}
+        rules={{
+          required: 'Please specify your back-end languages',
+        }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
             const languages = field.value || {};
