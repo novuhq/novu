@@ -1,12 +1,15 @@
 import { flip, offset, shift } from '@floating-ui/dom';
 import { useFloating, UseFloatingResult } from 'solid-floating-ui';
-import { createSignal, JSX, Setter, Show } from 'solid-js';
+import { createSignal, JSX, onCleanup, onMount, Setter, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { FetchFeedArgs } from 'src/feeds';
 import { NotificationStatus } from 'src/types';
 import { useAppearance, useFeedsContext } from 'src/ui/context';
 import { cn, useStyle } from 'src/ui/helpers';
 import { Archived, ArrowDropDown, Check, Inbox, Unread } from '../../icons';
+import { Dropdown, DropdownItem } from '../common';
+
+const APPEARANCE_KEY_PREFIX = 'inboxStatus';
 
 const DropdownStatus = {
   UnreadRead: 'Unread & read',
@@ -52,28 +55,44 @@ export const StatusDropdown = () => {
       }),
     ],
   });
+
+  const handleClickOutside = (e: any) => {
+    if (contentRef()?.contains(e.target)) return;
+    setIsOpen(false);
+  };
+
+  onMount(() => {
+    document.body.addEventListener('click', handleClickOutside);
+  });
+
+  onCleanup(() => {
+    document.body.removeEventListener('click', handleClickOutside);
+  });
+
   return (
     <>
-      <button
-        class={style(
-          'inboxStatusDropdownTrigger',
-          cn(id, 'focus:nt-outline-none nt-flex nt-items-center nt-gap-2 nt-relative')
+      <Dropdown
+        renderTrigger={() => (
+          <button
+            class={style(
+              'inboxStatusDropdownTrigger',
+              cn(id, 'focus:nt-outline-none nt-flex nt-items-center nt-gap-2 nt-relative')
+            )}
+            ref={setTargetRef}
+            onClick={() => setIsOpen((prev) => !prev)}
+          >
+            <span class={style('inboxStatusTitle', cn(id, 'nt-text-xl nt-font-semibold nt-text-foreground'))}>
+              {getStatusLabel(feedOptions.status)}
+            </span>
+            <span>
+              <ArrowDropDown />
+            </span>
+          </button>
         )}
-        ref={setTargetRef}
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <span class={style('inboxStatusTitle', cn(id, 'nt-text-xl nt-font-semibold nt-text-foreground'))}>
-          {getStatusLabel(feedOptions.status)}
-        </span>
-        <span>
-          <ArrowDropDown />
-        </span>
-      </button>
-      <Show when={isOpen() && targetRef()}>
-        <Portal mount={targetRef() as HTMLElement}>
-          <StatusOptions ref={setContentRef} position={position} setFeedOptions={setFeedOptions} />
-        </Portal>
-      </Show>
+        renderContent={({ position, ref }) => (
+          <StatusOptions ref={ref} position={position} setFeedOptions={setFeedOptions} />
+        )}
+      />
     </>
   );
 };
@@ -83,7 +102,7 @@ const StatusOptions = ({
   ref,
   setFeedOptions,
 }: {
-  ref: Setter<HTMLDivElement | null>;
+  ref: Setter<HTMLElement | null>;
   position: UseFloatingResult;
   setFeedOptions: (options: FetchFeedArgs) => void;
 }) => {
@@ -104,7 +123,7 @@ const StatusOptions = ({
       )}
     >
       <ul class="nt-list-none">
-        <Statusitem
+        <DropdownItem
           label={DropdownStatus.UnreadRead}
           /**
            * TODO: Implement setFeedOptions and isSelected after Filter is implemented
@@ -114,8 +133,9 @@ const StatusOptions = ({
           }}
           isSelected={true}
           icon={Inbox}
+          appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
         />
-        <Statusitem
+        <DropdownItem
           label={DropdownStatus.Unread}
           onClick={() => {
             /**
@@ -125,8 +145,9 @@ const StatusOptions = ({
           }}
           isSelected={false}
           icon={Unread}
+          appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
         />
-        <Statusitem
+        <DropdownItem
           label={DropdownStatus.Archived}
           onClick={() => {
             /**
@@ -136,38 +157,9 @@ const StatusOptions = ({
           }}
           isSelected={false}
           icon={Archived}
+          appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
         />
       </ul>
     </div>
-  );
-};
-
-const Statusitem = (props: { label: string; onClick: () => void; isSelected?: boolean; icon: () => JSX.Element }) => {
-  const style = useStyle();
-  const { id } = useAppearance();
-
-  return (
-    <li>
-      <button
-        class={style(
-          'inboxStatusDropdownItem',
-          cn(
-            id,
-            'focus:nt-outline-none nt-flex nt-items-center nt-justify-between hover:nt-bg-neutral-alpha-100 nt-py-1 nt-px-3 nt-w-[210px]'
-          )
-        )}
-        onClick={props.onClick}
-      >
-        <span class="nt-inline-flex nt-gap-2 nt-flex-1 nt-items-center">
-          <span class={style('inboxStatusDropdownItemLeftIcon', cn(id, ''))}>{props.icon()}</span>
-          <span class={style('inboxStatusDropdownItemLabel', cn(id, 'nt-text-foreground'))}>{props.label}</span>
-        </span>
-        <Show when={props.isSelected}>
-          <span class={style('inboxStatusDropdownItemRightIcon', cn(id, ''))}>
-            <Check />
-          </span>
-        </Show>
-      </button>
-    </li>
   );
 };

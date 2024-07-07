@@ -6,55 +6,39 @@ import { useReadAll } from 'src/ui/api';
 import { useAppearance } from 'src/ui/context';
 import { cn, useStyle } from 'src/ui/helpers';
 import { Archived, ArchiveRead, DotsMenu, ReadAll } from '../../icons';
+import { Dropdown, DropdownItem } from '../common';
+
+const APPEARANCE_KEY_PREFIX = 'moreActions';
 
 export const MoreActionsDropdown = () => {
   const style = useStyle();
   const { id } = useAppearance();
-  const [targetRef, setTargetRef] = createSignal<HTMLButtonElement | null>(null);
-  const [contentRef, setContentRef] = createSignal<HTMLDivElement | null>(null);
-  const [isOpen, setIsOpen] = createSignal(false);
-
-  const position = useFloating(targetRef, contentRef, {
-    placement: 'bottom',
-
-    middleware: [
-      offset(8),
-      shift(),
-      flip({
-        fallbackPlacements: ['bottom', 'top'],
-      }),
-    ],
-  });
 
   return (
-    <>
-      <button
-        class={style(
-          'moreActionsDropdownTrigger',
-          cn(
-            id,
-            `nt-h-6 nt-w-6 nt-flex nt-justify-center
+    <Dropdown
+      renderTrigger={() => (
+        <button
+          class={style(
+            'moreActionsDropdownTrigger',
+            cn(
+              id,
+              `nt-h-6 nt-w-6 nt-flex nt-justify-center
         nt-items-center nt-rounded-md nt-relative
         hover:nt-bg-foreground-alpha-50
         focus:nt-bg-foreground-alpha-50
         nt-text-foreground-alpha-600`
-          )
-        )}
-        onClick={() => setIsOpen((prev) => !prev)}
-        ref={setTargetRef}
-      >
-        <DotsMenu />
-      </button>
-      <Show when={isOpen() && targetRef()}>
-        <Portal mount={targetRef() as HTMLElement}>
-          <OptionsList ref={setContentRef} position={position} />
-        </Portal>
-      </Show>
-    </>
+            )
+          )}
+        >
+          <DotsMenu />
+        </button>
+      )}
+      renderContent={({ position, ref }) => <OptionsList position={position} ref={ref} />}
+    />
   );
 };
 
-const OptionsList = ({ position, ref }: { ref: Setter<HTMLDivElement | null>; position: UseFloatingResult }) => {
+const OptionsList = ({ position, ref }: { ref: Setter<HTMLElement | null>; position: UseFloatingResult }) => {
   const style = useStyle();
   const { id } = useAppearance();
 
@@ -74,56 +58,34 @@ const OptionsList = ({ position, ref }: { ref: Setter<HTMLDivElement | null>; po
       )}
     >
       <ul class="nt-list-none">
-        <OptionItem
+        <DropdownItem
           label="Mark all as read"
           /**
            * TODO: Implement setFeedOptions and isSelected after Filter is implemented
            */
           onClick={markAllAsRead}
           icon={ReadAll}
+          appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
         />
-        <OptionItem
+        <DropdownItem
           label="Archive all"
           /**
            * TODO: Implement onClick after Filter is implemented
            */
           onClick={() => {}}
           icon={Archived}
+          appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
         />
-        <OptionItem
+        <DropdownItem
           label="Archive read"
           /**
            * TODO: Implement onClick after Filter is implemented
            */
           onClick={() => {}}
           icon={ArchiveRead}
+          appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
         />
       </ul>
     </div>
-  );
-};
-
-const OptionItem = (props: { label: string; onClick: () => void; icon: () => JSX.Element }) => {
-  const style = useStyle();
-  const { id } = useAppearance();
-
-  return (
-    <li>
-      <button
-        class={style(
-          'moreActionsDropdownItem',
-          cn(
-            id,
-            'focus:nt-outline-none nt-flex nt-items-center hover:nt-bg-neutral-alpha-100 nt-py-2 nt-px-3 nt-w-[210px]'
-          )
-        )}
-        onClick={props.onClick}
-      >
-        <span class="nt-inline-flex nt-gap-2 nt-flex-1 nt-items-center">
-          <span class={style('moreActionsDropdownItemLeftIcon', cn(id, ''))}>{props.icon()}</span>
-          <span class={style('moreActionsDropdownItemLabel', cn(id, 'nt-text-foreground'))}>{props.label}</span>
-        </span>
-      </button>
-    </li>
   );
 };
