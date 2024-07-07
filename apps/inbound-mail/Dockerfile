@@ -69,4 +69,4 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --reporter=silent
 
 WORKDIR /usr/src/app/apps/inbound-mail
-CMD [ "pm2-runtime", "dist/main.js" ]
+CMD [ "pm2-runtime", "dist/src/main.js" ]
