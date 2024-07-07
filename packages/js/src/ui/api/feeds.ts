@@ -1,10 +1,10 @@
-import type { FetchCountArgs } from '../../feeds';
+import type { FetchCountArgs, FetchFeedArgs } from '../../feeds';
 import { useNovu } from '../context';
 
-export const fetchFeeds = async () => {
+export const fetchFeeds = async (options?: FetchFeedArgs) => {
   const novu = useNovu();
   try {
-    const response = await novu.feeds.fetch();
+    const response = await novu.feeds.fetch(options);
 
     return response;
   } catch (error) {
