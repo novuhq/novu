@@ -39698,7 +39698,7 @@ snapshots:
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
-      semver: 7.5.4
+      semver: 7.6.2
       tar: 7.1.0
     transitivePeerDependencies:
       - encoding
@@ -56575,7 +56575,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
@@ -56592,7 +56592,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(webpack-cli@5.1.4(webpack-bundle-analyzer@4.9.0)(webpack@5.82.1))
@@ -56609,7 +56609,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))
@@ -56626,7 +56626,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       tapable: 2.2.1
       typescript: 5.1.6
       webpack: 5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.17)
@@ -68659,7 +68659,7 @@ snapshots:
 
   simple-update-notifier@2.0.0:
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.2
 
   sinon@9.2.4:
     dependencies:
