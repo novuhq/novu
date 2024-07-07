@@ -1,4 +1,4 @@
-import type { FetchCountArgs, FetchFeedArgs } from '../../feeds';
+import type { FetchCountArgs, FetchFeedArgs, MarkAllNotificationsAsArgs } from '../../feeds';
 import { useNovu } from '../context';
 
 export const fetchFeeds = async (options?: FetchFeedArgs) => {
@@ -21,6 +21,18 @@ export const fetchCount = async (feedIdentifier?: FetchCountArgs) => {
     return count;
   } catch (error) {
     console.error('Error fetching feeds count:', error);
+    throw error;
+  }
+};
+
+export const markAllAs = async (options: MarkAllNotificationsAsArgs) => {
+  const novu = useNovu();
+  try {
+    const response = await novu.feeds.markAllNotificationsAs(options);
+
+    return response;
+  } catch (error) {
+    console.error(`Error marking all as: ${options.status}`, error);
     throw error;
   }
 };
