@@ -43,6 +43,7 @@ export function QuestionnaireForm() {
   const segment = useSegment();
   const location = useLocation();
 
+  console.log({ JobTitleEnum });
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
     IResponseError,
@@ -167,6 +168,9 @@ export function QuestionnaireForm() {
       <Controller
         name="language"
         control={control}
+        rules={{
+          required: 'Please specify your back-end languages',
+        }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
             const languages = field.value || {};
