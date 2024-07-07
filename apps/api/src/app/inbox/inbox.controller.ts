@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Query, UseGuards, Param } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import type { SubscriberEntity } from '@novu/dal';
+import { SubscriberEntity } from '@novu/dal';
+import { MessageActionStatusEnum } from '@novu/shared';
 
 import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
@@ -17,6 +18,12 @@ import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-
 import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
 import { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
 import { NotificationsCountCommand } from './usecases/notifications-count/notifications-count.command';
+import { InboxNotification } from './utils/types';
+import { MarkNotificationAsCommand } from './usecases/mark-notification-as/mark-notification-as.command';
+import { MarkNotificationAs } from './usecases/mark-notification-as/mark-notification-as.usecase';
+import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
+import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
+import { UpdateNotificationActionCommand } from './usecases/update-notification-action/update-notification-action.command';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -25,7 +32,9 @@ export class InboxController {
   constructor(
     private initializeSessionUsecase: Session,
     private getNotificationsUsecase: GetNotifications,
-    private notificationsCount: NotificationsCount
+    private notificationsCountUsecase: NotificationsCount,
+    private markNotificationAsUsecase: MarkNotificationAs,
+    private updateNotificationActionUsecase: UpdateNotificationAction
   ) {}
 
   @Post('/session')
@@ -43,8 +52,7 @@ export class InboxController {
   @Get('/notifications')
   async getNotifications(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query()
-    query: GetNotificationsRequestDto
+    @Query() query: GetNotificationsRequestDto
   ): Promise<GetNotificationsResponseDto> {
     return await this.getNotificationsUsecase.execute(
       GetNotificationsCommand.create({
@@ -68,7 +76,7 @@ export class InboxController {
     @Query()
     query: GetNotificationsCountRequestDto
   ): Promise<GetNotificationsCountResponseDto> {
-    const res = await this.notificationsCount.execute(
+    const res = await this.notificationsCountUsecase.execute(
       NotificationsCountCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -80,5 +88,111 @@ export class InboxController {
     );
 
     return res;
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/mark-as-read')
+  async markNotificationAsRead(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string
+  ): Promise<InboxNotification> {
+    return await this.markNotificationAsUsecase.execute(
+      MarkNotificationAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        read: true,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/mark-as-unread')
+  async markNotificationAsUnread(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string
+  ): Promise<InboxNotification> {
+    return await this.markNotificationAsUsecase.execute(
+      MarkNotificationAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        read: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/mark-as-archived')
+  async markNotificationAsArchived(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string
+  ): Promise<InboxNotification> {
+    return await this.markNotificationAsUsecase.execute(
+      MarkNotificationAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        archived: true,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/mark-as-unarchived')
+  async markNotificationAsUnarchived(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string
+  ): Promise<InboxNotification> {
+    return await this.markNotificationAsUsecase.execute(
+      MarkNotificationAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        archived: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/complete')
+  async completeAction(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string,
+    @Body() body: ActionTypeRequestDto
+  ): Promise<InboxNotification> {
+    return await this.updateNotificationActionUsecase.execute(
+      UpdateNotificationActionCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        actionType: body.actionType,
+        actionStatus: MessageActionStatusEnum.DONE,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/revert')
+  async revertAction(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string,
+    @Body() body: ActionTypeRequestDto
+  ): Promise<InboxNotification> {
+    return await this.updateNotificationActionUsecase.execute(
+      UpdateNotificationActionCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        actionType: body.actionType,
+        actionStatus: MessageActionStatusEnum.PENDING,
+      })
+    );
   }
 }

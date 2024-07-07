@@ -34,6 +34,10 @@ export class NotificationsCount {
       );
     }
 
+    if (command.read === false && command.archived === true) {
+      throw new ApiException('Filtering for unread and archived notifications is not supported.');
+    }
+
     const filter = { tags: command.tags, read: command.read, archived: command.archived };
     const count = await this.messageRepository.getCount(
       command.environmentId,
