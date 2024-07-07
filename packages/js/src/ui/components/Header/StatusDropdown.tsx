@@ -21,9 +21,9 @@ const DropdownStatus = {
  */
 const getStatusLabel = (status?: NotificationStatus) => {
   switch (status) {
-    case NotificationStatus.READ:
-      return 'Inbox';
     case NotificationStatus.UNREAD:
+      return 'Inbox';
+    case NotificationStatus.UNSEEN:
       return 'Unread';
     case NotificationStatus.SEEN:
       return 'Archived';
@@ -121,7 +121,7 @@ const StatusOptions = ({
             /**
              * TODO: Implement setFeedOptions after Filter is implemented
              */
-            setFeedOptions({ status: NotificationStatus.READ });
+            setFeedOptions({ status: NotificationStatus.UNSEEN });
           }}
           isSelected={false}
           icon={Unread}
