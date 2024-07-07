@@ -71,6 +71,7 @@ export class DevServer {
     const studioHTML = `
     <html class="dark">
       <head>
+        <link href="${this.options.dashboardUrl}/favicon.svg" rel="icon" />
         <title>Novu Studio</title>
       </head>
       <body style="padding: 0; margin: 0;">
