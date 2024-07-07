@@ -39,7 +39,10 @@ export class SegmentService {
           if (payload.type() === 'identify' && userId) {
             mixpanel.identify(userId);
           }
-        } catch (e) {}
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e);
+        }
         next(payload);
       });
     }
@@ -79,12 +82,6 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      const segmentDeviceId = cleanDoubleQuotedString(localStorage.getItem('ajs_anonymous_id'));
-      const userId = cleanDoubleQuotedString(localStorage.getItem('ajs_user_id'));
-      if (userId) {
-        mixpanel.identify(userId);
-      }
-      mixpanel.register({ $device_id: segmentDeviceId });
       const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
       data = {
