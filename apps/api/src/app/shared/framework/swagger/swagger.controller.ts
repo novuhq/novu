@@ -5,6 +5,7 @@ import { injectDocumentComponents } from './injection';
 import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
+import metadata from '../../../../metadata';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'apiKey',
@@ -111,7 +112,8 @@ if (process.env.NOVU_ENTERPRISE === 'true') {
     { url: 'https://docs.novu.co/content-creation-design/translations' }
   );
 }
-export const setupSwagger = (app: INestApplication) => {
+export const setupSwagger = async (app: INestApplication) => {
+  await SwaggerModule.loadPluginMetadata(metadata);
   const document = injectDocumentComponents(
     SwaggerModule.createDocument(app, options.build(), {
       operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
