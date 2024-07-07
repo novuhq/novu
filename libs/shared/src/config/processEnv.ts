@@ -25,5 +25,5 @@ export function getEnvFileNameForNodeEnv(env: { NODE_ENV: keyof typeof envFileFr
  * Use this type to convert the env object to a type that can be used to validate the env object.
  */
 export type StringifyEnv<T extends Record<string, string | number | boolean | undefined>> = {
-  [K in keyof T]: T[K] extends undefined ? never : `${T[K]}`;
+  [K in keyof T]: T[K] extends undefined ? string : `${T[K]}`;
 };

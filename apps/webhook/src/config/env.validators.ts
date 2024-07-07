@@ -1,4 +1,11 @@
-import { port, str, ValidatorSpec } from 'envalid';
+import { CleanedEnv, cleanEnv, port, str, ValidatorSpec } from 'envalid';
+import { StringifyEnv } from '@novu/shared';
+
+export function validateEnv() {
+  return cleanEnv(process.env, envValidators);
+}
+
+export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 
 export const envValidators = {
   NODE_ENV: str({

@@ -60,5 +60,5 @@ export async function bootstrap() {
     process.exit(1);
   }
 
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PORT as string);
 }

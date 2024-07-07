@@ -34,7 +34,6 @@
     "antd": "^4.10.0",
     "babel-plugin-import": "^1.13.3",
     "chroma-js": "^2.4.2",
-    "dotenv": "^16.4.5",
     "envalid": "^8.0.0",
     "eslint-plugin-cypress": "^2.15.1",
     "iframe-resizer": "^4.3.1",

@@ -1,5 +1,4 @@
-import type { FeatureFlagsKeysEnum, ApiRateLimitEnvVarFormat } from '@novu/shared';
-import type { ValidatedEnv } from '../config/env.config';
+import type { ValidatedEnv } from '../config';
 
 declare global {
   namespace NodeJS {

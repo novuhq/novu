@@ -1,18 +1,13 @@
-import * as dotenv from 'dotenv';
-import { cleanEnv, CleanedEnv } from 'envalid';
-import { getContextPath, NovuComponentEnum, StringifyEnv } from '@novu/shared';
-import { envValidators } from './env.validators';
+import { isBrowser } from '@novu/shared';
+import { getContextPath, NovuComponentEnum } from '@novu/shared';
 
-dotenv.config();
-
-export function validateEnv() {
-  return cleanEnv(process.env, envValidators);
-}
-
-export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
+export const API_URL =
+  isBrowser() && (window as any).Cypress
+    ? window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:1336'
+    : window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:3000';
+export const WS_URL =
+  isBrowser() && (window as any).Cypress
+    ? window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://127.0.0.1:1340'
+    : window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://127.0.0.1:3002';
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WIDGET);
-
-const processEnv = validateEnv();
-export const API_URL = processEnv.REACT_APP_API_URL;
-export const WS_URL = processEnv.REACT_APP_WS_URL;

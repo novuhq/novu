@@ -1,4 +1,11 @@
-import { json, num, port, str, ValidatorSpec } from 'envalid';
+import { CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
+import { StringifyEnv } from 'libs/shared/dist/cjs';
+
+export function validateEnv() {
+  return cleanEnv(process.env, envValidators);
+}
+
+export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 
 export const envValidators = {
   NODE_ENV: str({
