@@ -181,6 +181,7 @@ export function QuestionnaireForm() {
 
           return (
             <MantineInput.Wrapper
+              data-test-id="language-checkbox"
               label="Choose your back-end stack"
               styles={inputStyles}
               error={fieldState.error?.message}
