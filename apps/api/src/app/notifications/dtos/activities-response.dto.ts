@@ -44,7 +44,7 @@ export class ActivityNotificationExecutionDetailResponseDto {
   @ApiProperty()
   isTest: boolean;
 
-  @ApiProperty({})
+  @ApiProperty()
   providerId: ProvidersIdEnum;
 
   @ApiPropertyOptional()
