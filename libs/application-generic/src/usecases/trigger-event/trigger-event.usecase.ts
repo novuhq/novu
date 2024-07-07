@@ -42,7 +42,7 @@ import { GetActionEnum, PostActionEnum } from '@novu/framework';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
-export interface IDoBridgeRequestCommand {
+export interface IExecuteBridgeRequestCommand {
   bridgeUrl: string;
   payload?: Record<string, unknown>;
   apiKey: string;

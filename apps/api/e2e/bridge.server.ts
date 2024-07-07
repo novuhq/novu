@@ -8,11 +8,11 @@ export type ServerStartOptions = {
   workflows: Array<Workflow>;
 };
 
-export class EchoServer {
+export class BridgeServer {
   private server: express.Express;
   private app: http.Server;
   private port = 9999;
-  public echo = new Client({ strictAuthentication: false });
+  public client = new Client({ strictAuthentication: false });
 
   get serverPath() {
     return `http://localhost:${this.port}`;
@@ -21,7 +21,7 @@ export class EchoServer {
   async start(options: ServerStartOptions) {
     this.server = express();
     this.server.use(express.json());
-    this.server.use(serve({ client: this.echo, workflows: options.workflows }));
+    this.server.use(serve({ client: this.client, workflows: options.workflows }));
 
     await new Promise<void>((resolve) => {
       this.app = this.server.listen(this.port, () => {

@@ -96,7 +96,7 @@
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
-    "@novu/ee-echo-worker": "workspace:*",
+    "@novu/ee-bridge-worker": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },

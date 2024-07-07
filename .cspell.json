@@ -654,7 +654,7 @@
     "tailwindcss",
     "focusable",
     "textareas",
-    "echoterminal"
+    "frameworkterminal"
   ],
   "flagWords": [],
   "patterns": [

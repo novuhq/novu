@@ -1,16 +1,17 @@
 import { JSONSchema7 } from 'json-schema';
 
-import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
+import type {
+  BuilderFieldType,
+  BuilderGroupValues,
+  TemplateVariableTypeEnum,
+  FilterParts,
+  WorkflowTypeEnum,
+} from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
 import { INotificationGroup } from '../notification-group';
 import { ControlsDto } from '../../dto';
-
-export enum NotificationTemplateTypeEnum {
-  REGULAR = 'REGULAR',
-  ECHO = 'ECHO',
-}
 
 export interface INotificationTemplate {
   _id?: string;
@@ -29,7 +30,7 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
-  type?: NotificationTemplateTypeEnum;
+  type?: WorkflowTypeEnum;
   payloadSchema?: any;
 }
 

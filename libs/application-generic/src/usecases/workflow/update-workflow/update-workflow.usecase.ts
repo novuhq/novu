@@ -18,7 +18,7 @@ import {
   NotificationTemplateRepository,
   StepVariantEntity,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, WorkflowTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, isBridgeWorkflow } from '@novu/shared';
 
 import {
   AnalyticsService,
@@ -239,7 +239,7 @@ export class UpdateWorkflow {
       notificationTemplateWithStepTemplate
     );
 
-    if (command.type !== WorkflowTypeEnum.ECHO) {
+    if (!isBridgeWorkflow(command.type)) {
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
@@ -367,7 +367,7 @@ export class UpdateWorkflow {
 
       let messageTemplateExist = message._templateId;
 
-      if (!messageTemplateExist && command.type === WorkflowTypeEnum.ECHO) {
+      if (!messageTemplateExist && isBridgeWorkflow(command.type)) {
         const stepMessageTemplate =
           await this.messageTemplateRepository.findOne({
             _environmentId: command.environmentId,

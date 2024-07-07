@@ -51,6 +51,9 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
     echo: {
       url: Schema.Types.String,
     },
+    bridge: {
+      url: Schema.Types.String,
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

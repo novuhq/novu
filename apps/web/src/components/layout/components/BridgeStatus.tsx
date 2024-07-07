@@ -6,11 +6,11 @@ import { Popover } from '@novu/design-system';
 import { useDisclosure } from '@mantine/hooks';
 import { IS_DOCKER_HOSTED } from '../../../config';
 
-export function EchoStatus() {
+export function BridgeStatus() {
   const [opened, { close, open }] = useDisclosure(false);
 
   const { environment } = useEnvironment();
-  const echoEnabled = !!environment?.echo?.url && !IS_DOCKER_HOSTED;
+  const isBridgeEnabled = !!environment?.echo?.url && !IS_DOCKER_HOSTED;
   const { data, error, isInitialLoading } = useQuery<{
     status: 'ok' | 'down';
     version: string;
@@ -21,7 +21,7 @@ export function EchoStatus() {
       return api.get('/v1/bridge/status');
     },
     {
-      enabled: echoEnabled,
+      enabled: isBridgeEnabled,
       refetchInterval: 5000,
       refetchOnWindowFocus: true,
     }
@@ -31,7 +31,7 @@ export function EchoStatus() {
     return null;
   }
 
-  if (!echoEnabled) return null;
+  if (!isBridgeEnabled) return null;
 
   const status = data?.status === 'ok' && !error ? 'ok' : 'down';
   let color = status === 'ok' ? 'green' : 'red';
@@ -46,10 +46,10 @@ export function EchoStatus() {
       position={'bottom'}
       target={
         <Badge color={color} variant="outline" onMouseEnter={open} onMouseLeave={close}>
-          Echo
+          Bridge
         </Badge>
       }
-      title={'Echo Status'}
+      title={'Bridge Status'}
       content={<PopoverContent status={status} url={environment?.echo?.url} />}
     ></Popover>
   );
@@ -72,7 +72,7 @@ function PopoverContent({ url, status }) {
   return (
     <>
       <Text>
-        <b>Status</b>: Echo Is Up
+        <b>Status</b>: Bridge Is Up
       </Text>
       <Text>
         <b>URL</b>: {url}

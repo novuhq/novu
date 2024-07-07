@@ -1,4 +1,4 @@
-import { INotificationTemplate, WorkflowIntegrationStatus, NotificationTemplateTypeEnum } from '@novu/shared';
+import { INotificationTemplate, isBridgeWorkflow, WorkflowIntegrationStatus, WorkflowTypeEnum } from '@novu/shared';
 import { IUsePaginationQueryParamsStateOptions } from '@novu/design-system';
 
 import { useEnvironment } from './useEnvironment';
@@ -56,7 +56,7 @@ export function useTemplates({
     templates: data?.data.map((template) => {
       return {
         ...template,
-        bridge: template.type === NotificationTemplateTypeEnum.ECHO,
+        bridge: isBridgeWorkflow(template.type),
       };
     }),
     loading: isLoading,

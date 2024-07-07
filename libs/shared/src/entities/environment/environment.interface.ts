@@ -22,6 +22,9 @@ export interface IEnvironment {
   echo?: {
     url?: string;
   };
+  bridge?: {
+    url?: string;
+  };
 }
 
 export interface IWidgetSettings {

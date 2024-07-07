@@ -3,11 +3,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  ControlVariablesLevelEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import {
@@ -82,7 +82,7 @@ export class SubscriberJobBound {
 
     this.analyticsService.mixpanelTrack('Notification event trigger - [Triggers]', segmentUserId, {
       name: template.name,
-      type: template?.type || 'REGULAR',
+      type: template?.type || WorkflowTypeEnum.REGULAR,
       transactionId: command.transactionId,
       _template: template._id,
       _organization: command.organizationId,
@@ -160,7 +160,7 @@ export class SubscriberJobBound {
      */
     return {
       ...bridgeWorkflow,
-      type: 'ECHO',
+      type: WorkflowTypeEnum.BRIDGE,
       steps: bridgeWorkflow.steps.map((step) => {
         const stepControlVariables = command.controls?.steps?.[step.stepId];
 

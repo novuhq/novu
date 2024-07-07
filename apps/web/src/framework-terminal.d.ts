@@ -6,7 +6,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {
-      ['nv-echo-terminal']: CustomElement<any>;
+      ['nv-framework-terminal']: CustomElement<any>;
     }
   }
 }

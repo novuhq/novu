@@ -122,7 +122,7 @@
   "optionalDependencies": {
     "@novu/ee-auth": "workspace:*",
     "@novu/ee-billing": "workspace:*",
-    "@novu/ee-echo-api": "workspace:*",
+    "@novu/ee-bridge-api": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/ee-translation": "workspace:*"
   }
