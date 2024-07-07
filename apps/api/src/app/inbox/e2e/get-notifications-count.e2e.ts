@@ -86,6 +86,15 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
     await session.awaitRunningJobs(templateToTrigger._id);
   };
 
+  it('should throw exception when filtering for unread and archived notifications', async function () {
+    await triggerEvent(template);
+
+    const { body, status } = await getNotificationsCount({ read: false, archived: true });
+
+    expect(status).to.equal(400);
+    expect(body.message).to.equal('Filtering for unread and archived notifications is not supported.');
+  });
+
   it('should return all notifications count', async function () {
     const count = 4;
     await triggerEvent(template, count);
