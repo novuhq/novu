@@ -43,7 +43,6 @@ export function QuestionnaireForm() {
   const segment = useSegment();
   const location = useLocation();
 
-  console.log({ JobTitleEnum });
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
     IResponseError,
