@@ -1,12 +1,6 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import {
-  MessageEntity,
-  MessageRepository,
-  NotificationTemplateEntity,
-  SubscriberEntity,
-  SubscriberRepository,
-} from '@novu/dal';
+import { MessageRepository, NotificationTemplateEntity, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   StepTypeEnum,
   ChannelCTATypeEnum,
@@ -16,7 +10,7 @@ import {
   ButtonTypeEnum,
 } from '@novu/shared';
 
-describe('Update All Notifications - /inbox/notifications/all-{read,archived,read-archived} (POST)', async () => {
+describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,archived,read-archived} (POST)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
@@ -31,7 +25,7 @@ describe('Update All Notifications - /inbox/notifications/all-{read,archived,rea
     tags?: string[];
   }) => {
     return await session.testAgent
-      .post(`/v1/inbox/notifications/all-${action}`)
+      .post(`/v1/inbox/notifications/mark-all-as-${action}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`)
       .send({ tags });
   };

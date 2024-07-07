@@ -201,9 +201,9 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/notifications/all-read')
+  @Post('/notifications/mark-all-as-read')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updateAllStatusToRead(
+  async markAllAsRead(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
@@ -223,9 +223,9 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/notifications/all-archived')
+  @Post('/notifications/mark-all-as-archived')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updateAllStatusToArchived(
+  async markAllAsArchived(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
@@ -245,9 +245,9 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/notifications/all-read-archived')
+  @Post('/notifications/mark-all-as-read-archived')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updateAllReadStatusToArchived(
+  async markAllAsReadArchived(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: UpdateAllNotificationsRequestDto
   ): Promise<void> {
