@@ -5,6 +5,7 @@ import {
   MessageTemplateDto,
   ProvidersIdEnum,
   StepTypeEnum,
+  TriggerTypeEnum,
 } from '@novu/shared';
 import { StepFilter } from '@novu/dal';
 
@@ -43,7 +44,7 @@ export class ActivityNotificationExecutionDetailResponseDto {
   @ApiProperty()
   isTest: boolean;
 
-  @ApiProperty()
+  @ApiProperty({})
   providerId: ProvidersIdEnum;
 
   @ApiPropertyOptional()
@@ -103,8 +104,10 @@ export class NotificationTriggerVariable {
 }
 
 export class NotificationTrigger {
-  @ApiProperty()
-  type: 'event';
+  @ApiProperty({
+    enum: TriggerTypeEnum,
+  })
+  type: TriggerTypeEnum;
 
   @ApiProperty()
   identifier: string;

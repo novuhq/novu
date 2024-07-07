@@ -29,7 +29,9 @@ export class NotificationTriggerVariable {
 }
 
 export class NotificationTrigger {
-  @ApiProperty()
+  @ApiProperty({
+    enum: TriggerTypeEnum,
+  })
   type: TriggerTypeEnum;
 
   @ApiProperty()
