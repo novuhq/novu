@@ -54,13 +54,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+              "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                    "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>"
                   }
                 }
               ]
@@ -172,13 +172,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has failed.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+              "text": "Release has failed.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release has failed.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                    "text": "Release has failed.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>"
                   }
                 }
               ]
@@ -208,13 +208,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release was successful.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+              "text": "Release was successful.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release was successful.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                    "text": "Release was successful.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>"
                   }
                 }
               ]
