@@ -177,6 +177,7 @@ describe('validation', () => {
       } catch (error) {
         expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
         expect((error as ExecutionStateControlsInvalidError).message).to.equal(
+          // eslint-disable-next-line max-len
           'Workflow with id: `zod-validation` has an invalid state. Step with id: `test-email` has invalid `controls`. Please provide the correct step controls.'
         );
         expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([
@@ -360,6 +361,7 @@ describe('validation', () => {
       } catch (error) {
         expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
         expect((error as ExecutionStateControlsInvalidError).message).to.equal(
+          // eslint-disable-next-line max-len
           'Workflow with id: `json-schema-validation` has an invalid state. Step with id: `test-email` has invalid `controls`. Please provide the correct step controls.'
         );
         expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([
