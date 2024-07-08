@@ -111,9 +111,14 @@ export class AuthService {
         this.analyticsService.alias(distinctId, user._id);
       }
 
+      // FIXME: this is incomplete
+      const wasInvited =
+        authProvider === AuthProviderEnum.GITHUB || authProvider === null;
+
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
         origin: origin,
+        wasInvited,
       });
     } else {
       if (
