@@ -1,7 +1,7 @@
 {
   "$schema": "https://swc.rs/schema.json",
   "jsc": {
-    "target": "es5"
+    "target": "es2015"
   },
   "module": {
     "type": "commonjs"
