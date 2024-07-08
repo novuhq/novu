@@ -26,10 +26,12 @@ import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { OrganizationRepository, EnvironmentRepository, EnvironmentEntity, MemberRepository } from '@novu/dal';
+import { ApiException } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
 @ApiTags('Partner Integrations')
 @ApiExcludeController()
 export class PartnerIntegrationsController {
@@ -38,7 +40,11 @@ export class PartnerIntegrationsController {
     private getVercelProjectsUsecase: GetVercelProjects,
     private completeVercelIntegrationUsecase: CompleteVercelIntegration,
     private getVercelConfigurationUsecase: GetVercelConfiguration,
-    private updateVercelConfigurationUsecase: UpdateVercelConfiguration
+    private updateVercelConfigurationUsecase: UpdateVercelConfiguration,
+    private organizationRepository: OrganizationRepository,
+    private environmentRepository: EnvironmentRepository,
+    protected moduleRef: ModuleRef,
+    private memberRepository: MemberRepository
   ) {}
 
   @Post('/vercel')
@@ -57,7 +63,63 @@ export class PartnerIntegrationsController {
     );
   }
 
+  @Post('/vercel/webhook')
+  async webhook(@Body() body: any): Promise<any> {
+    console.log(body);
+    const url = body.payload.deployment.url;
+
+    const organizations = await this.organizationRepository.find(
+      {
+        'partnerConfigurations.teamId': body.payload.team.id,
+        'partnerConfigurations.projectIds': body.payload.project.id,
+      },
+      { 'partnerConfigurations.$': 1 }
+    );
+
+    const organization = organizations[0];
+
+    let environment: EnvironmentEntity | null;
+
+    if (body.payload.target === 'production') {
+      const configuration = organization.partnerConfigurations?.[0];
+
+      environment = await this.environmentRepository.findOne({
+        _organizationId: organization._id,
+        name: 'Production',
+      });
+    } else {
+      environment = await this.environmentRepository.findOne({
+        _organizationId: organization._id,
+        name: 'Development',
+      });
+    }
+
+    if (!environment) {
+      console.error('Env Not Found');
+
+      return false;
+    }
+
+    if (!require('@novu/ee-bridge-api')?.Sync) {
+      throw new ApiException('Bridge api module is not loaded');
+    }
+    const service = this.moduleRef.get(require('@novu/ee-bridge-api')?.Sync, { strict: false });
+    const data2 = await this.organizationRepository.findUserActiveOrganizations();
+
+    const data = await service.execute({
+      organizationId: environment._organizationId,
+      userId: organization._id,
+      environmentId: environment._id,
+      bridgeUrl: url,
+      source: 'vercel',
+    });
+    console.log('NEW');
+
+    return true;
+  }
+
   @Get('/vercel/projects/:configurationId')
+  @UserAuthentication()
   async getVercelProjects(
     @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string,
@@ -75,6 +137,7 @@ export class PartnerIntegrationsController {
   }
 
   @Post('/vercel/configuration/complete')
+  @UserAuthentication()
   async completeVercelIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CompleteAndUpdateVercelIntegrationRequestDto
@@ -91,6 +154,7 @@ export class PartnerIntegrationsController {
   }
 
   @Get('vercel/configuration/:configurationId')
+  @UserAuthentication()
   async getVercelConfigurationDetails(
     @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string
@@ -106,6 +170,7 @@ export class PartnerIntegrationsController {
   }
 
   @Put('/vercel/configuration/update')
+  @UserAuthentication()
   async updateVercelConfiguration(
     @UserSession() user: UserSessionData,
     @Body() body: CompleteAndUpdateVercelIntegrationRequestDto
