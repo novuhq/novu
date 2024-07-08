@@ -1,14 +1,14 @@
 import './config/env.config';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import Sentry from '@sentry/node';
+import { init } from '@sentry/node';
 import { getErrorInterceptor, Logger } from '@novu/application-generic';
 import packageJson from '../package.json';
 
 import { AppModule } from './app.module';
 
 if (process.env.SENTRY_DSN) {
-  Sentry.init({
+  init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${packageJson.version}`,

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -74,7 +74,7 @@ export class SendMessageChat extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending Chat',
     });
     const step: NotificationStepEntity = command.step;

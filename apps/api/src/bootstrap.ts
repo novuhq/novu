@@ -8,7 +8,7 @@ const passport = require('passport');
 const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
-import Sentry from '@sentry/node';
+import { init, Integrations, Handlers } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
@@ -32,14 +32,14 @@ const extendedBodySizeRoutes = [
 ];
 
 if (process.env.SENTRY_DSN) {
-  Sentry.init({
+  init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${packageJson.version}`,
     ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true }),
+      new Integrations.Http({ tracing: true }),
     ],
   });
 }
@@ -86,8 +86,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   Logger.verbose(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
 
   if (process.env.SENTRY_DSN) {
-    app.use(Sentry.Handlers.requestHandler());
-    app.use(Sentry.Handlers.tracingHandler());
+    app.use(Handlers.requestHandler());
+    app.use(Handlers.tracingHandler());
   }
 
   app.use(helmet());

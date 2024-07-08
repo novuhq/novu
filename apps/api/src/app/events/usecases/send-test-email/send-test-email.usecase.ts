@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import Sentry from '@sentry/node';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { addBreadcrumb } from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
@@ -36,7 +36,7 @@ export class SendTestEmail {
 
     const email = command.to;
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending Email',
     });
 
