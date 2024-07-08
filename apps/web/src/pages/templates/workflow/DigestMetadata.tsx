@@ -1,6 +1,6 @@
 import { Accordion, Group, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { DigestTypeEnum } from '@novu/shared';
 
 import { colors, Input, Select, Tooltip, Bell, Digest, Timer } from '@novu/design-system';

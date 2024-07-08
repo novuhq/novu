@@ -1,5 +1,5 @@
 import { UnstyledButton } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { TooltipRenderProps } from 'react-joyride';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';

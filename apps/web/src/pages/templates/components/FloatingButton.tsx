@@ -1,5 +1,5 @@
 import { MouseEventHandler } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { colors, shadows, ChevronPlainDown } from '@novu/design-system';
 
 const FloatingButtonHolder = styled.button`

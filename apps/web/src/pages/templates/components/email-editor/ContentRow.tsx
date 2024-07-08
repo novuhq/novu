@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { TextAlignEnum } from '@novu/shared';
 
 import {

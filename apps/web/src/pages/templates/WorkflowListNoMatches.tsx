@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useMantineTheme } from '@mantine/core';
 import { colors, IconOutlineSearchOff, Text } from '@novu/design-system';
 

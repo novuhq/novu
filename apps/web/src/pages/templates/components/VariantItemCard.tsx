@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { FilterPartTypeEnum, StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import { MouseEventHandler, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';

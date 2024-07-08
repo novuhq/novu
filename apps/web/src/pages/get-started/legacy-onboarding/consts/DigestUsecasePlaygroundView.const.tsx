@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Flex } from '@mantine/core';
 import { Bolt, Button, colors, Text } from '@novu/design-system';
 import { useState } from 'react';

@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { StepTypeEnum, DELAYED_STEPS } from '@novu/shared';
 
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';

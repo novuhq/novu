@@ -1,5 +1,5 @@
 import { MemberRoleEnum } from '@novu/shared';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Dropdown, Tag } from '@novu/design-system';
 

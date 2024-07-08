@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Grid } from '@mantine/core';
 
 import { ArrowLeft, Button, colors, Text } from '@novu/design-system';

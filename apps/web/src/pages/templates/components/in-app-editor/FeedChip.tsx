@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ColorScheme, useMantineTheme } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
 import type { UseFormSetValue } from 'react-hook-form';

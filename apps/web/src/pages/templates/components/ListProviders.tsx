@@ -1,5 +1,5 @@
 import { MouseEventHandler, PropsWithChildren, useMemo } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, NOVU_SMS_EMAIL_PROVIDERS } from '@novu/shared';
 import { Button, colors, Tooltip } from '@novu/design-system';

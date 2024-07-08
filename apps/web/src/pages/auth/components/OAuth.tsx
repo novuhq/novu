@@ -1,6 +1,5 @@
 import { Divider, Button as MantineButton } from '@mantine/core';
-import styled from '@emotion/styled';
-
+import styled from '@emotion/styled/macro';
 import { colors, GitHub, Text } from '@novu/design-system';
 
 import { PropsWithChildren } from 'react';

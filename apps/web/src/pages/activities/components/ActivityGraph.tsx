@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js';
 import { Bar, getElementAtEvent } from 'react-chartjs-2';
 import { useEffect, useState, useRef, useMemo } from 'react';

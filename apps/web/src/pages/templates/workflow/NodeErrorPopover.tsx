@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { createStyles, Group, GroupProps, Popover as MPopover, PopoverProps, useMantineTheme } from '@mantine/core';
 import React from 'react';
 import { colors, shadows, Text } from '@novu/design-system';

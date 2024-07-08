@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { createStyles, Group, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 

@@ -5,8 +5,8 @@ import {
   SegmentedControlItem,
   Sx,
 } from '@mantine/core';
-import styled from '@emotion/styled';
 import useStyles from './TypeSegment.styles';
+import styled from '@emotion/styled/macro';
 
 interface ISegmentedControlProps {
   data: string[] | SegmentedControlItem[];

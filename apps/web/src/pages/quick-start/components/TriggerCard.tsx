@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Grid, Group } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { colors, Text } from '@novu/design-system';
 import { CONTEXT_PATH } from '../../../config';
 

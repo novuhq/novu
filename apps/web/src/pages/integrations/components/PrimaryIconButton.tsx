@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group, Text } from '@mantine/core';
 import { useState } from 'react';
 import {

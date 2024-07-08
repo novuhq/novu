@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import React from 'react';
 import { PlusButton } from '@novu/design-system';
 

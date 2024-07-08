@@ -1,6 +1,6 @@
 import { createStyles } from '@mantine/core';
 import { colors, shadows, Text } from '@novu/design-system';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 export default createStyles((theme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';

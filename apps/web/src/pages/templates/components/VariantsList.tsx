@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useFormContext } from 'react-hook-form';
 import { ScrollArea } from '@mantine/core';
 import { useParams } from 'react-router-dom';

@@ -1,6 +1,6 @@
 import { FC, useMemo } from 'react';
 
-import { Button, JsonSchemaForm, Tabs, Title, useDebouncedCallback } from '@novu/novui';
+import { Button, JsonSchemaForm, Tabs, Title } from '@novu/novui';
 import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { Container, Flex } from '@novu/novui/jsx';
@@ -9,6 +9,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
+
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { PATHS } from '../../../../components/docs/docs.const';
 import { getSuggestionVariables, subscriberVariables } from '../../../utils';
@@ -57,9 +58,13 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     return [Object.keys(controlsObject).length > 0];
   }, [step?.controls?.schema, step?.inputs?.schema]);
 
+  /*
   const handleOnChange = useDebouncedCallback(async (type: OnChangeType, data: any, id?: string) => {
     onChange(type, data, id);
   }, TYPING_DEBOUNCE_TIME_MS);
+*/
+
+  const handleOnChange = (type: OnChangeType, data: any, id?: string) => {};
 
   const isAutocompleteEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTROLS_AUTOCOMPLETE_ENABLED);
 

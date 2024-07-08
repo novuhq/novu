@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Popover, useMantineTheme, Grid, ColorScheme, createStyles } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import styled from '@emotion/styled';
-import { captureException } from '@sentry/react';
+import styled from '@emotion/styled/macro';
+import * as Sentry from '@sentry/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import type { UseFormSetValue } from 'react-hook-form';
@@ -172,7 +172,7 @@ function DeleteBlock({
         color: 'green',
       });
     } catch (e: any) {
-      captureException(e);
+      Sentry.captureException(e);
 
       showNotification({
         message: e.message || 'Un-expected error occurred',

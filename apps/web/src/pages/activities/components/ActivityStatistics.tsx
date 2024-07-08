@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Skeleton, useMantineTheme } from '@mantine/core';
 
 import { colors } from '@novu/design-system';

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ActionIcon, FileButton, Group, Indicator, Stack, useMantineColorScheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { colors, Edit, Sidebar, Table, Text, Title, Tooltip, Trash, Upload, When } from '@novu/design-system';

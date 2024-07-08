@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useMantineTheme, ColorScheme } from '@mantine/core';
 import { colors } from '@novu/design-system';
 import { HUBSPOT_PORTAL_ID } from '../utils/environment';

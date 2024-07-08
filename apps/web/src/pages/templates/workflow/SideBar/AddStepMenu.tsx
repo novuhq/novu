@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Stack, Title } from '@mantine/core';
 import { colors, DragButton, Tooltip } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';

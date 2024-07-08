@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { css, cx } from '@emotion/css';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group, useMantineTheme } from '@mantine/core';
 import { Editor, Monaco } from '@monaco-editor/react';
 import { colors, Text } from '@novu/design-system';

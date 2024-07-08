@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Select, Input, Button } from '@novu/design-system';
 import { Flex } from '@mantine/core';

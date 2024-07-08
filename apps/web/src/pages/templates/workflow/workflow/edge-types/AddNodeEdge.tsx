@@ -1,6 +1,6 @@
 import { EdgeProps, getBezierEdgeCenter, getBezierPath } from 'react-flow-renderer';
-import styled from '@emotion/styled';
 import AddNode from '../node-types/AddNode';
+import styled from '@emotion/styled/macro';
 
 const foreignObjectSize = 30;
 

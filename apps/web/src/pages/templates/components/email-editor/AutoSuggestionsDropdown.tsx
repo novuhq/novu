@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ScrollArea } from '@mantine/core';
 import { colors, shadows } from '@novu/design-system';
 import { useEffect, useRef } from 'react';

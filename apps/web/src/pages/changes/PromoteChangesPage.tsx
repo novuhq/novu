@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Button, Tabs } from '@novu/design-system';
 import PageHeader from '../../components/layout/components/PageHeader';

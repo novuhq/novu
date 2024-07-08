@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { colors, DotsNavigation } from '@novu/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';

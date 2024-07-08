@@ -9,7 +9,7 @@ import {
 } from '@novu/shared';
 import { ColorScheme, TextInput, useMantineColorScheme, useMantineTheme } from '@mantine/core';
 import { RemoveCircle, Button, colors } from '@novu/design-system';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { When } from '../../../../../components/utils/When';
 
 export function ActionBlockContainer({

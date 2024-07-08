@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Buildings, colors } from '@novu/design-system';
 import { useEnvironment } from '../../../../hooks';
