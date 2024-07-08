@@ -1,3 +1,4 @@
+import ws from 'ws';
 import ora from 'ora';
 import open from 'open';
 import chalk from 'chalk';
@@ -142,8 +143,6 @@ async function fetchNewTunnel(originUrl: URL): Promise<URL> {
 }
 
 async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const ws = await import('ws');
   tunnelClient = new NtfrTunnel(
     parsedUrl.host,
     parsedOrigin.host,
