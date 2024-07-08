@@ -12,7 +12,7 @@ import { channelStepSchemas } from '../schemas/steps/channels';
 import type { Providers } from './provider.types';
 import type { FromSchema, Schema } from './schema.types';
 import type { Skip } from './skip.types';
-import type { Awaitable } from './util.types';
+import type { Awaitable, Prettify } from './util.types';
 
 // @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
 export type StepOptions = {
@@ -212,7 +212,7 @@ export type ChannelStep<
     /**
      * The providers for the step. Used to override the behaviour of the providers for the step.
      */
-    providers?: Providers<T_StepType, T_Controls, T_Outputs>;
+    providers?: Prettify<Providers<T_StepType, T_Controls, T_Outputs>>;
     /*
      * credentials?: (controls: T_Controls) => Promise<Record<string, unknown>>;
      * preferences?: (controls: T_Controls) => Promise<Record<string, unknown>>;

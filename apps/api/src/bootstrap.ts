@@ -27,8 +27,6 @@ const extendedBodySizeRoutes = [
   '/v1/notification-templates',
   '/v1/workflows',
   '/v1/layouts',
-  '/v1/echo/sync',
-  '/v1/echo/diff',
   '/v1/bridge/sync',
   '/v1/bridge/diff',
 ];

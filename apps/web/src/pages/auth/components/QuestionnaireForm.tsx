@@ -167,6 +167,9 @@ export function QuestionnaireForm() {
       <Controller
         name="language"
         control={control}
+        rules={{
+          required: 'Please specify your back-end languages',
+        }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
             const languages = field.value || {};
@@ -178,6 +181,7 @@ export function QuestionnaireForm() {
 
           return (
             <MantineInput.Wrapper
+              data-test-id="language-checkbox"
               label="Choose your back-end stack"
               styles={inputStyles}
               error={fieldState.error?.message}

@@ -10,7 +10,8 @@ import {
   DigestUnitEnum,
   INotificationTemplate,
   INotificationTrigger,
-  NotificationTemplateTypeEnum,
+  isBridgeWorkflow,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
@@ -298,7 +299,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     () => ({
       template: {
         ...template,
-        bridge: template?.type === NotificationTemplateTypeEnum.ECHO,
+        bridge: isBridgeWorkflow(template?.type),
       } as INotificationTemplateWithBridge,
       isLoading: isLoading || loadingGroups,
       isCreating,

@@ -10,7 +10,7 @@ import {
   MessageTemplateRepository,
   MessageRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, WorkflowTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, isBridgeWorkflow } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -160,7 +160,7 @@ export class UpdateMessageTemplate {
         ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
         item._id
       );
-      if (command.workflowType !== WorkflowTypeEnum.ECHO) {
+      if (!isBridgeWorkflow(command.workflowType)) {
         await this.createChange.execute(
           CreateChangeCommand.create({
             organizationId: command.organizationId,

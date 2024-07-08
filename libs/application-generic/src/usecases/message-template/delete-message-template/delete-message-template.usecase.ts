@@ -4,7 +4,7 @@ import {
   DalException,
   MessageTemplateRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, WorkflowTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, isBridgeWorkflow } from '@novu/shared';
 
 import { DeleteMessageTemplateCommand } from './delete-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -37,7 +37,7 @@ export class DeleteMessageTemplate {
           _id: command.messageTemplateId,
         });
 
-      if (command.workflowType !== WorkflowTypeEnum.ECHO) {
+      if (!isBridgeWorkflow(command.workflowType)) {
         await this.createChange.execute(
           CreateChangeCommand.create({
             changeId,

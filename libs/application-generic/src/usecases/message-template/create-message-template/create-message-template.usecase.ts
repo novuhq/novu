@@ -7,8 +7,8 @@ import {
 import {
   ChangeEntityTypeEnum,
   IMessageAction,
+  isBridgeWorkflow,
   StepTypeEnum,
-  WorkflowTypeEnum,
 } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
@@ -81,7 +81,7 @@ export class CreateMessageTemplate {
       })) as MessageTemplateEntity;
     }
 
-    if (command.workflowType !== WorkflowTypeEnum.ECHO) {
+    if (!isBridgeWorkflow(command.workflowType)) {
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,

@@ -5,7 +5,7 @@ import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 
 const TAB_SEARCH_PARAM_NAME = 'tab';
-const DEFAULT_TAB: OnboardingUseCasesTabsEnum = OnboardingUseCasesTabsEnum.ECHO;
+const DEFAULT_TAB: OnboardingUseCasesTabsEnum = OnboardingUseCasesTabsEnum.FRAMEWORK;
 
 interface GetStartedTabSearchParams {
   [TAB_SEARCH_PARAM_NAME]: OnboardingUseCasesTabsEnum;
