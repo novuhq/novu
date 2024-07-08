@@ -22,7 +22,8 @@ import {
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
 import { CreateWorkflowRequestDto } from '../../workflows/dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
-import blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
+// eslint-disable-next-line import/no-namespace
+import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET)', async () => {
   let session: UserSession;
