@@ -39,7 +39,7 @@ export class NotificationTriggerVariableResponse implements INotificationTrigger
 
   @ApiPropertyOptional()
   @ApiProperty({
-    type: TemplateVariableTypeEnum,
+    enum: TemplateVariableTypeEnum,
     description: 'The type of the variable',
   })
   type?: TemplateVariableTypeEnum;
@@ -47,7 +47,7 @@ export class NotificationTriggerVariableResponse implements INotificationTrigger
 
 export class TriggerReservedVariableResponse implements ITriggerReservedVariable {
   @ApiProperty({
-    type: TriggerContextTypeEnum,
+    enum: TriggerContextTypeEnum,
     description: 'The type of the reserved variable',
   })
   type: TriggerContextTypeEnum;
@@ -61,7 +61,7 @@ export class TriggerReservedVariableResponse implements ITriggerReservedVariable
 
 export class NotificationTriggerResponse implements INotificationTrigger {
   @ApiProperty({
-    type: TriggerTypeEnum,
+    enum: TriggerTypeEnum,
     description: 'The type of the trigger',
   })
   type: TriggerTypeEnum;

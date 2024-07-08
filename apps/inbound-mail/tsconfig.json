@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "strictNullChecks": false,
     "module": "commonjs",
+    "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "types": ["node", "mocha", "chai", "sinon"],
     "target": "es2017",
