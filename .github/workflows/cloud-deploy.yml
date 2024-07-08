@@ -54,7 +54,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}",
+              "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
               "blocks": [
                 {
                   "type": "section",
@@ -172,7 +172,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has failed",
+              "text": "Release has failed.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
               "blocks": [
                 {
                   "type": "section",
@@ -208,7 +208,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release was successful",
+              "text": "Release was successful.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
               "blocks": [
                 {
                   "type": "section",
