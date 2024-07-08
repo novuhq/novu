@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 import { UserRepository } from '@novu/dal';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdatePasswordCommand } from './update-password.command';

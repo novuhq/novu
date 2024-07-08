@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as Handlebars from 'handlebars';
+import Handlebars from 'handlebars';
 import { format } from 'date-fns';
 import { HandlebarHelpersEnum } from '@novu/shared';
 

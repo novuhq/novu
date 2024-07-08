@@ -1,6 +1,6 @@
-import * as ora from 'ora';
-import * as open from 'open';
-import * as chalk from 'chalk';
+import ora from 'ora';
+import open from 'open';
+import chalk from 'chalk';
 import { NtfrTunnel } from '@novu/ntfr-client';
 
 import { DevServer } from '../../dev-server';
@@ -8,7 +8,7 @@ import { showWelcomeScreen } from '../shared';
 import { config } from '../../index';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
-import * as packageJson from '../../../package.json';
+import packageJson from '../../../package.json';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel

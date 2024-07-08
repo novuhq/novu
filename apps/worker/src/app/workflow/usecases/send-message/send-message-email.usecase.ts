@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import * as inlineCss from 'inline-css';
-import * as Sentry from '@sentry/node';
+import inlineCss from 'inline-css';
+import Sentry from '@sentry/node';
 
 import {
   MessageRepository,

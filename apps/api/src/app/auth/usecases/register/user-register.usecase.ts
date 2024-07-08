@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { SignUpOriginEnum } from '@novu/shared';
 import { AnalyticsService, AuthService, createHash } from '@novu/application-generic';
 

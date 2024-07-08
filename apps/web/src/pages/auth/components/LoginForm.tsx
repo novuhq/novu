@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
 import type { IResponseError } from '@novu/shared';
@@ -153,7 +153,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
-        Sentry.captureException(e);
+        captureException(e);
       }
     }
   };

@@ -3,7 +3,7 @@ const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import * as Sentry from '@sentry/node';
+import Sentry from '@sentry/node';
 import {
   buildNotificationTemplateKey,
   CachedEntity,

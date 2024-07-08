@@ -1,7 +1,7 @@
 import { UserSessionData } from '@novu/shared';
 import { TEST_USER_PASSWORD, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const NEW_PASSWORD = 'newPassword123@';
 const PASSWORD_ERROR_MESSAGE =

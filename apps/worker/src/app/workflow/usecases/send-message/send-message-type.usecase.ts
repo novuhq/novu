@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/node';
+import Sentry from '@sentry/node';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { LogCodeEnum } from '@novu/shared';
 import { ExecutionLogRoute } from '@novu/application-generic';

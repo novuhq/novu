@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { UserEntity, UserRepository } from '@novu/dal';
 import { normalizeEmail } from '@novu/shared';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 
 import { EnvironmentService } from './environment.service';
 import { OrganizationService } from './organization.service';

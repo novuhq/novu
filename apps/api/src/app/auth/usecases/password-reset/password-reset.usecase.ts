@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { isBefore, subDays } from 'date-fns';
 import { UserRepository } from '@novu/dal';
 import { AuthService, buildUserKey, InvalidateCacheService } from '@novu/application-generic';

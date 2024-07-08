@@ -7,8 +7,8 @@ import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 const passport = require('passport');
 const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
-import * as bodyParser from 'body-parser';
-import * as Sentry from '@sentry/node';
+import bodyParser from 'body-parser';
+import Sentry from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
@@ -18,7 +18,7 @@ import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv, CONTEXT_PATH } from './config';
 
-import * as packageJson from '../package.json';
+import packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { corsOptionsDelegate } from './config';
 

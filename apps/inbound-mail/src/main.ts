@@ -4,7 +4,7 @@ import './config/env.config';
 
 import mailin from './server/index';
 import logger from './server/logger';
-import * as Sentry from '@sentry/node';
+import Sentry from '@sentry/node';
 import { version } from '../package.json';
 
 const LOG_CONTEXT = 'Main';

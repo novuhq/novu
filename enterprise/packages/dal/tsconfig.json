@@ -3,6 +3,6 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "types": ["node"],
-    "esModuleInterop": false
+    "esModuleInterop": true
   }
 }

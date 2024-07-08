@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import path from 'node:path';
 import { getContextPath, NovuComponentEnum, getEnvFileNameForNodeEnv } from '@novu/shared';
 

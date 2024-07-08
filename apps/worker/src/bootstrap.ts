@@ -4,15 +4,15 @@ import '@sentry/tracing';
 import helmet from 'helmet';
 import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import * as bodyParser from 'body-parser';
-import * as Sentry from '@sentry/node';
+import bodyParser from 'body-parser';
+import Sentry from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { validateEnv, CONTEXT_PATH } from './config';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
-import * as packageJson from '../package.json';
+import packageJson from '../package.json';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 

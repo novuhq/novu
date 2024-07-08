@@ -53,7 +53,7 @@ import {
   UpdateTenant,
 } from '@novu/application-generic';
 
-import * as packageJson from '../../../package.json';
+import packageJson from '../../../package.json';
 import { CreateLog } from './logs';
 import { JobTopicNameEnum } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';

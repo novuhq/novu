@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import Sentry from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
 import {
