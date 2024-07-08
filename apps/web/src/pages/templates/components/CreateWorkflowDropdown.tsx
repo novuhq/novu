@@ -9,7 +9,7 @@ import { IBlueprintTemplate } from '../../../api/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { TemplateCreationSourceEnum } from '../shared';
 import { useFeatureFlag, useHoverOverItem } from '../../../hooks';
-import { EchoProjectDropDownItem } from './EchoProjectWaitList';
+import { FrameworkProjectDropDownItem } from './FrameworkProjectWaitList';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Button } from '@novu/novui';
 import { IconOutlineAdd } from '@novu/novui/icons';
@@ -99,7 +99,7 @@ export const CreateWorkflowDropdown = ({
       >
         Blank workflow
       </Dropdown.Item>
-      <EchoProjectDropDownItem />
+      <FrameworkProjectDropDownItem />
       <Dropdown.Divider />
       {isLoading
         ? Array.from({ length: 3 }).map((_, index) => <DropdownItemSkeleton key={index} />)

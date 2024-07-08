@@ -33,7 +33,9 @@ export class LayoutDto {
   @ApiProperty()
   description?: LayoutDescription;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: ChannelTypeEnum,
+  })
   channel: ChannelTypeEnum;
 
   @ApiProperty()

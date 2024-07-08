@@ -53,7 +53,7 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private resonateUsecase: IUseCaseInterfaceInline;
+  private executeBridgeJob: IUseCaseInterfaceInline;
 
   constructor(
     private jobRepository: JobRepository,
@@ -70,7 +70,7 @@ export class AddJob {
     private normalizeVariablesUsecase: NormalizeVariables,
     private moduleRef: ModuleRef
   ) {
-    this.resonateUsecase = requireInject('resonate', this.moduleRef);
+    this.executeBridgeJob = requireInject('execute-bridge-job', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -181,7 +181,7 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    await this.fetchResonateData(command, filterVariables);
+    await this.fetchBridgeData(command, filterVariables);
     delayAmount = await this.addDelayJob.execute(command);
 
     Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
@@ -189,8 +189,8 @@ export class AddJob {
     return delayAmount;
   }
 
-  private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
-    const response = await this.resonateUsecase.execute<
+  private async fetchBridgeData(command: AddJobCommand, filterVariables: IFilterVariables) {
+    const response = await this.executeBridgeJob.execute<
       AddJobCommand & { variables: IFilterVariables; identifier: string },
       ExecuteOutput<DigestOutput> | null
     >({
@@ -304,9 +304,9 @@ export class AddJob {
     digestAmount: number | undefined,
     filtered: boolean
   ) {
-    const resonateResponse = await this.fetchResonateData(command, filterVariables);
+    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
 
-    const bridgeAmount = this.mapBridgeTimedDigestAmount(resonateResponse);
+    const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse);
 
     validateDigest(job);
 
@@ -338,9 +338,9 @@ export class AddJob {
     return { digestAmount, digestCreationResult };
   }
 
-  private mapBridgeTimedDigestAmount(resonateResponse: ExecuteOutput<DigestOutput> | null): number | null {
+  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput<DigestOutput> | null): number | null {
     let bridgeAmount: number | null = null;
-    const outputs = resonateResponse?.outputs;
+    const outputs = bridgeResponse?.outputs;
 
     if (!isTimedDigestOutput(outputs)) {
       return null;

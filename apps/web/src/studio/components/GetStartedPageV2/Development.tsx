@@ -7,7 +7,7 @@ export const Development = () => {
   if (colorScheme === 'light') {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180" fill="none">
-        <g clip-path="url(#clip0_5956_60010)">
+        <g clipPath="url(#clip0_5956_60010)">
           <mask
             id="mask0_5956_60010"
             style={{
@@ -142,9 +142,9 @@ export const Development = () => {
             width="320"
             height="271"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -165,9 +165,9 @@ export const Development = () => {
             width="294"
             height="289.598"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -189,8 +189,8 @@ export const Development = () => {
             y2="254.731"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="white" stop-opacity="0" />
-            <stop offset="0.732193" stop-color="white" />
+            <stop stopColor="white" stopOpacity="0" />
+            <stop offset="0.732193" stopColor="white" />
           </linearGradient>
           <clipPath id="clip0_5956_60010">
             <rect width="280" height="180" fill="white" />
@@ -202,7 +202,7 @@ export const Development = () => {
 
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180" fill="none">
-      <g clip-path="url(#clip0_5956_94496)">
+      <g clipPath="url(#clip0_5956_94496)">
         <mask
           id="mask0_5956_94496"
           style={{
@@ -334,9 +334,9 @@ export const Development = () => {
           width="320"
           height="271"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -357,9 +357,9 @@ export const Development = () => {
           width="304"
           height="299.598"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -381,8 +381,8 @@ export const Development = () => {
           y2="254.731"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#1E1E26" stop-opacity="0" />
-          <stop offset="0.732193" stop-color="#1E1E26" />
+          <stop stopColor="#1E1E26" stopOpacity="0" />
+          <stop offset="0.732193" stopColor="#1E1E26" />
         </linearGradient>
         <clipPath id="clip0_5956_94496">
           <rect width="280" height="180" fill="white" />

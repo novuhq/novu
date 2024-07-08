@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowTypeEnum, isBridgeWorkflow } from '@novu/shared';
 
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
@@ -51,7 +51,7 @@ export const ChannelStepEditor = () => {
     );
   }
 
-  if (template?.type === 'ECHO' && (channel === StepTypeEnum.DIGEST || channel === StepTypeEnum.DELAY)) {
+  if (isBridgeWorkflow(template?.type) && (channel === StepTypeEnum.DIGEST || channel === StepTypeEnum.DELAY)) {
     return (
       <StepEditorSidebar>
         <TemplateCustomEditor />

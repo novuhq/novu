@@ -37,7 +37,9 @@ export class UserResponseDto implements IUserEntity {
   @ApiProperty()
   servicesHashes?: ServicesHashesDto;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    enum: JobTitleEnum,
+  })
   jobTitle?: JobTitleEnum;
 
   @ApiProperty()

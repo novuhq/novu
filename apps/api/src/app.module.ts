@@ -44,8 +44,11 @@ import { isClerkEnabled } from '@novu/shared';
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    if (require('@novu/ee-echo-api')?.EchoModule) {
-      modules.push(require('@novu/ee-echo-api')?.EchoModule);
+    if (require('@novu/ee-auth')?.EEAuthModule) {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+    }
+    if (require('@novu/ee-bridge-api')?.BridgeModule) {
+      modules.push(require('@novu/ee-bridge-api')?.BridgeModule);
     }
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);

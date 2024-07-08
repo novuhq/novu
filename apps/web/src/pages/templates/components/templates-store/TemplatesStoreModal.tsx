@@ -35,7 +35,7 @@ import { TemplateCreationSourceEnum } from '../../shared';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../../../api/types';
 import { TemplateAnalyticsEnum } from '../../constants';
-import { EchoProjectModalItem } from '../EchoProjectWaitList';
+import { FrameworkProjectModalItem } from '../FrameworkProjectWaitList';
 
 const nodeTypes = {
   triggerNode: TriggerNode,
@@ -126,7 +126,7 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
               <FontAwesomeIcon icon={faFile} />
               <span>Blank Workflow</span>
             </TemplateItem>
-            <EchoProjectModalItem />
+            <FrameworkProjectModalItem />
           </TemplatesGroup>
 
           {popular.map((group) => (

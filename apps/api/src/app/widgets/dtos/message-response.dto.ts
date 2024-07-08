@@ -15,14 +15,14 @@ import { WorkflowResponse } from '../../workflows/dto/workflow-response.dto';
 
 class EmailBlockStyles {
   @ApiProperty({
-    enum: ['left', 'right', 'center'],
+    enum: TextAlignEnum,
   })
   textAlign?: TextAlignEnum;
 }
 
 export class EmailBlock {
   @ApiProperty({
-    enum: ['text', 'button'],
+    enum: EmailBlockTypeEnum,
   })
   type: EmailBlockTypeEnum;
   @ApiProperty()
@@ -79,7 +79,9 @@ class MessageCTAData {
 }
 
 export class MessageCTA implements IMessageCTA {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    enum: ChannelCTATypeEnum,
+  })
   type: ChannelCTATypeEnum;
 
   @ApiProperty()
