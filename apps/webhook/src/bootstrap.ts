@@ -1,4 +1,4 @@
-import './config';
+import './config/env.config';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';

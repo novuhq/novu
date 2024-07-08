@@ -53,7 +53,7 @@
     "@types/jest": "29.5.2",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
-    "@types/node": "^14.6.0",
+    "@types/node": "^20.14.10",
     "@types/uuid": "^8.3.4",
     "axios": "^1.6.2",
     "codecov": "^3.5.0",

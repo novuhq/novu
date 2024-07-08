@@ -48,12 +48,6 @@ export const useTelemetry = () => {
       const mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
-        const segmentDeviceId = cleanDoubleQuotedString(localStorage.getItem('ajs_anonymous_id'));
-        const userId = cleanDoubleQuotedString(localStorage.getItem('ajs_user_id'));
-        if (userId) {
-          mixpanel.identify(userId);
-        }
-        mixpanel.register({ $device_id: segmentDeviceId });
         const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
         data = {
