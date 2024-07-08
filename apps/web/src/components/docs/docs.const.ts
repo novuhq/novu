@@ -15,4 +15,4 @@ export const DOCS_URL = 'https://docs.novu.co';
 
 export const MINTLIFY_IMAGE_URL = 'https://mintlify.s3-us-west-1.amazonaws.com/novu';
 
-export const MDX_URL = 'https://cloud-doc.vercel.app/';
+export const MDX_URL = 'http://localhost:5173/';

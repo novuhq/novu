@@ -5,6 +5,7 @@ export type DocsQueryResults = {
   code: string;
   title: string;
   description: string;
+  mappings: Record<string, Record<string, string> | string>;
 };
 
 type UseLoadDocsProps = {
@@ -14,7 +15,7 @@ type UseLoadDocsProps = {
 };
 
 export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
-  const { data = { code: '', title: '', description: '' }, ...queryResults } = useQuery<DocsQueryResults>(
+  const { data = { code: '', title: '', description: '', mappings: {} }, ...queryResults } = useQuery<DocsQueryResults>(
     ['docs', path],
     async () => {
       const response = await fetch(MDX_URL + path);

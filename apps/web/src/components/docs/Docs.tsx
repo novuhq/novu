@@ -11,7 +11,6 @@ import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 import { Highlight } from './Highlight';
 import { DocsQueryResults } from './useLoadDocs';
 import { useFrameworkTerminalScript } from '../../hooks/useFrameworkTerminalScript';
-import { useEchoTerminalScript } from '../../hooks/useEchoTerminalScript';
 import { When } from '../utils/When';
 import { ChildDocs } from './ChildDocs';
 
@@ -23,11 +22,22 @@ const TitleH1 = styled('h1', RTitle);
 
 const DOCS_WRAPPER_ELEMENT_ID = 'embedded-docs';
 
+const globalOverrides = {
+  frameworkterminal: {
+    FrameworkTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
+  },
+  framework: () => null,
+  echoterminal: {
+    EchoTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
+  },
+};
+
 type DocsProps = PropsWithChildren<
   DocsQueryResults & {
     isLoading?: boolean;
     actions?: ReactNode;
     isChildDocs?: boolean;
+    mappings: Record<string, Record<string, string> | string>;
   }
 >;
 
@@ -43,26 +53,38 @@ export const Docs = ({
   children: docsChildren,
   actions = null,
   isChildDocs = false,
+  mappings = {},
 }: DocsProps) => {
   const Component = useMemo(() => {
     if (code.length === 0) {
       return null;
     }
 
+    const globals = Object.keys(mappings).reduce((prev: Record<string, Record<string, any> | any>, key) => {
+      const path = mappings[key];
+
+      if (typeof path === 'string') {
+        prev[key] = () => <ChildDocs path={path} />;
+
+        return prev;
+      }
+
+      const value = path;
+
+      prev[key] = Object.keys(value).reduce((child: Record<string, any>, name) => {
+        child[name] = () => <ChildDocs path={child[name]} />;
+
+        return child;
+      }, {});
+
+      return prev;
+    }, {} as Record<string, Record<string, any> | any>);
+
     return getMDXComponent(code, {
-      frameworkterminal: {
-        FrameworkTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
-      },
-      framework: () => null,
-      NextStepsStep: () => <ChildDocs path="snippets/quickstart/next-steps" />,
-      TestStep: () => <ChildDocs path="snippets/quickstart/test" />,
-      DeployApp: () => <ChildDocs path="snippets/quickstart/deploy" />,
-      LocalStudio: () => <ChildDocs path="snippets/quickstart/start-studio" />,
-      echoterminal: {
-        EchoTerminal: () => <nv-echo-terminal></nv-echo-terminal>,
-      },
+      ...globals,
+      ...globalOverrides,
     });
-  }, [code]);
+  }, [code, mappings]);
 
   useFrameworkTerminalScript();
 
