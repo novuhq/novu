@@ -48,7 +48,7 @@
     "braze-api": "^2.5.6",
     "cross-fetch": "^4.0.0",
     "date-fns": "2.29.3",
-    "emailjs": "^3.6.0",
+    "emailjs": "^4.0.3",
     "expo-server-sdk": "^3.6.0",
     "firebase-admin": "^11.10.1",
     "form-data": "^4.0.0",

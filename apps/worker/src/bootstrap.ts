@@ -1,4 +1,4 @@
-import { CONTEXT_PATH } from './config';
+import './config';
 import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';
@@ -10,7 +10,7 @@ import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/
 
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
-import { validateEnv } from './config/env-validator';
+import { validateEnv, CONTEXT_PATH } from './config';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
 import * as packageJson from '../package.json';
 

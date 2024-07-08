@@ -22,7 +22,7 @@ export class IPartnerConfigurationResponseDto {
   teamId: string;
 
   @ApiProperty({
-    enum: { ...PartnerTypeEnum },
+    enum: PartnerTypeEnum,
     description: 'Partner Type Enum',
   })
   @IsEnum(PartnerTypeEnum)
@@ -31,7 +31,7 @@ export class IPartnerConfigurationResponseDto {
 
 export class OrganizationBrandingResponseDto extends UpdateBrandingDetailsDto {
   @ApiPropertyOptional({
-    enum: { ...DirectionEnum },
+    enum: DirectionEnum,
   })
   @IsString()
   direction?: DirectionEnum;
