@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
@@ -10,6 +10,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
+// eslint-disable-next-line import/no-namespace
 import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 

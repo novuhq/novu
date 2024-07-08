@@ -7,7 +7,7 @@ import {
   DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG,
 } from '@novu/shared';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { CacheService, InvalidateCacheService, cacheService as cacheServiceProvider } from '@novu/application-generic';
 
 const mockRateLimitServiceLevel = ApiServiceLevelEnum.FREE;

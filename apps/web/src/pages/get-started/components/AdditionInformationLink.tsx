@@ -4,7 +4,7 @@ import { colors, Text, IconMenuBook } from '@novu/design-system';
 
 import { Link } from '../consts/shared';
 import { OnboardingUseCasesTabsEnum } from '../consts/OnboardingUseCasesTabsEnum';
-import * as capitalize from 'lodash.capitalize';
+import capitalize from 'lodash.capitalize';
 import { When } from '../../../components/utils/When';
 
 interface IAdditionInformationLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {

@@ -1,7 +1,7 @@
 import { addProjectConfiguration, formatFiles, generateFiles, Tree } from '@nx/devkit';
 import { IProviderGeneratorSchema } from './schema';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const PROVIDERS_BASE_FOLDER = path.join('..', '..', 'packages', 'providers', 'src', 'lib');
 

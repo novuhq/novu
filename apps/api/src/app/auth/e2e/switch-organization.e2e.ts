@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import { OrganizationEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';

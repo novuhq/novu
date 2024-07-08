@@ -2,7 +2,7 @@ import { ThemeProvider } from '@novu/design-system';
 import { SegmentProvider } from './components/providers/SegmentProvider';
 import { StudioStateProvider } from './studio/StudioStateProvider';
 import { CONTEXT_PATH } from './config';
-import * as Sentry from '@sentry/react';
+import { withProfiler } from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
@@ -44,4 +44,4 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   );
 };
 
-export default Sentry.withProfiler(Providers);
+export default withProfiler(Providers);
