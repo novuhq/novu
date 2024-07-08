@@ -48,17 +48,8 @@ jobs:
             echo "All output values have been set successfully."
           fi
 
-      - name: Start Deployment Notification
-        uses: ravsamhq/notify-slack-action@2.3.0
-        with:
-          notification_title: "Release has started for ${{ steps.setenvname.outputs.envName }}"
-          message_format: ""
-          status: ${{ job.status }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
       - name: Start Deployment Notification
-        id: slack
         uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
@@ -177,7 +168,6 @@ jobs:
           method: 'POST'
 
       - name: Failed Deployment Notification
-        id: slack
         uses: slackapi/slack-github-action@v1.26.0
         if: ${{ always() && contains(needs.*.result, 'failure') }}
         with:
@@ -198,7 +188,6 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
       - name: Success Deployment Notification
-        id: slack
         uses: slackapi/slack-github-action@v1.26.0
         if: ${{ always() && contains(needs.*.result, 'success') }}
         with:
