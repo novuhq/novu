@@ -1,4 +1,4 @@
-import { corsOptionsDelegate, isPermittedDeployPreviewOrigin } from './cors';
+import { corsOptionsDelegate, isPermittedDeployPreviewOrigin } from './cors.config';
 import { spy } from 'sinon';
 import { expect } from 'chai';
 

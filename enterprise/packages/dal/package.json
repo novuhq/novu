@@ -25,7 +25,7 @@
     "rimraf": "^3.0.2"
   },
   "devDependencies": {
-    "@types/node": "^14.6.0",
+    "@types/node": "^20.14.10",
     "@typescript-eslint/parser": "^4.14.2",
     "eslint-plugin-prettier": "^4.2.1",
     "ts-node": "~10.9.1",

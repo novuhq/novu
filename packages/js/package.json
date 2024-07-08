@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@types/jest": "^29.2.3",
-    "@types/node": "^18.11.12",
+    "@types/node": "^20.14.10",
     "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",

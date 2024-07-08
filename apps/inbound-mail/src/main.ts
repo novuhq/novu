@@ -1,6 +1,6 @@
 // Source is taken from the un-maintained https://github.com/Flolagale/mailin and refactored
 
-import './config';
+import './config/env.config';
 
 import mailin from './server/index';
 import logger from './server/logger';

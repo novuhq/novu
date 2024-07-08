@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UpdateSubscriberChannelRequestDto } from './update-subscriber-channel-request.dto';
 
-class ChannelSettings extends UpdateSubscriberChannelRequestDto {
+export class ChannelSettings extends UpdateSubscriberChannelRequestDto {
   @ApiProperty({
     description: 'Id of the integration that is used for this channel',
   })
