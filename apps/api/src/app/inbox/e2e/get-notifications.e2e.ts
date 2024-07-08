@@ -75,7 +75,7 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
       query += `&offset=${offset}`;
     }
     if (tags) {
-      query += tags.map((tag) => `&tags[]s=${tag}`).join('');
+      query += tags.map((tag) => `&tags[]=${tag}`).join('');
     }
     if (typeof read !== 'undefined') {
       query += `&read=${read}`;
@@ -124,6 +124,15 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
 
     expect(status).to.equal(400);
     expect(body.message[0]).to.equal('The after cursor must be a valid MongoDB ObjectId');
+  });
+
+  it('should throw exception when filtering for unread and archived notifications', async function () {
+    await triggerEvent(template);
+
+    const { body, status } = await getNotifications({ limit: 1, read: false, archived: true });
+
+    expect(status).to.equal(400);
+    expect(body.message).to.equal('Filtering for unread and archived notifications is not supported.');
   });
 
   it('should include fields from message entity', async function () {

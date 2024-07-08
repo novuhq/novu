@@ -19,5 +19,5 @@ export class CreateOrganizationDto implements ICreateOrganizationDto {
   domain?: string;
 
   @IsOptional()
-  productUseCases?: ProductUseCases;
+  language?: string[];
 }

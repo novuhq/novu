@@ -1,20 +1,25 @@
-import { Subscriber } from './subscriber.types';
+import { PostActionEnum } from '../constants';
+import type { Subscriber } from './subscriber.types';
 
-export interface IEvent {
+export type Event = {
+  /** @deprecated */
   data: Record<string, unknown>;
+  payload: Record<string, unknown>;
   workflowId: string;
   stepId: string;
+  /** @deprecated */
   inputs: Record<string, unknown>;
-  state: IState[];
-  action: 'execute' | 'preview';
+  controls: Record<string, unknown>;
+  state: State[];
+  action: Exclude<PostActionEnum, PostActionEnum.TRIGGER>;
   subscriber: Subscriber;
-}
+};
 
-interface IState {
+export type State = {
   stepId: string;
   outputs: any;
   state: { status: string; error?: string };
-}
+};
 
 export type ExecuteOutputMetadata = {
   status: string;

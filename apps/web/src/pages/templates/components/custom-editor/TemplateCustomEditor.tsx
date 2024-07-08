@@ -3,13 +3,13 @@ import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useState } from 'react';
 import { Grid, Stack } from '@mantine/core';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { ControlVariablesForm } from '../ControlVariablesForm';
 
 export function TemplateCustomEditor() {
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
 
-  const [inputVariables, setInputVariables] = useState();
+  const [controlVariables, setControlVariables] = useState();
 
   return (
     <>
@@ -22,9 +22,9 @@ export function TemplateCustomEditor() {
             control={control}
             render={({ field }) => (
               <Stack spacing={8}>
-                <InputVariablesForm
+                <ControlVariablesForm
                   onChange={(values) => {
-                    setInputVariables(values);
+                    setControlVariables(values);
                   }}
                 />
               </Stack>

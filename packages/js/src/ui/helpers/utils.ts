@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
-function generateRandomString(length: number): string {
-  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+export function generateRandomString(length: number): string {
+  const characters = 'abcdefghijklmnopqrstuvwxyz';
   let result = '';
   const charactersLength = characters.length;
   for (let i = 0; i < length; i++) {
@@ -45,17 +45,17 @@ export function createClassAndRuleFromCssString(classNameSet: Set<string>, style
 }
 
 const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
-export function generateDefaultColor(color: string, key: string) {
-  const cssVariableDefaultRule = `:root { --nv-${key}: oklch(from ${color} l c h); }`;
+export function generateDefaultColor(props: { color: string; key: string; id: string }) {
+  const cssVariableDefaultRule = `.${props.id} { --nv-${props.key}: oklch(from ${props.color} l c h); }`;
 
   return cssVariableDefaultRule;
 }
 
-export function generatesSolidShadesFromColor(color: string, key: string) {
+export function generatesSolidShadesFromColor(props: { color: string; key: string; id: string }) {
   const rules = [];
   for (let i = 0; i < shades.length; i++) {
     const shade = shades[i];
-    const cssVariableSolidRule = `:root { --nv-${key}-${shade}: oklch(from ${color} calc(l - ${
+    const cssVariableSolidRule = `.${props.id} { --nv-${props.key}-${shade}: oklch(from ${props.color} calc(l - ${
       (shade - 500) / 1000
     }) c h); }`;
     rules.push(cssVariableSolidRule);
@@ -64,34 +64,44 @@ export function generatesSolidShadesFromColor(color: string, key: string) {
   return rules;
 }
 
-export function generatesAlphaShadesFromColor(color: string, key: string) {
+export function generatesAlphaShadesFromColor(props: { color: string; key: string; id: string }) {
   const rules = [];
   for (let i = 0; i < shades.length; i++) {
     const shade = shades[i];
-    const cssVariableAlphaRule = `:root { --nv-${key}-${shade}: oklch(from ${color} l c h / ${shade / 1000}); }`;
+    const cssVariableAlphaRule = `.${props.id} { --nv-${props.key}-${shade}: oklch(from ${props.color} l c h / ${
+      shade / 1000
+    }); }`;
     rules.push(cssVariableAlphaRule);
   }
 
   return rules;
 }
 
-export const parseVariables = (variables: Required<Variables>) => {
+export const parseVariables = (variables: Required<Variables>, id: string) => {
   return [
-    generateDefaultColor(variables.colorBackground, 'color-background'),
-    generateDefaultColor(variables.colorForeground, 'color-foreground'),
-    generateDefaultColor(variables.colorPrimary, 'color-primary'),
-    generateDefaultColor(variables.colorPrimaryForeground, 'color-primary-foreground'),
-    generateDefaultColor(variables.colorSecondary, 'color-secondary'),
-    generateDefaultColor(variables.colorSecondaryForeground, 'color-secondary-foreground'),
-    ...generatesAlphaShadesFromColor(variables.colorBackground, 'color-background-alpha'),
-    ...generatesAlphaShadesFromColor(variables.colorForeground, 'color-foreground-alpha'),
-    ...generatesSolidShadesFromColor(variables.colorPrimary, 'color-primary'),
-    ...generatesAlphaShadesFromColor(variables.colorPrimary, 'color-primary-alpha'),
-    ...generatesAlphaShadesFromColor(variables.colorPrimaryForeground, 'color-primary-foreground-alpha'),
-    ...generatesSolidShadesFromColor(variables.colorSecondary, 'color-secondary'),
-    ...generatesAlphaShadesFromColor(variables.colorSecondary, 'color-secondary-alpha'),
-    ...generatesAlphaShadesFromColor(variables.colorSecondaryForeground, 'color-secondary-foreground-alpha'),
-    ...generatesAlphaShadesFromColor(variables.colorNeutral, 'color-neutral-alpha'),
+    generateDefaultColor({ color: variables.colorBackground, key: 'color-background', id }),
+    generateDefaultColor({ color: variables.colorForeground, key: 'color-foreground', id }),
+    generateDefaultColor({ color: variables.colorPrimary, key: 'color-primary', id }),
+    generateDefaultColor({ color: variables.colorPrimaryForeground, key: 'color-primary-foreground', id }),
+    generateDefaultColor({ color: variables.colorSecondary, key: 'color-secondary', id }),
+    generateDefaultColor({ color: variables.colorSecondaryForeground, key: 'color-secondary-foreground', id }),
+    ...generatesAlphaShadesFromColor({ color: variables.colorBackground, key: 'color-background-alpha', id }),
+    ...generatesAlphaShadesFromColor({ color: variables.colorForeground, key: 'color-foreground-alpha', id }),
+    ...generatesSolidShadesFromColor({ color: variables.colorPrimary, key: 'color-primary', id }),
+    ...generatesAlphaShadesFromColor({ color: variables.colorPrimary, key: 'color-primary-alpha', id }),
+    ...generatesAlphaShadesFromColor({
+      color: variables.colorPrimaryForeground,
+      key: 'color-primary-foreground-alpha',
+      id,
+    }),
+    ...generatesSolidShadesFromColor({ color: variables.colorSecondary, key: 'color-secondary', id }),
+    ...generatesAlphaShadesFromColor({ color: variables.colorSecondary, key: 'color-secondary-alpha', id }),
+    ...generatesAlphaShadesFromColor({
+      color: variables.colorSecondaryForeground,
+      key: 'color-secondary-foreground-alpha',
+      id,
+    }),
+    ...generatesAlphaShadesFromColor({ color: variables.colorNeutral, key: 'color-neutral-alpha', id }),
   ];
 };
 

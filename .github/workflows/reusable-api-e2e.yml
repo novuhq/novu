@@ -45,7 +45,7 @@ jobs:
   e2e_api:
     name: Test E2E
     if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-medium
     timeout-minutes: 80
     permissions:
       contents: read

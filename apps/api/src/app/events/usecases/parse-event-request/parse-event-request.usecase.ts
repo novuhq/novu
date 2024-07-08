@@ -20,7 +20,7 @@ import {
   InvalidateCacheService,
   requireInject,
   IUseCaseInterface,
-  IDoBridgeRequestCommand,
+  IExecuteBridgeRequestCommand,
 } from '@novu/application-generic';
 import {
   FeatureFlagsKeysEnum,
@@ -43,7 +43,7 @@ import {
   EnvironmentEntity,
 } from '@novu/dal';
 import { Novu } from '@novu/node';
-import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
+import { DiscoverOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import {
   ParseEventRequestBroadcastCommand,
@@ -57,7 +57,7 @@ const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
-  private doBridgeRequest: IUseCaseInterface<IDoBridgeRequestCommand, DiscoverOutput | null>;
+  private executeBridgeRequest: IUseCaseInterface<IExecuteBridgeRequestCommand, DiscoverOutput | null>;
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -75,7 +75,7 @@ export class ParseEventRequest {
     private invalidateCacheService: InvalidateCacheService,
     protected moduleRef: ModuleRef
   ) {
-    this.doBridgeRequest = requireInject('do_bridge_request', this.moduleRef);
+    this.executeBridgeRequest = requireInject('execute-bridge-request', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -196,15 +196,11 @@ export class ParseEventRequest {
       return null;
     }
 
-    const discover = await this.doBridgeRequest.execute({
+    const discover = await this.executeBridgeRequest.execute({
       bridgeUrl: command.bridgeUrl,
       apiKey: environment.apiKeys[0].key,
-      action: 'discover',
+      action: GetActionEnum.DISCOVER,
     });
-
-    if (!discover) {
-      return null;
-    }
 
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }

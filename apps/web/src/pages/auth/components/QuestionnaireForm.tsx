@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
@@ -25,9 +25,10 @@ import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useDomainParser } from './useDomainHook';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function QuestionnaireForm() {
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -39,6 +40,8 @@ export function QuestionnaireForm() {
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
+  const segment = useSegment();
+  const location = useLocation();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -58,10 +61,23 @@ export function QuestionnaireForm() {
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
-    const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
+    const selectedLanguages = Object.keys(data.language || {}).filter((key) => data.language && data.language[key]);
+
+    const createDto: ICreateOrganizationDto = {
+      ...rest,
+      name: organizationName,
+      language: selectedLanguages,
+    };
     const organization = await createOrganizationMutation(createDto);
+
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
+
+    segment.track('Create Organization Form Submitted', {
+      location: (location.state as any)?.origin || 'web',
+      language: selectedLanguages,
+      jobTitle: data.jobTitle,
+    });
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -80,14 +96,13 @@ export function QuestionnaireForm() {
       return;
     }
 
-    if (isV2ExperienceEnabled) {
-      navigate(ROUTES.STUDIO_ONBOARDING);
+    if (isV2Enabled) {
+      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
 
       return;
     }
-    const firstUsecase = findFirstUsecase(data.productUseCases) ?? '';
-    const mappedUsecase = firstUsecase.replace('_', '-');
-    navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);
+
+    navigate(`${ROUTES.GET_STARTED}`);
   };
 
   /**
@@ -103,6 +118,27 @@ export function QuestionnaireForm() {
 
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>
+      <Controller
+        name="organizationName"
+        control={control}
+        rules={{
+          required: 'Please specify your company name',
+        }}
+        render={({ field }) => {
+          return (
+            <Input
+              label="Company name"
+              {...field}
+              error={errors.organizationName?.message}
+              placeholder="Enter your company name"
+              data-test-id="questionnaire-company-name"
+              mt={32}
+              required
+            />
+          );
+        }}
+      />
+
       <Controller
         name="jobTitle"
         control={control}
@@ -129,70 +165,24 @@ export function QuestionnaireForm() {
       />
 
       <Controller
-        name="organizationName"
+        name="language"
         control={control}
         rules={{
-          required: 'Please specify your company name',
-        }}
-        render={({ field }) => {
-          return (
-            <Input
-              label="Company name"
-              {...field}
-              error={errors.organizationName?.message}
-              placeholder="Enter your company name"
-              data-test-id="questionnaire-company-name"
-              mt={32}
-              required
-            />
-          );
-        }}
-      />
-
-      <Controller
-        name="domain"
-        control={control}
-        rules={{
-          validate: {
-            isValiDomain: (value) => {
-              const val = parse(value as string);
-
-              if (value && !val.isIcann) {
-                return 'Please provide a valid domain';
-              }
-            },
-          },
-        }}
-        render={({ field }) => {
-          return (
-            <Input
-              label="Company domain"
-              {...field}
-              error={errors.domain?.message}
-              placeholder="my-company.com"
-              data-test-id="questionnaire-company-domain"
-              mt={32}
-            />
-          );
-        }}
-      />
-
-      <Controller
-        name="productUseCases"
-        control={control}
-        rules={{
-          required: 'Please specify your use case',
+          required: 'Please specify your back-end languages',
         }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
-            const newUseCases: ProductUseCases = field.value || {};
-            newUseCases[channelType] = e.currentTarget.checked;
-            field.onChange(newUseCases);
+            const languages = field.value || {};
+
+            languages[channelType] = e.currentTarget.checked;
+
+            field.onChange(languages);
           }
 
           return (
             <MantineInput.Wrapper
-              label="What do you plan to use Novu for?"
+              data-test-id="language-checkbox"
+              label="Choose your back-end stack"
               styles={inputStyles}
               error={fieldState.error?.message}
               mt={32}
@@ -201,16 +191,14 @@ export function QuestionnaireForm() {
               <Group
                 mt={8}
                 mx={'8px'}
-                style={{ marginLeft: '-12px', marginRight: '-12px', gap: '0', justifyContent: 'space-between' }}
+                style={{ marginLeft: '-1px', marginRight: '-3px', gap: '0', justifyContent: 'space-between' }}
               >
                 <>
-                  {checkBoxData.map((item) => (
+                  {backendLanguages.map((item) => (
                     <DynamicCheckBox
-                      Icon={item.icon}
                       label={item.label}
-                      onChange={(e) => handleCheckboxChange(e, item.type)}
-                      key={item.type}
-                      type={item.type}
+                      onChange={(e) => handleCheckboxChange(e, item.label)}
+                      key={item.label}
                     />
                   ))}
                 </>
@@ -226,19 +214,31 @@ export function QuestionnaireForm() {
   );
 }
 
-const checkBoxData = [
-  { type: ProductUseCasesEnum.IN_APP, icon: RingingBell, label: 'In-app' },
-  { type: ProductUseCasesEnum.MULTI_CHANNEL, icon: MultiChannel, label: 'Multi-channel' },
-  { type: ProductUseCasesEnum.DIGEST, icon: Digest, label: 'Digest' },
-  { type: ProductUseCasesEnum.DELAY, icon: HalfClock, label: 'Delay' },
-  { type: ProductUseCasesEnum.TRANSLATION, icon: Translation, label: 'Translate' },
+const backendLanguages = [
+  { label: 'Node.js' },
+  { label: 'Python' },
+  { label: 'Go' },
+  { label: 'PHP' },
+  { label: 'Rust' },
+  { label: 'Java' },
+  { label: 'Other' },
+];
+
+const frontendFrameworks = [
+  { label: 'React' },
+  { label: 'Vue' },
+  { label: 'Angular' },
+  { label: 'Flutter' },
+  { label: 'React Native' },
+  { label: 'Other' },
 ];
 
 interface IOrganizationCreateForm {
   organizationName: string;
   jobTitle: JobTitleEnum;
   domain?: string;
-  productUseCases?: ProductUseCases;
+  language?: string[];
+  frontendStack?: string[];
 }
 
 function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCasesEnum | undefined {

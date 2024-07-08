@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "private": true,
   "scripts": {
     "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 PORT=4200 react-app-rewired start",
@@ -73,7 +73,7 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^29.5.0",
-    "@types/node": "^12.0.0",
+    "@types/node": "^20.14.10",
     "@types/react-table": "^7.7.12",
     "ace-builds": "^1.4.12",
     "antd": "^4.10.0",
@@ -88,6 +88,7 @@
     "handlebars": "^4.7.7",
     "highlight.js": "11.9.0",
     "html-webpack-plugin": "5.5.3",
+    "js-cookie": "^3.0.5",
     "jwt-decode": "^3.1.2",
     "launchdarkly-react-client-sdk": "^3.3.2",
     "less": "^4.1.0",
@@ -156,10 +157,10 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/testing-library__jest-dom": "^5.14.5",
+    "@types/js-cookie": "^3.0.6",
     "eslint-plugin-storybook": "^0.6.13",
     "http-server": "^0.13.0",
     "less-loader": "4.1.0",
-    "nodemon": "^3.0.1",
     "react-app-rewired": "^2.2.1",
     "react-error-overlay": "6.0.11",
     "react-scripts": "^5.0.1",
@@ -180,11 +181,6 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
-    ]
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
     ]
   },
   "eslintConfig": {

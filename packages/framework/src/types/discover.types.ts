@@ -1,15 +1,16 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { JsonSchema, Schema } from './schema.types';
-import { StepOptions } from './step.types';
-import { Execute, WorkflowOptions } from './workflow.types';
-import { Awaitable } from './util.types';
+import type { JsonSchema, Schema } from './schema.types';
+import type { StepOptions } from './step.types';
+import type { Execute, WorkflowOptions } from './workflow.types';
+import type { Awaitable, Prettify } from './util.types';
+import type { EventTriggerParams, EventTriggerResult } from './event.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: (inputs: unknown) => Awaitable<unknown>;
+  resolve: ({ controls, outputs }: { controls: unknown; outputs: unknown }) => Awaitable<unknown>;
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
@@ -23,6 +24,10 @@ export type DiscoverStepOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
@@ -32,7 +37,7 @@ export type DiscoverStepOutput = {
     unknownSchema: Schema;
   };
   code: string;
-  resolve: (inputs: any) => Awaitable<any>;
+  resolve: (controls: any) => Awaitable<any>;
   providers: Array<DiscoverProviderOutput>;
   options: StepOptions;
 };
@@ -43,14 +48,31 @@ export type DiscoverWorkflowOutput = {
   options: WorkflowOptions<unknown, unknown>;
   code: string;
   steps: Array<DiscoverStepOutput>;
+  payload: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  /** @deprecated */
   data: {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  /** @deprecated */
   inputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+};
+
+export type Workflow<T_Payload = any> = {
+  trigger: (
+    event: Prettify<Omit<EventTriggerParams<T_Payload>, 'workflowId' | 'bridgeUrl' | 'controls'>>
+  ) => Promise<EventTriggerResult>;
+  definition: DiscoverWorkflowOutput;
 };
 
 export type DiscoverOutput = {

@@ -1,6 +1,12 @@
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery, Types } from 'mongoose';
-import { MessagesStatusEnum, ChannelTypeEnum, ActorTypeEnum } from '@novu/shared';
+import {
+  MessagesStatusEnum,
+  ChannelTypeEnum,
+  ActorTypeEnum,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+} from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
 import { MessageEntity, MessageDBModel } from './message.entity';
@@ -32,7 +38,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {}
+    query: {
+      feedId?: string[];
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+      payload?: object;
+    } = {}
   ): Promise<MessageQuery & EnforceEnvId> {
     let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -69,6 +82,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = query.read;
     } else {
       requestQuery.read = { $in: [true, false] };
+    }
+
+    if (query.tags && query.tags?.length > 0) {
+      requestQuery.tags = { $in: query.tags };
+    }
+
+    if (typeof query.archived === 'boolean') {
+      if (!query.archived) {
+        requestQuery.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        requestQuery.archived = true;
+      }
+    } else {
+      requestQuery.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
     }
 
     if (query.payload) {
@@ -166,13 +193,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {},
+    query: {
+      feedId?: string[];
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+      payload?: object;
+    } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
       seen: query.seen,
+      tags: query.tags,
       read: query.read,
+      archived: query.archived,
       payload: query.payload,
     });
 
@@ -366,6 +402,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
   }
 
+  /**
+   * @deprecated
+   */
   async changeStatus(
     environmentId: string,
     subscriberId: string,
@@ -396,6 +435,187 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       },
       {
         $set: requestQuery,
+      }
+    );
+  }
+
+  async updateMessagesStatusByIds({
+    environmentId,
+    subscriberId,
+    ids,
+    seen,
+    read,
+    archived,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    ids: string[];
+    seen?: boolean;
+    read?: boolean;
+    archived?: boolean;
+  }) {
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: {
+        $in: ids.map((id) => {
+          return new Types.ObjectId(id);
+        }),
+      },
+    };
+
+    await this.updateMessagesStatus({
+      query,
+      seen,
+      read,
+      archived,
+    });
+  }
+
+  async updateMessagesFromToStatus({
+    environmentId,
+    subscriberId,
+    from,
+    to,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    from: {
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+    };
+    to: {
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+    };
+  }) {
+    const isFromSeen = from.seen !== undefined;
+    const isFromRead = from.read !== undefined;
+    const isFromArchived = from.archived !== undefined;
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      ...(from.tags && from.tags?.length > 0 && { tags: { $in: from.tags } }),
+    };
+
+    if (isFromArchived) {
+      if (!from.archived) {
+        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        query.archived = true;
+      }
+    } else if (isFromRead) {
+      query.read = from.read;
+    } else if (isFromSeen) {
+      query.seen = from.seen;
+    }
+
+    await this.updateMessagesStatus({
+      query,
+      ...to,
+    });
+  }
+
+  /**
+   * Allows to update the status of queried messages at once.
+   * The status can be updated to seen, unseen, read, unread, archived or unarchived.
+   * Depending on the flag passed, the other flags will be updated accordingly.
+   * For example:
+   * seen -> { seen: true }
+   * read -> { seen: true, read: true }
+   * archived -> { seen: true, read: true, archived: true }
+   * unseen -> { seen: false, read: false, archived: false }
+   * unread -> { seen: true, read: false, archived: false }
+   * unarchived -> { seen: true, read: true, archived: false }
+   */
+  private async updateMessagesStatus({
+    query,
+    seen,
+    read,
+    archived,
+  }: {
+    query: MessageQuery & EnforceEnvId;
+    seen?: boolean;
+    read?: boolean;
+    archived?: boolean;
+  }) {
+    const isUpdatingSeen = seen !== undefined;
+    const isUpdatingRead = read !== undefined;
+    const isUpdatingArchived = archived !== undefined;
+
+    let updatePayload: FilterQuery<MessageEntity> = {};
+    if (isUpdatingArchived) {
+      updatePayload = {
+        seen: true,
+        lastSeenDate: new Date(),
+        read: true,
+        lastReadDate: new Date(),
+        archived,
+        archivedAt: archived ? new Date() : null,
+      };
+    } else if (isUpdatingRead) {
+      updatePayload = {
+        seen: true,
+        lastSeenDate: new Date(),
+        read,
+        lastReadDate: read ? new Date() : null,
+        archived: !read ? false : undefined,
+        archivedAt: !read ? null : undefined,
+      };
+    } else if (isUpdatingSeen) {
+      updatePayload = {
+        seen,
+        lastSeenDate: seen ? new Date() : null,
+        read: !seen ? false : undefined,
+        lastReadDate: !seen ? null : undefined,
+        archived: !seen ? false : undefined,
+        archivedAt: !seen ? null : undefined,
+      };
+    }
+
+    await this.update(query, {
+      $set: updatePayload,
+    });
+  }
+
+  async updateActionStatus({
+    environmentId,
+    subscriberId,
+    id,
+    actionType,
+    actionStatus,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    id: string;
+    actionType: ButtonTypeEnum;
+    actionStatus: MessageActionStatusEnum;
+  }) {
+    const isUpdatingPrimaryCta = actionType === ButtonTypeEnum.PRIMARY;
+    const isUpdatingSecondaryCta = actionType === ButtonTypeEnum.SECONDARY;
+    const updatePayload: Partial<MessageEntity> = {};
+
+    if (isUpdatingPrimaryCta) {
+      updatePayload['cta.action.result.type'] = ButtonTypeEnum.PRIMARY;
+      updatePayload['cta.action.status'] = actionStatus;
+    }
+
+    if (isUpdatingSecondaryCta) {
+      updatePayload['cta.action.result.type'] = ButtonTypeEnum.SECONDARY;
+      updatePayload['cta.action.status'] = actionStatus;
+    }
+
+    await this.update(
+      {
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        _id: id,
+      },
+      {
+        $set: updatePayload,
       }
     );
   }

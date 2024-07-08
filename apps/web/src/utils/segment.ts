@@ -2,6 +2,7 @@ import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
 import * as mixpanel from 'mixpanel-browser';
 import { api } from '../api';
+import { cleanDoubleQuotedString } from './utils';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -38,7 +39,10 @@ export class SegmentService {
           if (payload.type() === 'identify' && userId) {
             mixpanel.identify(userId);
           }
-        } catch (e) {}
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e);
+        }
         next(payload);
       });
     }
@@ -52,14 +56,32 @@ export class SegmentService {
     this._segment?.identify(user?._id);
   }
 
+  alias(anonymousId: string, userId: string) {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
+    if (this._mixpanelEnabled) {
+      mixpanel.alias(userId, anonymousId);
+    }
+
+    this._segment?.alias(userId, anonymousId);
+  }
+
+  setAnonymousId(anonymousId: string) {
+    if (!this.isSegmentEnabled() || !anonymousId) {
+      return;
+    }
+
+    this._segment?.setAnonymousId(anonymousId);
+  }
+
   async track(event: string, data?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;
     }
 
     if (this._mixpanelEnabled) {
-      const segmentDeviceId = localStorage.getItem('ajs_anonymous_id');
-      mixpanel.register({ $device_id: segmentDeviceId });
       const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
       data = {

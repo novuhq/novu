@@ -25,49 +25,38 @@ npm install @novu/framework
 ## Quickstart
 
 ```typescript
-import { workflow } from '@novu/framework';
-import { serve } from '@novu/framework/express';
+import { workflow, CronExpression, } from "@novu/framework";
+import { serve } from "@novu/framework/next";
+import { z } from 'zod';
 
-const commentWorkflow = await workflow(
+// Define your notification workflow
+const weeklyComments = workflow(
   'comment-on-post',
   async ({ payload, step }) => {
-    const inAppResponse = await step.inApp('notify-user', async () => ({
-      body: renderBody(payload.postId),
+    const inAppResponse = await step.inApp('new-comment', async () => ({
+      body: `You have a new comment on your post ${payload.comment}`,
     }));
 
-    const weeklyDigest = await step.digest('wait-1-week', () => ({
-      amount: 7,
-      unit: 'days',
+    const weeklyDigest = await step.digest('weekly-digest', () => ({
+      cron: CronExpression.EVERY_WEEK,
     }));
 
-    await step.email(
-      'weekly-comments',
-      async (inputs) => {
-        return {
-          subject: `Weekly post comments (${weeklyDigest.events.length + 1})`,
-          body: renderReactEmail(inputs, weeklyDigest.events),
-        };
-      },
-      { skip: () => inAppResponse.seen }
-    );
+    await step.email('weekly-comments', async (controls) => ({
+      subject: `${controls.prefix} - Weekly post comments (${weeklyDigest.events.length})`,
+      body: `Weekly digest: ${weeklyDigest.events.map(({ payload }) => payload.comment).join(', ')}`,
+    }), {
+      // Skip the notification if the user has already seen it
+      skip: () => inAppResponse.seen,
+      // Non-technical stakeholders can modify strongly-validated copy in Novu Cloud
+      inputSchema: z.object({ prefix: z.string().describe('The prefix of the subject.').default('Hi!') }),
+    });
   },
-  {
-    payloadSchema: {
-      type: 'object',
-      properties: {
-        postId: {
-          title: 'Post ID',
-          type: 'string',
-          description: 'The ID of the post.',
-          default: '123',
-        },
-      },
-      required: ['postId'],
-      additionalProperties: false,
-    } as const,
-  }
+  { payloadSchema: z.object({ comment: z.string().describe('The comment on the post.') }) }
 );
 
 // Use your favorite framework to serve your workflows
-serve({ workflows: [commentWorkflow] });
+const { GET, POST, OPTIONS } = serve({ workflows: [weeklyComments] });
+
+// Trigger your notification workflow
+weeklyComments.trigger({ postId: '123', to: 'user:123' });
 ```

@@ -1,10 +1,13 @@
 import { PackageManager } from "../helpers/get-pkg-manager";
 
-export type TemplateType =
-  | "default"
-  | "app"
-  | "default-react-email"
-  | "app-react-email";
+export enum TemplateTypeEnum {
+  DEFAULT = "default",
+  APP = "app",
+  DEFAULT_REACT_EMAIL = "default-react-email",
+  APP_REACT_EMAIL = "app-react-email",
+}
+
+export type TemplateType = `${TemplateTypeEnum}`;
 export type TemplateMode = "js" | "ts";
 
 export interface GetTemplateFileArgs {
@@ -18,13 +21,10 @@ export interface InstallTemplateArgs {
   root: string;
   packageManager: PackageManager;
   isOnline: boolean;
-
   template: TemplateType;
   mode: TemplateMode;
   eslint: boolean;
-  reactEmail: boolean;
   srcDir: boolean;
   importAlias: string;
-  apiKey: string;
-  tunnelHost: string;
+  secretKey: string;
 }

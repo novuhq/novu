@@ -1,7 +1,7 @@
-import Ajv, { ErrorObject, ValidateFunction as AjvValidateFunction } from 'ajv';
+import Ajv, { type ErrorObject, type ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import { ValidateResult, Validator } from '../types/validator.types';
-import { JsonSchema, Schema } from '../types/schema.types';
+import type { ValidateResult, Validator } from '../types/validator.types';
+import type { JsonSchema, Schema } from '../types/schema.types';
 
 export class JsonSchemaValidator implements Validator<JsonSchema> {
   private readonly ajv: Ajv;

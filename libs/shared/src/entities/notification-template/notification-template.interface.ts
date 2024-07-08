@@ -1,15 +1,17 @@
 import { JSONSchema7 } from 'json-schema';
 
-import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
+import type {
+  BuilderFieldType,
+  BuilderGroupValues,
+  TemplateVariableTypeEnum,
+  FilterParts,
+  WorkflowTypeEnum,
+} from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
 import { INotificationGroup } from '../notification-group';
-
-export enum NotificationTemplateTypeEnum {
-  REGULAR = 'REGULAR',
-  ECHO = 'ECHO',
-}
+import { ControlsDto } from '../../dto';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -28,7 +30,7 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
-  type?: NotificationTemplateTypeEnum;
+  type?: WorkflowTypeEnum;
   payloadSchema?: any;
 }
 
@@ -93,6 +95,14 @@ export interface IStepVariant {
   inputs?: {
     schema: JSONSchema7;
   };
+  controls?: {
+    schema: JSONSchema7;
+  };
+  /*
+   * controlVariables exists
+   * only on none production environment in order to provide stateless control variables on fly
+   */
+  controlVariables?: ControlsDto;
   bridgeUrl?: string;
 }
 

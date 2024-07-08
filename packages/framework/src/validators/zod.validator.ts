@@ -1,6 +1,8 @@
 import { ZodSchema } from 'zod';
-import { JsonSchema, Schema } from '../types/schema.types';
-import { ValidateResult, Validator } from '../types/validator.types';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+
+import type { JsonSchema, Schema } from '../types/schema.types';
+import type { ValidateResult, Validator } from '../types/validator.types';
 
 export class ZodValidator implements Validator<ZodSchema> {
   isSchema(schema: Schema): schema is ZodSchema {
@@ -24,9 +26,8 @@ export class ZodValidator implements Validator<ZodSchema> {
 
   transformToJsonSchema(schema: ZodSchema): JsonSchema {
     try {
-      const module = require('zod-to-json-schema');
-
-      return module.zodToJsonSchema(schema);
+      // @ts-expect-error - zod-to-json-schema is not using JSONSchema7
+      return zodToJsonSchema(schema);
     } catch (error) {
       if ((error as Error)?.message?.includes('Cannot find module')) {
         // eslint-disable-next-line no-console

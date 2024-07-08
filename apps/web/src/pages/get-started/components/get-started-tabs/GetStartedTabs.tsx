@@ -8,7 +8,7 @@ import { GetStartedTabConfig, ICON_STYLE, TAB_CONFIGS } from './GetStartedTabs.c
 import useStyles from './GetStartedTabs.style';
 import { useGetStartedTabs } from './useGetStartedTabs';
 import { useGetStartedTabView } from './useGetStartedTabView';
-import { EchoTab } from './EchoTab';
+import { FrameworkTab } from './FrameworkTab';
 
 interface IGetStartedTabsProps extends ReturnType<typeof useGetStartedTabs> {
   tabConfigs?: GetStartedTabConfig[];
@@ -36,8 +36,8 @@ export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TA
       >
         <Tabs.List>
           <Tabs.Tab
-            key={`tab-${OnboardingUseCasesTabsEnum.ECHO}`}
-            value={OnboardingUseCasesTabsEnum.ECHO}
+            key={`tab-${OnboardingUseCasesTabsEnum.FRAMEWORK}`}
+            value={OnboardingUseCasesTabsEnum.FRAMEWORK}
             icon={<IconConnectedTv style={ICON_STYLE} />}
           >
             Workflows
@@ -53,8 +53,11 @@ export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TA
             <GetStartedTab setView={setView} currentView={currentView} {...UseCasesConst[value]} />
           </Tabs.Panel>
         ))}
-        <Tabs.Panel key={`tab-panel-${OnboardingUseCasesTabsEnum.ECHO}`} value={OnboardingUseCasesTabsEnum.ECHO}>
-          <EchoTab />
+        <Tabs.Panel
+          key={`tab-panel-${OnboardingUseCasesTabsEnum.FRAMEWORK}`}
+          value={OnboardingUseCasesTabsEnum.FRAMEWORK}
+        >
+          <FrameworkTab />
         </Tabs.Panel>
       </Tabs>
       <Outlet />

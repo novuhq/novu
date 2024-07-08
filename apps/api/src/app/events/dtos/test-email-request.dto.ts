@@ -41,4 +41,6 @@ export class TestSendEmailRequestDto {
 
   @IsOptional()
   inputs: any;
+  @IsOptional()
+  controls: any;
 }

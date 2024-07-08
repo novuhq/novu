@@ -1,11 +1,11 @@
-import { CONTEXT_PATH } from './config';
+import './config';
 import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
-import * as passport from 'passport';
-import * as compression from 'compression';
+const passport = require('passport');
+const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
@@ -16,19 +16,19 @@ import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
-import { validateEnv } from './config/env-validator';
+import { validateEnv, CONTEXT_PATH } from './config';
 
 import * as packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { corsOptionsDelegate } from './config/cors';
+import { corsOptionsDelegate } from './config';
 
 const extendedBodySizeRoutes = [
   '/v1/events',
   '/v1/notification-templates',
   '/v1/workflows',
   '/v1/layouts',
-  '/v1/echo/sync',
-  '/v1/echo/diff',
+  '/v1/bridge/sync',
+  '/v1/bridge/diff',
 ];
 
 if (process.env.SENTRY_DSN) {

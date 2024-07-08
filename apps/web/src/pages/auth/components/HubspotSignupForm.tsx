@@ -17,12 +17,12 @@ import { successMessage } from '@novu/design-system';
 
 export function HubspotSignupForm() {
   const [loading, setLoading] = useState<boolean>();
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const navigate = useNavigate();
   const { login, currentUser, currentOrganization, environmentId } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { colorScheme } = useMantineColorScheme();
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
 
   const segment = useSegment();
 
@@ -54,7 +54,7 @@ export function HubspotSignupForm() {
     // TODO: Move this into useAuth
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
-    login(organizationResponseToken, isV2ExperienceEnabled ? ROUTES.STUDIO_ONBOARDING : ROUTES.GET_STARTED);
+    login(organizationResponseToken, isV2Enabled ? ROUTES.WORKFLOWS + '?onboarding=true' : ROUTES.GET_STARTED);
   }
 
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -74,7 +74,7 @@ export function HubspotSignupForm() {
 
       return;
     }
-    navigate(isV2ExperienceEnabled ? ROUTES.STUDIO_ONBOARDING : ROUTES.GET_STARTED);
+    navigate(isV2Enabled ? ROUTES.WORKFLOWS + '?onboarding=true' : ROUTES.GET_STARTED);
   };
 
   if (!currentUser || loading) {

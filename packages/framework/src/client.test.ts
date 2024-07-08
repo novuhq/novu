@@ -2,16 +2,15 @@ import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
 import {
-  ExecutionEventInputInvalidError,
+  ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import { workflow } from './workflow';
-import { IEvent, Step } from './types';
-import { delayOutputSchema } from './schemas';
-import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
-import { FromSchema } from './types/schema.types';
+import { workflow } from './resources';
+import { Event, Step, FromSchema } from './types';
+import { delayOutputSchema, channelStepSchemas } from './schemas';
+import { FRAMEWORK_VERSION, SDK_VERSION, ChannelStepEnum, PostActionEnum } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -24,30 +23,30 @@ describe('Novu Client', () => {
       }));
     });
 
-    client = new Client();
+    client = new Client({ secretKey: 'some-secret-key' });
     client.addWorkflows([newWorkflow]);
   });
 
   describe('client constructor', () => {
-    it('should set apiKey to process.env.NOVU_API_KEY by default', () => {
-      const originalApiKey = process.env.NOVU_API_KEY;
-      const testApiKey = 'test-env-api-key';
-      process.env = { ...process.env, NOVU_API_KEY: testApiKey };
+    it('should set secretKey to process.env.NOVU_SECRET_KEY by default', () => {
+      const originalSecretKey = process.env.NOVU_SECRET_KEY;
+      const testSecretKey = 'test-env-secret-key';
+      process.env = { ...process.env, NOVU_SECRET_KEY: testSecretKey };
       const newClient = new Client();
-      expect(newClient.apiKey).toBe(process.env.NOVU_API_KEY);
-      process.env = { ...process.env, NOVU_API_KEY: originalApiKey };
+      expect(newClient.secretKey).toBe(process.env.NOVU_SECRET_KEY);
+      process.env = { ...process.env, NOVU_SECRET_KEY: originalSecretKey };
     });
 
-    it('should set apiKey to provided apiKey', () => {
-      const testApiKey = 'test-provided-api-key';
-      const newClient = new Client({ apiKey: testApiKey });
-      expect(newClient.apiKey).toBe(testApiKey);
+    it('should set secretKey to provided secretKey', () => {
+      const testSecretKey = 'test-provided-secret-key';
+      const newClient = new Client({ secretKey: testSecretKey });
+      expect(newClient.secretKey).toBe(testSecretKey);
     });
 
     it('should set strictAuthentication to false when NODE_ENV is development', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'development' };
-      const newClient = new Client();
+      const newClient = new Client({ secretKey: 'some-secret-key' });
       expect(newClient.strictAuthentication).toBe(false);
       process.env = { ...process.env, NODE_ENV: originalEnv };
     });
@@ -55,15 +54,31 @@ describe('Novu Client', () => {
     it('should set strictAuthentication to true when NODE_ENV is production', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'production' };
-      const newClient = new Client();
+      const newClient = new Client({ secretKey: 'some-secret-key' });
       expect(newClient.strictAuthentication).toBe(true);
       process.env = { ...process.env, NODE_ENV: originalEnv };
     });
 
     it('should set strictAuthentication to provided strictAuthentication', () => {
       const testStrictAuthentication = false;
-      const newClient = new Client({ strictAuthentication: testStrictAuthentication });
+      const newClient = new Client({ secretKey: 'some-secret-key', strictAuthentication: testStrictAuthentication });
       expect(newClient.strictAuthentication).toBe(testStrictAuthentication);
+    });
+
+    it('should set strictAuthentication to false when NOVU_STRICT_AUTHENTICATION_ENABLED is false', () => {
+      const originalEnv = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED;
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: 'false' };
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.strictAuthentication).toBe(false);
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: originalEnv };
+    });
+
+    it('should set strictAuthentication to true when NOVU_STRICT_AUTHENTICATION_ENABLED is true', () => {
+      const originalEnv = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED;
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: 'true' };
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.strictAuthentication).toBe(true);
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: originalEnv };
     });
   });
 
@@ -98,12 +113,12 @@ describe('Novu Client', () => {
 
         await step.custom(
           'send-custom',
-          async (input) => ({
+          async (controls) => ({
             fooBoolean: inAppRes.read,
-            fooString: input.someString,
+            fooString: controls.someString,
           }),
           {
-            inputSchema: {
+            controlSchema: {
               type: 'object',
               properties: {
                 someString: { type: 'string' },
@@ -195,7 +210,7 @@ describe('Novu Client', () => {
       if (stepCustom === undefined) throw new Error('stepEmail is undefined');
       expect(stepCustom.type).toBe('custom');
       expect(stepCustom.code).toContain(`fooBoolean: inAppRes.read`);
-      expect(stepCustom.code).toContain(`fooString: input.someString`);
+      expect(stepCustom.code).toContain(`fooString: controls.someString`);
 
       const stepSms = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-sms');
       expect(stepSms).toBeDefined();
@@ -249,18 +264,18 @@ describe('Novu Client', () => {
           }),
           {
             providers: {
-              slack: async ({ inputs }) => {
-                const blocks = [
-                  {
-                    type: 'header' as any,
-                    text: {
-                      type: 'plain_text',
-                      text: 'Pretty Header',
+              slack: async ({ controls }) => {
+                return {
+                  blocks: [
+                    {
+                      type: 'header',
+                      text: {
+                        type: 'plain_text',
+                        text: 'Pretty Header',
+                      },
                     },
-                  },
-                ];
-
-                return { blocks };
+                  ],
+                };
               },
             },
           }
@@ -285,20 +300,20 @@ describe('Novu Client', () => {
   });
 
   describe('previewWorkflow method', () => {
-    it('should compile default input variables for preview', async () => {
+    it('should compile default control variables for preview', async () => {
       const newWorkflow = workflow(
         'test-workflow',
         async ({ step }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + inputs.name,
-                body: inputs.name,
+                subject: 'body static prefix' + ' ' + controls.name,
+                body: controls.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{name}}' },
@@ -323,9 +338,10 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const emailEvent: IEvent = {
-        action: 'preview',
+      const emailEvent: Event = {
+        action: PostActionEnum.PREVIEW,
         data: { name: 'John' },
+        payload: { name: 'John' },
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {
@@ -333,6 +349,7 @@ describe('Novu Client', () => {
         },
         state: [],
         inputs: {},
+        controls: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -344,10 +361,11 @@ describe('Novu Client', () => {
       expect(subject).toBe('body static prefix John');
     });
   });
+
   describe('executeWorkflow method', () => {
-    it('should execute workflow successfully when action is execute and data is provided', async () => {
+    it('should execute workflow successfully when action is execute and payload is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
-      const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
+      const emailConfiguration: FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['output']> = {
         body: 'Test Body',
         subject: 'Subject',
       };
@@ -356,14 +374,16 @@ describe('Novu Client', () => {
         await step.delay('delay', async () => delayConfiguration);
       });
 
-      const emailEvent: IEvent = {
-        action: 'execute',
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
         data: {},
+        payload: {},
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         inputs: {},
+        controls: {},
       };
 
       client.addWorkflows([newWorkflow]);
@@ -383,9 +403,10 @@ describe('Novu Client', () => {
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
 
-      const delayEvent: IEvent = {
-        action: 'execute',
+      const delayEvent: Event = {
+        action: PostActionEnum.EXECUTE,
         data: {},
+        payload: {},
         workflowId: 'test-workflow',
         stepId: 'delay',
         subscriber: {},
@@ -400,6 +421,7 @@ describe('Novu Client', () => {
           },
         ],
         inputs: {},
+        controls: {},
       };
 
       const delayExecutionResult = await client.executeWorkflow(delayEvent);
@@ -416,7 +438,7 @@ describe('Novu Client', () => {
       expect(type).toBe(delayConfiguration.type);
     });
 
-    it('should compile default input variable', async () => {
+    it('should compile default control variable', async () => {
       const bodyTemplate = `
 {% for element in elements %}
   {{ element }}
@@ -427,14 +449,14 @@ describe('Novu Client', () => {
         async ({ step }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + inputs.name + ' ' + inputs.lastName + ' ' + inputs.role,
-                body: inputs.body,
+                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                body: controls.body,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{name}}' },
@@ -464,9 +486,10 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const emailEvent: IEvent = {
-        action: 'execute',
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
         data: { role: 'product manager', elements: ['cat', 'dog'] },
+        payload: { role: 'product manager', elements: ['cat', 'dog'] },
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {
@@ -474,6 +497,7 @@ describe('Novu Client', () => {
         },
         state: [],
         inputs: {},
+        controls: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -488,27 +512,69 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
-    it('should throw error on execute action without data', async () => {
+    it('should throw error on execute action without payload', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
-        action: 'execute',
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: undefined as any,
+        payload: undefined as any,
         inputs: {},
+        controls: {},
       };
 
-      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventInputInvalidError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventPayloadInvalidError);
     });
 
-    it('should preview with mocked data during preview', async () => {
+    it('should pass the step controls and outputs to the provider execution', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          controlSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            required: ['foo'],
+            additionalProperties: false,
+          } as const,
+          providers: {
+            sendgrid: async ({ controls, outputs }) => ({
+              ipPoolName: `${controls.foo} ${outputs.subject}`,
+            }),
+          },
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {
+          foo: 'foo',
+        },
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
+    });
+
+    it('should preview with mocked payload during preview', async () => {
       const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
@@ -528,14 +594,16 @@ describe('Novu Client', () => {
 
       client.addWorkflows([workflowMock]);
 
-      const event: IEvent = {
-        action: 'preview',
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
         workflowId: 'mock-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -552,14 +620,16 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
-        action: 'preview',
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -591,14 +661,16 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
-        action: 'preview',
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -623,14 +695,16 @@ describe('Novu Client', () => {
 
     it('should throw an error when workflow ID is invalid', async () => {
       // non-existing workflow ID
-      const event: IEvent = {
-        action: 'execute',
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
         workflowId: 'non-existent-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
+        controls: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
@@ -643,7 +717,7 @@ describe('Novu Client', () => {
 
       // no workflow ID
       const event2 = {
-        action: 'execute',
+        action: PostActionEnum.EXECUTE,
         stepId: 'send-email',
         subscriber: {},
         state: [],
@@ -658,14 +732,16 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
-        action: 'execute',
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
         workflowId: 'test-workflow',
         stepId: 'non-existing-step',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
+        controls: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionStateCorruptError);
@@ -684,6 +760,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         inputs: {},
+        controls: {},
       } as any;
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
@@ -703,7 +780,7 @@ describe('Novu Client', () => {
     };
 
     beforeEach(async () => {
-      getCodeClientInstance = new Client();
+      getCodeClientInstance = new Client({ secretKey: 'some-secret-key' });
 
       const newWorkflow = workflow('setup-workflow', workflowExecuteFunc);
 
@@ -732,6 +809,22 @@ describe('Novu Client', () => {
       const codeResult = getCodeClientInstance.getCode('setup-workflow', 'send-email');
 
       expect(codeResult.code).toEqual(stepExecuteFunc.toString());
+    });
+  });
+
+  describe('healthCheck method', () => {
+    it('should return expected data from healthCheck method', () => {
+      const toCheck = client.healthCheck();
+
+      expect(toCheck).toEqual({
+        discovered: {
+          steps: 1,
+          workflows: 1,
+        },
+        frameworkVersion: FRAMEWORK_VERSION,
+        sdkVersion: SDK_VERSION,
+        status: 'ok',
+      });
     });
   });
 });

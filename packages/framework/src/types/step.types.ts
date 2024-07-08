@@ -7,17 +7,18 @@ import {
   digestResultSchema,
   digestTimedOutputSchema,
 } from '../schemas';
-import { channelStepSchemas } from '../schemas/steps/channels';
-import { Providers } from './provider.types';
-import { Schema, FromSchema } from './schema.types';
-import { Skip } from './skip.types';
-import { Awaitable } from './util.types';
 import { actionStepSchemas } from '../schemas/steps/actions';
+import { channelStepSchemas } from '../schemas/steps/channels';
+import type { Providers } from './provider.types';
+import type { FromSchema, Schema } from './schema.types';
+import type { Skip } from './skip.types';
+import type { Awaitable, Prettify } from './util.types';
 
 // @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
 export type StepOptions = {
   skip?: Skip<any>;
   inputSchema?: Schema;
+  controlSchema?: Schema;
   providers?: Record<string, (payload: any) => Awaitable<any>>;
 };
 
@@ -52,19 +53,44 @@ type StepOutput<T_Result> = Promise<T_Result & StepContext>;
 
 export type ActionStep<T_Outputs, T_Result> = <
   /**
-   * The schema for the inputs of the step.
+   * The schema for the controls of the step.
    */
-  T_InputSchema extends Schema,
+  T_ControlSchema extends Schema,
   /**
-   * The inputs for the step.
+   * The controls for the step.
    */
-  T_Inputs = FromSchema<T_InputSchema>
+  T_Controls = FromSchema<T_ControlSchema>
 >(
+  /**
+   * The name of the step. This is used to identify the step in the workflow.
+   */
   name: string,
-  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
+  /**
+   * The function to resolve the step notification content for the step.
+   *
+   * @param controls The controls for the step.
+   */
+  resolve: (controls: T_Controls) => Awaitable<T_Outputs>,
+  /**
+   * The options for the step.
+   */
   options?: {
-    skip?: Skip<T_Inputs>;
-    inputSchema?: T_InputSchema;
+    /**
+     * Skip the step. If the skip function returns true, the step will be skipped.
+     *
+     * @param controls The controls for the step.
+     */
+    skip?: Skip<T_Controls>;
+    /**
+     * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+     *
+     * @deprecated Use `controlSchema` instead
+     */
+    inputSchema?: T_ControlSchema;
+    /**
+     * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+     */
+    controlSchema?: T_ControlSchema;
     // TODO: Remove the providers from the action step options
     providers?: Record<string, (payload: unknown) => Awaitable<unknown>>;
   }
@@ -72,17 +98,17 @@ export type ActionStep<T_Outputs, T_Result> = <
 
 export type CustomStep = <
   /**
-   * The schema for the inputs of the step.
+   * The schema for the controls of the step.
    */
-  T_InputSchema extends Schema,
+  T_ControlSchema extends Schema,
   /**
    * The schema for the outputs of the step.
    */
   T_OutputsSchema extends Schema,
   /**
-   * The inputs for the step.
+   * The controls for the step.
    */
-  T_Inputs = FromSchema<T_InputSchema>,
+  T_Controls = FromSchema<T_ControlSchema>,
   /**
    * The result for the step.
    */
@@ -97,9 +123,9 @@ export type CustomStep = <
   /**
    * The function to resolve the step notification content for the step.
    *
-   * @param inputs The inputs for the step.
+   * @param controls The controls for the step.
    */
-  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
+  resolve: (controls: T_Controls) => Awaitable<T_Outputs>,
   /**
    * The options for the step.
    */
@@ -107,13 +133,22 @@ export type CustomStep = <
     /**
      * Skip the step. If the skip function returns true, the step will be skipped.
      *
-     * @param inputs The inputs for the step.
+     * @param controls The controls for the step.
      */
-    skip?: Skip<T_Inputs>;
+    skip?: Skip<T_Controls>;
     /**
-     * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
+     * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+     *
+     * @deprecated Use `controlSchema` instead
      */
-    inputSchema?: T_InputSchema;
+    inputSchema?: T_ControlSchema;
+    /**
+     * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+     */
+    controlSchema?: T_ControlSchema;
+    /**
+     * The schema for the outputs of the step. Used to validate the output of the `resolve` function.
+     */
     outputSchema?: T_OutputsSchema;
     /**
      * The providers for the step. Used to override the behaviour of the providers for the step.
@@ -136,13 +171,13 @@ export type ChannelStep<
   T_Result
 > = <
   /**
-   * The schema for the inputs of the step.
+   * The schema for the controls of the step.
    */
-  T_InputSchema extends Schema,
+  T_ControlSchema extends Schema,
   /**
-   * The inputs for the step.
+   * The controls for the step.
    */
-  T_Inputs = FromSchema<T_InputSchema>
+  T_Controls = FromSchema<T_ControlSchema>
 >(
   /**
    * The name of the step. This is used to identify the step in the workflow.
@@ -151,9 +186,9 @@ export type ChannelStep<
   /**
    * The function to resolve the step notification content for the step.
    *
-   * @param inputs The inputs for the step.
+   * @param controls The controls for the step.
    */
-  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
+  resolve: (controls: T_Controls) => Awaitable<T_Outputs>,
   /**
    * The options for the step.
    */
@@ -161,20 +196,26 @@ export type ChannelStep<
     /**
      * Skip the step. If the skip function returns true, the step will be skipped.
      *
-     * @param inputs The inputs for the step.
+     * @param controls The controls for the step.
      */
-    skip?: Skip<T_Inputs>;
+    skip?: Skip<T_Controls>;
     /**
-     * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
+     * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+     *
+     * @deprecated Use `controlSchema` instead
      */
-    inputSchema?: T_InputSchema;
+    inputSchema?: T_ControlSchema;
+    /**
+     * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+     */
+    controlSchema?: T_ControlSchema;
     /**
      * The providers for the step. Used to override the behaviour of the providers for the step.
      */
-    providers?: Providers<T_StepType, T_Inputs, T_Outputs>;
+    providers?: Prettify<Providers<T_StepType, T_Controls, T_Outputs>>;
     /*
-     * credentials?: (inputs: T_Inputs) => Promise<Record<string, unknown>>;
-     * preferences?: (input: T_Inputs) => Promise<Record<string, unknown>>;
+     * credentials?: (controls: T_Controls) => Promise<Record<string, unknown>>;
+     * preferences?: (controls: T_Controls) => Promise<Record<string, unknown>>;
      */
   }
 ) => Promise<T_Result & StepContext>;

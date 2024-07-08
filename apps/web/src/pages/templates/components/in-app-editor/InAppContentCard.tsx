@@ -6,14 +6,14 @@ import { InAppPreview } from '../../../../components/workflow/preview';
 import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { ControlVariablesForm } from '../ControlVariablesForm';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { InAppEditorBlock } from './InAppEditorBlock';
 
 const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
-const INPUTS = 'Inputs';
+const CONTROLS = 'Controls';
 
 export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
   const { template } = useTemplateEditorForm();
@@ -64,8 +64,8 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
         />
       ) : null}
 
-      <When truthy={activeTab === INPUTS}>
-        <InputVariablesForm />
+      <When truthy={activeTab === CONTROLS}>
+        <ControlVariablesForm />
       </When>
       <When truthy={activeTab === PREVIEW}>
         <div style={{ marginTop: '1.5rem' }}>

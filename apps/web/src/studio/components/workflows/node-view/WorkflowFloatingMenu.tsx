@@ -16,6 +16,7 @@ import { VStack } from '@novu/novui/jsx';
 import { vstack } from '@novu/novui/patterns';
 import { FC, PropsWithChildren } from 'react';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
+import { DOCS_URL } from '../../../../components/docs/docs.const';
 
 type IWorkflowFloatingMenuProps = CoreProps;
 
@@ -23,13 +24,12 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
   const { Component: DocsModal, setPath, toggle } = useDocsModal();
 
   const handleClick = (pathToSet: string) => () => {
-    setPath('framework/steps/' + pathToSet);
-    toggle();
+    window.open(`${DOCS_URL}/sdks/framework/typescript/steps/${pathToSet}`, '_blank');
   };
 
   return (
     <>
-      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '25' }), className)}>
+      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '50' }), className)}>
         <WorkflowFloatingMenuSection title="Actions">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAutoAwesomeMotion}
@@ -41,12 +41,17 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
             tooltipLabel="Guide of how to add a Delay step for embedding in code"
             onClick={handleClick('delay')}
           />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineBolt}
+            tooltipLabel="Guide of how to add a Custom step for embedding in code"
+            onClick={handleClick('custom')}
+          />
         </WorkflowFloatingMenuSection>
         <WorkflowFloatingMenuSection title="Channels">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineNotifications}
             tooltipLabel="Guide of how to add an In-app step for embedding in code"
-            onClick={handleClick('in-app')}
+            onClick={handleClick('inbox')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineEmail}
@@ -67,11 +72,6 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
             Icon={IconOutlineForum}
             tooltipLabel="Guide of how to add a Chat step for embedding in code"
             onClick={handleClick('chat')}
-          />
-          <WorkflowFloatingMenuButton
-            Icon={IconOutlineBolt}
-            tooltipLabel="Guide of how to add a Custom step for embedding in code"
-            onClick={handleClick('custom')}
           />
         </WorkflowFloatingMenuSection>
       </menu>

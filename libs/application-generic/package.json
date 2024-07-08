@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -96,7 +96,7 @@
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
-    "@novu/ee-echo-worker": "workspace:*",
+    "@novu/ee-bridge-worker": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
@@ -110,7 +110,7 @@
     "chai": "^4.2.0",
     "codecov": "^3.5.0",
     "cpx": "^1.5.0",
-    "dotenv": "^8.2.0",
+    "dotenv": "^16.4.5",
     "jest": "^27.1.0",
     "newrelic": "^9",
     "npm-run-all": "^4.1.5",

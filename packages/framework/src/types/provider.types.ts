@@ -1,12 +1,18 @@
 import { providerSchemas } from '../schemas';
-import { FromSchema } from './schema.types';
+import type { FromSchema } from './schema.types';
 
-export type Providers<T_StepType extends keyof typeof providerSchemas, T_Input, T_Output> = {
+export type Providers<T_StepType extends keyof typeof providerSchemas, T_Control, T_Output> = {
   [K in keyof (typeof providerSchemas)[T_StepType]]: (step: {
     /**
-     * The inputs for the step.
+     * The controls for the step.
+     *
+     * @deprecated Use `controls` instead
      */
-    inputs: T_Input;
+    inputs: T_Control;
+    /**
+     * The controls for the step.
+     */
+    controls: T_Control;
     /**
      * The outputs of the step.
      */

@@ -2,17 +2,20 @@ import * as Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
 import { UserSessionData } from '@novu/shared';
 
+type OriginPort = number;
+type ConfigKey = 'token' | 'anonymousId' | `tunnelUrl-${OriginPort}`;
+
 export class ConfigService {
   private _config: Configstore;
   constructor() {
     this._config = new Configstore('novu-cli');
   }
 
-  setValue(key: string, value: string) {
+  setValue(key: ConfigKey, value: string) {
     this._config.set(key, value);
   }
 
-  getValue(key: string) {
+  getValue(key: ConfigKey) {
     return this._config.get(key);
   }
 
@@ -29,7 +32,7 @@ export class ConfigService {
   }
 
   getToken(): string {
-    return this._config.get('token');
+    return this.getValue('token');
   }
 
   getDecodedToken(): UserSessionData {
