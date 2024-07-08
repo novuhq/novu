@@ -5,8 +5,8 @@
   "scripts": {
     "start": "pnpm panda --watch & vite --port=4200",
     "prebuild": "rimraf build",
-    "build": "pnpm panda && cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
-    "build:test": "pnpm panda && cross-env REACT_APP_HUBSPOT_EMBED=44416662 REACT_APP_API_URL=http://127.0.0.1:1336 NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
+    "build": "pnpm panda && cross-env vite build",
+    "build:test": "pnpm panda && cross-env REACT_APP_HUBSPOT_EMBED=44416662 REACT_APP_API_URL=http://127.0.0.1:1336 vite build",
     "precommit": "lint-staged",
     "docker:build": "docker buildx build --load -f ./Dockerfile -t novu-web ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",
@@ -180,7 +180,6 @@
     "eslint-plugin-storybook": "^0.6.13",
     "http-server": "^0.13.0",
     "less-loader": "4.1.0",
-    "react-app-rewired": "^2.2.1",
     "react-error-overlay": "6.0.11",
     "react-scripts": "^5.0.1",
     "sinon": "9.2.4",
