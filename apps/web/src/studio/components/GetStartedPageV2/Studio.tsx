@@ -457,7 +457,7 @@ export const Studio = () => {
                     fill="#A1A1B2"
                   />
                 </g>
-                <path d="M140 108V132" stroke="#A1A1B2" stroke-dasharray="3 3" />
+                <path d="M140 108V132" stroke="#A1A1B2" strokeDasharray="3 3" />
                 <g filter="url(#filter2_d_5956_42863)">
                   <path
                     d="M40 144C40 137.373 45.3726 132 52 132H228C234.627 132 240 137.373 240 144V180C240 186.627 234.627 192 228 192H52C45.3726 192 40 186.627 40 180V144Z"
@@ -488,9 +488,9 @@ export const Studio = () => {
             width="320"
             height="312"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -511,9 +511,9 @@ export const Studio = () => {
             width="240"
             height="100"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -534,9 +534,9 @@ export const Studio = () => {
             width="240"
             height="100"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -558,8 +558,8 @@ export const Studio = () => {
             y2="254.731"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="white" stop-opacity="0" />
-            <stop offset="1" stop-color="white" />
+            <stop stopColor="white" stopOpacity="0" />
+            <stop offset="1" stopColor="white" />
           </linearGradient>
           <clipPath id="clip0_5956_42863">
             <rect width="280" height="180" fill="white" />
@@ -1020,7 +1020,7 @@ export const Studio = () => {
                 fill="#525266"
               />
             </g>
-            <path d="M140 108V132" stroke="#525266" stroke-dasharray="3 3" />
+            <path d="M140 108V132" stroke="#525266" strokeDasharray="3 3" />
             <g filter="url(#filter2_d_5956_77314)">
               <path
                 d="M40 144C40 137.373 45.3726 132 52 132H228C234.627 132 240 137.373 240 144V180C240 186.627 234.627 192 228 192H52C45.3726 192 40 186.627 40 180V144Z"
@@ -1050,9 +1050,9 @@ export const Studio = () => {
           width="320"
           height="312"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -1073,9 +1073,9 @@ export const Studio = () => {
           width="240"
           height="100"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -1096,9 +1096,9 @@ export const Studio = () => {
           width="240"
           height="100"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -1120,8 +1120,8 @@ export const Studio = () => {
           y2="254.731"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#1E1E26" stop-opacity="0" />
-          <stop offset="1" stop-color="#1E1E26" />
+          <stop stopColor="#1E1E26" stopOpacity="0" />
+          <stop offset="1" stopColor="#1E1E26" />
         </linearGradient>
       </defs>
     </svg>

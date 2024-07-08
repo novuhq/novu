@@ -77,8 +77,8 @@ export const GithubAction = () => {
               </mask>
               <g mask="url(#mask3_6003_242425)">
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M16.0066 8C11.5792 8 8 11.6667 8 16.2028C8 19.8288 10.2933 22.8981 13.4747 23.9844C13.8725 24.0661 14.0182 23.8079 14.0182 23.5908C14.0182 23.4006 14.005 22.7488 14.005 22.0696C11.7778 22.5586 11.314 21.0918 11.314 21.0918C10.9561 20.1411 10.4257 19.8968 10.4257 19.8968C9.69674 19.3943 10.4788 19.3943 10.4788 19.3943C11.2874 19.4486 11.7118 20.2363 11.7118 20.2363C12.4275 21.4856 13.5807 21.1326 14.0447 20.9153C14.1109 20.3856 14.3232 20.0189 14.5485 19.8153C12.7721 19.6251 10.9031 18.919 10.9031 15.7681C10.9031 14.8718 11.2211 14.1385 11.7249 13.5681C11.6454 13.3645 11.3669 12.5223 11.8045 11.3952C11.8045 11.3952 12.4806 11.1778 14.0049 12.2371C14.6575 12.0576 15.3305 11.9663 16.0066 11.9655C16.6827 11.9655 17.3718 12.0606 18.0082 12.2371C19.5327 11.1778 20.2087 11.3952 20.2087 11.3952C20.6463 12.5223 20.3677 13.3645 20.2882 13.5681C20.8053 14.1385 21.1101 14.8718 21.1101 15.7681C21.1101 18.919 19.2411 19.6115 17.4515 19.8153C17.7432 20.0733 17.9949 20.5621 17.9949 21.3363C17.9949 22.4363 17.9818 23.3191 17.9818 23.5906C17.9818 23.8079 18.1277 24.0661 18.5253 23.9846C21.7067 22.8979 24 19.8288 24 16.2028C24.0131 11.6667 20.4208 8 16.0066 8Z"
                   fill="#A1A1B2"
                 />
@@ -254,9 +254,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -277,9 +277,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -300,9 +300,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -323,9 +323,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -346,9 +346,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -369,9 +369,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -392,9 +392,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -415,9 +415,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -438,9 +438,9 @@ export const GithubAction = () => {
             width="41"
             height="60"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -461,9 +461,9 @@ export const GithubAction = () => {
             width="270"
             height="170"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -484,9 +484,9 @@ export const GithubAction = () => {
             width="430"
             height="134"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -508,8 +508,8 @@ export const GithubAction = () => {
             y2="254.731"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="white" stop-opacity="0" />
-            <stop offset="0.625985" stop-color="white" />
+            <stop stopColor="white" stopOpacity="0" />
+            <stop offset="0.625985" stopColor="white" />
           </linearGradient>
         </defs>
       </svg>
@@ -518,7 +518,7 @@ export const GithubAction = () => {
 
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="288" height="188" viewBox="0 0 288 188" fill="none">
-      <g clip-path="url(#clip0_6003_246339)" filter="url(#filter0_d_6003_246339)">
+      <g clipPath="url(#clip0_6003_246339)" filter="url(#filter0_d_6003_246339)">
         <mask
           id="mask0_6003_246339"
           style={{
@@ -589,8 +589,8 @@ export const GithubAction = () => {
               </mask>
               <g mask="url(#mask3_6003_246339)">
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M20.0066 8C15.5792 8 12 11.6667 12 16.2028C12 19.8288 14.2933 22.8981 17.4747 23.9844C17.8725 24.0661 18.0182 23.8079 18.0182 23.5908C18.0182 23.4006 18.005 22.7488 18.005 22.0696C15.7778 22.5586 15.314 21.0918 15.314 21.0918C14.9561 20.1411 14.4257 19.8968 14.4257 19.8968C13.6967 19.3943 14.4788 19.3943 14.4788 19.3943C15.2874 19.4486 15.7118 20.2363 15.7118 20.2363C16.4275 21.4856 17.5807 21.1326 18.0447 20.9153C18.1109 20.3856 18.3232 20.0189 18.5485 19.8153C16.7721 19.6251 14.9031 18.919 14.9031 15.7681C14.9031 14.8718 15.2211 14.1385 15.7249 13.5681C15.6454 13.3645 15.3669 12.5223 15.8045 11.3952C15.8045 11.3952 16.4806 11.1778 18.0049 12.2371C18.6575 12.0576 19.3305 11.9663 20.0066 11.9655C20.6827 11.9655 21.3718 12.0606 22.0082 12.2371C23.5327 11.1778 24.2087 11.3952 24.2087 11.3952C24.6463 12.5223 24.3677 13.3645 24.2882 13.5681C24.8053 14.1385 25.1101 14.8718 25.1101 15.7681C25.1101 18.919 23.2411 19.6115 21.4515 19.8153C21.7432 20.0733 21.9949 20.5621 21.9949 21.3363C21.9949 22.4363 21.9818 23.3191 21.9818 23.5906C21.9818 23.8079 22.1277 24.0661 22.5253 23.9846C25.7067 22.8979 28 19.8288 28 16.2028C28.0131 11.6667 24.4208 8 20.0066 8Z"
                   fill="#76768B"
                 />
@@ -767,9 +767,9 @@ export const GithubAction = () => {
           width="288"
           height="188"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -790,9 +790,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -813,9 +813,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -836,9 +836,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -859,9 +859,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -882,9 +882,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -905,9 +905,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -928,9 +928,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -951,9 +951,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -974,9 +974,9 @@ export const GithubAction = () => {
           width="41"
           height="60"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -997,9 +997,9 @@ export const GithubAction = () => {
           width="336"
           height="236"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -1042,9 +1042,9 @@ export const GithubAction = () => {
           width="440"
           height="144"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -1066,8 +1066,8 @@ export const GithubAction = () => {
           y2="254.731"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#1E1E26" stop-opacity="0" />
-          <stop offset="0.625985" stop-color="#1E1E26" />
+          <stop stopColor="#1E1E26" stopOpacity="0" />
+          <stop offset="0.625985" stopColor="#1E1E26" />
         </linearGradient>
         <clipPath id="clip0_6003_246339">
           <rect width="280" height="180" fill="white" transform="translate(4)" />
