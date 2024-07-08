@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { Schema } from '../../../types/schema.types';
 
 /**
@@ -5,14 +6,15 @@ import { Schema } from '../../../types/schema.types';
  *
  * @see https://api.slack.com/reference/messaging/payload
  */
-export const sendgridOutputSchema = {
-  type: 'object',
-  properties: {
-    ipPoolName: { type: 'string' },
-  },
-  required: ['ipPoolName'],
-  additionalProperties: false,
-} as const satisfies Schema;
+export const sendgridOutputSchema = z.object({
+  ipPoolName: z.string(),
+  customData: z
+    .object({
+      dynamicTemplateData: z.record(z.string(), z.any()).optional(),
+      templateId: z.string().optional(),
+    })
+    .optional(),
+}) satisfies Schema;
 
 export const sendgridProviderSchemas = {
   output: sendgridOutputSchema,
