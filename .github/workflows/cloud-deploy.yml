@@ -54,13 +54,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has started for ${{ steps.setenvname.outputs.envName }}",
+              "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release has started for ${{ steps.setenvname.outputs.envName }}"
+                    "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
                   }
                 }
               ]
@@ -150,8 +150,8 @@ jobs:
       test_port: ${{ matrix.service.test_port }}
       local_tag: novu-${{ matrix.service.name }}
 
-  post-release:
-    if: ${{ always() }}
+  post-release-failure:
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
     needs: [
       release-services,
       release-embed,
@@ -169,7 +169,6 @@ jobs:
 
       - name: Failed Deployment Notification
         uses: slackapi/slack-github-action@v1.26.0
-        if: ${{ always() && contains(needs.*.result, 'failure') }}
         with:
           payload: |
             {
@@ -179,7 +178,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release has failed"
+                    "text": "Release has failed.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
                   }
                 }
               ]
@@ -187,6 +186,22 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
+  post-release-success:
+    if: ${{ always() && contains(needs.*.result, 'success') }}
+    needs: [
+      release-services,
+      release-embed,
+      release-web,
+      release-widget,
+      release-web-components,
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API Documentation
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
+          method: 'POST'
       - name: Success Deployment Notification
         uses: slackapi/slack-github-action@v1.26.0
         if: ${{ always() && contains(needs.*.result, 'success') }}
@@ -199,7 +214,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release was successful"
+                    "text": "Release was successful.\n[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
                   }
                 }
               ]
