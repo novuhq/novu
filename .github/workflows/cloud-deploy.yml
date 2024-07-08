@@ -54,13 +54,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>",
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has started for ${{ steps.setenvname.outputs.envName }}.>*",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release has started (In Progress) for ${{ steps.setenvname.outputs.envName }}.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>"
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has started for ${{ steps.setenvname.outputs.envName }}.>*)"
                   }
                 }
               ]
@@ -172,13 +172,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "Release has failed.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>",
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has Failed.>*",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release has failed.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>"
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has Failed.>*"
                   }
                 }
               ]
@@ -204,17 +204,16 @@ jobs:
           method: 'POST'
       - name: Success Deployment Notification
         uses: slackapi/slack-github-action@v1.26.0
-        if: ${{ always() && contains(needs.*.result, 'success') }}
         with:
           payload: |
             {
-              "text": "Release was successful.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>",
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release was successful.>*",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release was successful.<br><small>[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</small>"
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release was successful.>*"
                   }
                 }
               ]
