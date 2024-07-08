@@ -61,11 +61,12 @@ export class InviteMember {
       },
     };
 
+    await this.memberRepository.addMember(organization._id, memberPayload);
+
     this.analyticsService.track('Invite Organization Member', command.userId, {
       _organization: command.organizationId,
       role: command.role,
+      email: command.email,
     });
-
-    await this.memberRepository.addMember(organization._id, memberPayload);
   }
 }
