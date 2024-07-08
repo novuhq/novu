@@ -4,12 +4,12 @@ import * as sinon from 'sinon';
 import * as chai from 'chai';
 
 import { bootstrap } from '../src/bootstrap';
-import { IS_CLERK_ENABLED } from '@novu/shared';
+import { isClerkEnabled } from '@novu/shared';
 
 const dalService = new DalService();
 
 async function seedClerkMongo() {
-  if (IS_CLERK_ENABLED) {
+  if (isClerkEnabled()) {
     const clerkClientMock = require('@novu/ee-auth')?.ClerkClientMock;
 
     if (clerkClientMock) {

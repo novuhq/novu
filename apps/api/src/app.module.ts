@@ -39,7 +39,7 @@ import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
-import { IS_CLERK_ENABLED } from '@novu/shared';
+import { isClerkEnabled } from '@novu/shared';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -55,7 +55,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     }
   }
 
-  if (IS_CLERK_ENABLED) {
+  if (isClerkEnabled()) {
     Logger.log('Clerk enabled');
   }
 
@@ -108,7 +108,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 
 const enterpriseModules = enterpriseImports();
 
-if (!IS_CLERK_ENABLED) {
+if (!isClerkEnabled()) {
   const communityModules = [StorageModule, InvitesModule];
   baseModules.push(...communityModules);
 }

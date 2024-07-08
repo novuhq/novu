@@ -18,7 +18,7 @@ import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { EEOrganizationController } from './ee.organization.controller';
-import { IS_CLERK_ENABLED } from '@novu/shared';
+import { isClerkEnabled } from '@novu/shared';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -36,7 +36,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 function getControllers() {
-  if (IS_CLERK_ENABLED) {
+  if (isClerkEnabled()) {
     return [EEOrganizationController];
   }
 

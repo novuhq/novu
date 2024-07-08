@@ -13,7 +13,7 @@ import {
   StepTypeEnum,
   TriggerRecipientsPayload,
   ClerkJwtPayload,
-  IS_CLERK_ENABLED,
+  isClerkEnabled,
 } from '@novu/shared';
 import {
   UserEntity,
@@ -95,7 +95,7 @@ export class UserSession {
   }
 
   async initialize(options?: UserSessionOptions) {
-    if (IS_CLERK_ENABLED) {
+    if (isClerkEnabled()) {
       // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
@@ -218,7 +218,7 @@ export class UserSession {
   }
 
   async fetchJWT() {
-    if (IS_CLERK_ENABLED) {
+    if (isClerkEnabled()) {
       await this.fetchJwtEE();
     } else {
       await this.fetchJwtCommunity();
@@ -226,7 +226,7 @@ export class UserSession {
   }
 
   async addOrganization() {
-    if (IS_CLERK_ENABLED) {
+    if (isClerkEnabled()) {
       return await this.addOrganizationEE('clerk_org_1');
     } else {
       return await this.addOrganizationCommunity();
@@ -408,7 +408,7 @@ export class UserSession {
       this.environment = environment;
       await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
 
-      if (IS_CLERK_ENABLED) {
+      if (isClerkEnabled()) {
         await this.fetchJwtEE();
       } else {
         await this.fetchJwtCommunity();
@@ -474,7 +474,7 @@ export class UserSession {
   }
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
-    const organizationService = IS_CLERK_ENABLED ? new EEOrganizationService() : new OrganizationService();
+    const organizationService = isClerkEnabled() ? new EEOrganizationService() : new OrganizationService();
 
     await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
   }

@@ -1,8 +1,8 @@
 import { CommunityOrganizationRepository, CommunityUserRepository, CommunityMemberRepository } from '@novu/dal';
-import { IS_CLERK_ENABLED } from '@novu/shared';
+import { isClerkEnabled } from '@novu/shared';
 
 export function getEERepository<T>(className: 'OrganizationRepository' | 'MemberRepository' | 'UserRepository'): T {
-  if (IS_CLERK_ENABLED) {
+  if (isClerkEnabled()) {
     switch (className) {
       case 'OrganizationRepository':
         return getEEOrganizationRepository();

@@ -10,7 +10,7 @@ import {
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
-import { IS_CLERK_ENABLED } from '@novu/shared';
+import { isClerkEnabled } from '@novu/shared';
 import {
   AnalyticsService,
   CommunityAuthService,
@@ -33,7 +33,7 @@ export function injectRepositories(
     repositoriesOnly: true,
   }
 ) {
-  if (!IS_CLERK_ENABLED) {
+  if (!isClerkEnabled()) {
     const userRepositoryProvider = {
       provide: 'USER_REPOSITORY',
       useClass: CommunityUserRepository,
