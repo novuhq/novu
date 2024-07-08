@@ -1,5 +1,5 @@
 import { IsDefined, IsEmail, IsNotEmpty } from 'class-validator';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import * as Sentry from '@sentry/node';
 import { BadRequestException } from '@nestjs/common';
 

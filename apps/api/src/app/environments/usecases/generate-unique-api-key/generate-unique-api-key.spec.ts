@@ -1,7 +1,7 @@
 import { EnvironmentRepository } from '@novu/dal';
 import { InternalServerErrorException } from '@nestjs/common';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { GenerateUniqueApiKey } from './generate-unique-api-key.usecase';
 
