@@ -58,7 +58,7 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const inPublicRoute = Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
+  const inPublicRoute = !!Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
     location.pathname.startsWith(prefix)
   );
   const inPrivateRoute = !inPublicRoute;
