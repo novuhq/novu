@@ -157,7 +157,7 @@ jobs:
           method: 'POST'
 
       - name: Failed Deployment Notification
-        if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
+        if: ${{ always() && contains(needs.*.result, 'failure') }}
         uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release has failed"
@@ -169,7 +169,7 @@ jobs:
 
 
       - name: Success Deployment Notification
-        if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
+        if: ${{ always() && contains(needs.*.result, 'success') }}
         uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release was successful"
