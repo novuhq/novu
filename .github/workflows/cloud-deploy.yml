@@ -49,7 +49,7 @@ jobs:
           fi
 
       - name: Start Deployment Notification
-        uses: ravsamhq/notify-slack-action@v2
+        uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release has started for ${{ steps.env_name.outputs.env }} "
         env:
@@ -156,17 +156,23 @@ jobs:
 
       - name: Failed Deployment Notification
         if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
-        uses: ravsamhq/notify-slack-action@v2
+        uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release has failed"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          notify_when: "failure"
+          status: ${{ job.status }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
 
 
       - name: Success Deployment Notification
         if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
-        uses: ravsamhq/notify-slack-action@v2
+        uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release was successful"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          notify_when: "success"
+          status: ${{ job.status }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
