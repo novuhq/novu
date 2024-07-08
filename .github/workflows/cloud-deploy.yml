@@ -187,7 +187,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
   post-release-success:
-    if: ${{ always() && contains(needs.*.result, 'success') }}
+    if: ${{ always() && (!contains(needs.*.result, 'failure') || !contains(needs.*.result, 'cancelled')) }}
     needs: [
       release-services,
       release-embed,
