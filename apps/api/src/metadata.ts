@@ -1999,6 +1999,18 @@ export default async () => {
           },
         ],
         [
+          import('./app/organization/ee.organization.controller'),
+          {
+            EEOrganizationController: {
+              getMyOrganization: {
+                type: t['../../../libs/dal/dist/repositories/organization/organization.entity'].OrganizationEntity,
+              },
+              updateBrandingDetails: {},
+              renameOrganization: {},
+            },
+          },
+        ],
+        [
           import('./app/testing/testing.controller'),
           {
             TestingController: {
@@ -2008,7 +2020,6 @@ export default async () => {
                   'Used for seeding data for client e2e tests,\nCurrently just creates a new user session and returns signed JWT',
                 type: Object,
               },
-              seedData: {},
               idempotency: {},
               idempotencyGet: {},
               productFeatureGet: {},
