@@ -51,7 +51,8 @@ jobs:
       - name: Start Deployment Notification
         uses: ravsamhq/notify-slack-action@2.3.0
         with:
-          notification_title: "Release has started for ${{ steps.env_name.outputs.env }} "
+          notification_title: "Release has started for ${{ steps.setenvname.outputs.envName }} "
+          message_format: ""
           status: ${{ job.status }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
@@ -160,6 +161,7 @@ jobs:
         uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release has failed"
+          message_format: "{emoji} *{workflow}* {status_message}"
           notify_when: "failure"
           status: ${{ job.status }}
         env:
@@ -171,6 +173,7 @@ jobs:
         uses: ravsamhq/notify-slack-action@2.3.0
         with:
           notification_title: "Release was successful"
+          message_format: "{emoji} *{workflow}* {status_message}"
           notify_when: "success"
           status: ${{ job.status }}
         env:
