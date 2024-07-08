@@ -51,9 +51,29 @@ jobs:
       - name: Start Deployment Notification
         uses: ravsamhq/notify-slack-action@2.3.0
         with:
-          notification_title: "Release has started for ${{ steps.setenvname.outputs.envName }} "
+          notification_title: "Release has started for ${{ steps.setenvname.outputs.envName }}"
           message_format: ""
           status: ${{ job.status }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+
+      - name: Start Deployment Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "Release has started for ${{ steps.setenvname.outputs.envName }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Release has started for ${{ steps.setenvname.outputs.envName }}"
+                  }
+                }
+              ]
+            }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
@@ -157,24 +177,43 @@ jobs:
           method: 'POST'
 
       - name: Failed Deployment Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
         if: ${{ always() && contains(needs.*.result, 'failure') }}
-        uses: ravsamhq/notify-slack-action@2.3.0
         with:
-          notification_title: "Release has failed"
-          message_format: "{emoji} *{workflow}* {status_message}"
-          notify_when: "failure"
-          status: ${{ job.status }}
+          payload: |
+            {
+              "text": "Release has failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Release has failed"
+                  }
+                }
+              ]
+            }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
-
       - name: Success Deployment Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
         if: ${{ always() && contains(needs.*.result, 'success') }}
-        uses: ravsamhq/notify-slack-action@2.3.0
         with:
-          notification_title: "Release was successful"
-          message_format: "{emoji} *{workflow}* {status_message}"
-          notify_when: "success"
-          status: ${{ job.status }}
+          payload: |
+            {
+              "text": "Release was successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Release was successful"
+                  }
+                }
+              ]
+            }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
