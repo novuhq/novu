@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { green, cyan } from 'picocolors';
 import fs from 'fs';
 import path from 'path';
@@ -59,7 +58,7 @@ export async function createApp({
 
   process.chdir(root);
 
-  let hasPackageJson = false;
+  const hasPackageJson = false;
 
   /**
    * If an example repository is not provided for cloning, proceed

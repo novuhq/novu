@@ -3,9 +3,10 @@
 import { Command } from 'commander';
 import { devCommand, DevCommandOptions } from './commands';
 import { sync } from './commands/sync';
-
+import { green } from 'picocolors';
 import { v4 as uuidv4 } from 'uuid';
 import { AnalyticService, ConfigService } from './services';
+import { IInitCommandOptions, init } from './commands/init';
 
 const analytics = new AnalyticService();
 export const config = new ConfigService();
@@ -77,6 +78,21 @@ program
     });
 
     return await devCommand(options, anonymousId);
+  });
+
+program
+  .command('init')
+  .description(`Scaffold a new Novu application`)
+  .argument('[project-directory]')
+  .option(
+    '-s, --secret-key <secret-key>',
+    `Your Novu development environment secret key. Note that your novu app won't work outside of local mode without it.`
+  )
+  .usage(`${green('<project-directory>')} [-s <secret-key>] [options]`)
+  .action(async (options: IInitCommandOptions) => {
+    console.log(options);
+
+    return await init(options || {});
   });
 
 program.parse(process.argv);
