@@ -8,7 +8,10 @@ import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/c
 import { OrganizationResource, UserResource } from '@clerk/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
-import { IS_EE_AUTH_ENABLED } from '../../../config/index';
+import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
+import { ClerkProvider } from '@clerk/clerk-react';
+import { useColorScheme } from '@novu/design-system';
+import { dark } from '@clerk/themes';
 
 interface AuthEnterpriseContextProps {
   inPublicRoute: boolean;
@@ -21,6 +24,28 @@ interface AuthEnterpriseContextProps {
   logout: () => void;
   environmentId: string | null;
 }
+
+const ClerkModalElement = {
+  modalContent: {
+    width: '80rem',
+    display: 'block',
+  },
+  cardBox: {
+    width: '100%',
+  },
+  rootBox: {
+    width: 'auto',
+  },
+};
+
+const localization = {
+  userProfile: {
+    navbar: {
+      title: 'Settings',
+      description: 'Manage your account settings',
+    },
+  },
+};
 
 const toUserEntity = (clerkUser: UserResource): IUserEntity => ({
   _id: clerkUser.id,
@@ -165,7 +190,7 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
       organizations: isOrganizationLoaded && organization ? [organization] : [],
       currentOrganization: organization,
-      login: (...args: any[]) => console.warn('login() not implemented in enterprise version'),
+      login: (...args: any[]) => new Error('login() not implemented in enterprise version'),
       logout,
       // TODO: implement proper environment switch
       environmentId: null,
@@ -173,17 +198,29 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [inPublicRoute, inPrivateRoute, isUserLoaded, isOrganizationLoaded, user, organization, logout]
   );
 
-  if (!IS_EE_AUTH_ENABLED) {
-    return <>{children}</>;
-  }
-
   return <AuthEnterpriseContext.Provider value={memoizedValues}>{children}</AuthEnterpriseContext.Provider>;
 };
 
 export const AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+  const { colorScheme } = useColorScheme();
+
   if (!IS_EE_AUTH_ENABLED) {
     return <>{children}</>;
   }
 
-  return <_AuthEnterpriseProvider>{children}</_AuthEnterpriseProvider>;
+  return (
+    <ClerkProvider
+      routerPush={(to) => navigate(to)}
+      routerReplace={(to) => navigate(to, { replace: true })}
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        baseTheme: colorScheme === 'dark' ? dark : undefined,
+        elements: ClerkModalElement,
+      }}
+      localization={localization}
+    >
+      <_AuthEnterpriseProvider>{children}</_AuthEnterpriseProvider>;
+    </ClerkProvider>
+  );
 };

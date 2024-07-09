@@ -1,4 +1,4 @@
-import { UserButton, UserProfile } from '@clerk/clerk-react';
+import { UserButton } from '@clerk/clerk-react';
 import { IconCreditCard, IconGroup, IconRoomPreferences, IconWorkspacePremium } from '@novu/design-system';
 import { ROUTES } from '../../../constants/routes';
 import { BrandingPage } from '../../../pages/brand/BrandingPage';

@@ -7,7 +7,6 @@ import { HelmetProvider } from 'react-helmet-async';
 import { api } from './api/api.client';
 import { NovuiProvider } from '@novu/novui';
 import { AuthEnterpriseProvider } from './ee/clerk';
-import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -29,15 +28,13 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
     <ThemeProvider>
       <NovuiProvider>
-        <ClerkProvider>
-          <SegmentProvider>
-            <QueryClientProvider client={queryClient}>
-              <AuthEnterpriseProvider>
-                <HelmetProvider>{children}</HelmetProvider>
-              </AuthEnterpriseProvider>
-            </QueryClientProvider>
-          </SegmentProvider>
-        </ClerkProvider>
+        <SegmentProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthEnterpriseProvider>
+              <HelmetProvider>{children}</HelmetProvider>
+            </AuthEnterpriseProvider>
+          </QueryClientProvider>
+        </SegmentProvider>
       </NovuiProvider>
     </ThemeProvider>
   );
