@@ -3,7 +3,8 @@ import { far } from '@fortawesome/free-regular-svg-icons';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { init, Replay, type Event } from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
-import { ENV, SENTRY_DSN } from './config';
+import { ENV, NOVU_GTM_ID, SENTRY_DSN } from './config';
+import TagManager from 'react-gtm-module';
 
 /**
  * Handles all initialization steps of the app.
@@ -12,6 +13,10 @@ import { ENV, SENTRY_DSN } from './config';
  */
 export const initializeApp = () => {
   library.add(far, fas);
+
+  if (NOVU_GTM_ID) {
+    TagManager.initialize({ gtmId: NOVU_GTM_ID });
+  }
 
   if (SENTRY_DSN) {
     init({

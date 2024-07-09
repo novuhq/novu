@@ -32,6 +32,8 @@ export const WS_URL = isPlaywright
 
 export const SENTRY_DSN = window._env_.VITE_SENTRY_DSN || process.env.VITE_SENTRY_DSN;
 
+export const NOVU_GTM_ID = window._env_.VITE_NOVU_GTM_ID || process.env.VITE_NOVU_GTM_ID;
+
 export const ENV = window._env_.VITE_ENVIRONMENT || process.env.VITE_ENVIRONMENT;
 
 const blueprintApiUrlByEnv =
