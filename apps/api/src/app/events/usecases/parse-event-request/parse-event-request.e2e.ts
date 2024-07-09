@@ -13,12 +13,12 @@ import { ParseEventRequest } from './parse-event-request.usecase';
 
 function getEchoGatewayModule() {
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    const eeEchoWorker = require('@novu/ee-echo-worker');
-    if (!eeEchoWorker.EchoGatewayModule) {
-      throw new Error("EchoGatewayModule doesn't exist");
+    const eeEchoBridgeWorker = require('@novu/ee-bridge-worker');
+    if (!eeEchoBridgeWorker.BridgeGatewayModule) {
+      throw new Error("BridgeGatewayModule doesn't exist");
     }
 
-    return [eeEchoWorker.EchoGatewayModule];
+    return [eeEchoBridgeWorker.BridgeGatewayModule];
   }
 
   return [];
