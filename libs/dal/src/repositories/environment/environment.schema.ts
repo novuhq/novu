@@ -1,4 +1,4 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 

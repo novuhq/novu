@@ -4,7 +4,7 @@ import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title
 import { Bar, getElementAtEvent } from 'react-chartjs-2';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useMantineTheme } from '@mantine/core';
-import * as cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash.clonedeep';
 import { differenceInDays, format, isSameDay, subDays } from 'date-fns';
 
 import { MessageContainer } from './MessageContainer';

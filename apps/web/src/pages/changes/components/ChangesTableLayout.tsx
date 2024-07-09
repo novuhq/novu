@@ -1,4 +1,4 @@
-import * as capitalize from 'lodash.capitalize';
+import capitalize from 'lodash.capitalize';
 import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

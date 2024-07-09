@@ -1,9 +1,9 @@
 import 'cross-fetch/polyfill';
 import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
-import * as request from 'supertest';
-import * as defaults from 'superagent-defaults';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import superAgentDefaults from 'superagent-defaults';
 import {
   ApiServiceLevelEnum,
   EmailBlockTypeEnum,
@@ -241,7 +241,7 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
   private async fetchJwtEE() {
@@ -266,7 +266,7 @@ export class UserSession {
 
     this.token = `Bearer ${encoded}`;
 
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
   private async decodeClerkJWT(token: string) {

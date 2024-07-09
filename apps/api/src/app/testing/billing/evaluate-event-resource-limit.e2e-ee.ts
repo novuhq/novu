@@ -1,6 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { ApiServiceLevelEnum } from '@novu/shared';

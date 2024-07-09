@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { OrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';

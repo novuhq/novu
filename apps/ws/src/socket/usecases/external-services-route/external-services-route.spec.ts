@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 

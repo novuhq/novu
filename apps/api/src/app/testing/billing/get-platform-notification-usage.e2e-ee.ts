@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
