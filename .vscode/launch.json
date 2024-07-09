@@ -230,7 +230,7 @@
   "compounds": [
     {
       "name": "-- RUN ENV - Local",
-      "configurations": ["API", "DAL", "SHARED", "TESTING LIB", "WEB", "worker"]
+      "configurations": ["API", "DAL", "SHARED", "TESTING LIB", "WEB", "worker", "WS"]
     },
     {
       "name": "-- RUN ENV - Test",
