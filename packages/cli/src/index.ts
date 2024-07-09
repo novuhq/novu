@@ -82,10 +82,10 @@ program
 
 program
   .command('init')
-  .description(`Scaffold a new Novu application`)
+  .description(`Create a new Novu application`)
   .option(
     '-s, --secret-key <secret-key>',
-    `Your Novu development environment secret key. Note that your novu app won't work outside of local mode without it.`
+    `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
   .action(async (options: IInitCommandOptions) => {
