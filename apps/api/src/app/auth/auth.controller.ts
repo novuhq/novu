@@ -115,6 +115,7 @@ export class AuthController {
         jobTitle: body.jobTitle,
         domain: body.domain,
         productUseCases: body.productUseCases,
+        wasInvited: !!body.invitationToken,
       })
     );
   }
