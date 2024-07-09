@@ -106,7 +106,7 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch environment details');
+        throw new Error('Failed to fetch api key details');
       }
 
       const user = await response.json();
@@ -118,7 +118,12 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
         userId,
       });
     } catch (error) {
-      console.error('Error fetching environment details:', error);
+      console.error(
+        // eslint-disable-next-line max-len
+        `Failed to verify your secret key against ${program.apiUrl}. For EU instances use --api-url https://eu.novu.co or provide the correct secret key`
+      );
+
+      process.exit(1);
     }
   }
 
