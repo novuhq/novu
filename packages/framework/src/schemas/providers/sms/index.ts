@@ -1,1 +1,32 @@
-export const smsProviderSchemas = {};
+import { genericProviderSchemas } from '../generic';
+
+export const smsProviderSchemas = {
+  twilio: genericProviderSchemas,
+  termii: genericProviderSchemas,
+  telnyx: genericProviderSchemas,
+  sns: genericProviderSchemas,
+  sms77: genericProviderSchemas,
+  smsCentral: genericProviderSchemas,
+  simpletexting: genericProviderSchemas,
+  sendchamp: genericProviderSchemas,
+  ringCentral: genericProviderSchemas,
+  plivo: genericProviderSchemas,
+  nexmo: genericProviderSchemas,
+  mobishastra: genericProviderSchemas,
+  messagebird: genericProviderSchemas,
+  maqsam: genericProviderSchemas,
+  kannel: genericProviderSchemas,
+  isendSms: genericProviderSchemas,
+  infobip: genericProviderSchemas,
+  gupshup: genericProviderSchemas,
+  genericSms: genericProviderSchemas,
+  fortySixElks: genericProviderSchemas,
+  firetext: genericProviderSchemas,
+  clickatell: genericProviderSchemas,
+  burstSms: genericProviderSchemas,
+  brevoSms: genericProviderSchemas,
+  bandwidth: genericProviderSchemas,
+  azureSms: genericProviderSchemas,
+  africasTalking: genericProviderSchemas,
+  novu: genericProviderSchemas,
+};
