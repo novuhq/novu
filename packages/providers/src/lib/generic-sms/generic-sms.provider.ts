@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -8,7 +9,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 
 export class GenericSmsProvider implements ISmsProvider {
-  id = 'generic-sms';
+  id = SmsProviderIdEnum.GenericSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   axiosInstance: AxiosInstance;
   headers: Record<string, string>;

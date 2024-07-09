@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -12,6 +13,7 @@ if (!globalThis.fetch) {
 }
 
 export class GupshupSmsProvider implements ISmsProvider {
+  id = SmsProviderIdEnum.Gupshup;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
 

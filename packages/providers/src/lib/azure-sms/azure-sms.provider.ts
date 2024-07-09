@@ -5,9 +5,10 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import { SmsClient } from '@azure/communication-sms';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 export class AzureSmsProvider implements ISmsProvider {
-  id = 'azure-sms';
+  id = SmsProviderIdEnum.AzureSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   private smsClient: SmsClient;

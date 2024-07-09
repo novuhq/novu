@@ -6,9 +6,10 @@ import {
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
+import { PushProviderIdEnum } from '@novu/shared';
 
 export class OneSignalPushProvider implements IPushProvider {
-  id = 'one-signal';
+  id = PushProviderIdEnum.OneSignal;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   private axiosInstance: AxiosInstance;
   public readonly BASE_URL = 'https://onesignal.com/api/v1';

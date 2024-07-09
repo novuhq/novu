@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import axios from 'axios';
 
 export class BulkSmsProvider implements ISmsProvider {
-  id = 'bulk-sms';
+  id = SmsProviderIdEnum.BulkSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.bulksms.com/v1/messages';
 

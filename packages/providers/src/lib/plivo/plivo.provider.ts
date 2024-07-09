@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -10,7 +11,7 @@ import {
 import plivo from 'plivo';
 
 export class PlivoSmsProvider implements ISmsProvider {
-  id = 'plivo';
+  id = SmsProviderIdEnum.Plivo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private plivoClient: plivo.Client;
 

@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -11,7 +12,7 @@ if (!globalThis.fetch) {
 }
 
 export class FiretextSmsProvider implements ISmsProvider {
-  id = 'firetext';
+  id = SmsProviderIdEnum.Firetext;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private BASE_URL = 'https://www.firetext.co.uk/api/sendsms';
 

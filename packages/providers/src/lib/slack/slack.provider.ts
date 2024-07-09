@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IChatOptions,
@@ -8,7 +9,7 @@ import axios from 'axios';
 
 export class SlackProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  public id = 'slack';
+  public id = ChatProviderIdEnum.Slack;
   private axiosInstance = axios.create();
 
   async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {

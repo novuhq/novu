@@ -1,3 +1,4 @@
+import { PushProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IPushOptions,
@@ -7,7 +8,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 
 export class PusherBeamsPushProvider implements IPushProvider {
-  id = 'pusher-beams';
+  id = PushProviderIdEnum.PusherBeams;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private axiosInstance: AxiosInstance;

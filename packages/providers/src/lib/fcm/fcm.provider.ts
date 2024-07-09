@@ -7,9 +7,10 @@ import {
 import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
 import { getMessaging, Messaging } from 'firebase-admin/messaging';
 import crypto from 'crypto';
+import { PushProviderIdEnum } from '@novu/shared';
 
 export class FcmPushProvider implements IPushProvider {
-  id = 'fcm';
+  id = PushProviderIdEnum.FCM;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private appName: string;

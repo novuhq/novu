@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import axios from 'axios';
 
 export class EazySmsProvider implements ISmsProvider {
-  id = 'eazy-sms';
+  id = SmsProviderIdEnum.EazySms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.eazy.im/v3';
   public readonly EAZY_SMS_CHANNEL = '@sms.eazy.im';
