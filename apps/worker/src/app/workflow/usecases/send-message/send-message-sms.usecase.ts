@@ -80,7 +80,7 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nextInstance = await this.initiateTranslations(
+    const i18nInstance = await this.initiateTranslations(
       command.environmentId,
       command.organizationId,
       subscriber.locale
@@ -99,8 +99,8 @@ export class SendMessageSms extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
-            // i18next: i18nextInstance,
-          })
+          }),
+          i18nInstance
         );
 
         if (!content) {
