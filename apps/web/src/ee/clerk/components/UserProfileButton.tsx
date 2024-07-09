@@ -9,7 +9,7 @@ export function UserProfileButton() {
   return (
     <UserButton afterSignOutUrl={ROUTES.AUTH_LOGIN}>
       <UserButton.UserProfilePage label="account" />
-      <UserButton.UserProfilePage label="Organisation" url={ROUTES.ORGANIZATION} labelIcon={<IconRoomPreferences />}>
+      <UserButton.UserProfilePage label="Organization" url={ROUTES.ORGANIZATION} labelIcon={<IconRoomPreferences />}>
         <CustomOrganizationProfile firstItem="general" />
       </UserButton.UserProfilePage>
       <UserButton.UserProfilePage label="security" />
