@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { ChannelCTATypeEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
@@ -68,6 +68,27 @@ describe('GetNotifications', () => {
     } catch (error) {
       expect(error).to.be.instanceOf(ApiException);
       expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} is not found.`);
+    }
+  });
+
+  it('it should throw exception when filtering for unread and archived notifications', async () => {
+    const command: GetNotificationsCommand = {
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      subscriberId: 'not-found',
+      limit: 10,
+      offset: 0,
+      read: false,
+      archived: true,
+    };
+
+    getSubscriberMock.execute.resolves(mockSubscriber);
+
+    try {
+      await getNotifications.execute(command);
+    } catch (error) {
+      expect(error).to.be.instanceOf(ApiException);
+      expect(error.message).to.equal(`Filtering for unread and archived notifications is not supported.`);
     }
   });
 

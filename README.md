@@ -69,7 +69,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 To get started, type the following command in your Terminal.
 
 ```bash
-npx novu-labs@latest echo
+npx novu@latest dev
 ```
 
 ## 📚 Table Of Contents
@@ -90,54 +90,34 @@ npx novu-labs@latest echo
 
 ## Notification Workflows as Code
 
-For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/framework/quickstart?utm_campaign=github-readme).
+For API documentation and reference, please visit our [API Reference](https://docs.novu.co/getting-started/introduction?utm_campaign=github-readme).
 
 ```ts
+import { workflow, CronExpression } from '@novu/framework';
+import { z } from 'zod';
+import { render } from '@react-email/render';
 
-client.workflow('comment-on-post', async ({step, subscriber}) => {
-  const inAppResponse = await step.inApp('in-app-step', async (controls) => {
-    return {
-      body: renderReactComponent(controls)
-    };
-  }, {
-    controlSchema: {
-      // ...JSON Schema or ZOD/Ajv/Class Validators definition
-    }
+const commentWorkflow = workflow('comment-workflow', async (event) => {
+  const digest = await event.step.digest('digest-comments', (controls) => ({
+    cron: controls.schedule
+  }), { controlSchema: z.object({ schedule: z.nativeEnum(CronExpression) }) });
+
+  await event.step.email('digest-email', async (controls) => ({
+    subject: controls.subject,
+    body: render(<WeeklyDigestEmail { ...controls } events = { digest.events } />)
+  }), {
+    skip: () => !digest.events.length,
+    controlSchema: z.object({
+      subject: z.string().default('Hi {{subscriber.firstName}} - Acme Comments'),
+      openAiModel: z.enum(['gpt-3.5-turbo', 'gpt-4o']).default('gpt-4o'),
+      aiPrompt: z.string().default('Produce a concise comment digest'),
+    })
   });
+}, { payloadSchema: z.object({ name: z.string(), comment: z.string() }) });
 
-  // Novu Worker Engine will manage the state and durability of each step in isolation
-  const { events } = await step.digest('1 day');
-
-  await step.email('email-step', async () => {
-    return {
-      subject: 'E-mail Subject',
-      body: renderReactEmail(<ReactEmailComponent events={digestedEvents} />);
-    }
-  }, {
-    // Step-level controls defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    controlSchema: {
-      // ...JSON Schema
-    },
-    providers: {
-      sendgrid: async (controls) => {
-        // Echo runs as part of your application, so you have access to your database or resources
-
-        return {
-          to: email,
-          ipPoolName: 'custom-pool'
-        };
-      }
-    },
-    skip: () => {
-      // Write custom skip logic
-      return inAppResponse.seen || subscriber.isOnline;
-    }
-  });
-// Define your workflow trigger payload using json schema and custom validation;
-}, {
-  payloadSchema: {
-    // ...JSON Schema
-  }
+await commentWorkflow.trigger({
+  payload: { name: 'John', comment: 'Are you free to give me a call?' },
+  to: 'jane@acme.com'
 });
 
 ```

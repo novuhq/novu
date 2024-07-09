@@ -1,6 +1,6 @@
 import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
-import * as hat from 'hat';
+import { addBreadcrumb } from '@sentry/node';
+import hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ModuleRef } from '@nestjs/core';
@@ -20,7 +20,7 @@ import {
   InvalidateCacheService,
   requireInject,
   IUseCaseInterface,
-  IDoBridgeRequestCommand,
+  IExecuteBridgeRequestCommand,
 } from '@novu/application-generic';
 import {
   FeatureFlagsKeysEnum,
@@ -57,7 +57,7 @@ const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
-  private doBridgeRequest: IUseCaseInterface<IDoBridgeRequestCommand, DiscoverOutput | null>;
+  private executeBridgeRequest: IUseCaseInterface<IExecuteBridgeRequestCommand, DiscoverOutput | null>;
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -75,7 +75,7 @@ export class ParseEventRequest {
     private invalidateCacheService: InvalidateCacheService,
     protected moduleRef: ModuleRef
   ) {
-    this.doBridgeRequest = requireInject('do_bridge_request', this.moduleRef);
+    this.executeBridgeRequest = requireInject('execute-bridge-request', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -161,7 +161,7 @@ export class ParseEventRequest {
       };
     }
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending trigger',
       data: {
         triggerIdentifier: command.identifier,
@@ -196,7 +196,7 @@ export class ParseEventRequest {
       return null;
     }
 
-    const discover = await this.doBridgeRequest.execute({
+    const discover = await this.executeBridgeRequest.execute({
       bridgeUrl: command.bridgeUrl,
       apiKey: environment.apiKeys[0].key,
       action: GetActionEnum.DISCOVER,

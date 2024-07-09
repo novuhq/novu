@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 
 import {
   IntegrationRepository,
@@ -42,7 +42,7 @@ import { GetActionEnum, PostActionEnum } from '@novu/framework';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
-export interface IDoBridgeRequestCommand {
+export interface IExecuteBridgeRequestCommand {
   bridgeUrl: string;
   payload?: Record<string, unknown>;
   apiKey: string;
@@ -84,7 +84,7 @@ export class TriggerEvent {
         environmentId
       );
 
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         message: 'Sending trigger',
         data: {
           triggerIdentifier: identifier,
@@ -184,6 +184,7 @@ export class TriggerEvent {
         }
       }
     } catch (e) {
+      Logger.error(e);
       Logger.error(
         {
           transactionId: command.transactionId,

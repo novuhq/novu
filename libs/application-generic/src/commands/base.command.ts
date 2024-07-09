@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 import { BadRequestException, flatten } from '@nestjs/common';
 
 export abstract class BaseCommand {
@@ -19,7 +19,7 @@ export abstract class BaseCommand {
         errors.map((item) => Object.values((item as any).constraints))
       );
 
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         category: 'BaseCommand',
         data: mappedErrors,
       });

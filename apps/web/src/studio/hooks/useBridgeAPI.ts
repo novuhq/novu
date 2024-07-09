@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   buildBridgeHTTPClient,
@@ -18,9 +18,10 @@ function useBridgeAPI() {
 const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 5 * 1000;
 
 export const useDiscover = (options?: any) => {
+  const { bridgeURL, setBridgeURL } = useStudioState();
   const api = useBridgeAPI();
 
-  return useQuery(
+  const discoverQuery = useQuery(
     ['bridge-workflows'],
     async () => {
       return api.discover();
@@ -30,6 +31,13 @@ export const useDiscover = (options?: any) => {
       ...(options || {}),
     }
   );
+  const { refetch } = discoverQuery;
+
+  useEffect(() => {
+    refetch();
+  }, [bridgeURL, setBridgeURL, refetch]);
+
+  return discoverQuery;
 };
 
 export const useHealthCheck = (options?: any) => {

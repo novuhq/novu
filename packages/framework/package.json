@@ -21,8 +21,8 @@
     "preinstall": "npx only-allow pnpm",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
+    "lint": "eslint src --ext .ts --config .eslintrc.js",
+    "lint:fix": "eslint src --ext .ts --fix --config .eslintrc.js",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "build": "tsup",
@@ -56,34 +56,34 @@
       "types": "./dist/index.d.ts"
     },
     "./express": {
-      "require": "./dist/express.js",
-      "import": "./dist/express.js",
-      "types": "./dist/express.d.ts"
+      "require": "./dist/servers/express.js",
+      "import": "./dist/servers/express.js",
+      "types": "./dist/servers/express.d.ts"
     },
     "./next": {
-      "require": "./dist/next.js",
-      "import": "./dist/next.js",
-      "types": "./dist/next.d.ts"
+      "require": "./dist/servers/next.js",
+      "import": "./dist/servers/next.js",
+      "types": "./dist/servers/next.d.ts"
     },
     "./nuxt": {
-      "require": "./dist/nuxt.js",
-      "import": "./dist/nuxt.js",
-      "types": "./dist/nuxt.d.ts"
+      "require": "./dist/servers/nuxt.js",
+      "import": "./dist/servers/nuxt.js",
+      "types": "./dist/servers/nuxt.d.ts"
     },
     "./h3": {
-      "require": "./dist/h3.js",
-      "import": "./dist/h3.js",
-      "types": "./dist/h3.d.ts"
+      "require": "./dist/servers/h3.js",
+      "import": "./dist/servers/h3.js",
+      "types": "./dist/servers/h3.d.ts"
     },
     "./sveltekit": {
-      "require": "./dist/sveltekit.js",
-      "import": "./dist/sveltekit.js",
-      "types": "./dist/sveltekit.d.ts"
+      "require": "./dist/servers/sveltekit.js",
+      "import": "./dist/servers/sveltekit.js",
+      "types": "./dist/servers/sveltekit.d.ts"
     },
     "./remix": {
-      "require": "./dist/remix.js",
-      "import": "./dist/remix.js",
-      "types": "./dist/remix.d.ts"
+      "require": "./dist/servers/remix.js",
+      "import": "./dist/servers/remix.js",
+      "types": "./dist/servers/remix.d.ts"
     }
   },
   "peerDependencies": {
@@ -125,7 +125,7 @@
     "@sveltejs/kit": "^1.27.3",
     "@types/express": "^4.17.13",
     "@types/json-schema": "^7.0.15",
-    "@types/node": "^20.11.20",
+    "@types/node": "^20.14.10",
     "@vercel/node": "^2.15.9",
     "express": "^4.19.2",
     "h3": "^1.11.1",

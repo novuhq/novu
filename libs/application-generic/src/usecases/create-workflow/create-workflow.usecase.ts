@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import slugify from 'slugify';
-import * as shortid from 'shortid';
+import shortid from 'shortid';
 
 import {
   FeedRepository,
@@ -20,6 +20,7 @@ import {
   ChangeEntityTypeEnum,
   INotificationTemplateStep,
   INotificationTrigger,
+  isBridgeWorkflow,
   IStepVariant,
   TriggerTypeEnum,
   WorkflowTypeEnum,
@@ -208,7 +209,7 @@ export class CreateWorkflow {
     item,
     parentChangeId: string
   ) {
-    if (command.type !== WorkflowTypeEnum.ECHO) {
+    if (!isBridgeWorkflow(command.type)) {
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
@@ -488,7 +489,7 @@ export class CreateWorkflow {
           _organizationId: command.organizationId,
         });
 
-        if (command.type !== WorkflowTypeEnum.ECHO) {
+        if (!isBridgeWorkflow(command.type)) {
           await this.createChange.execute(
             CreateChangeCommand.create({
               item: feedItem,
@@ -528,7 +529,7 @@ export class CreateWorkflow {
         name: command.notificationGroup.name,
       });
 
-      if (command.type !== WorkflowTypeEnum.ECHO) {
+      if (!isBridgeWorkflow(command.type)) {
         await this.createChange.execute(
           CreateChangeCommand.create({
             item: notificationGroup,

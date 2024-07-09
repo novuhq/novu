@@ -6,7 +6,7 @@ import { TranslationUseCaseConst } from './TranslationUseCase.const';
 import { DigestUseCaseConst } from './DigestUseCase.const';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
-export const UseCasesConst: Omit<OnboardingUseCases, OnboardingUseCasesTabsEnum.ECHO> = {
+export const UseCasesConst: Omit<OnboardingUseCases, OnboardingUseCasesTabsEnum.FRAMEWORK> = {
   [OnboardingUseCasesTabsEnum.IN_APP]: InAppUseCaseConst,
   [OnboardingUseCasesTabsEnum.MULTI_CHANNEL]: MultiChannelUseCaseConst,
   [OnboardingUseCasesTabsEnum.DELAY]: DelayUseCaseConst,

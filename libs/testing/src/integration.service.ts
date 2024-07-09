@@ -1,4 +1,4 @@
-import * as shortid from 'shortid';
+import shortid from 'shortid';
 import slugify from 'slugify';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import {

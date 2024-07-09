@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Group, Code, ActionIcon, Text, Grid } from '@mantine/core';
+// eslint-disable-next-line import/no-namespace
 import * as allIcons from '.';
 import { Input } from '../input/Input';
 

@@ -3,29 +3,30 @@ import { createHmac } from 'node:crypto';
 import { Client } from './client';
 import {
   ErrorCodeEnum,
+  FRAMEWORK_VERSION,
   GetActionEnum,
   HttpHeaderKeysEnum,
   HttpMethodEnum,
   HttpQueryKeysEnum,
   HttpStatusEnum,
   PostActionEnum,
+  SDK_VERSION,
   SIGNATURE_TIMESTAMP_TOLERANCE,
 } from './constants';
 import {
+  BridgeError,
+  FrameworkError,
   InvalidActionError,
   MethodNotAllowedError,
-  FrameworkError,
-  BridgeError,
+  PlatformError,
   SignatureExpiredError,
   SignatureInvalidError,
   SignatureMismatchError,
   SignatureNotFoundError,
   SigningKeyNotFoundError,
-  PlatformError,
 } from './errors';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { initApiClient } from './utils';
-import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type ServeHandlerOptions = {
@@ -97,7 +98,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: SDK_VERSION,
-      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_API]: this.frameworkName,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SERVER]: this.frameworkName,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
     };
   }

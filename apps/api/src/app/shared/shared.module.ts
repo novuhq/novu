@@ -42,7 +42,7 @@ import {
   CreateExecutionDetails,
 } from '@novu/application-generic';
 
-import * as packageJson from '../../../package.json';
+import packageJson from '../../../package.json';
 import { JobTopicNameEnum } from '@novu/shared';
 
 const DAL_MODELS = [

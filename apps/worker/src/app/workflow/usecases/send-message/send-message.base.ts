@@ -1,4 +1,4 @@
-import * as i18next from 'i18next';
+import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { format } from 'date-fns';

@@ -3,7 +3,7 @@ import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
-import * as packageJson from '../package.json';
+import packageJson from '../package.json';
 import { ProfilingModule, TracingModule } from '@novu/application-generic';
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
@@ -46,8 +46,8 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (require('@novu/ee-auth')?.EEAuthModule) {
       modules.push(require('@novu/ee-auth')?.EEAuthModule);
     }
-    if (require('@novu/ee-echo-api')?.EchoModule) {
-      modules.push(require('@novu/ee-echo-api')?.EchoModule);
+    if (require('@novu/ee-bridge-api')?.BridgeModule) {
+      modules.push(require('@novu/ee-bridge-api')?.BridgeModule);
     }
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);

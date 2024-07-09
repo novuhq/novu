@@ -3,7 +3,7 @@ import { PrivatePageLayout } from './components/layout/components/PrivatePageLay
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
-import { useAuth, useFeatureFlag } from './hooks';
+import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -60,27 +60,10 @@ import {
   WorkflowsTestPage,
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
-import { useSegment } from './components/providers/SegmentProvider';
-import * as mixpanel from 'mixpanel-browser';
-import { useEffect } from 'react';
 import { novuOnboardedCookie } from './utils/cookies';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
-  const isMixpanelRecordingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MIXPANEL_RECORDING_ENABLED);
-  const segment = useSegment();
-  const { inPrivateRoute } = useAuth();
-
-  useEffect(() => {
-    if (!segment._mixpanelEnabled) {
-      return;
-    }
-
-    if (isMixpanelRecordingEnabled && inPrivateRoute) {
-      mixpanel.start_session_recording();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMixpanelRecordingEnabled, inPrivateRoute]);
 
   return (
     <Routes>
