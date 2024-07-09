@@ -88,7 +88,6 @@ program
     `Your Novu development environment secret key. Note that your novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .usage(`${green('<project-directory>')} [-s <secret-key>] [options]`)
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
   });
