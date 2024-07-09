@@ -172,13 +172,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has Failed.>*",
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has failed.>*",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has Failed.>*"
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has failed.>*"
                   }
                 }
               ]
