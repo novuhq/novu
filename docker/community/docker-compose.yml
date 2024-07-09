@@ -181,11 +181,11 @@ services:
         max-size: '50m'
         max-file: '5'
     environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_DOCKER_HOSTED_ENV: 'true'
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      VITE_API_URL: ${API_ROOT_URL}
+      VITE_ENVIRONMENT: ${NODE_ENV}
+      VITE_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
+      VITE_DOCKER_HOSTED_ENV: 'true'
+      VITE_WS_URL: ${VITE_WS_URL}
       IS_MULTI_TENANCY_ENABLED: ${IS_MULTI_TENANCY_ENABLED}
     ports:
       - 4200:4200
@@ -213,9 +213,9 @@ services:
         max-size: '50m'
         max-file: '5'
     environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      VITE_API_URL: ${API_ROOT_URL}
+      VITE_WS_URL: ${VITE_WS_URL}
+      VITE_ENVIRONMENT: ${NODE_ENV}
       WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
     ports:
       - 4500:4500

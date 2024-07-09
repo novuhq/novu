@@ -6,7 +6,7 @@
     "start": "pnpm panda --watch & vite",
     "prebuild": "rimraf dist",
     "build": "pnpm panda && cross-env vite build",
-    "build:test": "pnpm panda && cross-env REACT_APP_HUBSPOT_EMBED=44416662 REACT_APP_API_URL=http://127.0.0.1:1336 vite build",
+    "build:test": "pnpm panda && cross-env VITE_HUBSPOT_EMBED=44416662 VITE_API_URL=http://127.0.0.1:1336 vite build",
     "precommit": "lint-staged",
     "docker:build": "docker buildx dist --load -f ./Dockerfile -t novu-web ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",

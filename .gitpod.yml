@@ -26,8 +26,8 @@ tasks:
       cd apps/web
       API_URL=`gp url 3000`
       WS_URL=`gp url 3002`
-      sed -i "/REACT_APP_API_URL=/c\REACT_APP_API_URL=$API_URL" .env
-      echo "REACT_APP_WS_URL=$WS_URL" >> .env
+      sed -i "/VITE_API_URL=/c\VITE_API_URL=$API_URL" .env
+      echo "VITE_WS_URL=$WS_URL" >> .env
       pnpm envsetup && pnpm start
   - name: WIDGET
     init: gp sync-await setup
@@ -35,8 +35,8 @@ tasks:
       cd apps/widget
       API_URL=`gp url 3000`
       WS_URL=`gp url 3002`
-      sed -i "/REACT_APP_API_URL=/c\REACT_APP_API_URL=$API_URL" .env
-      sed -i "/REACT_APP_WS_URL=/c\REACT_APP_WS_URL=$WS_URL" .env
+      sed -i "/VITE_API_URL=/c\VITE_API_URL=$API_URL" .env
+      sed -i "/VITE_WS_URL=/c\VITE_WS_URL=$WS_URL" .env
       pnpm envsetup && pnpm start:dev
 ports:
   - port: 4200

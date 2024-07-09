@@ -28,7 +28,7 @@ export function MembersInvitePage() {
   const [form] = Form.useForm();
   const segment = useSegment();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const selfHosted = process.env.VITE_DOCKER_HOSTED_ENV === 'true';
   const { currentOrganization, currentUser } = useAuth();
 
   const {
