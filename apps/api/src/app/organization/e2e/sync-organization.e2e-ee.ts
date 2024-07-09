@@ -94,7 +94,7 @@ describe.skip('Sync Organization - /organizations (POST)', async () => {
     expect(internalOrganization._id).to.equal(updatedClerkOrganization.publicMetadata.externalOrgId);
     expect(internalOrganization.externalId).to.equal(updatedClerkOrganization.id);
 
-    // these are stored in the Clerk organization only and then concated to the response
+    // these are stored in the Clerk organization only and then concatenated with the response
     expect(internalOrganization.name).to.equal(updatedClerkOrganization.name);
     expect(internalOrganization.logo).to.equal(updatedClerkOrganization.imageUrl);
   });

@@ -260,11 +260,11 @@ export class UserSession {
       ...claims,
     };
 
-    const reencoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {
+    const encoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {
       algorithm: 'RS256',
     });
 
-    this.token = `Bearer ${reencoded}`;
+    this.token = `Bearer ${encoded}`;
 
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
