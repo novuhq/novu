@@ -1,10 +1,10 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import * as passport from 'passport';
+import passport from 'passport';
 
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
-import { AuthService, CommunityAuthService, CommunityUserAuthGuard } from '@novu/application-generic';
+import { AuthService } from '@novu/application-generic';
 
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';

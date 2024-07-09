@@ -2379,6 +2379,10 @@ export default async () => {
             },
           },
         ],
+        [
+          import('./app/auth/legacy-ee-auth/auth.controller'),
+          { AuthController: { googleAuth: {}, googleCallback: { type: Object } } },
+        ],
       ],
     },
   };
