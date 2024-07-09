@@ -31,13 +31,15 @@ export interface IInitCommandOptions {
 }
 
 export async function init(program: IInitCommandOptions, anonymousId?: string): Promise<void> {
-  analytics.track({
-    identity: {
-      anonymousId: anonymousId,
-    },
-    data: {},
-    event: 'Run Novu Init Command',
-  });
+  if (anonymousId) {
+    analytics.track({
+      identity: {
+        anonymousId: anonymousId,
+      },
+      data: {},
+      event: 'Run Novu Init Command',
+    });
+  }
 
   let projectPath = program.projectPath;
 
@@ -108,11 +110,12 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
       }
 
       const user = await response.json();
-      userId = user.data._id;
+
+      userId = user.data?._id;
 
       analytics.alias({
         previousId: anonymousId,
-        userId: user.data._id,
+        userId,
       });
     } catch (error) {
       console.error('Error fetching environment details:', error);
@@ -145,15 +148,15 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     customizeImportAlias: false,
   };
 
-  analytics.track({
-    identity: {
-      userId: userId,
-    },
-    data: {
-      name: projectName,
-    },
-    event: 'Creating a new project',
-  });
+  if (userId || anonymousId) {
+    analytics.track({
+      identity: userId ? { userId } : { anonymousId },
+      data: {
+        name: projectName,
+      },
+      event: 'Creating a new project',
+    });
+  }
 
   await createApp({
     appPath: resolvedProjectPath,
@@ -165,13 +168,13 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     secretKey: program.secretKey,
   });
 
-  analytics.track({
-    identity: {
-      userId: userId,
-    },
-    data: {
-      name: projectName,
-    },
-    event: 'Project created',
-  });
+  if (userId || anonymousId) {
+    analytics.track({
+      identity: userId ? { userId } : { anonymousId },
+      data: {
+        name: projectName,
+      },
+      event: 'Project created',
+    });
+  }
 }
