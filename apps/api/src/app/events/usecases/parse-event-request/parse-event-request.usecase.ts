@@ -1,6 +1,6 @@
 import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
-import * as hat from 'hat';
+import { addBreadcrumb } from '@sentry/node';
+import hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ModuleRef } from '@nestjs/core';
@@ -161,7 +161,7 @@ export class ParseEventRequest {
       };
     }
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending trigger',
       data: {
         triggerIdentifier: command.identifier,

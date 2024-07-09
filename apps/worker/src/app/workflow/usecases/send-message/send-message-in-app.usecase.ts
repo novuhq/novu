@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -72,7 +72,7 @@ export class SendMessageInApp extends SendMessageBase {
   public async execute(command: SendMessageCommand) {
     if (!command.step.template) throw new PlatformException('Template not found');
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending In App',
     });
 

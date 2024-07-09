@@ -2,7 +2,7 @@ import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';

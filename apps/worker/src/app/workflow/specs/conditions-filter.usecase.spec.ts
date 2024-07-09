@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
 import {

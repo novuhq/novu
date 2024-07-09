@@ -329,7 +329,10 @@ export default async () => {
         ],
         [
           import('./app/auth/dtos/password-reset.dto'),
-          { PasswordResetBodyDto: { token: { required: true, type: () => String } } },
+          {
+            PasswordResetBodyDto: { token: { required: true, type: () => String } },
+            PasswordResetRequestBodyDto: { email: { required: true, type: () => String } },
+          },
         ],
         [
           import('./app/auth/dtos/update-password.dto'),

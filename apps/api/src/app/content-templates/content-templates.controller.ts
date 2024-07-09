@@ -1,7 +1,7 @@
 import { Body, Controller, Logger, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { format } from 'date-fns';
-import * as i18next from 'i18next';
+import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import {
   ApiException,

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateRepository, EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
@@ -22,6 +22,7 @@ import {
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
 import { CreateWorkflowRequestDto } from '../../workflows/dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
+// eslint-disable-next-line import/no-namespace
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET)', async () => {

@@ -41,7 +41,7 @@
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "superagent-defaults": "^0.1.14",
-    "supertest": "^5.0.0",
+    "supertest": "^7.0.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {

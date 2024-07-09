@@ -3,7 +3,7 @@ import { useLDClient } from 'launchdarkly-react-client-sdk';
 import jwtDecode from 'jwt-decode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
+import { setUser, configureScope } from '@sentry/react';
 import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
@@ -176,7 +176,7 @@ export function useAuth() {
     if (user && currentOrganization) {
       segment.identify(user);
 
-      Sentry.setUser({
+      setUser({
         email: user.email ?? '',
         username: `${user.firstName} ${user.lastName}`,
         id: user._id,
@@ -184,7 +184,7 @@ export function useAuth() {
         organizationName: currentOrganization.name,
       });
     } else {
-      Sentry.configureScope((scope) => scope.setUser(null));
+      configureScope((scope) => scope.setUser(null));
     }
   }, [user, currentOrganization, segment]);
 

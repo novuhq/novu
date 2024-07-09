@@ -28,7 +28,7 @@ export class StorageController {
   async signedUrl(
     @UserSession() user: UserSessionData,
     @Query('extension') extension: string,
-    @Query('type') type: UploadTypesEnum = UploadTypesEnum.BRANDING
+    @Query('type') type: string
   ): Promise<UploadUrlResponse> {
     return await this.getSignedUrlUsecase.execute(
       GetSignedUrlCommand.create({
@@ -36,7 +36,7 @@ export class StorageController {
         organizationId: user.organizationId,
         userId: user._id,
         extension,
-        type,
+        type: (type as UploadTypesEnum) || UploadTypesEnum.BRANDING,
       })
     );
   }

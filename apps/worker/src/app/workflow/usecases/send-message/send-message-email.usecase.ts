@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import inlineCss from 'inline-css';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 
 import {
   MessageRepository,
@@ -114,7 +114,7 @@ export class SendMessageEmail extends SendMessageBase {
     const { subscriber } = command.compileContext;
     const email = command.payload.email || subscriber.email;
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending Email',
     });
 
