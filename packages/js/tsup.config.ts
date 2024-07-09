@@ -3,6 +3,7 @@ import { solidPlugin } from 'esbuild-plugin-solid';
 import { name, version } from './package.json';
 import inlineImportPlugin from 'esbuild-plugin-inline-import';
 import loadPostcssConfig from 'postcss-load-config';
+import { compress } from 'esbuild-plugin-compress';
 import postcss from 'postcss';
 
 const processCSS = async (css: string, filePath: string) => {
@@ -26,6 +27,7 @@ const baseConfig: Options = {
   clean: true,
   dts: true,
   esbuildPlugins: [
+    //@ts-expect-error types
     inlineImportPlugin({
       filter: /^directcss:/,
       transform: async (contents, args) => {
@@ -71,5 +73,26 @@ export default defineConfig((config: Options) => {
     tsconfig: 'tsconfig.cjs.json',
   };
 
-  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs')])(esm, cjs);
+  const umd: Options = {
+    ...baseConfig,
+    entry: { novu: 'src/umd.ts' },
+    format: ['iife'],
+    minify: true,
+    dts: false,
+    outExtension: () => {
+      return {
+        js: '.min.js',
+      };
+    },
+    esbuildPlugins: [
+      ...(baseConfig.esbuildPlugins ? baseConfig.esbuildPlugins : []),
+      compress({
+        gzip: true,
+        brotli: false,
+        outputDir: '.',
+        exclude: ['**/*.map'],
+      }),
+    ],
+  };
+  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
 });

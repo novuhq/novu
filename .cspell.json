@@ -754,6 +754,6 @@
     ".example.env",
     "pnpm-lock.yaml",
     "apps/web/env.sh",
-    "packages/js/ui/index.directcss",
+    "packages/js/src/ui/index.directcss",
   ]
 }

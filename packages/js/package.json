@@ -20,11 +20,6 @@
       "require": "./dist/cjs/ui/index.cjs",
       "import": "./dist/esm/ui/index.mjs",
       "default": "./dist/esm/ui/index.mjs"
-    },
-    "./ui/index.css": {
-      "require": "./dist/cjs/ui/index.css",
-      "import": "./dist/esm/ui/index.css",
-      "default": "./dist/esm/ui/index.css"
     }
   },
   "files": [
@@ -37,7 +32,7 @@
   "private": true,
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
-    "build": "tsup && pnpm run build:umd && pnpm run post:build",
+    "build": "tsup && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "tsup --watch",
     "post:build": "node scripts/size-limit.mjs",
@@ -78,7 +73,7 @@
     "tiny-glob": "^0.2.9",
     "ts-jest": "^29.0.3",
     "ts-loader": "~9.4.0",
-    "tsup": "^8.0.2",
+    "tsup": "^8.1.0",
     "tsup-preset-solid": "^2.2.0",
     "typescript": "4.9.5",
     "webpack": "^5.74.0",
