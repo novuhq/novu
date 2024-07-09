@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { PlivoSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class PlivoHandler extends BaseSmsHandler {
   constructor() {
-    super('plivo', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Plivo, ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     this.provider = new PlivoSmsProvider({

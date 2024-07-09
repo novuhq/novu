@@ -1,5 +1,5 @@
 import { IEmailOptions, IEmailProvider } from '@novu/stateless';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import { IMailHandler } from '../interfaces/send.handler.interface';
 import { PlatformException } from '../../../utils/exceptions';
@@ -8,7 +8,7 @@ export abstract class BaseHandler implements IMailHandler {
   protected provider: IEmailProvider;
 
   protected constructor(
-    private providerId: string,
+    private providerId: EmailProviderIdEnum,
     private channelType: string
   ) {}
 

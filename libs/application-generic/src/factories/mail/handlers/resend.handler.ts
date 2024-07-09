@@ -1,10 +1,14 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 import { ResendEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class ResendHandler extends BaseHandler {
   constructor() {
-    super('resend', ChannelTypeEnum.EMAIL);
+    super(EmailProviderIdEnum.Resend, ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string) {
     const config: { apiKey: string; from: string; senderName?: string } = {

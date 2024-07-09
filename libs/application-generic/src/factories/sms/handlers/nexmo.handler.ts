@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 import { NexmoSmsProvider } from '@novu/providers';
 
 export class NexmoHandler extends BaseSmsHandler {
   constructor() {
-    super('nexmo', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Nexmo, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {
