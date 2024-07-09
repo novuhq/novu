@@ -1,11 +1,11 @@
 import { OrganizationSwitcher as ClerkOrganizationSwitcher } from '@clerk/clerk-react';
+import { token } from '@novu/novui/tokens';
 
 // TODO: this is tmp. styling
 const OrganizationSwitcherAppearance = {
   elements: {
     organizationSwitcherTrigger: {
-      paddingInline: 'var(--nv-spacing-125)',
-      fontSize: '14px',
+      paddingInline: token('spacing.125'),
       width: '240px',
       height: '52px',
       justifyContent: 'space-between',
