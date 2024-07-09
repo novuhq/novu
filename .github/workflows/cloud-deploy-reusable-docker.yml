@@ -61,7 +61,7 @@ jobs:
       - id: set-platforms
         run: |
           if [[ "${{ inputs.environment }}" == "Production" ]]; then
-            echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+            echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
           else
             echo "platforms=linux/amd64" >> "$GITHUB_OUTPUT"
           fi

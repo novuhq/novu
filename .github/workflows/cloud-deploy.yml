@@ -50,6 +50,7 @@ jobs:
 
 
       - name: Start Deployment Notification
+        if: false
         uses: slackapi/slack-github-action@v1.26.0
         with:
           payload: |
@@ -151,7 +152,8 @@ jobs:
       local_tag: novu-${{ matrix.service.name }}
 
   post-release-failure:
-    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
+#    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
+    if: false
     needs: [
       release-services,
       release-embed,
@@ -187,7 +189,8 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
   post-release-success:
-    if: ${{ always() && (needs.release-services.result == 'success' && needs.release-embed.result == 'success' && needs.release-web.result == 'success' && needs.release-widget.result == 'success' && needs.release-web-components.result == 'success') }}
+#    if: ${{ always() && (needs.release-services.result == 'success' && needs.release-embed.result == 'success' && needs.release-web.result == 'success' && needs.release-widget.result == 'success' && needs.release-web-components.result == 'success') }}
+    if: false
     needs: [
       release-services,
       release-embed,
