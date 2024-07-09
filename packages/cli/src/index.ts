@@ -83,16 +83,14 @@ program
 program
   .command('init')
   .description(`Scaffold a new Novu application`)
-  .argument('[project-directory]')
   .option(
     '-s, --secret-key <secret-key>',
     `Your Novu development environment secret key. Note that your novu app won't work outside of local mode without it.`
   )
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
   .usage(`${green('<project-directory>')} [-s <secret-key>] [options]`)
   .action(async (options: IInitCommandOptions) => {
-    console.log(options);
-
-    return await init(options || {});
+    return await init(options, anonymousId);
   });
 
 program.parse(process.argv);

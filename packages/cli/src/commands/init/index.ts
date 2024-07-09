@@ -6,6 +6,9 @@ import { createApp } from './create-app';
 import { validateNpmName } from './helpers/validate-pkg';
 import { isFolderEmpty } from './helpers/is-folder-empty';
 import fs from 'fs';
+import { AnalyticService } from '../../services/analytics.service';
+
+const analytics = new AnalyticService();
 
 const programName = 'novu init';
 
@@ -24,9 +27,18 @@ const onPromptState = (state: { value: InitialReturnValue; aborted: boolean; exi
 export interface IInitCommandOptions {
   secretKey?: string;
   projectPath?: string;
+  apiUrl: string;
 }
 
-export async function init(program: IInitCommandOptions): Promise<void> {
+export async function init(program: IInitCommandOptions, anonymousId?: string): Promise<void> {
+  analytics.track({
+    identity: {
+      anonymousId: anonymousId,
+    },
+    data: {},
+    event: 'Run Novu Init Command',
+  });
+
   let projectPath = program.projectPath;
 
   if (typeof projectPath === 'string') {
@@ -79,9 +91,32 @@ export async function init(program: IInitCommandOptions): Promise<void> {
     process.exit(1);
   }
 
+  let userId: string;
   // if no secret key is supplied set to empty string
   if (!program.secretKey) {
     program.secretKey = '';
+  } else {
+    try {
+      const response = await fetch(program.apiUrl + '/v1/users/me', {
+        headers: {
+          Authorization: `ApiKey ${program.secretKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch environment details');
+      }
+
+      const user = await response.json();
+      userId = user.data._id;
+
+      analytics.alias({
+        previousId: anonymousId,
+        userId: user.data._id,
+      });
+    } catch (error) {
+      console.error('Error fetching environment details:', error);
+    }
   }
 
   /**
@@ -110,6 +145,16 @@ export async function init(program: IInitCommandOptions): Promise<void> {
     customizeImportAlias: false,
   };
 
+  analytics.track({
+    identity: {
+      userId: userId,
+    },
+    data: {
+      name: projectName,
+    },
+    event: 'Creating a new project',
+  });
+
   await createApp({
     appPath: resolvedProjectPath,
     packageManager: 'npm',
@@ -117,6 +162,16 @@ export async function init(program: IInitCommandOptions): Promise<void> {
     eslint: defaults.eslint as boolean,
     srcDir: defaults.srcDir as boolean,
     importAlias: defaults.importAlias as string,
-    secretKey: defaults.secretKey as string,
+    secretKey: program.secretKey,
+  });
+
+  analytics.track({
+    identity: {
+      userId: userId,
+    },
+    data: {
+      name: projectName,
+    },
+    event: 'Project created',
   });
 }
