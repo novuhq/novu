@@ -4,6 +4,7 @@
   "private": true,
   "main": "dist/index.js",
   "scripts": {
+    "start": "npm run build:watch",
     "build": "node ./check-ee.mjs",
     "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
