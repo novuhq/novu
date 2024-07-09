@@ -1,6 +1,6 @@
 # Novu Bridge App
 
-This is a [Novu](https://novu.co/) bridge application bootstrapped with [`create-novu-app`](https://www.npmjs.com/package/create-novu-app)
+This is a [Novu](https://novu.co/) bridge application bootstrapped with [`npx novu init`](https://www.npmjs.com/package/novu)
 
 ## Getting Started
 
