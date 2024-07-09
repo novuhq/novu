@@ -4,7 +4,7 @@ import { Navigate, Outlet, Route } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
-import { INTERCOM_APP_ID, IS_CLERK_AUTH_ENABLED } from '../../../config';
+import { INTERCOM_APP_ID, IS_EE_AUTH_ENABLED } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
@@ -48,7 +48,7 @@ export function PrivatePageLayout() {
   );
 
   function clerkPrivateWrapper(children: React.ReactNode) {
-    if (!IS_CLERK_AUTH_ENABLED) {
+    if (!IS_EE_AUTH_ENABLED) {
       return <>children</>;
     }
 

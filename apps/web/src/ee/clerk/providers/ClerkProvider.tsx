@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CLERK_PUBLISHABLE_KEY, IS_CLERK_AUTH_ENABLED } from '../../../config/index';
+import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
 import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { useColorScheme } from '@novu/design-system';
 import { dark } from '@clerk/themes';
@@ -31,7 +31,7 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
   const navigate = useNavigate();
   const { colorScheme } = useColorScheme();
 
-  if (!IS_CLERK_AUTH_ENABLED) {
+  if (!IS_EE_AUTH_ENABLED) {
     return <>{children}</>;
   }
 

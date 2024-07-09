@@ -69,12 +69,12 @@ export const HUBSPOT_PORTAL_ID = window._env_.REACT_APP_HUBSPOT_EMBED || process
 
 export const IS_EU_ENV = (ENV === 'production' || ENV === 'prod') && API_ROOT.includes('eu.api.novu.co');
 
-export const IS_CLERK_AUTH_ENABLED =
-  window._env_.REACT_APP_IS_CLERK_AUTH_ENABLED === 'true' || process.env.REACT_APP_IS_CLERK_AUTH_ENABLED === 'true';
+export const IS_EE_AUTH_ENABLED =
+  window._env_.REACT_APP_IS_EE_AUTH_ENABLED === 'true' || process.env.REACT_APP_IS_EE_AUTH_ENABLED === 'true';
 
 export const CLERK_PUBLISHABLE_KEY =
   window._env_.REACT_APP_CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
 
-if (!CLERK_PUBLISHABLE_KEY) {
+if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }

@@ -10,7 +10,7 @@ import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
 import { useAuthEnterpriseContext } from '../ee/clerk';
-import { IS_CLERK_AUTH_ENABLED } from '../config/index';
+import { IS_EE_AUTH_ENABLED } from '../config/index';
 
 // TODO: Add a novu prefix to the local storage key
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -171,5 +171,5 @@ function useAuthCommunity() {
 
 export function useAuth() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  return IS_CLERK_AUTH_ENABLED ? useAuthEnterpriseContext() : useAuthCommunity();
+  return IS_EE_AUTH_ENABLED ? useAuthEnterpriseContext() : useAuthCommunity();
 }

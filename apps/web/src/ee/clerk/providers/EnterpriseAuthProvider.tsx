@@ -8,7 +8,7 @@ import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/c
 import { OrganizationResource, UserResource } from '@clerk/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
-import { IS_CLERK_AUTH_ENABLED } from '../../../config/index';
+import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 
 interface AuthEnterpriseContextProps {
   inPublicRoute: boolean;
@@ -173,7 +173,7 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [inPublicRoute, inPrivateRoute, isUserLoaded, isOrganizationLoaded, user, organization, logout]
   );
 
-  if (!IS_CLERK_AUTH_ENABLED) {
+  if (!IS_EE_AUTH_ENABLED) {
     return <>{children}</>;
   }
 
@@ -181,7 +181,7 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 };
 
 export const AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  if (!IS_CLERK_AUTH_ENABLED) {
+  if (!IS_EE_AUTH_ENABLED) {
     return <>{children}</>;
   }
 

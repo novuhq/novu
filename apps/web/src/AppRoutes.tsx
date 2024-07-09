@@ -58,7 +58,7 @@ import {
   WorkflowsTestPage,
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
-import { IS_CLERK_AUTH_ENABLED } from './config/index';
+import { IS_EE_AUTH_ENABLED } from './config/index';
 import { ClerkRoutes } from './ee/clerk/ClerkRoutes';
 
 export const AppRoutes = () => {
@@ -66,7 +66,7 @@ export const AppRoutes = () => {
 
   return (
     <Routes>
-      {!IS_CLERK_AUTH_ENABLED ? (
+      {!IS_EE_AUTH_ENABLED ? (
         <Route element={<PublicPageLayout />}>
           <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
           <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
@@ -120,7 +120,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
         <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
         <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
-        {!IS_CLERK_AUTH_ENABLED ? (
+        {!IS_EE_AUTH_ENABLED ? (
           <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
             <Route path="" element={<Navigate to={ROUTES.PROFILE} replace />} />
             {/* TODO: Remove after the next deployment on 2024-06-18 */}
@@ -143,7 +143,7 @@ export const AppRoutes = () => {
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
           <Route path=":integrationId" element={<UpdateProviderPage />} />
         </Route>
-        {!IS_CLERK_AUTH_ENABLED ? <Route path={ROUTES.TEAM} element={<MembersInvitePage />} /> : null}
+        {!IS_EE_AUTH_ENABLED ? <Route path={ROUTES.TEAM} element={<MembersInvitePage />} /> : null}
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
         <Route path={ROUTES.STUDIO}>

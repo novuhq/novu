@@ -2,7 +2,7 @@ import { ActionIcon, Header } from '@mantine/core';
 import { IconHelpOutline, IconOutlineCloudUpload } from '@novu/novui/icons';
 import { Tooltip } from '@novu/design-system';
 import { Button } from '@novu/novui';
-import { IS_CLERK_AUTH_ENABLED, IS_DOCKER_HOSTED } from '../../../../config';
+import { IS_EE_AUTH_ENABLED, IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
@@ -62,7 +62,7 @@ export function HeaderNav() {
             <IconHelpOutline />
           </ActionIcon>
         )}
-        {IS_CLERK_AUTH_ENABLED ? <UserProfileButton /> : <HeaderMenuItems />}
+        {IS_EE_AUTH_ENABLED ? <UserProfileButton /> : <HeaderMenuItems />}
       </HStack>
     </Header>
   );
