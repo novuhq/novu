@@ -70,12 +70,12 @@ export const MAIL_SERVER_DOMAIN =
   window._env_.VITE_MAIL_SERVER_DOMAIN || import.meta.env.VITE_MAIL_SERVER_DOMAIN || 'dev.inbound-mail.novu.co';
 
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
-  window._env_.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID;
+  window._env_.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID || import.meta.env.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
 export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce(
   (prev, key) => {
     const defaultValue = 'false';
-    prev[key] = window._env_[key] || process.env[key] || defaultValue;
+    prev[key] = window._env_[key] || import.meta.env[key] || defaultValue;
 
     return prev;
   },
