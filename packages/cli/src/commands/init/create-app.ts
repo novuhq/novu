@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { green, cyan } from 'picocolors';
 import fs from 'fs';
 import path from 'path';
@@ -59,8 +58,6 @@ export async function createApp({
 
   process.chdir(root);
 
-  let hasPackageJson = false;
-
   /**
    * If an example repository is not provided for cloning, proceed
    * by installing from a template.
@@ -91,23 +88,4 @@ export async function createApp({
   }
 
   console.log(`${green('Success!')} Created ${appName} at ${appPath}`);
-
-  if (hasPackageJson) {
-    console.log('Inside that directory, you can run several commands:');
-    console.log();
-    console.log(cyan(`  ${packageManager} ${useYarn ? '' : 'run '}dev`));
-    console.log('    Starts the development server.');
-    console.log();
-    console.log(cyan(`  ${packageManager} ${useYarn ? '' : 'run '}build`));
-    console.log('    Builds the app for production.');
-    console.log();
-    console.log(cyan(`  ${packageManager} start`));
-    console.log('    Runs the built app in production mode.');
-    console.log();
-    console.log('We suggest that you begin by typing:');
-    console.log();
-    console.log(cyan('  cd'), cdPath);
-    console.log(`  ${cyan(`${packageManager} ${useYarn ? '' : 'run '}dev`)}`);
-  }
-  console.log();
 }

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import axios from 'axios';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';

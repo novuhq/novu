@@ -1,8 +1,8 @@
 import 'cross-fetch/polyfill';
 import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
-import * as request from 'supertest';
-import * as defaults from 'superagent-defaults';
+import request from 'supertest';
+import superAgentDefaults from 'superagent-defaults';
 import {
   ApiServiceLevelEnum,
   EmailBlockTypeEnum,
@@ -167,7 +167,7 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
   async createEnvironmentsAndFeeds(): Promise<void> {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Logger } from '@nestjs/common';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';

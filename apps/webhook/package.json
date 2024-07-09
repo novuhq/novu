@@ -61,7 +61,7 @@
     "mocha": "^10.2.0",
     "prettier": "~2.8.0",
     "sinon": "^9.2.4",
-    "supertest": "^6.0.0",
+    "supertest": "^7.0.0",
     "ts-jest": "^27.0.7",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",

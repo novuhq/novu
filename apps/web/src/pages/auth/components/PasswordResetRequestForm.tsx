@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
@@ -38,7 +38,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
       onSent();
     } catch (e: any) {
       if (e.statusCode !== 400) {
-        Sentry.captureException(e);
+        captureException(e);
       }
     }
   };

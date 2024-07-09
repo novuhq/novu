@@ -14,8 +14,8 @@ import {
   render,
   CodeInline,
 } from "@react-email/components";
-import * as React from "react";
-import { ControlSchema, PayloadSchema } from "../workflows/";
+import React from "react";
+import { ControlSchema, PayloadSchema } from "../workflows";
 
 type NovuWelcomeEmailProps = ControlSchema & PayloadSchema;
 

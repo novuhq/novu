@@ -1,17 +1,16 @@
-import { useEffect, useCallback, useMemo } from 'react';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
-import jwtDecode from 'jwt-decode';
-import { useLocation, useNavigate } from 'react-router-dom';
+import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import { setUser, configureScope } from '@sentry/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
-import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
-import { useSegment } from '../components/providers/SegmentProvider';
+import { HttpStatusCode } from 'axios';
+import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
-
-// TODO: Add a novu prefix to the local storage key
-const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
-const UNAUTHENTICATED_STATUS_CODE = 401;
+import { useSegment } from '../components/providers/SegmentProvider';
+import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../constants/routes';
+import { LOCAL_STORAGE_AUTH_TOKEN_KEY } from './auth.const';
+import { getToken } from './getToken';
+import { getTokenClaims } from './getTokenClaims';
 
 export interface IUserWithContext extends IUserEntity {
   organizationId?: string;
@@ -34,16 +33,6 @@ function saveToken(token: string | null) {
   }
 }
 
-export function getToken(): string {
-  return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || '';
-}
-
-export function getTokenClaims(): IJwtClaims | null {
-  const token = getToken();
-
-  return token ? jwtDecode<IJwtClaims>(token) : null;
-}
-
 function inIframe() {
   try {
     return window.self !== window.top;
@@ -52,12 +41,17 @@ function inIframe() {
   }
 }
 
-export function useAuth() {
+/**
+ * TODO: this function should be decomposed into smaller, more focused pieces of functionality.
+ */
+export function useCreateAuthContext() {
   const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const [organizationId, setOrganizationId] = useState<string | undefined>();
+  const [environmentId, setEnvironmentId] = useState<string | undefined>();
   const inPublicRoute = Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
     location.pathname.startsWith(prefix)
   );
@@ -74,7 +68,7 @@ export function useAuth() {
     enabled: hasToken,
     retry: false,
     onError: (error: any) => {
-      if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
+      if (error?.statusCode === HttpStatusCode.Unauthorized) {
         logout();
       }
     },
@@ -88,7 +82,7 @@ export function useAuth() {
     enabled: hasToken,
     retry: false,
     onError: (error: any) => {
-      if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
+      if (error?.statusCode === HttpStatusCode.Unauthorized) {
         logout();
       }
     },
@@ -102,6 +96,7 @@ export function useAuth() {
 
       saveToken(newToken);
       await refetchOrganizations();
+      refreshContext();
 
       redirectUrl ? navigate(redirectUrl) : void 0;
     },
@@ -110,6 +105,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     saveToken(null);
+    refreshContext();
     queryClient.clear();
     segment.reset();
     navigate(ROUTES.AUTH_LOGIN);
@@ -162,7 +158,18 @@ export function useAuth() {
     [redirectTo]
   );
 
-  const { organizationId, environmentId } = getTokenClaims() || {};
+  const refreshContext = () => {
+    const { organizationId: newOrgId, environmentId: newEnvId } = getTokenClaims() || {
+      organizationId: undefined,
+      environmentId: undefined,
+    };
+    setOrganizationId(newOrgId);
+    setEnvironmentId(newEnvId);
+  };
+
+  useEffect(() => {
+    refreshContext();
+  }, []);
 
   const currentOrganization = useMemo(() => {
     if (organizationId && organizations && organizations?.length > 0) {
@@ -176,7 +183,7 @@ export function useAuth() {
     if (user && currentOrganization) {
       segment.identify(user);
 
-      Sentry.setUser({
+      setUser({
         email: user.email ?? '',
         username: `${user.firstName} ${user.lastName}`,
         id: user._id,
@@ -184,7 +191,7 @@ export function useAuth() {
         organizationName: currentOrganization.name,
       });
     } else {
-      Sentry.configureScope((scope) => scope.setUser(null));
+      configureScope((scope) => scope.setUser(null));
     }
   }, [user, currentOrganization, segment]);
 
