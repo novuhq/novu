@@ -8,6 +8,8 @@ import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
 import { useDebouncedCallback } from '@novu/novui';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
+import { CONCEPT_PATHS, PATHS } from '../../../../components/docs/docs.const';
+import { ROUTES } from '../../../../constants/routes';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -92,7 +94,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
-                      setPath('concepts/controls');
+                      setPath(CONCEPT_PATHS.CONTROLS);
                       toggle();
                     }}
                   />
@@ -119,7 +121,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Payload ensures correct formatting and data validity."
                     onDocsClick={() => {
-                      setPath('workflow/introduction#payload-schema');
+                      setPath((PATHS[ROUTES.STUDIO_FLOWS] as string) + '#payload-schema');
                       toggle();
                     }}
                   />

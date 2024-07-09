@@ -5,6 +5,7 @@ export type DocsQueryResults = {
   code: string;
   title: string;
   description: string;
+  /** is a map of what needs to have globals and are usually mapped to ChildDocs component */
   mappings: Record<string, Record<string, string> | string>;
 };
 
