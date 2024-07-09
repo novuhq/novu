@@ -57,7 +57,8 @@ export const IS_DOCKER_HOSTED =
 
 export const VITE_VERSION = version;
 
-export const INTERCOM_APP_ID = window._env_.VITE_INTERCOM_APP_ID || process.env.VITE_INTERCOM_APP_ID || '';
+export const INTERCOM_APP_ID =
+  window._env_.VITE_INTERCOM_APP_ID || process.env.VITE_INTERCOM_APP_ID || import.meta.env.VITE_INTERCOM_APP_ID || '';
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
 
