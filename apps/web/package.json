@@ -3,10 +3,10 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "start": "pnpm panda --watch & vite",
+    "start": "pnpm panda codegen && vite",
     "prebuild": "rimraf dist",
-    "build": "pnpm panda && cross-env vite build",
-    "build:test": "pnpm panda && cross-env VITE_HUBSPOT_EMBED=44416662 VITE_API_URL=http://127.0.0.1:1336 vite build",
+    "build": "tsc && pnpm panda && cross-env vite build",
+    "build:test": "tsc && pnpm panda && cross-env VITE_HUBSPOT_EMBED=44416662 VITE_API_URL=http://127.0.0.1:1336 vite build",
     "precommit": "lint-staged",
     "docker:build": "docker buildx dist --load -f ./Dockerfile -t novu-web ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",

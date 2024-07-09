@@ -1,4 +1,5 @@
 import { FeatureFlagsKeysEnum, getContextPath, NovuComponentEnum } from '@novu/shared';
+import { version } from '../../package.json';
 
 function isBrowser() {
   return typeof window !== 'undefined';
@@ -54,7 +55,7 @@ export const WIDGET_EMBED_PATH =
 export const IS_DOCKER_HOSTED =
   window._env_.VITE_DOCKER_HOSTED_ENV === 'true' || import.meta.env.VITE_DOCKER_HOSTED_ENV === 'true';
 
-export const VITE_VERSION = import.meta.env.NOVU_VERSION;
+export const VITE_VERSION = version;
 
 export const INTERCOM_APP_ID = window._env_.VITE_INTERCOM_APP_ID || process.env.VITE_INTERCOM_APP_ID || '';
 

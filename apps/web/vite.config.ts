@@ -13,7 +13,4 @@ export default defineConfig({
     // this sets a default port to 4200
     port: 4200,
   },
-  define: {
-    'process.env': {},
-  },
 });
