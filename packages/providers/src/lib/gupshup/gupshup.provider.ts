@@ -23,7 +23,6 @@ export class GupshupSmsProvider implements ISmsProvider {
       password?: string;
     }
   ) {}
-  id: string;
 
   async sendMessage(
     options: ISmsOptions
