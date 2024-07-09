@@ -141,7 +141,7 @@ jobs:
 
       - name: Render Amazon ECS task definition
         id: render-container
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
         with:
           task-definition: task-definition.json
           container-name: ${{ env.ws_ecs_container_name }}
@@ -149,7 +149,7 @@ jobs:
 
       - name: Deploy to Amazon ECS service
         if: ${{contains(matrix.name, 'ee')}}
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
         with:
           task-definition: ${{ steps.render-container.outputs.task-definition }}
           service: ${{ env.ws_ecs_service }}
