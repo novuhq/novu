@@ -24,7 +24,7 @@ const normalizePayload = (originalPayload: Record<string, unknown>) => {
   return originalPayload;
 };
 export const createNodeSnippet = ({ identifier, to, payload, overrides, snippet, secretKey }: CodeSnippetProps) => {
-  const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
+  const renderedSecretKey = secretKey ? `'${secretKey}'` : `import.meta.env['${SECRET_KEY_ENV_KEY}']`;
 
   return `import { Novu } from '@novu/node'; 
 
