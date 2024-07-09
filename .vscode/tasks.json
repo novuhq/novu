@@ -1,0 +1,190 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "API",
+      "path": "/apps/api",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Successfully compiled",
+          "endsPattern": "Started application in NODE_ENV"
+        }
+      },
+      "dependsOn": [
+        "SHARED",
+        "APPLICATION GENERIC",
+        "DAL"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "WORKER",
+      "path": "/apps/worker",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Successfully compiled",
+          "endsPattern": "Started application in NODE_ENV"
+        }
+      },
+      "dependsOn": [
+        "SHARED",
+        "API",
+        "APPLICATION GENERIC",
+        "DAL",
+        "EE - TRANSLATION",
+        "EE - BILLING",
+        "EE - BRIDGE WORKER"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "WEB",
+      "path": "/apps/web",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling...",
+          "endsPattern": "webpack compiled successfully"
+        }
+      },
+      "dependsOn": [
+        "SHARED",
+        "API"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "SHARED",
+      "path": "/libs/shared",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "APPLICATION GENERIC",
+      "path": "/libs/application-generic",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED",
+        "TESTING",
+        "STATELESS",
+        "NODE",
+        "PROVIDERS"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "DAL",
+      "path": "/libs/dal",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "STATELESS",
+      "path": "/packages/stateless",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "PROVIDERS",
+      "path": "/packages/providers",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED",
+        "STATELESS"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "NODE",
+      "path": "/packages/node",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "TESTING",
+      "path": "/libs/testing",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - TRANSLATION",
+      "path": "/enterprise/packages/translation",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED", "EE - DAL", "EE - SHARED SERVICES"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - BILLING",
+      "path": "/enterprise/packages/billing",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED", "EE - DAL"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - BRIDGE WORKER",
+      "path": "/enterprise/packages/bridge-worker",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED", "EE - DAL"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - DAL",
+      "path": "/enterprise/packages/dal",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - SHARED SERVICES",
+      "path": "/enterprise/packages/shared-services",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED"]
+    }
+  ]
+}

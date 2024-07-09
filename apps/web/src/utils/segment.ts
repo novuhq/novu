@@ -1,6 +1,7 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
-import { init, identify, alias, register, get_session_recording_properties } from 'mixpanel-browser';
+// eslint-disable-next-line import/no-namespace
+import * as mixpanel from 'mixpanel-browser';
 import { api } from '../api';
 
 export class SegmentService {
@@ -13,7 +14,7 @@ export class SegmentService {
     this._mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
     if (this._mixpanelEnabled) {
-      init(process.env.REACT_APP_MIXPANEL_KEY as string, {
+      mixpanel.init(process.env.REACT_APP_MIXPANEL_KEY as string, {
         record_sessions_percent: 100,
       });
     }
@@ -27,8 +28,8 @@ export class SegmentService {
         try {
           if (payload.type() === 'track' || payload.type() === 'page') {
             const segmentDeviceId = payload.obj.anonymousId;
-            register({ $device_id: segmentDeviceId });
-            const sessionReplayProperties = get_session_recording_properties();
+            mixpanel.register({ $device_id: segmentDeviceId });
+            const sessionReplayProperties = mixpanel.get_session_recording_properties();
             payload.obj.properties = {
               ...payload.obj.properties,
               ...sessionReplayProperties,
@@ -36,7 +37,7 @@ export class SegmentService {
           }
           const userId = payload.obj.userId;
           if (payload.type() === 'identify' && userId) {
-            identify(userId);
+            mixpanel.identify(userId);
           }
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -61,7 +62,7 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      alias(userId, anonymousId);
+      mixpanel.alias(userId, anonymousId);
     }
 
     this._segment?.alias(userId, anonymousId);
@@ -81,7 +82,7 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      const sessionReplayProperties = get_session_recording_properties();
+      const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
       data = {
         ...(data || {}),

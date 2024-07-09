@@ -13,6 +13,7 @@
   "license": "MIT",
   "keywords": [],
   "scripts": {
+    "start": "npm run build:watch",
     "prebuild": "rimraf build",
     "build": "node ./check-ee.mjs",
     "build:main": "tsc -p tsconfig.json",

@@ -81,7 +81,7 @@ export class SendMessageChat extends SendMessageBase {
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const { subscriber } = command.compileContext;
-    const i18nextInstance = await this.initiateTranslations(
+    const i18nInstance = await this.initiateTranslations(
       command.environmentId,
       command.organizationId,
       subscriber.locale
@@ -101,7 +101,8 @@ export class SendMessageChat extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
-          })
+          }),
+          i18nInstance
         );
       }
     } catch (e) {
