@@ -1,5 +1,5 @@
 import { UserButton } from '@clerk/clerk-react';
-import { IconCreditCard, IconGroup, IconRoomPreferences, IconWorkspacePremium } from '@novu/design-system';
+import { IconCreditCard, IconGroup, IconRoomPreferences, IconWorkspacePremium } from '@novu/novui/icons';
 import { ROUTES } from '../../../constants/routes';
 import { BrandingPage } from '../../../pages/brand/BrandingPage';
 import { BillingPage } from '../../billing/pages/BillingPage';

@@ -13,16 +13,12 @@ export default function QuestionnairePage() {
   const isHubspotEnabled = HUBSPOT_PORTAL_ID && isHubspotFormFeatureFlagEnabled;
 
   if (isLoading) {
-    <SetupLoader title="Loading..." />;
+    return <SetupLoader title="Loading..." />;
   }
 
-  const renderQuestionnaireForm = () => {
-    if (isHubspotEnabled) {
-      return <HubspotSignupForm />;
-    }
-
-    return <QuestionnaireForm />;
-  };
-
-  return <AuthLayout title="Tell us more about you">{renderQuestionnaireForm()}</AuthLayout>;
+  return (
+    <AuthLayout title="Tell us more about you">
+      {isHubspotEnabled ? <HubspotSignupForm /> : <QuestionnaireForm />}
+    </AuthLayout>
+  );
 }

@@ -25,6 +25,7 @@ interface AuthEnterpriseContextProps {
   environmentId: string | null;
 }
 
+// TODO: styles of Clerk components will get updated according to custom design
 const ClerkModalElement = {
   modalContent: {
     width: '80rem',
@@ -76,7 +77,7 @@ const AuthEnterpriseContext = createContext<AuthEnterpriseContextProps | undefin
 
 export const useAuthEnterpriseContext = () => {
   const context = useContext(AuthEnterpriseContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuthEnterpriseContext must be used within an AuthEnterpriseProvider');
   }
 
@@ -84,7 +85,7 @@ export const useAuthEnterpriseContext = () => {
 };
 
 const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { signOut, userId, orgId } = useAuth();
+  const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
   const { setActive, isLoaded: isOrgListLoaded } = useOrganizationList();
@@ -111,8 +112,15 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     signOut();
   }, [navigate, queryClient, segment, signOut]);
 
+  const switchOrgCallback = useCallback(async () => {
+    await queryClient.refetchQueries();
+  }, [queryClient]);
+
+  // check if user has active organization
   useEffect(() => {
-    if (orgId || !userId) return;
+    if (orgId) {
+      return;
+    }
 
     if (isOrgListLoaded && clerkUser) {
       const hasOrgs = clerkUser.organizationMemberships.length > 0;
@@ -124,30 +132,30 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         navigate(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST);
       }
     }
-  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId, userId]);
+  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId]);
 
+  // transform Clerk user to internal user entity
   useEffect(() => {
     if (isUserLoaded && clerkUser) {
       setUser(toUserEntity(clerkUser));
     }
   }, [clerkUser, isUserLoaded]);
 
+  // transform Clerk organization to internal organization entity
   useEffect(() => {
     if (isOrganizationLoaded && clerkOrganization) {
       setOrganization(toOrganizationEntity(clerkOrganization));
     }
   }, [clerkOrganization, isOrganizationLoaded]);
 
-  const switchOrgCallback = useCallback(async () => {
-    await queryClient.refetchQueries();
-  }, [queryClient]);
-
+  // refetch queries on organization switch
   useEffect(() => {
     if (organization && organization._id !== clerkOrganization?.id) {
       switchOrgCallback();
     }
   }, [organization, clerkOrganization, switchOrgCallback]);
 
+  // sentry tracking
   useEffect(() => {
     if (user && organization) {
       segment.identify(user);
@@ -164,6 +172,7 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [user, organization, segment]);
 
+  // launch darkly
   useEffect(() => {
     if (!ldClient) return;
 

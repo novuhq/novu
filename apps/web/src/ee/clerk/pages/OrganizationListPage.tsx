@@ -9,7 +9,7 @@ export default function OrganizationListPage() {
       description="Please select or create an organization to continue."
     >
       <OrganizationList
-        hidePersonal={true}
+        hidePersonal
         afterSelectOrganizationUrl={ROUTES.GET_STARTED}
         afterCreateOrganizationUrl={ROUTES.AUTH_APPLICATION}
       />
