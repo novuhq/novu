@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Navigate, Outlet, Route } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
@@ -15,8 +15,6 @@ import { HeaderNav } from './v2/HeaderNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
-import { SignedIn, SignedOut } from '@clerk/clerk-react';
-import { ROUTES } from '../../../constants/routes';
 
 const AppShell = styled.div`
   display: flex;
@@ -47,22 +45,7 @@ export function PrivatePageLayout() {
     [environment]
   );
 
-  function clerkPrivateWrapper(children: React.ReactNode) {
-    if (!IS_EE_AUTH_ENABLED) {
-      return <>children</>;
-    }
-
-    return (
-      <>
-        <SignedIn>{children}</SignedIn>
-        <SignedOut>
-          <Navigate to={ROUTES.AUTH_LOGIN} replace />
-        </SignedOut>
-      </>
-    );
-  }
-
-  const layout = (
+  return (
     <EnsureOnboardingComplete>
       <SpotLightProvider>
         <IntercomProvider
@@ -101,6 +84,4 @@ export function PrivatePageLayout() {
       </SpotLightProvider>
     </EnsureOnboardingComplete>
   );
-
-  return clerkPrivateWrapper(layout);
 }

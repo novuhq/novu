@@ -60,9 +60,25 @@ import {
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 import { IS_EE_AUTH_ENABLED } from './config/index';
 import { ClerkRoutes } from './ee/clerk/ClerkRoutes';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
+
+  function clerkPrivateWrapper(children: React.ReactNode) {
+    if (!IS_EE_AUTH_ENABLED) {
+      return <>children</>;
+    }
+
+    return (
+      <>
+        <SignedIn>{children}</SignedIn>
+        <SignedOut>
+          <Navigate to={ROUTES.AUTH_LOGIN} replace />
+        </SignedOut>
+      </>
+    );
+  }
 
   return (
     <Routes>
@@ -78,7 +94,7 @@ export const AppRoutes = () => {
       ) : (
         ClerkRoutes()
       )}
-      <Route element={<PrivatePageLayout />}>
+      <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : clerkPrivateWrapper(<PrivatePageLayout />)}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
           element={<LinkVercelProjectPage type="create" />}
