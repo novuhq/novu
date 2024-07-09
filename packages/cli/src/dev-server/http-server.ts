@@ -1,8 +1,8 @@
-import * as http from 'http';
+import http from 'node:http';
 import { AddressInfo } from 'net';
 
 import { SERVER_HOST } from '../constants';
-import * as getPort from 'get-port';
+import getPort from 'get-port';
 
 export const WELL_KNOWN_ROUTE = '/.well-known/novu';
 export const STUDIO_PATH = '/studio';
@@ -71,6 +71,7 @@ export class DevServer {
     const studioHTML = `
     <html class="dark">
       <head>
+        <link href="${this.options.dashboardUrl}/favicon.svg" rel="icon" />
         <title>Novu Studio</title>
       </head>
       <body style="padding: 0; margin: 0;">

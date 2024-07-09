@@ -1,4 +1,4 @@
-import * as Handlebars from 'handlebars';
+import Handlebars from 'handlebars';
 import {
   IAttachmentOptions,
   ITriggerPayload,

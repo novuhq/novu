@@ -9,7 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "target": "es2017",
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "sourceMap": false,
     "outDir": "./dist",
     "baseUrl": "./src",
