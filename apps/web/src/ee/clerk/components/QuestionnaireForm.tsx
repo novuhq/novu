@@ -37,7 +37,7 @@ function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
 }
 
 export function QuestionnaireForm() {
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -73,7 +73,7 @@ export function QuestionnaireForm() {
     await updateOrganizationMutation(updateClerkOrgDto);
   }
 
-  const onCreateOrganization = async (data: UpdateExternalOrganizationDto) => {
+  const onUpdateOrganization = async (data: UpdateExternalOrganizationDto) => {
     setLoading(true);
     await updateOrganization({ ...data });
     setLoading(false);
@@ -84,14 +84,13 @@ export function QuestionnaireForm() {
       return;
     }
 
-    if (isV2ExperienceEnabled) {
-      navigate(ROUTES.STUDIO_ONBOARDING);
+    if (isV2Enabled) {
+      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
 
       return;
     }
-    const firstUsecase = findFirstUsecase(data.productUseCases) ?? '';
-    const mappedUsecase = firstUsecase.replace('_', '-');
-    navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);
+
+    navigate(`${ROUTES.GET_STARTED}`);
   };
 
   /**
@@ -106,7 +105,7 @@ export function QuestionnaireForm() {
   `;
 
   return (
-    <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>
+    <form noValidate name="create-app-form" onSubmit={handleSubmit(onUpdateOrganization)}>
       <Controller
         name="jobTitle"
         control={control}
@@ -189,11 +188,9 @@ export function QuestionnaireForm() {
                 <>
                   {checkBoxData.map((item) => (
                     <DynamicCheckBox
-                      Icon={item.icon}
                       label={item.label}
                       onChange={(e) => handleCheckboxChange(e, item.type)}
                       key={item.type}
-                      type={item.type}
                     />
                   ))}
                 </>
@@ -216,13 +213,3 @@ const checkBoxData = [
   { type: ProductUseCasesEnum.DELAY, icon: HalfClock, label: 'Delay' },
   { type: ProductUseCasesEnum.TRANSLATION, icon: Translation, label: 'Translate' },
 ];
-
-function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCasesEnum | undefined {
-  if (useCases) {
-    const keys = Object.keys(useCases) as ProductUseCasesEnum[];
-
-    return keys.find((key) => useCases[key] === true);
-  }
-
-  return undefined;
-}

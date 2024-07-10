@@ -1,31 +1,27 @@
-import { createContext, useContext } from 'react';
-import { useCreateAuthContext } from './useCreateAuthContext';
+import { Context, useContext } from 'react';
+import { IS_EE_AUTH_ENABLED } from '../config/index';
+import { EnterpriseAuthContext, EnterpriseAuthContextProvider } from '../ee/clerk';
+import { useCreateAuthContextEnterprise } from '../ee/clerk/';
+import { CommunityAuthContext, CommunityAuthContextProvider } from './CommunityAuthContextProvider';
+import { useCreateAuthContextCommunity } from './useCreateAuthContextCommunity';
 
-const AuthContext = createContext<ReturnType<typeof useCreateAuthContext>>({
-  inPublicRoute: undefined,
-  inPrivateRoute: false,
-  isLoading: false,
-  currentUser: undefined,
-  organizations: [],
-  currentOrganization: null,
-  login: () => Promise.resolve(),
-  logout: () => {},
-  environmentId: undefined,
-  organizationId: undefined,
-  redirectToLogin: () => {},
-  redirectToSignUp: () => {},
-});
-AuthContext.displayName = 'AuthProvider';
+export type AuthContextType = ReturnType<typeof useCreateAuthContextCommunity | typeof useCreateAuthContextEnterprise>;
 
 export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
-  return <AuthContext.Provider value={useCreateAuthContext()}>{children}</AuthContext.Provider>;
+  if (IS_EE_AUTH_ENABLED) {
+    return <EnterpriseAuthContextProvider>{children}</EnterpriseAuthContextProvider>;
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return <CommunityAuthContextProvider>{children}</CommunityAuthContextProvider>;
 };
 
 export const useAuthContext = () => {
-  const value = useContext(AuthContext);
+  const context = IS_EE_AUTH_ENABLED ? EnterpriseAuthContext : CommunityAuthContext;
+  const value = useContext(context as Context<AuthContextType>);
 
   if (!value) {
-    throw new Error('useAuth must be used within ' + AuthContext.displayName);
+    throw new Error('useAuth must be used within ' + context.displayName);
   }
 
   return value;

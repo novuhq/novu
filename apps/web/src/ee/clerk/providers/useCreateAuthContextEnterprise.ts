@@ -1,52 +1,13 @@
-import React, { createContext, useContext, useEffect, useCallback, useMemo, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
+import { setUser as setSentryUser, configureScope } from '@sentry/react';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
-import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
-import { ClerkProvider } from '@clerk/clerk-react';
-import { useColorScheme } from '@novu/design-system';
-import { dark } from '@clerk/themes';
-
-interface AuthEnterpriseContextProps {
-  inPublicRoute: boolean;
-  inPrivateRoute: boolean;
-  isLoading: boolean;
-  currentUser: IUserEntity | undefined;
-  organizations: IOrganizationEntity[];
-  currentOrganization: IOrganizationEntity | undefined;
-  login: (...args: any[]) => void;
-  logout: () => void;
-  environmentId: string | null;
-}
-
-// TODO: styles of Clerk components will get updated according to custom design
-const ClerkModalElement = {
-  modalContent: {
-    width: '80rem',
-    display: 'block',
-  },
-  cardBox: {
-    width: '100%',
-  },
-  rootBox: {
-    width: 'auto',
-  },
-};
-
-const localization = {
-  userProfile: {
-    navbar: {
-      title: 'Settings',
-      description: 'Manage your account settings',
-    },
-  },
-};
 
 const toUserEntity = (clerkUser: UserResource): IUserEntity => ({
   _id: clerkUser.id,
@@ -73,18 +34,7 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
   productUseCases: clerkOrganization.publicMetadata.productUseCases,
 });
 
-const AuthEnterpriseContext = createContext<AuthEnterpriseContextProps | undefined>(undefined);
-
-export const useAuthEnterpriseContext = () => {
-  const context = useContext(AuthEnterpriseContext);
-  if (!context) {
-    throw new Error('useAuthEnterpriseContext must be used within an AuthEnterpriseProvider');
-  }
-
-  return context;
-};
-
-const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function useCreateAuthContextEnterprise() {
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
@@ -99,9 +49,8 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const navigate = useNavigate();
   const location = useLocation();
 
-  const inPublicRoute = useMemo(
-    () => Array.from(PUBLIC_ROUTES_PREFIXES.values()).some((prefix) => location.pathname.startsWith(prefix)),
-    [location.pathname]
+  const inPublicRoute = Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
+    location.pathname.startsWith(prefix)
   );
   const inPrivateRoute = !inPublicRoute;
 
@@ -160,7 +109,7 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (user && organization) {
       segment.identify(user);
 
-      Sentry.setUser({
+      setSentryUser({
         email: user.email ?? '',
         username: `${user.firstName} ${user.lastName}`,
         id: user._id,
@@ -168,7 +117,7 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         organizationName: organization.name,
       });
     } else {
-      Sentry.configureScope((scope) => scope.setUser(null));
+      configureScope((scope) => scope.setUser(null));
     }
   }, [user, organization, segment]);
 
@@ -190,46 +139,20 @@ const _AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [ldClient, organization]);
 
-  const memoizedValues = useMemo(
-    () => ({
-      inPublicRoute,
-      inPrivateRoute,
-      isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
-      currentUser: user,
-      // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
-      organizations: isOrganizationLoaded && organization ? [organization] : [],
-      currentOrganization: organization,
-      login: (...args: any[]) => new Error('login() not implemented in enterprise version'),
-      logout,
-      // TODO: implement proper environment switch
-      environmentId: null,
-    }),
-    [inPublicRoute, inPrivateRoute, isUserLoaded, isOrganizationLoaded, user, organization, logout]
-  );
-
-  return <AuthEnterpriseContext.Provider value={memoizedValues}>{children}</AuthEnterpriseContext.Provider>;
-};
-
-export const AuthEnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const navigate = useNavigate();
-  const { colorScheme } = useColorScheme();
-
-  if (!IS_EE_AUTH_ENABLED) {
-    return <>{children}</>;
-  }
-
-  return (
-    <ClerkProvider
-      routerPush={(to) => navigate(to)}
-      routerReplace={(to) => navigate(to, { replace: true })}
-      publishableKey={CLERK_PUBLISHABLE_KEY}
-      appearance={{
-        baseTheme: colorScheme === 'dark' ? dark : undefined,
-        elements: ClerkModalElement,
-      }}
-      localization={localization}
-    >
-      <_AuthEnterpriseProvider>{children}</_AuthEnterpriseProvider>;
-    </ClerkProvider>
-  );
-};
+  return {
+    inPublicRoute,
+    inPrivateRoute,
+    isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
+    currentUser: user,
+    // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
+    organizations: isOrganizationLoaded && organization ? [organization] : undefined,
+    currentOrganization: organization,
+    logout,
+    login: (...args: any[]) => {},
+    // TODO: implement proper environment switch
+    environmentId: undefined,
+    organizationId: organization?._id,
+    redirectToLogin: (...args: any[]) => {},
+    redirectToSignUp: (...args: any[]) => {},
+  };
+}

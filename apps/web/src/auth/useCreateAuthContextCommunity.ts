@@ -7,8 +7,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
-import { useAuthEnterpriseContext } from '../ee/clerk';
-import { IS_EE_AUTH_ENABLED } from '../config/index';
 import { useSegment } from '../components/providers/SegmentProvider';
 import { LOCAL_STORAGE_AUTH_TOKEN_KEY } from './auth.const';
 import { getToken } from './getToken';
@@ -48,7 +46,7 @@ function inIframe() {
 /**
  * TODO: this function should be decomposed into smaller, more focused pieces of functionality.
  */
-function useAuthCommunity() {
+export function useCreateAuthContextCommunity() {
   const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();
@@ -233,9 +231,4 @@ function useAuthCommunity() {
     redirectToLogin,
     redirectToSignUp,
   };
-}
-
-export function useAuth() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  return IS_EE_AUTH_ENABLED ? useAuthEnterpriseContext() : useAuthCommunity();
 }
