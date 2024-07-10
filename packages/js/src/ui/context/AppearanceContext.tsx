@@ -51,6 +51,9 @@ export type Elements = {
   moreActionsDropdownItemLabel?: ElementStyles;
   moreActionsDropdownItemLabelContainer?: ElementStyles;
   moreActionsDropdownItemLeftIcon?: ElementStyles;
+  settingsHeader?: ElementStyles;
+  settingsHeaderTitle?: ElementStyles;
+  settingsBackButton?: ElementStyles;
 };
 
 export type Variables = {
