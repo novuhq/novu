@@ -41,3 +41,13 @@ export function getCookies(cookieName: string): string | null {
 
   return null;
 }
+
+const DOUBLE_QUOTE_REGEX = /^\"(.*)\"$/;
+export function cleanDoubleQuotedString(str?: string | null) {
+  if (!str) {
+    return str;
+  }
+  const match = DOUBLE_QUOTE_REGEX.exec(str);
+
+  return match ? match[1] : str;
+}

@@ -1,5 +1,5 @@
 import { UserSession } from '@novu/testing';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { subMinutes } from 'date-fns';
 import { expect } from 'chai';
 import { CommunityUserRepository } from '@novu/dal';

@@ -3,16 +3,17 @@ import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
-import * as cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash.clonedeep';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
   INotificationTemplate,
   INotificationTrigger,
-  NotificationTemplateTypeEnum,
+  isBridgeWorkflow,
+  WorkflowTypeEnum,
 } from '@novu/shared';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
 import type { IForm, IFormStep, ITemplates } from './formTypes';
@@ -170,7 +171,7 @@ const defaultValues: IForm = {
 const TemplateEditorFormProvider = ({ children }) => {
   const { templateId = '' } = useParams<{ templateId?: string }>();
   const methods = useForm<IForm>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues,
     mode: 'onChange',
   });
@@ -243,7 +244,7 @@ const TemplateEditorFormProvider = ({ children }) => {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
       } catch (e: any) {
-        Sentry.captureException(e);
+        captureException(e);
 
         errorMessage(e.message || 'Unexpected error occurred');
       }
@@ -298,7 +299,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     () => ({
       template: {
         ...template,
-        bridge: template?.type === NotificationTemplateTypeEnum.ECHO,
+        bridge: isBridgeWorkflow(template?.type),
       } as INotificationTemplateWithBridge,
       isLoading: isLoading || loadingGroups,
       isCreating,

@@ -72,9 +72,8 @@ jobs:
       - name: Start WS
         env:
           NODE_ENV: 'test'
-          TZ: 'UTC'
         run: |
-          cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
+          cp apps/ws/src/.env.test apps/ws/dist/.env.test
           cd apps/ws && pnpm start:prod &
 
       - name: Wait on Widget and WS Services

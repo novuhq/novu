@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { AnalyticsService, UserSession } from '@novu/application-generic';
+import { AnalyticsService, ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -14,6 +14,7 @@ export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
   @Post('/measure')
+  @ExternalApiAccessible()
   @UserAuthentication()
   async trackEvent(@Body('event') event, @Body('data') data = {}, @UserSession() user: UserSessionData): Promise<any> {
     this.analyticsService.track(event, user._id, {

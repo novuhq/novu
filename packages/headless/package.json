@@ -1,6 +1,6 @@
 {
   "name": "@novu/headless",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Headless client package that is a thin abstraction layer over the API client + state and socket management",
   "keywords": [],
@@ -37,7 +37,7 @@
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-typescript": "^7.13.0",
     "@types/jest": "^29.2.3",
-    "@types/node": "^14.6.0",
+    "@types/node": "^20.14.10",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
     "ts-jest": "^29.0.3",

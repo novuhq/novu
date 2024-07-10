@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import * as inlineCss from 'inline-css';
-import * as Sentry from '@sentry/node';
+import inlineCss from 'inline-css';
+import { addBreadcrumb } from '@sentry/node';
 
 import {
   MessageRepository,
@@ -11,6 +11,8 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
+  OrganizationRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -48,6 +50,7 @@ export class SendMessageEmail extends SendMessageBase {
 
   constructor(
     protected environmentRepository: EnvironmentRepository,
+    protected organizationRepository: OrganizationRepository,
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
@@ -111,7 +114,7 @@ export class SendMessageEmail extends SendMessageBase {
     const { subscriber } = command.compileContext;
     const email = command.payload.email || subscriber.email;
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending Email',
     });
 
@@ -188,6 +191,7 @@ export class SendMessageEmail extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     let replyToAddress: string | undefined;
@@ -204,6 +208,14 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
+      const organization = await this.getOrganization(command.organizationId);
+
+      const i18nInstance = await this.initiateTranslations(
+        command.environmentId,
+        command.organizationId,
+        command.payload.subscriber?.locale || organization?.defaultLocale
+      );
+
       if (!command.bridgeData) {
         ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
           CompileEmailTemplateCommand.create({
@@ -212,7 +224,7 @@ export class SendMessageEmail extends SendMessageBase {
             userId: command.userId,
             ...payload,
           }),
-          this.initiateTranslations.bind(this)
+          i18nInstance
         ));
 
         if (this.storeContent()) {
@@ -235,9 +247,13 @@ export class SendMessageEmail extends SendMessageBase {
           url: ' ',
         });
       }
-    } catch (e) {
-      Logger.error({ payload, e }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
-      await this.sendErrorHandlebars(command.job, e.message);
+    } catch (error) {
+      Logger.error(
+        { payload, error },
+        'Compiling the email template or storing it or inlining it has failed',
+        LOG_CONTEXT
+      );
+      await this.sendErrorHandlebars(command.job, error.message);
 
       return;
     }
@@ -513,6 +529,16 @@ export class SendMessageEmail extends SendMessageBase {
 
       return layoutOverride?._id;
     }
+  }
+
+  protected async getOrganization(organizationId: string): Promise<OrganizationEntity | undefined> {
+    const organization = await this.organizationRepository.findById(organizationId, 'branding defaultLocale');
+
+    if (!organization) {
+      throw new NotFoundException(`Organization ${organizationId} not found`);
+    }
+
+    return organization;
   }
 
   public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {

@@ -1,4 +1,4 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
@@ -38,6 +38,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     },
     defaultLocale: Schema.Types.String,
     domain: Schema.Types.String,
+    language: [Schema.Types.String],
     productUseCases: {
       delay: {
         type: Schema.Types.Boolean,

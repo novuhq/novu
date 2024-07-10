@@ -1,10 +1,10 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import * as passport from 'passport';
+import passport from 'passport';
 
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
-import { AuthService, CommunityAuthService, CommunityUserAuthGuard } from '@novu/application-generic';
+import { AuthService } from '@novu/application-generic';
 
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
@@ -25,16 +25,6 @@ const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberS
 if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
 }
-
-const authServiceProvider = {
-  provide: 'AUTH_SERVICE',
-  useClass: CommunityAuthService,
-};
-
-const userAuthGuardProvider = {
-  provide: 'USER_AUTH_GUARD',
-  useClass: CommunityUserAuthGuard,
-};
 
 export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
@@ -57,12 +47,10 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     providers: [
       ...USE_CASES,
       ...AUTH_STRATEGIES,
-      ...injectRepositories(),
+      ...injectRepositories({ repositoriesOnly: false }),
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,
-      authServiceProvider,
-      userAuthGuardProvider,
     ],
     exports: [
       RolesGuard,

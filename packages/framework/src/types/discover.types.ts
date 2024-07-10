@@ -1,21 +1,19 @@
-import { ValidateFunction } from 'ajv';
-
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { Schema } from './schema.types';
-import { ActionStepOptions } from './step.types';
-import { Execute, WorkflowOptions } from './workflow.types';
+import type { JsonSchema, Schema } from './schema.types';
+import type { StepOptions } from './step.types';
+import type { Execute, WorkflowOptions } from './workflow.types';
+import type { Awaitable, Prettify } from './util.types';
+import type { EventTriggerParams, EventTriggerResult } from './event.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
-
-export type Validate = ValidateFunction;
 
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
+  resolve: ({ controls, outputs }: { controls: unknown; outputs: unknown }) => Awaitable<unknown>;
   outputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
 };
 
@@ -23,21 +21,25 @@ export type DiscoverStepOutput = {
   stepId: string;
   type: StepType;
   inputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   outputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   results: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   code: string;
-  resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
+  resolve: (controls: any) => Awaitable<any>;
   providers: Array<DiscoverProviderOutput>;
-  options: ActionStepOptions;
+  options: StepOptions;
 };
 
 export type DiscoverWorkflowOutput = {
@@ -46,14 +48,31 @@ export type DiscoverWorkflowOutput = {
   options: WorkflowOptions<unknown, unknown>;
   code: string;
   steps: Array<DiscoverStepOutput>;
+  payload: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  /** @deprecated */
   data: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
+  /** @deprecated */
   inputs: {
-    schema: Schema;
-    validate: Validate;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+};
+
+export type Workflow<T_Payload = any> = {
+  trigger: (
+    event: Prettify<Omit<EventTriggerParams<T_Payload>, 'workflowId' | 'bridgeUrl' | 'controls'>>
+  ) => Promise<EventTriggerResult>;
+  definition: DiscoverWorkflowOutput;
 };
 
 export type DiscoverOutput = {

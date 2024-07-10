@@ -1,8 +1,22 @@
+import { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import {
   CommunityUserRepository,
   CommunityMemberRepository,
   CommunityOrganizationRepository,
+  EnvironmentRepository,
+  SubscriberRepository,
+  UserRepository,
+  MemberRepository,
+  OrganizationRepository,
 } from '@novu/dal';
+import { isClerkEnabled } from '@novu/shared';
+import {
+  AnalyticsService,
+  CommunityAuthService,
+  CommunityUserAuthGuard,
+} from '../services';
+import { CreateUser, SwitchOrganization, SwitchEnvironment } from '../usecases';
 
 class PlatformException extends Error {}
 
@@ -14,8 +28,12 @@ function injectClerkClientMock() {
   }
 }
 
-export function injectRepositories() {
-  if (process.env.NOVU_ENTERPRISE !== 'true') {
+export function injectRepositories(
+  { repositoriesOnly }: { repositoriesOnly?: boolean } = {
+    repositoriesOnly: true,
+  }
+) {
+  if (!isClerkEnabled()) {
     const userRepositoryProvider = {
       provide: 'USER_REPOSITORY',
       useClass: CommunityUserRepository,
@@ -31,10 +49,69 @@ export function injectRepositories() {
       useClass: CommunityOrganizationRepository,
     };
 
+    const authServiceProvider = {
+      provide: 'AUTH_SERVICE',
+      useFactory: (
+        userRepository: UserRepository,
+        subscriberRepository: SubscriberRepository,
+        createUserUsecase: CreateUser,
+        jwtService: JwtService,
+        analyticsService: AnalyticsService,
+        organizationRepository: OrganizationRepository,
+        environmentRepository: EnvironmentRepository,
+        memberRepository: MemberRepository,
+        switchOrganizationUsecase: SwitchOrganization,
+        switchEnvironmentUsecase: SwitchEnvironment
+      ) => {
+        return new CommunityAuthService(
+          userRepository,
+          subscriberRepository,
+          createUserUsecase,
+          jwtService,
+          analyticsService,
+          organizationRepository,
+          environmentRepository,
+          memberRepository,
+          switchOrganizationUsecase,
+          switchEnvironmentUsecase
+        );
+      },
+      inject: [
+        UserRepository,
+        SubscriberRepository,
+        CreateUser,
+        JwtService,
+        AnalyticsService,
+        OrganizationRepository,
+        EnvironmentRepository,
+        MemberRepository,
+        SwitchOrganization,
+        SwitchEnvironment,
+      ],
+    };
+
+    const userAuthGuardProvider = {
+      provide: 'USER_AUTH_GUARD',
+      useFactory: (reflector: Reflector) => {
+        return new CommunityUserAuthGuard(reflector);
+      },
+      inject: [Reflector],
+    };
+
+    if (repositoriesOnly) {
+      return [
+        userRepositoryProvider,
+        memberRepositoryProvider,
+        organizationRepositoryProvider,
+      ];
+    }
+
     return [
       userRepositoryProvider,
       memberRepositoryProvider,
       organizationRepositoryProvider,
+      authServiceProvider,
+      userAuthGuardProvider,
     ];
   }
 
@@ -86,6 +163,58 @@ export function injectRepositories() {
     inject: [CommunityOrganizationRepository],
   };
 
+  const eeAuthServiceProvider = {
+    provide: 'AUTH_SERVICE',
+    useFactory: (
+      userRepository: UserRepository,
+      environmentRepository: EnvironmentRepository,
+      subscriberRepository: SubscriberRepository,
+      jwtService: JwtService
+    ) => {
+      const eeAuthPackage = require('@novu/ee-auth');
+      if (!eeAuthPackage?.EEAuthService) {
+        throw new PlatformException('EEAuthService is not loaded');
+      }
+
+      return new eeAuthPackage.EEAuthService(
+        userRepository,
+        environmentRepository,
+        subscriberRepository,
+        jwtService
+      );
+    },
+    inject: [
+      UserRepository,
+      EnvironmentRepository,
+      SubscriberRepository,
+      JwtService,
+    ],
+  };
+
+  const eeUserAuthGuard = {
+    provide: 'USER_AUTH_GUARD',
+    useFactory: (reflector: Reflector) => {
+      const eeAuthPackage = require('@novu/ee-auth');
+      if (!eeAuthPackage?.EEUserAuthGuard) {
+        throw new PlatformException('EEUserAuthGuard is not loaded');
+      }
+
+      return new eeAuthPackage.EEUserAuthGuard(reflector);
+    },
+    inject: [Reflector],
+  };
+
+  if (repositoriesOnly) {
+    return [
+      eeUserRepositoryProvider,
+      CommunityUserRepository,
+      eeMemberRepositoryProvider,
+      CommunityMemberRepository,
+      eeOrganizationRepositoryProvider,
+      CommunityOrganizationRepository,
+    ];
+  }
+
   return [
     eeUserRepositoryProvider,
     CommunityUserRepository,
@@ -93,5 +222,7 @@ export function injectRepositories() {
     CommunityMemberRepository,
     eeOrganizationRepositoryProvider,
     CommunityOrganizationRepository,
+    eeAuthServiceProvider,
+    eeUserAuthGuard,
   ];
 }

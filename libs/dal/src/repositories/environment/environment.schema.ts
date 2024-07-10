@@ -1,4 +1,4 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 
@@ -49,6 +49,9 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
       },
     },
     echo: {
+      url: Schema.Types.String,
+    },
+    bridge: {
       url: Schema.Types.String,
     },
     _parentId: {

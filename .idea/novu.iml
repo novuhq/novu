@@ -43,6 +43,8 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/.storybook" />
       <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/build" />
       <excludeFolder url="file://$MODULE_DIR$/.source" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/web/src/styled-system" />
+      <excludeFolder url="file://$MODULE_DIR$/libs/novui/styled-system" />
       <excludePattern pattern="dist" />
       <excludePattern pattern="build" />
     </content>

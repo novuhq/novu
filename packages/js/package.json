@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -20,7 +20,8 @@
       "require": "./dist/ui/index.js",
       "import": "./dist/ui/index.mjs",
       "default": "./dist/ui/index.mjs"
-    }
+    },
+    "./ui/index.css": "./dist/ui/index.css"
   },
   "files": [
     "dist/cjs",
@@ -34,20 +35,38 @@
     "start": "pnpm run build -- --watch --sourcemap",
     "build": "tsup && pnpm run build:umd && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
+    "build:watch": "tsup --watch",
     "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
     "@types/jest": "^29.2.3",
-    "@types/node": "^18.11.12",
+    "@types/node": "^20.14.10",
+    "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
     "compression-webpack-plugin": "^10.0.0",
     "esbuild-plugin-compress": "^1.0.1",
-    "esbuild-plugin-solid": "^0.6.0",
+    "eslint-plugin-local-rules": "^3.0.2",
     "jest": "^29.3.1",
+    "postcss": "^8.4.38",
+    "postcss-prefix-selector": "^1.16.1",
+    "postcss-preset-env": "^9.5.14",
     "solid-devtools": "^0.29.2",
+    "tailwindcss": "^3.4.4",
     "terser-webpack-plugin": "^5.3.9",
     "tiny-glob": "^0.2.9",
     "ts-jest": "^29.0.3",
@@ -60,9 +79,12 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.6.7",
     "@novu/client": "workspace:*",
+    "clsx": "^2.1.1",
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
+    "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.8.11"
   }
 }

@@ -1,9 +1,10 @@
 import { Global, MiddlewareConsumer, Module, ModuleMetadata } from '@nestjs/common';
+import { isClerkEnabled } from '@novu/shared';
 import { getCommunityAuthModuleConfig, configure as configureCommunity } from './community.auth.module.config';
 import { getEEModuleConfig, configure as configureEE } from './ee.auth.module.config';
 
 function getModuleConfig(): ModuleMetadata {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (isClerkEnabled()) {
     return getEEModuleConfig();
   } else {
     return getCommunityAuthModuleConfig();
@@ -14,7 +15,7 @@ function getModuleConfig(): ModuleMetadata {
 @Module(getModuleConfig())
 export class AuthModule {
   public configure(consumer: MiddlewareConsumer) {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (isClerkEnabled()) {
       configureEE(consumer);
     } else {
       configureCommunity(consumer);

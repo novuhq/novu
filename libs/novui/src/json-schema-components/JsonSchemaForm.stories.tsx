@@ -22,7 +22,7 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => 
   return (
     <form onSubmit={onSubmit} className={css({ colorPalette })}>
       <HStack justifyContent="space-between">
-        <Title variant="subsection">Step inputs</Title>
+        <Title variant="subsection">Step controls</Title>
         <Button type="submit" Icon={IconOutlineSave}>
           Save
         </Button>

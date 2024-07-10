@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "private": true,
   "description": "",
   "keywords": [],
@@ -39,9 +39,6 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint"
-    ],
     "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
       "prettier --ignore-path .eslintignore --parser json --write"
     ],
@@ -80,7 +77,7 @@
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^5.0.2",
     "@types/jest": "29.5.2",
-    "@types/node": "^14.14.16",
+    "@types/node": "^20.14.10",
     "colors": "1.4.0",
     "concurrently": "^5.3.0",
     "cross-env": "^5.2.0",

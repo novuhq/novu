@@ -4,7 +4,7 @@ import {
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
-import * as Pushpad from 'pushpad';
+import Pushpad from 'pushpad';
 
 export class PushpadPushProvider implements IPushProvider {
   id = 'pushpad';

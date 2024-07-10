@@ -18,7 +18,7 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <AuthLayout title="Tell us more about you">
+    <AuthLayout title="Let's create your organization">
       {isHubspotEnabled ? <HubspotSignupForm /> : <QuestionnaireForm />}
     </AuthLayout>
   );

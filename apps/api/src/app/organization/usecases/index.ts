@@ -9,10 +9,11 @@ import { GetOrganizations } from './get-organizations/get-organizations.usecase'
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
 import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
+import { isClerkEnabled } from '@novu/shared';
 
 // TODO: move ee.organization.controller.ts to EE package
 function getEnterpriseUsecases() {
-  if (process.env.NOVU_ENTERPRISE === 'true') {
+  if (isClerkEnabled()) {
     return [
       {
         provide: 'SyncOrganizationUsecase',

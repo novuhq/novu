@@ -1,9 +1,9 @@
 import 'cross-fetch/polyfill';
 import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
-import * as request from 'supertest';
-import * as defaults from 'superagent-defaults';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import superAgentDefaults from 'superagent-defaults';
 import {
   ApiServiceLevelEnum,
   EmailBlockTypeEnum,
@@ -13,6 +13,7 @@ import {
   StepTypeEnum,
   TriggerRecipientsPayload,
   ClerkJwtPayload,
+  isClerkEnabled,
 } from '@novu/shared';
 import {
   UserEntity,
@@ -94,7 +95,7 @@ export class UserSession {
   }
 
   async initialize(options?: UserSessionOptions) {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (isClerkEnabled()) {
       // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
@@ -217,7 +218,7 @@ export class UserSession {
   }
 
   async fetchJWT() {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (isClerkEnabled()) {
       await this.fetchJwtEE();
     } else {
       await this.fetchJwtCommunity();
@@ -225,7 +226,7 @@ export class UserSession {
   }
 
   async addOrganization() {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
+    if (isClerkEnabled()) {
       return await this.addOrganizationEE('clerk_org_1');
     } else {
       return await this.addOrganizationCommunity();
@@ -240,7 +241,7 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
   private async fetchJwtEE() {
@@ -259,13 +260,13 @@ export class UserSession {
       ...claims,
     };
 
-    const reencoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {
+    const encoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {
       algorithm: 'RS256',
     });
 
-    this.token = `Bearer ${reencoded}`;
+    this.token = `Bearer ${encoded}`;
 
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
   private async decodeClerkJWT(token: string) {
@@ -325,7 +326,7 @@ export class UserSession {
       .put('/v1/organizations/branding')
       .send({
         color: '#2a9d8f',
-        logo: 'https://web.novu.co/static/images/logo-light.png',
+        logo: 'https://dashboard.novu.co/static/images/logo-light.png',
         fontColor: '#214e49',
         contentBackground: '#c2cbd2',
         fontFamily: 'Montserrat',
@@ -407,7 +408,7 @@ export class UserSession {
       this.environment = environment;
       await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
 
-      if (process.env.NOVU_ENTERPRISE === 'true') {
+      if (isClerkEnabled()) {
         await this.fetchJwtEE();
       } else {
         await this.fetchJwtCommunity();
@@ -473,7 +474,7 @@ export class UserSession {
   }
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
-    const organizationService = new OrganizationService();
+    const organizationService = isClerkEnabled() ? new EEOrganizationService() : new OrganizationService();
 
     await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
   }

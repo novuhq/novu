@@ -14,6 +14,7 @@ export enum ROUTES {
   WORKFLOWS_CREATE = '/workflows/create',
   WORKFLOWS_EDIT_TEMPLATEID = '/workflows/edit/:templateId',
   WORKFLOWS_V2_STEP_EDIT = '/workflows/edit/:templateId/step/:stepId',
+  WORKFLOWS_V2_TEST = '/workflows/edit/:templateId/test',
   WORKFLOWS_VARIANT_PREVIEW = '/workflows/edit/:templateId/:channel/:stepUuid/variants/:variantUuid/preview',
   WORKFLOWS = '/workflows',
   TENANTS = '/tenants',
@@ -50,15 +51,18 @@ export enum ROUTES {
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
-  /** Novu V2 routes */
+
+  /** Novu V2 routes, defined as nested routes */
   STUDIO = '/studio',
   STUDIO_FLOWS = '/studio/flows',
   STUDIO_FLOWS_VIEW = '/studio/flows/:templateId',
+  STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
+  STUDIO_FLOWS_TEST = '/studio/flows/:templateId/test',
   STUDIO_ONBOARDING = '/studio/onboarding',
   STUDIO_ONBOARDING_PREVIEW = '/studio/onboarding/preview',
   STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',
-  STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
-  STUDIO_FLOWS_TEST = '/studio/flows/:templateId/test',
+
+  LOCAL_STUDIO_AUTH = '/local-studio/auth',
 }
 
-export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth']);
+export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/local-studio']);

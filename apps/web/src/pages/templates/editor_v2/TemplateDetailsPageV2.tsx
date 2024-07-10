@@ -1,6 +1,6 @@
-import { Button, IconButton } from '@novu/novui';
+import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { IconCable, IconPlayArrow, IconSettings } from '@novu/novui/icons';
+import { IconCable, IconPlayArrow } from '@novu/novui/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
 import { useTemplateController } from '../components/useTemplateController';
@@ -9,6 +9,7 @@ import { ROUTES } from '../../../constants/routes';
 import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-view/WorkflowFloatingMenu';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -18,9 +19,8 @@ export const TemplateDetailsPageV2 = () => {
   const title = workflow?.name || '';
   const navigate = useNavigate();
 
-  const handleSettingsClick = () => {};
   const handleTestClick = () => {
-    navigate(parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId: (workflow as any)?.rawData?.workflowId }));
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
 
   return (
@@ -29,10 +29,9 @@ export const TemplateDetailsPageV2 = () => {
       title={title}
       actions={
         <>
-          <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
             Test workflow
-          </Button>
-          <IconButton Icon={IconSettings} onClick={handleSettingsClick} />
+          </OutlineButton>
         </>
       }
     >
@@ -46,11 +45,18 @@ export const TemplateDetailsPageV2 = () => {
               };
             }) || []
           }
-          onClick={(step) => {
+          onStepClick={(step) => {
             navigate(
               parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
                 templateId: workflow?._id as string,
                 stepId: step.stepId,
+              })
+            );
+          }}
+          onTriggerClick={() => {
+            navigate(
+              parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
+                templateId: workflow?._id as string,
               })
             );
           }}

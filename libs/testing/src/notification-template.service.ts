@@ -153,7 +153,7 @@ export class NotificationTemplateService {
       active: true,
       preferenceSettings: override.preferenceSettingsOverride ?? undefined,
       draft: false,
-      tags: ['test-tag'],
+      tags: override.tags ?? ['test-tag'],
       description: faker.commerce.productDescription().slice(0, 90),
       triggers: override.triggers ?? [
         {

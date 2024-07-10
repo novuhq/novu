@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
@@ -10,6 +10,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
+// eslint-disable-next-line import/no-namespace
 import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 
@@ -101,7 +102,7 @@ describe('Session', () => {
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { count: 10 };
+    const notificationCount = { data: { count: 10 }, filter: {} };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves({
@@ -132,7 +133,7 @@ describe('Session', () => {
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
     const integration = { ...mockIntegration, credentials: { hmac: false } };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { count: 10 };
+    const notificationCount = { data: { count: 10 }, filter: {} };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
@@ -144,7 +145,7 @@ describe('Session', () => {
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.totalUnreadCount).to.equal(notificationCount.count);
+    expect(response.totalUnreadCount).to.equal(notificationCount.data.count);
     expect(
       analyticsService.mixpanelTrack.calledOnceWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,

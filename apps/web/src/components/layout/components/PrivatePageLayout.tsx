@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import * as Sentry from '@sentry/react';
-import { Outlet } from 'react-router-dom';
+import { ErrorBoundary } from '@sentry/react';
+import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
@@ -15,6 +15,7 @@ import { HeaderNav } from './v2/HeaderNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
+import { isStudioRoute } from '../../../studio/utils/routing';
 
 const AppShell = styled.div`
   display: flex;
@@ -33,6 +34,7 @@ const ContentShell = styled.div`
 export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
   const { environment } = useEnvironment();
+  const location = useLocation();
 
   /**
    * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.
@@ -40,9 +42,8 @@ export function PrivatePageLayout() {
    */
   const isLocalEnv = useMemo(
     () =>
-      [EnvironmentEnum.DEVELOPMENT, EnvironmentEnum.LOCAL].includes(environment?.name as EnvironmentEnum) &&
-      window.location.pathname.includes('/studio'),
-    [environment]
+      [EnvironmentEnum.DEVELOPMENT].includes(environment?.name as EnvironmentEnum) && isStudioRoute(location.pathname),
+    [environment, location]
   );
 
   return (
@@ -53,7 +54,7 @@ export function PrivatePageLayout() {
           onShow={() => setIsIntercomOpened(true)}
           onHide={() => setIsIntercomOpened(false)}
         >
-          <Sentry.ErrorBoundary
+          <ErrorBoundary
             fallback={({ error, resetError, eventId }) => (
               <>
                 Sorry, but something went wrong. <br />
@@ -79,7 +80,7 @@ export function PrivatePageLayout() {
                 </ContentShell>
               </AppShell>
             </SpotLight>
-          </Sentry.ErrorBoundary>
+          </ErrorBoundary>
         </IntercomProvider>
       </SpotLightProvider>
     </EnsureOnboardingComplete>

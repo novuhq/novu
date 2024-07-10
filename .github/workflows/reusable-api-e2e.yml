@@ -19,8 +19,13 @@ on:
         required: false
         default: false
         type: boolean
+      ee-clerk:
+        description: 'use the clerk ee version of api'
+        required: false
+        default: false
+        type: boolean
       job-name:
-        description: 'job name [options: novu/api-ee, novu/api]'
+        description: 'job name [options: novu/api-ee, novu/api, novu/api-ee-clerk]'
         required: true
         type: string
 
@@ -45,7 +50,7 @@ jobs:
   e2e_api:
     name: Test E2E
     if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-medium
     timeout-minutes: 80
     permissions:
       contents: read
@@ -97,7 +102,7 @@ jobs:
           cd apps/api && pnpm test:e2e
 
       - name: Run E2E EE tests
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && !inputs.ee-clerk }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
@@ -105,6 +110,25 @@ jobs:
           CI_EE_TEST: true
         run: |
           cd apps/api && pnpm test:e2e:ee
+
+      - name: Run E2E EE Clerk tests
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.ee-clerk }}
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          CI_EE_TEST: true
+          CLERK_ENABLED: true
+          CLERK_ISSUER_URL: ${{ vars.CLERK_ISSUER_URL }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PRIVATE_KEY_BASE64: ${{ secrets.CLERK_PRIVATE_KEY_BASE64 }}
+          CLERK_PEM_PUBLIC_KEY_BASE64: ${{ secrets.CLERK_PEM_PUBLIC_KEY_BASE64 }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          CLERK_LONG_LIVED_TOKEN: ${{ secrets.CLERK_LONG_LIVED_TOKEN }}
+        run: |
+          export CLERK_PEM_PUBLIC_KEY=$(echo $CLERK_PEM_PUBLIC_KEY_BASE64 | base64 -d)
+          export CLERK_PRIVATE_KEY=$(echo $CLERK_PRIVATE_KEY_BASE64 | base64 -d)
+          cd apps/api && pnpm test:e2e:clerk
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)

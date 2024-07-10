@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -72,7 +72,7 @@ export class SendMessagePush extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending Push',
     });
 
@@ -100,14 +100,16 @@ export class SendMessagePush extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template?.content as string,
             data,
-          })
+          }),
+          i18nInstance
         );
 
         title = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template?.title as string,
             data,
-          })
+          }),
+          i18nInstance
         );
       }
     } catch (e) {
@@ -359,6 +361,7 @@ export class SendMessagePush extends SendMessageBase {
       overrides: overrides as never,
       providerId: integration.providerId,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.executionLogRoute.execute(

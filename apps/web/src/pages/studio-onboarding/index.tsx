@@ -1,47 +1,48 @@
 import { css } from '@novu/novui/css';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { useEffect, useState } from 'react';
-import { useEnvironment } from '../../hooks/useEnvironment';
+import { useEffect } from 'react';
 import { Title, Text } from '@novu/novui';
 import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
-import { useSetupBridge } from './useSetupBridge';
-import { useSegment } from '../../components/providers/SegmentProvider';
+import { Wrapper } from './components/Wrapper';
+import { ROUTES } from '../../constants/routes';
+import { useNavigate } from 'react-router-dom';
+import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
+import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
+import { useStudioState } from '../../studio/StudioStateProvider';
+import { capitalizeFirstLetter } from '../../utils/string';
+import { setNovuOnboardingStepCookie } from '../../utils';
+import { useTelemetry } from '../../hooks/useNovuAPI';
+
+const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 
 export const StudioOnboarding = () => {
-  const [url, setUrl] = useState('');
-  const [error, setError] = useState<string>('');
-  const { loading, setup, testEndpoint, testResponse } = useSetupBridge(url, setError);
-  const segment = useSegment();
+  const track = useTelemetry();
+  const navigate = useNavigate();
+  const { testUser } = useStudioState();
+  const { data, isLoading } = useHealthCheck();
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => testEndpoint(url), 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [url, testEndpoint]);
+    /**
+     * User already onboarded to Novu and have more than one workflow
+     */
+    if (data?.discovered?.workflows && data?.discovered?.workflows > 1) {
+      setNovuOnboardingStepCookie();
+      navigate(ROUTES.STUDIO_FLOWS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   useEffect(() => {
-    segment.track('Add endpoint step started - [Onboarding - Signup]');
+    track('Add endpoint step started - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function retest(continueSetup = false) {
-    const result = await testEndpoint(url);
-
-    if (continueSetup && result.data?.status === 'ok') {
-      await setup();
-    }
-  }
+  const welcomeMessage = `Welcome ${capitalizeFirstLetter(testUser?.firstName || '')}`.trim() + `. Let's get started!`;
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-        colorPalette: 'mode.cloud',
-      })}
-    >
+    <Wrapper>
       <Header />
       <VStack alignContent="center">
         <div
@@ -49,7 +50,7 @@ export const StudioOnboarding = () => {
             width: 'onboarding',
           })}
         >
-          <Title variant="page">Create an Novu endpoint</Title>
+          <Title variant="page">{welcomeMessage}</Title>
           <Text
             variant="main"
             color="typography.text.secondary"
@@ -58,23 +59,19 @@ export const StudioOnboarding = () => {
               marginTop: '50',
             })}
           >
-            To start sending your first workflows, you first need to connect Novu to your Bridge Endpoint. This setup
-            will create a sample Next.js project and pre-configured the @novu/framework client for you.
+            Send your first email notification, by connecting to your Novu Bridge Endpoint. This setup will create a
+            sample Next.js project with a pre-configured <code>@novu/framework</code>.
           </Text>
-          <SetupTimeline error={error} url={url} setUrl={setUrl} testResponse={testResponse} retest={retest} />
+          <SetupTimeline testResponse={{ data: data as BridgeStatus, isLoading }} />
         </div>
       </VStack>
       <Footer
-        disabled={loading || !url}
+        disabled={data?.status !== 'ok'}
         onClick={async () => {
-          if (testResponse.data?.status === 'ok') {
-            setup();
-          } else {
-            retest(true);
-          }
+          navigate(ROUTES.STUDIO_ONBOARDING_PREVIEW);
         }}
-        loading={loading}
+        loading={isLoading}
       />
-    </div>
+    </Wrapper>
   );
 };

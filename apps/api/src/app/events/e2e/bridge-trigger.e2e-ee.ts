@@ -2,13 +2,13 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 
-import { UserSession, SubscribersService } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import {
-  MessageRepository,
-  SubscriberEntity,
-  NotificationTemplateRepository,
-  JobRepository,
   ExecutionDetailsRepository,
+  JobRepository,
+  MessageRepository,
+  NotificationTemplateRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -19,7 +19,7 @@ import {
 } from '@novu/shared';
 import { workflow } from '@novu/framework';
 
-import { EchoServer } from '../../../../e2e/echo.server';
+import { BridgeServer } from '../../../../e2e/bridge.server';
 
 const eventTriggerPath = '/v1/events/trigger';
 
@@ -32,7 +32,7 @@ const contexts: Context[] = [
 contexts.forEach((context: Context) => {
   describe('Bridge Trigger', async () => {
     let session: UserSession;
-    let echoServer: EchoServer;
+    let bridgeServer: BridgeServer;
     const messageRepository = new MessageRepository();
     const workflowsRepository = new NotificationTemplateRepository();
     const jobRepository = new JobRepository();
@@ -42,8 +42,8 @@ contexts.forEach((context: Context) => {
     let bridge;
 
     beforeEach(async () => {
-      echoServer = new EchoServer();
-      bridge = context.isStateful ? undefined : { url: echoServer.serverPath + '/echo' };
+      bridgeServer = new BridgeServer();
+      bridge = context.isStateful ? undefined : { url: bridgeServer.serverPath + '/novu' };
       session = new UserSession();
       await session.initialize();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
@@ -51,24 +51,24 @@ contexts.forEach((context: Context) => {
     });
 
     afterEach(async () => {
-      await echoServer.stop();
+      await bridgeServer.stop();
     });
 
-    it(`should trigger the echo workflow with sync [${context.name}]`, async () => {
+    it(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
       const workflowId = `hello-world-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'This is an email subject ' + inputs.name,
+                subject: 'This is an email subject ' + controls.name,
                 body: 'Body result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -79,13 +79,13 @@ contexts.forEach((context: Context) => {
 
           await step.inApp(
             'send-in-app',
-            async (inputs) => {
+            async (controls) => {
               return {
                 body: 'in-app result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -96,13 +96,13 @@ contexts.forEach((context: Context) => {
 
           await step.sms(
             'send-sms',
-            async (inputs) => {
+            async (controls) => {
               return {
                 body: 'sms result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -123,10 +123,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
 
         const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
         expect(foundWorkflow).to.be.ok;
@@ -161,14 +161,14 @@ contexts.forEach((context: Context) => {
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'This is an email subject ' + inputs.name,
+                subject: 'This is an email subject ' + controls.name,
                 body: 'Body result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -190,10 +190,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await syncWorkflow(session, workflowsRepository, workflowIdSkipByStatic, echoServer);
+        await syncWorkflow(session, workflowsRepository, workflowIdSkipByStatic, bridgeServer);
       }
 
       await triggerEvent(session, workflowIdSkipByStatic, subscriber, null, bridge);
@@ -224,21 +224,21 @@ contexts.forEach((context: Context) => {
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'This is an email subject ' + inputs.name,
+                subject: 'This is an email subject ' + controls.name,
                 body: 'Body result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
                   shouldSkipVar: { type: 'boolean', default: true },
                 },
               } as const,
-              skip: (inputs) => inputs.shouldSkipVar,
+              skip: (controls) => controls.shouldSkipVar,
             }
           );
         },
@@ -254,10 +254,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await syncWorkflow(session, workflowsRepository, workflowIdSkipByVariable, echoServer);
+        await syncWorkflow(session, workflowsRepository, workflowIdSkipByVariable, bridgeServer);
       }
 
       await triggerEvent(session, workflowIdSkipByVariable, subscriber, null, bridge);
@@ -305,10 +305,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -386,10 +386,10 @@ contexts.forEach((context: Context) => {
         });
       });
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -413,21 +413,21 @@ contexts.forEach((context: Context) => {
       expect(messagesAfterEmail[0].subject).to.include('Read');
     });
 
-    it(`should trigger the echo workflow with digest [${context.name}]`, async () => {
+    it(`should trigger the bridge workflow with digest [${context.name}]`, async () => {
       const workflowId = `digest-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step }) => {
           const digestResponse = await step.digest(
             'digest',
-            async (inputs) => {
+            async (controls) => {
               return {
-                amount: inputs.amount,
-                unit: inputs.unit,
+                amount: controls.amount,
+                unit: controls.unit,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   amount: {
@@ -440,7 +440,7 @@ contexts.forEach((context: Context) => {
                     default: 'seconds',
                   },
                 },
-              },
+              } as const,
             }
           );
 
@@ -464,10 +464,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, { name: 'John' }, bridge);
@@ -485,22 +485,22 @@ contexts.forEach((context: Context) => {
       expect(messages[0].content).to.include('2 people liked your post');
     });
 
-    it(`should trigger the echo workflow with delay [${context.name}]`, async () => {
+    it(`should trigger the bridge workflow with delay [${context.name}]`, async () => {
       const workflowId = `delay-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step }) => {
           const delayResponse = await step.delay(
             'delay-id',
-            async (inputs) => {
+            async (controls) => {
               return {
                 type: 'regular',
-                amount: inputs.amount,
-                unit: inputs.unit,
+                amount: controls.amount,
+                unit: controls.unit,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   amount: {
@@ -513,7 +513,7 @@ contexts.forEach((context: Context) => {
                     default: 'seconds',
                   },
                 },
-              },
+              } as const,
             }
           );
 
@@ -527,7 +527,7 @@ contexts.forEach((context: Context) => {
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {},
               },
@@ -546,10 +546,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, null, bridge);
@@ -566,21 +566,21 @@ contexts.forEach((context: Context) => {
       expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
     });
 
-    it(`should trigger the echo workflow with input variables [${context.name}]`, async () => {
-      const workflowId = `input-variables-workflow-${context.name + '-' + uuidv4()}`;
+    it(`should trigger the bridge workflow with control default and payload data [${context.name}]`, async () => {
+      const workflowId = `default-payload-params-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'prefix ' + inputs.name,
+                subject: 'prefix ' + controls.name,
                 body: 'Body result',
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'Hello {{name}}' },
@@ -601,10 +601,10 @@ contexts.forEach((context: Context) => {
         }
       );
 
-      await echoServer.start({ workflows: [newWorkflow] });
+      await bridgeServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -622,6 +622,64 @@ contexts.forEach((context: Context) => {
       expect(sentMessage[1].subject).to.include('prefix Hello default_name');
       expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
     });
+
+    it(`should trigger the bridge workflow with control variables [${context.name}]`, async () => {
+      const workflowId = `control-variables-workflow-${context.name + '-' + uuidv4()}`;
+      const stepId = 'send-email';
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.email(
+            stepId,
+            async (controls) => {
+              return {
+                subject: 'email subject ' + controls.name,
+                body: 'Body result',
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: 'control default' },
+                },
+              } as const,
+            }
+          );
+        },
+        {
+          // todo delete
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: 'default_name' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+        await saveControlVariables(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
+      }
+
+      const controls = { steps: { [stepId]: { name: 'stored_control_name' } } };
+      await triggerEvent(session, workflowId, subscriber, undefined, bridge, controls);
+      await session.awaitRunningJobs();
+
+      const sentMessage = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(sentMessage.length).to.be.eq(1);
+      expect(sentMessage[0].subject).to.equal('email subject stored_control_name');
+    });
   });
 });
 
@@ -629,10 +687,10 @@ async function syncWorkflow(
   session: UserSession,
   workflowsRepository: NotificationTemplateRepository,
   workflowIdentifier: string,
-  echoServer: EchoServer
+  bridgeServer: BridgeServer
 ) {
-  await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer.serverPath + '/echo',
+  await session.testAgent.post(`/v1/bridge/sync`).send({
+    bridgeUrl: bridgeServer.serverPath + '/novu',
   });
 
   const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowIdentifier);
@@ -641,7 +699,14 @@ async function syncWorkflow(
   if (!foundWorkflow) throw new Error('Workflow not found');
 }
 
-async function triggerEvent(session, workflowId: string, subscriber, payload?: any, bridge?: { url: string }) {
+async function triggerEvent(
+  session,
+  workflowId: string,
+  subscriber,
+  payload?: any,
+  bridge?: { url: string },
+  controls?: Record<string, unknown>
+) {
   const defaultPayload = {
     name: 'test_name',
   };
@@ -655,6 +720,7 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
         email: 'test@subscriber.com',
       },
       payload: payload ?? defaultPayload,
+      controls: controls ?? undefined,
       bridgeUrl: bridge?.url ?? undefined,
     },
     {
@@ -665,14 +731,14 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
   );
 }
 
-async function discoverAndSyncEcho(
+async function discoverAndSyncBridge(
   session: UserSession,
   workflowsRepository?: NotificationTemplateRepository,
   workflowIdentifier?: string,
-  echoServer?: EchoServer
+  bridgeServer?: BridgeServer
 ) {
-  const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer?.serverPath + '/echo',
+  const discoverResponse = await session.testAgent.post(`/v1/bridge/sync`).send({
+    bridgeUrl: bridgeServer?.serverPath + '/novu',
   });
 
   if (!workflowsRepository || !workflowIdentifier) {
@@ -687,6 +753,15 @@ async function discoverAndSyncEcho(
   }
 
   return discoverResponse;
+}
+
+async function saveControlVariables(
+  session: UserSession,
+  workflowIdentifier?: string,
+  stepIdentifier?: string,
+  payloadBody?: any
+) {
+  return await session.testAgent.put(`/v1/bridge/controls/${workflowIdentifier}/${stepIdentifier}`).send(payloadBody);
 }
 
 async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MessagesStatusEnum) {

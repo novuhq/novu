@@ -79,7 +79,16 @@ export class CommunityOrganizationRepository
     organizationId: string,
     defaultLocale: string
   ): Promise<{ matched: number; modified: number }> {
-    throw new Error('Method not implemented.');
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $set: {
+          defaultLocale,
+        },
+      }
+    );
   }
 
   async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {

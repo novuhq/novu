@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
-import { ModuleRef } from '@nestjs/core';
+import { addBreadcrumb } from '@sentry/node';
 
 import {
-  EnvironmentRepository,
   IntegrationRepository,
   JobEntity,
   JobRepository,
@@ -20,13 +18,8 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
-import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
-import {
-  TriggerEventBroadcastCommand,
-  TriggerEventCommand,
-  TriggerEventMulticastCommand,
-} from './trigger-event.command';
+import { TriggerEventCommand } from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
@@ -45,17 +38,17 @@ import {
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '../trigger-multicast';
-import { IUseCaseInterface, requireInject } from '../../utils/require-inject';
+import { GetActionEnum, PostActionEnum } from '@novu/framework';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
-export interface IDoBridgeRequestCommand {
+export interface IExecuteBridgeRequestCommand {
   bridgeUrl: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
   apiKey: string;
-  searchParams?: Record<string, any>;
+  searchParams?: Record<string, string>;
   afterResponse?: any;
-  action: 'execute' | 'preview' | 'discover' | 'health-check' | 'code';
+  action: GetActionEnum | PostActionEnum;
   retriesLimit?: number;
 }
 
@@ -91,7 +84,7 @@ export class TriggerEvent {
         environmentId
       );
 
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         message: 'Sending trigger',
         data: {
           triggerIdentifier: identifier,
@@ -104,16 +97,15 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: mappedCommand.environmentId,
-        triggerIdentifier: mappedCommand.identifier,
-      });
+      let storedWorkflow: NotificationTemplateEntity | null = null;
+      if (!command.bridgeWorkflow) {
+        storedWorkflow = await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: mappedCommand.environmentId,
+          triggerIdentifier: mappedCommand.identifier,
+        });
+      }
 
-      /*
-       * Makes no sense to execute anything if template doesn't exist
-       * TODO: Send a 404?
-       */
-      if (!template && !command.bridgeWorkflow) {
+      if (!storedWorkflow && !command.bridgeWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -157,11 +149,9 @@ export class TriggerEvent {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
-              bridgeUrl: command.bridgeUrl,
-              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
-                template ||
+                storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -171,11 +161,9 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
-              bridgeUrl: command.bridgeUrl,
-              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
-                template ||
+                storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -186,11 +174,9 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
-              bridgeUrl: command.bridgeUrl,
-              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
-                template ||
+                storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
@@ -198,6 +184,7 @@ export class TriggerEvent {
         }
       }
     } catch (e) {
+      Logger.error(e);
       Logger.error(
         {
           transactionId: command.transactionId,

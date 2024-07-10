@@ -47,6 +47,9 @@ export class EnvironmentEntity {
   echo: {
     url: string;
   };
+  bridge: {
+    url: string;
+  };
 }
 
 export type EnvironmentDBModel = ChangePropsValueType<

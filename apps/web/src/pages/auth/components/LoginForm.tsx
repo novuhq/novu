@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
-import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError } from '@novu/shared';
-import { useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useAuth, useRedirectURL, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
 import { useAcceptInvite } from './useAcceptInvite';
@@ -28,6 +27,11 @@ export interface LocationState {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
+
+  const { setRedirectURL } = useRedirectURL();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setRedirectURL(), []);
+
   const { login, currentUser, organizations } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
@@ -35,8 +39,9 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const tokenInQuery = params.get('token');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
-  const invitationTokenFromGithub = params.get('invitationToken') as string;
-  const isRedirectedFromLoginPage = params.get('isLoginPage') as string;
+  // TODO: Deprecate the legacy cameCased format in search param
+  const invitationTokenFromGithub = params.get('invitationToken') || params.get('invitation_token') || '';
+  const isRedirectedFromLoginPage = params.get('isLoginPage') || params.get('is_login_page') || '';
 
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
@@ -148,7 +153,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
-        Sentry.captureException(e);
+        captureException(e);
       }
     }
   };

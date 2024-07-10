@@ -1,8 +1,8 @@
-import * as child_process from 'child_process';
-import * as shell from 'shelljs';
+import child_process from 'node:child_process';
+import shell from 'shelljs';
 import logger from './logger';
-import * as path from 'path';
-import * as Spamc from 'spamc';
+import path from 'node:path';
+import Spamc from 'spamc';
 
 const spamc = new Spamc();
 

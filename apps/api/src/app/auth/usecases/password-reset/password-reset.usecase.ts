@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { hash } from 'bcrypt';
 import { isBefore, subDays } from 'date-fns';
 import { UserRepository } from '@novu/dal';
 import { AuthService, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
@@ -25,7 +25,7 @@ export class PasswordReset {
       throw new ApiException('Token has expired');
     }
 
-    const passwordHash = await bcrypt.hash(command.password, 10);
+    const passwordHash = await hash(command.password, 10);
 
     await this.invalidateCache.invalidateByKey({
       key: buildUserKey({

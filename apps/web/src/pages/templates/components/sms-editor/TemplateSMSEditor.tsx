@@ -19,11 +19,9 @@ import { SmsPreview } from '../../../../components/workflow/preview';
 import { EditVariablesModal } from '../EditVariablesModal';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { When } from '@novu/design-system';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { ControlVariablesForm } from '../ControlVariablesForm';
 
 const templateFields = ['content'];
-const PREVIEW = 'Preview';
-const INPUTS = 'Inputs';
 
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
@@ -39,9 +37,7 @@ export function TemplateSMSEditor() {
     channelType: ChannelTypeEnum.SMS,
   });
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
-  const [inputVariables, setInputVariables] = useState();
-  const [activeTab, setActiveTab] = useState<string>(PREVIEW);
-  const theme = useMantineTheme();
+  const [controlVariables, setControlVariables] = useState();
 
   return (
     <>
@@ -69,7 +65,7 @@ export function TemplateSMSEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
-                  label={bridge ? 'Input variables' : undefined}
+                  label={bridge ? 'Control variables' : undefined}
                 />
                 <When truthy={!bridge}>
                   <CustomCodeEditor
@@ -80,9 +76,9 @@ export function TemplateSMSEditor() {
                   />
                 </When>
                 <When truthy={bridge}>
-                  <InputVariablesForm
+                  <ControlVariablesForm
                     onChange={(values) => {
-                      setInputVariables(values);
+                      setControlVariables(values);
                     }}
                   />
                 </When>
@@ -91,7 +87,7 @@ export function TemplateSMSEditor() {
           />
         </Grid.Col>
         <Grid.Col span={'content'}>
-          <SmsPreview inputVariables={inputVariables} showPreviewAsLoading={isPreviewLoading} />
+          <SmsPreview controlVariables={controlVariables} showPreviewAsLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
       <EditVariablesModal

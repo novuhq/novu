@@ -14,7 +14,6 @@ const ENVIRONMENT_ICON_LOOKUP: Record<BaseEnvironmentEnum, React.ReactElement<II
 };
 
 export const useEnvironmentSelect = () => {
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
   const location = useLocation();
 
@@ -42,27 +41,13 @@ export const useEnvironmentSelect = () => {
     const urlParts = location.pathname.replace('/', '').split('/');
     const redirectRoute: string | undefined = checkIfEnvBasedRoute() ? undefined : urlParts[0];
 
-    /**
-     * TODO: Review this logic to see if we want to handle this differently
-     */
-    if (value === 'Local') {
-      await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT, { route: '/studio' });
-    } else {
-      await setEnvironment(value as BaseEnvironmentEnum, { route: redirectRoute });
-    }
+    await setEnvironment(value as BaseEnvironmentEnum, { route: redirectRoute });
   };
 
   const data = Object.values(BaseEnvironmentEnum).map((value) => ({
     label: value,
     value,
   }));
-
-  if (isV2ExperienceEnabled) {
-    data.push({
-      label: 'Local' as BaseEnvironmentEnum,
-      value: 'Local' as BaseEnvironmentEnum,
-    });
-  }
 
   return {
     loading: isLoading,

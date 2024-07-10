@@ -100,6 +100,8 @@
     "Consolas",
     "consts",
     "containerd",
+    "Mobishastra",
+    "mobishastra",
     "cpack",
     "Craco",
     "crossorigin",
@@ -140,6 +142,7 @@
     "domainname",
     "domainsuffix",
     "donefunc",
+    "Dotan",
     "dotenv",
     "doublecolon",
     "dtos",
@@ -151,6 +154,7 @@
     "elif",
     "emailjs",
     "Embeddable",
+    "Emek",
     "EMSA",
     "endgroup",
     "enroute",
@@ -308,6 +312,7 @@
     "mkdocs",
     "mlen",
     "moby",
+    "Modiin",
     "modlen",
     "mongod",
     "mongosh",
@@ -361,6 +366,7 @@
     "npmjs",
     "npmrc",
     "nrwl",
+    "ntfr",
     "ntoa",
     "ntvs",
     "nunito",
@@ -644,7 +650,13 @@
     "Nimma",
     "jpath",
     "vstack",
-    "liquidjs"
+    "liquidjs",
+    "tailwindcss",
+    "focusable",
+    "textareas",
+    "frameworkterminal",
+    "unarchived",
+    "Unarchived"
   ],
   "flagWords": [],
   "patterns": [
@@ -738,6 +750,7 @@
     ".env.production",
     ".env.test",
     ".example.env",
-    "pnpm-lock.yaml"
+    "pnpm-lock.yaml",
+    "apps/web/env.sh"
   ]
 }

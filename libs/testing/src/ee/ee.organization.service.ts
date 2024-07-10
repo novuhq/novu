@@ -1,25 +1,28 @@
-import { ApiServiceLevelEnum, JobTitleEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { MemberRepository, OrganizationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { CommunityOrganizationRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
 import { getEERepository } from './ee.repository.factory';
 
 export class EEOrganizationService {
   private organizationRepository = getEERepository<OrganizationRepository>('OrganizationRepository');
+  private communityOrganizationRepository = new CommunityOrganizationRepository();
   private memberRepository = getEERepository<MemberRepository>('MemberRepository');
 
   async createOrganization(orgId: string) {
-    // id, name, logo - lives in clerk; rest lives in our db
+    //  if internal organization exists delete so we can re-create with same Clerk org id
+    const org = await this.communityOrganizationRepository.findOne({ externalId: orgId });
+
+    if (org) {
+      await this.communityOrganizationRepository.delete({ _id: org._id });
+    }
+
     const syncExternalOrg = {
       externalId: orgId,
-      jobTitle: JobTitleEnum.ENGINEER,
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
-      domain: 'example.com',
-      productUseCases: {
-        in_app: true,
-        digest: true,
-      },
     };
 
-    // link already existing organization in Clerk
+    /**
+     * Links Clerk organization with internal organization collection
+     * (!) this is without org creation side-effects
+     */
     return this.organizationRepository.create(syncExternalOrg);
   }
 

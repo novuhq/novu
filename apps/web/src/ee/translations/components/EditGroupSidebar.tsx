@@ -4,7 +4,7 @@ import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
 import { api } from '../../../api';
 import { useAuth, useEnvironment } from '../../../hooks';
 import { Group } from '@mantine/core';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Control, FormProvider, useForm } from 'react-hook-form';
 
 import { GroupFormCommonFields } from './GroupFormCommonFields';
 import { ICreateGroup } from './shared';
@@ -115,7 +115,7 @@ export const EditGroupSidebar = ({
       }
     >
       <FormProvider {...methods}>
-        <GroupFormCommonFields edit={true} control={control} readonly={readonly} />
+        <GroupFormCommonFields edit={true} control={control as Control<ICreateGroup>} readonly={readonly} />
       </FormProvider>
     </Sidebar>
   );

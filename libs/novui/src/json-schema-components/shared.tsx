@@ -8,7 +8,7 @@ export const formItemClassName = css({
   pl: '75',
   borderLeft: 'solid',
   borderColor: 'input.border',
-  py: '75',
+  py: '50',
   '&:first-of-type': { paddingTop: '0' },
   '&:last-of-type': { paddingBottom: '0' },
 });

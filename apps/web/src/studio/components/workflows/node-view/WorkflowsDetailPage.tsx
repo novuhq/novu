@@ -1,44 +1,39 @@
-import { Button, IconButton } from '@novu/novui';
+import { Skeleton } from '@mantine/core';
 import { css } from '@novu/novui/css';
-import {
-  IconCable,
-  IconOutlineBolt,
-  IconOutlineEmail,
-  IconOutlineNotifications,
-  IconPlayArrow,
-  IconSettings,
-  IconOutlineAutoAwesomeMotion,
-  IconOutlineAvTimer,
-  IconOutlineForum,
-  IconOutlineMobileFriendly,
-  IconOutlineSms,
-} from '@novu/novui/icons';
-import { Flex, VStack } from '@novu/novui/jsx';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
+import { IconCable, IconPlayArrow } from '@novu/novui/icons';
+import { Stack } from '@novu/novui/jsx';
+import { token } from '@novu/novui/tokens';
+import { useEffect } from 'react';
+import { useTelemetry } from '../../../../hooks/useNovuAPI';
+import { useWorkflow } from '../../../hooks/useBridgeAPI';
+import { useStudioWorkflowsNavigation } from '../../../hooks/useStudioWorkflowsNavigation';
+import { PageContainer } from '../../../layout/PageContainer';
+import { useStudioState } from '../../../StudioStateProvider';
+import { OutlineButton } from '../../OutlineButton';
 import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
-import { StepNode } from './StepNode';
-import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
-import { useQuery } from '@tanstack/react-query';
-import { bridgeApi } from '../../../../api/bridge/bridge.api';
-import { parseUrl } from '../../../../utils/routeUtils';
-import { WorkflowNodes } from './WorkflowNodes';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
+import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
+import { WorkflowNodes } from './WorkflowNodes';
 
 export const WorkflowsDetailPage = () => {
-  const { templateId = '' } = useParams<{ templateId: string }>();
+  const { currentWorkflowId, goToStep, goToTest } = useStudioWorkflowsNavigation();
+  const { data: workflow, isLoading } = useWorkflow(currentWorkflowId);
+  const track = useTelemetry();
+  const { isLocalStudio } = useStudioState() || {};
 
-  const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
-    return bridgeApi.getWorkflow(templateId);
-  });
+  useEffect(() => {
+    track('Workflow open - [Studio]', {
+      workflowId: currentWorkflowId,
+      env: isLocalStudio ? 'local' : 'cloud',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (isLoading) {
+    return <WorkflowsContentLoading />;
+  }
 
   const title = workflow?.workflowId;
-  const navigate = useNavigate();
-
-  const handleSettingsClick = () => {};
-  const handleTestClick = () => {
-    navigate(parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId }));
-  };
 
   return (
     <WorkflowsPageTemplate
@@ -46,24 +41,18 @@ export const WorkflowsDetailPage = () => {
       title={title}
       actions={
         <>
-          <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          <OutlineButton Icon={IconPlayArrow} onClick={() => goToTest(currentWorkflowId)}>
             Test workflow
-          </Button>
-          <IconButton Icon={IconSettings} onClick={handleSettingsClick} />
+          </OutlineButton>
         </>
       }
     >
       <WorkflowBackgroundWrapper>
         <WorkflowNodes
           steps={workflow?.steps || []}
-          onClick={(step) => {
-            // TODO: this is just a temporary step for connecting the prototype
-            navigate(
-              parseUrl(ROUTES.STUDIO_FLOWS_STEP_EDITOR, {
-                templateId: workflow.workflowId,
-                stepId: step.stepId,
-              })
-            );
+          onTriggerClick={() => goToTest(currentWorkflowId)}
+          onStepClick={(step) => {
+            goToStep(currentWorkflowId, step.stepId);
           }}
         />
       </WorkflowBackgroundWrapper>
@@ -79,3 +68,16 @@ export const WorkflowsDetailPage = () => {
     </WorkflowsPageTemplate>
   );
 };
+
+WorkflowsDetailPage.LoadingDisplay = WorkflowsContentLoading;
+
+function WorkflowsContentLoading() {
+  return (
+    <PageContainer>
+      <Stack pl={'75'} py={'150'}>
+        <Skeleton height={token('lineHeights.100')} width={'20%'} radius="md" />
+      </Stack>
+      <WorkflowNodes.LoadingDisplay />
+    </PageContainer>
+  );
+}

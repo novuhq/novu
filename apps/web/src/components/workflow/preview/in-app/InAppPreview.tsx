@@ -11,7 +11,7 @@ import { api } from '../../../../api';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
+import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { InAppBasePreview } from './InAppBasePreview';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
@@ -34,14 +34,17 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent({
-        content: data.outputs.body,
-        ctaButtons: [],
-      });
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent({
+          content: data.outputs.body,
+          ctaButtons: [],
+        });
+      },
+    }
+  );
 
   useEffect(() => {
     if (bridge) {
@@ -114,7 +117,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
               </Button>
             </When>
             <When truthy={bridge}>
-              <InputVariablesForm
+              <ControlVariablesForm
                 onChange={(values) => {
                   mutateAsync(values);
                 }}

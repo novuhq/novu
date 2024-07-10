@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 import {
   IntegrationRepository,
@@ -149,6 +149,7 @@ export class TriggerBroadcast {
           subscriber,
           templateId: command.template._id,
           _subscriberSource: SubscriberSourceEnum.BROADCAST,
+          controls: command.controls,
           requestCategory: command.requestCategory,
           bridge: {
             url: command.bridgeUrl,

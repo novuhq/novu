@@ -1,6 +1,6 @@
 import { Analytics } from '@segment/analytics-node';
 import { Logger } from '@nestjs/common';
-import * as Mixpanel from 'mixpanel';
+import Mixpanel from 'mixpanel';
 
 import { IOrganizationEntity } from '@novu/shared';
 
@@ -109,7 +109,12 @@ export class AnalyticsService {
     }
   }
 
-  track(name: string, userId: string, data: Record<string, unknown> = {}) {
+  track(
+    name: string,
+    userId: string,
+    data: Record<string, unknown> = {},
+    anonymousId?: string
+  ) {
     if (this.segmentEnabled) {
       Logger.log(
         'Tracking event: ' + name,
@@ -123,6 +128,7 @@ export class AnalyticsService {
 
       try {
         this.segment.track({
+          anonymousId: userId,
           userId: userId,
           event: name,
           properties: data,

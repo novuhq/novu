@@ -46,4 +46,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   bridgeData?: ExecuteOutput<IBridgeChannelResponse> | null;
+
+  @IsDefined()
+  tags: string[];
 }

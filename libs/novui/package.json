@@ -1,6 +1,6 @@
 {
   "name": "@novu/novui",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's Design System & Component Library",
   "types": "./dist/index.d.ts",
@@ -87,7 +87,7 @@
     "@testing-library/react": "^12.1.5",
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.5.2",
-    "@types/node": "^18.11.12",
+    "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.0.3",
@@ -128,12 +128,13 @@
     }
   },
   "dependencies": {
+    "@mantine/code-highlight": "^7.10.2",
     "@mantine/core": "^7.10.0",
     "@mantine/hooks": "^7.10.0",
-    "@tanstack/react-table": "^8.17.3",
-    "react-icons": "^5.0.1",
     "@rjsf/core": "^5.17.1",
     "@rjsf/utils": "^5.17.1",
-    "@rjsf/validator-ajv8": "^5.17.1"
+    "@rjsf/validator-ajv8": "^5.17.1",
+    "@tanstack/react-table": "^8.17.3",
+    "react-icons": "^5.0.1"
   }
 }

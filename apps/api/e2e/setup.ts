@@ -1,14 +1,15 @@
 import { DalService } from '@novu/dal';
 import { testServer } from '@novu/testing';
-import * as sinon from 'sinon';
-import * as chai from 'chai';
+import sinon from 'sinon';
+import chai from 'chai';
 
 import { bootstrap } from '../src/bootstrap';
+import { isClerkEnabled } from '@novu/shared';
 
 const dalService = new DalService();
 
 async function seedClerkMongo() {
-  if (process.env.NOVU_ENTERPRISE) {
+  if (isClerkEnabled()) {
     const clerkClientMock = require('@novu/ee-auth')?.ClerkClientMock;
 
     if (clerkClientMock) {

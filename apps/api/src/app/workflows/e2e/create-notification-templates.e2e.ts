@@ -14,6 +14,8 @@ import {
   EmailProviderIdEnum,
   ChangeEntityTypeEnum,
   INotificationTemplateStep,
+  isClerkEnabled,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import {
   ChangeRepository,
@@ -548,8 +550,14 @@ describe('Create Notification template from blueprint - /notification-templates 
     const { blueprintId } = await buildBlueprint(session, prodEnv, notificationTemplateRepository);
 
     const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
-    const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
-    process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+
+    if (isClerkEnabled()) {
+      process.env.BLUEPRINT_CREATOR = session.organization._id;
+    } else {
+      const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
+      process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+    }
+
     blueprint.notificationGroupId = blueprint._notificationGroupId;
     blueprint.notificationGroup.name = 'New Group Name';
     blueprint.blueprintId = blueprint._id;
@@ -726,7 +734,7 @@ const blueprintTemplateMock = {
       shouldStopOnFail: false,
       uuid: 'b6944995-a283-46bd-b55a-18625fd1d4fd',
       name: 'In-App',
-      type: 'REGULAR',
+      type: WorkflowTypeEnum.REGULAR,
       filters: [
         {
           children: [],
@@ -792,7 +800,7 @@ const blueprintTemplateMock = {
       shouldStopOnFail: false,
       uuid: '642e42b5-51e6-4d3b-8a91-067c29e902d4',
       name: 'Digest',
-      type: 'REGULAR',
+      type: WorkflowTypeEnum.REGULAR,
       filters: [],
       _templateId: '6485b92e2a50bb4986758662',
       _parentId: '6485b9052a50bb498675846d',
@@ -838,7 +846,7 @@ const blueprintTemplateMock = {
       shouldStopOnFail: false,
       uuid: '671d86ec-dc27-413c-a666-ec4aeb191691',
       name: 'Email',
-      type: 'REGULAR',
+      type: WorkflowTypeEnum.REGULAR,
       filters: [
         {
           value: 'AND',

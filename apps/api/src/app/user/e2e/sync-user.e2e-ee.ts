@@ -4,7 +4,8 @@ import { expect } from 'chai';
 import { ClerkClientMock } from '@novu/ee-auth';
 import { User } from '@novu/shared';
 
-describe('Sync Clerk user with internal database', async () => {
+// TODO: rework to clerk webhook
+describe.skip('Sync Clerk user with internal database', async () => {
   let session: UserSession;
   let clerkClientMock: ClerkClientMock;
   let clerkUser: User;

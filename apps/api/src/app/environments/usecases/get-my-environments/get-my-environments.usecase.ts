@@ -21,7 +21,7 @@ export class GetMyEnvironments {
       throw new NotFoundException(`Environments for organization ${command.organizationId} not found`);
 
     return environments.map((environment) => {
-      if (environment._id === command.environmentId) {
+      if (command.includeApiKeys || environment._id === command.environmentId) {
         return this.decryptApiKeys(environment);
       }
 

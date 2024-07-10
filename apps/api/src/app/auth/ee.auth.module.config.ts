@@ -49,7 +49,10 @@ export function getEEModuleConfig(): ModuleMetadata {
 
 export function configure(consumer: MiddlewareConsumer) {
   const eeAuthPackage = require('@novu/ee-auth');
-  if (eeAuthPackage?.configure) {
-    eeAuthPackage.configure(consumer);
+
+  if (!eeAuthPackage?.configure) {
+    throw new PlatformException('ee-auth configure() is not loaded');
   }
+
+  eeAuthPackage.configure(consumer);
 }
