@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.0.0-canary.6",
+  "version": "2.0.0-canary.7",
   "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
   "main": "src/index.js",
   "files": [
@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.json",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates",
     "build:prod": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
