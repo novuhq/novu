@@ -2,29 +2,29 @@ import './config';
 import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';
-import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import * as bodyParser from 'body-parser';
-import * as Sentry from '@sentry/node';
+import bodyParser from 'body-parser';
+import { init, Integrations, Handlers } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { validateEnv, CONTEXT_PATH } from './config';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
-import * as packageJson from '../package.json';
+import packageJson from '../package.json';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
 if (process.env.SENTRY_DSN) {
-  Sentry.init({
+  init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${packageJson.version}`,
     ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true }),
+      new Integrations.Http({ tracing: true }),
     ],
   });
 }
@@ -43,8 +43,8 @@ export async function bootstrap(): Promise<INestApplication> {
   await prepareAppInfra(app);
 
   if (process.env.SENTRY_DSN) {
-    app.use(Sentry.Handlers.requestHandler());
-    app.use(Sentry.Handlers.tracingHandler());
+    app.use(Handlers.requestHandler());
+    app.use(Handlers.tracingHandler());
   }
 
   app.use(helmet());

@@ -1,6 +1,6 @@
 import { Avatar, Divider, Container, LoadingOverlay, Stack, Text } from '@mantine/core';
 import styled from '@emotion/styled';
-import * as capitalize from 'lodash.capitalize';
+import capitalize from 'lodash.capitalize';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 

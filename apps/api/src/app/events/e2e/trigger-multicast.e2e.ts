@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import axios from 'axios';
 
@@ -81,6 +81,19 @@ function expectBulkSingleSubscriberStub(
   }
 }
 
+function getEchoGatewayModule() {
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    const eeEchoBridgeWorker = require('@novu/ee-bridge-worker');
+    if (!eeEchoBridgeWorker.BridgeGatewayModule) {
+      throw new Error("BridgeGatewayModule doesn't exist");
+    }
+
+    return [eeEchoBridgeWorker.BridgeGatewayModule];
+  }
+
+  return [];
+}
+
 describe('TriggerMulticast', () => {
   let triggerMulticast: TriggerMulticast;
   let subscriberProcessQueueService: SubscriberProcessQueueService;
@@ -88,7 +101,7 @@ describe('TriggerMulticast', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, EventsModule],
+      imports: [SharedModule, EventsModule, ...getEchoGatewayModule()],
       providers: [
         TriggerMulticast,
         {

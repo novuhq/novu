@@ -1,7 +1,7 @@
 import { Button, errorMessage, IconOutlineLockPerson, PasswordInput, successMessage } from '@novu/design-system';
 import { checkIsResponseError, IResponseError } from '@novu/shared';
 import { api } from '../../../api';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { css } from '@novu/novui/css';
@@ -58,7 +58,7 @@ export const UserProfileUpdatePasswordForm: React.FC<UserProfileUpdatePasswordFo
       let errMessage = 'Error while setting password';
       if (checkIsResponseError(err)) {
         if (err.statusCode !== 400) {
-          Sentry.captureException(err);
+          captureException(err);
         }
 
         errMessage = `${errMessage}: ${err.message}`;

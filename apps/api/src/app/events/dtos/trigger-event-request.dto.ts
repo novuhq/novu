@@ -26,7 +26,7 @@ export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
 export class TenantPayloadDto extends UpdateTenantRequestDto {}
 
 export class TopicPayloadDto {
-  @ApiProperty({ example: 'topic_key' })
+  @ApiProperty()
   topicKey: TopicKey;
 
   @ApiProperty({ example: 'Topic', enum: TriggerRecipientsTypeEnum })
