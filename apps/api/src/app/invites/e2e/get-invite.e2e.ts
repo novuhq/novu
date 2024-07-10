@@ -1,12 +1,12 @@
-import { OrganizationRepository, MemberRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, CommunityMemberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Get invite object - /invites/:inviteToken (GET)', async () => {
+describe('Get invite object - /invites/:inviteToken (GET) @skip-in-ee', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
-  const memberRepository = new MemberRepository();
+  const organizationRepository = new CommunityOrganizationRepository();
+  const memberRepository = new CommunityMemberRepository();
 
   describe('valid token returned', async () => {
     before(async () => {

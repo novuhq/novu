@@ -1,13 +1,13 @@
-import { MemberEntity, OrganizationRepository, MemberRepository, EnvironmentRepository } from '@novu/dal';
+import { MemberEntity, EnvironmentRepository, CommunityMemberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 
-describe('Remove organization member - /organizations/members/:memberId (DELETE)', async () => {
+describe('Remove organization member - /organizations/members/:memberId (DELETE) @skip-in-ee', async () => {
   let session: UserSession;
-  const memberRepository = new MemberRepository();
+  const memberRepository = new CommunityMemberRepository();
   const environmentRepository = new EnvironmentRepository();
   let user2: UserSession;
   let user3: UserSession;
