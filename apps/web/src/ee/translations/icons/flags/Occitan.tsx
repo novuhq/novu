@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 export function Occitan(props: React.SVGProps<SVGSVGElement>) {
   return (

@@ -8,22 +8,6 @@ import { UpdateBrandingDetails } from './update-branding-details/update-branding
 import { GetOrganizations } from './get-organizations/get-organizations.usecase';
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
-import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
-import { isClerkEnabled } from '@novu/shared';
-
-// TODO: move ee.organization.controller.ts to EE package
-function getEnterpriseUsecases() {
-  if (isClerkEnabled()) {
-    return [
-      {
-        provide: 'SyncOrganizationUsecase',
-        useClass: SyncExternalOrganization,
-      },
-    ];
-  }
-
-  return [];
-}
 
 export const USE_CASES = [
   AddMember,
@@ -36,5 +20,4 @@ export const USE_CASES = [
   GetOrganizations,
   GetMyOrganization,
   RenameOrganization,
-  ...getEnterpriseUsecases(),
 ];

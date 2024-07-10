@@ -1297,7 +1297,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
           status: JobStatusEnum.COMPLETED,
         });
         await promiseTimeout(100);
-      } while (completedCount < 4);
+      } while (completedCount !== 4);
 
       const jobs = await jobRepository.find({ _environmentId: session.environment._id, _templateId: template._id });
       const statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);

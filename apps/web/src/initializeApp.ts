@@ -1,7 +1,7 @@
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fas } from '@fortawesome/free-solid-svg-icons';
-import { init, Replay, type Event } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import { ENV, SENTRY_DSN } from './config';
 
@@ -14,11 +14,11 @@ export const initializeApp = () => {
   library.add(far, fas);
 
   if (SENTRY_DSN) {
-    init({
+    Sentry.init({
       dsn: SENTRY_DSN,
       integrations: [
         new Integrations.BrowserTracing(),
-        new Replay({
+        new Sentry.Replay({
           // Additional SDK configuration goes in here, for example:
           maskAllText: true,
           blockAllMedia: true,
@@ -51,7 +51,7 @@ export const initializeApp = () => {
        * We recommend adjusting this value in production
        */
       tracesSampleRate: 1.0,
-      beforeSend(event: Event) {
+      beforeSend(event: Sentry.Event) {
         return event;
       },
     });

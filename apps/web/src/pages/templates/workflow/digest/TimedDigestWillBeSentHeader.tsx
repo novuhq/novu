@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import capitalize from 'lodash.capitalize';
+import * as capitalize from 'lodash.capitalize';
 import { useMantineColorScheme } from '@mantine/core';
 import { DigestUnitEnum, MonthlyTypeEnum } from '@novu/shared';
 

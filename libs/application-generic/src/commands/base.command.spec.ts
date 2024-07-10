@@ -1,6 +1,5 @@
 import { IsDefined, IsEmail, IsNotEmpty } from 'class-validator';
-import sinon from 'sinon';
-// eslint-disable-next-line import/no-namespace
+import * as sinon from 'sinon';
 import * as Sentry from '@sentry/node';
 import { BadRequestException } from '@nestjs/common';
 

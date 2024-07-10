@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 export function Botswana(props: React.SVGProps<SVGSVGElement>) {
   return (

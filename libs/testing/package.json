@@ -21,8 +21,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^5.0.9",
-    "@clerk/types": "^4.5.1",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
@@ -36,7 +34,6 @@
     "event-stream": "^4.0.1",
     "fs-extra": "^9.0.0",
     "jsonfile": "^6.0.1",
-    "jsonwebtoken": "9.0.0",
     "mongoose": "^7.5.0",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
@@ -44,7 +41,7 @@
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "superagent-defaults": "^0.1.14",
-    "supertest": "^7.0.0",
+    "supertest": "^5.0.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {

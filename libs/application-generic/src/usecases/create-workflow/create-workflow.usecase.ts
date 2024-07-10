@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import slugify from 'slugify';
-import shortid from 'shortid';
+import * as shortid from 'shortid';
 
 import {
   FeedRepository,

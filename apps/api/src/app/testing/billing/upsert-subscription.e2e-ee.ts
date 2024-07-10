@@ -1,5 +1,5 @@
-import sinon from 'sinon';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import * as sinon from 'sinon';
+import { OrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
@@ -24,7 +24,7 @@ describe('UpsertSubscription', () => {
   let deleteSubscriptionStub: sinon.SinonStub;
 
   let getPricesStub: sinon.SinonStub;
-  const repo = new CommunityOrganizationRepository();
+  const repo = new OrganizationRepository();
   let updateOrgStub: sinon.SinonStub;
 
   const mockCustomerBase = {
@@ -615,7 +615,7 @@ describe('UpsertSubscription', () => {
 
         expect(updateOrgStub.lastCall.args).to.deep.equal([
           { _id: 'organization_id' },
-          { $set: { apiServiceLevel: ApiServiceLevelEnum.BUSINESS } },
+          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS },
         ]);
       });
     });

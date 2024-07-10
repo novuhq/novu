@@ -16,7 +16,7 @@ import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
 
-import packageJson from '../package.json';
+import * as packageJson from '../package.json';
 
 const modules = [
   SharedModule,

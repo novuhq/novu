@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import cloneDeep from 'lodash.clonedeep';
+import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
   IConfigCredentials,

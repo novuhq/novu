@@ -237,11 +237,10 @@ jobs:
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
       matrix:
-        name: ['novu/api-ee', 'novu/api', 'novu/api-ee-clerk']
+        name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
-      ee-clerk: ${{ contains (matrix.name,'-ee-clerk') }}
       test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
       test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
       job-name: ${{ matrix.name }}

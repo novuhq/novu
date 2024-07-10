@@ -1,16 +1,16 @@
 import { MailParser } from 'mailparser';
-import _ from 'lodash';
-import Promise from 'bluebird';
+import * as _ from 'lodash';
+import * as Promise from 'bluebird';
 import { convert } from 'html-to-text';
-import events from 'events';
-import fs from 'node:fs';
-import path from 'path';
-import shell from 'shelljs';
-import util from 'util';
+import * as events from 'events';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as shell from 'shelljs';
+import * as util from 'util';
 import { SMTPServer } from 'smtp-server';
-import uuid from 'uuid';
-import dns from 'dns';
-import extend from 'extend';
+import * as uuid from 'uuid';
+import * as dns from 'dns';
+import * as extend from 'extend';
 import { BullMqService } from '@novu/application-generic';
 
 import { InboundMailService } from './inbound-mail.service';

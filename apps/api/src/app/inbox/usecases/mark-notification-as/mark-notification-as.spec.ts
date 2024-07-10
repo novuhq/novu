@@ -1,4 +1,4 @@
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
 import { ChannelCTATypeEnum } from '@novu/shared';

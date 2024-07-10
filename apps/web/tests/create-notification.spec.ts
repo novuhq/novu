@@ -56,7 +56,7 @@ test.describe('Creation functionality', () => {
     await assertCodeSnippetStructureIncludingVariables(workflowEditorPage, TEST_WORKFLOW_ID);
   });
 
-  test.skip('should be able to add many nodes.', async ({ page }) => {
+  test('should be able to add many nodes.', async ({ page }) => {
     test.slow();
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
     await editWorkflowSettings(workflowEditorPage, 'Test 10 Nodes');

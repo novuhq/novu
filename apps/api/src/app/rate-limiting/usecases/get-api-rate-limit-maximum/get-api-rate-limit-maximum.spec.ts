@@ -2,7 +2,7 @@ import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
@@ -53,7 +53,7 @@ describe('GetApiRateLimitMaximum', async () => {
     getDefaultApiRateLimits = moduleRef.get<GetApiRateLimitServiceMaximumConfig>(GetApiRateLimitServiceMaximumConfig);
 
     findOneEnvironmentStub = sinon.stub(environmentRepository, 'findOne');
-    findOneOrganizationStub = sinon.stub(organizationRepository, 'findById');
+    findOneOrganizationStub = sinon.stub(organizationRepository, 'findOne');
     defaultApiRateLimits = sinon.stub(getDefaultApiRateLimits, 'default').value(mockDefaultApiRateLimits);
   });
 

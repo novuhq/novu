@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import chalk from 'chalk';
-import gradient from 'gradient-string';
+import * as chalk from 'chalk';
+import * as gradient from 'gradient-string';
 
 /**
  * This packages is forked from 'chalk-animation' and modified to work with TypeScript.

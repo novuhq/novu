@@ -3,10 +3,9 @@
 import { Command } from 'commander';
 import { devCommand, DevCommandOptions } from './commands';
 import { sync } from './commands/sync';
-import { green } from 'picocolors';
+
 import { v4 as uuidv4 } from 'uuid';
 import { AnalyticService, ConfigService } from './services';
-import { IInitCommandOptions, init } from './commands/init';
 
 const analytics = new AnalyticService();
 export const config = new ConfigService();
@@ -78,18 +77,6 @@ program
     });
 
     return await devCommand(options, anonymousId);
-  });
-
-program
-  .command('init')
-  .description(`Create a new Novu application`)
-  .option(
-    '-s, --secret-key <secret-key>',
-    `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
-  )
-  .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .action(async (options: IInitCommandOptions) => {
-    return await init(options, anonymousId);
   });
 
 program.parse(process.argv);

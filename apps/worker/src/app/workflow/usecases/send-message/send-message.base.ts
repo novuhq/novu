@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import * as i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { format } from 'date-fns';
@@ -160,7 +160,8 @@ export abstract class SendMessageBase extends SendMessageType {
           organizationId
         );
 
-        const instance = i18next.createInstance({
+        const instance = i18next.createInstance();
+        await instance.init({
           resources,
           ns: namespaces,
           defaultNS: false,
@@ -179,8 +180,6 @@ export abstract class SendMessageBase extends SendMessageType {
             },
           },
         });
-
-        await instance.init();
 
         return instance;
       }

@@ -1,8 +1,8 @@
-import http from 'node:http';
+import * as http from 'http';
 import { AddressInfo } from 'net';
 
 import { SERVER_HOST } from '../constants';
-import getPort from 'get-port';
+import * as getPort from 'get-port';
 
 export const WELL_KNOWN_ROUTE = '/.well-known/novu';
 export const STUDIO_PATH = '/studio';

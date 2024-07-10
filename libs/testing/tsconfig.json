@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "types": ["node"],
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "sourceMap": true
   }
 }

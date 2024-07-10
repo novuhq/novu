@@ -7,7 +7,7 @@ import {
   SmsEventStatusEnum,
 } from '@novu/stateless';
 
-import plivo from 'plivo';
+import * as plivo from 'plivo';
 
 export class PlivoSmsProvider implements ISmsProvider {
   id = 'plivo';

@@ -16,7 +16,6 @@ import {
   DalServiceHealthIndicator,
   WebSocketsInMemoryProviderService,
   QueuesModule,
-  injectRepositories,
 } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
@@ -31,7 +30,6 @@ const DAL_MODELS = [
   NotificationRepository,
   MessageRepository,
   MemberRepository,
-  ...injectRepositories(),
 ];
 
 const dalService = {

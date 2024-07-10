@@ -1,6 +1,5 @@
 import type { JSONSchema, FromSchema as JsonSchemaInfer } from 'json-schema-to-ts';
-// eslint-disable-next-line id-length
-import z from 'zod';
+import * as z from 'zod';
 
 export type Schema = JSONSchema | z.ZodSchema;
 

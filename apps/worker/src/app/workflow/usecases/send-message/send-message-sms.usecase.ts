@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -70,7 +70,7 @@ export class SendMessageSms extends SendMessageBase {
       },
     });
 
-    addBreadcrumb({
+    Sentry.addBreadcrumb({
       message: 'Sending SMS',
     });
 
@@ -80,7 +80,7 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nInstance = await this.initiateTranslations(
+    const i18nextInstance = await this.initiateTranslations(
       command.environmentId,
       command.organizationId,
       subscriber.locale
@@ -99,8 +99,8 @@ export class SendMessageSms extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
-          }),
-          i18nInstance
+            // i18next: i18nextInstance,
+          })
         );
 
         if (!content) {

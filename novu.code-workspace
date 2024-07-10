@@ -108,6 +108,8 @@
   "extensions": {
     "recommendations": [
       "folke.vscode-monorepo-workspace",
+      "seatonjiang.gitmoji-vscode",
+      "jondot.vscode-hygen",
       "esbenp.prettier-vscode",
       "dbaeumer.vscode-eslint"
     ]

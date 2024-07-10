@@ -12,7 +12,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ApiBadRequestResponse,
   ApiCommonResponses,
@@ -155,7 +155,6 @@ export class LayoutsController {
   @ApiNotFoundResponse({
     description: 'The layout with the layoutId provided does not exist in the database.',
   })
-  @ApiParam({ name: 'layoutId', description: 'The layout id', type: String, required: true })
   @ApiOperation({ summary: 'Get layout', description: 'Get a layout by its ID' })
   async getLayout(
     @UserSession() user: UserSessionData,
@@ -182,7 +181,6 @@ export class LayoutsController {
     description:
       'Either you are trying to delete a layout that is being used or a layout that is the default in the environment.',
   })
-  @ApiParam({ name: 'layoutId', description: 'The layout id', type: String, required: true })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete layout', description: 'Execute a soft delete of a layout given a certain ID.' })
   async deleteLayout(@UserSession() user: UserSessionData, @Param('layoutId') layoutId: LayoutId): Promise<void> {
@@ -210,7 +208,6 @@ export class LayoutsController {
       'One default layout is needed. If you are trying to turn a default layout as not default, you should turn a different layout as default first and automatically it will be done by the system.',
     schema: { example: `One default layout is required` },
   })
-  @ApiParam({ name: 'layoutId', description: 'The layout id', type: String, required: true })
   @ApiOperation({
     summary: 'Update a layout',
     description: 'Update the name, content and variables of a layout. Also change it to be default or no.',
@@ -249,7 +246,6 @@ export class LayoutsController {
     description:
       'The layout with the layoutId provided does not exist in the database so it can not be set as the default for the environment.',
   })
-  @ApiParam({ name: 'layoutId', description: 'The layout id', type: String, required: true })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Set default layout',

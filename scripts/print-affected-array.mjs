@@ -2,7 +2,7 @@ import { getPackageFolders } from './get-packages-folder.mjs';
 import spawn from 'cross-spawn';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import * as fs from 'fs';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const processArguments = process.argv.slice(2);
 
@@ -85,9 +85,9 @@ function getAffectedCommandResult(str) {
 async function affectedProjectsContainingTask(taskName, baseBranch) {
   const cachePath = taskName + baseBranch.replace('/', '').replace('/', '') + '-contain-task-cache.json';
 
-  const isCacheExists = existsSync(cachePath);
+  const isCacheExists = fs.existsSync(cachePath);
   if (isCacheExists) {
-    const cache = readFileSync(cachePath, 'utf8');
+    const cache = fs.readFileSync(cachePath, 'utf8');
 
     return JSON.parse(cache);
   }
@@ -108,7 +108,7 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
   // pnpm nx show projects --affected --withTarget=[task] --base [base branch] --json
   const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
 
-  writeFileSync(cachePath, JSON.stringify(result));
+  fs.writeFileSync(cachePath, JSON.stringify(result));
 
   return result;
 }
@@ -116,9 +116,9 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
 async function allProjectsContainingTask(taskName) {
   const cachePath = taskName + '-all-contain-task-cache.json';
 
-  const isCacheExists = existsSync(cachePath);
+  const isCacheExists = fs.existsSync(cachePath);
   if (isCacheExists) {
-    const cache = readFileSync(cachePath, 'utf8');
+    const cache = fs.readFileSync(cachePath, 'utf8');
 
     return JSON.parse(cache);
   }
@@ -138,7 +138,7 @@ async function allProjectsContainingTask(taskName) {
 
   const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
 
-  writeFileSync(cachePath, JSON.stringify(result));
+  fs.writeFileSync(cachePath, JSON.stringify(result));
 
   return result;
 }

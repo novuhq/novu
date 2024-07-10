@@ -1,12 +1,13 @@
-import { MemberEntity, MemberRepository, CommunityMemberRepository } from '@novu/dal';
+import { MemberEntity, OrganizationRepository, MemberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 
-describe('Get Organization members - /organizations/members (GET) @skip-in-ee', async () => {
+describe('Get Organization members - /organizations/members (GET)', async () => {
   let session: UserSession;
-  const memberRepository = new CommunityMemberRepository();
+  const organizationRepository = new OrganizationRepository();
+  const memberRepository = new MemberRepository();
   let user2: UserSession;
   let user3: UserSession;
 

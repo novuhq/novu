@@ -5,7 +5,11 @@ import { ModuleRef } from '@nestjs/core';
 
 import { IEmailBlock, OrganizationRepository } from '@novu/dal';
 
-import { CompileTemplate, CompileTemplateBase } from '../compile-template';
+import {
+  CompileTemplate,
+  CompileTemplateCommand,
+  CompileTemplateBase,
+} from '../compile-template';
 import { ApiException } from '../../utils/exceptions';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { LayoutDto, GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
@@ -26,11 +30,25 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
   public async execute(
     command: CompileEmailTemplateCommand,
-    // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any
+    initiateTranslations?: (
+      environmentId: string,
+      organizationId,
+      locale: string
+    ) => Promise<void>
   ) {
     const verifyPayloadService = new VerifyPayloadService();
     const organization = await this.getOrganization(command.organizationId);
+
+    let i18nInstance;
+    if (initiateTranslations) {
+      i18nInstance = await initiateTranslations(
+        command.environmentId,
+        command.organizationId,
+        command.locale ||
+          command.payload.subscriber?.locale ||
+          organization.defaultLocale
+      );
+    }
 
     const isEditorMode = command.contentType === 'editor';
 
@@ -130,26 +148,22 @@ export class CompileEmailTemplate extends CompileTemplateBase {
       blocks: isEditorMode ? content : [],
     };
 
-    const body = await this.compileTemplate.execute(
-      {
-        template: !isEditorMode
-          ? (content as string)
-          : (helperBlocksContent as string),
-        data: templateVariables,
-      },
-      i18nInstance
-    );
+    const body = await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: !isEditorMode
+        ? (content as string)
+        : (helperBlocksContent as string),
+      data: templateVariables,
+    });
 
     templateVariables.body = body as string;
 
     const html = customLayout
-      ? await this.compileTemplate.execute(
-          {
-            template: customLayout,
-            data: templateVariables,
-          },
-          i18nInstance
-        )
+      ? await this.compileTemplate.execute({
+          i18next: i18nInstance,
+          template: customLayout,
+          data: templateVariables,
+        })
       : body;
 
     return { html, content, subject, senderName };
@@ -160,15 +174,13 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     payload: Record<string, unknown>,
     i18nInstance: any
   ) {
-    const renderedContent = await this.compileTemplate.execute(
-      {
-        template: content,
-        data: {
-          ...payload,
-        },
+    const renderedContent = await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content,
+      data: {
+        ...payload,
       },
-      i18nInstance
-    );
+    });
 
     return renderedContent?.trim() || '';
   }

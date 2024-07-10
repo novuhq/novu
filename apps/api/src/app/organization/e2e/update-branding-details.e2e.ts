@@ -1,8 +1,10 @@
+import { OrganizationRepository } from '@novu/dal';
 import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Update Branding Details - /organizations/branding (PUT)', function () {
   let session: UserSession;
+  const organizationRepository = new OrganizationRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -15,9 +17,8 @@ describe('Update Branding Details - /organizations/branding (PUT)', function () 
     };
 
     await session.testAgent.patch('/v1/organizations').send(payload).expect(processTestAgentExpectedStatusCode(200));
-    const { body } = await session.testAgent.get('/v1/organizations/me').expect(200);
-    const organization = body.data;
 
+    const organization = await organizationRepository.findById(session.organization._id);
     expect(organization?.name).to.equal(payload.name);
     expect(organization?.logo).to.equal(session.organization.logo);
   });
@@ -36,8 +37,7 @@ describe('Update Branding Details - /organizations/branding (PUT)', function () 
       .send(payload)
       .expect(processTestAgentExpectedStatusCode(200));
 
-    const { body } = await session.testAgent.get('/v1/organizations/me').expect(200);
-    const organization = body.data;
+    const organization = await organizationRepository.findById(session.organization._id);
 
     expect(organization?.branding.color).to.equal(payload.color);
     expect(organization?.branding.logo).to.equal(payload.logo);

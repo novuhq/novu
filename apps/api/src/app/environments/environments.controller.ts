@@ -84,7 +84,7 @@ export class EnvironmentsController {
         userId: user._id,
         organizationId: user.organizationId,
         // TODO: This is a temporary patch to include API keys when Novu API is accessed via a user JWT token
-        includeApiKeys: user?.iss === 'novu_api' || user?.iss === process.env.CLERK_ISSUER_URL,
+        includeApiKeys: user?.iss === 'novu_api',
       })
     );
   }

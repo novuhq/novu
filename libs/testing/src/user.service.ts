@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
-import { UserEntity, CommunityUserRepository } from '@novu/dal';
+import { UserEntity, UserRepository } from '@novu/dal';
 import { normalizeEmail } from '@novu/shared';
-import { hash } from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 
 import { EnvironmentService } from './environment.service';
 import { OrganizationService } from './organization.service';
@@ -10,7 +10,7 @@ import { TEST_USER_PASSWORD } from './constants';
 export class UserService {
   private environmentService = new EnvironmentService();
   private organizationService = new OrganizationService();
-  private userRepository = new CommunityUserRepository();
+  private userRepository = new UserRepository();
 
   async createTestUser(): Promise<UserEntity> {
     const user = await this.createUser({
@@ -31,7 +31,7 @@ export class UserService {
 
   async createUser(userEntity?: Partial<UserEntity>): Promise<UserEntity> {
     const password = userEntity?.password ?? faker.internet.password();
-    const passwordHash = await hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await this.userRepository.create({
       email: normalizeEmail(userEntity?.email ?? faker.internet.email()),
@@ -47,7 +47,9 @@ export class UserService {
   }
 
   async getUser(id: string): Promise<UserEntity> {
-    const user = await this.userRepository.findById(id);
+    const user = await this.userRepository.findOne({
+      _id: id,
+    });
 
     if (!user) {
       throw new Error(`Test user with ${id} not found`);

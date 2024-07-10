@@ -8,4 +8,6 @@ export class CompileTemplateCommand extends BaseCommand {
 
   @IsObject()
   data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  i18next?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

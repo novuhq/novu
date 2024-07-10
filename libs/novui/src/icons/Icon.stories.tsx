@@ -3,7 +3,6 @@ import { StoryFn, Meta } from '@storybook/react';
 import { DEFAULT_ICON_SIZE } from './Icon.const';
 import { IIconProps, IconSize } from './Icon.types';
 import { Grid, Group, ActionIcon, Code, Input } from '@mantine/core';
-// eslint-disable-next-line import/no-namespace
 import * as allIcons from './icon-registry';
 import { styled, VStack } from '../../styled-system/jsx';
 import { text } from '../../styled-system/recipes';

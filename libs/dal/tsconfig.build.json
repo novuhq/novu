@@ -6,7 +6,6 @@
     "target": "es6",
     "declaration": true,
     "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "types": ["node"]

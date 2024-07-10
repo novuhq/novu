@@ -1,4 +1,4 @@
-import request from 'supertest';
+import * as request from 'supertest';
 
 /**
  * Source: https://github.com/ladjs/supertest/issues/12#issuecomment-1081640817

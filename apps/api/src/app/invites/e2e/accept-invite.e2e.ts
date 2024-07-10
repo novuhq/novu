@@ -1,12 +1,12 @@
-import { MemberEntity, CommunityMemberRepository } from '@novu/dal';
+import { MemberRepository, MemberEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Accept invite - /invites/:inviteToken/accept (POST) @skip-in-ee', async () => {
+describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
   let session: UserSession;
   let invitedUserSession: UserSession;
-  const memberRepository = new CommunityMemberRepository();
+  const memberRepository = new MemberRepository();
 
   async function setup() {
     session = new UserSession();

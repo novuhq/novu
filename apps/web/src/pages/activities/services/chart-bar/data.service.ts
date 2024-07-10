@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash.clonedeep';
+import * as cloneDeep from 'lodash.clonedeep';
 import { ScriptableContext } from 'chart.js';
 import { format, subDays } from 'date-fns';
 import { IActivityGraphStats, IChartData } from '../../interfaces';

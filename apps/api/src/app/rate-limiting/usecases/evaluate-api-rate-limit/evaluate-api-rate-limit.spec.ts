@@ -10,7 +10,7 @@ import {
   IApiRateLimitCost,
 } from '@novu/shared';
 import { expect } from 'chai';
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
 import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { SharedModule } from '../../../shared/shared.module';

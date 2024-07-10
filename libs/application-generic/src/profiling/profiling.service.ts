@@ -6,7 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
-import Pyroscope from '@pyroscope/nodejs';
+import * as Pyroscope from '@pyroscope/nodejs';
 
 @Injectable()
 export class ProfilingService implements OnModuleInit, OnModuleDestroy {

@@ -1,7 +1,6 @@
-import ws from 'ws';
-import ora from 'ora';
-import open from 'open';
-import chalk from 'chalk';
+import * as ora from 'ora';
+import * as open from 'open';
+import * as chalk from 'chalk';
 import { NtfrTunnel } from '@novu/ntfr-client';
 
 import { DevServer } from '../../dev-server';
@@ -9,7 +8,7 @@ import { showWelcomeScreen } from '../shared';
 import { config } from '../../index';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
-import packageJson from '../../../package.json';
+import * as packageJson from '../../../package.json';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
@@ -79,7 +78,7 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
 
   Ensure your application is configured and running locally.
 
-  Starting out? Use our starter ${chalk.bold('npx novu@latest init')}
+  Starting out? Use our starter ${chalk.bold('npx create-novu-app@latest')}
   Running on a different route or port? Use ${chalk.bold('--route')} or ${chalk.bold('--port')}
           `;
       }
@@ -143,6 +142,8 @@ async function fetchNewTunnel(originUrl: URL): Promise<URL> {
 }
 
 async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const ws = await import('ws');
   tunnelClient = new NtfrTunnel(
     parsedUrl.host,
     parsedOrigin.host,

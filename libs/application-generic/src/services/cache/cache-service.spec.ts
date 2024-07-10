@@ -4,7 +4,7 @@ import {
   ICacheService,
   splitKey,
 } from './cache.service';
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 
 import { CacheInMemoryProviderService } from '../in-memory-provider';
 import { MockCacheService } from './cache-service.mock';

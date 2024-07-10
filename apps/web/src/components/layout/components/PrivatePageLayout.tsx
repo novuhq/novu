@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ErrorBoundary } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 
@@ -54,7 +54,7 @@ export function PrivatePageLayout() {
           onShow={() => setIsIntercomOpened(true)}
           onHide={() => setIsIntercomOpened(false)}
         >
-          <ErrorBoundary
+          <Sentry.ErrorBoundary
             fallback={({ error, resetError, eventId }) => (
               <>
                 Sorry, but something went wrong. <br />
@@ -80,7 +80,7 @@ export function PrivatePageLayout() {
                 </ContentShell>
               </AppShell>
             </SpotLight>
-          </ErrorBoundary>
+          </Sentry.ErrorBoundary>
         </IntercomProvider>
       </SpotLightProvider>
     </EnsureOnboardingComplete>

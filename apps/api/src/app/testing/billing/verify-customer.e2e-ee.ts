@@ -1,10 +1,9 @@
 import { Logger } from '@nestjs/common';
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import { OrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { VerifyCustomerCommand } from '@novu/ee-billing';
-import { getEERepository } from '@novu/testing';
 
 describe('VerifyCustomer', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -30,7 +29,7 @@ describe('VerifyCustomer', () => {
 
   let getSubscriptionStub: sinon.SinonStub;
 
-  const repo = getEERepository<OrganizationRepository>('OrganizationRepository');
+  const repo = new OrganizationRepository();
   let getOrgStub: sinon.SinonStub;
 
   beforeEach(() => {

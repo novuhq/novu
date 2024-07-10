@@ -1,9 +1,13 @@
 import { CanActivate, ExecutionContext, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { AuthService } from '@novu/application-generic';
 
 @Injectable()
 export class RootEnvironmentGuard implements CanActivate {
-  constructor(@Inject(forwardRef(() => AuthService)) private authService: AuthService) {}
+  constructor(
+    private readonly reflector: Reflector,
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService
+  ) {}
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();

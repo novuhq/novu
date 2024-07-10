@@ -7,7 +7,6 @@ import { UserRegister } from '../../../auth/usecases/register/user-register.usec
 import { UserRegisterCommand } from '../../../auth/usecases/register/user-register.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
-// TODO: this causes exit code 1 in ee e2e tests (?)
 @Injectable()
 export class SeedData {
   constructor(private authService: AuthService, private userRegister: UserRegister) {}

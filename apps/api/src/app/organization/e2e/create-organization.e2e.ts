@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 
 import {
+  MemberRepository,
+  OrganizationRepository,
+  UserRepository,
   IntegrationRepository,
   EnvironmentRepository,
-  CommunityOrganizationRepository,
-  CommunityUserRepository,
-  CommunityMemberRepository,
 } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import {
@@ -18,11 +18,11 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-describe('Create Organization - /organizations (POST) @skip-in-ee', async () => {
+describe('Create Organization - /organizations (POST)', async () => {
   let session: UserSession;
-  const organizationRepository = new CommunityOrganizationRepository();
-  const userRepository = new CommunityUserRepository();
-  const memberRepository = new CommunityMemberRepository();
+  const organizationRepository = new OrganizationRepository();
+  const userRepository = new UserRepository();
+  const memberRepository = new MemberRepository();
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
 

@@ -1,7 +1,7 @@
 import { useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import set from 'lodash.set';
+import * as set from 'lodash.set';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 

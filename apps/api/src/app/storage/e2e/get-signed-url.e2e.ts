@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Get Signed Url - /storage/upload-url (GET) @skip-in-ee', function () {
+describe('Get Signed Url - /storage/upload-url (GET)', function () {
   let session: UserSession;
 
   beforeEach(async () => {

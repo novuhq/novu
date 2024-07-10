@@ -1,5 +1,5 @@
-import chalk from 'chalk';
-import gradient from 'gradient-string';
+import * as chalk from 'chalk';
+import * as gradient from 'gradient-string';
 import chalkAnimation from './animation';
 
 export async function showWelcomeScreen() {

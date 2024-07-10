@@ -1,4 +1,4 @@
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';

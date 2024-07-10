@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, ExternalSubscriberId, TopicKey, UserSessionData } from '@novu/shared';
 
 import {
@@ -91,7 +91,6 @@ export class TopicsController {
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Subscribers addition', description: 'Add subscribers to a topic by key' })
-  @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @SdkGroupName('Topics.Subscribers')
   @SdkMethodName('assign')
   async addSubscribers(
@@ -127,8 +126,6 @@ export class TopicsController {
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Check topic subscriber', description: 'Check if a subscriber belongs to a certain topic' })
-  @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
-  @ApiParam({ name: 'externalSubscriberId', description: 'The external subscriber id', type: String, required: true })
   @SdkGroupName('Topics.Subscribers')
   async getTopicSubscriber(
     @UserSession() user: UserSessionData,
@@ -150,7 +147,6 @@ export class TopicsController {
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Subscribers removal', description: 'Remove subscribers from a topic' })
-  @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @SdkGroupName('Topics.Subscribers')
   async removeSubscribers(
     @UserSession() user: UserSessionData,
@@ -223,7 +219,6 @@ export class TopicsController {
     description:
       'The topic you are trying to delete has subscribers assigned to it. Delete the subscribers before deleting the topic.',
   })
-  @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete topic', description: 'Delete a topic by its topic key if it has no subscribers' })
   async deleteTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: TopicKey): Promise<void> {
@@ -240,7 +235,6 @@ export class TopicsController {
   @ExternalApiAccessible()
   @ApiResponse(GetTopicResponseDto)
   @ApiOperation({ summary: 'Get topic', description: 'Get a topic by its topic key' })
-  @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   async getTopic(
     @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey
@@ -258,7 +252,6 @@ export class TopicsController {
   @ExternalApiAccessible()
   @ApiResponse(RenameTopicResponseDto)
   @ApiOperation({ summary: 'Rename a topic', description: 'Rename a topic by providing a new name' })
-  @ApiParam({ name: 'topicKey', description: 'The topic key', type: String, required: true })
   @SdkMethodName('rename')
   async renameTopic(
     @UserSession() user: UserSessionData,

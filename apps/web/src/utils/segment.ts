@@ -1,8 +1,8 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
-// eslint-disable-next-line import/no-namespace
 import * as mixpanel from 'mixpanel-browser';
 import { api } from '../api';
+import { cleanDoubleQuotedString } from './utils';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;

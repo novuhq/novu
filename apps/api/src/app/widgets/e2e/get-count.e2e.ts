@@ -70,6 +70,7 @@ describe('Count - GET /widget/notifications/count', function () {
       String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
+    const messageId = messages[0]._id;
     const seenCount = (await getFeedCount()).data.count;
     expect(seenCount).to.equal(3);
   });

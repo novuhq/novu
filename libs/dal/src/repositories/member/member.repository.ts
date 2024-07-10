@@ -1,7 +1,10 @@
-import { Inject } from '@nestjs/common';
-import { MemberRoleEnum, IMemberInvite, MemberStatusEnum } from '@novu/shared';
-import { IMemberRepository } from './member-repository.interface';
-import { MemberEntity } from './member.entity';
+import { FilterQuery } from 'mongoose';
+import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+
+import { MemberEntity, MemberDBModel } from './member.entity';
+import { BaseRepository } from '../base-repository';
+import { Member } from './member.schema';
+import type { EnforceOrgId } from '../../types/enforce';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -10,129 +13,193 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-export class MemberRepository implements IMemberRepository {
-  constructor(@Inject('MEMBER_REPOSITORY') private memberRepository: IMemberRepository) {}
+type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
 
-  removeMemberById(organizationId: string, memberId: string): Promise<{ acknowledged: boolean; deletedCount: number }> {
-    return this.memberRepository.removeMemberById(organizationId, memberId);
+export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity, EnforceOrgId> {
+  constructor() {
+    super(Member, MemberEntity);
   }
 
-  updateMemberRoles(
+  async removeMemberById(
     organizationId: string,
-    memberId: string,
-    roles: MemberRoleEnum[]
-  ): Promise<{ matched: number; modified: number }> {
-    return this.memberRepository.updateMemberRoles(organizationId, memberId, roles);
+    memberId: string
+  ): Promise<{
+    /** Indicates whether this write result was acknowledged. If not, then all other members of this result will be undefined. */
+    acknowledged: boolean;
+    /** The number of documents that were deleted */
+    deletedCount: number;
+  }> {
+    return this.MongooseModel.deleteOne({
+      _id: memberId,
+      _organizationId: organizationId,
+    });
   }
 
-  getOrganizationMembers(organizationId: string): Promise<any[]> {
-    return this.memberRepository.getOrganizationMembers(organizationId);
+  async updateMemberRoles(organizationId: string, memberId: string, roles: MemberRoleEnum[]) {
+    return this.update(
+      {
+        _id: memberId,
+        _organizationId: organizationId,
+      },
+      {
+        roles,
+      }
+    );
   }
 
-  getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity | null> {
-    return this.memberRepository.getOrganizationAdminAccount(organizationId);
+  async getOrganizationMembers(organizationId: string) {
+    const requestQuery: MemberQuery = {
+      _organizationId: organizationId,
+    };
+
+    const members = await this.MongooseModel.find(requestQuery).populate(
+      '_userId',
+      'firstName lastName email _id profilePicture createdAt'
+    );
+    if (!members) return [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const membersEntity: any = this.mapEntities(members);
+
+    return [
+      ...membersEntity.map((member) => {
+        return {
+          ...member,
+          _userId: member._userId ? member._userId._id : null,
+          user: member._userId,
+        };
+      }),
+    ];
   }
 
-  getOrganizationAdmins(organizationId: string): Promise<
-    {
-      _userId: any;
-      user: string;
-      _id: string;
-      roles: MemberRoleEnum[];
-      invite?: IMemberInvite | undefined;
-      memberStatus: MemberStatusEnum;
-      _organizationId: string;
-    }[]
-  > {
-    return this.memberRepository.getOrganizationAdmins(organizationId);
+  async getOrganizationAdminAccount(organizationId: string) {
+    const requestQuery: MemberQuery = {
+      _organizationId: organizationId,
+      roles: MemberRoleEnum.ADMIN,
+    };
+
+    const member = await this.MongooseModel.findOne(requestQuery);
+
+    return this.mapEntity(member);
   }
 
-  findUserActiveMembers(userId: string): Promise<MemberEntity[]> {
-    return this.memberRepository.findUserActiveMembers(userId);
+  async getOrganizationAdmins(organizationId: string) {
+    const requestQuery: MemberQuery = {
+      _organizationId: organizationId,
+    };
+
+    const members = await this.MongooseModel.find(requestQuery).populate('_userId', 'firstName lastName email _id');
+    if (!members) return [];
+
+    const membersEntity = this.mapEntities(members);
+
+    return [
+      ...membersEntity
+        .filter((i) => i.roles.includes(MemberRoleEnum.ADMIN))
+        .map((member) => {
+          return {
+            ...member,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            _userId: member._userId ? (member._userId as any)._id : null,
+            user: member._userId,
+          };
+        }),
+    ];
   }
 
-  convertInvitedUserToMember(
+  async findUserActiveMembers(userId: string): Promise<MemberEntity[]> {
+    // exception casting - due to the login logic in generateUserToken
+    const requestQuery = {
+      _userId: userId,
+      memberStatus: MemberStatusEnum.ACTIVE,
+    } as unknown as MemberQuery;
+
+    return await this.find(requestQuery);
+  }
+
+  async convertInvitedUserToMember(
     organizationId: string,
     token: string,
-    data: { memberStatus: MemberStatusEnum; _userId: string; answerDate: Date }
-  ): Promise<void> {
-    return this.memberRepository.convertInvitedUserToMember(organizationId, token, data);
+    data: {
+      memberStatus: MemberStatusEnum;
+      _userId: string;
+      answerDate: Date;
+    }
+  ) {
+    await this.update(
+      {
+        _organizationId: organizationId,
+        'invite.token': token,
+      },
+      {
+        memberStatus: data.memberStatus,
+        _userId: data._userId,
+        'invite.answerDate': data.answerDate,
+      }
+    );
   }
 
-  findByInviteToken(token: string): Promise<MemberEntity | null> {
-    return this.memberRepository.findByInviteToken(token);
+  async findByInviteToken(token: string) {
+    const requestQuery = {
+      'invite.token': token,
+    } as unknown as MemberQuery;
+
+    return await this.findOne(requestQuery);
   }
 
-  findInviteeByEmail(organizationId: string, email: string): Promise<MemberEntity | null> {
-    return this.memberRepository.findInviteeByEmail(organizationId, email);
+  async findInviteeByEmail(organizationId: string, email: string): Promise<MemberEntity | null> {
+    const foundMember = await this.findOne({
+      _organizationId: organizationId,
+      'invite.email': email,
+    });
+
+    if (!foundMember) return null;
+
+    return foundMember;
   }
 
-  addMember(organizationId: string, member: IAddMemberData): Promise<void> {
-    return this.memberRepository.addMember(organizationId, member);
+  async addMember(organizationId: string, member: IAddMemberData): Promise<void> {
+    await this.create({
+      _userId: member._userId,
+      roles: member.roles,
+      invite: member.invite,
+      memberStatus: member.memberStatus,
+      _organizationId: organizationId,
+    });
   }
 
-  isMemberOfOrganization(organizationId: string, userId: string): Promise<boolean> {
-    return this.memberRepository.isMemberOfOrganization(organizationId, userId);
+  async isMemberOfOrganization(organizationId: string, userId: string): Promise<boolean> {
+    return !!(await this.findOne(
+      {
+        _organizationId: organizationId,
+        _userId: userId,
+      },
+      '_id',
+      {
+        readPreference: 'secondaryPreferred',
+      }
+    ));
   }
 
-  findMemberByUserId(organizationId: string, userId: string): Promise<MemberEntity | null> {
-    return this.memberRepository.findMemberByUserId(organizationId, userId);
+  async findMemberByUserId(organizationId: string, userId: string): Promise<MemberEntity | null> {
+    const member = await this.findOne({
+      _organizationId: organizationId,
+      _userId: userId,
+    });
+
+    if (!member) return null;
+
+    return this.mapEntity(member) as MemberEntity;
   }
 
-  findMemberById(organizationId: string, memberId: string): Promise<MemberEntity | null> {
-    return this.memberRepository.findMemberById(organizationId, memberId);
-  }
+  async findMemberById(organizationId: string, memberId: string): Promise<MemberEntity | null> {
+    const member = await this.findOne({
+      _organizationId: organizationId,
+      _id: memberId,
+    });
 
-  create(data: any, options?: any): Promise<MemberEntity> {
-    return this.memberRepository.create(data, options);
-  }
+    if (!member) return null;
 
-  update(query: any, body: any): Promise<{ matched: number; modified: number }> {
-    return this.memberRepository.update(query, body);
-  }
-
-  delete(query: any): Promise<{ acknowledged: boolean; deletedCount: number }> {
-    return this.memberRepository.delete(query);
-  }
-
-  count(query: any, limit?: number): Promise<number> {
-    return this.memberRepository.count(query, limit);
-  }
-
-  aggregate(query: any[], options?: { readPreference?: 'secondaryPreferred' | 'primary' }): Promise<any> {
-    return this.memberRepository.aggregate(query, options);
-  }
-
-  findOne(query: any, select?: any, options?: any): Promise<MemberEntity | null> {
-    return this.memberRepository.findOne(query, select, options);
-  }
-
-  find(query: any, select?: any, options?: any): Promise<MemberEntity[]> {
-    return this.memberRepository.find(query, select, options);
-  }
-
-  async *findBatch(
-    query: any,
-    select?: string | undefined,
-    options?: any,
-    batchSize?: number | undefined
-  ): AsyncGenerator<any, any, unknown> {
-    return this.memberRepository.findBatch(query, select, options, batchSize);
-  }
-
-  insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {
-    return this.memberRepository.insertMany(data, ordered);
-  }
-
-  updateOne(query: any, body: any): Promise<{ matched: number; modified: number }> {
-    return this.memberRepository.updateOne(query, body);
-  }
-
-  upsertMany(data: any): Promise<any> {
-    return this.memberRepository.upsertMany(data);
-  }
-
-  bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
-    return this.memberRepository.bulkWrite(bulkOperations, ordered);
+    return this.mapEntity(member) as MemberEntity;
   }
 }

@@ -1,4 +1,4 @@
-import Configstore from 'configstore';
+import * as Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
 import { UserSessionData } from '@novu/shared';
 

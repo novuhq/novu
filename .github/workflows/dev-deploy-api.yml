@@ -30,6 +30,7 @@ jobs:
     secrets: inherit
 
   deploy_dev_api:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     needs: test_api
@@ -40,14 +41,17 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    strategy:
+      matrix:
+        name: ['novu/api-ee', 'novu/api']
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: ${{ contains (matrix.name,'-ee') }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
         with:
-          submodules: true
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - uses: ./.github/actions/docker/build-api
         id: docker_build
@@ -55,11 +59,12 @@ jobs:
           tag: dev
           push: 'true'
           github_token: ${{ secrets.GH_PACKAGES }}
-          docker_name: 'novu/api-ee'
+          docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           environment: dev
 
       - name: Checkout cloud infra
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
@@ -67,6 +72,7 @@ jobs:
           path: cloud-infra
 
       - name: Configure AWS credentials
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -74,6 +80,7 @@ jobs:
           aws-region: eu-west-2
 
       - name: Terraform setup
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: hashicorp/setup-terraform@v3
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
@@ -81,10 +88,12 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
+        if: ${{ contains (matrix.name,'-ee') }}
         working-directory: cloud-infra/terraform/novu/aws
         run: terraform init
 
       - name: Terraform get output
+        if: ${{ contains (matrix.name,'-ee') }}
         working-directory: cloud-infra/terraform/novu/aws
         id: terraform
         run: |
@@ -94,20 +103,23 @@ jobs:
           echo "api_task_name=$(terraform output -json api_task_name | jq -r .)" >> $GITHUB_ENV
 
       - name: Download task definition
+        if: ${{ contains (matrix.name,'-ee') }}
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.api_task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
+        if: ${{ contains (matrix.name,'-ee') }}
         id: render-web-container
-        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
           container-name: ${{ env.api_ecs_container_name }}
           image: ${{ steps.docker_build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
+        if: ${{ contains (matrix.name,'-ee') }}
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
           service: ${{ env.api_ecs_service }}
@@ -115,12 +127,14 @@ jobs:
           wait-for-service-stability: true
 
       - name: get-npm-version
+        if: ${{ contains (matrix.name,'-ee') }}
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
         with:
           path: apps/api
 
       - name: Create Sentry release
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

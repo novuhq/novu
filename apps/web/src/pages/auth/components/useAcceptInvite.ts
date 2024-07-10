@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { captureException } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import type { IResponseError } from '@novu/shared';
 
 import { api } from '../../../api/api.client';
@@ -18,7 +18,7 @@ export function useAcceptInvite() {
       } catch (e: unknown) {
         errorMessage('Failed to accept an invite.');
 
-        captureException(e);
+        Sentry.captureException(e);
       }
     },
     [mutateAsync]

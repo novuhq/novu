@@ -3,7 +3,11 @@ import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
 import { IMessageButton } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 
-import { CompileTemplate, CompileTemplateBase } from '../compile-template';
+import {
+  CompileTemplate,
+  CompileTemplateCommand,
+  CompileTemplateBase,
+} from '../compile-template';
 import { ApiException } from '../../utils/exceptions';
 import { CompileInAppTemplateCommand } from './compile-in-app-template.command';
 
@@ -19,10 +23,25 @@ export class CompileInAppTemplate extends CompileTemplateBase {
 
   public async execute(
     command: CompileInAppTemplateCommand,
-    // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any
+    initiateTranslations?: (
+      environmentId: string,
+      organizationId,
+      locale: string
+    ) => Promise<void>
   ) {
     const organization = await this.getOrganization(command.organizationId);
+
+    let i18nInstance;
+    if (initiateTranslations) {
+      i18nInstance = await initiateTranslations(
+        command.environmentId,
+        command.organizationId,
+        command.locale ||
+          command.payload.subscriber?.locale ||
+          organization.defaultLocale
+      );
+    }
+
     const payload = command.payload || {};
 
     let content = '';
@@ -74,18 +93,16 @@ export class CompileInAppTemplate extends CompileTemplateBase {
     organization: OrganizationEntity | null,
     i18nInstance: any
   ): Promise<string> {
-    return await this.compileTemplate.execute(
-      {
-        template: content as string,
-        data: {
-          ...payload,
-          branding: {
-            logo: organization?.branding?.logo,
-            color: organization?.branding?.color || '#f47373',
-          },
+    return await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content as string,
+      data: {
+        ...payload,
+        branding: {
+          logo: organization?.branding?.logo,
+          color: organization?.branding?.color || '#f47373',
         },
       },
-      i18nInstance
-    );
+    });
   }
 }

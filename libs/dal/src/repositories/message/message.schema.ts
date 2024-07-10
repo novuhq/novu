@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import * as mongooseDelete from 'mongoose-delete';
 import { ActorTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';

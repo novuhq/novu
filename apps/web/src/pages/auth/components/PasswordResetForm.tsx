@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { captureException } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 import { useAuth } from '../../../hooks/useAuth';
@@ -53,7 +53,7 @@ export function PasswordResetForm({ token }: Props) {
       navigate(ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
-        captureException(e);
+        Sentry.captureException(e);
       }
     }
 

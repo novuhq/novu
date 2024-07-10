@@ -1,4 +1,4 @@
-import twilio from 'twilio';
+import * as twilio from 'twilio';
 
 export class SmsService {
   private provider = process.env.NODE_ENV === 'test' ? null : twilio(this.SID, this.AUTH_TOKEN);

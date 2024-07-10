@@ -10,7 +10,6 @@
   "license": "MIT",
   "keywords": [],
   "scripts": {
-    "start": "npm run watch:build",
     "prebuild": "rimraf build",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",

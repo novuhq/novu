@@ -5,7 +5,7 @@ import { api } from '../../../api';
 import { useAuth, useEnvironment } from '../../../hooks';
 import { Group } from '@mantine/core';
 import slugify from 'slugify';
-import { Control, FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { TranslationFolderIconSmall } from '../icons';
 
@@ -116,7 +116,7 @@ export const CreateGroupSidebar = ({
       }
     >
       <FormProvider {...methods}>
-        <GroupFormCommonFields control={control as Control<ICreateGroup>} readonly={readonly} />
+        <GroupFormCommonFields control={control} readonly={readonly} />
       </FormProvider>
     </Sidebar>
   );

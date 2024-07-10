@@ -1,4 +1,4 @@
-const DEFAULT_ENV = 'local';
+const DEFAULT_ENV_FILE = '.env';
 
 const envFileFromNodeEnv = {
   production: '.env.production',
@@ -14,8 +14,8 @@ const envFileFromNodeEnv = {
  * @param configDir The config directory.
  * @returns The path to the .env file.
  */
-export function getEnvFileNameForNodeEnv(nodeEnv?: string): string {
-  const selectedEnvFile = envFileFromNodeEnv[nodeEnv || DEFAULT_ENV];
+export function getEnvFileNameForNodeEnv(env: { NODE_ENV: keyof typeof envFileFromNodeEnv }): string {
+  const selectedEnvFile = envFileFromNodeEnv[env.NODE_ENV] || DEFAULT_ENV_FILE;
 
   return selectedEnvFile;
 }

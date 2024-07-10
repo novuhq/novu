@@ -1,11 +1,10 @@
 import { expect } from '@playwright/test';
-
-import { OrganizationEntity, UserEntity } from '@novu/dal';
-
 import { test } from './utils/baseTest';
 import { initializeSession, isLoginPage } from './utils/browser';
 import { HeaderPage } from './page-models/headerPage';
 import { validateTokenNotExisting } from './utils/authUtils';
+import { OrganizationEntity, UserEntity } from '@novu/dal/src';
+import { FeatureFlagsMock } from './utils/featureFlagsMock';
 import { SessionData } from './utils/plugins';
 
 test.describe('App Header', () => {

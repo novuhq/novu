@@ -1,4 +1,4 @@
-import { ErrorBoundary } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { LocalStudioHeader } from './LocalStudioHeader/LocalStudioHeader';
@@ -27,7 +27,7 @@ export const LocalStudioPageLayout: WithLoadingSkeleton = () => {
   }, [state]);
 
   return (
-    <ErrorBoundary
+    <Sentry.ErrorBoundary
       fallback={({ error, eventId }) => (
         <>
           Sorry, but something went wrong. <br />
@@ -50,7 +50,7 @@ export const LocalStudioPageLayout: WithLoadingSkeleton = () => {
           <Outlet />
         </ContentShell>
       </AppShell>
-    </ErrorBoundary>
+    </Sentry.ErrorBoundary>
   );
 };
 

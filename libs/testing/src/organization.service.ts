@@ -1,10 +1,11 @@
 import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { faker } from '@faker-js/faker';
-import { CommunityMemberRepository, CommunityOrganizationRepository, OrganizationRepository } from '@novu/dal';
+import { MemberRepository, OrganizationRepository } from '@novu/dal';
 
 export class OrganizationService {
-  private organizationRepository = new CommunityOrganizationRepository();
-  private memberRepository = new CommunityMemberRepository();
+  private organizationRepository = new OrganizationRepository();
+
+  private memberRepository = new MemberRepository();
 
   async createOrganization(options?: Parameters<OrganizationRepository['create']>[0]) {
     if (options) {
@@ -30,7 +31,9 @@ export class OrganizationService {
   }
 
   async getOrganization(organizationId: string) {
-    return await this.organizationRepository.findById(organizationId);
+    return await this.organizationRepository.findOne({
+      _id: organizationId,
+    });
   }
 
   async updateServiceLevel(organizationId: string, serviceLevel: ApiServiceLevelEnum) {

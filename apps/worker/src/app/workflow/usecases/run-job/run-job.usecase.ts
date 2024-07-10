@@ -3,7 +3,7 @@ const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { setUser } from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import {
   buildNotificationTemplateKey,
   CachedEntity,
@@ -34,7 +34,7 @@ export class RunJob {
 
   @InstrumentUsecase()
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
-    setUser({
+    Sentry.setUser({
       id: command.userId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,

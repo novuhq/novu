@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { LogCodeEnum } from '@novu/shared';
 import { ExecutionLogRoute } from '@novu/application-generic';
@@ -32,7 +32,7 @@ export abstract class SendMessageType {
       errorMessageFallback;
 
     if (error) {
-      captureException(errorString);
+      Sentry.captureException(errorString);
     }
 
     await this.messageRepository.updateMessageStatus(

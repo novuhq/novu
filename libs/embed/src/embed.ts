@@ -3,15 +3,7 @@
 /* eslint-disable */
 //
 import iFrameResize from 'iframe-resizer';
-import {
-  SHOW_WIDGET,
-  LOGOUT,
-  INIT_IFRAME,
-  SET_COOKIE,
-  DOMAIN_NOT_ALLOWED,
-  BOOTSTRAP_DONE,
-  WIDGET_READY,
-} from './shared/eventTypes';
+import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
 import type { IStore, ITab, INotificationCenterStyles, ColorScheme } from '@novu/notification-center';
@@ -162,7 +154,7 @@ class Novu {
 
         _scope.iframe?.contentWindow?.postMessage(
           {
-            type: SHOW_WIDGET,
+            type: EventTypes.SHOW_WIDGET,
             value: {},
           },
           '*'
@@ -182,7 +174,7 @@ class Novu {
 
     this.iframe?.contentWindow?.postMessage(
       {
-        type: LOGOUT,
+        type: EventTypes.LOGOUT,
       },
       '*'
     );
@@ -209,13 +201,13 @@ class Novu {
     if (!!event && !!event.data && !!event.data.type) {
       // eslint-disable-next-line default-case
       switch (event.data.type) {
-        case SET_COOKIE:
+        case EventTypes.SET_COOKIE:
           document.cookie = event.data.value;
           break;
-        case DOMAIN_NOT_ALLOWED:
+        case EventTypes.DOMAIN_NOT_ALLOWED:
           this.handleDomainNotAllowed();
           break;
-        case BOOTSTRAP_DONE:
+        case EventTypes.BOOTSTRAP_DONE:
           this.handleBootstrapDone();
           break;
       }
@@ -240,13 +232,13 @@ class Novu {
       window.addEventListener(
         'message',
         (event) => {
-          if (!event.target || event?.data?.type !== WIDGET_READY) {
+          if (!event.target || event?.data?.type !== EventTypes.WIDGET_READY) {
             return;
           }
 
           iframe?.contentWindow?.postMessage(
             {
-              type: INIT_IFRAME,
+              type: EventTypes.INIT_IFRAME,
               value: {
                 clientId: this.clientId,
                 backendUrl: this.backendUrl,

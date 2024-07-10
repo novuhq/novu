@@ -2,7 +2,7 @@ import './config';
 import 'newrelic';
 import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
-import { init } from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
@@ -13,7 +13,7 @@ import { version } from '../package.json';
 import { prepareAppInfra, startAppInfra } from './socket/services';
 
 if (process.env.SENTRY_DSN) {
-  init({
+  Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${version}`,

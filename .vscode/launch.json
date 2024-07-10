@@ -28,7 +28,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "type": "node"
+      "type": "pwa-node"
     },
     {
       "name": "worker",
@@ -229,11 +229,11 @@
   ],
   "compounds": [
     {
-      "name": "-- RUN ENV - Local",
-      "configurations": ["API", "DAL", "SHARED", "TESTING LIB", "WEB", "worker", "WS"]
+      "name": "-- RUN FULL ENV - Local",
+      "configurations": ["API", "DAL", "EMBED", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET", "worker"]
     },
     {
-      "name": "-- RUN ENV - Test",
+      "name": "-- RUN FULL ENV - Test",
       "configurations": [
         "API - TEST ENV",
         "DAL",

@@ -31,11 +31,10 @@ export const useDiscover = (options?: any) => {
       ...(options || {}),
     }
   );
-  const { refetch } = discoverQuery;
 
   useEffect(() => {
-    refetch();
-  }, [bridgeURL, setBridgeURL, refetch]);
+    discoverQuery.refetch();
+  }, [bridgeURL, setBridgeURL, discoverQuery]);
 
   return discoverQuery;
 };

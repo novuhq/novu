@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/node';
+import * as Sentry from '@sentry/node';
 import { Injectable, Logger, Scope } from '@nestjs/common';
 import { MemberRoleEnum } from '@novu/shared';
 import { InviteMemberCommand } from '../invite-member/invite-member.command';
@@ -44,7 +44,7 @@ export class BulkInvite {
           });
         } else {
           Logger.error(e);
-          captureException(e);
+          Sentry.captureException(e);
           invites.push({
             success: false,
             email: invitee.email,

@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { promises, type MxRecord } from 'node:dns';
+import * as dns from 'dns';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 
 import { GetMxRecordCommand } from './get-mx-record.command';
@@ -52,12 +52,12 @@ export class GetMxRecord {
       throw new ApiException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
     }
 
-    return relativeDnsRecords.some((record: MxRecord) => record.exchange === INBOUND_DOMAIN);
+    return relativeDnsRecords.some((record: dns.MxRecord) => record.exchange === INBOUND_DOMAIN);
   }
 
-  async getMxRecords(domain: string): Promise<MxRecord[]> {
+  async getMxRecords(domain: string): Promise<dns.MxRecord[]> {
     try {
-      return await promises.resolveMx(domain);
+      return await dns.promises.resolveMx(domain);
     } catch (e) {
       return [];
     }

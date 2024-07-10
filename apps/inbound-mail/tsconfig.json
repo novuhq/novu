@@ -9,7 +9,7 @@
     "types": ["node", "mocha", "chai", "sinon"],
     "target": "es2017",
     "allowJs": false,
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "declarationMap": true
   }
 }

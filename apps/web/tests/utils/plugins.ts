@@ -1,14 +1,12 @@
 // eslint-disable-next-line no-restricted-imports
+import { DalService, IntegrationRepository, NotificationGroupRepository, NotificationTemplateEntity } from '@novu/dal';
 import {
-  DalService,
-  IntegrationRepository,
-  NotificationGroupRepository,
-  NotificationTemplateEntity,
-  EnvironmentEntity,
-  OrganizationEntity,
-  UserEntity,
-} from '@novu/dal';
-import { ChannelTypeEnum, getPopularTemplateIds, MemberStatusEnum, ProvidersIdEnum } from '@novu/shared';
+  ChannelTypeEnum,
+  getGetStartedTemplateIds,
+  getPopularTemplateIds,
+  MemberStatusEnum,
+  ProvidersIdEnum,
+} from '@novu/shared';
 import {
   CreateTemplatePayload,
   EnvironmentService,
@@ -20,6 +18,7 @@ import {
   UserService,
   UserSession,
 } from '@novu/testing';
+import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal/src';
 import { Page } from '@playwright/test';
 
 export interface SessionData {

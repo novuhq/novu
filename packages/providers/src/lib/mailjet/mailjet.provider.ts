@@ -8,7 +8,7 @@ import {
   IEmailEventBody,
   EmailEventStatusEnum,
 } from '@novu/stateless';
-import { Client, type SendEmailV3_1 } from 'node-mailjet';
+import * as Mailjet from 'node-mailjet';
 
 const MAILJET_API_VERSION = 'v3.1';
 
@@ -16,7 +16,7 @@ export class MailjetEmailProvider implements IEmailProvider {
   id = 'mailjet';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private mailjetClient: Client;
+  private mailjetClient: Mailjet.Client;
   constructor(
     private config: {
       apiKey: string;
@@ -25,7 +25,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    this.mailjetClient = new Client({
+    this.mailjetClient = new Mailjet.Client({
       apiKey: config.apiKey,
       apiSecret: config.apiSecret,
     });
@@ -38,7 +38,9 @@ export class MailjetEmailProvider implements IEmailProvider {
       .post('send', {
         version: MAILJET_API_VERSION,
       })
-      .request<SendEmailV3_1.Response>(this.createMailData(emailOptions));
+      .request<Mailjet.SendEmailV3_1.Response>(
+        this.createMailData(emailOptions)
+      );
 
     const { body, response: clientResponse } = response;
 
@@ -72,15 +74,15 @@ export class MailjetEmailProvider implements IEmailProvider {
     }
   }
 
-  private createMailData(options: IEmailOptions): SendEmailV3_1.Body {
-    const message: SendEmailV3_1.Message = {
+  private createMailData(options: IEmailOptions): Mailjet.SendEmailV3_1.Body {
+    const message: Mailjet.SendEmailV3_1.Message = {
       From: {
         Email: options.from || this.config.from,
         Name: options.senderName || this.config.senderName,
       },
       To: options.to.map((email) => ({
         Email: email,
-      })) as SendEmailV3_1.EmailAddressTo[],
+      })) as Mailjet.SendEmailV3_1.EmailAddressTo[],
       Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
       Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
       Subject: options.subject,

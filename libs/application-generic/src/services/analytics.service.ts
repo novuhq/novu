@@ -1,6 +1,6 @@
 import { Analytics } from '@segment/analytics-node';
 import { Logger } from '@nestjs/common';
-import Mixpanel from 'mixpanel';
+import * as Mixpanel from 'mixpanel';
 
 import { IOrganizationEntity } from '@novu/shared';
 

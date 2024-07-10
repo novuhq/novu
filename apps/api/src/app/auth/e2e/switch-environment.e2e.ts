@@ -1,10 +1,10 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import { EnvironmentEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { UserSessionData } from '@novu/shared';
 
-describe('Switch Environment - /auth/environments/:id/switch (POST) @skip-in-ee', async () => {
+describe('Switch Environment - /auth/environments/:id/switch (POST)', async () => {
   let session: UserSession;
 
   describe('user has multiple environments', () => {

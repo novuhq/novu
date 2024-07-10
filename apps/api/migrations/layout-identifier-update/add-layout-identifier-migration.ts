@@ -1,6 +1,6 @@
 // August 14th, 2023
 
-import shortid from 'shortid';
+import * as shortid from 'shortid';
 import slugify from 'slugify';
 
 import { LayoutRepository, OrganizationRepository } from '@novu/dal';

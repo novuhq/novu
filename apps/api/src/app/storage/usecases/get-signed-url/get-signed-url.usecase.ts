@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import hat from 'hat';
+import * as hat from 'hat';
 import { StorageService } from '@novu/application-generic';
 import { UploadTypesEnum, FILE_EXTENSION_TO_MIME_TYPE } from '@novu/shared';
 

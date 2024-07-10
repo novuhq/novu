@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import WebFont from 'webfontloader';
+import * as WebFont from 'webfontloader';
 import { css, Global } from '@emotion/react';
 import {
   NotificationCenter,

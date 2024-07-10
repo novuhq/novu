@@ -33,7 +33,7 @@ import { PasswordResetCommand } from './usecases/password-reset/password-reset.c
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
 import { ApiException } from '../shared/exceptions/api.exception';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
+import { PasswordResetBodyDto } from './dtos/password-reset.dto';
 import {
   AuthService,
   buildOauthRedirectUrl,
@@ -59,6 +59,7 @@ export class AuthController {
     private authService: AuthService,
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
+    private organizationRepository: OrganizationRepository,
     private switchEnvironmentUsecase: SwitchEnvironment,
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
@@ -120,11 +121,11 @@ export class AuthController {
   }
 
   @Post('/reset/request')
-  async forgotPasswordRequest(@Body() body: PasswordResetRequestBodyDto, @Query('src') src?: string) {
+  async forgotPasswordRequest(@Body() body: { email: string }, @Query('src') src?: PasswordResetFlowEnum) {
     return await this.passwordResetRequestUsecase.execute(
       PasswordResetRequestCommand.create({
         email: body.email,
-        src: src as PasswordResetFlowEnum,
+        src,
       })
     );
   }

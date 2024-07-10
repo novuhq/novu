@@ -4,7 +4,7 @@ import { CacheService, cacheService as inMemoryCacheService } from '@novu/applic
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
 import { Test } from '@nestjs/testing';
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import { v4 as uuid } from 'uuid';
 

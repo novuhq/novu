@@ -1,7 +1,7 @@
 import { defineConfig, Options } from 'tsup';
 // import { compress } from 'esbuild-plugin-compress';
 import glob from 'tiny-glob';
-import { parsePresetOptions, generateTsupOptions, type PresetOptions } from 'tsup-preset-solid';
+import * as preset from 'tsup-preset-solid';
 import { name, version } from './package.json';
 
 const isProd = process.env?.NODE_ENV === 'production';
@@ -27,7 +27,7 @@ const baseModuleConfig: Options = {
   },
 };
 
-const uiPresetOptions: PresetOptions = {
+const uiPresetOptions: preset.PresetOptions = {
   entries: [
     {
       // entries with '.tsx' extension will have `solid` export condition generated
@@ -44,7 +44,7 @@ const uiPresetOptions: PresetOptions = {
 export default defineConfig((config: Options) => {
   const isWatching = !!config.watch;
 
-  const PARSED_DATA = parsePresetOptions(uiPresetOptions, isWatching);
+  const PARSED_DATA = preset.parsePresetOptions(uiPresetOptions, isWatching);
 
   return [
     {
@@ -59,7 +59,7 @@ export default defineConfig((config: Options) => {
       outDir: 'dist/cjs',
       tsconfig: 'tsconfig.cjs.json',
     },
-    ...generateTsupOptions(PARSED_DATA),
+    ...preset.generateTsupOptions(PARSED_DATA),
     // {
     //   ...baseConfig,
     //   entry: { novu: 'src/umd.ts' },

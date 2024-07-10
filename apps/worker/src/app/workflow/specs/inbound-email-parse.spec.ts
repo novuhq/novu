@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { expect } from 'chai';
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 
 import { JobRepository, MessageRepository } from '@novu/dal';
 import { CompileTemplate } from '@novu/application-generic';

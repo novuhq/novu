@@ -1,6 +1,6 @@
 // June 27th, 2023
 
-import shortid from 'shortid';
+import * as shortid from 'shortid';
 import slugify from 'slugify';
 
 import { providers } from '@novu/shared';

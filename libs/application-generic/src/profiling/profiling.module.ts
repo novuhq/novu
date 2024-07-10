@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ProfilingService } from './profiling.service';
+import * as process from 'process';
 
 @Module({
   imports: [],

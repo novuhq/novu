@@ -1,7 +1,7 @@
 import spawn from 'cross-spawn';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import fs from 'node:fs';
+import * as fs from 'fs';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ROOT_PATH = path.resolve(dirname);

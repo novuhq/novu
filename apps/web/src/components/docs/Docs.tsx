@@ -5,7 +5,7 @@ import { css } from '@novu/novui/css';
 import { Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
 import { text, title as RTitle } from '@novu/novui/recipes';
 import { token } from '@novu/novui/tokens';
-import { getMDXComponent } from 'mdx-bundler/client';
+import * as mdxBundler from 'mdx-bundler/client';
 import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
 import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 import { Highlight } from './Highlight';
@@ -17,6 +17,8 @@ const LiText = styled('span', text);
 const TitleH2 = styled('h2', RTitle);
 const TitleH3 = styled('h3', RTitle);
 const TitleH1 = styled('h1', RTitle);
+
+const getMDXComponent = mdxBundler.getMDXComponent;
 
 const DOCS_WRAPPER_ELEMENT_ID = 'embedded-docs';
 

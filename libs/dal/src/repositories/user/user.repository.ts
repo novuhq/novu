@@ -1,87 +1,65 @@
-import { IUserRepository } from './user-repository.interface';
-import { UserEntity, IUserResetTokenCount } from './user.entity';
-import { Inject } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { AuthProviderEnum } from '@novu/shared';
+import { createHash } from 'crypto';
+import { BaseRepository } from '../base-repository';
+import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
+import { User } from './user.schema';
 
-export class UserRepository implements IUserRepository {
-  constructor(@Inject('USER_REPOSITORY') private userRepository: IUserRepository) {}
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity, object> {
+  constructor() {
+    super(User, UserEntity);
+  }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    return this.userRepository.findByEmail(email);
+    return this.findOne({
+      email,
+    });
   }
 
   async findById(id: string, select?: string): Promise<UserEntity | null> {
-    return this.userRepository.findById(id, select);
+    const data = await this.MongooseModel.findById(id, select);
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
   }
 
-  async findUserByToken(token: string): Promise<UserEntity | null> {
-    return this.userRepository.findUserByToken(token);
+  private hashResetToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
   }
 
-  async updatePasswordResetToken(
-    userId: string,
-    token: string,
-    resetTokenCount: IUserResetTokenCount
-  ): Promise<{ matched: number; modified: number }> {
-    return this.userRepository.updatePasswordResetToken(userId, token, resetTokenCount);
+  async findUserByToken(token: string) {
+    return await this.findOne({
+      resetToken: this.hashResetToken(token),
+    });
   }
 
-  create(data: any, options?: any): Promise<UserEntity> {
-    return this.userRepository.create(data, options);
+  async updatePasswordResetToken(userId: string, token: string, resetTokenCount: IUserResetTokenCount) {
+    return await this.update(
+      {
+        _id: userId,
+      },
+      {
+        $set: {
+          resetToken: this.hashResetToken(token),
+          resetTokenDate: new Date(),
+          resetTokenCount,
+        },
+      }
+    );
   }
 
-  update(query: any, body: any): Promise<{ matched: number; modified: number }> {
-    return this.userRepository.update(query, body);
+  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
+    return this.findOne({
+      'tokens.providerId': profileId,
+      'tokens.provider': provider,
+    });
   }
 
-  delete(query: any): Promise<{ acknowledged: boolean; deletedCount: number }> {
-    return this.userRepository.delete(query);
-  }
-
-  count(query: any, limit?: number | undefined): Promise<number> {
-    return this.userRepository.count(query, limit);
-  }
-
-  aggregate(
-    query: any[],
-    options?: { readPreference?: 'secondaryPreferred' | 'primary' | undefined } | undefined
-  ): Promise<any> {
-    return this.userRepository.aggregate(query, options);
-  }
-
-  findOne(query: any, select?: any, options?: any): Promise<UserEntity | null> {
-    return this.userRepository.findOne(query, select, options);
-  }
-
-  find(query: any, select?: any, options?: any): Promise<UserEntity[]> {
-    return this.userRepository.find(query, select, options);
-  }
-
-  findBatch(
-    query: any,
-    select?: string | undefined,
-    options?: any,
-    batchSize?: number | undefined
-  ): AsyncGenerator<any, any, unknown> {
-    return this.userRepository.findBatch(query, select, options, batchSize);
-  }
-
-  insertMany(
-    data: any,
-    ordered: boolean
-  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
-    return this.userRepository.insertMany(data, ordered);
-  }
-
-  updateOne(query: any, body: any): Promise<{ matched: number; modified: number }> {
-    return this.userRepository.updateOne(query, body);
-  }
-
-  upsertMany(data: any): Promise<any> {
-    return this.userRepository.upsertMany(data);
-  }
-
-  bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
-    return this.userRepository.bulkWrite(bulkOperations, ordered);
+  async userExists(userId: string) {
+    return !!(await this.findOne(
+      {
+        _id: userId,
+      },
+      '_id'
+    ));
   }
 }
