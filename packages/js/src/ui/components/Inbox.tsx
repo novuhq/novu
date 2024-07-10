@@ -1,9 +1,10 @@
-import { JSX } from 'solid-js';
+import { createSignal, JSX, Match, Switch } from 'solid-js';
 import { useLocalization } from '../context';
 import { Bell } from './Bell';
 import { Footer } from './Footer';
-import { Header } from './Header';
+import { Header, SettingsHeader } from './Header';
 import { Popover } from './Popover';
+import { Settings } from './Settings';
 
 type InboxProps = {
   open?: boolean;
@@ -12,6 +13,7 @@ type InboxProps = {
 
 export const Inbox = (props: InboxProps) => {
   const { t } = useLocalization();
+  const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
 
   return (
     <Popover.Root open={props?.open}>
@@ -19,9 +21,17 @@ export const Inbox = (props: InboxProps) => {
         <Bell>{props.renderBell}</Bell>
       </Popover.Trigger>
       <Popover.Content appearanceKey="inbox__popoverContent">
-        <Header />
-        {/* notifications will go here */}
-        {t('inbox.title')}
+        <Switch>
+          <Match when={!isSettingsOpen()}>
+            <Header showSettings={() => setIsSettingsOpen(true)} />
+            {t('inbox.title')}
+          </Match>
+          {/* notifications will go here */}
+          <Match when={isSettingsOpen()}>
+            <SettingsHeader backAction={() => setIsSettingsOpen(false)} />
+            <Settings />
+          </Match>
+        </Switch>
         <Footer />
       </Popover.Content>
     </Popover.Root>
