@@ -25,9 +25,6 @@ export const Inbox = (props: InboxProps) => {
           <Bell>{props.renderBell}</Bell>
         </Popover.Trigger>
         <Popover.Content classes={style('popoverContent', popoverContentClasses())}>
-          {/* notifications will go here */}
-          {t('inbox.title')}
-
           <Switch>
             <Match when={!isSettingsOpen()}>
               <Header showSettings={() => setIsSettingsOpen(true)} />

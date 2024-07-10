@@ -22,7 +22,7 @@ export const PopoverContent: ParentComponent<{ classes: string }> = (props) => {
   });
 
   const handleClickOutside = (e: any) => {
-    if (contentRef()?.contains(e.target)) return;
+    if (contentRef()?.contains(e.target) || targetRef()?.contains(e.target)) return;
     onClose();
   };
 
