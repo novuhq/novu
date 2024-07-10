@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.0.0-canary.4",
+  "version": "2.0.0-canary.6",
   "description": "Novu CLI. Used to sync with Novu Cloud, and run Novu Studio.",
   "main": "src/index.js",
   "files": [
@@ -53,14 +53,7 @@
     "nodemon": "^3.0.1",
     "ts-node": "~10.9.1",
     "typescript": "4.9.5",
-    "vitest": "^1.2.1",
-    "picocolors": "^1.0.0",
-    "validate-npm-package-name": "3.0.0",
-    "prompts": "2.4.2",
-    "@types/cross-spawn": "6.0.0",
-    "cross-spawn": "7.0.3",
-    "fast-glob": "3.3.1",
-    "async-sema": "3.0.1"
+    "vitest": "^1.2.1"
   },
   "dependencies": {
     "@novu/ntfr-client": "^0.0.4",
@@ -78,6 +71,13 @@
     "open": "^8.4.0",
     "ora": "^5.4.1",
     "uuid": "^9.0.0",
-    "ws": "^8.11.0"
+    "ws": "^8.11.0",
+    "picocolors": "^1.0.0",
+    "validate-npm-package-name": "3.0.0",
+    "prompts": "2.4.2",
+    "@types/cross-spawn": "6.0.0",
+    "cross-spawn": "7.0.3",
+    "fast-glob": "3.3.1",
+    "async-sema": "3.0.1"
   }
 }
