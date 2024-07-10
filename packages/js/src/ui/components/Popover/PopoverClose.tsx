@@ -3,7 +3,6 @@ import { usePopover } from '.';
 
 export const PopoverClose: ParentComponent<{ onClick?: () => void }> = (props) => {
   const { onClose } = usePopover();
-
   return (
     <div
       onClick={() => {
