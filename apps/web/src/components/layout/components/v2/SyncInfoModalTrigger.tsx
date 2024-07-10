@@ -16,7 +16,7 @@ export function SyncInfoModalTrigger() {
   return (
     <>
       <Button size="xs" Icon={IconOutlineCloudUpload} onClick={toggleSyncInfoModalShow}>
-        Deploy
+        Sync
       </Button>
       {/** TODO: use a modal manager */}
       <SyncInfoModal isOpen={showSyncInfoModal} toggleOpen={toggleSyncInfoModalShow} />

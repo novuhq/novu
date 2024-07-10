@@ -109,7 +109,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
   ];
 
   return (
-    <Modal opened={isOpen} title={<Title variant="section">Deploy changes</Title>} onClose={toggleOpen}>
+    <Modal opened={isOpen} title={<Title variant="section">Sync changes</Title>} onClose={toggleOpen}>
       <Text color="typography.text.secondary" className={css({ marginBottom: 30 })}>
         For your changes to be visible on the cloud dashboard, you need to deploy your local novu application to a cloud
         provider.
