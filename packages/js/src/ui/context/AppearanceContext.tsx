@@ -18,40 +18,49 @@ export type CSSProperties = {
 
 export type ElementStyles = string | CSSProperties;
 
-export type Elements = {
-  /**
-   * Primitive element styles
-   */
-  button?: ElementStyles;
-  root?: ElementStyles;
-  bell?: ElementStyles;
-  bellContainer?: ElementStyles;
-  popoverContent?: ElementStyles;
-  popoverTrigger?: ElementStyles;
-  dropdownContent?: ElementStyles;
-  dropdownTrigger?: ElementStyles;
+/* The double underscore signals that entire key extends the right part of the key
+ * i.e. foo__bar means that foo_bar is an extension of bar. Both keys will be applied when foo_bar is used
+ * meaning you would have `bar foo__bar` in the dom
+ */
+export const appearanceKeys = [
+  //Primitives
+  'button',
+  'popoverContent',
+  'popoverTrigger',
+  'dropdownContent',
+  'dropdownTrigger',
+  'dropdownItem',
+  'dropdownItemLabel',
+  'dropdownItemLabelContainer',
+  'dropdownItemLeftIcon',
+  'dropdownItemRightIcon',
 
-  /**
-   * Component element styles
-   */
-  settingsIconContainer?: ElementStyles;
-  inboxHeader?: ElementStyles;
-  inboxStatusDropdownTrigger?: ElementStyles;
-  inboxStatusDropdownContent?: ElementStyles;
-  inboxStatusDropdownItem?: ElementStyles;
-  inboxStatusDropdownItemLabel?: ElementStyles;
-  inboxStatusDropdownItemLabelContainer?: ElementStyles;
-  inboxStatusDropdownItemLeftIcon?: ElementStyles;
-  inboxStatusDropdownItemRightIcon?: ElementStyles;
-  inboxStatusTitle?: ElementStyles;
-  moreActionsContainer?: ElementStyles;
-  moreActionsDropdownTrigger?: ElementStyles;
-  moreActionsDropdownContent?: ElementStyles;
-  moreActionsDropdownItem?: ElementStyles;
-  moreActionsDropdownItemLabel?: ElementStyles;
-  moreActionsDropdownItemLabelContainer?: ElementStyles;
-  moreActionsDropdownItemLeftIcon?: ElementStyles;
-};
+  //General
+  'root',
+  'bellIcon',
+  'bellContainer',
+  'settings__button',
+  'inboxHeader',
+
+  //Inbox status
+  'inboxStatus__title',
+  'inboxStatus__dropdownTrigger',
+  'inboxStatus__dropdownContent',
+  'inboxStatus__dropdownItem',
+  'inboxStatus__dropdownItemLabel',
+  'inboxStatus__dropdownItemLabelContainer',
+  'inboxStatus__dropdownItemLeftIcon',
+  'inboxStatus__dropdownItemRightIcon',
+
+  //More actions
+  'moreActionsContainer',
+  'moreActions__dropdownTrigger',
+  'moreActions__dropdownContent',
+  'moreActions__dropdownItem',
+  'moreActions__dropdownItemLabel',
+  'moreActions__dropdownItemLabelContainer',
+  'moreActions__dropdownItemLeftIcon',
+] as const;
 
 export type Variables = {
   colorBackground?: string;
@@ -64,6 +73,9 @@ export type Variables = {
   fontSize?: string;
   borderRadius?: string;
 };
+
+export type AppearanceKey = (typeof appearanceKeys)[number];
+export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 
 type AppearanceContextType = {
   variables?: Variables;

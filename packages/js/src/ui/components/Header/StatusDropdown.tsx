@@ -30,17 +30,15 @@ export const StatusDropdown = () => {
 
   return (
     <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
-      <Popover.Trigger
-        classes={style(['dropdownTrigger', 'inboxStatusDropdownTrigger'], inboxStatusDropdownTriggerClasses())}
-      >
-        <span class={style('inboxStatusTitle', cn(id, 'nt-text-xl nt-font-semibold nt-text-foreground'))}>
+      <Popover.Trigger classes={style('inboxStatus__dropdownTrigger', inboxStatusDropdownTriggerClasses())}>
+        <span class={style('inboxStatus__title', cn('nt-text-xl nt-font-semibold nt-text-foreground'))}>
           {getStatusLabel(feedOptions.status)}
         </span>
         <span>
           <ArrowDropDown />
         </span>
       </Popover.Trigger>
-      <Popover.Content classes={style(['dropdownContent', 'inboxStatusDropdownContent'], dropdownContentClasses())}>
+      <Popover.Content classes={style('inboxStatus__dropdownContent', dropdownContentClasses())}>
         <StatusOptions setFeedOptions={setFeedOptions} />
       </Popover.Content>
     </Popover>
