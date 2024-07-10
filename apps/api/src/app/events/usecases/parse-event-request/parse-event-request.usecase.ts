@@ -352,9 +352,7 @@ export class ParseEventRequest {
       });
 
       // check if user is using personal email
-      const user = await this.userRepository.findOne({
-        _id: command.userId,
-      });
+      const user = await this.userRepository.findById(command.userId);
 
       if (!user) throw new ApiException('User not found');
 

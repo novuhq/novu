@@ -160,8 +160,7 @@ export abstract class SendMessageBase extends SendMessageType {
           organizationId
         );
 
-        const instance = i18next.createInstance();
-        await instance.init({
+        const instance = i18next.createInstance({
           resources,
           ns: namespaces,
           defaultNS: false,
@@ -180,6 +179,8 @@ export abstract class SendMessageBase extends SendMessageType {
             },
           },
         });
+
+        await instance.init();
 
         return instance;
       }

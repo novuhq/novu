@@ -100,14 +100,16 @@ export class SendMessagePush extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template?.content as string,
             data,
-          })
+          }),
+          i18nInstance
         );
 
         title = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template?.title as string,
             data,
-          })
+          }),
+          i18nInstance
         );
       }
     } catch (e) {

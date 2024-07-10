@@ -14,6 +14,7 @@ import {
   EmailProviderIdEnum,
   ChangeEntityTypeEnum,
   INotificationTemplateStep,
+  isClerkEnabled,
   WorkflowTypeEnum,
 } from '@novu/shared';
 import {
@@ -24,6 +25,7 @@ import {
   SubscriberEntity,
   OrganizationRepository,
   NotificationTemplateEntity,
+  CommunityOrganizationRepository,
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import { CreateWorkflowRequestDto } from '../dto';
@@ -510,7 +512,9 @@ describe('Create Notification template from blueprint - /notification-templates 
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
-  const organizationRepository: OrganizationRepository = new OrganizationRepository();
+  const organizationRepository: OrganizationRepository = new OrganizationRepository(
+    new CommunityOrganizationRepository()
+  );
 
   before(async () => {
     session = new UserSession();
@@ -546,8 +550,14 @@ describe('Create Notification template from blueprint - /notification-templates 
     const { blueprintId } = await buildBlueprint(session, prodEnv, notificationTemplateRepository);
 
     const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
-    const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
-    process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+
+    if (isClerkEnabled()) {
+      process.env.BLUEPRINT_CREATOR = session.organization._id;
+    } else {
+      const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
+      process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+    }
+
     blueprint.notificationGroupId = blueprint._notificationGroupId;
     blueprint.notificationGroup.name = 'New Group Name';
     blueprint.blueprintId = blueprint._id;

@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
-import { getToken } from './useAuth';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { buildApiHttpClient } from '../api/api.client';
-import { get_session_recording_properties } from 'mixpanel-browser';
+// eslint-disable-next-line import/no-namespace
+import * as mixpanel from 'mixpanel-browser';
 import { useStudioState } from '../studio/StudioStateProvider';
+import { getToken } from '../auth/getToken';
 
 function useNovuAPI() {
   const { devSecretKey } = useStudioState();
@@ -47,7 +48,7 @@ export const useTelemetry = () => {
       const mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
-        const sessionReplayProperties = get_session_recording_properties();
+        const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
         data = {
           ...(data || {}),

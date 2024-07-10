@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { UserEntity, UserRepository } from '@novu/dal';
+import { UserEntity, CommunityUserRepository } from '@novu/dal';
 import { normalizeEmail } from '@novu/shared';
 import { hash } from 'bcrypt';
 
@@ -10,7 +10,7 @@ import { TEST_USER_PASSWORD } from './constants';
 export class UserService {
   private environmentService = new EnvironmentService();
   private organizationService = new OrganizationService();
-  private userRepository = new UserRepository();
+  private userRepository = new CommunityUserRepository();
 
   async createTestUser(): Promise<UserEntity> {
     const user = await this.createUser({
@@ -47,9 +47,7 @@ export class UserService {
   }
 
   async getUser(id: string): Promise<UserEntity> {
-    const user = await this.userRepository.findOne({
-      _id: id,
-    });
+    const user = await this.userRepository.findById(id);
 
     if (!user) {
       throw new Error(`Test user with ${id} not found`);

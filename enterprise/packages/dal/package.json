@@ -4,6 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
+    "start": "npm run build:watch",
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
     "build": "node ./check-ee.mjs",
