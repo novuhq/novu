@@ -1,8 +1,8 @@
 import { PushProviderIdEnum } from '@novu/shared';
+import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic';
-import { PushProvidersSchemas } from '../types';
 
-export const pushProviderSchemas: PushProvidersSchemas = {
+export const pushProviderSchemas = {
   [PushProviderIdEnum.FCM]: genericProviderSchemas,
   [PushProviderIdEnum.APNS]: genericProviderSchemas,
   [PushProviderIdEnum.EXPO]: genericProviderSchemas,
@@ -10,4 +10,4 @@ export const pushProviderSchemas: PushProvidersSchemas = {
   [PushProviderIdEnum.PushWebhook]: genericProviderSchemas,
   [PushProviderIdEnum.PusherBeams]: genericProviderSchemas,
   [PushProviderIdEnum.Pushpad]: genericProviderSchemas,
-};
+} satisfies Record<PushProviderIdEnum, { output: Schema }>;

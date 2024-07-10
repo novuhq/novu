@@ -1,9 +1,9 @@
 import { EmailProviderIdEnum } from '@novu/shared';
+import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic';
-import { EmailProvidersSchemas } from '../types';
 import { sendgridProviderSchemas } from './sendgrid';
 
-export const emailProviderSchemas: EmailProvidersSchemas = {
+export const emailProviderSchemas = {
   [EmailProviderIdEnum.SendGrid]: sendgridProviderSchemas,
   [EmailProviderIdEnum.EmailJS]: genericProviderSchemas,
   [EmailProviderIdEnum.Mailgun]: genericProviderSchemas,
@@ -25,4 +25,4 @@ export const emailProviderSchemas: EmailProvidersSchemas = {
   [EmailProviderIdEnum.SparkPost]: genericProviderSchemas,
   [EmailProviderIdEnum.EmailWebhook]: genericProviderSchemas,
   [EmailProviderIdEnum.Braze]: genericProviderSchemas,
-};
+} satisfies Record<EmailProviderIdEnum, { output: Schema }>;

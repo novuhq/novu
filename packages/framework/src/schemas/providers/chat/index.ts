@@ -1,9 +1,9 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic';
-import { ChatProvidersSchemas } from '../types';
 import { slackProviderSchemas } from './slack';
 
-export const chatProviderSchemas: ChatProvidersSchemas = {
+export const chatProviderSchemas = {
   [ChatProviderIdEnum.Slack]: slackProviderSchemas,
   [ChatProviderIdEnum.Discord]: genericProviderSchemas,
   [ChatProviderIdEnum.GetStream]: genericProviderSchemas,
@@ -14,4 +14,4 @@ export const chatProviderSchemas: ChatProvidersSchemas = {
   [ChatProviderIdEnum.Ryver]: genericProviderSchemas,
   [ChatProviderIdEnum.WhatsAppBusiness]: genericProviderSchemas,
   [ChatProviderIdEnum.Zulip]: genericProviderSchemas,
-};
+} satisfies Record<ChatProviderIdEnum, { output: Schema }>;

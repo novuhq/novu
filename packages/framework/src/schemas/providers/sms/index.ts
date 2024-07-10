@@ -1,8 +1,8 @@
 import { SmsProviderIdEnum } from '@novu/shared';
+import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic';
-import { SmsProvidersSchemas } from '../types';
 
-export const smsProviderSchemas: SmsProvidersSchemas = {
+export const smsProviderSchemas = {
   [SmsProviderIdEnum.Twilio]: genericProviderSchemas,
   [SmsProviderIdEnum.Termii]: genericProviderSchemas,
   [SmsProviderIdEnum.Telnyx]: genericProviderSchemas,
@@ -34,4 +34,4 @@ export const smsProviderSchemas: SmsProvidersSchemas = {
   [SmsProviderIdEnum.BulkSms]: genericProviderSchemas,
   [SmsProviderIdEnum.Clicksend]: genericProviderSchemas,
   [SmsProviderIdEnum.EazySms]: genericProviderSchemas,
-};
+} satisfies Record<SmsProviderIdEnum, { output: Schema }>;
