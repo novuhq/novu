@@ -1,14 +1,15 @@
-import * as sinon from 'sinon';
-import { EnvironmentRepository, MessageEntity, MessageRepository, UserRepository } from '@novu/dal';
+import sinon from 'sinon';
+import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
 import { ExternalServicesRoute } from './external-services-route.usecase';
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { WSGateway } from '../../ws.gateway';
+import { Types } from 'mongoose';
 
-const environmentId = EnvironmentRepository.createObjectId();
+const environmentId = new Types.ObjectId().toString();
 const messageId = 'message-id-1';
-const userId = UserRepository.createObjectId();
+const userId = new Types.ObjectId().toString();
 
 const commandReceivedMessage = ExternalServicesRouteCommand.create({
   event: WebSocketEventEnum.RECEIVED,

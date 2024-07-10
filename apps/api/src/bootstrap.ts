@@ -7,8 +7,8 @@ import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 const passport = require('passport');
 const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
-import * as bodyParser from 'body-parser';
-import * as Sentry from '@sentry/node';
+import bodyParser from 'body-parser';
+import { init, Integrations, Handlers } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
@@ -18,7 +18,7 @@ import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv, CONTEXT_PATH } from './config';
 
-import * as packageJson from '../package.json';
+import packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { corsOptionsDelegate } from './config';
 
@@ -32,14 +32,14 @@ const extendedBodySizeRoutes = [
 ];
 
 if (process.env.SENTRY_DSN) {
-  Sentry.init({
+  init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${packageJson.version}`,
     ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true }),
+      new Integrations.Http({ tracing: true }),
     ],
   });
 }
@@ -50,22 +50,19 @@ validateEnv();
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
-  let rawBodyBuffer: undefined | (() => void) = undefined;
+  let rawBodyBuffer: undefined | ((...args) => void) = undefined;
   let nestOptions: Record<string, boolean> = {};
 
-  try {
-    if (
-      (process.env.NOVU_ENTERPRISE === 'true' && require('@novu/ee-billing')?.rawBodyBuffer) ||
-      process.env.CI_EE_TEST === 'true'
-    ) {
-      rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
-      nestOptions = {
-        bodyParser: false,
-        rawBody: true,
-      };
-    }
-  } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    rawBodyBuffer = (req, res, buffer, encoding): void => {
+      if (buffer && buffer.length) {
+        req.rawBody = Buffer.from(buffer);
+      }
+    };
+    nestOptions = {
+      bodyParser: false,
+      rawBody: true,
+    };
   }
 
   let app: INestApplication;
@@ -86,8 +83,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   Logger.verbose(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
 
   if (process.env.SENTRY_DSN) {
-    app.use(Sentry.Handlers.requestHandler());
-    app.use(Sentry.Handlers.tracingHandler());
+    app.use(Handlers.requestHandler());
+    app.use(Handlers.tracingHandler());
   }
 
   app.use(helmet());
@@ -118,7 +115,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  setupSwagger(app);
+  await setupSwagger(app);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 

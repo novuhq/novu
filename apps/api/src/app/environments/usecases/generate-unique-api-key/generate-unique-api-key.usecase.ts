@@ -1,4 +1,4 @@
-import * as hat from 'hat';
+import hat from 'hat';
 import { createHash } from 'crypto';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 

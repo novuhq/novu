@@ -49,3 +49,6 @@ export const getEnvVariable = (name: string, context?: any): string => {
 
   return '';
 };
+
+export const isClerkEnabled = () =>
+  (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') && process.env.CLERK_ENABLED === 'true';

@@ -145,14 +145,14 @@ jobs:
 
       - name: Render Amazon ECS task definition
         id: render-web-container
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
         with:
           task-definition: task-definition.json
           container-name: ${{ env.inbound_mail_ecs_container_name }}
           image: ${{ steps.build-image.outputs.IMAGE }}
 
       - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
           service: ${{ env.inbound_mail_ecs_service }}

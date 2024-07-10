@@ -1,8 +1,8 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
-import { NotificationRepository, OrganizationRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
 
 describe('GetPlatformNotificationUsage', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -12,11 +12,11 @@ describe('GetPlatformNotificationUsage', () => {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const { GetPlatformNotificationUsage, GetPlatformNotificationUsageCommand } = eeBilling;
 
-  const organizationRepo = new OrganizationRepository();
+  const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
 
   const createUseCase = () => {
-    const useCase = new GetPlatformNotificationUsage(organizationRepo);
+    const useCase = new GetPlatformNotificationUsage(environmentRepo);
 
     return useCase;
   };
@@ -57,7 +57,9 @@ describe('GetPlatformNotificationUsage', () => {
     const notificationCountPerIndex = 10;
     const orgCount = 10;
 
-    const orgPromises = new Array(orgCount).fill(null).map(async (_, index) => {
+    const organizations: any[] = [];
+
+    for (let index = 0; index < orgCount; index++) {
       const orgSession = new UserSession();
       await orgSession.initialize();
 
@@ -71,15 +73,19 @@ describe('GetPlatformNotificationUsage', () => {
       );
       await orgSession.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
 
-      return Promise.resolve({ id: orgSession.organization._id, notificationsCount });
-    });
-    const organizations = await Promise.all(orgPromises);
+      organizations.push({ id: orgSession.organization._id, notificationsCount });
+    }
 
-    const expectedResult = organizations.map((org) => ({
+    let expectedResult = organizations.map((org) => ({
       _id: org.id.toString(),
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
       notificationsCount: org.notificationsCount,
     }));
+
+    if (isClerkEnabled()) {
+      // we have just one organization in Clerk - we don't create new ones on initialize()
+      expectedResult = [expectedResult[expectedResult.length - 1]];
+    }
 
     const result = await useCase.execute(
       GetPlatformNotificationUsageCommand.create({
