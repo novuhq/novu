@@ -1,9 +1,10 @@
 import { JSX } from 'solid-js';
-import { NovuOptions } from '../../novu';
-import { Appearance, Localization, useAppearance, useLocalization } from '../context';
+import { useAppearance, useLocalization } from '../context';
 import { cn, useStyle } from '../helpers';
 import { Bell } from './Bell';
-import { Popover } from './Popover';
+import { Footer } from './Footer';
+import { Header } from './Header';
+import { Popover, popoverContentClasses, popoverTriggerClasses } from './Popover';
 
 type InboxProps = {
   open?: boolean;
@@ -18,12 +19,14 @@ export const Inbox = (props: InboxProps) => {
   return (
     <div class={(style('root'), cn('novu', id))}>
       <Popover open={props?.open}>
-        <Popover.Trigger>
+        <Popover.Trigger classes={style('popoverTrigger', popoverTriggerClasses())}>
           <Bell>{props.renderBell}</Bell>
         </Popover.Trigger>
-        <Popover.Content>
+        <Popover.Content classes={style('popoverContent', popoverContentClasses())}>
+          <Header />
           {/* notifications will go here */}
           {t('inbox.title')}
+          <Footer />
         </Popover.Content>
       </Popover>
     </div>
