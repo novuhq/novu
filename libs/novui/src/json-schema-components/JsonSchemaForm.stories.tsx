@@ -68,6 +68,20 @@ const schema: RJSFSchema = {
           title: 'Location',
           $ref: '#/definitions/locations',
         },
+        anotherObject: {
+          type: 'object',
+          title: 'Nested example',
+          properties: {
+            isResidential: {
+              type: 'boolean',
+              title: 'Is residential?',
+            },
+            addressType: {
+              type: 'string',
+              title: 'Address type',
+            },
+          },
+        },
       },
       required: ['address'],
     },

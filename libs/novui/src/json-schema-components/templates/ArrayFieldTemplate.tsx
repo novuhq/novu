@@ -11,6 +11,8 @@ import { Box, HStack } from '../../../styled-system/jsx';
 import { formItemClassName, FormGroupTitle } from '../shared';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
+  console.log('Array props', props);
+
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
     props;
   const {

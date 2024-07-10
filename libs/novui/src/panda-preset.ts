@@ -33,6 +33,7 @@ import {
   CHECKBOX_RECIPE,
   CODE_BLOCK_RECIPE,
   LOADING_OVERLAY_RECIPE,
+  JSON_SCHEMA_FORM_SECTION_RECIPE,
 } from './recipes';
 
 /**
@@ -102,6 +103,7 @@ export const novuPandaPreset = definePreset({
         checkbox: CHECKBOX_RECIPE,
         codeBlock: CODE_BLOCK_RECIPE,
         loadingOverlay: LOADING_OVERLAY_RECIPE,
+        jsonSchemaFormSection: JSON_SCHEMA_FORM_SECTION_RECIPE,
       },
     },
   },
