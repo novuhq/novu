@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -15,7 +16,7 @@ if (!globalThis.fetch) {
 export class TermiiSmsProvider implements ISmsProvider {
   public static readonly BASE_URL = 'https://api.ng.termii.com/api/sms/send';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  id = 'termii';
+  id = SmsProviderIdEnum.Termii;
 
   constructor(
     private config: {

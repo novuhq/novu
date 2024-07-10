@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -15,7 +16,7 @@ declare global {
 }
 
 export class BrevoSmsProvider implements ISmsProvider {
-  id = 'brevo-sms';
+  id = SmsProviderIdEnum.BrevoSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://api.brevo.com/v3';
 

@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IChatOptions,
@@ -9,7 +10,7 @@ import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
 
 export class WhatsappBusinessChatProvider implements IChatProvider {
-  id = 'whatsapp-business';
+  id = ChatProviderIdEnum.WhatsAppBusiness;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
   private readonly axiosClient: AxiosInstance;

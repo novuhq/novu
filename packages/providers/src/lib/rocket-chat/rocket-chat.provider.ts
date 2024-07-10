@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import axios from 'axios';
 
 export class RocketChatProvider implements IChatProvider {
-  id = 'rocket-chat';
+  id = ChatProviderIdEnum.RocketChat;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
 

@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { SendchampSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class SendchampSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('sendchamp', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Sendchamp, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

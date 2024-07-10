@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 
 export class SendchampSmsProvider implements ISmsProvider {
-  id: 'sendchamp';
+  id = SmsProviderIdEnum.Sendchamp;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://api.sendchamp.com/v1';
   private axiosInstance: AxiosInstance;

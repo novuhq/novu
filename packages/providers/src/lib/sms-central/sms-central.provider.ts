@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -8,7 +9,7 @@ import axios from 'axios';
 
 export class SmsCentralSmsProvider implements ISmsProvider {
   public readonly DEFAULT_BASE_URL = 'https://my.smscentral.com.au/api/v3.2';
-  id = 'sms-central';
+  id = SmsProviderIdEnum.SmsCentral;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   constructor(

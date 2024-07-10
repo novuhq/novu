@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -9,7 +10,7 @@ import {
 import { MailtrapClient, Address } from 'mailtrap';
 
 export class MailtrapEmailProvider implements IEmailProvider {
-  id = 'mailtrap';
+  id = EmailProviderIdEnum.Mailtrap;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly mailtrapClient: MailtrapClient;
 
