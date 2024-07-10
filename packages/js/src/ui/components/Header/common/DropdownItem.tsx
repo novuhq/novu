@@ -1,7 +1,7 @@
 import { JSX, Show } from 'solid-js';
-import { useAppearance } from '../../context';
-import { AppearanceKey, cn, useStyle } from '../../helpers';
-import { Check } from '../../icons';
+import { useAppearance } from '../../../context';
+import { AppearanceKey, cn, useStyle } from '../../../helpers';
+import { Check } from '../../../icons';
 
 export const DropdownItem = (props: {
   label: string;
@@ -14,13 +14,13 @@ export const DropdownItem = (props: {
   const { id } = useAppearance();
 
   return (
-    <li>
+    <div>
       <button
         class={style(
           `${props.appearanceKeyPrefix}DropdownItem` as AppearanceKey,
           cn(
             id,
-            'focus:nt-outline-none nt-flex nt-items-center nt-justify-between hover:nt-bg-neutral-alpha-100 nt-py-1 nt-px-3 nt-w-[210px]'
+            'focus:nt-outdivne-none nt-flex nt-items-center nt-justify-between hover:nt-bg-neutral-alpha-100 nt-py-1 nt-px-3 nt-w-[210px]'
           )
         )}
         onClick={props.onClick}
@@ -44,6 +44,6 @@ export const DropdownItem = (props: {
           </span>
         </Show>
       </button>
-    </li>
+    </div>
   );
 };

@@ -1,19 +1,24 @@
+import { autoUpdate, flip, offset, shift } from '@floating-ui/dom';
+import { useFloating } from 'solid-floating-ui';
 import { onCleanup, onMount, ParentComponent, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { useStyle } from '../../helpers';
+import { useAppearance } from '../../context';
 import { usePopover } from './Popover';
-import { useFloating } from 'solid-floating-ui';
 
-import { autoUpdate, offset, flip, shift } from '@floating-ui/dom';
-export const PopoverContent: ParentComponent = (props) => {
-  const style = useStyle();
-  const { setContentRef, opened, targetRef, onClose, contentRef } = usePopover();
+export const PopoverContent: ParentComponent<{ classes: string }> = (props) => {
+  const { setContentRef, opened, targetRef, onClose, contentRef, fallbackPlacements, placement } = usePopover();
+  const { id } = useAppearance();
 
   const position = useFloating(targetRef, contentRef, {
-    placement: 'bottom-end',
+    placement: placement || 'bottom-end',
     whileElementsMounted: autoUpdate,
-
-    middleware: [offset(10), flip(), shift()],
+    middleware: [
+      offset(10),
+      flip({
+        fallbackPlacements,
+      }),
+      shift(),
+    ],
   });
 
   const handleClickOutside = (e: any) => {
@@ -41,19 +46,14 @@ export const PopoverContent: ParentComponent = (props) => {
     <Show when={opened() && targetRef()}>
       <Portal mount={targetRef() as HTMLElement}>
         <div
-          id="novu-popover-content"
           ref={setContentRef}
-          class={style(
-            'popoverContent',
-            `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0
-         nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999] nt-cursor-default
-       nt-flex nt-flex-col nt-overflow-hidden`
-          )}
+          class={`${props.classes} + ${id}`}
           style={{
             position: position.strategy,
             top: `${position.y ?? 0}px`,
             left: `${position.x ?? 0}px`,
           }}
+          data-open={opened()}
         >
           {props.children}
         </div>
@@ -61,3 +61,9 @@ export const PopoverContent: ParentComponent = (props) => {
     </Show>
   );
 };
+
+export const POPOVER_CONTENT_CLASSES =
+  'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0 nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999] nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden';
+
+export const DROPDOWN_CONTENT_CLASSES =
+  'nt-w-max nt-rounded-lg nt-shadow-[0_5px_20px_0_rgba(0,0,0,0.20)] nt-z-10 nt-bg-background nt-py-2';

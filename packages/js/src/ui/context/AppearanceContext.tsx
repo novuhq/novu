@@ -19,12 +19,21 @@ export type CSSProperties = {
 export type ElementStyles = string | CSSProperties;
 
 export type Elements = {
+  /**
+   * Primitive element styles
+   */
   button?: ElementStyles;
   root?: ElementStyles;
   bell?: ElementStyles;
   bellContainer?: ElementStyles;
   popoverContent?: ElementStyles;
   popoverTrigger?: ElementStyles;
+  dropdownContent?: ElementStyles;
+  dropdownTrigger?: ElementStyles;
+
+  /**
+   * Component element styles
+   */
   settingsIconContainer?: ElementStyles;
   inboxHeader?: ElementStyles;
   inboxStatusDropdownTrigger?: ElementStyles;
@@ -34,6 +43,7 @@ export type Elements = {
   inboxStatusDropdownItemLeftIcon?: ElementStyles;
   inboxStatusDropdownItemRightIcon?: ElementStyles;
   inboxStatusTitle?: ElementStyles;
+  moreActionsContainer?: ElementStyles;
   moreActionsDropdownTrigger?: ElementStyles;
   moreActionsDropdownContent?: ElementStyles;
   moreActionsDropdownItem?: ElementStyles;

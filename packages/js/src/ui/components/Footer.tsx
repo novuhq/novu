@@ -1,3 +1,4 @@
+// @eslint-disable
 import { Novu } from '../icons';
 
 export const Footer = () => {
