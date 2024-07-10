@@ -123,7 +123,7 @@ jobs:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CLERK_PRIVATE_KEY_BASE64: ${{ secrets.CLERK_PRIVATE_KEY_BASE64 }}
           CLERK_PEM_PUBLIC_KEY_BASE64: ${{ secrets.CLERK_PEM_PUBLIC_KEY_BASE64 }}
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
           CLERK_LONG_LIVED_TOKEN: ${{ secrets.CLERK_LONG_LIVED_TOKEN }}
         run: |
           export CLERK_PEM_PUBLIC_KEY=$(echo $CLERK_PEM_PUBLIC_KEY_BASE64 | base64 -d)
