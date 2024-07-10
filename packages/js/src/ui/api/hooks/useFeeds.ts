@@ -1,8 +1,8 @@
 import { createEffect, createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import { useNovu } from '../../context';
 import { FetchFeedArgs, Notification } from '../../../feeds';
 import { PaginatedResponse } from '../../../types';
-import { fetchFeeds as fetcher } from '../feeds';
 
 export const useFeeds = (props: {
   options: FetchFeedArgs;
@@ -12,11 +12,13 @@ export const useFeeds = (props: {
   const [feeds, setFeeds] = createSignal<Notification[]>([]);
   const [pagination, setPagination] = createStore({ currentPage: 1, hasMore: true });
 
+  const novu = useNovu();
+
   const fetchFeeds = async ({ options }: { options: FetchFeedArgs }) => {
     if (!pagination.hasMore) return;
 
     try {
-      const response = await fetcher(options);
+      const response = await novu.feeds.fetch(options);
 
       setFeeds((prev) => [...prev, ...response.data]);
       setPagination({

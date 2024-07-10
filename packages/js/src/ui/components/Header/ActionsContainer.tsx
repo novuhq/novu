@@ -4,7 +4,6 @@ import { MoreActionsDropdown } from './MoreActionsDropdown';
 
 export const ActionsContainer = () => {
   const style = useStyle();
-
   return (
     <div class={style('moreActionsContainer', 'nt-flex nt-gap-2')}>
       <MoreActionsDropdown />
