@@ -61,43 +61,32 @@ import {
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 import { IS_EE_AUTH_ENABLED } from './config/index';
-import { ClerkRoutes } from './ee/clerk/ClerkRoutes';
-import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
+import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
+
+const AuthRoutes = () => {
+  const CommunityAuthRoutes = () => (
+    <Route element={<PublicPageLayout />}>
+      <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+      <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+      <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+      <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+      <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+      <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+    </Route>
+  );
+
+  return IS_EE_AUTH_ENABLED ? EnterpriseAuthRoutes() : CommunityAuthRoutes();
+};
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
 
-  function clerkPrivateWrapper(children: React.ReactNode) {
-    if (!IS_EE_AUTH_ENABLED) {
-      return <>children</>;
-    }
-
-    return (
-      <>
-        <SignedIn>{children}</SignedIn>
-        <SignedOut>
-          <Navigate to={ROUTES.AUTH_LOGIN} replace />
-        </SignedOut>
-      </>
-    );
-  }
-
   return (
     <Routes>
-      {!IS_EE_AUTH_ENABLED ? (
-        <Route element={<PublicPageLayout />}>
-          <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
-          <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
-          <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
-          <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
-          <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-          <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
-        </Route>
-      ) : (
-        ClerkRoutes()
-      )}
-      <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : clerkPrivateWrapper(<PrivatePageLayout />)}>
+      {AuthRoutes()}
+      <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
           element={<LinkVercelProjectPage type="create" />}

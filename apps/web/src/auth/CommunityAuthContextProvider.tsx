@@ -2,7 +2,7 @@ import { createContext } from 'react';
 import { useCreateAuthContextCommunity } from './useCreateAuthContextCommunity';
 
 export const CommunityAuthContext = createContext<ReturnType<typeof useCreateAuthContextCommunity>>({
-  inPublicRoute: undefined,
+  inPublicRoute: false,
   inPrivateRoute: false,
   isLoading: false,
   currentUser: undefined,

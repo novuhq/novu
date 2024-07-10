@@ -1,7 +1,10 @@
 import { Context, useContext } from 'react';
 import { IS_EE_AUTH_ENABLED } from '../config/index';
-import { EnterpriseAuthContext, EnterpriseAuthContextProvider } from '../ee/clerk';
-import { useCreateAuthContextEnterprise } from '../ee/clerk/';
+import {
+  EnterpriseAuthContext,
+  EnterpriseAuthContextProvider,
+} from '../ee/clerk/providers/EnterpriseAuthContextProvider';
+import { useCreateAuthContextEnterprise } from '../ee/clerk/providers/useCreateAuthContextEnterprise';
 import { CommunityAuthContext, CommunityAuthContextProvider } from './CommunityAuthContextProvider';
 import { useCreateAuthContextCommunity } from './useCreateAuthContextCommunity';
 

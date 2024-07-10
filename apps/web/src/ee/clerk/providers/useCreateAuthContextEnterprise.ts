@@ -61,6 +61,53 @@ export function useCreateAuthContextEnterprise() {
     signOut();
   }, [navigate, queryClient, segment, signOut]);
 
+  const redirectTo = useCallback(
+    ({
+      url,
+      redirectURL,
+      origin,
+      anonymousId,
+    }: {
+      url: string;
+      redirectURL?: string;
+      origin?: string;
+      anonymousId?: string | null;
+    }) => {
+      const finalURL = new URL(url, window.location.origin);
+
+      if (redirectURL) {
+        finalURL.searchParams.append('redirect_url', redirectURL);
+      }
+
+      if (origin) {
+        finalURL.searchParams.append('origin', origin);
+      }
+
+      if (anonymousId) {
+        finalURL.searchParams.append('anonymous_id', anonymousId);
+      }
+
+      // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
+      window.location.replace(finalURL.href);
+    },
+    []
+  );
+
+  const redirectToLogin = useCallback(
+    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_LOGIN, redirectURL }),
+    [redirectTo]
+  );
+
+  const redirectToSignUp = useCallback(
+    ({
+      redirectURL,
+      origin,
+      anonymousId,
+    }: { redirectURL?: string; origin?: string; anonymousId?: string | null } = {}) =>
+      redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL, origin, anonymousId }),
+    [redirectTo]
+  );
+
   const switchOrgCallback = useCallback(async () => {
     await queryClient.refetchQueries();
   }, [queryClient]);
@@ -152,7 +199,7 @@ export function useCreateAuthContextEnterprise() {
     // TODO: implement proper environment switch
     environmentId: undefined,
     organizationId: organization?._id,
-    redirectToLogin: (...args: any[]) => {},
-    redirectToSignUp: (...args: any[]) => {},
+    redirectToLogin,
+    redirectToSignUp,
   };
 }
