@@ -7,9 +7,10 @@ import {
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 
 import { SNSConfig } from './sns.config';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 export class SNSSmsProvider implements ISmsProvider {
-  id = 'sns';
+  id = SmsProviderIdEnum.SNS;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private client: SNSClient;
 

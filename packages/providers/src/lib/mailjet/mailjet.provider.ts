@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IEmailOptions,
@@ -13,7 +14,7 @@ import { Client, type SendEmailV3_1 } from 'node-mailjet';
 const MAILJET_API_VERSION = 'v3.1';
 
 export class MailjetEmailProvider implements IEmailProvider {
-  id = 'mailjet';
+  id = EmailProviderIdEnum.Mailjet;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private mailjetClient: Client;

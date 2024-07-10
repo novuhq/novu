@@ -123,6 +123,9 @@ export function workflow<
     environment: {},
     controls: {} as T_Control,
     step: {
+      // eslint-disable-next-line multiline-comment-style
+      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
       push: discoverStepFactory(newWorkflow, 'push', channelStepSchemas.push.output, channelStepSchemas.push.result),
       // eslint-disable-next-line multiline-comment-style
       // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
@@ -137,7 +140,13 @@ export function workflow<
         channelStepSchemas.email.output,
         channelStepSchemas.email.result
       ),
+      // eslint-disable-next-line multiline-comment-style
+      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
       sms: discoverStepFactory(newWorkflow, 'sms', channelStepSchemas.sms.output, channelStepSchemas.sms.result),
+      // eslint-disable-next-line multiline-comment-style
+      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
       inApp: discoverStepFactory(
         newWorkflow,
         'in_app',

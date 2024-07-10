@@ -6,9 +6,10 @@ import {
 } from '@novu/stateless';
 import crypto from 'crypto';
 import axios from 'axios';
+import { PushProviderIdEnum } from '@novu/shared';
 
 export class PushWebhookPushProvider implements IPushProvider {
-  readonly id = 'push-webhook';
+  readonly id = PushProviderIdEnum.PushWebhook;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   constructor(

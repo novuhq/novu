@@ -1,3 +1,4 @@
+import { PushProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IPushOptions,
@@ -7,7 +8,7 @@ import {
 import apn from '@parse/node-apn';
 
 export class APNSPushProvider implements IPushProvider {
-  id = 'apns';
+  id = PushProviderIdEnum.APNS;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private provider: apn.Provider;

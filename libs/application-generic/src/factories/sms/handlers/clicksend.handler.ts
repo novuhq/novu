@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { ClicksendSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class ClicksendSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('clicksend', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Clicksend, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

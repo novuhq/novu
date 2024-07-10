@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IEmailOptions,
@@ -23,7 +24,7 @@ export enum NetCoreStatusEnum {
 }
 
 export class NetCoreProvider implements IEmailProvider {
-  id = 'netcore';
+  id = EmailProviderIdEnum.NetCore;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   public readonly BASE_URL = 'https://emailapi.netcorecloud.net/v5.1';
   private axiosInstance: AxiosInstance;

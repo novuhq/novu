@@ -10,9 +10,10 @@ import {
 import crypto from 'crypto';
 import axios from 'axios';
 import { setTimeout } from 'timers/promises';
+import { EmailProviderIdEnum } from '@novu/shared';
 
 export class EmailWebhookProvider implements IEmailProvider {
-  readonly id = 'email-webhook';
+  readonly id = EmailProviderIdEnum.EmailWebhook;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   constructor(

@@ -2,6 +2,8 @@ import { createMemo, createSignal, onMount } from 'solid-js';
 import { Elements, useAppearance } from '../context';
 import { cn } from './utils';
 
+export type AppearanceKey = keyof Elements | (keyof Elements)[];
+
 export const useStyle = () => {
   const appearance = useAppearance();
   const [isServer, setIsServer] = createSignal(true);
@@ -10,7 +12,7 @@ export const useStyle = () => {
     setIsServer(false);
   });
 
-  const styleFuncMemo = createMemo(() => (appearanceKey: keyof Elements | (keyof Elements)[], className?: string) => {
+  const styleFuncMemo = createMemo(() => (appearanceKey: AppearanceKey, className?: string) => {
     const appearanceClassname =
       typeof appearanceKey === 'string' && typeof appearance.elements?.[appearanceKey] === 'string'
         ? (appearance.elements?.[appearanceKey] as string) || ''

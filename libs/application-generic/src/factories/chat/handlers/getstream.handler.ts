@@ -1,12 +1,12 @@
 import { ChannelTypeEnum } from '@novu/stateless';
 
-import { ICredentials } from '@novu/shared';
+import { ChatProviderIdEnum, ICredentials } from '@novu/shared';
 import { BaseChatHandler } from './base.handler';
 import { GetstreamChatProvider } from '@novu/providers';
 
 export class GetstreamChatHandler extends BaseChatHandler {
   constructor() {
-    super('getstream', ChannelTypeEnum.CHAT);
+    super(ChatProviderIdEnum.GetStream, ChannelTypeEnum.CHAT);
   }
 
   buildProvider(credentials: ICredentials) {

@@ -5,6 +5,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 interface IFortySixElksSuccessObject {
   status: string;
@@ -23,7 +24,7 @@ interface IFortySixElksRequestResponse {
 }
 
 export class FortySixElksSmsProvider implements ISmsProvider {
-  id = 'forty-six-elks';
+  id = SmsProviderIdEnum.FortySixElks;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   constructor(
