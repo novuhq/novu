@@ -201,7 +201,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
 
                 {location === 'onboarding' && (
                   <SkipCTA
-                    text="No time now?"
+                    text="No time right now?"
                     buttonText="Skip Onboarding"
                     onClick={() => {
                       track('Skip Onboarding Clicked', { location: 'button' });
