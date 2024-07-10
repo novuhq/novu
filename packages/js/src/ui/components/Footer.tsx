@@ -1,4 +1,4 @@
-// eslint-disable local-rules/no-class-without-style
+/* eslint-disable local-rules/no-class-without-style */
 import { Novu } from '../icons';
 
 export const Footer = () => {
