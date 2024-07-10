@@ -40,7 +40,7 @@ export const Settings = () => {
   }) => {
     mutate((prev) =>
       prev?.map((preference) => {
-        if (preference.workflow?.id === workflowId) {
+        if (preference.workflow?.id === workflowId || (!workflowId && preference.level === PreferenceLevel.GLOBAL)) {
           return {
             ...preference,
             channels: {
@@ -67,7 +67,7 @@ export const Settings = () => {
           onChange={optimisticUpdate}
         />
 
-        <For each={preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE)}>
+        <For each={allPreferences().workflowPreferences}>
           {(preference) => (
             <SettingsRow
               label={preference.workflow?.name as string}
