@@ -4,13 +4,13 @@ import { FetchFeedArgs, Notification } from '../../feeds';
 import { NotificationStatus } from '../../types';
 import { useFeed } from '../api';
 
-type InboxstatusContextType = {
+type InboxStatusContextType = {
   feed: Accessor<Notification[]>;
   setFeedOptions: (options: FetchFeedArgs) => void;
   feedOptions: FetchFeedArgs;
 };
 
-const InboxStatusContext = createContext<InboxstatusContextType | undefined>(undefined);
+const InboxStatusContext = createContext<InboxStatusContextType | undefined>(undefined);
 
 // TODO: update this after Filter is implemented
 export const InboxStatusProvider: ParentComponent = (props) => {
