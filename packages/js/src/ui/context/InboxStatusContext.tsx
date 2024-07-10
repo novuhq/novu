@@ -4,16 +4,16 @@ import { FetchFeedArgs, Notification } from '../../feeds';
 import { NotificationStatus } from '../../types';
 import { useFeed } from '../api';
 
-type FeedsContextType = {
+type InboxstatusContextType = {
   feed: Accessor<Notification[]>;
   setFeedOptions: (options: FetchFeedArgs) => void;
   feedOptions: FetchFeedArgs;
 };
 
-const FeedContext = createContext<FeedsContextType | undefined>(undefined);
+const InboxStatusContext = createContext<InboxstatusContextType | undefined>(undefined);
 
 // TODO: update this after Filter is implemented
-export const FeedProvider: ParentComponent = (props) => {
+export const InboxStatusProvider: ParentComponent = (props) => {
   const [options, setOptions] = createStore<FetchFeedArgs>({
     status: NotificationStatus.UNREAD,
   });
@@ -25,12 +25,14 @@ export const FeedProvider: ParentComponent = (props) => {
   };
 
   return (
-    <FeedContext.Provider value={{ feed, setFeedOptions, feedOptions: options }}>{props.children}</FeedContext.Provider>
+    <InboxStatusContext.Provider value={{ feed, setFeedOptions, feedOptions: options }}>
+      {props.children}
+    </InboxStatusContext.Provider>
   );
 };
 
-export const useFeedContext = () => {
-  const context = useContext(FeedContext);
+export const useInboxStatusContext = () => {
+  const context = useContext(InboxStatusContext);
 
   if (!context) {
     throw new Error('useFeedContext must be used within a FeedsProvider');

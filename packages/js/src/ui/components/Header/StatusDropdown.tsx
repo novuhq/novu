@@ -1,5 +1,5 @@
 import { NotificationStatus } from '../../../types';
-import { useAppearance, useFeedContext } from '../../context';
+import { useAppearance, useInboxStatusContext } from '../../context';
 import { cn, useStyle } from '../../helpers';
 import { ArrowDropDown } from '../../icons';
 import { dropdownContentClasses, inboxStatusDropdownTriggerClasses, Popover } from '../Popover';
@@ -26,7 +26,7 @@ const getStatusLabel = (status?: NotificationStatus) => {
 export const StatusDropdown = () => {
   const style = useStyle();
   const { id } = useAppearance();
-  const { setFeedOptions, feedOptions } = useFeedContext();
+  const { setFeedOptions, feedOptions } = useInboxStatusContext();
 
   return (
     <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
