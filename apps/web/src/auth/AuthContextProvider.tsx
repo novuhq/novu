@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import { useCreateAuthContext } from './useCreateAuthContext';
 
 const AuthContext = createContext<ReturnType<typeof useCreateAuthContext>>({
-  inPublicRoute: undefined,
+  inPublicRoute: true,
   inPrivateRoute: false,
   isLoading: false,
   currentUser: undefined,
