@@ -3,8 +3,6 @@ import { DotsMenu } from '../../icons';
 import { dropdownContentClasses, moreActionsDropdownTriggerClasses, Popover } from '../Popover';
 import { MoreActionsOptions } from './MoreActionsOptions';
 
-const APPEARANCE_KEY_PREFIX = 'moreActions';
-
 export const MoreActionsDropdown = () => {
   const style = useStyle();
 
