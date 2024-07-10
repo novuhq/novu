@@ -100,7 +100,7 @@ const generateDetailByStepAndStatus = (status, job) => {
     const { digest, step: stepMetadata, payload } = job;
 
     if (!digest.amount && !digest.unit) return `Waiting to receive execution delay from bridge endpoint`;
-    if (stepMetadata?.metadata?.type === DelayTypeEnum.SCHEDULED) {
+    if (stepMetadata.metadata.type === DelayTypeEnum.SCHEDULED) {
       return `Delaying execution until ${payload[stepMetadata.metadata.delayPath]}`;
     }
 
