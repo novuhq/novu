@@ -102,6 +102,7 @@ export function QuestionnaireForm() {
         JobTitleEnum.ENGINEERING_MANAGER,
         JobTitleEnum.ARCHITECT,
         JobTitleEnum.FOUNDER,
+        JobTitleEnum.STUDENT,
       ].includes(data.jobTitle);
 
       if (isTechnicalJobTitle) {
