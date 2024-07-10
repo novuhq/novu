@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.json && cp -r src/commands/init/templates/{app*,github} dist/src/commands/init/templates",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && cp -r ./src/commands/init/templates/{app*,github} ./dist/src/commands/init/templates",
     "build:prod": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
