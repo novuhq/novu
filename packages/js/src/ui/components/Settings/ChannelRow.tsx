@@ -1,4 +1,5 @@
 import { JSX, onCleanup } from 'solid-js';
+import { useStyle } from '../../helpers';
 import { ChannelType } from '../../../types';
 import { useNovu } from '../../context';
 import { Chat, Email, InApp, Push, Sms } from '../../icons';
@@ -14,6 +15,7 @@ type ChannelRowProps = {
 
 export const ChannelRow = (props: ChannelRowProps) => {
   const novu = useNovu();
+  const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
     try {
@@ -35,12 +37,14 @@ export const ChannelRow = (props: ChannelRowProps) => {
   };
 
   return (
-    <div class="nt-flex nt-justify-between nt-items-center nt-h-11">
-      <div class="nt-flex nt-items-center nt-gap-2">
+    <div class={style('settingsChannelContainer', 'nt-flex nt-justify-between nt-items-center nt-h-11')}>
+      <div class={style('settingsChannelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
         <div>{getIcon(props.channel)}</div>
-        <span class="nt-text-base nt-font-semibold nt-text-foreground">{getLabel(props.channel)}</span>
+        <span class={style('settingsChannelLabel', 'nt-text-base nt-font-semibold nt-text-foreground')}>
+          {getLabel(props.channel)}
+        </span>
       </div>
-      <div class="nt-flex nt-items-center">
+      <div class={style('settingsChannelSwitchContainer', 'nt-flex nt-items-center')}>
         <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
       </div>
     </div>
