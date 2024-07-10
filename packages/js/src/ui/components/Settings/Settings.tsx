@@ -1,9 +1,9 @@
-import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
-import { useStyle } from '../../helpers';
+import { createMemo, createSignal, For, Show } from 'solid-js';
+import { usePreferences } from '../../api';
 import { Preference } from '../../../preferences/preference';
-import { FetchPreferencesArgs } from '../../../preferences/types';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../types';
 import { useNovu } from '../../context';
+import { useStyle } from '../../helpers';
 import { ArrowDropDown } from '../../icons';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
@@ -11,16 +11,8 @@ import { LoadingScreen } from './LoadingScreen';
 export const Settings = () => {
   const novu = useNovu();
   const style = useStyle();
-  const [preferences, { mutate }] = createResource({}, async (options?: FetchPreferencesArgs) => {
-    try {
-      const response = await novu.preferences.fetch(options);
 
-      return response;
-    } catch (error) {
-      console.error('Error fetching feeds:', error);
-      throw error;
-    }
-  });
+  const { preferences, mutate } = usePreferences();
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
