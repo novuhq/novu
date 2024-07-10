@@ -54,7 +54,7 @@ export function useCreateAuthContextCommunity() {
   const location = useLocation();
   const [organizationId, setOrganizationId] = useState<string | undefined>();
   const [environmentId, setEnvironmentId] = useState<string | undefined>();
-  const inPublicRoute = Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
+  const inPublicRoute = !!Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
     location.pathname.startsWith(prefix)
   );
   const inPrivateRoute = !inPublicRoute;
