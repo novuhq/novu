@@ -1,6 +1,6 @@
 import { PushProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
-import { genericProviderSchemas } from '../generic';
+import { genericProviderSchemas } from '../generic.schema';
 
 export const pushProviderSchemas = {
   [PushProviderIdEnum.FCM]: genericProviderSchemas,

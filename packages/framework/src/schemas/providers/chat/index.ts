@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
-import { genericProviderSchemas } from '../generic';
-import { slackProviderSchemas } from './slack';
+import { genericProviderSchemas } from '../generic.schema';
+import { slackProviderSchemas } from './slack.schema';
 
 export const chatProviderSchemas = {
   [ChatProviderIdEnum.Slack]: slackProviderSchemas,

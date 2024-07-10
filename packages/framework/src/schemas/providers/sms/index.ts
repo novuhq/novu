@@ -1,6 +1,6 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
-import { genericProviderSchemas } from '../generic';
+import { genericProviderSchemas } from '../generic.schema';
 
 export const smsProviderSchemas = {
   [SmsProviderIdEnum.Twilio]: genericProviderSchemas,

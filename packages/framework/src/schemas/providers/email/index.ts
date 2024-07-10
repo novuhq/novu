@@ -1,7 +1,7 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
-import { genericProviderSchemas } from '../generic';
-import { sendgridProviderSchemas } from './sendgrid';
+import { genericProviderSchemas } from '../generic.schema';
+import { sendgridProviderSchemas } from './sendgrid.schema';
 
 export const emailProviderSchemas = {
   [EmailProviderIdEnum.SendGrid]: sendgridProviderSchemas,
