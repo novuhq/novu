@@ -105,8 +105,6 @@ export class DevServer {
                 history.replaceState(null, '', event.data?.pathname);
               }
             });
-            
-     
 
             return iframe;
           }
