@@ -27,7 +27,6 @@ export const useFeed = (props: {
       });
       props.onSuccess?.(response);
     } catch (error) {
-      console.error('Error fetching feeds:', error);
       props.onError?.(error);
     }
   };

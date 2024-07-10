@@ -20,8 +20,8 @@ export const InboxStatusProvider: ParentComponent = (props) => {
 
   const { feed } = useFeed({ options });
 
-  const setFeedOptions = (options: FetchFeedArgs) => {
-    setOptions(options);
+  const setFeedOptions = (feedOptions: FetchFeedArgs) => {
+    setOptions(feedOptions);
   };
 
   return (

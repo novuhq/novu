@@ -16,7 +16,6 @@ export const useReadAll = (props?: { onSuccess?: (data: number) => void; onError
       });
       props?.onSuccess?.(response);
     } catch (error) {
-      console.error(`Error marking all as: Read`, error);
       props?.onError?.(error);
     }
   };
