@@ -79,7 +79,7 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
 
   Ensure your application is configured and running locally.
 
-  Starting out? Use our starter ${chalk.bold('npx create-novu-app@latest')}
+  Starting out? Use our starter ${chalk.bold('npx novu@latest init')}
   Running on a different route or port? Use ${chalk.bold('--route')} or ${chalk.bold('--port')}
           `;
       }
