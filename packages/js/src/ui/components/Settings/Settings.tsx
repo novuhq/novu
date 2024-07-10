@@ -49,6 +49,7 @@ export const Settings = () => {
             },
           } as Preference;
         }
+
         return preference;
       })
     );
