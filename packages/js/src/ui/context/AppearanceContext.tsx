@@ -66,6 +66,9 @@ export type Elements = {
   settingsWorkflowContainer?: ElementStyles;
   settingsWorkflowLabel?: ElementStyles;
   settingsWorkflowLabelContainer?: ElementStyles;
+  settingsChannelsLoadingContainer?: ElementStyles;
+  loadingSkeletonContainer?: ElementStyles;
+  loadingSkeleton?: ElementStyles;
 };
 
 export type Variables = {
