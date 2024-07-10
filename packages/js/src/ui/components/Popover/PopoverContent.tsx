@@ -62,8 +62,8 @@ export const PopoverContent: ParentComponent<{ classes: string }> = (props) => {
   );
 };
 
-export const POPOVER_CONTENT_CLASSES =
+export const popoverContentClasses = () =>
   'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0 nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999] nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden';
 
-export const DROPDOWN_CONTENT_CLASSES =
+export const dropdownContentClasses = () =>
   'nt-w-max nt-rounded-lg nt-shadow-[0_5px_20px_0_rgba(0,0,0,0.20)] nt-z-10 nt-bg-background nt-py-2';

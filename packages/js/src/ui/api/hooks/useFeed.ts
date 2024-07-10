@@ -4,23 +4,23 @@ import { useNovu } from '../../context';
 import { FetchFeedArgs, Notification } from '../../../feeds';
 import { PaginatedResponse } from '../../../types';
 
-export const useFeeds = (props: {
+export const useFeed = (props: {
   options: FetchFeedArgs;
   onSuccess?: (data: PaginatedResponse<Notification>) => void;
   onError?: (err: unknown) => void;
 }) => {
-  const [feeds, setFeeds] = createSignal<Notification[]>([]);
+  const [feed, setFeed] = createSignal<Notification[]>([]);
   const [pagination, setPagination] = createStore({ currentPage: 1, hasMore: true });
 
   const novu = useNovu();
 
-  const fetchFeeds = async ({ options }: { options: FetchFeedArgs }) => {
+  const fetchFeed = async ({ options }: { options: FetchFeedArgs }) => {
     if (!pagination.hasMore) return;
 
     try {
       const response = await novu.feeds.fetch(options);
 
-      setFeeds((prev) => [...prev, ...response.data]);
+      setFeed((prev) => [...prev, ...response.data]);
       setPagination({
         currentPage: response.page,
         hasMore: response.hasMore,
@@ -33,8 +33,8 @@ export const useFeeds = (props: {
   };
 
   createEffect(() => {
-    fetchFeeds({ options: props.options });
+    fetchFeed({ options: props.options });
   });
 
-  return { feeds, fetchFeeds, hasMore: pagination.hasMore, page: pagination.currentPage };
+  return { feed, fetchFeed, hasMore: pagination.hasMore, page: pagination.currentPage };
 };

@@ -1,10 +1,10 @@
 import { FetchFeedArgs } from '../../../feeds';
 import { NotificationStatus } from '../../../types';
-import { useAppearance, useFeedsContext } from '../../context';
+import { useAppearance, useFeedContext } from '../../context';
 import { cn, useStyle } from '../../helpers';
 import { Archived, ArrowDropDown, Inbox, Unread } from '../../icons';
-import { DROPDOWN_CONTENT_CLASSES, INBOX_STATUS_DROPDOWN_TRIGGER_CLASSES, Popover } from '../Popover';
-import { DropdownItem } from './common';
+import { dropdownContentClasses, inboxStatusDropdownTriggerClasses, Popover } from '../Popover';
+import { Item } from './common';
 
 const APPEARANCE_KEY_PREFIX = 'inboxStatus';
 
@@ -35,12 +35,12 @@ const getStatusLabel = (status?: NotificationStatus) => {
 export const StatusDropdown = () => {
   const style = useStyle();
   const { id } = useAppearance();
-  const { setFeedOptions, feedOptions } = useFeedsContext();
+  const { setFeedOptions, feedOptions } = useFeedContext();
 
   return (
     <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
       <Popover.Trigger
-        classes={style(['dropdownTrigger', 'inboxStatusDropdownTrigger'], INBOX_STATUS_DROPDOWN_TRIGGER_CLASSES)}
+        classes={style(['dropdownTrigger', 'inboxStatusDropdownTrigger'], inboxStatusDropdownTriggerClasses())}
       >
         <span class={style('inboxStatusTitle', cn(id, 'nt-text-xl nt-font-semibold nt-text-foreground'))}>
           {getStatusLabel(feedOptions.status)}
@@ -49,7 +49,7 @@ export const StatusDropdown = () => {
           <ArrowDropDown />
         </span>
       </Popover.Trigger>
-      <Popover.Content classes={style(['dropdownContent', 'inboxStatusDropdownContent'], DROPDOWN_CONTENT_CLASSES)}>
+      <Popover.Content classes={style(['dropdownContent', 'inboxStatusDropdownContent'], dropdownContentClasses())}>
         <StatusOptions setFeedOptions={setFeedOptions} />
       </Popover.Content>
     </Popover>
@@ -59,7 +59,7 @@ export const StatusDropdown = () => {
 const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) => void }) => {
   return (
     <>
-      <DropdownItem
+      <Item
         label={DropdownStatus.UnreadRead}
         /**
          * TODO: Implement setFeedOptions and isSelected after Filter is implemented
@@ -71,7 +71,7 @@ const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) => void
         icon={Inbox}
         appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
       />
-      <DropdownItem
+      <Item
         label={DropdownStatus.Unread}
         onClick={() => {
           /**
@@ -83,7 +83,7 @@ const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) => void
         icon={Unread}
         appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
       />
-      <DropdownItem
+      <Item
         label={DropdownStatus.Archived}
         onClick={() => {
           /**

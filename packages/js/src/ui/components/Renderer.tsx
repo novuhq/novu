@@ -4,7 +4,7 @@ import { NovuOptions } from '../../novu';
 import {
   Appearance,
   AppearanceProvider,
-  FeedsProvider,
+  FeedProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
@@ -42,11 +42,11 @@ export const Renderer = (props: RendererProps) => {
     <NovuProvider options={props.options}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-          <FeedsProvider>
+          <FeedProvider>
             {[...props.nodes].map(([node, component]) => (
               <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
             ))}
-          </FeedsProvider>
+          </FeedProvider>
         </AppearanceProvider>
       </LocalizationProvider>
     </NovuProvider>

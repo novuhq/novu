@@ -1,8 +1,9 @@
 import { useReadAll } from '../../api';
 import { useStyle } from '../../helpers';
 import { Archived, ArchiveRead, DotsMenu, ReadAll } from '../../icons';
-import { DROPDOWN_CONTENT_CLASSES, MORE_ACTIONS_DROPDOWN_TRIGGER_CLASSES, Popover } from '../Popover';
-import { DropdownItem } from './common';
+import { dropdownContentClasses, moreActionsDropdownTriggerClasses, Popover } from '../Popover';
+import { Item } from './common';
+import { DropdownItem } from './common/DropdownItem';
 
 const APPEARANCE_KEY_PREFIX = 'moreActions';
 
@@ -12,11 +13,11 @@ export const MoreActionsDropdown = () => {
   return (
     <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
       <Popover.Trigger
-        classes={style(['dropdownTrigger', 'moreActionsDropdownTrigger'], MORE_ACTIONS_DROPDOWN_TRIGGER_CLASSES)}
+        classes={style(['dropdownTrigger', 'moreActionsDropdownTrigger'], moreActionsDropdownTriggerClasses())}
       >
         <DotsMenu />
       </Popover.Trigger>
-      <Popover.Content classes={style(['dropdownContent', 'moreActionsDropdownContent'], DROPDOWN_CONTENT_CLASSES)}>
+      <Popover.Content classes={style(['dropdownContent', 'moreActionsDropdownContent'], dropdownContentClasses())}>
         <OptionsList />
       </Popover.Content>
     </Popover>
@@ -27,8 +28,8 @@ const OptionsList = () => {
   const { markAllAsRead } = useReadAll();
 
   return (
-    <>
-      <DropdownItem
+    <DropdownItem>
+      <Item
         label="Mark all as read"
         /**
          * TODO: Implement setFeedOptions and isSelected after Filter is implemented
@@ -37,7 +38,7 @@ const OptionsList = () => {
         icon={ReadAll}
         appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
       />
-      <DropdownItem
+      <Item
         label="Archive all"
         /**
          * TODO: Implement onClick after Filter is implemented
@@ -46,7 +47,7 @@ const OptionsList = () => {
         icon={Archived}
         appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
       />
-      <DropdownItem
+      <Item
         label="Archive read"
         /**
          * TODO: Implement onClick after Filter is implemented
@@ -55,6 +56,6 @@ const OptionsList = () => {
         icon={ArchiveRead}
         appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
       />
-    </>
+    </DropdownItem>
   );
 };
