@@ -1,8 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
+import {
+  MessageRepository,
+  NotificationStepEntity,
+  SubscriberRepository,
+  MessageEntity,
+  OrganizationEntity,
+  OrganizationRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -38,6 +45,7 @@ export class SendMessageInApp extends SendMessageBase {
   constructor(
     private invalidateCache: InvalidateCacheService,
     protected messageRepository: MessageRepository,
+    protected organizationRepository: OrganizationRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
     protected executionLogRoute: ExecutionLogRoute,
@@ -108,6 +116,14 @@ export class SendMessageInApp extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        const organization = await this.getOrganization(command.organizationId);
+
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          command.payload.subscriber?.locale || organization?.defaultLocale
+        );
+
         const compiled = await this.compileInAppTemplate.execute(
           CompileInAppTemplateCommand.create({
             organizationId: command.organizationId,
@@ -117,7 +133,7 @@ export class SendMessageInApp extends SendMessageBase {
             cta: step.template.cta,
             userId: command.userId,
           }),
-          this.initiateTranslations.bind(this)
+          i18nInstance
         );
         content = compiled.content;
 
@@ -254,5 +270,15 @@ export class SendMessageInApp extends SendMessageBase {
         isRetry: false,
       })
     );
+  }
+
+  protected async getOrganization(organizationId: string): Promise<OrganizationEntity | undefined> {
+    const organization = await this.organizationRepository.findById(organizationId, 'branding defaultLocale');
+
+    if (!organization) {
+      throw new NotFoundException(`Organization ${organizationId} not found`);
+    }
+
+    return organization;
   }
 }
