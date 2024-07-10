@@ -1,9 +1,15 @@
 import { useColorScheme } from '@novu/design-system';
 import { css } from '@novu/novui/css';
+import { IconClose, IconCloseFullscreen } from '@novu/novui/icons';
+import { HStack, LinkOverlay } from '@novu/novui/jsx';
+import { Link } from 'react-router-dom';
 import { COMPANY_LOGO_TEXT_PATH, COMPANY_LOGO_TEXT_PATH_DARK_TEXT } from '../../../constants/assets';
+import { ROUTES } from '../../../constants/routes';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { GetStartedPageV2 } from '../../../studio/components/GetStartedPageV2/index';
 
 export function OnboardingPage() {
+  const track = useTelemetry();
   const { colorScheme } = useColorScheme();
 
   return (
@@ -12,10 +18,9 @@ export function OnboardingPage() {
         bg: 'surface.page',
       })}
     >
-      <div
+      <HStack
         className={css({
-          paddingTop: '32px',
-          paddingLeft: '32px',
+          padding: '32px',
         })}
       >
         <div className={css({ width: '100%', height: '375' })}>
@@ -27,7 +32,20 @@ export function OnboardingPage() {
             })}
           />
         </div>
-      </div>
+        <Link
+          to={ROUTES.WORKFLOWS}
+          onClick={() => {
+            track('Skip Onboarding Clicked', { location: 'x-icon' });
+          }}
+          className={css({
+            position: 'relative',
+            top: '-16px',
+            right: '-16px',
+          })}
+        >
+          <IconClose />
+        </Link>
+      </HStack>
       <GetStartedPageV2 location="onboarding" />
     </div>
   );

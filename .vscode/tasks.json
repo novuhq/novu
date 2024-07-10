@@ -8,6 +8,10 @@
       "isBackground": true,
       "label": "API",
       "path": "/apps/api",
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
       "problemMatcher": {
         "base": "$tsc-watch",
         "fileLocation": "autoDetect",
@@ -47,6 +51,10 @@
           "endsPattern": "Started application in NODE_ENV"
         }
       },
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
       "dependsOn": [
         "SHARED",
         "API",
@@ -63,6 +71,10 @@
       "isBackground": true,
       "label": "WEB",
       "path": "/apps/web",
+      "icon": {
+        "id": "browser",
+        "color": "terminal.ansiGreen"
+      },
       "problemMatcher": {
         "base": "$tsc-watch",
         "owner": "typescript",

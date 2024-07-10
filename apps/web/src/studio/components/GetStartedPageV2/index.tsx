@@ -204,7 +204,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                     text="No time now?"
                     buttonText="Skip Onboarding"
                     onClick={() => {
-                      track('Skip Onboarding Clicked');
+                      track('Skip Onboarding Clicked', { location: 'button' });
                       navigate(ROUTES.WORKFLOWS);
                     }}
                   />
