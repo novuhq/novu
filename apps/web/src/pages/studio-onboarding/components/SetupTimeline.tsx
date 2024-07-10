@@ -56,7 +56,7 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
           This will create a new Next.js sample app with React-Email
         </Text>
         <CodeSnippet
-          command={`npx create-novu-app@latest --secret-key=${devSecretKey}`}
+          command={`npx novu@latest init --secret-key=${devSecretKey}`}
           onClick={() => {
             setActive((old) => (old > 1 ? old : 1));
           }}
