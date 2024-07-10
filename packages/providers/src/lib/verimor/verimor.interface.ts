@@ -33,10 +33,10 @@ interface IVerimorClient {
 
 interface IVerimorPayload {
   /*
-   * Your registered phone number or title
+   * Your registered phone number or title. if null, default title from the system will be used.
    *
    */
-  source_addr: string;
+  source_addr?: string;
   messages: IVerimorMessage[];
 }
 

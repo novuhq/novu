@@ -26,7 +26,6 @@ export class VerimorSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const verimorResponse = await this.verimorClient.send({
-      source_addr: this.config.from,
       messages: [
         {
           dest: options.to,
