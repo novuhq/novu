@@ -51,9 +51,21 @@ export type Elements = {
   moreActionsDropdownItemLabel?: ElementStyles;
   moreActionsDropdownItemLabelContainer?: ElementStyles;
   moreActionsDropdownItemLeftIcon?: ElementStyles;
+  settingsContainer?: ElementStyles;
   settingsHeader?: ElementStyles;
   settingsHeaderTitle?: ElementStyles;
   settingsBackButton?: ElementStyles;
+  settingsChannelContainer?: ElementStyles;
+  settingsChannelsContainer?: ElementStyles;
+  settingsChannelLabelContainer?: ElementStyles;
+  settingsChannelLabel?: ElementStyles;
+  settingsChannelSwitch?: ElementStyles;
+  settingsChannelSwitchContainer?: ElementStyles;
+  settingsChannelSwitchThumb?: ElementStyles;
+  settingsChannelDescription?: ElementStyles;
+  settingsWorkflowContainer?: ElementStyles;
+  settingsWorkflowLabel?: ElementStyles;
+  settingsWorkflowLabelContainer?: ElementStyles;
 };
 
 export type Variables = {
