@@ -5,7 +5,7 @@ module.exports = {
     'postcss-prefix-selector': {
       transform: function (_, selector) {
         // Prefix each class selector with :where(.class)
-        if (selector.startsWith('.')) {
+        if (selector.startsWith('.') && !selector.includes('::after') && !selector.includes('::before')) {
           return `:where(${selector})`;
         }
 
