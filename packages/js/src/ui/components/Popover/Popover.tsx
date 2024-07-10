@@ -1,6 +1,7 @@
 import { Placement } from '@floating-ui/dom';
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
 import { useUncontrolledState } from '../../helpers';
+import { PopoverClose } from './PopoverClose';
 import { PopoverContent } from './PopoverContent';
 import { PopoverTrigger } from './PopoverTrigger';
 
@@ -69,3 +70,4 @@ export function usePopover() {
 
 Popover.Trigger = PopoverTrigger;
 Popover.Content = PopoverContent;
+Popover.Close = PopoverClose;

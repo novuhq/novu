@@ -40,6 +40,7 @@ export type Elements = {
   inboxStatusDropdownContent?: ElementStyles;
   inboxStatusDropdownItem?: ElementStyles;
   inboxStatusDropdownItemLabel?: ElementStyles;
+  inboxStatusDropdownItemLabelContainer?: ElementStyles;
   inboxStatusDropdownItemLeftIcon?: ElementStyles;
   inboxStatusDropdownItemRightIcon?: ElementStyles;
   inboxStatusTitle?: ElementStyles;
@@ -48,6 +49,7 @@ export type Elements = {
   moreActionsDropdownContent?: ElementStyles;
   moreActionsDropdownItem?: ElementStyles;
   moreActionsDropdownItemLabel?: ElementStyles;
+  moreActionsDropdownItemLabelContainer?: ElementStyles;
   moreActionsDropdownItemLeftIcon?: ElementStyles;
 };
 

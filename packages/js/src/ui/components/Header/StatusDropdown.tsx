@@ -1,18 +1,9 @@
-import { FetchFeedArgs } from '../../../feeds';
 import { NotificationStatus } from '../../../types';
 import { useAppearance, useFeedContext } from '../../context';
 import { cn, useStyle } from '../../helpers';
-import { Archived, ArrowDropDown, Inbox, Unread } from '../../icons';
+import { ArrowDropDown } from '../../icons';
 import { dropdownContentClasses, inboxStatusDropdownTriggerClasses, Popover } from '../Popover';
-import { Item } from './common';
-
-const APPEARANCE_KEY_PREFIX = 'inboxStatus';
-
-const DropdownStatus = {
-  UnreadRead: 'Unread & read',
-  Unread: 'Unread only',
-  Archived: 'Archived',
-};
+import { StatusOptions } from './StatusOptions';
 
 /**
  *
@@ -53,48 +44,5 @@ export const StatusDropdown = () => {
         <StatusOptions setFeedOptions={setFeedOptions} />
       </Popover.Content>
     </Popover>
-  );
-};
-
-const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) => void }) => {
-  return (
-    <>
-      <Item
-        label={DropdownStatus.UnreadRead}
-        /**
-         * TODO: Implement setFeedOptions and isSelected after Filter is implemented
-         */
-        onClick={() => {
-          props.setFeedOptions({ status: NotificationStatus.UNREAD });
-        }}
-        isSelected={true}
-        icon={Inbox}
-        appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
-      />
-      <Item
-        label={DropdownStatus.Unread}
-        onClick={() => {
-          /**
-           * TODO: Implement setFeedOptions after Filter is implemented
-           */
-          props.setFeedOptions({ status: NotificationStatus.UNSEEN });
-        }}
-        isSelected={false}
-        icon={Unread}
-        appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
-      />
-      <Item
-        label={DropdownStatus.Archived}
-        onClick={() => {
-          /**
-           * TODO: Implement setFeedOptions after Filter is implemented
-           */
-          props.setFeedOptions({ status: NotificationStatus.SEEN });
-        }}
-        isSelected={false}
-        icon={Archived}
-        appearanceKeyPrefix={APPEARANCE_KEY_PREFIX}
-      />
-    </>
   );
 };
