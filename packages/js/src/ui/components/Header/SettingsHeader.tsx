@@ -7,6 +7,7 @@ type SettingsHeaderProps = {
 
 export const SettingsHeader = (props: SettingsHeaderProps) => {
   const style = useStyle();
+
   return (
     <div class={style('settingsHeader', 'nt-flex nt-items-center nt-py-5 nt-px-6 nt-gap-2')}>
       <button
