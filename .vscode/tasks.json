@@ -63,6 +63,15 @@
       "isBackground": true,
       "label": "WEB",
       "path": "/apps/web",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling...",
+          "endsPattern": "webpack compiled successfully"
+        }
+      },
       "dependsOn": [
         "SHARED",
         "API",

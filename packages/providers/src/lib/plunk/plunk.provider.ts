@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -12,7 +13,7 @@ import Plunk from '@plunk/node';
 import { IPlunkResponse } from './plunk.interface';
 
 export class PlunkEmailProvider implements IEmailProvider {
-  id = 'plunk';
+  id = EmailProviderIdEnum.Plunk;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private plunk: Plunk;

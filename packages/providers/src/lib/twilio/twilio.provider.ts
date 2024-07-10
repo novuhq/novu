@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -10,7 +11,7 @@ import {
 import { Twilio } from 'twilio';
 
 export class TwilioSmsProvider implements ISmsProvider {
-  id = 'twilio';
+  id = SmsProviderIdEnum.Twilio;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private twilioClient: Twilio;
 

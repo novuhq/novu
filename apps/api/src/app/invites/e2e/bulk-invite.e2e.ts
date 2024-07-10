@@ -1,12 +1,11 @@
-import { OrganizationRepository, MemberRepository } from '@novu/dal';
+import { CommunityMemberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { IBulkInviteResponse, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Bulk invite members - /invites/bulk (POST)', async () => {
+describe('Bulk invite members - /invites/bulk (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
-  const memberRepository = new MemberRepository();
+  const memberRepository = new CommunityMemberRepository();
 
   before(async () => {
     session = new UserSession();

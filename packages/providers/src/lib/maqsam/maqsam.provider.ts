@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -9,7 +10,7 @@ import axios, { AxiosInstance } from 'axios';
 import { fromUnixTime } from 'date-fns';
 
 export class MaqsamSmsProvider implements ISmsProvider {
-  id = 'maqsam';
+  id = SmsProviderIdEnum.Maqsam;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axiosInstance: AxiosInstance;
 
