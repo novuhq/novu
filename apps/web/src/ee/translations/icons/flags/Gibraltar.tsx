@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export function Gibraltar(props: React.SVGProps<SVGSVGElement>) {
   return (

@@ -9,6 +9,7 @@
   "license": "MIT",
   "keywords": [],
   "scripts": {
+    "start": "npm run watch:build",
     "prebuild": "rimraf build",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
@@ -96,6 +97,7 @@
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
+    "@novu/ee-auth": "workspace:*",
     "@novu/ee-bridge-worker": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@taskforcesh/bullmq-pro": "5.1.14"

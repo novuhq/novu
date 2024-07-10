@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export function Niger(props: React.SVGProps<SVGSVGElement>) {
   return (

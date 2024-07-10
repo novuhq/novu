@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import {
   TopicEntity,
   TopicRepository,

@@ -1,13 +1,13 @@
 import { UserSession } from '@novu/testing';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { subMinutes } from 'date-fns';
 import { expect } from 'chai';
+import { CommunityUserRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
-import { UserRepository } from '@novu/dal';
 
-describe('User login - /auth/login (POST)', async () => {
+describe('User login - /auth/login (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const userRepository = new UserRepository();
+  const userRepository = new CommunityUserRepository();
   const userCredentials = {
     email: 'Testy.test22@gmail.com',
     password: '123Qwerty@',

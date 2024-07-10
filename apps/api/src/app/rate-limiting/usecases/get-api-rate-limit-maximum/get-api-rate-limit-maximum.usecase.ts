@@ -55,7 +55,7 @@ export class GetApiRateLimitMaximum {
       apiServiceLevel = CUSTOM_API_SERVICE_LEVEL;
       apiRateLimits = environment.apiRateLimits;
     } else {
-      const organization = await this.organizationRepository.findOne({ _id: _organizationId });
+      const organization = await this.organizationRepository.findById(_organizationId);
 
       if (!organization) {
         const message = `Organization id: ${_organizationId} not found`;

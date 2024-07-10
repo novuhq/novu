@@ -40,9 +40,10 @@ import {
   storageService,
   ExecutionLogRoute,
   CreateExecutionDetails,
+  injectRepositories,
 } from '@novu/application-generic';
 
-import * as packageJson from '../../../package.json';
+import packageJson from '../../../package.json';
 import { JobTopicNameEnum } from '@novu/shared';
 
 const DAL_MODELS = [
@@ -68,6 +69,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
+  ...injectRepositories(),
 ];
 
 const dalService = {

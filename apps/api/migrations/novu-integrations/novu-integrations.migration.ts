@@ -10,7 +10,7 @@ import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
 import slugify from 'slugify';
-import * as shortid from 'shortid';
+import shortid from 'shortid';
 
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();

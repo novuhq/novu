@@ -1,4 +1,4 @@
-import * as sgApi from '@sendgrid/mail';
+import sgApi from '@sendgrid/mail';
 
 export type IEmailRecipient = string | { name?: string; email: string };
 

@@ -9,6 +9,7 @@ export * from './health/index';
 export * from './instrumentation/index';
 export * from './logging/index';
 export * from './modules';
+export * from './utils/inject-repositories';
 export * from './profiling';
 export * from './resilience';
 export * from './services';

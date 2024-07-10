@@ -1,14 +1,14 @@
 import { UserSessionData } from '@novu/shared';
 import { TEST_USER_PASSWORD, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const NEW_PASSWORD = 'newPassword123@';
 const PASSWORD_ERROR_MESSAGE =
   'The new password must contain minimum 8 and maximum 64 characters,' +
   ' at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-';
 
-describe('User update password - /auth/update-password (POST)', async () => {
+describe('User update password - /auth/update-password (POST) @skip-in-ee', async () => {
   let session: UserSession;
 
   before(async () => {

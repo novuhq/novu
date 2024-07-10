@@ -1,7 +1,7 @@
 import { Prism } from '@mantine/prism';
 import { useMemo } from 'react';
-import * as set from 'lodash.set';
-import * as get from 'lodash.get';
+import set from 'lodash.set';
+import get from 'lodash.get';
 
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
