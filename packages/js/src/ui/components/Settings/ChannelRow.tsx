@@ -27,8 +27,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
 
       props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });
     } catch (error) {
-      console.error('Error updating preference:', error);
-      throw error;
+      console.error(error);
     }
   };
 
