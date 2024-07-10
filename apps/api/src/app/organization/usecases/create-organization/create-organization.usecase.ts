@@ -116,7 +116,9 @@ export class CreateOrganization {
         _id: user._id,
       },
       {
-        jobTitle: jobTitle,
+        $set: {
+          jobTitle: jobTitle,
+        },
       }
     );
 

@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
-  CommunityMemberRepository,
-  CommunityOrganizationRepository,
-  CommunityUserRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,

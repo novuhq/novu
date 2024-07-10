@@ -24,7 +24,9 @@ export class UpdateOnBoardingUsecase extends BaseUserProfileUsecase {
         _id: command.userId,
       },
       {
-        showOnBoarding: command.showOnBoarding,
+        $set: {
+          showOnBoarding: command.showOnBoarding,
+        },
       }
     );
 

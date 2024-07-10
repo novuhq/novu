@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
 
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-import { decryptApiKey, AuthService } from '@novu/application-generic';
+import { decryptApiKey } from '@novu/application-generic';
 
 import { GetMyEnvironmentsCommand } from './get-my-environments.command';
 import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
@@ -10,7 +10,7 @@ import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
   scope: Scope.REQUEST,
 })
 export class GetMyEnvironments {
-  constructor(private environmentRepository: EnvironmentRepository, private authService: AuthService) {}
+  constructor(private environmentRepository: EnvironmentRepository) {}
 
   async execute(command: GetMyEnvironmentsCommand): Promise<EnvironmentResponseDto[]> {
     Logger.verbose('Getting Environments');

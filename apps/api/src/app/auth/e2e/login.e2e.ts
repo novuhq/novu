@@ -140,7 +140,9 @@ describe('User login - /auth/login (POST) @skip-in-ee', async () => {
           _id: session.user._id,
         },
         {
-          failedLogin,
+          $set: {
+            failedLogin,
+          },
         }
       );
 

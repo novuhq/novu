@@ -508,7 +508,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
   }
 });
 
-describe('Create Notification template from blueprint - /notification-templates (POST) @skip-in-ee', async () => {
+describe('Create Notification template from blueprint - /notification-templates (POST)', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();

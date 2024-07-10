@@ -35,7 +35,9 @@ export class GetMyProfileUsecase extends BaseUserProfileUsecase {
       await this.userRepository.update(
         { _id: profile._id },
         {
-          'servicesHashes.intercom': userHashForIntercom,
+          $set: {
+            'servicesHashes.intercom': userHashForIntercom,
+          },
         }
       );
     }

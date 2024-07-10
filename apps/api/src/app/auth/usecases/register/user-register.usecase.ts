@@ -40,7 +40,9 @@ export class UserRegister {
       await this.userRepository.update(
         { _id: user._id },
         {
-          'servicesHashes.intercom': userHashForIntercom,
+          $set: {
+            'servicesHashes.intercom': userHashForIntercom,
+          },
         }
       );
     }

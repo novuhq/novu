@@ -44,7 +44,9 @@ export async function run() {
             _id: user._id,
           },
           {
-            email: normalizedEmail,
+            $set: {
+              email: normalizedEmail,
+            },
           }
         );
 
