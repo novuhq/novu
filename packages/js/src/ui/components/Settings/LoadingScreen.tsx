@@ -18,6 +18,7 @@ export const LoadingScreen = () => {
 
 const LoadingSkeleton = () => {
   const style = useStyle();
+
   return (
     <div
       class={style(
