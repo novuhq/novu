@@ -9,6 +9,7 @@ import { API_ROOT, ENV } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildApiHttpClient } from '../../../../api';
 import { showNotification } from '@mantine/notifications';
+import { css } from '@novu/novui/css';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
@@ -108,18 +109,11 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
   ];
 
   return (
-    <Modal
-      opened={isOpen}
-      title={
-        <>
-          <Title variant="section">Sync changes</Title>
-          <Text color="typography.text.secondary">
-            Run the following command to publish changes to the desired environment:
-          </Text>
-        </>
-      }
-      onClose={toggleOpen}
-    >
+    <Modal opened={isOpen} title={<Title variant="section">Sync changes</Title>} onClose={toggleOpen}>
+      <Text color="typography.text.secondary" className={css({ marginBottom: 30 })}>
+        For your changes to be visible on the cloud dashboard, you need to deploy your local novu application to a cloud
+        provider.
+      </Text>
       <Tabs tabConfigs={tabs} defaultValue={'cli'} colorPalette="mode.local" />
     </Modal>
   );

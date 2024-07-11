@@ -5,12 +5,9 @@ import { StatusDropdown } from './StatusDropdown';
 
 export const Header = () => {
   const style = useStyle();
-  const { id } = useAppearance();
 
   return (
-    <div
-      class={style('inboxHeader', cn(id, 'nt-flex nt-justify-between nt-items-center nt-self-stretch nt-py-5 nt-px-6'))}
-    >
+    <div class={style('inboxHeader', cn('nt-flex nt-justify-between nt-items-center nt-self-stretch nt-py-5 nt-px-6'))}>
       <StatusDropdown />
       <ActionsContainer />
     </div>
