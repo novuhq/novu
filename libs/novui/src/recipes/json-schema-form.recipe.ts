@@ -81,11 +81,12 @@ export const JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE = defineSlotRecipe({
   },
   variants: {
     itemType: {
-      // primitive
-      string: {},
-      number: {},
+      // checkbox
       boolean: {},
-      integer: {},
+      // inputs - the buttons are bigger
+      string: { toolbar: { marginTop: '-25' } },
+      number: { toolbar: { marginTop: '-25' } },
+      integer: { toolbar: { marginTop: '-25' } },
       // sections
       object: { toolbar: { h: '300', right: '75' }, toolbarWrapper: {} },
       array: { toolbar: { h: '300', right: '75' }, toolbarWrapper: {} },

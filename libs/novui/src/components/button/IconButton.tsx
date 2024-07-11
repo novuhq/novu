@@ -8,6 +8,7 @@ import { token } from '../../../styled-system/tokens';
 import { IconType } from '../../icons';
 import { CoreProps } from '../../types';
 import { splitCssProps } from '../../../styled-system/jsx';
+import { BUTTON_SIZE_TO_ICON_SIZE, DEFAULT_SIZE } from './Button.shared';
 
 interface IIconButtonProps {
   Icon: IconType;
@@ -55,6 +56,7 @@ export const IconButton: PolymorphicComponent = React.forwardRef(
         <Icon
           title={props.title || 'action-icon'}
           color={variant === 'filled' ? token('colors.button.icon.filled') : undefined}
+          size={BUTTON_SIZE_TO_ICON_SIZE[variantProps.size ?? DEFAULT_SIZE]}
         />
       </ActionIcon>
     );

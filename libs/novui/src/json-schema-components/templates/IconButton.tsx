@@ -2,7 +2,7 @@ import { IconButtonProps } from '@rjsf/utils';
 import { ButtonHTMLAttributes, FC } from 'react';
 import { IconType } from '../../icons';
 import { css, cx } from '../../../styled-system/css';
-import { Button } from '../../components';
+import { Button, IconButton } from '../../components';
 import { IconAdd, IconArrowDownward, IconArrowUpward, IconOutlineDeleteOutline } from '../../icons/icon-registry';
 
 type Props = Omit<IconButtonProps, 'color' | 'translate' | 'iconType' | 'icon'>;
@@ -18,15 +18,15 @@ const SimpleIconButton: FC<ButtonHTMLAttributes<HTMLButtonElement> & { Icon: Ico
 );
 
 export function RemoveButton(props: Props) {
-  return <SimpleIconButton {...props} Icon={IconOutlineDeleteOutline} title="remove" />;
+  return <IconButton {...props} Icon={IconOutlineDeleteOutline} title="remove" />;
 }
 
 export function MoveUpButton(props: Props) {
-  return <SimpleIconButton {...props} Icon={IconArrowUpward} title="move-up" />;
+  return <IconButton {...props} Icon={IconArrowUpward} title="move-up" />;
 }
 
 export function MoveDownButton(props: Props) {
-  return <SimpleIconButton {...props} Icon={IconArrowDownward} title="move-down" />;
+  return <IconButton {...props} Icon={IconArrowDownward} title="move-down" />;
 }
 
 export function AddButton({ className, ...props }: Props) {
