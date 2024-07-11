@@ -4,6 +4,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import {
   CreateExecutionDetails,
   EventsDistributedLockService,
+  ExecuteBridgeRequest,
   GetNovuProviderCredentials,
   StorageHelperService,
 } from '@novu/application-generic';
@@ -23,6 +24,7 @@ import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { SendTestEmail } from './usecases/send-test-email';
+import { BridgeModule } from '../bridge';
 
 const PROVIDERS = [
   CreateExecutionDetails,
@@ -30,6 +32,7 @@ const PROVIDERS = [
   StorageHelperService,
   EventsDistributedLockService,
   SendTestEmail,
+  ExecuteBridgeRequest,
 ];
 
 @Module({
@@ -46,6 +49,7 @@ const PROVIDERS = [
     TopicsModule,
     LayoutsModule,
     TenantModule,
+    BridgeModule,
   ],
   controllers: [EventsController],
   providers: [...PROVIDERS, ...USE_CASES],

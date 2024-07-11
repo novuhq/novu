@@ -114,6 +114,10 @@ export default async () => {
       ),
     ['./app/workflows/dto/workflows.response.dto']: await import('./app/workflows/dto/workflows.response.dto'),
     ['./app/workflows/dto/variables.response.dto']: await import('./app/workflows/dto/variables.response.dto'),
+    ['./app/bridge/bridge.controller']: await import('./app/bridge/bridge.controller'),
+    ['./app/bridge/dtos/validate-bridge-url-response.dto']: await import(
+      './app/bridge/dtos/validate-bridge-url-response.dto'
+    ),
     ['./app/events/dtos/trigger-event-response.dto']: await import('./app/events/dtos/trigger-event-response.dto'),
     ['./app/widgets/dtos/session-initialize-response.dto']: await import(
       './app/widgets/dtos/session-initialize-response.dto'
@@ -1045,6 +1049,14 @@ export default async () => {
               tenant: { required: false, type: () => Object },
             },
           },
+        ],
+        [
+          import('./app/bridge/dtos/validate-bridge-url-request.dto'),
+          { ValidateBridgeUrlRequestDto: { bridgeUrl: { required: true, type: () => String } } },
+        ],
+        [
+          import('./app/bridge/dtos/validate-bridge-url-response.dto'),
+          { ValidateBridgeUrlResponseDto: { isValid: { required: true, type: () => Boolean } } },
         ],
         [
           import('./app/widgets/dtos/organization-response.dto'),
@@ -2094,6 +2106,22 @@ export default async () => {
               getWorkflowById: { type: t['./app/workflows/dto/workflow-response.dto'].WorkflowResponse },
               create: { type: t['./app/workflows/dto/workflow-response.dto'].WorkflowResponse },
               updateActiveStatus: { type: t['./app/workflows/dto/workflow-response.dto'].WorkflowResponse },
+            },
+          },
+        ],
+        [
+          import('./app/bridge/bridge.controller'),
+          {
+            BridgeController: {
+              health: { type: Object },
+              preview: { type: Object },
+              createBridgesByDiscovery: { type: t['./app/bridge/bridge.controller'].CreateBridgeResponseDto },
+              createDiscoverySoft: { type: t['./app/bridge/bridge.controller'].CreateBridgeResponseDto },
+              getControls: { type: Object },
+              createControls: { type: Object },
+              validateBridgeUrl: {
+                type: t['./app/bridge/dtos/validate-bridge-url-response.dto'].ValidateBridgeUrlResponseDto,
+              },
             },
           },
         ],
