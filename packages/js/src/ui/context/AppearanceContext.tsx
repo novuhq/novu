@@ -18,14 +18,50 @@ export type CSSProperties = {
 
 export type ElementStyles = string | CSSProperties;
 
-export type Elements = {
-  button?: ElementStyles;
-  root?: ElementStyles;
-  bell?: ElementStyles;
-  bellContainer?: ElementStyles;
-  popoverContent?: ElementStyles;
-  popoverTrigger?: ElementStyles;
-};
+/*
+ * The double underscore signals that entire key extends the right part of the key
+ * i.e. foo__bar means that foo_bar is an extension of bar. Both keys will be applied when foo_bar is used
+ * meaning you would have `bar foo__bar` in the dom
+ */
+export const appearanceKeys = [
+  //Primitives
+  'button',
+  'popoverContent',
+  'popoverTrigger',
+  'dropdownContent',
+  'dropdownTrigger',
+  'dropdownItem',
+  'dropdownItemLabel',
+  'dropdownItemLabelContainer',
+  'dropdownItemLeftIcon',
+  'dropdownItemRightIcon',
+
+  //General
+  'root',
+  'bellIcon',
+  'bellContainer',
+  'settings__button',
+  'inboxHeader',
+
+  //Inbox status
+  'inboxStatus__title',
+  'inboxStatus__dropdownTrigger',
+  'inboxStatus__dropdownContent',
+  'inboxStatus__dropdownItem',
+  'inboxStatus__dropdownItemLabel',
+  'inboxStatus__dropdownItemLabelContainer',
+  'inboxStatus__dropdownItemLeftIcon',
+  'inboxStatus__dropdownItemRightIcon',
+
+  //More actions
+  'moreActionsContainer',
+  'moreActions__dropdownTrigger',
+  'moreActions__dropdownContent',
+  'moreActions__dropdownItem',
+  'moreActions__dropdownItemLabel',
+  'moreActions__dropdownItemLabelContainer',
+  'moreActions__dropdownItemLeftIcon',
+] as const;
 
 export type Variables = {
   colorBackground?: string;
@@ -38,6 +74,9 @@ export type Variables = {
   fontSize?: string;
   borderRadius?: string;
 };
+
+export type AppearanceKey = (typeof appearanceKeys)[number];
+export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 
 type AppearanceContextType = {
   variables?: Variables;
@@ -64,7 +103,6 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     Array.isArray(props.appearance?.baseTheme) ? props.appearance?.baseTheme || [] : [props.appearance?.baseTheme || {}]
   );
 
-  //place style element on HEAD. Placing in body is available for HTML 5.2 onward.
   onMount(() => {
     const el = document.getElementById(props.id);
     if (el) {
@@ -78,13 +116,13 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     document.head.appendChild(styleEl);
 
     setStyleElement(styleEl);
-  });
 
-  onCleanup(() => {
-    const el = document.getElementById(props.id);
-    if (el) {
-      el.remove();
-    }
+    onCleanup(() => {
+      const element = document.getElementById(props.id);
+      if (element) {
+        element.remove();
+      }
+    });
   });
 
   //handle variables

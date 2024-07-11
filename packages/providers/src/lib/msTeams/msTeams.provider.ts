@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -8,7 +9,7 @@ import axios from 'axios';
 
 export class MsTeamsProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  public id = 'msteams';
+  public id = ChatProviderIdEnum.MsTeams;
   private axiosInstance = axios.create();
 
   constructor(private config) {}

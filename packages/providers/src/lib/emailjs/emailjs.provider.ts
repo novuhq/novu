@@ -8,9 +8,10 @@ import {
 } from '@novu/stateless';
 import { IEmailJsConfig } from './emailjs.config';
 import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
+import { EmailProviderIdEnum } from '@novu/shared';
 
 export class EmailJsProvider implements IEmailProvider {
-  readonly id = 'emailjs';
+  readonly id = EmailProviderIdEnum.EmailJS;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly client: SMTPClient;
 

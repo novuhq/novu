@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { SimpletextingSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class SimpletextingSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('simpletexting', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Simpletexting, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

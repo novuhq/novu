@@ -38,10 +38,13 @@
     }
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.0.9",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0"
   },
   "devDependencies": {
+    "@clerk/types": "^4.6.1",
+    "@types/bluebird": "^3.5.24",
     "@types/jest": "29.5.2",
     "@types/json-schema": "^7.0.15",
     "jest": "^27.1.0",

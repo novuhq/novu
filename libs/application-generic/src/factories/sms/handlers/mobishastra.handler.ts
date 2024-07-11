@@ -1,10 +1,10 @@
 import { MobishastraProvider } from '@novu/providers';
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 
 export class MobishastraHandler extends BaseSmsHandler {
   constructor() {
-    super('mobishastra', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Mobishastra, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

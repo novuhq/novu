@@ -6,9 +6,10 @@ import {
 } from '@novu/stateless';
 import { v4 as uuid } from 'uuid';
 import axios, { AxiosInstance } from 'axios';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 export class MobishastraProvider implements ISmsProvider {
-  id = 'mobishastra';
+  id = SmsProviderIdEnum.Mobishastra;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   axiosInstance: AxiosInstance;
   headers: Record<string, string>;

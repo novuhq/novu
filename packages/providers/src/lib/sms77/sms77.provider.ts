@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -13,7 +14,7 @@ if (!globalThis.fetch) {
 }
 
 export class Sms77SmsProvider implements ISmsProvider {
-  id = 'sms77';
+  id = SmsProviderIdEnum.Sms77;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private sms77Client: Sms77Client;
 

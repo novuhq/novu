@@ -1,10 +1,14 @@
 import { InfobipEmailProvider } from '@novu/providers';
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 import { BaseHandler } from './base.handler';
 
 export class InfobipEmailHandler extends BaseHandler {
   constructor() {
-    super('infobip', ChannelTypeEnum.EMAIL);
+    super(EmailProviderIdEnum.Infobip, ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials) {
     const config: {

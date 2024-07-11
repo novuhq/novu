@@ -51,6 +51,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateTenant,
+  injectRepositories,
 } from '@novu/application-generic';
 
 import packageJson from '../../../package.json';
@@ -82,6 +83,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
+  ...injectRepositories(),
 ];
 
 const dalService = {

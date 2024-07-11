@@ -7,9 +7,10 @@ import {
 
 import { Vonage } from '@vonage/server-sdk';
 import { Auth } from '@vonage/auth';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 export class NexmoSmsProvider implements ISmsProvider {
-  id = 'nexmo';
+  id = SmsProviderIdEnum.Nexmo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private vonageClient: Vonage;
 

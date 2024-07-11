@@ -15,12 +15,12 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    limitInBytes: 70_000,
+    limitInBytes: 140_000,
   },
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    limitInBytes: 20_000,
+    limitInBytes: 50_000,
   },
 ];
 

@@ -1,10 +1,14 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 import { WhatsappBusinessChatProvider } from '@novu/providers';
 import { BaseChatHandler } from './base.handler';
 
 export class WhatsAppBusinessHandler extends BaseChatHandler {
   constructor() {
-    super('whatsapp-business', ChannelTypeEnum.CHAT);
+    super(ChatProviderIdEnum.WhatsAppBusiness, ChannelTypeEnum.CHAT);
   }
 
   buildProvider(credentials: ICredentials) {

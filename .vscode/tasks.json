@@ -8,9 +8,22 @@
       "isBackground": true,
       "label": "API",
       "path": "/apps/api",
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
       "problemMatcher": {
         "base": "$tsc-watch",
+        "fileLocation": "autoDetect",
         "owner": "typescript",
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": "Successfully compiled",
@@ -38,6 +51,10 @@
           "endsPattern": "Started application in NODE_ENV"
         }
       },
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
       "dependsOn": [
         "SHARED",
         "API",
@@ -54,6 +71,10 @@
       "isBackground": true,
       "label": "WEB",
       "path": "/apps/web",
+      "icon": {
+        "id": "browser",
+        "color": "terminal.ansiGreen"
+      },
       "problemMatcher": {
         "base": "$tsc-watch",
         "owner": "typescript",
@@ -65,7 +86,10 @@
       },
       "dependsOn": [
         "SHARED",
-        "API"
+        "API",
+        "DESIGN SYSTEM",
+        "NOVUI",
+        "NOTIFICATION CENTER"
       ]
     },
     {
@@ -185,6 +209,41 @@
       "path": "/enterprise/packages/shared-services",
       "problemMatcher": "$tsc-watch",
       "dependsOn": ["SHARED"]
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "DESIGN SYSTEM",
+      "path": "/libs/design-system",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NOVUI",
+      "path": "/libs/novui",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NOTIFICATION CENTER",
+      "path": "/packages/notification-center",
+      "problemMatcher": "$tsc",
+      "dependsOn": [
+        "NC CLIENT",
+        "SHARED"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NC CLIENT",
+      "path": "/packages/client",
+      "problemMatcher": "$tsc",
+      "dependsOn": [
+        "SHARED"
+      ]
     }
   ]
 }

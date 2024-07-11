@@ -21,6 +21,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.0.9",
+    "@clerk/types": "^4.6.1",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
@@ -34,6 +36,7 @@
     "event-stream": "^4.0.1",
     "fs-extra": "^9.0.0",
     "jsonfile": "^6.0.1",
+    "jsonwebtoken": "9.0.0",
     "mongoose": "^7.5.0",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
