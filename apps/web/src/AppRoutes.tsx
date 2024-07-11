@@ -64,6 +64,7 @@ import { IS_EE_AUTH_ENABLED } from './config/index';
 import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
+import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -86,6 +87,7 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {AuthRoutes()}
+      <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}

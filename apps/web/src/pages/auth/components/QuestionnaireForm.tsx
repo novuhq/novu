@@ -97,7 +97,19 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
+      const isTechnicalJobTitle = [
+        JobTitleEnum.ENGINEER,
+        JobTitleEnum.ENGINEERING_MANAGER,
+        JobTitleEnum.ARCHITECT,
+        JobTitleEnum.FOUNDER,
+        JobTitleEnum.STUDENT,
+      ].includes(data.jobTitle);
+
+      if (isTechnicalJobTitle) {
+        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      } else {
+        navigate(ROUTES.WORKFLOWS);
+      }
 
       return;
     }
