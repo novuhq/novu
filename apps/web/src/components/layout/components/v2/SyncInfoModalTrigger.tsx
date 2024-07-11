@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import CryptoJS from 'crypto-js';
 import styled from '@emotion/styled';
 
-import { NotificationTemplateEntity } from '@novu/dal';
 import { colors, Tooltip, useColorScheme } from '@novu/design-system';
 import { Button, Text } from '@novu/novui';
 import { IconOutlineCloudUpload } from '@novu/novui/icons';
@@ -36,8 +35,7 @@ export function SyncInfoModalTrigger() {
     }
 
     const bridgeDiscoverWorkflows = bridgeDiscoverData?.workflows || undefined;
-    const originWorkflows =
-      originData?.data.map((workflow: NotificationTemplateEntity) => workflow.rawData) || undefined;
+    const originWorkflows = originData?.data.map((workflow) => workflow.rawData) || undefined;
 
     const bridgeDiscoverWorkflowsHash = createHash(bridgeDiscoverWorkflows);
     const storedWorkflowsHash = createHash(originWorkflows);
@@ -54,7 +52,12 @@ export function SyncInfoModalTrigger() {
 
   return (
     <>
-      <Tooltip width="auto" label={<Text>{`There's a change that needs to be synced`}</Text>} withinPortal>
+      <Tooltip
+        disabled={isSynced}
+        width="auto"
+        label={<Text>You have un-synced changes in your local application.</Text>}
+        withinPortal
+      >
         <Container>
           <Button size="xs" Icon={IconOutlineCloudUpload} onClick={toggleSyncInfoModalShow}>
             Sync
