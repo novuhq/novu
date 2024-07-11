@@ -656,7 +656,9 @@
     "textareas",
     "frameworkterminal",
     "unarchived",
-    "Unarchived"
+    "Unarchived",
+    "grayscale",
+    "directcss"
   ],
   "flagWords": [],
   "patterns": [
@@ -751,6 +753,7 @@
     ".env.test",
     ".example.env",
     "pnpm-lock.yaml",
-    "apps/web/env.sh"
+    "apps/web/env.sh",
+    "packages/js/src/ui/index.directcss",
   ]
 }

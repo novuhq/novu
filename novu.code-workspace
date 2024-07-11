@@ -92,6 +92,14 @@
       "name": "📦 @novu/application-generic",
       "path": "packages/application-generic"
     },
+    {
+      "name": "📦 @novu/js",
+      "path": "packages/js"
+    },
+    {
+      "name": "🎮 @novu/nextjs-playground",
+      "path": "playground/nextjs"
+    }
   ],
   "settings": {
     "typescript.tsdk": "node_modules/typescript/lib",

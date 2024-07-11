@@ -9,3 +9,5 @@ packages:
   - '!**/test/**'
   # all packages in enterprise modules
   - 'enterprise/packages/*'
+  # playground apps
+  - 'playground/*'
