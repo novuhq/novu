@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { ROUTES } from '../../../constants/routes';
+import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 import { useBlueprint, useRedirectURL } from '../../../hooks';
 
 export function EnsureOnboardingComplete({ children }: any) {
@@ -9,7 +10,15 @@ export function EnsureOnboardingComplete({ children }: any) {
   const { getRedirectURL } = useRedirectURL();
   const { currentOrganization, environmentId } = useAuth();
 
-  if ((!currentOrganization || !environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
+  function isOnboardingComplete() {
+    if (IS_EE_AUTH_ENABLED) {
+      return currentOrganization?.productUseCases !== undefined;
+    }
+
+    return currentOrganization && environmentId;
+  }
+
+  if (!isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {
     return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
   }
 
