@@ -175,7 +175,8 @@
       "packages/*",
       "enterprise/packages/*",
       "enterprise/packages/*/*",
-      "packages/notification-center-angular/projects/*"
+      "packages/notification-center-angular/projects/*",
+      "playground/*"
     ]
   },
   "husky": {
