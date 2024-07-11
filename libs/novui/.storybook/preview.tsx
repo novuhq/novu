@@ -5,10 +5,8 @@ import { css } from '../styled-system/css';
 import { MantineThemeProvider } from '@mantine/core';
 import { NovuiProvider } from '../src/components';
 
-// Bring in the Panda-generated stylesheets
+// Bring in the Panda-generated stylesheets + CSS Layers
 import '../src/index.css';
-
-import '@mantine/core/styles.layer.css';
 
 export const parameters: Parameters = {
   layout: 'fullscreen',
