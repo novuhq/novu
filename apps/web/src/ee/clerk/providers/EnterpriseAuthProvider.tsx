@@ -1,7 +1,7 @@
 import { createContext } from 'react';
-import { useCreateAuthContextEnterprise } from './useCreateAuthContextEnterprise';
+import { useCreateAuthEnterprise } from './useCreateAuthEnterprise';
 
-export const EnterpriseAuthContext = createContext<ReturnType<typeof useCreateAuthContextEnterprise>>({
+export const EnterpriseAuthContext = createContext<ReturnType<typeof useCreateAuthEnterprise>>({
   inPublicRoute: undefined,
   inPrivateRoute: false,
   isLoading: false,
@@ -17,8 +17,6 @@ export const EnterpriseAuthContext = createContext<ReturnType<typeof useCreateAu
 });
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
-export const EnterpriseAuthContextProvider = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <EnterpriseAuthContext.Provider value={useCreateAuthContextEnterprise()}>{children}</EnterpriseAuthContext.Provider>
-  );
+export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  return <EnterpriseAuthContext.Provider value={useCreateAuthEnterprise()}>{children}</EnterpriseAuthContext.Provider>;
 };

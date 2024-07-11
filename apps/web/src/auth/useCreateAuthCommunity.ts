@@ -5,7 +5,7 @@ import { HttpStatusCode } from 'axios';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api } from '../api/index';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
 import { useSegment } from '../components/providers/SegmentProvider';
 import { LOCAL_STORAGE_AUTH_TOKEN_KEY } from './auth.const';
@@ -46,7 +46,7 @@ function inIframe() {
 /**
  * TODO: this function should be decomposed into smaller, more focused pieces of functionality.
  */
-export function useCreateAuthContextCommunity() {
+export function useCreateAuthCommunity() {
   const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();

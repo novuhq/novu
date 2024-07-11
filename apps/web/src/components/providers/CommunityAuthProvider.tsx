@@ -1,7 +1,7 @@
 import { createContext } from 'react';
-import { useCreateAuthContextCommunity } from './useCreateAuthContextCommunity';
+import { useCreateAuthCommunity } from '../../auth/useCreateAuthCommunity';
 
-export const CommunityAuthContext = createContext<ReturnType<typeof useCreateAuthContextCommunity>>({
+export const CommunityAuthContext = createContext<ReturnType<typeof useCreateAuthCommunity>>({
   inPublicRoute: false,
   inPrivateRoute: false,
   isLoading: false,
@@ -17,8 +17,6 @@ export const CommunityAuthContext = createContext<ReturnType<typeof useCreateAut
 });
 CommunityAuthContext.displayName = 'CommunityAuthProvider';
 
-export const CommunityAuthContextProvider = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <CommunityAuthContext.Provider value={useCreateAuthContextCommunity()}>{children}</CommunityAuthContext.Provider>
-  );
+export const CommunityAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  return <CommunityAuthContext.Provider value={useCreateAuthCommunity()}>{children}</CommunityAuthContext.Provider>;
 };

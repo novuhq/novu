@@ -34,7 +34,7 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
   productUseCases: clerkOrganization.publicMetadata.productUseCases,
 });
 
-export function useCreateAuthContextEnterprise() {
+export function useCreateAuthEnterprise() {
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
