@@ -6,7 +6,7 @@ import styled from '@emotion/styled';
 import { colors, Tooltip, useColorScheme } from '@novu/design-system';
 import { Button, Text } from '@novu/novui';
 import { IconOutlineCloudUpload } from '@novu/novui/icons';
-import { css } from '@novu/novui/css';
+import { INotificationTemplate } from '@novu/shared';
 
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { SyncInfoModal } from './SyncInfoModal';
@@ -35,7 +35,7 @@ export function SyncInfoModalTrigger() {
     }
 
     const bridgeDiscoverWorkflows = bridgeDiscoverData?.workflows || undefined;
-    const originWorkflows = originData?.data.map((workflow) => workflow.rawData) || undefined;
+    const originWorkflows = originData?.data.map((workflow: INotificationTemplate) => workflow.rawData) || undefined;
 
     const bridgeDiscoverWorkflowsHash = createHash(bridgeDiscoverWorkflows);
     const storedWorkflowsHash = createHash(originWorkflows);

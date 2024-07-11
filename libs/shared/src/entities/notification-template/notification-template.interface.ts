@@ -1,11 +1,12 @@
 import { JSONSchema7 } from 'json-schema';
 
-import type {
+import {
   BuilderFieldType,
   BuilderGroupValues,
   TemplateVariableTypeEnum,
   FilterParts,
   WorkflowTypeEnum,
+  NotificationTemplateCustomData,
 } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
@@ -30,8 +31,11 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
+  blueprintId?: string;
   type?: WorkflowTypeEnum;
   payloadSchema?: any;
+  rawData?: any;
+  data?: NotificationTemplateCustomData;
 }
 
 export class IGroupedBlueprint {
