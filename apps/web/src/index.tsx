@@ -6,9 +6,9 @@ import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from './config';
 
-// TODO: would like to figure out a better solution, but this unblocks for now
-import '@novu/novui/components.css';
 import '@novu/novui/styles.css';
+import '@novu/novui/components.css';
+import './index.css';
 
 (async () => {
   initializeApp();

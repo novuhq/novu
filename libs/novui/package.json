@@ -52,7 +52,7 @@
       "import": "./styled-system/jsx/index.js"
     },
     "./styles.css": "./styled-system/styles.css",
-    "./components.css": "./node_modules/@mantine/core/styles.css"
+    "./components.css": "./node_modules/@mantine/core/styles.layer.css"
   },
   "scripts": {
     "start": "npm run build:watch",
