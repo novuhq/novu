@@ -22,7 +22,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.0.9",
-    "@clerk/types": "^4.5.1",
+    "@clerk/types": "^4.6.1",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",

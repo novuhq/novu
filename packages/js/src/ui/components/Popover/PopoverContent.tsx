@@ -21,12 +21,12 @@ export const PopoverContent: ParentComponent<{ classes: string }> = (props) => {
     ],
   });
 
-  const handleClickOutside = (e: any) => {
-    if (contentRef()?.contains(e.target)) return;
+  const handleClickOutside = (e: MouseEvent) => {
+    if (contentRef()?.contains(e.target as Node)) return;
     onClose();
   };
 
-  const handleEscapeKey = (e: any) => {
+  const handleEscapeKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose();
     }

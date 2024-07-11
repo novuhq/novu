@@ -20,7 +20,7 @@ export type UpdateOrganizationParams = {
 
 export type UpdateMetadataParams = OrganizationMetadataParams;
 
-type OrganizationPublicMetadata = {
+export type OrganizationPublicMetadata = {
   externalOrgId?: string;
   apiServiceLevel?: ApiServiceLevelEnum;
   domain?: string;

@@ -94,5 +94,5 @@ export default defineConfig((config: Options) => {
       }),
     ],
   };
-  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
+  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs'), 'tsc --noEmit'])(umd, esm, cjs);
 });

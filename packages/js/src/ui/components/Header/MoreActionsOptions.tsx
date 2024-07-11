@@ -44,10 +44,10 @@ export const ActionsItem = (props: { label: string; onClick: () => void; icon: (
 
   return (
     <Popover.Close onClick={props.onClick}>
-      <button class={style('moreActionsDropdownItem', dropdownItemClasses())}>
-        <span class={style('moreActionsDropdownItemLabelContainer', dropdownItemLabelContainerClasses())}>
-          <span class={style('moreActionsDropdownItemLeftIcon', '')}>{props.icon()}</span>
-          <span class={style('moreActionsDropdownItemLabel', dropdownItemLabelClasses())}>{props.label}</span>
+      <button class={style('moreActions__dropdownItem', dropdownItemClasses())}>
+        <span class={style('moreActions__dropdownItemLabelContainer', dropdownItemLabelContainerClasses())}>
+          <span class={style('moreActions__dropdownItemLeftIcon', '')}>{props.icon()}</span>
+          <span class={style('moreActions__dropdownItemLabel', dropdownItemLabelClasses())}>{props.label}</span>
         </span>
       </button>
     </Popover.Close>
