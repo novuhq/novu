@@ -18,13 +18,6 @@ export default function Home() {
           console.log('mounting', ui);
           ui.mountInbox(el);
 
-          setTimeout(() => {
-            ui.updateAppearance({
-              baseTheme: [{ variables: { colorForeground: 'blue', colorNeutral: 'white', colorBackground: 'black' } }],
-              variables: { colorPrimary: 'purple' },
-            });
-          }, 5000);
-
           return () => {
             ui.unmountComponent(el);
           };

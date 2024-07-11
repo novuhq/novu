@@ -62,13 +62,13 @@ export const StatusItem = (props: {
 
   return (
     <Popover.Close onClick={props.onClick}>
-      <button class={style('inboxStatusDropdownItem', dropdownItemClasses())}>
-        <span class={style('inboxStatusDropdownItemLabelContainer', dropdownItemLabelContainerClasses())}>
-          <span class={style('inboxStatusDropdownItemLeftIcon', '')}>{props.icon()}</span>
-          <span class={style('inboxStatusDropdownItemLabel', dropdownItemLabelClasses())}>{props.label}</span>
+      <button class={style('inboxStatus__dropdownItem', dropdownItemClasses())}>
+        <span class={style('inboxStatus__dropdownItemLabelContainer', dropdownItemLabelContainerClasses())}>
+          <span class={style('inboxStatus__dropdownItemLeftIcon', '')}>{props.icon()}</span>
+          <span class={style('inboxStatus__dropdownItemLabel', dropdownItemLabelClasses())}>{props.label}</span>
         </span>
         <Show when={props.isSelected}>
-          <span class={style('inboxStatusDropdownItemRightIcon', '')}>
+          <span class={style('inboxStatus__dropdownItemRightIcon', '')}>
             <Check />
           </span>
         </Show>
