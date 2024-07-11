@@ -9,6 +9,7 @@ const globalOverrides = {
     FrameworkTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
   },
   framework: () => null,
+  // TODO: EchoTerminal is legacy name for framework terminal and should be removed
   echoterminal: {
     EchoTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
   },
