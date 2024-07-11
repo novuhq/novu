@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as Handlebars from 'handlebars';
+import Handlebars from 'handlebars';
 import { format } from 'date-fns';
 import { HandlebarHelpersEnum } from '@novu/shared';
 
@@ -222,12 +222,16 @@ function createHandlebarsInstance(i18next: any) {
 
 @Injectable()
 export class CompileTemplate {
-  async execute(command: CompileTemplateCommand): Promise<string> {
+  async execute(
+    command: CompileTemplateCommand,
+    // we need i18nInstance outside the command on order to avoid command serialization on it.
+    i18nInstance?: any
+  ): Promise<string> {
     const templateContent = command.template || '';
 
     let result = '';
     try {
-      const handlebars = createHandlebarsInstance(command.i18next);
+      const handlebars = createHandlebarsInstance(i18nInstance);
       const template = handlebars.compile(templateContent);
 
       result = template(command.data, {});

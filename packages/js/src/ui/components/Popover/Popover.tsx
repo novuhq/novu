@@ -1,11 +1,15 @@
+import { Placement } from '@floating-ui/dom';
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
 import { useUncontrolledState } from '../../helpers';
+import { PopoverClose } from './PopoverClose';
 import { PopoverContent } from './PopoverContent';
 import { PopoverTrigger } from './PopoverTrigger';
 
 export type PopoverProps = {
   open?: boolean;
   children?: JSX.Element;
+  fallbackPlacements?: Placement[];
+  placement?: Placement;
 };
 
 type PopoverContextType = {
@@ -16,6 +20,8 @@ type PopoverContextType = {
   setTargetRef: Setter<HTMLElement | null>;
   onToggle: () => void;
   onClose: () => void;
+  placement?: Placement;
+  fallbackPlacements?: Placement[];
 };
 
 const PopoverContext = createContext<PopoverContextType | undefined>(undefined);
@@ -46,6 +52,8 @@ export function Popover(props: PopoverProps) {
     targetRef,
     opened: isOpen,
     onChange: setIsOpen,
+    fallbackPlacements: props.fallbackPlacements,
+    placement: props.placement,
   };
 
   return <PopoverContext.Provider value={context}>{props.children}</PopoverContext.Provider>;
@@ -62,3 +70,4 @@ export function usePopover() {
 
 Popover.Trigger = PopoverTrigger;
 Popover.Content = PopoverContent;
+Popover.Close = PopoverClose;

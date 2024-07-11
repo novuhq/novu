@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BulkSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class BulkSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('bulk-sms', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.BulkSms, ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     const config = {

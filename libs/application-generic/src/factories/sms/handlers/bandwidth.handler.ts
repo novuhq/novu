@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BandwidthSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class BandwidthHandler extends BaseSmsHandler {
   constructor() {
-    super('bandwidth', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Bandwidth, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

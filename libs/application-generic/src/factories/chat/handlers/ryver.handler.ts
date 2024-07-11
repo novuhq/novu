@@ -1,11 +1,11 @@
-import { ICredentials } from '@novu/shared';
+import { ChatProviderIdEnum, ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { RyverChatProvider } from '@novu/providers';
 import { BaseChatHandler } from './base.handler';
 
 export class RyverHandler extends BaseChatHandler {
   constructor() {
-    super('ryver', ChannelTypeEnum.CHAT);
+    super(ChatProviderIdEnum.Ryver, ChannelTypeEnum.CHAT);
   }
 
   buildProvider(_credentials: ICredentials) {

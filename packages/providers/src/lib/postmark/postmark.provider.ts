@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IEmailOptions,
@@ -11,7 +12,7 @@ import {
 import { Errors, ServerClient, Message, Models } from 'postmark';
 
 export class PostmarkEmailProvider implements IEmailProvider {
-  id = 'postmark';
+  id = EmailProviderIdEnum.Postmark;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private client: ServerClient;
 

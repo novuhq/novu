@@ -3,7 +3,7 @@ import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
-import * as cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash.clonedeep';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
@@ -13,7 +13,7 @@ import {
   isBridgeWorkflow,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
 import type { IForm, IFormStep, ITemplates } from './formTypes';
@@ -244,7 +244,7 @@ const TemplateEditorFormProvider = ({ children }) => {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
       } catch (e: any) {
-        Sentry.captureException(e);
+        captureException(e);
 
         errorMessage(e.message || 'Unexpected error occurred');
       }

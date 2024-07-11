@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -9,7 +10,7 @@ import {
 import { Resend } from 'resend';
 
 export class ResendEmailProvider implements IEmailProvider {
-  id = 'resend';
+  id = EmailProviderIdEnum.Resend;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private resendClient: Resend;
 

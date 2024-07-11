@@ -4,8 +4,8 @@ import { useForm } from '@mantine/form';
 import { useWatch } from 'react-hook-form';
 
 import { useMutation } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
-import * as capitalize from 'lodash.capitalize';
+import { captureException } from '@sentry/react';
+import capitalize from 'lodash.capitalize';
 import { useDisclosure } from '@mantine/hooks';
 import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors, inputStyles } from '@novu/design-system';
@@ -120,7 +120,7 @@ export function TestWorkflow({ trigger }) {
       successMessage('Template triggered successfully');
       openExecutionModal();
     } catch (e: any) {
-      Sentry.captureException(e);
+      captureException(e);
       errorMessage(e.message || 'Un-expected error occurred');
     }
   };

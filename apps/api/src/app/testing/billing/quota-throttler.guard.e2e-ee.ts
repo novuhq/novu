@@ -1,6 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { EvaluateEventResourceLimit } from '@novu/ee-billing';
 import { ApiServiceLevelEnum } from '@novu/shared';
 

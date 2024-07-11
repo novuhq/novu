@@ -10,12 +10,12 @@ import {
 } from '@novu/stateless';
 
 import { MailDataRequired, MailService } from '@sendgrid/mail';
-import { IEmailOptions } from '@novu/shared';
+import { EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
 
 export class SendgridEmailProvider implements IEmailProvider {
-  id = 'sendgrid';
+  id = EmailProviderIdEnum.SendGrid;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private sendgridMail: MailService;
 

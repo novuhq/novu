@@ -362,10 +362,19 @@ export class Client {
             // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
             // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             email: this.executeStepFactory(event, setResult),
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             sms: this.executeStepFactory(event, setResult),
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             inApp: this.executeStepFactory(event, setResult),
             digest: this.executeStepFactory(event, setResult),
             delay: this.executeStepFactory(event, setResult),
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             push: this.executeStepFactory(event, setResult),
             // eslint-disable-next-line multiline-comment-style
             // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]

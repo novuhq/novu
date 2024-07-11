@@ -1,7 +1,14 @@
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import { NovuOptions } from '../../novu';
-import { Appearance, AppearanceProvider, Localization, LocalizationProvider, NovuProvider } from '../context';
+import {
+  Appearance,
+  AppearanceProvider,
+  InboxStatusProvider,
+  Localization,
+  LocalizationProvider,
+  NovuProvider,
+} from '../context';
 import { Bell } from './Bell';
 import { Inbox } from './Inbox';
 
@@ -35,9 +42,11 @@ export const Renderer = (props: RendererProps) => {
     <NovuProvider options={props.options}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-          {[...props.nodes].map(([node, component]) => (
-            <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
-          ))}
+          <InboxStatusProvider>
+            {[...props.nodes].map(([node, component]) => (
+              <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
+            ))}
+          </InboxStatusProvider>
         </AppearanceProvider>
       </LocalizationProvider>
     </NovuProvider>

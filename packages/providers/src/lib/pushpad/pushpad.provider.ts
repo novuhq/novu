@@ -1,13 +1,14 @@
+import { PushProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
-import * as Pushpad from 'pushpad';
+import Pushpad from 'pushpad';
 
 export class PushpadPushProvider implements IPushProvider {
-  id = 'pushpad';
+  id = PushProviderIdEnum.Pushpad;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private pushpad: Pushpad.Pushpad;
