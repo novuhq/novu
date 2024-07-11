@@ -42,6 +42,7 @@ import {
   ExecutionLogRoute,
   CreateExecutionDetails,
   injectRepositories,
+  ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
 import packageJson from '../../../package.json';
@@ -98,6 +99,7 @@ const PROVIDERS = [
   ...DAL_MODELS,
   ExecutionLogRoute,
   CreateExecutionDetails,
+  ExecuteBridgeRequest,
   getFeatureFlag,
 ];
 
