@@ -11,6 +11,14 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
       type: 'color',
     },
+    panelSection: {
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    panelSubsection: {
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
+      type: 'color',
+    },
     popover: {
       value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B20}' },
       type: 'color',

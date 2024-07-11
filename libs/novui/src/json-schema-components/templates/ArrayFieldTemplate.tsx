@@ -1,16 +1,24 @@
-import React from 'react';
 import {
-  ArrayFieldTitleProps,
+  ArrayFieldTemplateItemType,
   ArrayFieldTemplateProps,
+  ArrayFieldTitleProps,
   getTemplate,
   getUiOptions,
-  ArrayFieldTemplateItemType,
 } from '@rjsf/utils';
 import { css, cx } from '../../../styled-system/css';
 import { Box, HStack } from '../../../styled-system/jsx';
-import { formItemClassName, FormGroupTitle } from '../shared';
+import { jsonSchemaFormSection } from '../../../styled-system/recipes';
+import {
+  calculateSectionDepth,
+  FormGroupTitle,
+  getVariantFromDepth,
+  SectionTitleToggle,
+  useExpandToggle,
+} from '../shared';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
+  const [isExpanded, toggleExpanded] = useExpandToggle();
+
   console.log('Array props', props);
 
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
@@ -22,20 +30,31 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
   const ArrayFieldItemTemplate = getTemplate('ArrayFieldItemTemplate', registry, uiOptions);
 
+  const depthVariant = getVariantFromDepth(calculateSectionDepth({ sectionId: props.idSchema.$id }));
+  const sectionClassNames = jsonSchemaFormSection({
+    depth: depthVariant,
+  });
+
   return (
-    <Box>
-      <ArrayFieldTitleTemplate
-        idSchema={idSchema}
-        title={uiOptions.title || title}
-        schema={schema}
-        uiSchema={uiSchema}
-        required={required}
-        registry={registry}
-      />
-      {items.map(({ key, ...itemProps }) => {
-        return <ArrayFieldItemTemplate key={key} {...itemProps} />;
-      })}
-      {canAdd && <AddButton onClick={onAddClick} disabled={disabled || readonly} registry={registry} />}
+    <Box className={sectionClassNames.sectionRoot}>
+      <SectionTitleToggle onToggle={toggleExpanded} isExpanded={isExpanded}>
+        <ArrayFieldTitleTemplate
+          idSchema={idSchema}
+          title={uiOptions.title || title}
+          schema={schema}
+          uiSchema={uiSchema}
+          required={required}
+          registry={registry}
+        />
+      </SectionTitleToggle>
+      {isExpanded ? (
+        <>
+          {items.map(({ key, ...itemProps }) => {
+            return <ArrayFieldItemTemplate key={key} {...itemProps} />;
+          })}
+          {canAdd && <AddButton onClick={onAddClick} disabled={disabled || readonly} registry={registry} />}
+        </>
+      ) : null}
     </Box>
   );
 }
@@ -64,7 +83,6 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
       gap="50"
       // align the buttons with the input itself rather than centered with the input and its label
       className={cx(
-        formItemClassName,
         css({
           '&:has(input[type="text"],input[type="checkbox"],textarea[type="text"]) [role="toolbar"]': {
             paddingTop: '0',

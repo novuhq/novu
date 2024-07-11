@@ -80,6 +80,15 @@ const schema: RJSFSchema = {
               type: 'string',
               title: 'Address type',
             },
+            doubleNestedArray: {
+              title: 'Double nested array',
+              description: 'An array nested twice',
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              minItems: 1,
+            },
           },
         },
       },
@@ -165,4 +174,31 @@ const MATCH_DESIGNS_SCHEMA: RJSFSchema = {
 export const MatchDesigns = Template.bind({});
 MatchDesigns.args = {
   schema: MATCH_DESIGNS_SCHEMA,
+};
+
+const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
+  type: 'array',
+  title: 'Contacts',
+  items: {
+    type: 'object',
+    title: 'Contact',
+    properties: {
+      Name: {
+        type: 'string',
+        title: 'Name',
+        default: 'John Doe',
+      },
+      Email: {
+        type: 'string',
+        title: 'Email',
+        pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+      },
+    },
+    required: ['Name', 'Email'],
+  },
+};
+
+export const ArrayDesigns = Template.bind({});
+ArrayDesigns.args = {
+  schema: ARRAY_DESIGNS_SCHEMA,
 };

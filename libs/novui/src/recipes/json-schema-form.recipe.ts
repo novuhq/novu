@@ -3,34 +3,52 @@ import { defineSlotRecipe } from '@pandacss/dev';
 export const JSON_SCHEMA_FORM_SECTION_RECIPE = defineSlotRecipe({
   className: 'jsonSchemaFormSection',
   jsx: ['JsonSchemaFormSection'],
-  slots: ['section', 'sectionTitle'],
+  slots: ['sectionRoot', 'sectionTitle'],
   base: {
-    section: {
+    sectionRoot: {
       // default color palette
       colorPalette: 'mode.cloud',
 
-      ml: '75',
-      pl: '75',
-      py: '50',
-      '&:first-of-type': { paddingTop: '0' },
-      '&:last-of-type': { paddingBottom: '0' },
-    },
-    sectionTitle: {},
+      p: '75',
+      borderRadius: '150',
+      border: 'solid',
+      borderColor: 'input.border',
+      // '&:last-of-type': { paddingBottom: '0' },
 
-    // depth of 0 or even
+      '& .form-group': {
+        marginBottom: '150',
+      },
+
+      '& .form-group:last-of-type': {
+        marginBottom: '0',
+      },
+
+      // this is quite ugly, but it adds a gap between form-group wrappers
+      '& div:has(div.form-group) + div:has(div.form-group)': {
+        marginTop: '75',
+      },
+    },
+    sectionTitle: {
+      textStyle: 'title.subsection',
+      color: 'typography.text.secondary',
+    },
   },
   variants: {
     depth: {
       even: {
-        section: {
-          backgroundColor: 'surface.popover',
+        sectionRoot: {
+          bg: 'surface.panelSection',
         },
       },
       odd: {
-        section: {
-          backgroundColor: 'surface.panel',
+        sectionRoot: {
+          bg: 'surface.panelSubsection',
         },
       },
     },
   },
+  defaultVariants: {
+    depth: 'even',
+  },
+  staticCss: [{ depth: ['*'] }],
 });

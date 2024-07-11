@@ -1,40 +1,70 @@
-import { FC } from 'react';
+import { FC, MouseEventHandler, useState } from 'react';
+import { token } from '../../styled-system/tokens';
+import { hstack } from '../../styled-system/patterns';
+import { Title } from '../components';
+import { IconExpandLess, IconExpandMore } from '../icons';
 import { CorePropsWithChildren } from '../types';
-import { css, cva } from '../../styled-system/css';
-import { Text } from '../components';
+import { cva, cx } from '../../styled-system/css';
 
-export const formItemClassName = css({
-  ml: '75',
-  pl: '75',
-  py: '50',
-  '&:first-of-type': { paddingTop: '0' },
-  '&:last-of-type': { paddingBottom: '0' },
-});
+export const FormGroupTitle: FC<CorePropsWithChildren> = ({ children, ...titleProps }) => {
+  return (
+    <Title variant="subsection" color="typography.text.secondary" {...titleProps}>
+      {children}
+    </Title>
+  );
+};
 
-export const formItemRecipe = cva({
+export const useExpandToggle = (defaultValue: boolean = true) => {
+  const [isExpanded, setExpanded] = useState<boolean>(defaultValue);
+
+  return [isExpanded, () => setExpanded((prevExpanded) => !prevExpanded)] as const;
+};
+
+type SectionTitleToggleProps = CorePropsWithChildren &
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
+    onToggle: () => void;
+    isExpanded: boolean;
+  };
+
+const toggleButtonRecipe = cva({
   base: {
-    ml: '75',
-    pl: '75',
-    py: '50',
-    '&:first-of-type': { paddingTop: '0' },
-    '&:last-of-type': { paddingBottom: '0' },
+    gap: 'margins.icons.Icon20-txt',
+    cursor: 'pointer',
+    _hover: { opacity: 'hover' },
   },
   variants: {
-    depth: {
-      even: {
-        backgroundColor: 'surface.popover',
-      },
-      odd: {
-        backgroundColor: 'surface.panel',
-      },
+    isExpanded: {
+      true: { marginBottom: '100' },
+      false: {},
     },
   },
 });
 
-export const FormGroupTitle: FC<CorePropsWithChildren> = ({ children }) => {
+export const SectionTitleToggle: FC<SectionTitleToggleProps> = ({ children, onToggle, isExpanded, ...buttonProps }) => {
+  const handleToggle: MouseEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
+    onToggle();
+  };
+
   return (
-    <Text py={'50'} fontWeight="strong">
+    <button onClick={handleToggle} className={cx(hstack(), toggleButtonRecipe({ isExpanded }))} {...buttonProps}>
+      {isExpanded ? (
+        <IconExpandLess title="expand-less-section-icon" color={token('colors.typography.text.main')} />
+      ) : (
+        <IconExpandMore title="expand-more-section-icon" />
+      )}
       {children}
-    </Text>
+    </button>
   );
 };
+
+export const JSON_SCHEMA_FORM_ID_DELIMITER = '~~~';
+
+export function calculateSectionDepth({ sectionId }: { sectionId: string }): number {
+  // FIXME: this is brittle
+  return sectionId.split(JSON_SCHEMA_FORM_ID_DELIMITER).length - 1;
+}
+
+export function getVariantFromDepth(depth: number) {
+  return depth % 2 === 0 ? 'even' : 'odd';
+}

@@ -15,7 +15,25 @@ export function MoveUpButton(props: Props) {
 export function AddButton(props: Props) {
   return (
     // marginLeft is used to nudge the button to make it align nicely with vertical borders
-    <Button {...props} variant={'transparent'} Icon={IconAdd} className={css({ marginLeft: '[1px]', my: '50' })}>
+    <Button
+      {...props}
+      variant={'transparent'}
+      size="md"
+      Icon={IconAdd}
+      className={css({
+        '&.nv-button__root--size_md': {
+          paddingBlock: '0 !important',
+          paddingTop: '0 !important',
+          paddingBottom: '0 !important',
+          paddingInline: '0 !important',
+          paddingStart: '0 !important',
+        },
+        '& span': {
+          color: 'typography.text.main',
+          WebkitTextFillColor: 'unset',
+        },
+      })}
+    >
       Add item
     </Button>
   );
