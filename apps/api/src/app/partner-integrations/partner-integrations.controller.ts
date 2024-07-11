@@ -29,6 +29,8 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 import { OrganizationRepository, EnvironmentRepository, EnvironmentEntity, MemberRepository } from '@novu/dal';
 import { ApiException } from '@novu/application-generic';
 import { ModuleRef } from '@nestjs/core';
+import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
+import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -41,10 +43,8 @@ export class PartnerIntegrationsController {
     private completeVercelIntegrationUsecase: CompleteVercelIntegration,
     private getVercelConfigurationUsecase: GetVercelConfiguration,
     private updateVercelConfigurationUsecase: UpdateVercelConfiguration,
-    private organizationRepository: OrganizationRepository,
-    private environmentRepository: EnvironmentRepository,
-    protected moduleRef: ModuleRef,
-    private memberRepository: MemberRepository
+    private processVercelWebhookUsecase: ProcessVercelWebhook,
+    protected moduleRef: ModuleRef
   ) {}
 
   @Post('/vercel')
@@ -64,62 +64,15 @@ export class PartnerIntegrationsController {
   }
 
   @Post('/vercel/webhook')
-  async webhook(@Body() body: any): Promise<any> {
-    console.log(body);
-    const url = body.payload.deployment.url;
-
-    const organizations = await this.organizationRepository.find(
-      {
-        'partnerConfigurations.teamId': body.payload.team.id,
-        'partnerConfigurations.projectIds': body.payload.project.id,
-      },
-      { 'partnerConfigurations.$': 1 }
+  async webhook(@Body() body: any) {
+    return this.processVercelWebhookUsecase.execute(
+      ProcessVercelWebhookCommand.create({
+        teamId: body.payload.team.id,
+        projectId: body.payload.project.id,
+        deploymentUrl: body.payload.deployment.url,
+        vercelEnvironment: body.payload.target,
+      })
     );
-
-    const organization = organizations[0];
-
-    console.log(organization);
-
-    let environment: EnvironmentEntity | null;
-
-    if (body.payload.target === 'production') {
-      environment = await this.environmentRepository.findOne({
-        _organizationId: organization._id,
-        name: 'Production',
-      });
-    } else {
-      environment = await this.environmentRepository.findOne({
-        _organizationId: organization._id,
-        name: 'Development',
-      });
-    }
-
-    if (!environment) {
-      console.error('Env Not Found');
-
-      return false;
-    }
-
-    try {
-      if (!require('@novu/ee-bridge-api')?.Sync) {
-        throw new ApiException('Bridge api module is not loaded');
-      }
-      const service = this.moduleRef.get(require('@novu/ee-bridge-api')?.Sync, { strict: false });
-      const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
-      console.log({ orgAdmin, url: url + '/api/novu' });
-      const data = await service.execute({
-        organizationId: environment._organizationId,
-        userId: orgAdmin?._userId,
-        environmentId: environment._id,
-        bridgeUrl: 'https://' + url + '/api/novu',
-        source: 'vercel',
-      });
-      console.log('NEW', data);
-    } catch (e) {
-      console.log(e);
-    }
-
-    return true;
   }
 
   @Get('/vercel/projects/:configurationId')
