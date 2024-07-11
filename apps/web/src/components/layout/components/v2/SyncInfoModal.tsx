@@ -13,11 +13,12 @@ import { showNotification } from '@mantine/notifications';
 export type SyncInfoModalProps = {
   isOpen: boolean;
   toggleOpen: () => void;
+  refetchOriginWorkflows: () => void;
 };
 
 const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
-export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
+export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen, refetchOriginWorkflows }) => {
   const { devSecretKey } = useStudioState();
   const [manualUrl, setTunnelManualURl] = useState('');
 
@@ -35,7 +36,9 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
 
     try {
       setLoadingSync(true);
-      const result = await api.syncBridge(manualUrl);
+      await api.syncBridge(manualUrl);
+
+      refetchOriginWorkflows();
 
       toggleOpen();
 
