@@ -13,4 +13,10 @@ export class ProcessVercelWebhookCommand extends BaseCommand {
 
   @IsDefined()
   vercelEnvironment: 'production' | 'preview';
+
+  @IsDefined()
+  signatureHeader: string;
+
+  @IsDefined()
+  body: any;
 }

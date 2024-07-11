@@ -1,21 +1,14 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
-import {
-  OrganizationRepository,
-  PartnerTypeEnum,
-  IPartnerConfiguration,
-  EnvironmentRepository,
-  MemberRepository,
-  EnvironmentEntity,
-} from '@novu/dal';
+import { OrganizationRepository, EnvironmentRepository, MemberRepository, EnvironmentEntity } from '@novu/dal';
 import { ModuleRef } from '@nestjs/core';
+import crypto from 'node:crypto';
 
 @Injectable()
 export class ProcessVercelWebhook {
   constructor(
-    private httpService: HttpService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     protected moduleRef: ModuleRef,
@@ -23,6 +16,7 @@ export class ProcessVercelWebhook {
   ) {}
 
   async execute(command: ProcessVercelWebhookCommand) {
+    this.verifySignature(command.signatureHeader, command.body);
     const url = command.deploymentUrl;
 
     const organizations = await this.organizationRepository.find(
@@ -68,5 +62,19 @@ export class ProcessVercelWebhook {
     });
 
     return true;
+  }
+
+  private verifySignature(signature: string, body: any): void {
+    const secret = process.env.VERCEL_CLIENT_SECRET;
+
+    if (!signature || !secret) {
+      throw new BadRequestException('Missing signature or secret');
+    }
+
+    const computedSignature = crypto.createHmac('sha1', secret).update(JSON.stringify(body)).digest('hex');
+
+    if (signature !== computedSignature) {
+      throw new BadRequestException('Invalid signature');
+    }
   }
 }

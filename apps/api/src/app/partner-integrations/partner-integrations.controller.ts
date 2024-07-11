@@ -9,6 +9,7 @@ import {
   Put,
   Query,
   UseInterceptors,
+  Headers,
 } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -26,8 +27,6 @@ import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { OrganizationRepository, EnvironmentRepository, EnvironmentEntity, MemberRepository } from '@novu/dal';
-import { ApiException } from '@novu/application-generic';
 import { ModuleRef } from '@nestjs/core';
 import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
 import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
@@ -64,13 +63,15 @@ export class PartnerIntegrationsController {
   }
 
   @Post('/vercel/webhook')
-  async webhook(@Body() body: any) {
+  async webhook(@Body() body: any, @Headers('x-vercel-signature') signatureHeader: string) {
     return this.processVercelWebhookUsecase.execute(
       ProcessVercelWebhookCommand.create({
+        body,
         teamId: body.payload.team.id,
         projectId: body.payload.project.id,
         deploymentUrl: body.payload.deployment.url,
         vercelEnvironment: body.payload.target,
+        signatureHeader,
       })
     );
   }
