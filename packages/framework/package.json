@@ -124,7 +124,6 @@
   "devDependencies": {
     "@sveltejs/kit": "^1.27.3",
     "@types/express": "^4.17.13",
-    "@types/json-schema": "^7.0.15",
     "@types/node": "^20.14.10",
     "@vercel/node": "^2.15.9",
     "express": "^4.19.2",
