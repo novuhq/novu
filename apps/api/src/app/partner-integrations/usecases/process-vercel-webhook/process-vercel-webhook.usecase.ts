@@ -17,6 +17,7 @@ export class ProcessVercelWebhook {
 
   async execute(command: ProcessVercelWebhookCommand) {
     this.verifySignature(command.signatureHeader, command.body);
+
     const url = command.deploymentUrl;
 
     const organizations = await this.organizationRepository.find(
@@ -53,7 +54,7 @@ export class ProcessVercelWebhook {
     const service = this.moduleRef.get(require('@novu/ee-bridge-api')?.Sync, { strict: false });
     const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
 
-    const data = await service.execute({
+    await service.execute({
       organizationId: environment._organizationId,
       userId: orgAdmin?._userId,
       environmentId: environment._id,

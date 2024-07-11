@@ -47,6 +47,7 @@ export class PartnerIntegrationsController {
   ) {}
 
   @Post('/vercel')
+  @UserAuthentication()
   async setupVercelIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: SetVercelConfigurationRequestDto
