@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { ControlVariablesRepository } from '@novu/dal';
+import { ControlVariablesRepository, NotificationTemplateEntity } from '@novu/dal';
 import {
   ControlVariablesLevelEnum,
   ExecutionDetailsSourceEnum,
@@ -40,12 +40,14 @@ export class ExecuteBridgeJob {
     private executeBridgeRequest: ExecuteBridgeRequest
   ) {}
 
-  async execute(command: ExecuteBridgeJobCommand) {
+  async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
     const stepId = command.job.step.stepId || command.job.step.uuid;
 
-    const workflow =
-      (command.job.step as any).bridgeUrl ??
-      (await this.notificationTemplateRepository.findOne(
+    const isStateful = !command.job.step.bridgeUrl;
+
+    let workflow: NotificationTemplateEntity | null = null;
+    if (isStateful) {
+      workflow = await this.notificationTemplateRepository.findOne(
         {
           _id: command.job._templateId,
           _environmentId: command.environmentId,
@@ -54,9 +56,10 @@ export class ExecuteBridgeJob {
           },
         },
         '_id triggers type'
-      ));
+      );
+    }
 
-    if (!workflow && !(command.job.step as any).bridgeUrl) {
+    if (!workflow && isStateful) {
       return null;
     }
 
@@ -76,18 +79,18 @@ export class ExecuteBridgeJob {
       throw new Error(`Environment id ${command.environmentId} is not found`);
     }
 
-    if (!environment?.echo?.url && !(command.job.step as any).bridgeUrl) {
+    if (!environment?.echo?.url && isStateful) {
       throw new Error('Bridge URL is not set for environment id: ' + environment._id);
     }
 
-    const { subscriber, payload: originalPayload, step, ...variables } = command.variables || {};
+    const { subscriber, payload: originalPayload } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
     const state = await this.generateState(payload, command);
 
-    const variablesStores = command.job.step.bridgeUrl
-      ? command.job.step.controlVariables
-      : await this.findControlVariables(command, workflow);
+    const variablesStores = isStateful
+      ? await this.findControlVariables(command, workflow as NotificationTemplateEntity)
+      : command.job.step.controlVariables;
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
       /** @deprecated */
@@ -96,10 +99,12 @@ export class ExecuteBridgeJob {
       inputs: variablesStores ?? {},
       controls: variablesStores ?? {},
       state,
-      subscriber,
+      subscriber: subscriber ?? {},
     };
 
-    const workflowId = command.job.step.bridgeUrl ? command.identifier : workflow?.triggers[0].identifier;
+    const workflowId = isStateful
+      ? (workflow as NotificationTemplateEntity).triggers[0].identifier
+      : command.identifier;
 
     const bridgeResponse = await this.sendBridgeRequest({
       bridgeUrl: command.job.step.bridgeUrl ?? environment.echo.url,
@@ -127,7 +132,7 @@ export class ExecuteBridgeJob {
     return bridgeResponse;
   }
 
-  private async findControlVariables(command: ExecuteBridgeJobCommand, workflow) {
+  private async findControlVariables(command: ExecuteBridgeJobCommand, workflow: NotificationTemplateEntity) {
     const controls = await this.controlVariablesRepository.findOne({
       _organizationId: command.organizationId,
       _workflowId: workflow._id,
