@@ -8,7 +8,9 @@ export function BridgeMenuItems() {
 
   return (
     <>
-      <BridgeUpdateModalTrigger />
+      <When truthy={!isLocalStudio}>
+        <BridgeUpdateModalTrigger />
+      </When>
       <When truthy={isLocalStudio}>
         <SyncInfoModalTrigger />
       </When>
