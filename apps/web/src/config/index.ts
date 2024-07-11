@@ -4,6 +4,15 @@ function isBrowser() {
   return typeof window !== 'undefined';
 }
 
+function autodetectApiRoot() {
+  const origin = window.location.origin;
+  const matcher = new RegExp(/web|dashboard/);
+
+  const isValidTargetForReplace = !origin.includes('localhost') && matcher.test(origin);
+
+  return isValidTargetForReplace ? origin.replace(matcher, 'api') : '';
+}
+
 declare global {
   interface Window {
     _env_: any;
@@ -14,8 +23,8 @@ const isPlaywright = isBrowser() && (window as any).isPlaywright;
 
 export const API_ROOT =
   window._env_.REACT_APP_API_URL || isPlaywright
-    ? window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:1336'
-    : window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
+    ? window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || autodetectApiRoot() || 'http://localhost:1336'
+    : window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || autodetectApiRoot() || 'http://localhost:3000';
 
 export const WS_URL = isPlaywright
   ? window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://localhost:1340'
@@ -25,7 +34,8 @@ export const SENTRY_DSN = window._env_.REACT_APP_SENTRY_DSN || process.env.REACT
 
 export const ENV = window._env_.REACT_APP_ENVIRONMENT || process.env.REACT_APP_ENVIRONMENT;
 
-const blueprintApiUrlByEnv = ENV === 'production' || ENV === 'prod' ? 'https://api.novu.co' : 'https://dev.api.novu.co';
+const blueprintApiUrlByEnv =
+  ENV === 'production' || ENV === 'prod' ? 'https://api.novu.co' : 'https://api.novu-staging.co';
 
 export const BLUEPRINTS_API_URL =
   window._env_.REACT_APP_BLUEPRINTS_API_URL || isPlaywright

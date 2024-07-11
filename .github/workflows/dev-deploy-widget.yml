@@ -29,7 +29,7 @@ jobs:
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
       environment: Development
-      react_app_api_url: https://dev.api.novu.co
+      react_app_api_url: https://api.novu-staging.co
       react_app_ws_url: https://dev.ws.novu.co
       react_app_webhook_url: https://dev.webhook.novu.co
       react_app_sentry_dsn: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
