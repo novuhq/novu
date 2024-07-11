@@ -43,6 +43,10 @@ export const appearanceKeys = [
   'settings__button',
   'inboxHeader',
 
+  //Inbox
+  'inbox__popoverTrigger',
+  'inbox__popoverContent',
+
   //Inbox status
   'inboxStatus__title',
   'inboxStatus__dropdownTrigger',

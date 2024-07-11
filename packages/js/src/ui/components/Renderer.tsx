@@ -49,7 +49,7 @@ export const Renderer = (props: RendererProps) => {
 
     const styleEl = document.createElement('style');
     styleEl.id = id;
-    document.head.appendChild(styleEl);
+    document.head.insertBefore(styleEl, document.head.firstChild);
     styleEl.innerHTML = props.defaultCss;
 
     onCleanup(() => {

@@ -1,28 +1,21 @@
-import { autoUpdate, flip, offset, shift } from '@floating-ui/dom';
-import { useFloating } from 'solid-floating-ui';
-import { onCleanup, onMount, ParentComponent, Show } from 'solid-js';
+import { createEffect, JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { useAppearance } from '../../context';
-import { usePopover } from './Popover';
+import { AppearanceKey, useAppearance } from '../../context';
+import { cn, useStyle } from '../../helpers';
+import { usePopover } from './PopoverRoot';
 
-export const PopoverContent: ParentComponent<{ classes: string }> = (props) => {
-  const { setContentRef, opened, targetRef, onClose, contentRef, fallbackPlacements, placement } = usePopover();
+export const popoverContentVariants = () =>
+  'nt-flex-col nt-gap-4 nt-h-[600px] nt-min-w-[400px] nt-rounded-xl nt-bg-background nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden';
+
+type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+export const PopoverContent = (props: PopoverContentProps) => {
+  const { open, onClose, setFloating, floating, floatingStyles } = usePopover();
   const { id } = useAppearance();
-
-  const position = useFloating(targetRef, contentRef, {
-    placement: placement || 'bottom-end',
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(10),
-      flip({
-        fallbackPlacements,
-      }),
-      shift(),
-    ],
-  });
+  const style = useStyle();
+  const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
 
   const handleClickOutside = (e: MouseEvent) => {
-    if (contentRef()?.contains(e.target as Node)) return;
+    if (floating()?.contains(e.target as Node)) return;
     onClose();
   };
 
@@ -43,29 +36,21 @@ export const PopoverContent: ParentComponent<{ classes: string }> = (props) => {
   });
 
   return (
-    <Show when={opened() && targetRef()}>
-      <Portal mount={targetRef() as HTMLElement}>
+    <Show when={open()}>
+      <Portal>
         <div
-          ref={setContentRef}
-          // eslint-disable-next-line local-rules/no-class-without-style
-          class={`${props.classes} + ${id}`}
-          style={{
-            position: position.strategy,
-            top: `${position.y ?? 0}px`,
-            left: `${position.x ?? 0}px`,
-          }}
-          data-open={opened()}
-        >
-          {props.children}
-        </div>
+          ref={setFloating}
+          //id is necessary here because this is a portal
+          class={
+            local.class
+              ? cn(local.class, id)
+              : style(local.appearanceKey || 'popoverContent', cn(popoverContentVariants(), id))
+          }
+          style={floatingStyles()}
+          data-open={open()}
+          {...rest}
+        />
       </Portal>
     </Show>
   );
 };
-
-export const popoverContentClasses = () =>
-  `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0
-nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999] nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden`;
-
-export const dropdownContentClasses = () =>
-  'nt-w-max nt-rounded-lg nt-shadow-[0_5px_20px_0_rgba(0,0,0,0.20)] nt-z-10 nt-bg-background nt-py-2';

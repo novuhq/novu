@@ -4,7 +4,7 @@ import { cn, useStyle } from '../helpers';
 import { Bell } from './Bell';
 import { Footer } from './Footer';
 import { Header } from './Header';
-import { Popover, popoverContentClasses, popoverTriggerClasses } from './Popover';
+import { Popover } from './Popover';
 
 type InboxProps = {
   open?: boolean;
@@ -18,17 +18,17 @@ export const Inbox = (props: InboxProps) => {
 
   return (
     <div class={(style('root'), cn('novu', id))}>
-      <Popover open={props?.open}>
-        <Popover.Trigger classes={style('popoverTrigger', popoverTriggerClasses())}>
+      <Popover.Root open={props?.open}>
+        <Popover.Trigger appearanceKey="inbox__popoverTrigger">
           <Bell>{props.renderBell}</Bell>
         </Popover.Trigger>
-        <Popover.Content classes={style('popoverContent', popoverContentClasses())}>
+        <Popover.Content appearanceKey="inbox__popoverContent">
           <Header />
           {/* notifications will go here */}
           {t('inbox.title')}
           <Footer />
         </Popover.Content>
-      </Popover>
+      </Popover.Root>
     </div>
   );
 };
