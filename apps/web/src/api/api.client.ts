@@ -88,11 +88,7 @@ function getHeaders() {
   // TODO: change the way we get the clerk token
   const token = getToken();
 
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 // WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.
