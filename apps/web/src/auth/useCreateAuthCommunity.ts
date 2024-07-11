@@ -5,12 +5,14 @@ import { HttpStatusCode } from 'axios';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api } from '../api/index';
+import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
 import { useSegment } from '../components/providers/SegmentProvider';
-import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../constants/routes';
 import { LOCAL_STORAGE_AUTH_TOKEN_KEY } from './auth.const';
 import { getToken } from './getToken';
 import { getTokenClaims } from './getTokenClaims';
+
+// TODO: Add a novu prefix to the local storage key
 
 export interface IUserWithContext extends IUserEntity {
   organizationId?: string;
@@ -44,7 +46,7 @@ function inIframe() {
 /**
  * TODO: this function should be decomposed into smaller, more focused pieces of functionality.
  */
-export function useCreateAuthContext() {
+export function useCreateAuthCommunity() {
   const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();

@@ -1,4 +1,4 @@
 // TODO: eventually remove this redirection
-import { useAuthContext } from '../auth/AuthContextProvider';
+import { useAuthContext } from '../components/providers/AuthProvider';
 
 export const useAuth = useAuthContext;

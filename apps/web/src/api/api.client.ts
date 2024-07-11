@@ -2,6 +2,7 @@ import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
 
 import { API_ROOT } from '../config';
+import { getToken } from '../auth/getToken';
 
 interface IOptions {
   absoluteUrl: boolean;
@@ -84,13 +85,10 @@ function buildUrl(url: string, absoluteUrl: boolean) {
 }
 
 function getHeaders() {
-  const token = localStorage.getItem('auth_token');
+  // TODO: change the way we get the clerk token
+  const token = getToken();
 
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 // WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.
