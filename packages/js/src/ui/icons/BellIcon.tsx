@@ -10,7 +10,7 @@ export function BellIcon() {
       height="20"
       fill="none"
       viewBox="0 0 20 20"
-      class={style('bell')}
+      class={style('bellIcon')}
     >
       <path
         fill="currentColor"

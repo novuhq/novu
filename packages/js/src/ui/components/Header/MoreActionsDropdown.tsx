@@ -10,12 +10,10 @@ export const MoreActionsDropdown = () => {
 
   return (
     <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
-      <Popover.Trigger
-        classes={style(['dropdownTrigger', 'moreActionsDropdownTrigger'], moreActionsDropdownTriggerClasses())}
-      >
+      <Popover.Trigger classes={style('moreActions__dropdownTrigger', moreActionsDropdownTriggerClasses())}>
         <DotsMenu />
       </Popover.Trigger>
-      <Popover.Content classes={style(['dropdownContent', 'moreActionsDropdownContent'], dropdownContentClasses())}>
+      <Popover.Content classes={style('moreActions__dropdownContent', dropdownContentClasses())}>
         <MoreActionsOptions />
       </Popover.Content>
     </Popover>
