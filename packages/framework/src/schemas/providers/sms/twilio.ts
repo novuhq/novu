@@ -57,7 +57,7 @@ export const twilioOutputSchema = {
       type: 'string',
       nullable: true,
       description:
-        'The amount billed for the message in the currency specified by `price_unit`. The `price` is populated after the message has been sent/received, and may not be immediately availalble. View the [Pricing page](https://www.twilio.com/en-us/pricing) for more details.',
+        'The amount billed for the message in the currency specified by `price_unit`. The `price` is populated after the message has been sent/received, and may not be immediately available. View the [Pricing page](https://www.twilio.com/en-us/pricing) for more details.',
     },
     error_message: {
       type: 'string',

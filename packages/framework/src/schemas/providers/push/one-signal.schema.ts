@@ -370,7 +370,7 @@ export const oneSignalOutputSchema = {
                     },
                     pt: {
                       type: 'string',
-                      description: 'Text in Portugese.',
+                      description: 'Text in Portuguese.',
                     },
                     pa: {
                       type: 'string',
@@ -556,7 +556,7 @@ export const oneSignalOutputSchema = {
                     },
                     pt: {
                       type: 'string',
-                      description: 'Text in Portugese.',
+                      description: 'Text in Portuguese.',
                     },
                     pa: {
                       type: 'string',
@@ -742,7 +742,7 @@ export const oneSignalOutputSchema = {
                     },
                     pt: {
                       type: 'string',
-                      description: 'Text in Portugese.',
+                      description: 'Text in Portuguese.',
                     },
                     pa: {
                       type: 'string',
