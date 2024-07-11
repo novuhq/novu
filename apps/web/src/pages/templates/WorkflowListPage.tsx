@@ -255,7 +255,7 @@ function WorkflowListPage() {
   };
 
   if ((isV2Enabled && shouldShowEmptyState) || (isV2Enabled && areWorkflowsLoading && isOnboarding)) {
-    return <GetStartedPageV2 />;
+    return <GetStartedPageV2 location="workflows" />;
   }
 
   return (

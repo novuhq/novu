@@ -61,6 +61,7 @@ import {
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 import { novuOnboardedCookie } from './utils/cookies';
+import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -75,6 +76,9 @@ export const AppRoutes = () => {
         <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
       </Route>
+
+      <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
+
       <Route element={<PrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
