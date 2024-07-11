@@ -674,7 +674,9 @@
     "EMUI",
     "notif",
     "suported",
-    "subresource"
+    "subresource",
+    "htmlonly",
+    "apidevtools"
   ],
   "flagWords": [],
   "patterns": [
