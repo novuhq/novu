@@ -16,7 +16,6 @@ export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const sectionClassNames = jsonSchemaFormSection({
     depth: depthVariant,
   });
-  console.log('Object props', { ...props, depthVariant });
 
   return (
     <Box className={sectionClassNames.sectionRoot}>

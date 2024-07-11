@@ -21,9 +21,9 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => 
 
   return (
     <form onSubmit={onSubmit} className={css({ colorPalette })}>
-      <HStack justifyContent="space-between">
+      <HStack justifyContent="space-between" mb="50">
         <Title variant="subsection">Step controls</Title>
-        <Button type="submit" Icon={IconOutlineSave}>
+        <Button type="submit" size="sm" Icon={IconOutlineSave}>
           Save
         </Button>
       </HStack>
@@ -185,8 +185,18 @@ const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
     title: 'Phone numbers',
     minItems: 2,
     items: {
-      type: 'string',
-      title: 'Phone number',
+      type: 'object',
+      title: 'Digits',
+      properties: {
+        strokes: {
+          title: 'Strokes',
+          type: 'array',
+          minItems: 2,
+          items: {
+            type: 'integer',
+          },
+        },
+      },
     },
   },
 };

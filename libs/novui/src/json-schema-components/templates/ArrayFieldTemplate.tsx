@@ -5,9 +5,9 @@ import {
   getTemplate,
   getUiOptions,
 } from '@rjsf/utils';
-import { css, cx } from '../../../styled-system/css';
+import { css } from '../../../styled-system/css';
 import { Box, HStack } from '../../../styled-system/jsx';
-import { jsonSchemaFormSection } from '../../../styled-system/recipes';
+import { jsonSchemaFormArrayToolbar, jsonSchemaFormSection } from '../../../styled-system/recipes';
 import {
   calculateSectionDepth,
   FormGroupTitle,
@@ -18,8 +18,6 @@ import {
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const [isExpanded, toggleExpanded] = useExpandToggle();
-
-  console.log('Array props', props);
 
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
     props;
@@ -52,7 +50,14 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
           {items.map(({ key, ...itemProps }) => {
             return <ArrayFieldItemTemplate key={key} {...itemProps} />;
           })}
-          {canAdd && <AddButton onClick={onAddClick} disabled={disabled || readonly} registry={registry} />}
+          {canAdd && (
+            <AddButton
+              onClick={onAddClick}
+              disabled={disabled || readonly}
+              registry={registry}
+              className={css({ mt: '150' })}
+            />
+          )}
         </>
       ) : null}
     </Box>
@@ -75,24 +80,18 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
     onReorderClick,
     readonly,
     registry,
+    schema,
   } = props;
   const { MoveDownButton, MoveUpButton, RemoveButton } = registry.templates.ButtonTemplates;
 
+  const toolbarClassNames = jsonSchemaFormArrayToolbar({
+    itemType: typeof schema.type === 'object' ? schema.type[0] : schema.type,
+  });
+
   return (
-    <HStack
-      gap="50"
-      // align the buttons with the input itself rather than centered with the input and its label
-      className={cx(
-        css({
-          '&:has(input[type="text"],input[type="checkbox"],textarea[type="text"]) [role="toolbar"]': {
-            paddingTop: '0',
-            alignSelf: 'flex-start',
-          },
-        })
-      )}
-    >
-      <div className={css({ width: 'full' })}>{children}</div>
-      <HStack role="toolbar" gap="25" py="25">
+    <div className={toolbarClassNames.toolbarWrapper}>
+      {children}
+      <HStack role="toolbar" className={toolbarClassNames.toolbar}>
         {(hasMoveUp || hasMoveDown) && (
           <MoveUpButton
             disabled={disabled || readonly || !hasMoveUp}
@@ -111,6 +110,6 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
           <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
         )}
       </HStack>
-    </HStack>
+    </div>
   );
 }
