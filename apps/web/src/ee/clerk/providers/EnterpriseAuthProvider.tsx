@@ -8,6 +8,7 @@ export const EnterpriseAuthContext = createContext<ReturnType<typeof useCreateAu
   currentUser: undefined,
   organizations: [],
   currentOrganization: undefined,
+  session: undefined,
   logout: () => {},
   login: (...args: any[]) => {},
   redirectToLogin: () => {},

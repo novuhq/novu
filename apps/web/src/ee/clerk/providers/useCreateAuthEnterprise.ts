@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { setUser as setSentryUser, configureScope } from '@sentry/react';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
-import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import { useAuth, useUser, useOrganization, useOrganizationList, useSession } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
@@ -36,6 +36,7 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
 
 export function useCreateAuthEnterprise() {
   const { signOut, orgId } = useAuth();
+  const { session } = useSession();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
   const { setActive, isLoaded: isOrgListLoaded } = useOrganizationList();
@@ -194,6 +195,7 @@ export function useCreateAuthEnterprise() {
     // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
     organizations: isOrganizationLoaded && organization ? [organization] : undefined,
     currentOrganization: organization,
+    session,
     logout,
     login: (...args: any[]) => {},
     // TODO: implement proper environment switch

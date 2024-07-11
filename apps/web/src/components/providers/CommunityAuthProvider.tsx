@@ -8,6 +8,7 @@ export const CommunityAuthContext = createContext<ReturnType<typeof useCreateAut
   currentUser: undefined,
   organizations: [],
   currentOrganization: undefined,
+  session: undefined,
   login: () => Promise.resolve(),
   logout: () => {},
   environmentId: undefined,

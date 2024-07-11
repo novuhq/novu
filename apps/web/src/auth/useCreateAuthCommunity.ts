@@ -224,6 +224,7 @@ export function useCreateAuthCommunity() {
     currentUser: user,
     organizations,
     currentOrganization,
+    session: undefined,
     login,
     logout,
     environmentId,

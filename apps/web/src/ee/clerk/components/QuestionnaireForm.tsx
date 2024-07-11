@@ -45,7 +45,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<UpdateExternalOrganizationDto>({});
   const navigate = useNavigate();
-  const { currentUser, currentOrganization, environmentId } = useAuth();
+  const { currentUser, currentOrganization, environmentId, session } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
@@ -71,6 +71,8 @@ export function QuestionnaireForm() {
       productUseCases: data.productUseCases,
     };
     await updateOrganizationMutation(updateClerkOrgDto);
+    // get updated organization data in session
+    await session?.reload();
   }
 
   const onUpdateOrganization = async (data: UpdateExternalOrganizationDto) => {
