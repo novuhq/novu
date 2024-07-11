@@ -1,5 +1,6 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
+  ignores: ['./devtool.ts'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,

@@ -15,12 +15,32 @@ const sound = {
 export const apnsOutputSchema = {
   type: 'object',
   properties: {
-    topic: { type: 'string' },
-    id: { type: 'string' },
-    expiry: { type: 'number' },
-    priority: { type: 'number' },
+    topic: { type: 'string', description: `The destination topic for the notification.` },
+    id: {
+      type: 'string',
+      description: `A UUID to identify the notification with APNS. If an id is not supplied, APNS will generate one automatically. If an error occurs the response will contain the id. This property populates the apns-id header.`,
+    },
+    expiry: {
+      type: 'number',
+      description: `A UNIX timestamp when the notification should expire. If the notification cannot be delivered to the device, APNS will retry until it expires. An expiry of 0 indicates that the notification expires immediately, therefore no retries will be attempted.`,
+    },
+    priority: {
+      type: 'number',
+      description: `Provide one of the following values:
+
+10 - The push notification is sent to the device immediately. (Default)
+The push notification must trigger an alert, sound, or badge on the device. It is an error to use this priority for a push notification that contains only the content-available key.
+
+5 - The push message is sent at a time that conserves power on the device receiving it.`,
+    },
     collapseId: { type: 'string' },
-    pushType: { type: 'string', enum: ['background', 'alert', 'voip'] },
+    pushType: {
+      type: 'string',
+      enum: ['background', 'alert', 'voip'],
+      description: `The type of the notification. The value of this header is alert or background. Specify alert when the delivery of your notification displays an alert, plays a sound, or badges your app's icon. Specify background for silent notifications that do not interact with the user.
+
+The value of this header must accurately reflect the contents of your notification's payload. If there is a mismatch, or if the header is missing on required systems, APNs may delay the delivery of the notification or drop it altogether.`,
+    },
     threadId: { type: 'string' },
     payload: { type: 'object', additionalProperties: true },
     aps: {

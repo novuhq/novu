@@ -1,9 +1,10 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic.schema';
+import { twilioProviderSchemas } from './twilio';
 
 export const smsProviderSchemas = {
-  [SmsProviderIdEnum.Twilio]: genericProviderSchemas,
+  [SmsProviderIdEnum.Twilio]: twilioProviderSchemas,
   [SmsProviderIdEnum.Termii]: genericProviderSchemas,
   [SmsProviderIdEnum.Telnyx]: genericProviderSchemas,
   [SmsProviderIdEnum.SNS]: genericProviderSchemas,
