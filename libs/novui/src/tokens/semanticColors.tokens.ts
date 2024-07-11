@@ -12,7 +12,7 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
     panelSection: {
-      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B20}' },
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
       type: 'color',
     },
     panelSubsection: {
