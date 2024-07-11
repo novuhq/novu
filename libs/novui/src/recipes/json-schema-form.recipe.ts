@@ -13,9 +13,9 @@ export const JSON_SCHEMA_FORM_SECTION_RECIPE = defineSlotRecipe({
       borderRadius: '150',
       border: 'solid',
       borderColor: 'input.border',
-      // '&:last-of-type': { paddingBottom: '0' },
 
       '& .form-group': {
+        flex: 'auto',
         marginBottom: '150',
       },
 
