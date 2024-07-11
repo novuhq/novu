@@ -1,7 +1,6 @@
-import { HttpClient, ApiOptions } from '@novu/client';
-
+import { ApiOptions, HttpClient } from '@novu/client';
 import type { Session } from '../types';
-import { ButtonTypeEnum, InboxNotification } from './types';
+import type { ButtonTypeEnum, InboxNotification } from './types';
 
 export type InboxServiceOptions = ApiOptions;
 
@@ -57,22 +56,6 @@ export class InboxService {
     return response;
   }
 
-  async completeAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/complete`, {
-      actionType,
-    });
-
-    return response;
-  }
-
-  async revertAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/revert`, {
-      actionType,
-    });
-
-    return response;
-  }
-
   async readAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-read`, { tags });
 
@@ -85,8 +68,24 @@ export class InboxService {
     return response;
   }
 
-  async readArchived({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
+  async readArchivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-read-archived`, { tags });
+
+    return response;
+  }
+
+  async completeAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
+    const response = await this.#httpClient.patch(`/notifications/${notificationId}/complete`, {
+      actionType,
+    });
+
+    return response;
+  }
+
+  async revertAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
+    const response = await this.#httpClient.patch(`/notifications/${notificationId}/revert`, {
+      actionType,
+    });
 
     return response;
   }
