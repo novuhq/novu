@@ -1,7 +1,7 @@
-import { JSX, onCleanup } from 'solid-js';
-import { useStyle } from '../../helpers';
+import { JSX } from 'solid-js';
 import { ChannelType } from '../../../types';
 import { useNovu } from '../../context';
+import { useStyle } from '../../helpers';
 import { Chat, Email, InApp, Push, Sms } from '../../icons';
 import { Switch } from './Switch';
 
