@@ -34,8 +34,8 @@ export const LocalStudioSidebarContent: WithLoadingSkeleton<FC<LocalStudioSideba
     <>
       <NavMenu variant="root">
         <LocalStudioSidebarOrganizationDisplay
-          title={organizationName || 'Your organization '}
-          subtitle="Local studio"
+          title={'Local Studio'}
+          subtitle={organizationName || 'Your organization '}
         />
         <NavMenuSection>
           <button

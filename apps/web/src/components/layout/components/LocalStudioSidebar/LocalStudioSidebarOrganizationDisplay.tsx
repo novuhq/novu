@@ -1,8 +1,9 @@
 import { LocalizedMessage, Text } from '@novu/novui';
 import { Flex, Stack } from '@novu/novui/jsx';
 import { FC } from 'react';
-import { COMPANY_LOGO_PATH } from '../../../../constants/assets';
 import { css } from '@novu/novui/css';
+import { Popover, Tooltip, useColorScheme } from '@novu/design-system';
+import { useDisclosure } from '@mantine/hooks';
 
 type LocalStudioSidebarOrganizationDisplayProps = {
   title: LocalizedMessage;
@@ -13,22 +14,34 @@ export const LocalStudioSidebarOrganizationDisplay: FC<LocalStudioSidebarOrganiz
   title,
   subtitle,
 }) => {
+  const { colorScheme } = useColorScheme();
+  const [opened, { close, open }] = useDisclosure(false);
+
   return (
-    <Flex gap="50" py="75" px="100">
-      {/** TODO:  use grey logo */}
-      <img
-        // TODO: use actual organization photo
-        src={COMPANY_LOGO_PATH}
-        className={css({
-          w: '125',
-          h: '125',
-          borderRadius: '100',
-        })}
-      />
-      <Stack gap="25">
-        <Text variant="strong">{title}</Text>
-        <Text variant={'secondary'}>{subtitle}</Text>
-      </Stack>
-    </Flex>
+    <Popover
+      opened={opened}
+      position="bottom"
+      offset={0}
+      withinPortal
+      title="Novu Local Studio"
+      target={
+        <Flex gap="50" py="75" px="100" onMouseEnter={open} onMouseLeave={close}>
+          <img
+            src={`/static/images/standalone-${colorScheme}-theme.svg`}
+            className={css({
+              w: '37px',
+              h: '37px',
+              borderRadius: '100',
+            })}
+          />
+          <Stack gap="25">
+            <Text variant="strong">{title}</Text>
+            <Text variant={'secondary'}>{subtitle}</Text>
+          </Stack>
+        </Flex>
+      }
+      // eslint-disable-next-line max-len
+      description="A stateless version of the Novu Dashboard. It's connected to your local application and used for development and debugging purposes."
+    />
   );
 };
