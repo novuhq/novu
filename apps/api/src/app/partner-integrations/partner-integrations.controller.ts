@@ -78,11 +78,11 @@ export class PartnerIntegrationsController {
 
     const organization = organizations[0];
 
+    console.log(organization);
+
     let environment: EnvironmentEntity | null;
 
     if (body.payload.target === 'production') {
-      const configuration = organization.partnerConfigurations?.[0];
-
       environment = await this.environmentRepository.findOne({
         _organizationId: organization._id,
         name: 'Production',
@@ -100,20 +100,24 @@ export class PartnerIntegrationsController {
       return false;
     }
 
-    if (!require('@novu/ee-bridge-api')?.Sync) {
-      throw new ApiException('Bridge api module is not loaded');
+    try {
+      if (!require('@novu/ee-bridge-api')?.Sync) {
+        throw new ApiException('Bridge api module is not loaded');
+      }
+      const service = this.moduleRef.get(require('@novu/ee-bridge-api')?.Sync, { strict: false });
+      const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
+      console.log({ orgAdmin, url: url + '/api/novu' });
+      const data = await service.execute({
+        organizationId: environment._organizationId,
+        userId: orgAdmin?._userId,
+        environmentId: environment._id,
+        bridgeUrl: 'https://' + url + '/api/novu',
+        source: 'vercel',
+      });
+      console.log('NEW', data);
+    } catch (e) {
+      console.log(e);
     }
-    const service = this.moduleRef.get(require('@novu/ee-bridge-api')?.Sync, { strict: false });
-    const data2 = await this.organizationRepository.findUserActiveOrganizations();
-
-    const data = await service.execute({
-      organizationId: environment._organizationId,
-      userId: organization._id,
-      environmentId: environment._id,
-      bridgeUrl: url,
-      source: 'vercel',
-    });
-    console.log('NEW');
 
     return true;
   }

@@ -20,7 +20,8 @@
       "dependsOn": [
         "SHARED",
         "APPLICATION GENERIC",
-        "DAL"
+        "DAL",
+        "EE - BRIDGE API"
       ]
     },
     {
@@ -165,6 +166,15 @@
       "isBackground": true,
       "label": "EE - BRIDGE WORKER",
       "path": "/enterprise/packages/bridge-worker",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED", "EE - DAL"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - BRIDGE API",
+      "path": "/enterprise/packages/bridge-api",
       "problemMatcher": "$tsc-watch",
       "dependsOn": ["SHARED", "EE - DAL"]
     },
