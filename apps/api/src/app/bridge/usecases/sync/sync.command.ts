@@ -26,7 +26,7 @@ interface IWorkflowDefineOptions {
   notificationGroupId?: string;
 }
 
-class WorkflowDefineOptions implements IWorkflowDefineOptions {
+export class WorkflowDefineOptions implements IWorkflowDefineOptions {
   @IsString()
   version: `${number}.${number}.${number}`;
 
