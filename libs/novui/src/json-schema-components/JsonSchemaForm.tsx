@@ -9,7 +9,7 @@ import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } f
 import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templates/IconButton';
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
 import { CheckboxWidget, InputWidget, SelectWidget, TextareaWidget } from './widgets';
-import { JSON_SCHEMA_FORM_ID_DELIMITER } from './shared';
+import { JSON_SCHEMA_FORM_ID_DELIMITER } from './utils';
 
 const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,

@@ -6,15 +6,11 @@ import {
   getUiOptions,
 } from '@rjsf/utils';
 import { css } from '../../../styled-system/css';
-import { Box, HStack } from '../../../styled-system/jsx';
+import { Box } from '../../../styled-system/jsx';
 import { jsonSchemaFormArrayToolbar, jsonSchemaFormSection } from '../../../styled-system/recipes';
-import {
-  calculateSectionDepth,
-  FormGroupTitle,
-  getVariantFromDepth,
-  SectionTitleToggle,
-  useExpandToggle,
-} from '../shared';
+import { FormGroupTitle, SectionTitleToggle } from '../shared';
+import { calculateSectionDepth, getVariantFromDepth } from '../utils';
+import { useExpandToggle } from '../useExpandToggle';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const [isExpanded, toggleExpanded] = useExpandToggle();

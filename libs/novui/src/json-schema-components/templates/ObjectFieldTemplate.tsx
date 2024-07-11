@@ -1,13 +1,9 @@
 import { ObjectFieldTemplateProps } from '@rjsf/utils';
 import { Box } from '../../../styled-system/jsx';
 import { jsonSchemaFormSection } from '../../../styled-system/recipes';
-import {
-  calculateSectionDepth,
-  FormGroupTitle,
-  getVariantFromDepth,
-  SectionTitleToggle,
-  useExpandToggle,
-} from '../shared';
+import { FormGroupTitle, SectionTitleToggle } from '../shared';
+import { calculateSectionDepth, getVariantFromDepth } from '../utils';
+import { useExpandToggle } from '../useExpandToggle';
 
 export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const [isExpanded, toggleExpanded] = useExpandToggle();

@@ -1,5 +1,6 @@
-import { button, type ButtonVariant } from '../../../styled-system/recipes';
-import { IconSize, IconType } from '../../icons';
+import { ButtonProps as ExternalButtonProps, ButtonVariant as ExternalButtonVariant } from '@mantine/core';
+import { type ButtonVariant } from '../../../styled-system/recipes';
+import { IconSize } from '../../icons';
 
 export const BUTTON_SIZE_TO_ICON_SIZE: Record<ButtonVariant['size'], IconSize> = {
   xs: '16',

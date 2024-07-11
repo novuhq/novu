@@ -1,4 +1,4 @@
-import { FC, MouseEventHandler, useState } from 'react';
+import { FC, MouseEventHandler } from 'react';
 import { token } from '../../styled-system/tokens';
 import { hstack } from '../../styled-system/patterns';
 import { Title } from '../components';
@@ -12,12 +12,6 @@ export const FormGroupTitle: FC<CorePropsWithChildren> = ({ children, ...titlePr
       {children}
     </Title>
   );
-};
-
-export const useExpandToggle = (defaultValue: boolean = true) => {
-  const [isExpanded, setExpanded] = useState<boolean>(defaultValue);
-
-  return [isExpanded, () => setExpanded((prevExpanded) => !prevExpanded)] as const;
 };
 
 type SectionTitleToggleProps = CorePropsWithChildren &
@@ -57,14 +51,3 @@ export const SectionTitleToggle: FC<SectionTitleToggleProps> = ({ children, onTo
     </button>
   );
 };
-
-export const JSON_SCHEMA_FORM_ID_DELIMITER = '~~~';
-
-export function calculateSectionDepth({ sectionId }: { sectionId: string }): number {
-  // FIXME: this is brittle
-  return sectionId.split(JSON_SCHEMA_FORM_ID_DELIMITER).length - 1;
-}
-
-export function getVariantFromDepth(depth: number) {
-  return depth % 2 === 0 ? 'even' : 'odd';
-}

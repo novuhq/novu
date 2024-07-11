@@ -56,7 +56,7 @@ export const IconButton: PolymorphicComponent = React.forwardRef(
         <Icon
           title={props.title || 'action-icon'}
           color={variant === 'filled' ? token('colors.button.icon.filled') : undefined}
-          size={BUTTON_SIZE_TO_ICON_SIZE[variantProps.size ?? DEFAULT_SIZE]}
+          size={BUTTON_SIZE_TO_ICON_SIZE[(variantProps.size as ButtonVariant['size']) ?? DEFAULT_SIZE]}
         />
       </ActionIcon>
     );
