@@ -90,7 +90,6 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     Array.isArray(props.appearance?.baseTheme) ? props.appearance?.baseTheme || [] : [props.appearance?.baseTheme || {}]
   );
 
-  //place style element on HEAD. Placing in body is available for HTML 5.2 onward.
   onMount(() => {
     const el = document.getElementById(props.id);
     if (el) {
@@ -104,13 +103,13 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     document.head.appendChild(styleEl);
 
     setStyleElement(styleEl);
-  });
 
-  onCleanup(() => {
-    const el = document.getElementById(props.id);
-    if (el) {
-      el.remove();
-    }
+    onCleanup(() => {
+      const element = document.getElementById(props.id);
+      if (element) {
+        element.remove();
+      }
+    });
   });
 
   //handle variables
