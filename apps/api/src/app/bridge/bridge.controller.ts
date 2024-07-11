@@ -17,29 +17,20 @@ import {
 import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 
-import { IsOptional, IsString } from 'class-validator';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlVariablesRepository } from '@novu/dal';
 
 import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
-import { ICreateBridges, IWorkflowDefine, SyncCommand } from './usecases/sync';
+import { SyncCommand } from './usecases/sync';
 import { Sync } from './usecases/sync/sync.usecase';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { ValidateBridgeUrlRequestDto } from './dtos/validate-bridge-url-request.dto';
 import { ValidateBridgeUrlResponseDto } from './dtos/validate-bridge-url-response.dto';
 import { GetBridgeStatus } from './usecases/get-bridge-status/get-bridge-status.usecase';
 import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-status.command';
-
-class CreateBridgeRequestDto implements ICreateBridges {
-  workflows: IWorkflowDefine[];
-
-  @IsOptional()
-  @IsString()
-  bridgeUrl: string;
-}
-
-export class CreateBridgeResponseDto {}
+import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
+import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
 
 @Controller('/bridge')
 @UseInterceptors(ClassSerializerInterceptor)
