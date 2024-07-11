@@ -65,6 +65,10 @@
       "path": "libs/testing"
     },
     {
+      "name": "📦 @novu/application-generic",
+      "path": "libs/application-generic"
+    },
+    {
       "name": "📦 @novu/stateless",
       "path": "packages/stateless"
     },
@@ -87,10 +91,6 @@
     {
       "name": "📦 @novu/react-native",
       "path": "packages/react-native"
-    },
-    {
-      "name": "📦 @novu/application-generic",
-      "path": "packages/application-generic"
     },
     {
       "name": "📦 @novu/js",
