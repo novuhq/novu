@@ -28,6 +28,7 @@ export const useStyle = () => {
     finalAppearanceKeys.sort((a, b) => {
       const countA = (a.match(/__/g) || []).length;
       const countB = (b.match(/__/g) || []).length;
+
       return countA - countB;
     });
 

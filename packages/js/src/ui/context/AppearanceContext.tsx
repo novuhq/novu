@@ -18,7 +18,8 @@ export type CSSProperties = {
 
 export type ElementStyles = string | CSSProperties;
 
-/* The double underscore signals that entire key extends the right part of the key
+/*
+ * The double underscore signals that entire key extends the right part of the key
  * i.e. foo__bar means that foo_bar is an extension of bar. Both keys will be applied when foo_bar is used
  * meaning you would have `bar foo__bar` in the dom
  */
