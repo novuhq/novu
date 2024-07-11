@@ -12,6 +12,11 @@ export function RemoveButton(props: Props) {
 export function MoveUpButton(props: Props) {
   return <IconButton {...props} variant={'transparent'} Icon={IconArrowUpward} />;
 }
+
+export function MoveDownButton(props: Props) {
+  return <IconButton {...props} variant={'transparent'} Icon={IconArrowDownward} />;
+}
+
 export function AddButton(props: Props) {
   return (
     // marginLeft is used to nudge the button to make it align nicely with vertical borders
@@ -37,8 +42,4 @@ export function AddButton(props: Props) {
       Add item
     </Button>
   );
-}
-
-export function MoveDownButton(props: Props) {
-  return <IconButton {...props} variant={'transparent'} Icon={IconArrowDownward} />;
 }

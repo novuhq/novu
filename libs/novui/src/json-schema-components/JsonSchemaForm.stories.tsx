@@ -179,22 +179,15 @@ MatchDesigns.args = {
 const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
   type: 'array',
   title: 'Contacts',
+  minItems: 2,
   items: {
-    type: 'object',
-    title: 'Contact',
-    properties: {
-      Name: {
-        type: 'string',
-        title: 'Name',
-        default: 'John Doe',
-      },
-      Email: {
-        type: 'string',
-        title: 'Email',
-        pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-      },
+    type: 'array',
+    title: 'Phone numbers',
+    minItems: 2,
+    items: {
+      type: 'string',
+      title: 'Phone number',
     },
-    required: ['Name', 'Email'],
   },
 };
 
