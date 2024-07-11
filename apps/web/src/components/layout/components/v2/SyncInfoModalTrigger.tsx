@@ -1,16 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CryptoJS from 'crypto-js';
+import styled from '@emotion/styled';
 
-import { Button } from '@novu/novui';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { colors, Tooltip, useColorScheme } from '@novu/design-system';
+import { Button, Text } from '@novu/novui';
 import { IconOutlineCloudUpload } from '@novu/novui/icons';
+import { css } from '@novu/novui/css';
 
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { SyncInfoModal } from './SyncInfoModal';
 import { useDiscover } from '../../../../studio/hooks';
 import { getNotificationsList } from '../../../../api/notification-templates';
-import { NotificationTemplateEntity } from '@novu/dal/src';
-import styled from '@emotion/styled';
 import { When } from '../../../utils/When';
 
 export function SyncInfoModalTrigger() {
@@ -52,14 +54,16 @@ export function SyncInfoModalTrigger() {
 
   return (
     <>
-      <Container>
-        <Button size="xs" Icon={IconOutlineCloudUpload} onClick={toggleSyncInfoModalShow}>
-          Sync
-        </Button>
-        <When truthy={!isSynced}>
-          <Dot />
-        </When>
-      </Container>
+      <Tooltip width="auto" label={<Text>{`There's a change that needs to be synced`}</Text>} withinPortal>
+        <Container>
+          <Button size="xs" Icon={IconOutlineCloudUpload} onClick={toggleSyncInfoModalShow}>
+            Sync
+          </Button>
+          <When truthy={!isSynced}>
+            <Dot />
+          </When>
+        </Container>
+      </Tooltip>
 
       {/** TODO: use a modal manager */}
       <SyncInfoModal isOpen={showSyncInfoModal} toggleOpen={toggleSyncInfoModalShow} refetchOriginWorkflows={refetch} />
@@ -72,6 +76,8 @@ function createHash(workflowDefine) {
 }
 
 export function GradientDot(props) {
+  const { colorScheme } = useColorScheme();
+
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" {...props}>
       <rect
@@ -81,7 +87,7 @@ export function GradientDot(props) {
         height="13"
         rx="6.5"
         fill="url(#paint0_linear_1722_2699)"
-        stroke="transparent"
+        stroke={colorScheme === 'light' ? colors.white : colors.B15}
         strokeWidth="3"
       />
       <defs>
@@ -100,8 +106,8 @@ const Container = styled.div`
 
 const Dot = styled(GradientDot)`
   position: absolute;
-  top: -19%;
-  right: -7%;
+  top: -3px;
+  right: -3px;
   width: 12px;
   height: 12px;
 `;
