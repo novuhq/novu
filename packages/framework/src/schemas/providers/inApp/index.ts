@@ -1,7 +1,12 @@
 import { InAppProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
-import { genericProviderSchemas } from '../generic.schema';
 
 export const inAppProviderSchemas = {
-  [InAppProviderIdEnum.Novu]: genericProviderSchemas,
+  [InAppProviderIdEnum.Novu]: {
+    output: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    } as const satisfies Schema,
+  },
 } satisfies Record<InAppProviderIdEnum, { output: Schema }>;

@@ -31,7 +31,13 @@ export const smsProviderSchemas = {
   [SmsProviderIdEnum.Bandwidth]: genericProviderSchemas,
   [SmsProviderIdEnum.AzureSms]: genericProviderSchemas,
   [SmsProviderIdEnum.AfricasTalking]: genericProviderSchemas,
-  [SmsProviderIdEnum.Novu]: genericProviderSchemas,
+  [SmsProviderIdEnum.Novu]: {
+    output: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    } as const satisfies Schema,
+  },
   [SmsProviderIdEnum.BulkSms]: genericProviderSchemas,
   [SmsProviderIdEnum.Clicksend]: genericProviderSchemas,
   [SmsProviderIdEnum.EazySms]: genericProviderSchemas,

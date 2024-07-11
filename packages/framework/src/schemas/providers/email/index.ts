@@ -23,7 +23,13 @@ export const emailProviderSchemas = {
   [EmailProviderIdEnum.Mailtrap]: genericProviderSchemas,
   [EmailProviderIdEnum.Clickatell]: genericProviderSchemas,
   [EmailProviderIdEnum.Outlook365]: genericProviderSchemas,
-  [EmailProviderIdEnum.Novu]: genericProviderSchemas,
+  [EmailProviderIdEnum.Novu]: {
+    output: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    } as const satisfies Schema,
+  },
   [EmailProviderIdEnum.SparkPost]: genericProviderSchemas,
   [EmailProviderIdEnum.EmailWebhook]: genericProviderSchemas,
   [EmailProviderIdEnum.Braze]: genericProviderSchemas,
