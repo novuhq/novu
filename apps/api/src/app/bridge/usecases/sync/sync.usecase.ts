@@ -19,8 +19,8 @@ import { WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import { SyncCommand } from './sync.command';
-import { CreateBridgeResponseDto } from '../../bridge.controller';
 import { DeleteWorkflow, DeleteWorkflowCommand } from '../delete-workflow';
+import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
 
 @Injectable()
 export class Sync {
