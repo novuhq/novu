@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       react_app_api_url:
-        required: true
+        required: false
         type: string
       react_app_ws_url:
         required: true
