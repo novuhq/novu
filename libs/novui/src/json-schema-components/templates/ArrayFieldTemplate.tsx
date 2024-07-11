@@ -91,7 +91,7 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
   return (
     <div className={toolbarClassNames.toolbarWrapper}>
       {children}
-      <HStack role="toolbar" className={toolbarClassNames.toolbar}>
+      <div role="toolbar" className={toolbarClassNames.toolbar}>
         {(hasMoveUp || hasMoveDown) && (
           <MoveUpButton
             disabled={disabled || readonly || !hasMoveUp}
@@ -109,7 +109,7 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
         {hasRemove && (
           <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
         )}
-      </HStack>
+      </div>
     </div>
   );
 }

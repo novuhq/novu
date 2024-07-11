@@ -67,7 +67,8 @@ export const JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE = defineSlotRecipe({
   slots: ['toolbar', 'toolbarWrapper'],
   base: {
     toolbar: {
-      gap: '25',
+      display: 'flex',
+      alignItems: 'center',
       '& button': {
         p: '0 !important',
       },
