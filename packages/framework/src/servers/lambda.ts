@@ -23,7 +23,7 @@ export const serve = (options: ServeHandlerOptions) => {
           const path = eventIsV2 ? event.requestContext.http.path : event.path;
           const proto = event.headers['x-forwarded-proto'] || 'https';
 
-          const url = new URL(path, `${proto}://${event.headers.host || ''}`);
+          const url = new URL(path, `${proto}://${event.headers.host || event.headers.Host || ''}`);
 
           return url;
         },
