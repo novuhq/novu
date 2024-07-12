@@ -69,9 +69,8 @@ export const JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE = defineSlotRecipe({
     toolbar: {
       display: 'flex',
       alignItems: 'center',
-      '& button': {
-        p: '0 !important',
-      },
+      gap: '50',
+
       position: 'absolute',
       top: '0',
       right: '0',
