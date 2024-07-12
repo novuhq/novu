@@ -6,9 +6,9 @@ import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from './config';
 
-import '@novu/novui/styles.css';
-import '@novu/novui/components.css';
 import './index.css';
+import '@novu/novui/components.css';
+import '@novu/novui/styles.css';
 
 (async () => {
   initializeApp();
