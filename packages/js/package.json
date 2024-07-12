@@ -32,10 +32,11 @@
   "private": true,
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
-    "build": "tsup && pnpm run post:build",
+    "pre:build": "cp ./src/ui/index.css ./src/ui/index.directcss",
+    "build": "pnpm run pre:build && tsup && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "tsup --watch",
-    "post:build": "node scripts/size-limit.mjs",
+    "post:build": "rm ./src/ui/index.directcss && node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },
@@ -88,6 +89,7 @@
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
+    "solid-focus-trap": "^0.1.7",
     "solid-js": "^1.8.11",
     "tailwind-merge": "^2.4.0"
   }

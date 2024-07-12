@@ -3519,6 +3519,9 @@ importers:
       solid-floating-ui:
         specifier: ^0.3.1
         version: 0.3.1(@floating-ui/dom@1.6.7)(solid-js@1.8.17)
+      solid-focus-trap:
+        specifier: ^0.1.7
+        version: 0.1.7(solid-js@1.8.17)
       solid-js:
         specifier: ^1.8.11
         version: 1.8.17
@@ -6673,6 +6676,11 @@ packages:
   '@contrast/fn-inspect@3.4.0':
     resolution: {integrity: sha512-Jw6dMFEIt/FXF1ihJri2GFNayeEKQ6r+WRjjWl7MdgMup2D4vCPu99ZV8eHSMqNNkj3BEzUNC91ZaJVB1XJmfg==}
     engines: {node: '>=12.13.0'}
+
+  '@corvu/utils@0.3.2':
+    resolution: {integrity: sha512-ZWlyWEE8qV9+CB9OAyo2bTrZGXQN9ZeM+JfYv89zoR+lRACKTDuoOZEdiyL8Uc7U5dUSH1uTqKhTTnaHWb+wZA==}
+    peerDependencies:
+      solid-js: ^1.8
 
   '@cspell/cspell-bundled-dicts@6.19.2':
     resolution: {integrity: sha512-dbzMGK1JHRTUJ8Pkw/EYbj02RMYhM1/vfrAzgRpqogj83m0cfBC/0IHELkVIl3taC1KdFZ1XHXPp7310LZ6+ww==}
@@ -28330,6 +28338,11 @@ packages:
       '@floating-ui/dom': ^1.5
       solid-js: ^1.8
 
+  solid-focus-trap@0.1.7:
+    resolution: {integrity: sha512-NSJiIkL+WTWGgca+OKQA9rV3bD51lT23iLn1Z+Ap1Qk3rJBxQ8SoEAQ0FvXoQThtyXFKAK1ibcVBBMMEcu6YMw==}
+    peerDependencies:
+      solid-js: ^1.8
+
   solid-js@1.8.17:
     resolution: {integrity: sha512-E0FkUgv9sG/gEBWkHr/2XkBluHb1fkrHywUgA6o6XolPDCJ4g1HaLmQufcBBhiF36ee40q+HpG/vCZu7fLpI3Q==}
 
@@ -36942,6 +36955,11 @@ snapshots:
       nan: 2.17.0
       node-gyp-build: 4.6.0
     optional: true
+
+  '@corvu/utils@0.3.2(solid-js@1.8.17)':
+    dependencies:
+      '@floating-ui/dom': 1.6.7
+      solid-js: 1.8.17
 
   '@cspell/cspell-bundled-dicts@6.19.2':
     dependencies:
@@ -68276,6 +68294,11 @@ snapshots:
   solid-floating-ui@0.3.1(@floating-ui/dom@1.6.7)(solid-js@1.8.17):
     dependencies:
       '@floating-ui/dom': 1.6.7
+      solid-js: 1.8.17
+
+  solid-focus-trap@0.1.7(solid-js@1.8.17):
+    dependencies:
+      '@corvu/utils': 0.3.2(solid-js@1.8.17)
       solid-js: 1.8.17
 
   solid-js@1.8.17:
