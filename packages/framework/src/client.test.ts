@@ -51,6 +51,14 @@ describe('Novu Client', () => {
       process.env = { ...process.env, NODE_ENV: originalEnv };
     });
 
+    it('should set strictAuthentication to false when NODE_ENV is not defined', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env = { ...process.env, NODE_ENV: undefined as any };
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.strictAuthentication).toBe(false);
+      process.env = { ...process.env, NODE_ENV: originalEnv };
+    });
+
     it('should set strictAuthentication to true when NODE_ENV is production', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'production' };
