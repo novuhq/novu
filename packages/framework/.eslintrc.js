@@ -1,6 +1,5 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
-  ignores: ['./devtool.ts'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,
@@ -8,6 +7,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   rules: {
+    'max-len': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     'import/prefer-default-export': 0,
     'no-else-return': 0,
