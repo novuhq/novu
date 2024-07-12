@@ -31,7 +31,6 @@ export function MoveDownButton(props: Props) {
 
 export function AddButton({ className, ...props }: Props) {
   return (
-    // marginLeft is used to nudge the button to make it align nicely with vertical borders
     <Button
       {...props}
       variant={'transparent'}
