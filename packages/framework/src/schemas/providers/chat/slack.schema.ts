@@ -6,8 +6,7 @@ import { Schema } from '../../../types/schema.types';
  *
  * @see https://api.slack.com/reference/messaging/payload
  */
-
-export const slackOutputSchema = {
+const slackOutputSchema = {
   type: 'object',
   properties: {
     webhookUrl: { type: 'string', format: 'uri' },
@@ -197,7 +196,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['alt_text', 'image_url', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Displays an image. A simple image block, designed to make those cat photos really pop.',
     },
     PlainTextElement: {
@@ -218,7 +217,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'text'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Defines an object containing some text.',
     },
     ContextBlock: {
@@ -252,7 +251,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['elements', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Displays contextual info, which can include both images and text.',
     },
     ImageElement: {
@@ -273,7 +272,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'image_url', 'alt_text'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Displays an image as part of a larger block of content. Use this `image` block if you want a block with\nonly an image in it.',
     },
@@ -297,7 +296,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'text'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Defines an object containing some text.',
     },
     ActionsBlock: {
@@ -357,7 +356,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['elements', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Holds multiple interactive elements.',
     },
     Button: {
@@ -404,12 +403,12 @@ export const slackOutputSchema = {
         },
       },
       required: ['text', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows users a direct path to performing basic actions.',
     },
     Actionable: {
       type: 'object',
-      additionalProperties: false,
+      additionalProperties: true,
       properties: {
         type: {
           type: 'string',
@@ -431,7 +430,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
     },
     Confirmable: {
       type: 'object',
@@ -442,11 +441,11 @@ export const slackOutputSchema = {
             'A {@link Confirm } object that defines an optional confirmation dialog after the element is interacted\nwith.',
         },
       },
-      additionalProperties: false,
+      additionalProperties: true,
     },
     ConfirmationDialog: {
       type: 'object',
-      additionalProperties: false,
+      additionalProperties: true,
       properties: {
         title: {
           $ref: '#/definitions/PlainTextElement',
@@ -523,7 +522,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['text'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Defines a dialog that adds a confirmation step to interactive elements.',
     },
     Checkboxes: {
@@ -562,7 +561,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['options', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows users to choose multiple items from a list of options.',
     },
     Focusable: {
@@ -572,7 +571,7 @@ export const slackOutputSchema = {
           type: 'boolean',
         },
       },
-      additionalProperties: false,
+      additionalProperties: true,
     },
     Option: {
       anyOf: [
@@ -611,7 +610,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['text'],
-      additionalProperties: false,
+      additionalProperties: true,
     },
     PlainTextOption: {
       type: 'object',
@@ -638,7 +637,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['text'],
-      additionalProperties: false,
+      additionalProperties: true,
     },
     Datepicker: {
       type: 'object',
@@ -675,7 +674,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows users to select a date from a calendar style UI.',
     },
     Placeholdable: {
@@ -687,7 +686,7 @@ export const slackOutputSchema = {
             'A {@link PlainTextElement } object that defines the placeholder text shown on the element. Maximum\nlength for the `text` field in this object is 150 characters.',
         },
       },
-      additionalProperties: false,
+      additionalProperties: true,
     },
     DateTimepicker: {
       type: 'object',
@@ -717,7 +716,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Allows users to select both a date and a time of day, formatted as a Unix timestamp. On desktop\nclients, this time picker will take the form of a dropdown list and the date picker will take the form of a dropdown\ncalendar. Both options will have free-text entry for precise choices. On mobile clients, the time picker and date\npicker will use native UIs.',
     },
@@ -783,7 +782,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This multi-select menu will populate its options with a list of Slack users visible to the current user\nin the active workspace.',
     },
@@ -847,7 +846,7 @@ export const slackOutputSchema = {
               },
             },
             required: ['label', 'options'],
-            additionalProperties: false,
+            additionalProperties: true,
           },
           description:
             'An array of option group objects. Maximum number of option groups is 100. If `options` is specified,\nthis field should not be.',
@@ -858,7 +857,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This is the simplest form of select menu, with a static list of options passed in when defining the\nelement.',
     },
@@ -924,12 +923,12 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description: 'A filter object that reduces the list of available conversations using the specified criteria.',
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This multi-select menu will populate its options with a list of public and private channels, DMs, and\nMPIMs visible to the current user in the active workspace.',
     },
@@ -975,7 +974,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This multi-select menu will populate its options with a list of public channels visible to the current\nuser in the active workspace.',
     },
@@ -1025,7 +1024,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This menu will load its options from an external data source, allowing for a dynamic list of options.',
     },
@@ -1056,7 +1055,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['options', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Allows users to press a button to view a list of options.\nUnlike the select menu, there is no typeahead field, and the button always appears with an ellipsis ("…") rather\nthan customizable text. As such, it is usually used if you want a more compact layout than a select menu, or to\nsupply a list of less visually important actions after a row of buttons. You can also specify simple URL links as\noverflow menu options, instead of actions.',
     },
@@ -1097,7 +1096,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['options', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows users to choose one item from a list of possible options.',
     },
     Select: {
@@ -1155,7 +1154,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This select menu will populate its options with a list of Slack users visible to the current user in the\nactive workspace.',
     },
@@ -1216,14 +1215,14 @@ export const slackOutputSchema = {
               },
             },
             required: ['label', 'options'],
-            additionalProperties: false,
+            additionalProperties: true,
           },
           description:
             'An array of option group objects. Maximum number of option groups is 100. If `options` is specified,\nthis field should not be.',
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This is the simplest form of select menu, with a static list of options passed in when defining the\nelement.',
     },
@@ -1287,12 +1286,12 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description: 'A filter object that reduces the list of available conversations using the specified criteria.',
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This select menu will populate its options with a list of public and private channels, DMs, and MPIMs\nvisible to the current user in the active workspace.',
     },
@@ -1335,7 +1334,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This select menu will populate its options with a list of public channels visible to the current user\nin the active workspace.',
     },
@@ -1378,7 +1377,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'This select menu will load its options from an external data source, allowing for a dynamic list of\noptions.',
     },
@@ -1422,7 +1421,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Allows users to choose a time from a rich dropdown UI. On desktop clients, this time picker will take\nthe form of a dropdown list with free-text entry for precise choices. On mobile clients, the time picker will use\nnative time picker UIs.',
     },
@@ -1472,20 +1471,20 @@ export const slackOutputSchema = {
                       },
                     },
                     required: ['name', 'value'],
-                    additionalProperties: false,
+                    additionalProperties: true,
                   },
                   description:
                     'List of customizable input parameters and their values. Should match input parameters specified on\nthe provided trigger.',
                 },
               },
               required: ['url'],
-              additionalProperties: false,
+              additionalProperties: true,
               description:
                 'Properties of the {@link https://api.slack.com/automation/triggers/link#workflow_buttons link trigger}that will be invoked via this button.',
             },
           },
           required: ['trigger'],
-          additionalProperties: false,
+          additionalProperties: true,
           description:
             'A workflow object that contains details about the workflow that will run when the button is clicked.',
         },
@@ -1502,7 +1501,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'text', 'workflow'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Allows users to run a {@link https://api.slack.com/automation/triggers/link#workflow_buttons link trigger} with customizable inputs.',
     },
@@ -1538,7 +1537,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'A rich text input creates a composer/WYSIWYG editor for entering formatted text, offering nearly the\nsame experience you have writing messages in Slack.',
     },
@@ -1549,7 +1548,7 @@ export const slackOutputSchema = {
           $ref: '#/definitions/DispatchActionConfig',
         },
       },
-      additionalProperties: false,
+      additionalProperties: true,
     },
     DispatchActionConfig: {
       type: 'object',
@@ -1564,7 +1563,7 @@ export const slackOutputSchema = {
             'An array of interaction types that you would like to receive a\n{@link https://api.slack.com/reference/interaction-payloads/block-actions `block_actions` payload} for. Should be\none or both of:\n`on_enter_pressed` — payload is dispatched when user presses the enter key while the input is in focus. Hint\ntext will appear underneath the input explaining to the user to press enter to submit.\n`on_character_entered` — payload is dispatched when a character is entered (or removed) in the input.',
         },
       },
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Defines when a {@link PlainTextElement } will return a {@link https://api.slack.com/reference/interaction-payloads/block-actions `block_actions` interaction payload}.',
     },
@@ -1602,7 +1601,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['elements', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
     },
     RichTextSection: {
       type: 'object',
@@ -1620,7 +1619,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'elements'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A section block within a rich text field.',
     },
     RichTextElement: {
@@ -1677,7 +1676,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
         },
         type: {
           type: 'string',
@@ -1691,7 +1690,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'range'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A broadcast mention element for use in a rich text message.',
     },
     RichTextStyleable: {
@@ -1713,10 +1712,10 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
         },
       },
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'For use styling Rich Text message sub-elements.',
     },
     RichTextColor: {
@@ -1738,7 +1737,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
         },
         type: {
           type: 'string',
@@ -1751,7 +1750,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'value'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A hex color element for use in a rich text message.',
     },
     RichTextChannelMention: {
@@ -1773,7 +1772,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
         },
         type: {
           type: 'string',
@@ -1786,7 +1785,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'channel_id'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A channel mention element for use in a rich text message.',
     },
     RichTextDate: {
@@ -1808,7 +1807,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
         },
         type: {
           type: 'string',
@@ -1834,7 +1833,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'timestamp', 'format'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A date element for use in a rich text message.',
     },
     RichTextEmoji: {
@@ -1856,7 +1855,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
         },
         type: {
           type: 'string',
@@ -1878,7 +1877,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'name'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'An emoji element for use in a rich text message.',
     },
     RichTextLink: {
@@ -1900,7 +1899,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description:
             'A limited style object for styling rich text message elements\n(excluding pre-formatted, or code, elements).',
         },
@@ -1923,7 +1922,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'url'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A link element for use in a rich text message.',
     },
     RichTextTeamMention: {
@@ -1945,7 +1944,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description:
             'A limited style object for styling rich text message elements\n(excluding pre-formatted, or code, elements).',
         },
@@ -1960,7 +1959,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'team_id'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A workspace or team mention element for use in a rich text message.',
     },
     RichTextText: {
@@ -1982,7 +1981,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description:
             'A limited style object for styling rich text message elements\n(excluding pre-formatted, or code, elements).',
         },
@@ -1997,7 +1996,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'text'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A generic text element for use in a rich text message.',
     },
     RichTextUserMention: {
@@ -2019,7 +2018,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description:
             'A limited style object for styling rich text message elements\n(excluding pre-formatted, or code, elements).',
         },
@@ -2034,7 +2033,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'user_id'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A user mention element for use in a rich text message.',
     },
     RichTextUsergroupMention: {
@@ -2056,7 +2055,7 @@ export const slackOutputSchema = {
               type: 'boolean',
             },
           },
-          additionalProperties: false,
+          additionalProperties: true,
           description:
             'A limited style object for styling rich text message elements\n(excluding pre-formatted, or code, elements).',
         },
@@ -2071,7 +2070,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'usergroup_id'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A usergroup mention element for use in a rich text message.',
     },
     RichTextList: {
@@ -2108,7 +2107,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'elements', 'style'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A list block within a rich text field.',
     },
     RichTextQuote: {
@@ -2128,7 +2127,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'elements'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A quote block within a rich text field.',
     },
     RichTextPreformatted: {
@@ -2162,7 +2161,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type', 'elements'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'A block of preformatted text within a rich text field.',
     },
     DividerBlock: {
@@ -2180,7 +2179,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
     },
     SectionBlock: {
       type: 'object',
@@ -2259,7 +2258,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Displays text, possibly alongside block elements. A section can be used as a simple text block, in\ncombination with text fields, or side-by-side with certain\n{@link https://api.slack.com/reference/messaging/block-elements block elements}.',
     },
@@ -2339,7 +2338,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['element', 'label', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Collects information from users via block elements.',
     },
     PlainTextInput: {
@@ -2389,7 +2388,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows users to enter freeform text data into a single-line or multi-line field.',
     },
     URLInput: {
@@ -2424,7 +2423,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows user to enter a URL into a single-line field.',
     },
     EmailInput: {
@@ -2461,7 +2460,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description: 'Allows user to enter an email into a single-line field.',
     },
     NumberInput: {
@@ -2510,7 +2509,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['is_decimal_allowed', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Allows user to enter a number into a single-line field. The number input element accepts both whole and\ndecimal numbers. For example, 0.25, 5.5, and -10 are all valid input values. Decimal numbers are only allowed when\n`is_decimal_allowed` is equal to `true`.',
     },
@@ -2537,7 +2536,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['external_id', 'source', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         "Displays a {@link https://api.slack.com/messaging/files/remote remote file}. You can't add this block to\napp surfaces directly, but it will show up when {@link https://api.slack.com/messaging/retrieving retrieving messages}\nthat contain remote files. If you want to add remote files to messages,\n{@link https://api.slack.com/messaging/files/remote follow our guide}.",
     },
@@ -2561,7 +2560,7 @@ export const slackOutputSchema = {
         },
       },
       required: ['text', 'type'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         "Displays a larger-sized text block. A `header` is a plain-text block that displays in a larger, bold\nfont. Use it to delineate between different groups of content in your app's surfaces.",
     },
@@ -2619,12 +2618,12 @@ export const slackOutputSchema = {
         },
       },
       required: ['alt_text', 'thumbnail_url', 'title', 'type', 'video_url'],
-      additionalProperties: false,
+      additionalProperties: true,
       description:
         'Displays an embedded video player. A video block is designed to embed videos in all app surfaces (e.g.\nlink unfurls, messages, modals, App Home) — anywhere you can put blocks! To use the video block within your app, you\nmust have the {@link https://api.slack.com/scopes/links.embed:write `links.embed:write` scope}.',
     },
   },
-  additionalProperties: false,
+  additionalProperties: true,
 } as const satisfies Schema;
 
 export const slackProviderSchemas = {

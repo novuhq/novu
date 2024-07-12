@@ -1,10 +1,9 @@
 import { JSX, Show } from 'solid-js';
 import { FetchFeedArgs } from '../../../feeds';
 import { NotificationStatus } from '../../../types';
-import { useStyle } from '../../helpers';
+import { cn, useStyle } from '../../helpers';
 import { Archived, Check, Inbox, Unread } from '../../icons';
-import { Popover } from '../Popover';
-import { dropdownItemClasses, dropdownItemLabelClasses, dropdownItemLabelContainerClasses } from './common';
+import { Dropdown, dropdownItemVariants } from '../Dropdown';
 
 const DropdownStatus = {
   UnreadRead: 'Unread & read',
@@ -61,18 +60,19 @@ export const StatusItem = (props: {
   const style = useStyle();
 
   return (
-    <Popover.Close onClick={props.onClick}>
-      <button class={style('inboxStatus__dropdownItem', dropdownItemClasses())}>
-        <span class={style('inboxStatus__dropdownItemLabelContainer', dropdownItemLabelContainerClasses())}>
-          <span class={style('inboxStatus__dropdownItemLeftIcon', '')}>{props.icon()}</span>
-          <span class={style('inboxStatus__dropdownItemLabel', dropdownItemLabelClasses())}>{props.label}</span>
+    <Dropdown.Item
+      class={style('inboxStatus__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-8'))}
+      onClick={props.onClick}
+    >
+      <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
+        <span class={style('inboxStatus__dropdownItemLeftIcon')}>{props.icon()}</span>
+        <span class={style('inboxStatus__dropdownItemLabel')}>{props.label}</span>
+      </span>
+      <Show when={props.isSelected}>
+        <span class={style('inboxStatus__dropdownItemRightIcon', 'nt-justify-self-end')}>
+          <Check />
         </span>
-        <Show when={props.isSelected}>
-          <span class={style('inboxStatus__dropdownItemRightIcon', '')}>
-            <Check />
-          </span>
-        </Show>
-      </button>
-    </Popover.Close>
+      </Show>
+    </Dropdown.Item>
   );
 };

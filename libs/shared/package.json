@@ -43,7 +43,7 @@
     "class-validator": "0.14.0"
   },
   "devDependencies": {
-    "@clerk/types": "^4.5.1",
+    "@clerk/types": "^4.6.1",
     "@types/bluebird": "^3.5.24",
     "@types/jest": "29.5.2",
     "jest": "^27.1.0",

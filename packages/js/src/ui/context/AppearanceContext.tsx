@@ -1,12 +1,12 @@
 import {
-  ParentProps,
   createContext,
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
   onMount,
+  ParentProps,
   useContext,
-  createMemo,
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
@@ -35,13 +35,20 @@ export const appearanceKeys = [
   'dropdownItemLabelContainer',
   'dropdownItemLeftIcon',
   'dropdownItemRightIcon',
+  'back__button',
 
   //General
   'root',
   'bellIcon',
   'bellContainer',
   'settings__button',
+  'settingsContainer',
   'inboxHeader',
+  'loading',
+
+  //Inbox
+  'inbox__popoverTrigger',
+  'inbox__popoverContent',
 
   //Inbox status
   'inboxStatus__title',
@@ -61,6 +68,31 @@ export const appearanceKeys = [
   'moreActions__dropdownItemLabel',
   'moreActions__dropdownItemLabelContainer',
   'moreActions__dropdownItemLeftIcon',
+
+  //workflow
+  'workflowContainer',
+  'workflowLabel',
+  'workflowLabelContainer',
+
+  // channel
+  'channelContainer',
+  'channelsContainer',
+  'channelLabel',
+  'channelLabelContainer',
+  'channelDescription',
+  'channelSwitchContainer',
+  'channelSwitch',
+  'channelSwitchThumb',
+
+  //Settings Header
+  'settingsHeader',
+  'settingsHeader__back__button',
+  'settingsHeader__title',
+
+  //Settings Loading
+  'settingsLoadingContainer',
+  'settingsLoadingSkeleton',
+  'settingsLoadingSkeletonContainer',
 ] as const;
 
 export type Variables = {
