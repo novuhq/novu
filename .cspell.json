@@ -676,7 +676,8 @@
     "suported",
     "subresource",
     "htmlonly",
-    "apidevtools"
+    "apidevtools",
+    "contenteditable"
   ],
   "flagWords": [],
   "patterns": [
