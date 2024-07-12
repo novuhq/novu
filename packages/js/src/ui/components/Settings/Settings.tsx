@@ -78,12 +78,12 @@ const ChannelsLabel = (props: { channels: ChannelPreference }) => {
   const style = useStyle();
   const definedKeys = () =>
     Object.keys(props.channels || {})
-      .filter((key) => props.channels[key] !== undefined)
+      .filter((key) => props.channels[key as keyof ChannelPreference] !== undefined)
       .map((key) => getLabel(key as ChannelType))
       .join(', ');
 
   return (
-    <div class={style('settingsChannelDescription', 'nt-text-sm nt-text-foreground-alpha-600 nt-text-start')}>
+    <div class={style('channelDescription', 'nt-text-sm nt-text-foreground-alpha-600 nt-text-start')}>
       {definedKeys()}
     </div>
   );
@@ -102,20 +102,16 @@ const SettingsRow = (props: {
 
   return (
     <Show when={channels().length > 0}>
-      <div
-        class={style('settingsWorkflowContainer', 'nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch')}
-      >
+      <div class={style('workflowContainer', 'nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch')}>
         <div
           class={style(
-            'settingsWorkflowLabelContainer',
+            'workflowLabelContainer',
             'nt-flex nt-justify-between nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center'
           )}
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <div>
-            <div
-              class={style('settingsWorkflowLabel', 'nt-text-base nt-font-semibold nt-text-foreground nt-text-start')}
-            >
+            <div class={style('workflowLabel', 'nt-text-base nt-font-semibold nt-text-foreground nt-text-start')}>
               {props.label}
             </div>
             <ChannelsLabel channels={props.channels} />
@@ -123,12 +119,12 @@ const SettingsRow = (props: {
           <ArrowDropDown />
         </div>
         <Show when={isOpen()}>
-          <div class={style('settingsChannelsContainer', 'nt-flex nt-flex-col nt-gap-1 nt-self-stretch')}>
+          <div class={style('channelsContainer', 'nt-flex nt-flex-col nt-gap-1 nt-self-stretch')}>
             <For each={channels()}>
               {(channel) => (
                 <ChannelRow
                   channel={channel as ChannelType}
-                  enabled={props.channels[channel]}
+                  enabled={!!props.channels[channel as keyof ChannelPreference]}
                   workflowId={props.workflowId}
                   onChange={props.onChange}
                 />

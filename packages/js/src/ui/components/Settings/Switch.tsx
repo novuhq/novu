@@ -11,7 +11,7 @@ export const Switch = (props: SwitchProps) => {
   return (
     <label
       class={style(
-        'settingsChannelSwitch',
+        'channelSwitch',
         `nt-relative
     nt-inline-flex nt-cursor-pointer nt-items-center`
       )}
@@ -27,7 +27,7 @@ export const Switch = (props: SwitchProps) => {
       />
       <div
         class={style(
-          'settingsChannelSwitchThumb',
+          'channelSwitchThumb',
           `nt-peer nt-h-6 nt-w-11 nt-rounded-full nt-border nt-bg-slate-200
           after:nt-absolute after:nt-left-[2px] after:nt-top-0.5 after:nt-h-5
           after:nt-w-5 after:nt-rounded-full after:nt-border

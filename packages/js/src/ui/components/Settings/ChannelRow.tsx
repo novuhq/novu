@@ -36,14 +36,14 @@ export const ChannelRow = (props: ChannelRowProps) => {
   };
 
   return (
-    <div class={style('settingsChannelContainer', 'nt-flex nt-justify-between nt-items-center nt-h-11')}>
-      <div class={style('settingsChannelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
+    <div class={style('channelContainer', 'nt-flex nt-justify-between nt-items-center nt-h-11')}>
+      <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
         <div>{getIcon(props.channel)}</div>
-        <span class={style('settingsChannelLabel', 'nt-text-base nt-font-semibold nt-text-foreground')}>
+        <span class={style('channelLabel', 'nt-text-base nt-font-semibold nt-text-foreground')}>
           {getLabel(props.channel)}
         </span>
       </div>
-      <div class={style('settingsChannelSwitchContainer', 'nt-flex nt-items-center')}>
+      <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
         <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
       </div>
     </div>
