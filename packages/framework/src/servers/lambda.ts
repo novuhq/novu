@@ -7,7 +7,7 @@ import {
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName, type Either } from '../types';
 
-export const frameworkName: SupportedFrameworkName = 'aws-lambda';
+export const frameworkName: SupportedFrameworkName = 'lambda';
 
 export const serve = (options: ServeHandlerOptions) => {
   const handler = new NovuRequestHandler({
