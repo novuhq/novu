@@ -38,7 +38,11 @@ export function useCreateAuthEnterprise() {
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
-  const { setActive, isLoaded: isOrgListLoaded } = useOrganizationList();
+  const {
+    setActive,
+    isLoaded: isOrgListLoaded,
+    userMemberships,
+  } = useOrganizationList({ userMemberships: { infinite: true } });
 
   const [user, setUser] = useState<IUserEntity | undefined>(undefined);
   const [organization, setOrganization] = useState<IOrganizationEntity | undefined>(undefined);
@@ -112,6 +116,14 @@ export function useCreateAuthEnterprise() {
     await queryClient.refetchQueries();
   }, [queryClient]);
 
+  const getOrganizations = useCallback(() => {
+    if (userMemberships && userMemberships.data) {
+      return userMemberships.data.map((membership) => toOrganizationEntity(membership.organization));
+    }
+
+    return [];
+  }, [userMemberships]);
+
   const reloadOrganization = useCallback(async () => {
     await clerkOrganization?.reload();
   }, [clerkOrganization]);
@@ -147,6 +159,13 @@ export function useCreateAuthEnterprise() {
       setOrganization(toOrganizationEntity(clerkOrganization));
     }
   }, [clerkOrganization, isOrganizationLoaded]);
+
+  // get all user organizations at once (mirrors unpaginaged community impl., page = 10 orgs)
+  useEffect(() => {
+    if (userMemberships && userMemberships.hasNextPage) {
+      userMemberships.fetchNext();
+    }
+  }, [userMemberships]);
 
   // refetch queries on organization switch
   useEffect(() => {
@@ -195,8 +214,7 @@ export function useCreateAuthEnterprise() {
     inPrivateRoute,
     isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
     currentUser: user,
-    // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
-    organizations: isOrganizationLoaded && organization ? [organization] : undefined,
+    organizations: getOrganizations(),
     currentOrganization: organization,
     reloadOrganization,
     logout,
