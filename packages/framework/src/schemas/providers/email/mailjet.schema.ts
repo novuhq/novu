@@ -11,7 +11,7 @@ const address = {
   additionalProperties: true,
 } satisfies Schema;
 
-const attatchment = {
+const attachment = {
   type: 'object',
   properties: {
     ContentType: { type: 'string' },
@@ -34,7 +34,12 @@ const inlineAttatchment = {
   additionalProperties: true,
 } satisfies Schema;
 
-export const mailjetOutputSchema = {
+/**
+ * Mailjet `POST /send` schema
+ *
+ * @see https://dev.mailjet.com/email/reference/send-emails
+ */
+const mailjetOutputSchema = {
   type: 'object',
   properties: {
     From: address,
@@ -70,7 +75,7 @@ export const mailjetOutputSchema = {
     TemplateErrorDeliver: { type: 'boolean' },
     Attachments: {
       type: 'array',
-      items: attatchment,
+      items: attachment,
     },
     InlineAttachments: {
       type: 'array',
@@ -93,7 +98,7 @@ export const mailjetOutputSchema = {
     Headers: { type: 'object', additionalProperties: true },
     Variables: { type: 'object', additionalProperties: true },
   },
-  required: ['From', 'To'],
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

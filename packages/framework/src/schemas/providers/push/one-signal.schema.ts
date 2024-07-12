@@ -1,6 +1,11 @@
 import { Schema } from '../../../types';
 
-export const oneSignalOutputSchema = {
+/**
+ * OneSignal `POST /notifications` schema
+ *
+ * @see https://documentation.onesignal.com/reference/create-notification
+ */
+const oneSignalOutputSchema = {
   allOf: [
     {
       allOf: [
@@ -1376,6 +1381,7 @@ export const oneSignalOutputSchema = {
       },
     },
   ],
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

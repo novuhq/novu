@@ -1,6 +1,11 @@
 import { Schema } from '../../../types';
 
-export const twilioOutputSchema = {
+/**
+ * Twilio `POST /2010-04-01/Accounts/{AccountSid}/Messages.json` schema
+ *
+ * @see https://www.twilio.com/docs/sms/api/message-resource
+ */
+const twilioOutputSchema = {
   type: 'object',
   properties: {
     body: {
@@ -161,6 +166,7 @@ export const twilioOutputSchema = {
       description: 'A list of related resources identified by their URIs relative to `https://api.twilio.com`',
     },
   },
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

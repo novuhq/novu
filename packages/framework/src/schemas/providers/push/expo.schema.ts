@@ -1,6 +1,11 @@
 import { Schema } from '../../../types/schema.types';
 
-export const expoOutputSchema = {
+/**
+ * Expo `POST /v2/push/send` schema
+ *
+ * @see https://docs.expo.dev/push-notifications/sending-notifications/
+ */
+const expoOutputSchema = {
   type: 'object',
   properties: {
     to: {
@@ -64,7 +69,7 @@ export const expoOutputSchema = {
       description: `Specifies whether this notification can be intercepted by the client app. In Expo Go, this defaults to true, and if you change that to false, you may experience issues. In standalone and bare apps, this defaults to false.`,
     },
   },
-  required: ['to'],
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

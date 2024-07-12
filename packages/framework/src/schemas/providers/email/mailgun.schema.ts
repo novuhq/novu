@@ -1,6 +1,11 @@
 import { Schema } from '../../../types/schema.types';
 
-export const mailgunOutputSchema = {
+/**
+ * Mailgun `POST /messages` schema
+ *
+ * @see https://documentation.mailgun.com/en/latest/api-sending.html#sending
+ */
+const mailgunOutputSchema = {
   type: 'object',
   properties: {
     to: {
@@ -74,6 +79,7 @@ export const mailgunOutputSchema = {
       description: `v: prefix followed by an arbitrary name allows to attach a custom JSON data to the message. See Attaching Data to Messages for more information.`,
     },
   },
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

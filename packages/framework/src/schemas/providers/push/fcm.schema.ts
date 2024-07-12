@@ -1,6 +1,10 @@
 import { Schema } from '../../../types/schema.types';
 
-/* eslint-disable max-len */
+/**
+ * FCM `send` schema
+ *
+ * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages/send
+ */
 const fcmOutputSchema = {
   type: 'object',
   properties: {
@@ -141,6 +145,7 @@ const fcmOutputSchema = {
       },
     },
   },
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

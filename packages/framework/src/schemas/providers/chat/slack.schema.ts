@@ -6,8 +6,7 @@ import { Schema } from '../../../types/schema.types';
  *
  * @see https://api.slack.com/reference/messaging/payload
  */
-
-export const slackOutputSchema = {
+const slackOutputSchema = {
   type: 'object',
   properties: {
     webhookUrl: { type: 'string', format: 'uri' },

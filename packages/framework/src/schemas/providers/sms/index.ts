@@ -1,6 +1,7 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic.schema';
+import { novuSmsProviderSchemas } from './novu-sms.schema';
 import { twilioProviderSchemas } from './twilio';
 
 export const smsProviderSchemas = {
@@ -31,13 +32,7 @@ export const smsProviderSchemas = {
   [SmsProviderIdEnum.Bandwidth]: genericProviderSchemas,
   [SmsProviderIdEnum.AzureSms]: genericProviderSchemas,
   [SmsProviderIdEnum.AfricasTalking]: genericProviderSchemas,
-  [SmsProviderIdEnum.Novu]: {
-    output: {
-      type: 'object',
-      properties: {},
-      additionalProperties: false,
-    } as const satisfies Schema,
-  },
+  [SmsProviderIdEnum.Novu]: novuSmsProviderSchemas,
   [SmsProviderIdEnum.BulkSms]: genericProviderSchemas,
   [SmsProviderIdEnum.Clicksend]: genericProviderSchemas,
   [SmsProviderIdEnum.EazySms]: genericProviderSchemas,

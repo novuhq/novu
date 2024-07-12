@@ -12,7 +12,12 @@ const sound = {
   ],
 } satisfies Schema;
 
-export const apnsOutputSchema = {
+/**
+ * APNS `POST /3/device/{device_token}` schema
+ *
+ * @see https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns
+ */
+const apnsOutputSchema = {
   type: 'object',
   properties: {
     topic: { type: 'string', description: `The destination topic for the notification.` },
@@ -93,7 +98,7 @@ The value of this header must accurately reflect the contents of your notificati
     },
     urlArgs: { type: 'array', items: { type: 'string' } },
   },
-  required: ['topic'],
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

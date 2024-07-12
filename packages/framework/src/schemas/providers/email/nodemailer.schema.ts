@@ -18,7 +18,12 @@ const attachmentLike = {
   additionalProperties: true,
 } as const satisfies Schema;
 
-export const nodemailerOutputSchema = {
+/**
+ * Nodemailer `sendMail` schema
+ *
+ * @see https://nodemailer.com/message/
+ */
+const nodemailerOutputSchema = {
   type: 'object',
   properties: {
     from: { anyOf: [{ type: 'string' }, address] },
@@ -100,6 +105,7 @@ export const nodemailerOutputSchema = {
       },
     },
   },
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 

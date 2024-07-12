@@ -1,11 +1,11 @@
 import { Schema } from '../../../types/schema.types';
 
 /**
- * Sendgrid payload schema
+ * Sendgrid `POST /v3/mail/send` schema
  *
- * @see https://api.slack.com/reference/messaging/payload
+ * @see https://www.twilio.com/docs/sendgrid/api-reference/mail-send
  */
-export const sendgridOutputSchema = {
+const sendgridOutputSchema = {
   type: 'object',
   properties: {
     personalizations: {
@@ -488,7 +488,7 @@ export const sendgridOutputSchema = {
       },
     },
   },
-  required: ['personalizations', 'from', 'subject', 'content'],
+  required: [],
   additionalProperties: true,
 } as const satisfies Schema;
 
