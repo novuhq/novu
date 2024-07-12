@@ -8,6 +8,7 @@ import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName, type Either } from '../types';
 
 export const frameworkName: SupportedFrameworkName = 'lambda';
+
 /**
  * With AWS Lambda, serve and register any declared workflows with Novu,
  * making them available to be triggered by events.
