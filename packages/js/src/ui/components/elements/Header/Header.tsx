@@ -1,4 +1,4 @@
-import { cn, useStyle } from '../../helpers';
+import { cn, useStyle } from '../../../helpers';
 import { ActionsContainer } from './ActionsContainer';
 import { StatusDropdown } from './StatusDropdown';
 

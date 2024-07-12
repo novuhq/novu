@@ -3,7 +3,7 @@ import type { NovuUI, NovuUIOptions } from '@novu/js/ui';
 
 export default function Home() {
   return (
-    <div className="h-screen w-full bg-neutral-100">
+    <div className="h-screen w-full bg-white">
       <Mounter
         mount={(el) => {
           //require here as it won't work in SSR.
@@ -12,14 +12,11 @@ export default function Home() {
           // returned and couldn't be used as a cleanup successfully.
           const ui = new (NovuUI as new (options: NovuUIOptions) => NovuUI)({
             options: {
-              applicationIdentifier: 'applicationIdentifier',
-              subscriberId: 'subscriberId',
+              applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APP_ID,
+              subscriberId: '1234',
             },
-            appearance: {
-              variables: { colorPrimary: 'purple' },
-            },
+            appearance: {},
           }) as NovuUI;
-
           ui.mountInbox(el);
 
           return () => {

@@ -1,15 +1,13 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
-import { usePreferences } from '../../api';
 import { Preference } from '../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../types';
-import { useNovu } from '../../context';
+import { usePreferences } from '../../api';
 import { useStyle } from '../../helpers';
 import { ArrowDropDown } from '../../icons';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
 
 export const Settings = () => {
-  const novu = useNovu();
   const style = useStyle();
 
   const { preferences, mutate } = usePreferences();
