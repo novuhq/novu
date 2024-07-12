@@ -36,7 +36,6 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
 
 export function useCreateAuthEnterprise() {
   const { signOut, orgId } = useAuth();
-  const { session } = useSession();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
   const { setActive, isLoaded: isOrgListLoaded } = useOrganizationList();
@@ -112,6 +111,10 @@ export function useCreateAuthEnterprise() {
   const switchOrgCallback = useCallback(async () => {
     await queryClient.refetchQueries();
   }, [queryClient]);
+
+  const reloadOrganization = useCallback(async () => {
+    await clerkOrganization?.reload();
+  }, [clerkOrganization]);
 
   // check if user has active organization
   useEffect(() => {
@@ -195,7 +198,7 @@ export function useCreateAuthEnterprise() {
     // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
     organizations: isOrganizationLoaded && organization ? [organization] : undefined,
     currentOrganization: organization,
-    session,
+    reloadOrganization,
     logout,
     login: (...args: any[]) => {},
     // TODO: implement proper environment switch
