@@ -23,6 +23,9 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     if (process.env.LEGACY_V1_FRONT_BASE_URL) {
       corsOptions.origin.push(process.env.LEGACY_V1_FRONT_BASE_URL);
     }
+    if (process.env.LEGACY_STAGING_DASHBOARD_URL) {
+      corsOptions.origin.push(process.env.LEGACY_STAGING_DASHBOARD_URL);
+    }
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
