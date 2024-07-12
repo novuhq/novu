@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { setUser as setSentryUser, configureScope } from '@sentry/react';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
-import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import { useAuth, useUser, useOrganization, useOrganizationList, useSession } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
@@ -116,6 +116,7 @@ export function useCreateAuthEnterprise() {
     await queryClient.refetchQueries();
   }, [queryClient]);
 
+
   const getOrganizations = useCallback(() => {
     if (userMemberships && userMemberships.data) {
       return userMemberships.data.map((membership) => toOrganizationEntity(membership.organization));
@@ -123,6 +124,10 @@ export function useCreateAuthEnterprise() {
 
     return [];
   }, [userMemberships]);
+
+  const reloadOrganization = useCallback(async () => {
+    await clerkOrganization?.reload();
+  }, [clerkOrganization]);
 
   // check if user has active organization
   useEffect(() => {
@@ -212,6 +217,7 @@ export function useCreateAuthEnterprise() {
     currentUser: user,
     organizations: getOrganizations(),
     currentOrganization: organization,
+    reloadOrganization,
     logout,
     login: (...args: any[]) => {},
     // TODO: implement proper environment switch
