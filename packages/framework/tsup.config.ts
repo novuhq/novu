@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 import { type SupportedFrameworkName } from './src';
 
-const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', 'sveltekit', 'remix'];
+const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', 'sveltekit', 'remix', 'aws-lambda'];
 
 export default defineConfig({
   entry: ['src/index.ts', ...frameworks.map((framework) => `src/servers/${framework}.ts`)],
