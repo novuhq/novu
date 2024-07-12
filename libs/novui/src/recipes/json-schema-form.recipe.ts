@@ -12,7 +12,7 @@ export const JSON_SCHEMA_FORM_SECTION_RECIPE = defineSlotRecipe({
       p: '75',
       borderRadius: '150',
       border: 'solid',
-      // TODO: talk to Nik about these colors
+      // TODO: talk to Design Team about these colors
       borderColor: {
         base: 'legacy.BGLight',
         _dark: 'legacy.B30',
