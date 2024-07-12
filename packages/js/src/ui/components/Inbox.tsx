@@ -14,7 +14,6 @@ type InboxProps = {
 export const Inbox = (props: InboxProps) => {
   const [currentScreen, setCurrentScreen] = createSignal<'inbox' | 'settings'>('inbox');
   const { t } = useLocalization();
-  const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
 
   return (
     <Popover.Root open={props?.open}>
