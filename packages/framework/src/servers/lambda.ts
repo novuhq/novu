@@ -38,6 +38,12 @@ export const serve = (options: ServeHandlerOptions) => {
 
           const url = new URL(path, `${proto}://${event.headers.host || event.headers.Host || ''}`);
 
+          for (const key in event.queryStringParameters) {
+            if (key) {
+              url.searchParams.set(key, event.queryStringParameters[key] as string);
+            }
+          }
+
           return url;
         },
         body: () => {
