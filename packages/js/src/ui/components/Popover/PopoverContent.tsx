@@ -1,7 +1,8 @@
-import { createEffect, JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
+import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { AppearanceKey, useAppearance } from '../../context';
-import { cn, useStyle } from '../../helpers';
+import { AppearanceKey } from '../../context';
+import { useStyle } from '../../helpers';
+import { Root } from '../Root';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
@@ -10,7 +11,6 @@ export const popoverContentVariants = () =>
 type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const PopoverContent = (props: PopoverContentProps) => {
   const { open, onClose, setFloating, floating, floatingStyles } = usePopover();
-  const { id } = useAppearance();
   const style = useStyle();
   const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
 
@@ -38,18 +38,16 @@ export const PopoverContent = (props: PopoverContentProps) => {
   return (
     <Show when={open()}>
       <Portal>
-        <div
-          ref={setFloating}
-          //id is necessary here because this is a portal
-          class={
-            local.class
-              ? cn(local.class, id)
-              : style(local.appearanceKey || 'popoverContent', cn(popoverContentVariants(), id))
-          }
-          style={floatingStyles()}
-          data-open={open()}
-          {...rest}
-        />
+        <Root>
+          <div
+            ref={setFloating}
+            //id is necessary here because this is a portal
+            class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
+            style={floatingStyles()}
+            data-open={open()}
+            {...rest}
+          />
+        </Root>
       </Portal>
     </Show>
   );

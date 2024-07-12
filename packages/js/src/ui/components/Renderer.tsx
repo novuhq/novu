@@ -12,6 +12,7 @@ import {
 } from '../context';
 import { Bell } from './Bell';
 import { Inbox } from './Inbox';
+import { Root } from './Root';
 
 const NovuComponents = {
   Inbox,
@@ -64,7 +65,9 @@ export const Renderer = (props: RendererProps) => {
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <InboxStatusProvider>
             {[...props.nodes].map(([node, component]) => (
-              <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
+              <Portal mount={node}>
+                <Root>{NovuComponents[component.name](component.props || {})}</Root>
+              </Portal>
             ))}
           </InboxStatusProvider>
         </AppearanceProvider>
