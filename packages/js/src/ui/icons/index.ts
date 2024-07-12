@@ -14,4 +14,4 @@ export * from './Email';
 export * from './Sms';
 export * from './Push';
 export * from './Chat';
-export * from './LeftArrow';
+export * from './ArrowLeft';

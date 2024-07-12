@@ -2,18 +2,7 @@ import { useStyle } from '../../helpers';
 import { ArrowDropDown } from '../../icons';
 
 export const LoadingScreen = () => {
-  return (
-    <>
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-      <LoadingSkeleton />
-    </>
-  );
+  return Array.from({ length: 8 }).map(() => <LoadingSkeleton />);
 };
 
 const LoadingSkeleton = () => {

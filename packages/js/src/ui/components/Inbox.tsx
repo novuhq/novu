@@ -12,6 +12,7 @@ type InboxProps = {
 };
 
 export const Inbox = (props: InboxProps) => {
+  const [currentScreen, setCurrentScreen] = createSignal<'inbox' | 'settings'>('inbox');
   const { t } = useLocalization();
   const [isSettingsOpen, setIsSettingsOpen] = createSignal(false);
 
@@ -22,13 +23,13 @@ export const Inbox = (props: InboxProps) => {
       </Popover.Trigger>
       <Popover.Content appearanceKey="inbox__popoverContent">
         <Switch>
-          <Match when={!isSettingsOpen()}>
-            <Header showSettings={() => setIsSettingsOpen(true)} />
+          <Match when={currentScreen() === 'inbox'}>
+            <Header updateScreen={setCurrentScreen} />
             {t('inbox.title')}
           </Match>
           {/* notifications will go here */}
-          <Match when={isSettingsOpen()}>
-            <SettingsHeader backAction={() => setIsSettingsOpen(false)} />
+          <Match when={currentScreen() === 'settings'}>
+            <SettingsHeader backAction={() => setCurrentScreen('inbox')} />
             <Settings />
           </Match>
         </Switch>

@@ -1,5 +1,5 @@
 import { useStyle } from '../../helpers';
-import { LeftArrow } from '../../icons';
+import { ArrowLeft } from '../../icons';
 
 type SettingsHeaderProps = {
   backAction: () => void;
@@ -17,7 +17,7 @@ export const SettingsHeader = (props: SettingsHeaderProps) => {
         )}
         onClick={props.backAction}
       >
-        <LeftArrow />
+        <ArrowLeft />
       </button>
       <div class={style('settingsHeaderTitle', 'nt-text-xl nt-text-foreground nt-font-semibold')}>
         Notification Settings
