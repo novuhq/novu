@@ -3,13 +3,16 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
-import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
 import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
+import { CreateIntegration } from '../../../integrations/usecases/create-integration/create-integration.usecase';
+import { CreateIntegrationCommand } from '../../../integrations/usecases/create-integration/create-integration.command';
 
 describe('Delete subscriber provider credentials', function () {
+  let createIntegrationUseCase: CreateIntegration;
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
   let deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials;
   let session: UserSession;
@@ -32,7 +35,32 @@ describe('Delete subscriber provider credentials', function () {
     const subscriber = await subscriberService.createSubscriber();
     const fcmTokens = ['token1', 'token2'];
 
-    // Update the subscriber credentials with the discord-integration-1 integration webhookUrl
+    const firstDiscordIntegration = await createIntegrationUseCase.execute(
+      CreateIntegrationCommand.create({
+        organizationId: subscriber._organizationId,
+        environmentId: session.environment._id,
+        channel: ChannelTypeEnum.CHAT,
+        credentials: {},
+        providerId: ChatProviderIdEnum.Discord,
+        active: true,
+        check: false,
+        userId: session.user._id,
+      })
+    );
+
+    const secondDiscordIntegration = await createIntegrationUseCase.execute(
+      CreateIntegrationCommand.create({
+        organizationId: subscriber._organizationId,
+        environmentId: session.environment._id,
+        channel: ChannelTypeEnum.CHAT,
+        credentials: {},
+        providerId: ChatProviderIdEnum.Discord,
+        active: true,
+        check: false,
+        userId: session.user._id,
+      })
+    );
+
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: subscriber._organizationId,
@@ -40,13 +68,12 @@ describe('Delete subscriber provider credentials', function () {
         environmentId: session.environment._id,
         providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'newWebhookUrl' },
-        integrationIdentifier: 'disord-integration-1',
+        integrationIdentifier: firstDiscordIntegration.identifier,
         oauthHandler: OAuthHandlerEnum.NOVU,
         isIdempotentOperation: false,
       })
     );
 
-    // Update the subscriber credentials with the discord-integration-2 integration webhookUrl
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: subscriber._organizationId,
@@ -54,7 +81,7 @@ describe('Delete subscriber provider credentials', function () {
         environmentId: session.environment._id,
         providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'newWebhookUrl' },
-        integrationIdentifier: 'disord-integration-2',
+        integrationIdentifier: secondDiscordIntegration.identifier,
         oauthHandler: OAuthHandlerEnum.NOVU,
         isIdempotentOperation: false,
       })
