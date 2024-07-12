@@ -14,20 +14,20 @@ export const TABS_RECIPE = defineSlotRecipe({
     },
     list: {
       color: 'typography.text.main',
-      gap: 'margins.layout.tabs.tab-tab !important',
+      gap: 'margins.layout.tabs.tab-tab',
       _before: {
-        borderBottom: 'solid !important',
-        borderColor: 'tabs.border !important',
+        borderBottom: 'solid',
+        borderColor: 'tabs.border',
       },
       marginBottom: 'margins.layout.tabs.bottom',
     },
     tab: {
       gap: 'margins.icons.Icon20-txt',
-      padding: '0 !important',
-      paddingBottom: '75 !important',
-      color: 'typography.text.secondary !important',
+      padding: '0',
+      paddingBottom: '75',
+      color: 'typography.text.secondary',
       '& svg': {
-        color: 'typography.text.secondary !important',
+        color: 'typography.text.secondary',
       },
 
       _disabled: {
@@ -35,19 +35,19 @@ export const TABS_RECIPE = defineSlotRecipe({
       },
 
       _active: {
-        color: 'typography.text.main !important',
+        color: 'typography.text.main',
         '& svg': {
-          color: 'typography.text.main !important',
+          color: 'typography.text.main',
         },
-        border: 'double',
-        borderColor: 'colorPalette.start !important',
+        borderBottom: 'double',
+        borderColor: 'colorPalette.start',
       },
 
       '&:hover:not(:disabled)': {
-        background: 'none !important',
-        color: 'typography.text.main !important',
+        background: 'none',
+        color: 'typography.text.main',
         '& svg': {
-          color: 'typography.text.main !important',
+          color: 'typography.text.main',
         },
       },
     },
