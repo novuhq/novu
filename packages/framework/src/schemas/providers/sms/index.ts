@@ -1,9 +1,11 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic.schema';
+import { novuSmsProviderSchemas } from './novu-sms.schema';
+import { twilioProviderSchemas } from './twilio';
 
 export const smsProviderSchemas = {
-  [SmsProviderIdEnum.Twilio]: genericProviderSchemas,
+  [SmsProviderIdEnum.Twilio]: twilioProviderSchemas,
   [SmsProviderIdEnum.Termii]: genericProviderSchemas,
   [SmsProviderIdEnum.Telnyx]: genericProviderSchemas,
   [SmsProviderIdEnum.SNS]: genericProviderSchemas,
@@ -30,7 +32,7 @@ export const smsProviderSchemas = {
   [SmsProviderIdEnum.Bandwidth]: genericProviderSchemas,
   [SmsProviderIdEnum.AzureSms]: genericProviderSchemas,
   [SmsProviderIdEnum.AfricasTalking]: genericProviderSchemas,
-  [SmsProviderIdEnum.Novu]: genericProviderSchemas,
+  [SmsProviderIdEnum.Novu]: novuSmsProviderSchemas,
   [SmsProviderIdEnum.BulkSms]: genericProviderSchemas,
   [SmsProviderIdEnum.Clicksend]: genericProviderSchemas,
   [SmsProviderIdEnum.EazySms]: genericProviderSchemas,

@@ -1,17 +1,20 @@
-import { ParentComponent } from 'solid-js';
+import { JSX, splitProps } from 'solid-js';
 import { usePopover } from '.';
 
-export const PopoverClose: ParentComponent<{ onClick?: () => void }> = (props) => {
+type PopoverCloseProps = JSX.IntrinsicElements['button'];
+export const PopoverClose = (props: PopoverCloseProps) => {
   const { onClose } = usePopover();
+  const [local, rest] = splitProps(props, ['onClick']);
 
   return (
-    <div
-      onClick={() => {
-        props.onClick?.();
+    <button
+      onClick={(e) => {
+        if (typeof local.onClick === 'function') {
+          local.onClick(e);
+        }
         onClose();
       }}
-    >
-      {props.children}
-    </div>
+      {...rest}
+    />
   );
 };

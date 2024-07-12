@@ -11,11 +11,6 @@ export const useStyle = () => {
   });
 
   const styleFuncMemo = createMemo(() => (appearanceKey: AppearanceKey, className?: string) => {
-    const appearanceClassname =
-      typeof appearance.elements?.[appearanceKey] === 'string'
-        ? (appearance.elements?.[appearanceKey] as string) || ''
-        : '';
-
     const appearanceKeyParts = appearanceKey.split('__');
     const finalAppearanceKeys: (keyof Elements)[] = [];
     for (let i = 0; i < appearanceKeyParts.length; i++) {
@@ -32,15 +27,22 @@ export const useStyle = () => {
       return countA - countB;
     });
 
+    const appearanceClassnames = [];
+    for (let i = 0; i < finalAppearanceKeys.length; i++) {
+      if (typeof appearance.elements?.[finalAppearanceKeys[i]] === 'string') {
+        appearanceClassnames.push(appearance.elements?.[finalAppearanceKeys[i]]);
+      }
+    }
+
     const cssInJsClasses =
       !!finalAppearanceKeys.length && !isServer()
         ? finalAppearanceKeys.map((appKey) => appearance.appearanceKeyToCssInJsClass[appKey])
         : [];
 
     return cn(
-      ...finalAppearanceKeys,
+      ...finalAppearanceKeys.map((key) => `nv-${key}`),
       className, // default styles
-      appearanceClassname, // overrides via appearance prop classes
+      appearanceClassnames, // overrides via appearance prop classes
       ...cssInJsClasses
     );
   });
