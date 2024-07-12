@@ -31,6 +31,8 @@ describe('Delete subscriber provider credentials', function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
     const fcmTokens = ['token1', 'token2'];
+
+    // Update the subscriber credentials with the discord-integration-1 integration webhookUrl
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: subscriber._organizationId,
@@ -38,6 +40,21 @@ describe('Delete subscriber provider credentials', function () {
         environmentId: session.environment._id,
         providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'newWebhookUrl' },
+        integrationIdentifier: 'disord-integration-1',
+        oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: false,
+      })
+    );
+
+    // Update the subscriber credentials with the discord-integration-2 integration webhookUrl
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: ChatProviderIdEnum.Discord,
+        credentials: { webhookUrl: 'newWebhookUrl' },
+        integrationIdentifier: 'disord-integration-2',
         oauthHandler: OAuthHandlerEnum.NOVU,
         isIdempotentOperation: false,
       })
@@ -50,6 +67,7 @@ describe('Delete subscriber provider credentials', function () {
         environmentId: session.environment._id,
         providerId: PushProviderIdEnum.FCM,
         credentials: { deviceTokens: fcmTokens },
+        integrationIdentifier: 'fcm-integration-1',
         oauthHandler: OAuthHandlerEnum.NOVU,
         isIdempotentOperation: false,
       })
@@ -60,11 +78,11 @@ describe('Delete subscriber provider credentials', function () {
       _environmentId: subscriber._environmentId,
     });
 
-    const newDiscordProvider = updatedSubscriber?.channels?.find(
+    const newDiscordProviders = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === ChatProviderIdEnum.Discord
     );
 
-    expect(newDiscordProvider?.credentials.webhookUrl).to.equal('newWebhookUrl');
+    expect(newDiscordProviders).length.to.equal(2);
 
     await deleteSubscriberCredentialsUsecase.execute(
       DeleteSubscriberCredentialsCommand.create({
@@ -80,13 +98,13 @@ describe('Delete subscriber provider credentials', function () {
       _environmentId: subscriber._environmentId,
     });
 
-    const isDiscordProviderDeleted = updatedSubscriber?.channels?.find(
+    const areDiscordProviderIntegrationsDeleted = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === ChatProviderIdEnum.Discord
     );
     const fcmCredentials = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === PushProviderIdEnum.FCM
     );
-    expect(isDiscordProviderDeleted).to.equal(undefined);
+    expect(areDiscordProviderIntegrationsDeleted).to.equal(undefined);
     expect(fcmCredentials?.credentials.deviceTokens).to.deep.equal(['identifier', ...fcmTokens]);
   });
 });

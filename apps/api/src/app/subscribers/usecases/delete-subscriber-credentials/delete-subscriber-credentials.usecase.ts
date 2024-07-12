@@ -53,7 +53,7 @@ export class DeleteSubscriberCredentials {
         _id: _subscriberId,
         _environmentId: environmentId,
       },
-      { $pull: { channels: { providerId: providerId } } }
+      { $pull: { channels: { providerId } } }
     );
   }
 }
