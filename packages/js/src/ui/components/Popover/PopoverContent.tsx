@@ -1,6 +1,6 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { AppearanceKey } from '../../context';
+import { AppearanceKey, useFocusManager } from '../../context';
 import { useStyle } from '../../helpers';
 import { Root } from '../Root';
 import { usePopover } from './PopoverRoot';
@@ -8,18 +8,53 @@ import { usePopover } from './PopoverRoot';
 export const popoverContentVariants = () =>
   'nt-flex-col nt-gap-4 nt-h-[600px] nt-min-w-[400px] nt-rounded-xl nt-bg-background nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden';
 
+const PopoverContentBody = (props: PopoverContentProps) => {
+  const { open, setFloating, floating, floatingStyles } = usePopover();
+  const { setActive, removeActive } = useFocusManager();
+  const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
+  const style = useStyle();
+
+  onMount(() => {
+    const floatingEl = floating();
+    setActive(floatingEl!);
+
+    onCleanup(() => {
+      removeActive(floatingEl!);
+    });
+  });
+
+  return (
+    <Root>
+      <div
+        ref={setFloating}
+        //id is necessary here because this is a portal
+        class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
+        style={floatingStyles()}
+        data-open={open()}
+        {...rest}
+      />
+    </Root>
+  );
+};
+
 type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const PopoverContent = (props: PopoverContentProps) => {
-  const { open, onClose, setFloating, floating, floatingStyles } = usePopover();
-  const style = useStyle();
-  const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
+  const { open, onClose, floating } = usePopover();
+  const { active } = useFocusManager();
 
   const handleClickOutside = (e: MouseEvent) => {
-    if (floating()?.contains(e.target as Node)) return;
+    if (active() !== floating() || floating()?.contains(e.target as Node)) {
+      return;
+    }
+
     onClose();
   };
 
   const handleEscapeKey = (e: KeyboardEvent) => {
+    if (active() !== floating()) {
+      return;
+    }
+
     if (e.key === 'Escape') {
       onClose();
     }
@@ -39,14 +74,7 @@ export const PopoverContent = (props: PopoverContentProps) => {
     <Show when={open()}>
       <Portal>
         <Root>
-          <div
-            ref={setFloating}
-            //id is necessary here because this is a portal
-            class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
-            style={floatingStyles()}
-            data-open={open()}
-            {...rest}
-          />
+          <PopoverContentBody {...props} />
         </Root>
       </Portal>
     </Show>

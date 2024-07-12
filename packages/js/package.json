@@ -89,7 +89,6 @@
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
-    "solid-focus-trap": "^0.1.7",
     "solid-js": "^1.8.11",
     "tailwind-merge": "^2.4.0"
   }

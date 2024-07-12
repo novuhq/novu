@@ -1,12 +1,12 @@
 import {
-  ParentProps,
   createContext,
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
   onMount,
+  ParentProps,
   useContext,
-  createMemo,
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';

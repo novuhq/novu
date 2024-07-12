@@ -5,6 +5,7 @@ import { NovuOptions } from '../../novu';
 import {
   Appearance,
   AppearanceProvider,
+  FocusManagerProvider,
   InboxStatusProvider,
   Localization,
   LocalizationProvider,
@@ -63,13 +64,15 @@ export const Renderer = (props: RendererProps) => {
     <NovuProvider options={props.options}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-          <InboxStatusProvider>
-            {[...props.nodes].map(([node, component]) => (
-              <Portal mount={node}>
-                <Root>{NovuComponents[component.name](component.props || {})}</Root>
-              </Portal>
-            ))}
-          </InboxStatusProvider>
+          <FocusManagerProvider>
+            <InboxStatusProvider>
+              {[...props.nodes].map(([node, component]) => (
+                <Portal mount={node}>
+                  <Root>{NovuComponents[component.name](component.props || {})}</Root>
+                </Portal>
+              ))}
+            </InboxStatusProvider>
+          </FocusManagerProvider>
         </AppearanceProvider>
       </LocalizationProvider>
     </NovuProvider>
