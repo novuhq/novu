@@ -116,7 +116,6 @@ export function useCreateAuthEnterprise() {
     await queryClient.refetchQueries();
   }, [queryClient]);
 
-
   const getOrganizations = useCallback(() => {
     if (userMemberships && userMemberships.data) {
       return userMemberships.data.map((membership) => toOrganizationEntity(membership.organization));
