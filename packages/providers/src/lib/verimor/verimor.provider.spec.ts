@@ -4,7 +4,7 @@ test.only('should trigger Verimor correctly', async () => {
   const provider = new VerimorSmsProvider({
     username: '+905555555555',
     password: 'the-password',
-    from: '+112345',
+    from: 'My Company Name',
   });
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

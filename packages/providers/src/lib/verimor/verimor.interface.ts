@@ -9,8 +9,12 @@ export class VerimorClient implements IVerimorClient {
   private sdkSend: (
     payload: unknown
   ) => Promise<IInternalVerimorClientResponse>;
-  constructor(public username: string, public password: string) {
-    this.sdkSend = sdk.createClient({ username, password }).send;
+  constructor(
+    public username: string,
+    public password: string,
+    public from?: string
+  ) {
+    this.sdkSend = sdk.createClient({ username, password, from }).send;
   }
 
   async send(payload: IVerimorPayload): Promise<IVerimorResponse> {
