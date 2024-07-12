@@ -7,6 +7,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   rules: {
+    'max-len': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     'import/prefer-default-export': 0,
     'no-else-return': 0,

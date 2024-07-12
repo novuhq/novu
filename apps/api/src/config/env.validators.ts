@@ -50,6 +50,7 @@ export const envValidators = {
   GOOGLE_OAUTH_CLIENT_SECRET: str({ default: undefined }),
   GOOGLE_OAUTH_CLIENT_ID: str({ default: undefined }),
   LEGACY_V1_FRONT_BASE_URL: url({ default: undefined }),
+  LEGACY_STAGING_DASHBOARD_URL: url({ default: undefined }),
   API_ROOT_URL: url({ default: undefined }),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
   HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID: str({ default: undefined }),
