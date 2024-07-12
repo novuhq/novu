@@ -35,13 +35,16 @@ export const appearanceKeys = [
   'dropdownItemLabelContainer',
   'dropdownItemLeftIcon',
   'dropdownItemRightIcon',
+  'back__button',
 
   //General
   'root',
   'bellIcon',
   'bellContainer',
   'settings__button',
+  'settingsContainer',
   'inboxHeader',
+  'loading',
 
   //Inbox
   'inbox__popoverTrigger',
@@ -65,6 +68,31 @@ export const appearanceKeys = [
   'moreActions__dropdownItemLabel',
   'moreActions__dropdownItemLabelContainer',
   'moreActions__dropdownItemLeftIcon',
+
+  //workflow
+  'workflowContainer',
+  'workflowLabel',
+  'workflowLabelContainer',
+
+  // channel
+  'channelContainer',
+  'channelsContainer',
+  'channelLabel',
+  'channelLabelContainer',
+  'channelDescription',
+  'channelSwitchContainer',
+  'channelSwitch',
+  'channelSwitchThumb',
+
+  //Settings Header
+  'settingsHeader',
+  'settingsHeader__back__button',
+  'settingsHeader__title',
+
+  //Settings Loading
+  'settingsLoadingContainer',
+  'settingsLoadingSkeleton',
+  'settingsLoadingSkeletonContainer',
 ] as const;
 
 export type Variables = {
