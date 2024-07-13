@@ -14,87 +14,6 @@ import {
   SmsOutput,
 } from '@novu/framework';
 
-export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
-  if (inject === RequireInjectEnum.EXECUTE_BRIDGE_JOB) {
-    return initiateExecuteBridgeJobProvider(moduleRef);
-  } else if (inject === RequireInjectEnum.EXECUTE_BRIDGE_REQUEST) {
-    return initiateExecuteBridgeRequestProvider(moduleRef);
-  }
-};
-
-const initiateExecuteBridgeJobProvider = (moduleRef: ModuleRef) => {
-  try {
-    if (
-      process.env.NOVU_ENTERPRISE === 'true' ||
-      process.env.CI_EE_TEST === 'true'
-    ) {
-      if (!require('@novu/ee-bridge-worker')?.ExecuteBridgeJob) {
-        throw new PlatformException('ExecuteBridgeJob provider is not loaded');
-      }
-
-      return moduleRef.get(
-        require('@novu/ee-bridge-worker')?.ExecuteBridgeJob,
-        {
-          strict: false,
-        }
-      );
-    } else {
-      return {
-        execute: () => {
-          return null;
-        },
-      };
-    }
-  } catch (e) {
-    Logger.error(
-      e,
-      `Unexpected error while importing enterprise modules`,
-      'ExecuteBridgeJob'
-    );
-    throw e;
-  }
-};
-
-const initiateExecuteBridgeRequestProvider = (moduleRef: ModuleRef) => {
-  try {
-    if (
-      process.env.NOVU_ENTERPRISE === 'true' ||
-      process.env.CI_EE_TEST === 'true'
-    ) {
-      if (!require('@novu/ee-bridge-worker')?.ExecuteBridgeRequest) {
-        throw new PlatformException('ExecuteBridgeJob provider is not loaded');
-      }
-
-      return moduleRef.get(
-        require('@novu/ee-bridge-worker')?.ExecuteBridgeRequest,
-        {
-          strict: false,
-        }
-      );
-    } else {
-      return {
-        execute: () => {
-          return null;
-        },
-      };
-    }
-  } catch (e) {
-    Logger.error(
-      e,
-      `Unexpected error while importing enterprise modules`,
-      'ExecuteBridgeRequest'
-    );
-    throw e;
-  }
-};
-
-type RequireInject = `${RequireInjectEnum}`;
-
-enum RequireInjectEnum {
-  EXECUTE_BRIDGE_JOB = 'execute-bridge-job',
-  EXECUTE_BRIDGE_REQUEST = 'execute-bridge-request',
-}
-
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   if (isTimedDigestOutput(outputs)) {
     return DigestTypeEnum.TIMED;
@@ -138,14 +57,6 @@ export type IBridgeActionResponse = DelayOutput | DigestOutput;
 export type IBridgeStepResponse =
   | IBridgeChannelResponse
   | IBridgeActionResponse;
-
-export interface IUseCaseInterface<TControl, TResponse> {
-  execute: (arg0: TControl) => Promise<TResponse>;
-}
-
-export interface IUseCaseInterfaceInline {
-  execute: <TControl, TResponse>(arg0: TControl) => Promise<TResponse>;
-}
 
 export type ExecuteOutputMetadata = {
   status: string;

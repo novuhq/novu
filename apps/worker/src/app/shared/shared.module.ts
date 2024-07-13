@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
+  ControlVariablesRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -52,6 +53,7 @@ import {
   UpdateSubscriberChannel,
   UpdateTenant,
   injectRepositories,
+  ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
 import packageJson from '../../../package.json';
@@ -83,6 +85,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
+  ControlVariablesRepository,
   ...injectRepositories(),
 ];
 
@@ -124,6 +127,7 @@ const PROVIDERS = [
   ProcessTenant,
   ...DAL_MODELS,
   ActiveJobsMetricService,
+  ExecuteBridgeRequest,
 ];
 
 @Module({

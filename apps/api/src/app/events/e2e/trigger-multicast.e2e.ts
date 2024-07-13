@@ -81,19 +81,6 @@ function expectBulkSingleSubscriberStub(
   }
 }
 
-function getEchoGatewayModule() {
-  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    const eeEchoBridgeWorker = require('@novu/ee-bridge-worker');
-    if (!eeEchoBridgeWorker.BridgeGatewayModule) {
-      throw new Error("BridgeGatewayModule doesn't exist");
-    }
-
-    return [eeEchoBridgeWorker.BridgeGatewayModule];
-  }
-
-  return [];
-}
-
 describe('TriggerMulticast', () => {
   let triggerMulticast: TriggerMulticast;
   let subscriberProcessQueueService: SubscriberProcessQueueService;
@@ -101,7 +88,7 @@ describe('TriggerMulticast', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, EventsModule, ...getEchoGatewayModule()],
+      imports: [SharedModule, EventsModule],
       providers: [
         TriggerMulticast,
         {

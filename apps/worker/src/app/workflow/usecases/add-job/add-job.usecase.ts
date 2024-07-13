@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
-import { ModuleRef } from '@nestjs/core';
 
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
@@ -25,10 +24,8 @@ import {
   ExecutionLogRouteCommand,
   IFilterVariables,
   InstrumentUsecase,
-  IUseCaseInterfaceInline,
   JobsOptions,
   LogDecorator,
-  requireInject,
   StandardQueueService,
   ExecuteOutput,
   NormalizeVariablesCommand,
@@ -44,6 +41,7 @@ import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
 import { validateDigest } from './validation';
+import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -53,8 +51,6 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private executeBridgeJob: IUseCaseInterfaceInline;
-
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
@@ -68,10 +64,8 @@ export class AddJob {
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private moduleRef: ModuleRef
-  ) {
-    this.executeBridgeJob = requireInject('execute-bridge-job', this.moduleRef);
-  }
+    private executeBridgeJob: ExecuteBridgeJob
+  ) {}
 
   @InstrumentUsecase()
   @LogDecorator()
@@ -189,15 +183,17 @@ export class AddJob {
     return delayAmount;
   }
 
-  private async fetchBridgeData(command: AddJobCommand, filterVariables: IFilterVariables) {
-    const response = await this.executeBridgeJob.execute<
-      AddJobCommand & { variables: IFilterVariables; identifier: string },
-      ExecuteOutput<DigestOutput> | null
-    >({
-      identifier: command.job.identifier,
-      ...command,
-      variables: filterVariables,
-    });
+  private async fetchBridgeData(
+    command: AddJobCommand,
+    filterVariables: IFilterVariables
+  ): Promise<ExecuteOutput<DigestOutput> | null> {
+    const response = (await this.executeBridgeJob.execute(
+      ExecuteBridgeJobCommand.create({
+        identifier: command.job.identifier,
+        ...command,
+        variables: filterVariables,
+      })
+    )) as ExecuteOutput<DigestOutput>;
 
     if (!response) {
       return null;
