@@ -10,6 +10,8 @@ import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
 import { CreateIntegration } from '../../../integrations/usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationCommand } from '../../../integrations/usecases/create-integration/create-integration.command';
+import { CheckIntegration } from '../../../integrations/usecases/check-integration/check-integration.usecase';
+import { CheckIntegrationEMail } from '../../../integrations/usecases/check-integration/check-integration-email.usecase';
 
 describe('Delete subscriber provider credentials', function () {
   let createIntegrationUseCase: CreateIntegration;
@@ -20,7 +22,14 @@ describe('Delete subscriber provider credentials', function () {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule],
-      providers: [DeleteSubscriberCredentials, UpdateSubscriberChannel, GetSubscriber],
+      providers: [
+        DeleteSubscriberCredentials,
+        UpdateSubscriberChannel,
+        GetSubscriber,
+        CreateIntegration,
+        CheckIntegration,
+        CheckIntegrationEMail,
+      ],
     }).compile();
 
     session = new UserSession();
@@ -88,14 +97,13 @@ describe('Delete subscriber provider credentials', function () {
       })
     );
 
-    await updateSubscriberChannelUsecase.execute(
+    const fcmUpdate = await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,
         environmentId: session.environment._id,
         providerId: PushProviderIdEnum.FCM,
         credentials: { deviceTokens: fcmTokens },
-        integrationIdentifier: 'fcm-integration-1',
         oauthHandler: OAuthHandlerEnum.NOVU,
         isIdempotentOperation: false,
       })
@@ -106,11 +114,11 @@ describe('Delete subscriber provider credentials', function () {
       _environmentId: subscriber._environmentId,
     });
 
-    const newDiscordProviders = updatedSubscriber?.channels?.find(
+    const newDiscordProviders = updatedSubscriber?.channels?.filter(
       (channel) => channel.providerId === ChatProviderIdEnum.Discord
     );
 
-    expect(newDiscordProviders).length.to.equal(2);
+    expect(newDiscordProviders?.length).to.equal(2);
 
     await deleteSubscriberCredentialsUsecase.execute(
       DeleteSubscriberCredentialsCommand.create({
