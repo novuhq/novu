@@ -28,6 +28,7 @@ describe('Delete subscriber provider credentials', function () {
 
     updateSubscriberChannelUsecase = moduleRef.get<UpdateSubscriberChannel>(UpdateSubscriberChannel);
     deleteSubscriberCredentialsUsecase = moduleRef.get<DeleteSubscriberCredentials>(DeleteSubscriberCredentials);
+    createIntegrationUseCase = moduleRef.get<CreateIntegration>(CreateIntegration);
   });
 
   it('should delete subscriber discord provider credentials', async function () {
