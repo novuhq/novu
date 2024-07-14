@@ -1,4 +1,5 @@
 import type { ApiService } from '@novu/client';
+import { Subscriber, Notification as NotificationType, ChannelTypeEnum } from '../api/types';
 
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { Avatar, NotificationActionStatus, NotificationButton, Cta, NotificationStatus, TODO } from '../types';
@@ -7,7 +8,7 @@ import { markActionAs, markNotificationAs, remove } from './helpers';
 
 type NotificationLike = Pick<
   Notification,
-  'id' | 'feedIdentifier' | 'createdAt' | 'avatar' | 'body' | 'read' | 'seen' | 'deleted' | 'cta'
+  'id' | 'feedIdentifier' | 'createdAt' | 'avatar' | 'body' | 'read' | 'seen' | 'deleted' | 'cta' | 'to' | 'channelType'
 >;
 
 export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
@@ -17,12 +18,14 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   readonly id: string;
   readonly feedIdentifier?: string | null;
   readonly createdAt: string;
-  readonly avatar?: Avatar;
+  readonly avatar?: NotificationType['avatar'];
   readonly body: string;
   readonly read: boolean;
   readonly seen: boolean;
   readonly deleted: boolean;
   readonly cta: Cta;
+  readonly to: Subscriber;
+  readonly channelType: ChannelTypeEnum;
 
   constructor(notification: NotificationLike) {
     this.#emitter = NovuEventEmitter.getInstance();
@@ -37,6 +40,8 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.seen = notification.seen;
     this.deleted = notification.deleted;
     this.cta = notification.cta;
+    this.to = notification.to;
+    this.channelType = notification.channelType;
   }
 
   markAsRead(): Promise<Notification> {

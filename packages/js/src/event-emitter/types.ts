@@ -9,6 +9,7 @@ import type {
   RemoveNotificationArgs,
   RemoveAllNotificationsArgs,
   RemoveNotificationsArgs,
+  FetchFeedResponse,
 } from '../feeds';
 import { Preference } from '../preferences/preference';
 import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
@@ -49,7 +50,7 @@ type BaseEvents<T extends string, ARGS, RESULT, OPTIMISTIC = undefined, FALLBACK
 };
 
 type SessionInitializeEvents = BaseEvents<'session.initialize', InitializeSessionArgs, Session>;
-type FeedFetchEvents = BaseEvents<'feeds.fetch', FetchFeedArgs, PaginatedResponse<Notification>>;
+type FeedFetchEvents = BaseEvents<'feeds.fetch', FetchFeedArgs, FetchFeedResponse>;
 type FeedFetchCountEvents = BaseEvents<'feeds.fetch_count', FetchCountArgs, number>;
 type FeedMarkNotificationsAsEvents = BaseEvents<
   'feeds.mark_notifications_as',

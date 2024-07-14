@@ -1,6 +1,6 @@
 import { ApiOptions, HttpClient } from '@novu/client';
 import type { Session } from '../types';
-import type { ButtonTypeEnum, InboxNotification } from './types';
+import type { ButtonTypeEnum, Notification, NotificationFilter } from './types';
 
 export type InboxServiceOptions = ApiOptions;
 
@@ -32,43 +32,80 @@ export class InboxService {
     return response;
   }
 
-  async read(notificationId: string): Promise<InboxNotification> {
+  async fetchNotifications({
+    after,
+    archived,
+    limit,
+    offset,
+    read,
+    tags,
+  }: {
+    tags?: Notification['tags'];
+    read?: boolean;
+    archived?: boolean;
+    limit?: number;
+    after?: string;
+    offset?: number;
+  }): Promise<{ data: Notification[]; hasMore: boolean; filter: NotificationFilter }> {
+    let query = `limit=${limit}`;
+    if (after) {
+      query += `&after=${after}`;
+    }
+    if (offset) {
+      query += `&offset=${offset}`;
+    }
+    if (tags) {
+      query += tags.map((tag) => `&tags[]=${tag}`).join('');
+    }
+    if (read !== undefined) {
+      query += `&read=${read}`;
+    }
+    if (archived !== undefined) {
+      query += `&archived=${archived}`;
+    }
+
+    const response = await this.#httpClient.get(`/notifications?${query}`);
+
+    return response;
+  }
+
+  async read(notificationId: string): Promise<Notification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-read`);
 
     return response;
   }
 
-  async unread(notificationId: string): Promise<InboxNotification> {
+  async unread(notificationId: string): Promise<Notification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-unread`);
 
     return response;
   }
 
-  async archived(notificationId: string): Promise<InboxNotification> {
+  async archived(notificationId: string): Promise<Notification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/archived`);
 
     return response;
   }
 
-  async unarchived(notificationId: string): Promise<InboxNotification> {
+  async unarchived(notificationId: string): Promise<Notification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/unarchived`);
 
     return response;
   }
 
-  async readAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
+  async readAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-read`, { tags });
 
     return response;
   }
 
-  async archiveAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
+  async archiveAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-archived`, { tags });
 
     return response;
   }
 
-  async readArchivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
+  async readArchivedAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-read-archived`, { tags });
 
     return response;

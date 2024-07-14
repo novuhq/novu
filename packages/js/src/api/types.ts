@@ -38,7 +38,7 @@ type Action = {
   isCompleted: boolean;
 };
 
-export type InboxNotification = {
+export type Notification = {
   id: string;
   subject?: string;
   body: string;

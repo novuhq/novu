@@ -21,6 +21,7 @@ import type {
   RemoveNotificationsByInstancesArgs,
   MarkNotificationActionAsByIdArgs,
   MarkNotificationActionAsByInstanceArgs,
+  FetchFeedResponse,
 } from './types';
 import { READ_OR_UNREAD, SEEN_OR_UNSEEN } from '../utils/notification-utils';
 import {
@@ -33,18 +34,18 @@ import {
 } from './helpers';
 
 export class Feeds extends BaseModule {
-  async fetch({ page = 0, status, ...restOptions }: FetchFeedArgs = {}): Promise<PaginatedResponse<Notification>> {
+  async fetch({ limit = 10, ...restOptions }: FetchFeedArgs = {}): Promise<FetchFeedResponse> {
     return this.callWithSession(async () => {
-      const args = { page, status, ...restOptions };
+      const args = { status, ...restOptions };
       try {
         this._emitter.emit('feeds.fetch.pending', { args });
 
-        const response = await this._apiService.getNotificationsList(page, {
+        const response = await this._inboxService.fetchNotifications({
+          limit,
           ...restOptions,
-          ...(status && SEEN_OR_UNSEEN.includes(status) && { seen: status === NotificationStatus.SEEN }),
-          ...(status && READ_OR_UNREAD.includes(status) && { seen: status === NotificationStatus.READ }),
         });
-        const modifiedResponse: PaginatedResponse<Notification> = {
+
+        const modifiedResponse: FetchFeedResponse = {
           ...response,
           data: response.data.map((el) => new Notification(mapFromApiNotification(el as TODO))),
         };
