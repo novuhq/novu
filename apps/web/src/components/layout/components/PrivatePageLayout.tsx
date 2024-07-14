@@ -19,6 +19,7 @@ import { isStudioRoute } from '../../../studio/utils/routing';
 import { Group } from '@mantine/core';
 import { Button, Text } from '@novu/novui';
 import { colors, Warning, useColorScheme } from '@novu/design-system';
+import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
 
 const AppShell = styled.div`
   display: flex;
@@ -90,44 +91,5 @@ export function PrivatePageLayout() {
         </IntercomProvider>
       </SpotLightProvider>
     </EnsureOnboardingComplete>
-  );
-}
-
-function SampleModeBanner() {
-  const { colorScheme } = useColorScheme();
-  const navigate = useNavigate();
-
-  return (
-    <div
-      style={{
-        width: '100%',
-        padding: 8,
-        backgroundColor: colorScheme === 'dark' ? '#13131A' : 'rgb(230 231 255)',
-        textAlign: 'center',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-      }}
-    >
-      <Group spacing={24}>
-        <Group spacing={8}>
-          <Text color={colors.black}>
-            You are currently viewing sample workflows. You can add your own by completing the Setup.
-          </Text>
-        </Group>
-        <Group spacing={20}>
-          <Button
-            onClick={() => {
-              navigate('/get-started');
-            }}
-            size="sm"
-            variant="transparent"
-          >
-            Complete Setup
-          </Button>
-        </Group>
-      </Group>
-    </div>
   );
 }
