@@ -1,21 +1,28 @@
-import { useStyle } from '../../helpers';
+import { cn, useStyle } from '../../helpers';
 import { DotsMenu } from '../../icons';
-import { dropdownContentClasses, moreActionsDropdownTriggerClasses, Popover } from '../Popover';
+import { Dropdown, dropdownTriggerVariants } from '../Dropdown';
+import { popoverTriggerVariants } from '../Popover';
 import { MoreActionsOptions } from './MoreActionsOptions';
-
-const APPEARANCE_KEY_PREFIX = 'moreActions';
 
 export const MoreActionsDropdown = () => {
   const style = useStyle();
 
   return (
-    <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
-      <Popover.Trigger classes={style('moreActions__dropdownTrigger', moreActionsDropdownTriggerClasses())}>
+    <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement="bottom">
+      <Dropdown.Trigger
+        class={style(
+          'moreActions__dropdownTrigger',
+          cn(
+            dropdownTriggerVariants(),
+            'nt-rounded-md nt-px-0 hover:nt-bg-foreground-alpha-50 focus:nt-bg-foreground-alpha-50 nt-text-foreground-alpha-600'
+          )
+        )}
+      >
         <DotsMenu />
-      </Popover.Trigger>
-      <Popover.Content classes={style('moreActions__dropdownContent', dropdownContentClasses())}>
+      </Dropdown.Trigger>
+      <Dropdown.Content appearanceKey="moreActions__dropdownContent">
         <MoreActionsOptions />
-      </Popover.Content>
-    </Popover>
+      </Dropdown.Content>
+    </Dropdown.Root>
   );
 };

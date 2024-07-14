@@ -41,3 +41,4 @@ export * from './create-workflow';
 export * from './workflow';
 export * from './message-template';
 export * from './subscribers';
+export * from './execute-bridge-request';

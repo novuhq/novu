@@ -5,6 +5,7 @@ import { NovuOptions } from '../../novu';
 import {
   Appearance,
   AppearanceProvider,
+  FocusManagerProvider,
   InboxStatusProvider,
   Localization,
   LocalizationProvider,
@@ -12,6 +13,7 @@ import {
 } from '../context';
 import { Bell } from './Bell';
 import { Inbox } from './Inbox';
+import { Root } from './Root';
 
 const NovuComponents = {
   Inbox,
@@ -49,7 +51,7 @@ export const Renderer = (props: RendererProps) => {
 
     const styleEl = document.createElement('style');
     styleEl.id = id;
-    document.head.appendChild(styleEl);
+    document.head.insertBefore(styleEl, document.head.firstChild);
     styleEl.innerHTML = props.defaultCss;
 
     onCleanup(() => {
@@ -62,11 +64,15 @@ export const Renderer = (props: RendererProps) => {
     <NovuProvider options={props.options}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-          <InboxStatusProvider>
-            {[...props.nodes].map(([node, component]) => (
-              <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
-            ))}
-          </InboxStatusProvider>
+          <FocusManagerProvider>
+            <InboxStatusProvider>
+              {[...props.nodes].map(([node, component]) => (
+                <Portal mount={node}>
+                  <Root>{NovuComponents[component.name](component.props || {})}</Root>
+                </Portal>
+              ))}
+            </InboxStatusProvider>
+          </FocusManagerProvider>
         </AppearanceProvider>
       </LocalizationProvider>
     </NovuProvider>

@@ -49,7 +49,7 @@ JSONSchemaFaker.option({
 });
 
 function isRuntimeInDevelopment() {
-  return process.env.NODE_ENV === 'development';
+  return ['development', undefined].includes(process.env.NODE_ENV);
 }
 
 export class Client {
