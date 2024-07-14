@@ -85,7 +85,7 @@ export async function assertPageShowsMessage(page: Page, text: string) {
 
 declare global {
   interface Window {
-    _env_: any;
+    _env_: Record<string, string | undefined>;
   }
 }
 

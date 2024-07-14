@@ -127,8 +127,6 @@ export class UserSession {
       await this.addOrganizationCommunity();
     }
 
-    await this.fetchJwtCommunity();
-
     if (!options.noOrganization && !options?.noEnvironment) {
       await this.createEnvironmentsAndFeeds();
     }
@@ -250,6 +248,7 @@ export class UserSession {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
+      // TODO: @adamchmara, is this necessary anymore?
       environmentId: this.environment ? this.environment._id : '',
     });
   }

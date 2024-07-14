@@ -240,34 +240,8 @@ export class CommunityAuthService implements IAuthService {
     const userActiveOrganizations =
       await this.organizationRepository.findUserActiveOrganizations(user._id);
 
-    if (userActiveOrganizations && userActiveOrganizations.length) {
+    if (userActiveOrganizations?.length > 0) {
       const organizationToSwitch = userActiveOrganizations[0];
-
-      const userActiveProjects =
-        await this.environmentRepository.findOrganizationEnvironments(
-          organizationToSwitch._id
-        );
-      let environmentToSwitch = userActiveProjects[0];
-
-      const reduceEnvsToOnlyDevelopment = (prev, current) =>
-        current.name === 'Development' ? current : prev;
-
-      if (userActiveProjects.length > 1) {
-        environmentToSwitch = userActiveProjects.reduce(
-          reduceEnvsToOnlyDevelopment,
-          environmentToSwitch
-        );
-      }
-
-      if (environmentToSwitch) {
-        return await this.switchEnvironmentUsecase.execute(
-          SwitchEnvironmentCommand.create({
-            newEnvironmentId: environmentToSwitch._id,
-            organizationId: organizationToSwitch._id,
-            userId: user._id,
-          })
-        );
-      }
 
       return this.switchOrganizationUsecase.execute(
         SwitchOrganizationCommand.create({
@@ -276,6 +250,8 @@ export class CommunityAuthService implements IAuthService {
         })
       );
     }
+
+    return this.getSignedToken(user);
   }
 
   public async getSignedToken(

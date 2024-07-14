@@ -70,10 +70,6 @@ function selectOrganization(organizations: IOrganizationEntity[] | null, selecte
     org = organizations[0];
   }
 
-  if (!org) {
-    throw new Error('Missing organization');
-  }
-
   return org;
 }
 

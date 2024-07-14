@@ -4,12 +4,6 @@ import { TranslationsPage } from './page-models/translationsPage';
 import path from 'path';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
-declare global {
-  interface Window {
-    _env_: any;
-  }
-}
-
 test.describe('Translations', () => {
   test.skip(process.env.NOVU_ENTERPRISE !== 'true', 'Skipping tests for non enterprise variant...');
 
