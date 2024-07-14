@@ -1,17 +1,16 @@
-import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { OrganizationRepository, EnvironmentRepository, MemberRepository, EnvironmentEntity } from '@novu/dal';
-import { ModuleRef } from '@nestjs/core';
 import crypto from 'node:crypto';
+import { Sync } from '../../../bridge/usecases/sync';
 
 @Injectable()
 export class ProcessVercelWebhook {
   constructor(
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
-    protected moduleRef: ModuleRef,
+    private syncUsecase: Sync,
     private memberRepository: MemberRepository
   ) {}
 
@@ -48,15 +47,11 @@ export class ProcessVercelWebhook {
       throw new ApiException('Environment Not Found');
     }
 
-    if (!require('@novu/ee-bridge-api')?.Sync) {
-      throw new ApiException('Bridge api module is not loaded');
-    }
-    const service = this.moduleRef.get(require('@novu/ee-bridge-api')?.Sync, { strict: false });
     const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
 
-    await service.execute({
+    await this.syncUsecase.execute({
       organizationId: environment._organizationId,
-      userId: orgAdmin?._userId,
+      userId: orgAdmin?._userId as string,
       environmentId: environment._id,
       bridgeUrl: 'https://' + url + '/api/novu',
       source: 'vercel',

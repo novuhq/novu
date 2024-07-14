@@ -71,7 +71,7 @@ export class PartnerIntegrationsController {
         teamId: body.payload.team.id,
         projectId: body.payload.project.id,
         deploymentUrl: body.payload.deployment.url,
-        vercelEnvironment: body.payload.target,
+        vercelEnvironment: body.payload.target || 'preview',
         signatureHeader,
       })
     );
