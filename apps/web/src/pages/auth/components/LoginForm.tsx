@@ -32,7 +32,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setRedirectURL(), []);
 
-  const { login, currentUser, organizations } = useAuth();
+  const { login, currentUser, currentOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
@@ -79,7 +79,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
     }
 
-    if (organizations) {
+    if (currentOrganization) {
       navigate(ROUTES.WORKFLOWS);
     } else {
       await login(tokenInQuery, ROUTES.AUTH_APPLICATION);

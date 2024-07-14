@@ -555,7 +555,11 @@ describe('Novu Client', () => {
           } as const,
           providers: {
             sendgrid: async ({ controls, outputs }) => ({
-              ipPoolName: `${controls.foo} ${outputs.subject}`,
+              ip_pool_name: `${controls.foo} ${outputs.subject}`,
+              from: {
+                email: 'test@example.com',
+                name: 'Test',
+              },
             }),
           },
         });
@@ -579,7 +583,12 @@ describe('Novu Client', () => {
 
       const executionResult = await client.executeWorkflow(event);
 
-      expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
+      expect(executionResult.providers).toEqual({
+        sendgrid: {
+          ip_pool_name: 'foo Subject',
+          from: { email: 'test@example.com', name: 'Test' },
+        },
+      });
     });
 
     it('should preview with mocked payload during preview', async () => {

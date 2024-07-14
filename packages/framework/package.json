@@ -29,7 +29,8 @@
     "build:watch": "tsup --watch",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
-    "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish"
+    "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
+    "devtool": "tsx ./scripts/devtool.ts"
   },
   "keywords": [
     "novu",
@@ -133,7 +134,6 @@
   "devDependencies": {
     "@sveltejs/kit": "^1.27.3",
     "@types/express": "^4.17.13",
-    "@types/json-schema": "^7.0.15",
     "@types/node": "^20.14.10",
     "@types/aws-lambda": "^8.10.141",
     "@vercel/node": "^2.15.9",
@@ -147,7 +147,9 @@
     "typescript": "^5.3.3",
     "vitest": "^1.2.1",
     "zod": "^3.23.0",
-    "zod-to-json-schema": "^3.23.0"
+    "zod-to-json-schema": "^3.23.0",
+    "@apidevtools/json-schema-ref-parser": "11.6.4",
+    "tsx": "4.16.2"
   },
   "dependencies": {
     "@novu/shared": "workspace:*",

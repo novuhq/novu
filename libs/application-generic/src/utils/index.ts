@@ -7,6 +7,6 @@ export * from './filter-processing-details';
 export * from './hmac';
 export * from './novu-integrations';
 export * from './object';
-export * from './require-inject';
+export * from './bridge';
 export * from './subscriber';
 export * from './variants';

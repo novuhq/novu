@@ -1,8 +1,8 @@
 import { NotificationStatus } from '../../../types';
-import { useAppearance, useInboxStatusContext } from '../../context';
+import { useInboxStatusContext } from '../../context';
 import { cn, useStyle } from '../../helpers';
 import { ArrowDropDown } from '../../icons';
-import { dropdownContentClasses, inboxStatusDropdownTriggerClasses, Popover } from '../Popover';
+import { Dropdown, dropdownTriggerVariants } from '../Dropdown';
 import { StatusOptions } from './StatusOptions';
 
 /**
@@ -25,22 +25,21 @@ const getStatusLabel = (status?: NotificationStatus) => {
 
 export const StatusDropdown = () => {
   const style = useStyle();
-  const { id } = useAppearance();
   const { setFeedOptions, feedOptions } = useInboxStatusContext();
 
   return (
-    <Popover fallbackPlacements={['bottom', 'top']} placement="bottom">
-      <Popover.Trigger classes={style('inboxStatus__dropdownTrigger', inboxStatusDropdownTriggerClasses())}>
-        <span class={style('inboxStatus__title', cn('nt-text-xl nt-font-semibold nt-text-foreground'))}>
+    <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement="bottom">
+      <Dropdown.Trigger class={style('inboxStatus__dropdownTrigger', dropdownTriggerVariants())}>
+        <span class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold nt-text-foreground')}>
           {getStatusLabel(feedOptions.status)}
         </span>
         <span>
           <ArrowDropDown />
         </span>
-      </Popover.Trigger>
-      <Popover.Content classes={style('inboxStatus__dropdownContent', dropdownContentClasses())}>
+      </Dropdown.Trigger>
+      <Dropdown.Content appearanceKey="inboxStatus__dropdownContent">
         <StatusOptions setFeedOptions={setFeedOptions} />
-      </Popover.Content>
-    </Popover>
+      </Dropdown.Content>
+    </Dropdown.Root>
   );
 };
