@@ -9,6 +9,8 @@ import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.us
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 interface ISetEnvironment {
+  name: string;
+  envId: string;
   token: string;
   projectIds: string[];
   teamId: string | null;
@@ -47,11 +49,13 @@ export class CompleteVercelIntegration {
 
       await this.saveProjectIds(command);
 
-      for (const key of Object.keys(mappedProjectData)) {
+      for (const env of mappedProjectData) {
         await this.setEnvironments({
-          clientKey: mappedProjectData[key].clientKey,
-          privateKey: mappedProjectData[key].privateKey,
-          projectIds: mappedProjectData[key].projectIds,
+          name: env.name,
+          envId: env.envId,
+          clientKey: env.clientKey,
+          privateKey: env.privateKey,
+          projectIds: env.projectIds,
           teamId: configurationDetails.teamId,
           token: configurationDetails.accessToken,
         });
@@ -74,25 +78,45 @@ export class CompleteVercelIntegration {
       {
         _organizationId: organizationIds,
       },
-      'apiKeys identifier _organizationId'
+      'apiKeys identifier name _organizationId _id'
     );
   }
 
   private mapProjectKeys(envData: EnvironmentEntity[], projectData: Record<string, string[]>) {
-    return envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
-      acc[curr._organizationId] = {
-        privateKey: decryptApiKey(curr.apiKeys[0].key),
-        clientKey: curr.identifier,
-        projectIds: projectData[curr._organizationId],
-      };
+    const result: {
+      _organizationId: string;
+      name: string;
+      envId: string;
+      projectIds: string[];
+      privateKey: string;
+      clientKey: string;
+    }[] = [];
 
-      return acc;
-    }, {});
+    for (const env of envData) {
+      result.push({
+        _organizationId: env._organizationId,
+        name: env.name,
+        envId: env._id,
+        projectIds: projectData[env._organizationId],
+        privateKey: decryptApiKey(env.apiKeys[0].key),
+        clientKey: env.identifier,
+      });
+    }
+
+    return result;
   }
 
-  private async setEnvironments({ clientKey, projectIds, privateKey, teamId, token }: ISetEnvironment): Promise<void> {
+  private async setEnvironments({
+    name,
+    envId,
+    clientKey,
+    projectIds,
+    privateKey,
+    teamId,
+    token,
+  }: ISetEnvironment): Promise<void> {
     const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
-    const target = ['production', 'preview', 'development'];
+    const target = name?.toLowerCase() === 'production' ? ['production'] : ['preview', 'development'];
     const type = 'encrypted';
 
     const apiKeys = [
