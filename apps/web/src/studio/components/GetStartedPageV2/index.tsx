@@ -103,7 +103,7 @@ const SkipCTA = ({
   </HStack>
 );
 
-export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workflows' }) => {
+export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-started' }) => {
   const track = useTelemetry();
   const navigate = useNavigate();
 
@@ -210,7 +210,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                   />
                 )}
 
-                {location === 'workflows' && (
+                {location === 'get-started' && (
                   <SkipCTA
                     text="Not a developer? Invite your dev team"
                     buttonText="Invite"
@@ -255,7 +255,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                 Build real-life notification workflows and preview them locally
               </Text>
 
-              {location === 'workflows' && (
+              {location === 'get-started' && (
                 <BadgeButton
                   onClick={() => {
                     track('Examples link clicked - [Workflows empty state]');
@@ -301,7 +301,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                 Provide your team with no-code controls to modify notification content and behavior
               </Text>
 
-              {location === 'workflows' && (
+              {location === 'get-started' && (
                 <BadgeButton
                   onClick={() => {
                     track('Invite team link clicked - [Workflows empty state]');
@@ -347,7 +347,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                 Use the familiar CI/CD pipeline to get your notifications to production
               </Text>
 
-              {location === 'workflows' && (
+              {location === 'get-started' && (
                 <BadgeButton
                   onClick={() => {
                     track('Deployment docs link clicked - [Workflows empty state]');

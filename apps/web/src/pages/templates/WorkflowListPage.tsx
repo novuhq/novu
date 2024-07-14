@@ -319,7 +319,7 @@ function WorkflowListPage() {
           />
         </When>
         <When truthy={shouldShowEmptyState && isV2Enabled}>
-          <GetStartedPageV2 location="workflows" />
+          <GetStartedPageV2 location="get-started" />
         </When>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
