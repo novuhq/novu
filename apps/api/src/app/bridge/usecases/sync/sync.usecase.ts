@@ -57,13 +57,15 @@ export class Sync {
       throw new BadRequestException('Invalid Bridge URL Response');
     }
 
-    this.analyticsService.track('Sync Request - [Bridge API]', command.userId, {
-      _organization: command.organizationId,
-      _environment: command.environmentId,
-      workflowsCount: discover.workflows?.length || 0,
-      localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : undefined,
-      source: command.source,
-    });
+    if (command.source !== 'sample-workspace') {
+      this.analyticsService.track('Sync Request - [Bridge API]', command.userId, {
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        workflowsCount: discover.workflows?.length || 0,
+        localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : undefined,
+        source: command.source,
+      });
+    }
 
     const createdWorkflows = await this.createWorkflows(command, discover.workflows);
 

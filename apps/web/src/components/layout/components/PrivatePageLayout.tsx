@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ErrorBoundary } from '@sentry/react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
-import { INTERCOM_APP_ID, IS_EE_AUTH_ENABLED } from '../../../config';
+import { BRIDGE_SYNC_SAMPLE_ENDPOINT, INTERCOM_APP_ID, IS_EE_AUTH_ENABLED } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
@@ -16,6 +16,9 @@ import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 import { isStudioRoute } from '../../../studio/utils/routing';
+import { Group } from '@mantine/core';
+import { Button, Text } from '@novu/novui';
+import { colors, Warning, useColorScheme } from '@novu/design-system';
 
 const AppShell = styled.div`
   display: flex;
@@ -74,6 +77,9 @@ export function PrivatePageLayout() {
               <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
                 <Sidebar />
                 <ContentShell>
+                  {location.pathname !== '/get-started' && environment?.bridge?.url === BRIDGE_SYNC_SAMPLE_ENDPOINT && (
+                    <SampleModeBanner />
+                  )}
                   <FreeTrialBanner />
                   <HeaderNav />
                   <Outlet />
@@ -84,5 +90,44 @@ export function PrivatePageLayout() {
         </IntercomProvider>
       </SpotLightProvider>
     </EnsureOnboardingComplete>
+  );
+}
+
+function SampleModeBanner() {
+  const { colorScheme } = useColorScheme();
+  const navigate = useNavigate();
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        padding: 8,
+        backgroundColor: colorScheme === 'dark' ? '#13131A' : 'rgb(230 231 255)',
+        textAlign: 'center',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+      }}
+    >
+      <Group spacing={24}>
+        <Group spacing={8}>
+          <Text color={colors.black}>
+            You are currently viewing sample workflows. You can add your own by completing the Setup.
+          </Text>
+        </Group>
+        <Group spacing={20}>
+          <Button
+            onClick={() => {
+              navigate('/get-started');
+            }}
+            size="sm"
+            variant="transparent"
+          >
+            Complete Setup
+          </Button>
+        </Group>
+      </Group>
+    </div>
   );
 }

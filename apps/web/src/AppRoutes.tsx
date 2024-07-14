@@ -65,6 +65,7 @@ import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
+import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -82,7 +83,7 @@ const AuthRoutes = () => {
 };
 
 export const AppRoutes = () => {
-  const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   return (
     <Routes>
@@ -119,8 +120,8 @@ export const AppRoutes = () => {
           <Route path="create" element={<CreateTenantPage />} />
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
-        {isImprovedOnboardingEnabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
+        {isV2Enabled ? (
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 location="workflows" />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
         )}
