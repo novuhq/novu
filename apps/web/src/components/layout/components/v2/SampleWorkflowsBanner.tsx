@@ -2,10 +2,12 @@ import { Group } from '@mantine/core';
 import { colors, useColorScheme } from '@novu/design-system';
 import { Button, Text } from '@novu/novui';
 import { useNavigate } from 'react-router-dom';
+import { useSegment } from '../../../providers/SegmentProvider';
 
 export function SampleModeBanner() {
   const { colorScheme } = useColorScheme();
   const navigate = useNavigate();
+  const segment = useSegment();
 
   return (
     <div
@@ -29,6 +31,7 @@ export function SampleModeBanner() {
         <Group spacing={20}>
           <Button
             onClick={() => {
+              segment.track('Sample Mode Banner Click');
               navigate('/get-started');
             }}
             size="sm"
