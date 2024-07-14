@@ -33,8 +33,7 @@
       "dependsOn": [
         "SHARED",
         "APPLICATION GENERIC",
-        "DAL",
-        "EE - BRIDGE API"
+        "DAL"
       ]
     },
     {
@@ -62,8 +61,7 @@
         "APPLICATION GENERIC",
         "DAL",
         "EE - TRANSLATION",
-        "EE - BILLING",
-        "EE - BRIDGE WORKER"
+        "EE - BILLING"
       ]
     },
     {
@@ -181,24 +179,6 @@
       "isBackground": true,
       "label": "EE - BILLING",
       "path": "/enterprise/packages/billing",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED", "EE - DAL"]
-    },
-    {
-      "type": "npm",
-      "script": "start",
-      "isBackground": true,
-      "label": "EE - BRIDGE WORKER",
-      "path": "/enterprise/packages/bridge-worker",
-      "problemMatcher": "$tsc-watch",
-      "dependsOn": ["SHARED", "EE - DAL"]
-    },
-    {
-      "type": "npm",
-      "script": "start",
-      "isBackground": true,
-      "label": "EE - BRIDGE API",
-      "path": "/enterprise/packages/bridge-api",
       "problemMatcher": "$tsc-watch",
       "dependsOn": ["SHARED", "EE - DAL"]
     },
