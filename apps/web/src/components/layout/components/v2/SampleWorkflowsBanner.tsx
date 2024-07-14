@@ -28,7 +28,7 @@ export function SampleModeBanner() {
             You are currently viewing sample workflows. You can add your own by completing the Setup.
           </Text>
         </Group>
-        <Group spacing={20}>
+        <Group>
           <Button
             onClick={() => {
               segment.track('Sample Mode Banner Click');
