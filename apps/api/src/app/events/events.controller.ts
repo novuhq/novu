@@ -12,6 +12,7 @@ import {
 import { ResourceCategory } from '@novu/application-generic';
 
 import {
+  BulkCancelEventDto,
   BulkTriggerEventDto,
   TestSendEmailRequestDto,
   TriggerEventRequestDto,
@@ -23,6 +24,7 @@ import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
+import { ProcessBulkCancel, ProcessBulkCancelCommand } from './usecases/process-bulk-cancel';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -31,6 +33,7 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
+import { TriggerBulkCancelResponseDto } from './dtos/trigger-bulk-cancel-response.dto';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
@@ -46,7 +49,8 @@ export class EventsController {
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
-    private processBulkTriggerUsecase: ProcessBulkTrigger
+    private processBulkTriggerUsecase: ProcessBulkTrigger,
+    private processBulkCancel: ProcessBulkCancel
   ) {}
 
   @ExternalApiAccessible()
@@ -201,6 +205,34 @@ export class EventsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         transactionId,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @UserAuthentication()
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
+  @Post('/trigger/bulk-cancel')
+  @ApiOkResponse({
+    type: TriggerBulkCancelResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Bulk Cancel triggered event',
+    description: `
+    Using a previously generated transactionId during the event trigger,
+     will cancel any active or pending workflows. This is useful to cancel active digests, delays etc...
+    `,
+  })
+  @SdkMethodName('triggerBulkCancel')
+  @SdkUsageExample('Bulk Cancel Triggered Event')
+  @SdkGroupName('')
+  async triggerBulkCancel(@UserSession() user: UserSessionData, @Body() body: BulkCancelEventDto) {
+    return await this.processBulkCancel.execute(
+      ProcessBulkCancelCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionIds: body.transactionIds,
       })
     );
   }

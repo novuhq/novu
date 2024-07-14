@@ -4,6 +4,7 @@ import { VerifyPayload } from './verify-payload';
 import { ParseEventRequest } from './parse-event-request';
 import { ProcessBulkTrigger } from './process-bulk-trigger';
 import { SendTestEmail } from './send-test-email';
+import { ProcessBulkCancel } from './process-bulk-cancel';
 
 export const USE_CASES = [
   CancelDelayed,
@@ -12,4 +13,5 @@ export const USE_CASES = [
   ParseEventRequest,
   ProcessBulkTrigger,
   SendTestEmail,
+  ProcessBulkCancel,
 ];
