@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import CryptoJS from 'crypto-js';
-import styled from '@emotion/styled';
 
 import { colors, Tooltip, useColorScheme } from '@novu/design-system';
 import { Button, Text } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import { IconOutlineCloudUpload } from '@novu/novui/icons';
 
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
@@ -30,14 +30,26 @@ export function SyncInfoModalTrigger() {
         label={<Text>You have un-synced changes in your local application.</Text>}
         withinPortal
       >
-        <Container>
+        <div
+          className={css({
+            position: 'relative',
+          })}
+        >
           <Button size="xs" Icon={IconOutlineCloudUpload} onClick={toggleSyncInfoModalShow}>
             Sync
           </Button>
           <When truthy={!isSynced}>
-            <Dot />
+            <Dot
+              className={css({
+                position: 'absolute',
+                top: -3,
+                right: -3,
+                width: 12,
+                height: 12,
+              })}
+            />
           </When>
-        </Container>
+        </div>
       </Tooltip>
 
       {/** TODO: use a modal manager */}
@@ -54,7 +66,7 @@ function createHash(workflowDefine) {
   return CryptoJS.SHA256(JSON.stringify(workflowDefine || '')).toString(CryptoJS.enc.Hex);
 }
 
-export function GradientDot(props) {
+export function Dot(props) {
   const { colorScheme } = useColorScheme();
 
   return (
@@ -78,15 +90,3 @@ export function GradientDot(props) {
     </svg>
   );
 }
-
-const Container = styled.div`
-  position: relative;
-`;
-
-const Dot = styled(GradientDot)`
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 12px;
-  height: 12px;
-`;
