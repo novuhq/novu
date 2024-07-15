@@ -233,9 +233,7 @@ export class UserSession {
 
   private async fetchJwtCommunity() {
     const response = await request(this.requestEndpoint).get(
-      `/v1/auth/test/token/${this.user._id}?environmentId=${
-        this.environment ? this.environment._id : ''
-      }&organizationId=${this.organization ? this.organization._id : ''}`
+      `/v1/auth/test/token/${this.user._id}?organizationId=${this.organization ? this.organization._id : ''}`
     );
 
     this.token = `Bearer ${response.body.data}`;
