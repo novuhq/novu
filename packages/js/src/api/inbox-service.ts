@@ -69,6 +69,29 @@ export class InboxService {
     return response;
   }
 
+  async count({ tags, read, archived }: { tags?: Notification['tags']; read?: boolean; archived?: boolean }): Promise<{
+    data: {
+      count: number;
+    };
+    filter: NotificationFilter;
+  }> {
+    let query = '';
+
+    if (tags) {
+      query += tags.map((tag) => `&tags[]=${tag}`).join('');
+    }
+    if (read !== undefined) {
+      query += `&read=${read}`;
+    }
+    if (archived !== undefined) {
+      query += `&archived=${archived}`;
+    }
+
+    const response = await this.#httpClient.get(`/notifications/count?${query}`);
+
+    return response;
+  }
+
   async read(notificationId: string): Promise<Notification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-read`);
 
@@ -99,7 +122,7 @@ export class InboxService {
     return response;
   }
 
-  async archiveAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
+  async archivedAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-archived`, { tags });
 
     return response;

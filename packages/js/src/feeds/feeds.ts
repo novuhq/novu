@@ -1,29 +1,6 @@
+import { NotificationFilter } from 'src/api/types';
 import { BaseModule } from '../base-module';
-import { Notification } from './notification';
-import { PaginatedResponse, NotificationStatus, TODO } from '../types';
-import type {
-  FetchFeedArgs,
-  FetchCountArgs,
-  MarkNotificationAsArgs,
-  MarkAllNotificationsAsArgs,
-  RemoveNotificationArgs,
-  RemoveAllNotificationsArgs,
-  MarkNotificationActionAsArgs,
-  MarkNotificationsAsArgs,
-  RemoveNotificationsArgs,
-  MarkNotificationAsByIdArgs,
-  MarkNotificationAsByInstanceArgs,
-  MarkNotificationsAsByIdsArgs,
-  MarkNotificationsAsByInstancesArgs,
-  RemoveNotificationByIdArgs,
-  RemoveNotificationByInstanceArgs,
-  RemoveNotificationsByIdsArgs,
-  RemoveNotificationsByInstancesArgs,
-  MarkNotificationActionAsByIdArgs,
-  MarkNotificationActionAsByInstanceArgs,
-  FetchFeedResponse,
-} from './types';
-import { READ_OR_UNREAD, SEEN_OR_UNSEEN } from '../utils/notification-utils';
+import { NotificationStatus, TODO } from '../types';
 import {
   mapFromApiNotification,
   markActionAs,
@@ -32,6 +9,35 @@ import {
   remove,
   removeNotifications,
 } from './helpers';
+import { Notification } from './notification';
+import type {
+  ArchivedArgs,
+  FetchCountArgs,
+  FetchCountResponse,
+  FetchFeedArgs,
+  FetchFeedResponse,
+  InstanceArgs,
+  MarkAllNotificationsAsArgs,
+  MarkNotificationActionAsArgs,
+  MarkNotificationActionAsByIdArgs,
+  MarkNotificationActionAsByInstanceArgs,
+  MarkNotificationAsArgs,
+  MarkNotificationAsByIdArgs,
+  MarkNotificationAsByInstanceArgs,
+  MarkNotificationsAsArgs,
+  MarkNotificationsAsByIdsArgs,
+  MarkNotificationsAsByInstancesArgs,
+  ReadArgs,
+  RemoveAllNotificationsArgs,
+  RemoveNotificationArgs,
+  RemoveNotificationByIdArgs,
+  RemoveNotificationByInstanceArgs,
+  RemoveNotificationsArgs,
+  RemoveNotificationsByIdsArgs,
+  RemoveNotificationsByInstancesArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+} from './types';
 
 export class Feeds extends BaseModule {
   async fetch({ limit = 10, ...restOptions }: FetchFeedArgs = {}): Promise<FetchFeedResponse> {
@@ -60,30 +66,196 @@ export class Feeds extends BaseModule {
     });
   }
 
-  async fetchCount({ feedIdentifier, status = NotificationStatus.UNSEEN }: FetchCountArgs = {}): Promise<number> {
+  async fetchCount({ archived, read, tags }: FetchCountArgs = {}): Promise<FetchCountResponse> {
     return this.callWithSession(async () => {
-      const args = { feedIdentifier, status };
+      const args = { archived, read, tags };
       try {
         this._emitter.emit('feeds.fetch_count.pending', { args });
 
-        let response: { count: number };
-        if (SEEN_OR_UNSEEN.includes(status)) {
-          response = await this._apiService.getUnseenCount({
-            feedIdentifier,
-            seen: status === NotificationStatus.SEEN,
-          });
-        } else {
-          response = await this._apiService.getUnreadCount({
-            feedIdentifier,
-            read: status === NotificationStatus.READ,
-          });
-        }
+        const response = await this._inboxService.count({
+          archived,
+          read,
+          tags,
+        });
 
-        this._emitter.emit('feeds.fetch_count.success', { args, result: response.count });
+        this._emitter.emit('feeds.fetch_count.success', { args, result: response });
 
-        return response.count;
+        return response;
       } catch (error) {
         this._emitter.emit('feeds.fetch_count.error', { args, error });
+        throw error;
+      }
+    });
+  }
+
+  async read(args: InstanceArgs): Promise<Notification>;
+  async read(args: ReadArgs): Promise<Notification> {
+    return this.callWithSession(async () => {
+      let notificationId: string;
+      let optimisticValue: Notification | undefined;
+
+      if ('notification' in args) {
+        notificationId = args.notification.id;
+        optimisticValue = new Notification({ ...args.notification, read: true });
+      } else {
+        notificationId = args.notificationId;
+      }
+
+      try {
+        this._emitter.emit('feeds.read.pending', {
+          args,
+          optimistic: optimisticValue,
+        });
+
+        const response = await this._inboxService.read(notificationId);
+
+        const updatedNotification = new Notification(mapFromApiNotification(response));
+        this._emitter.emit('feeds.read.success', { args, result: updatedNotification });
+
+        return updatedNotification;
+      } catch (error) {
+        this._emitter.emit('feeds.read.error', { args, error });
+        throw error;
+      }
+    });
+  }
+
+  async unread(args: InstanceArgs): Promise<Notification>;
+  async unread(args: UnreadArgs): Promise<Notification> {
+    return this.callWithSession(async () => {
+      let notificationId: string;
+      let optimisticValue: Notification | undefined;
+
+      if ('notification' in args) {
+        notificationId = args.notification.id;
+        optimisticValue = new Notification({ ...args.notification, read: false });
+      } else {
+        notificationId = args.notificationId;
+      }
+
+      try {
+        this._emitter.emit('feeds.unread.pending', {
+          args,
+          optimistic: optimisticValue,
+        });
+
+        const response = await this._inboxService.unread(notificationId);
+
+        const updatedNotification = new Notification(mapFromApiNotification(response));
+        this._emitter.emit('feeds.unread.success', { args, result: updatedNotification });
+
+        return updatedNotification;
+      } catch (error) {
+        this._emitter.emit('feeds.unread.error', { args, error });
+        throw error;
+      }
+    });
+  }
+
+  async archived(args: InstanceArgs): Promise<Notification>;
+  async archived(args: ArchivedArgs): Promise<Notification> {
+    return this.callWithSession(async () => {
+      let notificationId: string;
+      let optimisticValue: Notification | undefined;
+
+      if ('notification' in args) {
+        notificationId = args.notification.id;
+        optimisticValue = new Notification({ ...args.notification, archived: true });
+      } else {
+        notificationId = args.notificationId;
+      }
+
+      try {
+        this._emitter.emit('feeds.archived.pending', {
+          args,
+          optimistic: optimisticValue,
+        });
+
+        const response = await this._inboxService.archived(notificationId);
+
+        const updatedNotification = new Notification(mapFromApiNotification(response));
+        this._emitter.emit('feeds.archived.success', { args, result: updatedNotification });
+
+        return updatedNotification;
+      } catch (error) {
+        this._emitter.emit('feeds.archived.error', { args, error });
+        throw error;
+      }
+    });
+  }
+
+  async unarchived(args: InstanceArgs): Promise<Notification>;
+  async unarchived(args: UnarchivedArgs): Promise<Notification> {
+    return this.callWithSession(async () => {
+      let notificationId: string;
+      let optimisticValue: Notification | undefined;
+
+      if ('notification' in args) {
+        notificationId = args.notification.id;
+        optimisticValue = new Notification({ ...args.notification, archived: false });
+      } else {
+        notificationId = args.notificationId;
+      }
+
+      try {
+        this._emitter.emit('feeds.unarchived.pending', {
+          args,
+          optimistic: optimisticValue,
+        });
+
+        const response = await this._inboxService.unarchived(notificationId);
+
+        const updatedNotification = new Notification(mapFromApiNotification(response));
+        this._emitter.emit('feeds.unarchived.success', { args, result: updatedNotification });
+
+        return updatedNotification;
+      } catch (error) {
+        this._emitter.emit('feeds.unarchived.error', { args, error });
+        throw error;
+      }
+    });
+  }
+
+  async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
+    return this.callWithSession(async () => {
+      try {
+        this._emitter.emit('feeds.read_all.pending', { args: { tags } });
+
+        await this._inboxService.readAll({ tags });
+
+        this._emitter.emit('feeds.read_all.success', { args: { tags }, result: undefined });
+      } catch (error) {
+        this._emitter.emit('feeds.read_all.error', { args: { tags }, error });
+        throw error;
+      }
+    });
+  }
+
+  async archivedAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
+    return this.callWithSession(async () => {
+      try {
+        this._emitter.emit('feeds.archived_all.pending', { args: { tags } });
+
+        await this._inboxService.archivedAll({ tags });
+
+        this._emitter.emit('feeds.archived_all.success', { args: { tags }, result: undefined });
+      } catch (error) {
+        this._emitter.emit('feeds.archived_all.error', { args: { tags }, error });
+        throw error;
+      }
+    });
+  }
+
+  async readArchivedAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
+    return this.callWithSession(async () => {
+      try {
+        this._emitter.emit('feeds.read_archived_all.pending', { args: { tags } });
+
+        await this._inboxService.readArchivedAll({ tags });
+
+        this._emitter.emit('feeds.read_archived_all.success', { args: { tags }, result: undefined });
+      } catch (error) {
+        this._emitter.emit('feeds.read_archived_all.error', { args: { tags }, error });
         throw error;
       }
     });

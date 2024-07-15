@@ -8,7 +8,18 @@ import { markActionAs, markNotificationAs, remove } from './helpers';
 
 type NotificationLike = Pick<
   Notification,
-  'id' | 'feedIdentifier' | 'createdAt' | 'avatar' | 'body' | 'read' | 'seen' | 'deleted' | 'cta' | 'to' | 'channelType'
+  | 'id'
+  | 'feedIdentifier'
+  | 'createdAt'
+  | 'avatar'
+  | 'body'
+  | 'read'
+  | 'seen'
+  | 'deleted'
+  | 'cta'
+  | 'to'
+  | 'channelType'
+  | 'archived'
 >;
 
 export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
@@ -26,6 +37,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   readonly cta: Cta;
   readonly to: Subscriber;
   readonly channelType: ChannelTypeEnum;
+  readonly archived: boolean;
 
   constructor(notification: NotificationLike) {
     this.#emitter = NovuEventEmitter.getInstance();
@@ -42,6 +54,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.cta = notification.cta;
     this.to = notification.to;
     this.channelType = notification.channelType;
+    this.archived = notification.archived;
   }
 
   markAsRead(): Promise<Notification> {

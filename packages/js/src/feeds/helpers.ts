@@ -22,6 +22,9 @@ export const mapFromApiNotification = (apiNotification: TODO): Notification =>
     seen: apiNotification.seen,
     deleted: apiNotification.deleted,
     cta: apiNotification.cta,
+    channelType: apiNotification.channelType,
+    to: apiNotification.to,
+    archived: apiNotification.archived,
   });
 
 const getOptimisticMarkAs = (status: NotificationStatus): Partial<Notification> => {
