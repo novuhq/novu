@@ -387,6 +387,9 @@ export class UserSession {
 
   async switchToProdEnvironment() {
     const prodEnvironment = await this.environmentService.getProductionEnvironment(this.organization._id);
+    if (prodEnvironment) {
+      await this.switchEnvironment(prodEnvironment._id);
+    }
   }
 
   // TODO: Replace with a getDevId
