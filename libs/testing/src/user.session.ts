@@ -96,7 +96,7 @@ export class UserSession {
 
   async initialize(options?: UserSessionOptions) {
     if (isClerkEnabled()) {
-      // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
+      // The ids of pre-seeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
       await this.initializeCommunity(options);

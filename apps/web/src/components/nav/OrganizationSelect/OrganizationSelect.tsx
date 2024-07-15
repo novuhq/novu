@@ -47,18 +47,18 @@ export function OrganizationSelect() {
     return '';
   }
 
-  function onChange(organizatonId: string | string[] | null) {
+  function onChange(organizationId: string | string[] | null) {
     (async () => {
-      if (!organizatonId) {
+      if (!organizationId) {
         return;
       }
 
-      if (Array.isArray(organizatonId)) {
-        organizatonId = organizatonId[0];
+      if (Array.isArray(organizationId)) {
+        organizationId = organizationId[0];
       }
 
       setIsLoading(true);
-      await switchOrganization(organizatonId);
+      await switchOrganization(organizationId);
       setIsLoading(false);
     })();
   }

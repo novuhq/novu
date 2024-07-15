@@ -98,7 +98,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
       /*
        * TODO: Replace this revalidation by moving environment ID or name to the URL.
-       * This call creates an avalance of HTTP requests as the more you navigate across the app in a
+       * This call creates an avalanche of HTTP requests as the more you navigate across the app in a
        * single environment the more invalidations will be triggered on environment switching.
        */
       await queryClient.invalidateQueries();
