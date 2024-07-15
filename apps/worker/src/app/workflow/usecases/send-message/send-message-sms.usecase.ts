@@ -280,14 +280,18 @@ export class SendMessageSms extends SendMessageBase {
       if (!smsHandler) {
         throw new PlatformException(`Sms handler for provider ${integration.providerId} is  not found`);
       }
+      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
-      const result = await smsHandler.send({
-        to: overrides.to || phone,
-        from: overrides.from || integration.credentials.from,
-        content: bridgeBody || overrides.content || content,
-        id: message._id,
-        customData: overrides.customData || {},
-      });
+      const result = await smsHandler.send(
+        {
+          to: overrides.to || phone,
+          from: overrides.from || integration.credentials.from,
+          content: bridgeBody || overrides.content || content,
+          id: message._id,
+          customData: overrides.customData || {},
+        },
+        bridgeProviderData
+      );
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({

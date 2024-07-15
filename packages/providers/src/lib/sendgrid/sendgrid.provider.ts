@@ -32,10 +32,14 @@ export class SendgridEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeOptions: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const response = await this.sendgridMail.send(mailData);
+    const response = await this.sendgridMail.send({
+      ...mailData,
+      ...bridgeOptions,
+    });
 
     return {
       id: options.id || response[0]?.headers['x-message-id'],

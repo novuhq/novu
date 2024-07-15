@@ -33,7 +33,8 @@ export class APNSPushProvider implements IPushProvider {
   }
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
+    bridgeOptions: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.notificationIdentifiers;
     const notification = new apn.Notification({
@@ -42,6 +43,7 @@ export class APNSPushProvider implements IPushProvider {
       payload: options.payload,
       topic: this.config.bundleId,
       ...options.overrides,
+      ...bridgeOptions,
     });
     const res = await this.provider.send(notification, options.target);
 

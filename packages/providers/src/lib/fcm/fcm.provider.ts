@@ -38,7 +38,8 @@ export class FcmPushProvider implements IPushProvider {
   }
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
+    bridgeOptions: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse> {
     const {
       deviceTokens: _,
@@ -66,6 +67,7 @@ export class FcmPushProvider implements IPushProvider {
           title: options.title,
           body: options.content,
           message: options.content,
+          ...bridgeOptions,
         },
         android,
         apns,
@@ -79,6 +81,7 @@ export class FcmPushProvider implements IPushProvider {
           title: options.title,
           body: options.content,
           ...overridesData,
+          ...bridgeOptions,
         },
         data,
         android,

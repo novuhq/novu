@@ -294,16 +294,20 @@ export class SendMessagePush extends SendMessageBase {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
+      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
-      const result = await pushHandler.send({
-        target: [deviceToken],
-        title: (bridgeOutputs as PushOutput)?.subject || title,
-        content: (bridgeOutputs as PushOutput)?.body || content,
-        payload: command.payload,
-        overrides,
-        subscriber,
-        step,
-      });
+      const result = await pushHandler.send(
+        {
+          target: [deviceToken],
+          title: (bridgeOutputs as PushOutput)?.subject || title,
+          content: (bridgeOutputs as PushOutput)?.body || content,
+          payload: command.payload,
+          overrides,
+          subscriber,
+          step,
+        },
+        bridgeProviderData
+      );
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({

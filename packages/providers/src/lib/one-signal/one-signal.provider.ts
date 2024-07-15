@@ -26,7 +26,8 @@ export class OneSignalPushProvider implements IPushProvider {
   }
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
+    bridgeOptions: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
@@ -48,6 +49,7 @@ export class OneSignalPushProvider implements IPushProvider {
       chrome_icon: overrides.icon,
       firefox_icon: overrides.icon,
       ios_category: overrides.categoryId,
+      ...bridgeOptions,
     };
 
     const notificationOptions: AxiosRequestConfig = {

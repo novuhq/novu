@@ -6,5 +6,8 @@ export interface IPushHandler {
 
   buildProvider(credentials: ICredentials);
 
-  send(smsOptions: IPushOptions): Promise<ISendMessageSuccessResponse>;
+  send(
+    smsOptions: IPushOptions,
+    bridgeOptions: Record<string, unknown>
+  ): Promise<ISendMessageSuccessResponse>;
 }

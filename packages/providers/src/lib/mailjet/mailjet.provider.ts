@@ -33,13 +33,17 @@ export class MailjetEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    emailOptions: IEmailOptions
+    emailOptions: IEmailOptions,
+    bridgeOptions: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.mailjetClient
       .post('send', {
         version: MAILJET_API_VERSION,
       })
-      .request<SendEmailV3_1.Response>(this.createMailData(emailOptions));
+      .request<SendEmailV3_1.Response>({
+        ...this.createMailData(emailOptions),
+        ...bridgeOptions,
+      });
 
     const { body, response: clientResponse } = response;
 
