@@ -16,9 +16,6 @@ export const StatusOptions = (props: { setStatus: (status: NotificationStatus) =
     <>
       <StatusItem
         label={DropdownStatus.UnreadRead}
-        /**
-         * TODO: Implement setFeedOptions and isSelected after Filter is implemented
-         */
         onClick={() => {
           props.setStatus(NotificationStatus.UNREAD);
         }}
@@ -28,9 +25,6 @@ export const StatusOptions = (props: { setStatus: (status: NotificationStatus) =
       <StatusItem
         label={DropdownStatus.Unread}
         onClick={() => {
-          /**
-           * TODO: Implement setFeedOptions after Filter is implemented
-           */
           props.setStatus(NotificationStatus.UNSEEN);
         }}
         isSelected={false}
@@ -39,9 +33,6 @@ export const StatusOptions = (props: { setStatus: (status: NotificationStatus) =
       <StatusItem
         label={DropdownStatus.Archived}
         onClick={() => {
-          /**
-           * TODO: Implement setFeedOptions after Filter is implemented
-           */
           props.setStatus(NotificationStatus.SEEN);
         }}
         isSelected={false}

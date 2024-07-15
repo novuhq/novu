@@ -4,14 +4,9 @@ import { ArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
 import { StatusOptions } from './StatusOptions';
 
-/**
- *
- * TODO: Implement getStatusLabel after Filter is implemented
- * currently, it is a placeholder function
- */
 const getStatusLabel = (status?: { read?: boolean; archived?: boolean }) => {
   switch (status) {
-    case { read: true, archived: true }:
+    case { read: undefined, archived: false }:
       return 'Inbox';
     case { read: false, archived: false }:
       return 'Unread';
