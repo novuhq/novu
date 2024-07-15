@@ -1,6 +1,6 @@
 import { JSONSchema } from 'json-schema-to-ts';
 
-import {
+import type {
   BuilderFieldType,
   BuilderGroupValues,
   TemplateVariableTypeEnum,
