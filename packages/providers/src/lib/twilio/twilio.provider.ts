@@ -27,7 +27,7 @@ export class TwilioSmsProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeOptions: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const twilioResponse = await this.twilioClient.messages.create({
       body: options.content,

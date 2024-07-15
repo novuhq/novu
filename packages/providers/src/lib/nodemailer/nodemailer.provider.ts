@@ -91,7 +91,7 @@ export class NodemailerProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeOptions: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const info = await this.transports.sendMail({

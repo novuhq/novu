@@ -14,7 +14,7 @@ export class SlackProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeOptions: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(data.webhookUrl, {
       text: data.content,

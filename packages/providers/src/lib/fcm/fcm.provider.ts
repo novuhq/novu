@@ -39,7 +39,7 @@ export class FcmPushProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeOptions: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const {
       deviceTokens: _,

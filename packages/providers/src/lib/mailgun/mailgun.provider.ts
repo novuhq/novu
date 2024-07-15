@@ -39,7 +39,7 @@ export class MailgunEmailProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeOptions: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailgunMessageData: Partial<MailgunMessageData> = {
       from: emailOptions.from || this.config.from,
