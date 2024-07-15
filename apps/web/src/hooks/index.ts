@@ -1,5 +1,5 @@
 export * from './integrations';
-export * from './useAPIKeys';
+export * from './useApiKeys';
 export * from './useAuth';
 export * from './useBlueprint';
 export * from './useBootIntercom';
@@ -31,3 +31,4 @@ export * from './useThemeChange';
 export * from './useVariablesManager';
 export * from './useVercelIntegration';
 export * from './useVercelParams';
+export * from './useIsSynced';

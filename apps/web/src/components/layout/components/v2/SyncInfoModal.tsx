@@ -1,42 +1,53 @@
+import { FC, useEffect, useState } from 'react';
+import { QueryObserverResult } from '@tanstack/react-query';
+import { showNotification } from '@mantine/notifications';
 // TODO: replace with Novui Code Block when available
 import { Prism } from '@mantine/prism';
+
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
 import { Button, Input, Tabs, Text, Title } from '@novu/novui';
-import { FC, useEffect, useState } from 'react';
+import { css } from '@novu/novui/css';
+
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
 import { API_ROOT, ENV } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildApiHttpClient } from '../../../../api';
-import { showNotification } from '@mantine/notifications';
-import { css } from '@novu/novui/css';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
   toggleOpen: () => void;
+  refetchOriginWorkflows: () => Promise<QueryObserverResult<any, unknown>>;
 };
 
 const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
-export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
+export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen, refetchOriginWorkflows }) => {
   const { devSecretKey } = useStudioState();
   const [manualUrl, setTunnelManualURl] = useState('');
 
   const bridgeUrl = useBridgeURL(true);
   const [loadingSync, setLoadingSync] = useState(false);
 
-  useEffect(() => {
-    setTunnelManualURl(bridgeUrl);
-  }, [bridgeUrl]);
-
   async function handleLocalSync() {
+    if (!manualUrl) {
+      showNotification({
+        color: 'red',
+        message: 'Please specify a deployed application URL',
+      });
+
+      return;
+    }
+
     const api = buildApiHttpClient({
       secretKey: devSecretKey,
     });
 
     try {
       setLoadingSync(true);
-      const result = await api.syncBridge(manualUrl);
+      await api.syncBridge(manualUrl);
+
+      refetchOriginWorkflows();
 
       toggleOpen();
 
@@ -58,6 +69,48 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
 
   const tabs = [
     {
+      value: 'manual',
+      label: 'Manual',
+      content: (
+        <>
+          <Text color="typography.text.secondary" className={css({ marginBottom: 30 })}>
+            For your changes to be visible on the cloud dashboard, you need to deploy your local novu application to a
+            cloud provider and perform a Sync command with the cloud endpoint url. Learn more about syncing on{' '}
+            <a
+              href="https://docs.novu.co/deployment/syncing"
+              target={'_blank'}
+              className={css({
+                textDecoration: 'underline !important',
+              })}
+            >
+              our docs.
+            </a>
+          </Text>
+          <Input
+            onChange={(e) => setTunnelManualURl(e.target.value)}
+            value={manualUrl}
+            label={'Deployed application URL'}
+            placeholder="https://your-deployed-application.com/api/novu"
+          />
+
+          {bridgeUrl === manualUrl ? (
+            <Text variant={'secondary'} style={{ marginTop: 10 }}>
+              This tunnel URL will use your local computer's tunnel URL to forward requests. The tunnel must be running
+              to actively sync with Novu Cloud.
+              <br /> <br />
+              We recommend syncing to a deployed environment in your cloud with a publicly exposed endpoint.
+            </Text>
+          ) : null}
+
+          <div style={{ textAlign: 'right', marginTop: 25 }}>
+            <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
+              Manual Sync
+            </Button>
+          </div>
+        </>
+      ),
+    },
+    {
       value: 'cli',
       label: 'CLI',
       content: (
@@ -75,46 +128,11 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
         </Prism>
       ),
     },
-    {
-      value: 'manual',
-      label: 'Manual',
-      content: (
-        <>
-          <Text style={{ marginTop: 10 }}>
-            <Input
-              onChange={(e) => setTunnelManualURl(e.target.value)}
-              value={manualUrl}
-              description={'Specify a bridge endpoint to sync Novu Cloud with'}
-              label={'Tunnel URL to sync'}
-            />
-          </Text>
-
-          {bridgeUrl === manualUrl ? (
-            <Text variant={'secondary'} style={{ marginTop: 10 }}>
-              This tunnel URL will use your local computer's tunnel URL to forward requests. The tunnel must be running
-              to actively sync with Novu Cloud.
-              <br /> <br />
-              We recommend syncing to a deployed environment in your cloud with a publicly exposed endpoint.
-            </Text>
-          ) : null}
-
-          <div style={{ textAlign: 'right', marginTop: 15 }}>
-            <Button variant={'filled'} onClick={handleLocalSync} loading={loadingSync}>
-              Manual Sync
-            </Button>
-          </div>
-        </>
-      ),
-    },
   ];
 
   return (
     <Modal opened={isOpen} title={<Title variant="section">Sync changes</Title>} onClose={toggleOpen}>
-      <Text color="typography.text.secondary" className={css({ marginBottom: 30 })}>
-        For your changes to be visible on the cloud dashboard, you need to deploy your local novu application to a cloud
-        provider.
-      </Text>
-      <Tabs tabConfigs={tabs} defaultValue={'cli'} colorPalette="mode.local" />
+      <Tabs tabConfigs={tabs} defaultValue={'manual'} colorPalette="mode.local" />
     </Modal>
   );
 };

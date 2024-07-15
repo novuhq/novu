@@ -41,6 +41,7 @@ import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { isClerkEnabled } from '@novu/shared';
 import { LegacyEEAuthModule } from './app/auth/legacy-ee-auth/auth.module';
+import { BridgeModule } from './app/bridge/bridge.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -50,9 +51,6 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(LegacyEEAuthModule);
     }
 
-    if (require('@novu/ee-bridge-api')?.BridgeModule) {
-      modules.push(require('@novu/ee-bridge-api')?.BridgeModule);
-    }
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
     }
@@ -112,6 +110,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   WidgetsModule,
   ProfilingModule.register(packageJson.name),
   TracingModule.register(packageJson.name, packageJson.version),
+  BridgeModule,
 ];
 
 const enterpriseModules = enterpriseImports();

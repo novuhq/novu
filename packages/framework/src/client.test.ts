@@ -51,6 +51,14 @@ describe('Novu Client', () => {
       process.env = { ...process.env, NODE_ENV: originalEnv };
     });
 
+    it('should set strictAuthentication to false when NODE_ENV is not defined', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env = { ...process.env, NODE_ENV: undefined as any };
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.strictAuthentication).toBe(false);
+      process.env = { ...process.env, NODE_ENV: originalEnv };
+    });
+
     it('should set strictAuthentication to true when NODE_ENV is production', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'production' };
@@ -547,7 +555,11 @@ describe('Novu Client', () => {
           } as const,
           providers: {
             sendgrid: async ({ controls, outputs }) => ({
-              ipPoolName: `${controls.foo} ${outputs.subject}`,
+              ip_pool_name: `${controls.foo} ${outputs.subject}`,
+              from: {
+                email: 'test@example.com',
+                name: 'Test',
+              },
             }),
           },
         });
@@ -571,7 +583,12 @@ describe('Novu Client', () => {
 
       const executionResult = await client.executeWorkflow(event);
 
-      expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
+      expect(executionResult.providers).toEqual({
+        sendgrid: {
+          ip_pool_name: 'foo Subject',
+          from: { email: 'test@example.com', name: 'Test' },
+        },
+      });
     });
 
     it('should preview with mocked payload during preview', async () => {

@@ -6,7 +6,6 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { JSONSchema7 } from 'json-schema';
 
 import {
   StepTypeEnum,
@@ -19,6 +18,7 @@ import {
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../commands';
+import { JsonSchema } from '@novu/framework';
 
 export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -74,16 +74,16 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   inputs?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
   @IsOptional()
   controls?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
 
   @IsOptional()
   output?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
 
   @IsOptional()

@@ -10,7 +10,7 @@ export const buildInviteHref = ({
 }: {
   invitedMemberEmail: string;
   organizationName?: string;
-  currentUser?: IUserEntity;
+  currentUser?: IUserEntity | null;
   copyLink: string;
 }) => {
   const mailTo = `mailto:${invitedMemberEmail}`;

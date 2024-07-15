@@ -43,8 +43,7 @@ export class SwitchEnvironment {
     const token = await this.authService.getSignedToken(
       user,
       command.organizationId,
-      member,
-      command.newEnvironmentId
+      member
     );
 
     return token;
