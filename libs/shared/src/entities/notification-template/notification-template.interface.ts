@@ -31,6 +31,7 @@ export interface INotificationTemplate {
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
   type?: WorkflowTypeEnum;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
 }
 
@@ -72,6 +73,7 @@ export interface ITriggerReservedVariable {
 
 export interface INotificationTriggerVariable {
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   type?: TemplateVariableTypeEnum;
 }

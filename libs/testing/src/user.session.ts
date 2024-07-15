@@ -96,7 +96,7 @@ export class UserSession {
 
   async initialize(options?: UserSessionOptions) {
     if (isClerkEnabled()) {
-      // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
+      // The ids of pre-seeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
       await this.initializeCommunity(options);
@@ -126,8 +126,6 @@ export class UserSession {
     if (!options.noOrganization) {
       await this.addOrganizationCommunity();
     }
-
-    await this.fetchJwtCommunity();
 
     if (!options.noOrganization && !options?.noEnvironment) {
       await this.createEnvironmentsAndFeeds();
@@ -241,14 +239,15 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint))
+      .set('Authorization', this.token)
+      .set('Novu-Environment-Id', this.environment._id);
   }
 
   private async fetchJwtEE() {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
-      environmentId: this.environment ? this.environment._id : '',
     });
   }
 
@@ -388,11 +387,9 @@ export class UserSession {
 
   async switchToProdEnvironment() {
     const prodEnvironment = await this.environmentService.getProductionEnvironment(this.organization._id);
-    if (prodEnvironment) {
-      await this.switchEnvironment(prodEnvironment._id);
-    }
   }
 
+  // TODO: Replace with a getDevId
   async switchToDevEnvironment() {
     const devEnvironment = await this.environmentService.getDevelopmentEnvironment(this.organization._id);
     if (devEnvironment) {
@@ -429,11 +426,13 @@ export class UserSession {
   }
 
   async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
-    return await this.testAgent.post('/v1/events/trigger').send({
+    await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,
       payload,
     });
+
+    return;
   }
 
   public async awaitRunningJobs(

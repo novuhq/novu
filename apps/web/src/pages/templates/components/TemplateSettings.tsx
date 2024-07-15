@@ -18,7 +18,7 @@ import { WorkflowSidebar } from './WorkflowSidebar';
 export const TemplateSettings = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const { trigger, template } = useTemplateEditorForm();
-  const { readonly } = useEnvironment({}, template?.bridge);
+  const { readonly } = useEnvironment({ bridge: template?.bridge });
   const [toDelete, setToDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);

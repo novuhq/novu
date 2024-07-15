@@ -29,10 +29,7 @@ export class WorkflowsPage {
     let count = await locators.count();
     for (let i = 0; i < count; i++) {
       let href = await locators.nth(i).getAttribute('href');
-      console.log('triggerId: ' + JSON.stringify(triggerId));
-      console.log('href: ' + href);
-      console.log('locator: ' + JSON.stringify(locators.nth(i)));
-      if (href.includes(triggerId)) {
+      if (href?.includes(triggerId)) {
         return locators.nth(i);
       }
     }

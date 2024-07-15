@@ -45,7 +45,7 @@ import {
   buildUserKey,
   CachedEntity,
 } from '../cache';
-import { normalizeEmail } from '@novu/shared';
+import { ApiAuthSchemeEnum, normalizeEmail } from '@novu/shared';
 import { IAuthService } from './auth.service.interface';
 
 @Injectable()
@@ -211,6 +211,7 @@ export class CommunityAuthService implements IAuthService {
       organizationId: environment._organizationId,
       environmentId: environment._id,
       exp: 0,
+      scheme: ApiAuthSchemeEnum.API_KEY,
     };
   }
 
@@ -239,36 +240,10 @@ export class CommunityAuthService implements IAuthService {
     const userActiveOrganizations =
       await this.organizationRepository.findUserActiveOrganizations(user._id);
 
-    if (userActiveOrganizations && userActiveOrganizations.length) {
+    if (userActiveOrganizations?.length > 0) {
       const organizationToSwitch = userActiveOrganizations[0];
 
-      const userActiveProjects =
-        await this.environmentRepository.findOrganizationEnvironments(
-          organizationToSwitch._id
-        );
-      let environmentToSwitch = userActiveProjects[0];
-
-      const reduceEnvsToOnlyDevelopment = (prev, current) =>
-        current.name === 'Development' ? current : prev;
-
-      if (userActiveProjects.length > 1) {
-        environmentToSwitch = userActiveProjects.reduce(
-          reduceEnvsToOnlyDevelopment,
-          environmentToSwitch
-        );
-      }
-
-      if (environmentToSwitch) {
-        return await this.switchEnvironmentUsecase.execute(
-          SwitchEnvironmentCommand.create({
-            newEnvironmentId: environmentToSwitch._id,
-            organizationId: organizationToSwitch._id,
-            userId: user._id,
-          })
-        );
-      }
-
-      return await this.switchOrganizationUsecase.execute(
+      return this.switchOrganizationUsecase.execute(
         SwitchOrganizationCommand.create({
           newOrganizationId: organizationToSwitch._id,
           userId: user._id,
@@ -282,8 +257,7 @@ export class CommunityAuthService implements IAuthService {
   public async getSignedToken(
     user: UserEntity,
     organizationId?: string,
-    member?: MemberEntity,
-    environmentId?: string
+    member?: MemberEntity
   ): Promise<string> {
     const roles: MemberRoleEnum[] = [];
     if (member && member.roles) {
@@ -299,7 +273,6 @@ export class CommunityAuthService implements IAuthService {
         profilePicture: user.profilePicture,
         organizationId: organizationId || null,
         roles,
-        environmentId: environmentId || null,
       },
       {
         expiresIn: '30 days',
@@ -310,19 +283,36 @@ export class CommunityAuthService implements IAuthService {
 
   @Instrument()
   public async validateUser(payload: UserSessionData): Promise<UserEntity> {
-    // We run these in parallel to speed up the query time
     const userPromise = this.getUser({ _id: payload._id });
+
     const isMemberPromise = payload.organizationId
       ? this.isAuthenticatedForOrganization(payload._id, payload.organizationId)
       : Promise.resolve(true);
-    const [user, isMember] = await Promise.all([userPromise, isMemberPromise]);
+
+    const environmentPromise =
+      payload.organizationId && payload.environmentId
+        ? this.environmentRepository.findByIdAndOrganization(
+            payload.environmentId,
+            payload.organizationId
+          )
+        : Promise.resolve(true);
+
+    const [user, isMember, environment] = await Promise.all([
+      userPromise,
+      isMemberPromise,
+      environmentPromise,
+    ]);
 
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
       throw new UnauthorizedException(
-        `Not authorized for organization ${payload.organizationId}`
+        `User ${payload._id} is not a member of organization ${payload.organizationId}`
       );
     }
+    if (payload.organizationId && payload.environmentId && !environment)
+      throw new UnauthorizedException(
+        `Environment ${payload.environmentId} doesn't belong to organization ${payload.organizationId}`
+      );
 
     return user;
   }

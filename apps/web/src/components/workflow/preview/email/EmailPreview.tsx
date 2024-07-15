@@ -41,7 +41,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const path = useStepFormPath();
   const error = useStepFormErrors();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvironment({}, template?.bridge);
+  const { bridge } = useEnvironment({ bridge: template?.bridge });
 
   const stepId = watch(`${path}.uuid`);
 
