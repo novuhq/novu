@@ -154,11 +154,7 @@ export class AuthController {
   @UserAuthentication()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
-  async organizationSwitch(
-    @UserSession() user: UserSessionData,
-    @Param('organizationId') organizationId: string,
-    @Req() request: Request
-  ) {
+  async organizationSwitch(@UserSession() user: UserSessionData, @Param('organizationId') organizationId: string) {
     const command = SwitchOrganizationCommand.create({
       userId: user._id,
       newOrganizationId: organizationId,

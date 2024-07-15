@@ -20,7 +20,6 @@ import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.d
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import Api from 'twilio/lib/rest/Api';
 
 @ApiCommonResponses()
 @Controller('/environments')

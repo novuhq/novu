@@ -248,8 +248,6 @@ export class UserSession {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
-      // TODO: @adamchmara, is this necessary anymore?
-      environmentId: this.environment ? this.environment._id : '',
     });
   }
 
