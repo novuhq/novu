@@ -32,7 +32,8 @@ export interface IAuthService {
   getSignedToken(
     user: UserEntity,
     organizationId?: string,
-    member?: MemberEntity
+    member?: MemberEntity,
+    environmentId?: string
   ): Promise<string>;
 
   validateUser(payload: UserSessionData): Promise<UserEntity>;
