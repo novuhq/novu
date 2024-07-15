@@ -1,47 +1,19 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import CryptoJS from 'crypto-js';
 import styled from '@emotion/styled';
 
 import { colors, Tooltip, useColorScheme } from '@novu/design-system';
 import { Button, Text } from '@novu/novui';
 import { IconOutlineCloudUpload } from '@novu/novui/icons';
-import { INotificationTemplate } from '@novu/shared';
 
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { SyncInfoModal } from './SyncInfoModal';
-import { useDiscover } from '../../../../studio/hooks';
-import { getNotificationsList } from '../../../../api/notification-templates';
 import { When } from '../../../utils/When';
+import { useIsSynced } from '../../../../hooks';
 
 export function SyncInfoModalTrigger() {
   const [showSyncInfoModal, setShowSyncInfoModal] = useState(false);
-  const { data: bridgeDiscoverData, isLoading: isLoadingBridgeWorkflows } = useDiscover();
-  const {
-    data: originData,
-    isLoading: isLoadingOriginWorkflows,
-    refetch,
-  } = useQuery(
-    ['origin-workflows'],
-    async () => {
-      return getNotificationsList({ page: 0, limit: 100 });
-    },
-    {}
-  );
-
-  const isSynced = useMemo(() => {
-    if (isLoadingBridgeWorkflows || isLoadingOriginWorkflows) {
-      return true;
-    }
-
-    const bridgeDiscoverWorkflows = bridgeDiscoverData?.workflows || undefined;
-    const originWorkflows = originData?.data.map((workflow: INotificationTemplate) => workflow.rawData) || undefined;
-
-    const bridgeDiscoverWorkflowsHash = createHash(bridgeDiscoverWorkflows);
-    const storedWorkflowsHash = createHash(originWorkflows);
-
-    return storedWorkflowsHash === bridgeDiscoverWorkflowsHash;
-  }, [bridgeDiscoverData, originData, isLoadingBridgeWorkflows, isLoadingOriginWorkflows]);
+  const { isSynced, refetchOriginWorkflows } = useIsSynced();
 
   const track = useTelemetry();
 
@@ -69,7 +41,11 @@ export function SyncInfoModalTrigger() {
       </Tooltip>
 
       {/** TODO: use a modal manager */}
-      <SyncInfoModal isOpen={showSyncInfoModal} toggleOpen={toggleSyncInfoModalShow} refetchOriginWorkflows={refetch} />
+      <SyncInfoModal
+        isOpen={showSyncInfoModal}
+        toggleOpen={toggleSyncInfoModalShow}
+        refetchOriginWorkflows={refetchOriginWorkflows}
+      />
     </>
   );
 }
