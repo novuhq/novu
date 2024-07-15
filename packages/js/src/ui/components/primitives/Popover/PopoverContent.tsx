@@ -37,10 +37,15 @@ const PopoverContentBody = (props: PopoverContentProps) => {
 
 type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const PopoverContent = (props: PopoverContentProps) => {
-  const { open, onClose, floating } = usePopover();
+  const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
 
   const handleClickOutside = (e: MouseEvent) => {
+    // Don't count the trigger as outside click
+    if (reference()?.contains(e.target as Node)) {
+      return;
+    }
+
     if (active() !== floating() || floating()?.contains(e.target as Node)) {
       return;
     }
