@@ -80,12 +80,14 @@ describe('User registration - /auth/register (POST) @skip-in-ee', async () => {
 
     expect(organization.name).to.equal('Sample org');
 
-    // Should generate environment and api keys
-    expect(jwtContent.environmentId).to.be.ok;
-    const environment = await environmentRepository.findOne({ _id: jwtContent.environmentId });
+    // Should generate two (prod and dev) environments
+    const environments = await environmentRepository.findOrganizationEnvironments(organization._id);
 
-    expect(environment.apiKeys.length).to.equal(1);
-    expect(environment.apiKeys[0].key).to.ok;
+    // Check that each environment has a valid apiKey
+    environments.forEach((env) => {
+      expect(env.apiKeys.length).to.equal(1);
+      expect(env.apiKeys[0].key).to.be.ok;
+    });
 
     expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.ADMIN);
   });
