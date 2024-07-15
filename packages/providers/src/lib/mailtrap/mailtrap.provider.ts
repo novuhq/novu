@@ -59,7 +59,7 @@ export class MailtrapEmailProvider implements IEmailProvider {
 
   private sendWithMailtrap(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown> = {}
   ) {
     return this.mailtrapClient.send({
       to: options.to.map(this.mapAddress),
