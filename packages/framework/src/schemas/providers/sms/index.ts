@@ -2,7 +2,7 @@ import { SmsProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic.schema';
 import { novuSmsProviderSchemas } from './novu-sms.schema';
-import { twilioProviderSchemas } from './twilio';
+import { twilioProviderSchemas } from './twilio.schema';
 
 export const smsProviderSchemas = {
   [SmsProviderIdEnum.Twilio]: twilioProviderSchemas,
