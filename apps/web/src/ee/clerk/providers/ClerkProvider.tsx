@@ -27,6 +27,8 @@ const localization = {
   },
 };
 
+const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:2022', new URL(location.href).origin];
+
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const navigate = useNavigate();
   const { colorScheme } = useColorScheme();
@@ -45,6 +47,7 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
         elements: ClerkModalElement,
       }}
       localization={localization}
+      allowedRedirectOrigins={ALLOWED_REDIRECT_ORIGINS}
     >
       {children}
     </_ClerkProvider>
