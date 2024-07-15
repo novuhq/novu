@@ -6,6 +6,7 @@ import type {
   TemplateVariableTypeEnum,
   FilterParts,
   WorkflowTypeEnum,
+  NotificationTemplateCustomData,
 } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
@@ -30,9 +31,12 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
+  blueprintId?: string;
   type?: WorkflowTypeEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
+  rawData?: any;
+  data?: NotificationTemplateCustomData;
 }
 
 export class IGroupedBlueprint {
