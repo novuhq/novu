@@ -1,15 +1,15 @@
+import { FetchFeedArgs } from './feeds';
 import { Novu } from './novu';
 
 const mockFeedResponse = {
   data: [],
   hasMore: true,
-  totalCount: 0,
-  pageSize: 10,
-  page: 1,
+  filter: { tags: [], read: false, archived: false },
 };
 
 const initializeSession = jest.fn().mockResolvedValue({ token: 'token', profile: 'profile' });
 const getNotificationsList = jest.fn(() => mockFeedResponse);
+const fetchNotifications = jest.fn(() => mockFeedResponse);
 
 jest.mock('@novu/client', () => ({
   ...jest.requireActual('@novu/client'),
@@ -31,6 +31,7 @@ jest.mock('./api/inbox-service', () => ({
   InboxService: jest.fn().mockImplementation(() => {
     const inboxService = {
       initializeSession,
+      fetchNotifications,
     };
 
     return inboxService;
@@ -52,12 +53,12 @@ describe('Novu', () => {
       const res = await novu.feeds.fetch(options);
 
       expect(initializeSession).toHaveBeenCalledTimes(1);
-      expect(getNotificationsList).toHaveBeenCalledWith(options, {});
+      expect(fetchNotifications).toHaveBeenCalledWith(options);
       expect(res).toEqual(mockFeedResponse);
     });
 
     test('should call the feeds.fetch right away when session is already initialized', async () => {
-      const options = {
+      const options: FetchFeedArgs = {
         limit: 10,
         offset: 0,
       };
@@ -68,7 +69,7 @@ describe('Novu', () => {
       const res = await novu.feeds.fetch({ limit: 10, offset: 0 });
 
       expect(initializeSession).toHaveBeenCalledTimes(1);
-      expect(getNotificationsList).toHaveBeenCalledWith(options, {});
+      expect(fetchNotifications).toHaveBeenCalledWith(options);
       expect(res).toEqual(mockFeedResponse);
     });
 

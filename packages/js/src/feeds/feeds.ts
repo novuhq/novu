@@ -1,4 +1,4 @@
-import { NotificationFilter } from 'src/api/types';
+import { NotificationFilter } from '../api/types';
 import { BaseModule } from '../base-module';
 import { NotificationStatus, TODO } from '../types';
 import {
@@ -46,7 +46,7 @@ import type {
 export class Feeds extends BaseModule {
   async fetch({ limit = 10, ...restOptions }: FetchFeedArgs = {}): Promise<FetchFeedResponse> {
     return this.callWithSession(async () => {
-      const args = { status, ...restOptions };
+      const args = { limit, ...restOptions };
       try {
         this._emitter.emit('feeds.fetch.pending', { args });
 

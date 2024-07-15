@@ -1,6 +1,6 @@
 import type { ApiService } from '@novu/client';
-import { InboxService } from 'src/api';
-import { InboxServiceSingleton } from 'src/utils/inbox-service-singleton';
+import { InboxService } from '../api';
+import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 import { ChannelTypeEnum, Notification as NotificationType, Subscriber } from '../api/types';
 
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';

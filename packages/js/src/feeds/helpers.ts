@@ -1,5 +1,5 @@
 import type { ApiService } from '@novu/client';
-import { InboxService } from 'src/api';
+import { InboxService } from '../api';
 
 import type { NovuEventEmitter } from '../event-emitter';
 import { NotificationActionStatus, NotificationButton, NotificationStatus, TODO } from '../types';
