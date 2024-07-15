@@ -44,48 +44,60 @@ describe('Novu', () => {
 
   describe('lazy session initialization', () => {
     test('should call the queued feeds.fetch after the session is initialized', async () => {
-      const page = 1;
+      const options = {
+        limit: 10,
+        offset: 0,
+      };
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
-      const res = await novu.feeds.fetch({ page });
+      const res = await novu.feeds.fetch(options);
 
       expect(initializeSession).toHaveBeenCalledTimes(1);
-      expect(getNotificationsList).toHaveBeenCalledWith(page, {});
+      expect(getNotificationsList).toHaveBeenCalledWith(options, {});
       expect(res).toEqual(mockFeedResponse);
     });
 
     test('should call the feeds.fetch right away when session is already initialized', async () => {
-      const page = 1;
+      const options = {
+        limit: 10,
+        offset: 0,
+      };
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
       // await for session initialization
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const res = await novu.feeds.fetch({ page });
+      const res = await novu.feeds.fetch({ limit: 10, offset: 0 });
 
       expect(initializeSession).toHaveBeenCalledTimes(1);
-      expect(getNotificationsList).toHaveBeenCalledWith(page, {});
+      expect(getNotificationsList).toHaveBeenCalledWith(options, {});
       expect(res).toEqual(mockFeedResponse);
     });
 
     test('should reject the queued feeds.fetch if session initialization fails', async () => {
-      const page = 1;
+      const options = {
+        limit: 10,
+        offset: 0,
+      };
       const error = new Error('Failed to initialize session');
       initializeSession.mockRejectedValueOnce(error);
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
 
-      const fetchPromise = novu.feeds.fetch({ page });
+      const fetchPromise = novu.feeds.fetch(options);
 
       await expect(fetchPromise).rejects.toEqual(error);
     });
 
     test('should reject the feeds.fetch right away when session initialization has failed', async () => {
-      const page = 1;
+      const options = {
+        limit: 10,
+        offset: 0,
+      };
       const error = new Error('Failed to initialize session');
       initializeSession.mockRejectedValueOnce(error);
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
       // await for session initialization
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const fetchPromise = novu.feeds.fetch({ page });
+      const fetchPromise = novu.feeds.fetch(options);
 
       await expect(fetchPromise).rejects.toEqual(error);
     });
