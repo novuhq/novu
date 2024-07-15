@@ -1,16 +1,14 @@
 import { JSX } from 'solid-js';
 import { useReadAll } from '../../api';
-import { useStyle } from '../../helpers';
+import { cn, useStyle } from '../../helpers';
 import { Archived, ArchiveRead, ReadAll } from '../../icons';
-import { Popover } from '../Popover';
-import { PopoverClose } from '../Popover/PopoverClose';
-import { dropdownItemClasses, dropdownItemLabelClasses, dropdownItemLabelContainerClasses } from './common';
+import { Dropdown, dropdownItemVariants } from '../Dropdown';
 
 export const MoreActionsOptions = () => {
   const { markAllAsRead } = useReadAll();
 
   return (
-    <PopoverClose>
+    <>
       <ActionsItem
         label="Mark all as read"
         /**
@@ -35,7 +33,7 @@ export const MoreActionsOptions = () => {
         onClick={() => {}}
         icon={ArchiveRead}
       />
-    </PopoverClose>
+    </>
   );
 };
 
@@ -43,13 +41,12 @@ export const ActionsItem = (props: { label: string; onClick: () => void; icon: (
   const style = useStyle();
 
   return (
-    <Popover.Close onClick={props.onClick}>
-      <button class={style('moreActions__dropdownItem', dropdownItemClasses())}>
-        <span class={style('moreActions__dropdownItemLabelContainer', dropdownItemLabelContainerClasses())}>
-          <span class={style('moreActions__dropdownItemLeftIcon', '')}>{props.icon()}</span>
-          <span class={style('moreActions__dropdownItemLabel', dropdownItemLabelClasses())}>{props.label}</span>
-        </span>
-      </button>
-    </Popover.Close>
+    <Dropdown.Item
+      class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
+      onClick={props.onClick}
+    >
+      <span class={style('moreActions__dropdownItemLeftIcon')}>{props.icon()}</span>
+      <span class={style('moreActions__dropdownItemLabel')}>{props.label}</span>
+    </Dropdown.Item>
   );
 };

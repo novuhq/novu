@@ -1,4 +1,4 @@
-import { JSONSchema7 } from 'json-schema';
+import { JSONSchema } from 'json-schema-to-ts';
 
 import {
   BuilderFieldType,
@@ -97,10 +97,10 @@ export interface IStepVariant {
   };
   metadata?: IWorkflowStepMetadata;
   inputs?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
   };
   controls?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
   };
   /*
    * controlVariables exists

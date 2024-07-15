@@ -6,5 +6,5 @@
   "module": {
     "type": "commonjs"
   },
-  "sourceMaps": true
+  "sourceMaps": "inline"
 }

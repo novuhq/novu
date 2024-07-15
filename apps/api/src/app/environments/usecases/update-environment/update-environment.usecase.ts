@@ -24,7 +24,7 @@ export class UpdateEnvironment {
       updatePayload[`dns.inboundParseDomain`] = command.dns.inboundParseDomain;
     }
 
-    if ((await this.shouldUpdateBridgeConfiguration()) && command.bridge) {
+    if (command.bridge) {
       updatePayload['echo.url'] = command.bridge?.url || '';
       updatePayload['bridge.url'] = command.bridge?.url || '';
     }
@@ -36,8 +36,5 @@ export class UpdateEnvironment {
       },
       { $set: updatePayload }
     );
-  }
-  async shouldUpdateBridgeConfiguration(): Promise<boolean> {
-    return process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
   }
 }

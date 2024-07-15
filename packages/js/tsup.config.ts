@@ -1,14 +1,15 @@
-import { defineConfig, Options } from 'tsup';
-import { solidPlugin } from 'esbuild-plugin-solid';
-import { name, version } from './package.json';
-import inlineImportPlugin from 'esbuild-plugin-inline-import';
-import loadPostcssConfig from 'postcss-load-config';
 import { compress } from 'esbuild-plugin-compress';
+import inlineImportPlugin from 'esbuild-plugin-inline-import';
+import { solidPlugin } from 'esbuild-plugin-solid';
 import postcss from 'postcss';
+import loadPostcssConfig from 'postcss-load-config';
+import { defineConfig, Options } from 'tsup';
+import { name, version } from './package.json';
 
 const processCSS = async (css: string, filePath: string) => {
   const { plugins, options } = await loadPostcssConfig({}, filePath);
   const result = await postcss(plugins).process(css, { ...options, from: filePath });
+
   return result.css;
 };
 
@@ -16,6 +17,7 @@ const runAfterLast =
   (commands: Array<string | false>) =>
   (...configs: Options[]) => {
     const [last, ...rest] = configs.reverse();
+
     return [...rest.reverse(), { ...last, onSuccess: [last.onSuccess, ...commands].filter(Boolean).join(' && ') }];
   };
 
@@ -32,6 +34,7 @@ const baseConfig: Options = {
       filter: /^directcss:/,
       transform: async (contents, args) => {
         const processedCss = processCSS(contents, args.path);
+
         return processedCss;
       },
     }),
@@ -94,5 +97,6 @@ export default defineConfig((config: Options) => {
       }),
     ],
   };
+
   return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs'), 'tsc --noEmit'])(umd, esm, cjs);
 });

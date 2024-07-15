@@ -16,7 +16,7 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../commands';
-import { JSONSchema7 } from 'json-schema';
+import { JsonSchema } from '@novu/framework';
 
 export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -75,16 +75,16 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   inputs?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
   @IsOptional()
   controls?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
 
   @IsOptional()
   output?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
 
   @IsOptional()
