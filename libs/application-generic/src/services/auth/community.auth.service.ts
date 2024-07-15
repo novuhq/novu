@@ -257,7 +257,8 @@ export class CommunityAuthService implements IAuthService {
   public async getSignedToken(
     user: UserEntity,
     organizationId?: string,
-    member?: MemberEntity
+    member?: MemberEntity,
+    environmentId?: string
   ): Promise<string> {
     const roles: MemberRoleEnum[] = [];
     if (member && member.roles) {
@@ -272,6 +273,11 @@ export class CommunityAuthService implements IAuthService {
         email: user.email,
         profilePicture: user.profilePicture,
         organizationId: organizationId || null,
+        /*
+         * TODO: Remove it after deploying the new env switching logic twice to cater for outdated,
+         * cached versions of Dashboard web app in Netlify.
+         */
+        environmentId: environmentId || null,
         roles,
       },
       {
