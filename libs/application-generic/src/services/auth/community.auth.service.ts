@@ -32,10 +32,6 @@ import { ApiException } from '../../utils/exceptions';
 import { Instrument } from '../../instrumentation';
 import { CreateUser, CreateUserCommand } from '../../usecases/create-user';
 import {
-  SwitchEnvironment,
-  SwitchEnvironmentCommand,
-} from '../../usecases/switch-environment';
-import {
   SwitchOrganization,
   SwitchOrganizationCommand,
 } from '../../usecases/switch-organization';
@@ -60,9 +56,7 @@ export class CommunityAuthService implements IAuthService {
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
     @Inject(forwardRef(() => SwitchOrganization))
-    private switchOrganizationUsecase: SwitchOrganization,
-    @Inject(forwardRef(() => SwitchEnvironment))
-    private switchEnvironmentUsecase: SwitchEnvironment
+    private switchOrganizationUsecase: SwitchOrganization
   ) {}
 
   public async authenticate(

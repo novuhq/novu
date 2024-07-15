@@ -23,11 +23,11 @@ export class SwitchEnvironment {
   ) {}
 
   async execute(command: SwitchEnvironmentCommand) {
-    const project = await this.environmentRepository.findOne({
+    const environment = await this.environmentRepository.findOne({
       _id: command.newEnvironmentId,
     });
-    if (!project) throw new NotFoundException('Environment not found');
-    if (project._organizationId !== command.organizationId) {
+    if (!environment) throw new NotFoundException('Environment not found');
+    if (environment._organizationId !== command.organizationId) {
       throw new UnauthorizedException('Not authorized for organization');
     }
 
@@ -43,7 +43,8 @@ export class SwitchEnvironment {
     const token = await this.authService.getSignedToken(
       user,
       command.organizationId,
-      member
+      member,
+      command.newEnvironmentId
     );
 
     return token;
