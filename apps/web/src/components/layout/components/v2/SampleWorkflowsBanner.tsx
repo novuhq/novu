@@ -25,7 +25,7 @@ export function SampleModeBanner() {
       <Group spacing={24}>
         <Group spacing={8}>
           <Text color={colors.black}>
-            You are currently viewing sample workflows. You can add your own by completing the Setup.
+            You are currently viewing demo workflows. Add your own by completing the setup.
           </Text>
         </Group>
         <Group spacing={20}>
