@@ -19,14 +19,17 @@ export abstract class BasePushHandler implements IPushHandler {
     return providerId === this.providerId && channelType === this.channelType;
   }
 
-  async send(options: IPushOptions, bridgeOptions: Record<string, unknown>) {
+  async send(
+    options: IPushOptions,
+    bridgeProviderData: Record<string, unknown>
+  ) {
     if (process.env.NODE_ENV === 'test') {
       throw new Error(
         'Currently 3rd-party packages test are not support on test env'
       );
     }
 
-    return await this.provider.sendMessage(options, bridgeOptions);
+    return await this.provider.sendMessage(options, bridgeProviderData);
   }
 
   abstract buildProvider(credentials: ICredentials);

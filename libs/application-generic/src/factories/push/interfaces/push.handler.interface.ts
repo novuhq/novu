@@ -8,6 +8,6 @@ export interface IPushHandler {
 
   send(
     smsOptions: IPushOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 }

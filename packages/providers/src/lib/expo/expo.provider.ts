@@ -22,7 +22,7 @@ export class ExpoPushProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeOptions: Record<string, unknown> = {}
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
@@ -39,7 +39,7 @@ export class ExpoPushProvider implements IPushProvider {
               ? (sound as ExpoPushMessage['sound'])
               : null,
           ...overrides,
-          ...bridgeOptions,
+          ...bridgeProviderData,
         },
       ]);
 

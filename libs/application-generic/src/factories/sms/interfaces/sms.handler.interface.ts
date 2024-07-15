@@ -12,7 +12,7 @@ export interface ISmsHandler {
 
   send(
     smsOptions: ISmsOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
   getProvider(): ISmsProvider;

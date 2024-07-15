@@ -66,7 +66,7 @@ export class SendTestEmail {
 
     let html = '';
     let subject = '';
-    let bridgeProviderOptions: Record<string, unknown> = {};
+    let bridgeProviderData: Record<string, unknown> = {};
 
     if (!command.bridge) {
       const template = await this.compileEmailTemplateUsecase.execute(
@@ -114,7 +114,7 @@ export class SendTestEmail {
       subject = data.outputs.subject;
 
       if (data.providers && typeof data.providers === 'object') {
-        bridgeProviderOptions = data.providers[integration.providerId] || {};
+        bridgeProviderData = data.providers[integration.providerId] || {};
       }
     }
 
@@ -126,7 +126,7 @@ export class SendTestEmail {
         from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
       };
 
-      await this.sendMessage(integration, mailData, mailFactory, command, bridgeProviderOptions);
+      await this.sendMessage(integration, mailData, mailFactory, command, bridgeProviderData);
 
       return;
     }
@@ -137,13 +137,13 @@ export class SendTestEmail {
     mailData: IEmailOptions,
     mailFactory: MailFactory,
     command: SendTestEmailCommand,
-    bridgeProviderOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ) {
     const { providerId } = integration;
 
     try {
       const mailHandler = mailFactory.getHandler(integration, mailData.from);
-      await mailHandler.send(mailData, bridgeProviderOptions);
+      await mailHandler.send(mailData, bridgeProviderData);
       this.analyticsService.track('Test Email Sent - [Events]', command.userId, {
         _organization: command.organizationId,
         _environment: command.environmentId,

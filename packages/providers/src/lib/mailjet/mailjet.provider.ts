@@ -34,7 +34,7 @@ export class MailjetEmailProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeOptions: Record<string, unknown> = {}
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.mailjetClient
       .post('send', {
@@ -42,7 +42,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       })
       .request<SendEmailV3_1.Response>({
         ...this.createMailData(emailOptions),
-        ...bridgeOptions,
+        ...bridgeProviderData,
       });
 
     const { body, response: clientResponse } = response;

@@ -13,7 +13,7 @@ export interface IMailHandler {
 
   send(
     mailData: IEmailOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
   getProvider(): IEmailProvider;

@@ -154,7 +154,7 @@ export interface IEmailProvider extends IProvider {
 
   sendMessage(
     options: IEmailOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
   getMessageId?: (body: any | any[]) => string[];
@@ -170,7 +170,7 @@ export interface IEmailProvider extends IProvider {
 export interface ISmsProvider extends IProvider {
   sendMessage(
     options: ISmsOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
@@ -186,7 +186,7 @@ export interface ISmsProvider extends IProvider {
 export interface IChatProvider extends IProvider {
   sendMessage(
     options: IChatOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
 }
@@ -194,7 +194,7 @@ export interface IChatProvider extends IProvider {
 export interface IPushProvider extends IProvider {
   sendMessage(
     options: IPushOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;

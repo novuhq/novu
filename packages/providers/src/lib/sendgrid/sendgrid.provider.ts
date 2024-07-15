@@ -33,12 +33,12 @@ export class SendgridEmailProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeOptions: Record<string, unknown> = {}
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send({
       ...mailData,
-      ...bridgeOptions,
+      ...bridgeProviderData,
     });
 
     return {

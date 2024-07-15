@@ -7,7 +7,7 @@ export interface IChatHandler {
   buildProvider(credentials: ICredentials);
   send(
     chatData: IChatOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 }
 

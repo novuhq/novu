@@ -18,12 +18,12 @@ export abstract class BaseChatHandler implements IChatHandler {
 
   async send(
     chatContent: IChatOptions,
-    bridgeOptions: Record<string, unknown>
+    bridgeProviderData: Record<string, unknown>
   ) {
     if (process.env.NODE_ENV === 'test') {
       return {};
     }
 
-    return await this.provider.sendMessage(chatContent, bridgeOptions);
+    return await this.provider.sendMessage(chatContent, bridgeProviderData);
   }
 }

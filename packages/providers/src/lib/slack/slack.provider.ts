@@ -14,13 +14,13 @@ export class SlackProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeOptions: Record<string, unknown> = {}
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(data.webhookUrl, {
       text: data.content,
       blocks: data.blocks,
       ...(data.customData || {}),
-      ...bridgeOptions,
+      ...bridgeProviderData,
     });
 
     return {

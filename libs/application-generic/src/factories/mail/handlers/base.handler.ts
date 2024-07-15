@@ -18,12 +18,15 @@ export abstract class BaseHandler implements IMailHandler {
 
   abstract buildProvider(credentials, options);
 
-  async send(mailData: IEmailOptions, bridgeOptions: Record<string, unknown>) {
+  async send(
+    mailData: IEmailOptions,
+    bridgeProviderData: Record<string, unknown>
+  ) {
     if (process.env.NODE_ENV === 'test') {
       return {};
     }
 
-    return await this.provider.sendMessage(mailData, bridgeOptions);
+    return await this.provider.sendMessage(mailData, bridgeProviderData);
   }
 
   public getProvider(): IEmailProvider {
