@@ -25,6 +25,12 @@ describe('PlivoSmsProvider', () => {
     });
 
     expect(createMock).toHaveBeenCalled();
-    expect(createMock).toHaveBeenCalledWith('+1145678', '+187654', 'Test');
+    expect(createMock).toHaveBeenCalledWith(
+      '+1145678',
+      '+187654',
+      'Test',
+      undefined,
+      undefined
+    );
   });
 });
