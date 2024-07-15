@@ -32,7 +32,8 @@ export class InfobipSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.sms.send({
       messages: [
@@ -44,6 +45,7 @@ export class InfobipSmsProvider implements ISmsProvider {
             },
           ],
           from: options.from || this.config.from,
+          ...bridgeProviderData,
         },
       ],
     });

@@ -28,12 +28,14 @@ export class BurstSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = qs.stringify({
       message: options.content,
       to: options.to,
       from: options.from,
+      ...bridgeProviderData,
     });
 
     const response = await this.axiosInstance.post(

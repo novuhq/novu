@@ -23,7 +23,8 @@ export class GrafanaOnCallChatProvider implements IChatProvider {
   ) {}
 
   async sendMessage(
-    options: IChatOptions
+    options: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
     const body = {
@@ -33,6 +34,7 @@ export class GrafanaOnCallChatProvider implements IChatProvider {
       state: this.config.state,
       link_to_upstream_details: this.config.externalLink,
       message: options.content,
+      ...bridgeProviderData,
     };
     //response is just string "Ok."
     const { headers } = await this.axiosInstance.post(url.toString(), body);

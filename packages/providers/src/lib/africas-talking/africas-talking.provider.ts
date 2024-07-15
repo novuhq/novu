@@ -26,12 +26,14 @@ export class AfricasTalkingSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.africasTalkingClient.send({
       from: options.from || this.config.from,
       to: options.to,
       message: options.content,
+      ...bridgeProviderData,
     });
 
     return {

@@ -23,7 +23,8 @@ export class ClickatellSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = 'https://platform.clickatell.com/messages';
 
@@ -32,6 +33,7 @@ export class ClickatellSmsProvider implements ISmsProvider {
       ...(this.config.isTwoWayIntegration && { from: options.from }),
       content: options.content,
       binary: true,
+      ...bridgeProviderData,
     };
 
     const response = await axios({

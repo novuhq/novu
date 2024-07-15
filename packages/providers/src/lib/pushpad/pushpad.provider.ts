@@ -26,9 +26,10 @@ export class PushpadPushProvider implements IPushProvider {
   }
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const notification = this.buildNotification(options);
+    const notification = this.buildNotification(options, bridgeProviderData);
 
     const notificationId = await new Promise((resolve, reject) => {
       notification.deliverTo(options.target, function (err, result) {
@@ -46,11 +47,15 @@ export class PushpadPushProvider implements IPushProvider {
     };
   }
 
-  private buildNotification(options: IPushOptions): Pushpad.Notification {
+  private buildNotification(
+    options: IPushOptions,
+    bridgeProviderData: Record<string, unknown>
+  ): Pushpad.Notification {
     return new Pushpad.Notification({
       project: this.pushpad,
       body: options.content,
       title: options.title,
+      ...bridgeProviderData,
     });
   }
 }

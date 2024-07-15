@@ -31,9 +31,13 @@ export class WhatsappBusinessChatProvider implements IChatProvider {
   }
 
   async sendMessage(
-    options: IChatOptions
+    options: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = this.defineMessagePayload(options);
+    const payload = {
+      ...this.defineMessagePayload(options),
+      ...bridgeProviderData,
+    };
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       this.baseUrl + this.config.phoneNumberIdentification + '/messages',

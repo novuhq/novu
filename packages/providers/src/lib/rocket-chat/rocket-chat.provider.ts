@@ -20,13 +20,15 @@ export class RocketChatProvider implements IChatProvider {
   ) {}
 
   async sendMessage(
-    options: IChatOptions
+    options: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const roomId = options.channel;
     const payload = {
       message: {
         rid: roomId,
         msg: options.content,
+        ...bridgeProviderData,
       },
     };
     const headers = {

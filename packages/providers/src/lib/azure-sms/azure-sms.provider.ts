@@ -21,12 +21,14 @@ export class AzureSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const sendResults = await this.smsClient.send({
       from: options.from,
       to: [options.to],
       message: options.content,
+      ...bridgeProviderData,
     });
 
     const sendResult = sendResults[0];

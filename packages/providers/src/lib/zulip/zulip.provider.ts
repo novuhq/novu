@@ -15,9 +15,13 @@ export class ZulipProvider implements IChatProvider {
 
   constructor(private config) {}
 
-  async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    data: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
+  ): Promise<ISendMessageSuccessResponse> {
     await this.axiosInstance.post(data.webhookUrl, {
       text: data.content,
+      ...bridgeProviderData,
     });
 
     return {

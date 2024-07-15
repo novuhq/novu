@@ -28,13 +28,15 @@ export class TelnyxSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const telynxResponse = await this.telnyxClient.messages.create({
       to: options.to,
       text: options.content,
       from: options.from || this.config.from,
       messaging_profile_id: this.config.messageProfileId,
+      ...bridgeProviderData,
     });
 
     return {

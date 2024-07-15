@@ -13,11 +13,13 @@ export class RyverChatProvider implements IChatProvider {
   private axiosInstance = axios.create();
 
   async sendMessage(
-    options: IChatOptions
+    options: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
     const response = await this.axiosInstance.post(url.toString(), {
       content: options.content,
+      ...bridgeProviderData,
     });
 
     return {

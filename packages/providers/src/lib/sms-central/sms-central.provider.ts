@@ -22,7 +22,8 @@ export class SmsCentralSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = {
       ACTION: 'send',
@@ -31,6 +32,7 @@ export class SmsCentralSmsProvider implements ISmsProvider {
       PASSWORD: this.config.password,
       RECIPIENT: options.to,
       MESSAGE_TEXT: options.content,
+      ...bridgeProviderData,
     };
 
     const url = this.config.baseUrl || this.DEFAULT_BASE_URL;

@@ -36,7 +36,8 @@ export class FortySixElksSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const authKey = Buffer.from(
       this.config.user + ':' + this.config.password
@@ -46,6 +47,7 @@ export class FortySixElksSmsProvider implements ISmsProvider {
       from: options.from || this.config.from,
       to: options.to,
       message: options.content,
+      ...bridgeProviderData,
     }).toString();
 
     const res: IFortySixElksRequestResponse = await axios.post(

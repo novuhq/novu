@@ -39,9 +39,10 @@ export class EmailWebhookProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const bodyData = this.createBody(options);
+    const bodyData = this.createBody({ ...options, ...bridgeProviderData });
     const hmacValue = this.computeHmac(bodyData);
     let sent = false;
 

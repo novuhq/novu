@@ -22,12 +22,14 @@ export class MessageBirdSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = {
       originator: options.from,
       recipients: [options.to],
       body: options.content,
+      ...bridgeProviderData,
     };
 
     const response = await new Promise<Message>((resolve, reject) => {

@@ -14,13 +14,17 @@ export class DiscordProvider implements IChatProvider {
 
   constructor(private config) {}
 
-  async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    data: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
+  ): Promise<ISendMessageSuccessResponse> {
     // Setting the wait parameter with the URL API to respect user parameters
     const url = new URL(data.webhookUrl);
     url.searchParams.set('wait', 'true');
     const response = await this.axiosInstance.post(url.toString(), {
       content: data.content,
       ...(data.customData || {}),
+      ...bridgeProviderData,
     });
 
     return {

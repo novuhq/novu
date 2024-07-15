@@ -31,7 +31,8 @@ export class BrevoEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const email: any = {};
     email.sender = {
@@ -75,7 +76,7 @@ export class BrevoEmailProvider implements IEmailProvider {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      data: JSON.stringify(email),
+      data: JSON.stringify({ ...email, ...bridgeProviderData }),
     };
 
     const response = await this.axiosInstance.request<{ messageId: string }>(

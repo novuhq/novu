@@ -19,7 +19,8 @@ export class SimpletextingSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await axios.post(
       'https://api-app2.simpletexting.com/v2/api/messages',
@@ -28,6 +29,7 @@ export class SimpletextingSmsProvider implements ISmsProvider {
         accountPhone: this.config.accountPhone,
         mode: 'SINGLE_SMS_STRICTLY',
         text: options.content,
+        ...bridgeProviderData,
       },
       {
         headers: {

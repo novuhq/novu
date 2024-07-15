@@ -28,18 +28,21 @@ export class SESEmailProvider implements IEmailProvider {
     });
   }
 
-  private async sendMail({
-    html,
-    text,
-    to,
-    from,
-    senderName,
-    subject,
-    attachments,
-    cc,
-    bcc,
-    replyTo,
-  }) {
+  private async sendMail(
+    {
+      html,
+      text,
+      to,
+      from,
+      senderName,
+      subject,
+      attachments,
+      cc,
+      bcc,
+      replyTo,
+    },
+    bridgeProviderData: Record<string, unknown> = {}
+  ) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
@@ -57,6 +60,7 @@ export class SESEmailProvider implements IEmailProvider {
       cc,
       bcc,
       replyTo,
+      ...bridgeProviderData,
     });
   }
 

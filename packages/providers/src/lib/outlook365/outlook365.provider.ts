@@ -37,10 +37,14 @@ export class Outlook365Provider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const info = await this.transports.sendMail(mailData);
+    const info = await this.transports.sendMail({
+      ...mailData,
+      ...bridgeProviderData,
+    });
 
     return {
       id: info?.messageId,

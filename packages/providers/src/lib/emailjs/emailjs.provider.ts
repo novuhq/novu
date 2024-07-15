@@ -27,7 +27,8 @@ export class EmailJsProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    emailOptions: IEmailOptions
+    emailOptions: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const headers: Message['header'] = {
       from: emailOptions.from || this.config.from,
@@ -44,7 +45,7 @@ export class EmailJsProvider implements IEmailProvider {
     }
 
     const sent = await this.client.sendAsync(
-      new (require('emailjs').Message(headers))()
+      new (require('emailjs').Message({ ...headers, ...bridgeProviderData }))()
     );
 
     return {

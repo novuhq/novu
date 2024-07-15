@@ -31,7 +31,8 @@ export class MaqsamSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const maqsamResponse = await this.axiosInstance.request({
       method: 'POST',
@@ -39,6 +40,7 @@ export class MaqsamSmsProvider implements ISmsProvider {
         to: options.to,
         message: options.content,
         sender: options.from || this.config.from,
+        ...bridgeProviderData,
       },
     });
 

@@ -20,12 +20,15 @@ export class EazySmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = {
+      ...bridgeProviderData,
       message: {
         text: options.content,
         type: 'text',
+        ...((bridgeProviderData.message as object) || {}),
       },
     };
 

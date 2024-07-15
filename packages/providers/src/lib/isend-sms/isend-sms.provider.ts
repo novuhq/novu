@@ -55,13 +55,15 @@ export class ISendSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = {
       sender_id: options.from ?? this.config.from,
       recipient: options.to.replace(/^\+|^00/, ''),
       type: this.config.contentType ?? 'unicode',
       message: options.content,
+      ...bridgeProviderData,
     };
 
     const response = await this.Instance.post<ISendSmsResponse>(

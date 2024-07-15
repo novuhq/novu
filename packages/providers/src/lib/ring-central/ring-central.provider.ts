@@ -34,12 +34,14 @@ export class RingCentralSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const bodyParams = {
       from: { phoneNumber: options.from || this.config.from },
       to: [{ phoneNumber: options.to }],
       text: options.content,
+      ...bridgeProviderData,
     };
 
     if (!(await this.rcClient.loggedIn())) {

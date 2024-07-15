@@ -26,10 +26,14 @@ export class PostmarkEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const response = await this.client.sendEmail(mailData);
+    const response = await this.client.sendEmail({
+      ...mailData,
+      ...bridgeProviderData,
+    });
 
     return {
       id: response.MessageID,

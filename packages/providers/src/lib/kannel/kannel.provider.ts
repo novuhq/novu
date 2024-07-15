@@ -25,7 +25,8 @@ export class KannelSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = this.apiBaseUrl + '/sendsms';
     const queryParameters = {
@@ -34,6 +35,7 @@ export class KannelSmsProvider implements ISmsProvider {
       from: options.from || this.config.from,
       to: options.to,
       text: options.content,
+      ...bridgeProviderData,
     };
 
     const result = await axios.get(url, {

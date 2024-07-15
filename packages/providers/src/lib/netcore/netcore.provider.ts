@@ -42,7 +42,8 @@ export class NetCoreProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data: IEmailBody = {
       from: {
@@ -61,6 +62,7 @@ export class NetCoreProvider implements IEmailProvider {
           to: options.to.map((email) => ({ email })),
         },
       ],
+      ...bridgeProviderData,
     };
 
     if (options.replyTo) {

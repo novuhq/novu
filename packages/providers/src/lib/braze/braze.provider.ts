@@ -30,10 +30,14 @@ export class BrazeEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const maildata = await this.createMailData(options);
-    const response = await this.braze.messages.send(maildata);
+    const response = await this.braze.messages.send({
+      ...maildata,
+      ...bridgeProviderData,
+    });
 
     return {
       id: response.dispatch_id,

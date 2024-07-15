@@ -46,7 +46,8 @@ export class GenericSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     if (this.config?.authenticateByToken) {
       const tokenAxiosInstance = await axios.request({
@@ -71,6 +72,7 @@ export class GenericSmsProvider implements ISmsProvider {
       data: {
         ...options,
         sender: options.from || this.config.from,
+        ...bridgeProviderData,
       },
     });
 

@@ -17,13 +17,19 @@ export class MattermostProvider implements IChatProvider {
   public id = ChatProviderIdEnum.Mattermost;
   private axiosInstance = axios.create();
 
-  async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    data: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
+  ): Promise<ISendMessageSuccessResponse> {
     const payload: IMattermostPayload = { text: data.content };
 
     if (data.channel) {
       payload.channel = data.channel;
     }
-    const response = await this.axiosInstance.post(data.webhookUrl, payload);
+    const response = await this.axiosInstance.post(data.webhookUrl, {
+      ...payload,
+      ...bridgeProviderData,
+    });
 
     return {
       id: response.headers['x-request-id'],

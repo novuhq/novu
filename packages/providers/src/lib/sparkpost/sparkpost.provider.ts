@@ -35,14 +35,10 @@ export class SparkPostEmailProvider implements IEmailProvider {
     this.endpoint = this.getEndpoint(config.region);
   }
 
-  async sendMessage({
-    from,
-    to,
-    subject,
-    text,
-    html,
-    attachments,
-  }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    { from, to, subject, text, html, attachments }: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
+  ): Promise<ISendMessageSuccessResponse> {
     const recipients: { address: string }[] = to.map((recipient) => {
       return { address: recipient };
     });
@@ -59,12 +55,14 @@ export class SparkPostEmailProvider implements IEmailProvider {
 
     const data = {
       recipients,
+      ...bridgeProviderData,
       content: {
         from: from || this.config.from,
         subject,
         text,
         html,
         attachments: files,
+        ...((bridgeProviderData.content as object) || {}),
       },
     };
 

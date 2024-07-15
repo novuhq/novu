@@ -32,7 +32,8 @@ export class MobishastraProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.request({
       method: 'POST',
@@ -43,6 +44,7 @@ export class MobishastraProvider implements ISmsProvider {
           msg: options.content,
           user: this.config.username,
           pwd: this.config.password,
+          ...bridgeProviderData,
         },
       ]),
     });

@@ -26,12 +26,15 @@ export class PlivoSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const plivoResponse = await this.plivoClient.messages.create(
-      options.from || this.config.from,
-      options.to,
-      options.content
+      bridgeProviderData.src || options.from || this.config.from,
+      bridgeProviderData.dst || options.to,
+      (bridgeProviderData.text as string) || options.content,
+      bridgeProviderData.optionalParams as object,
+      bridgeProviderData.powerpackUUID as string
     );
 
     return {

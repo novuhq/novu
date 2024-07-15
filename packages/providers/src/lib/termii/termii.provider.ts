@@ -26,7 +26,8 @@ export class TermiiSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params: SmsParams = {
       to: options.to,
@@ -35,6 +36,7 @@ export class TermiiSmsProvider implements ISmsProvider {
       type: 'plain',
       channel: MessageChannel.GENERIC,
       api_key: this.config.apiKey,
+      ...bridgeProviderData,
     };
 
     const headers: HeadersInit = {

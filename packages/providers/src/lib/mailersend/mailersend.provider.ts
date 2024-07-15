@@ -71,9 +71,13 @@ export class MailersendEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const emailParams = this.createMailData(options);
+    const emailParams = {
+      ...this.createMailData(options),
+      ...bridgeProviderData,
+    };
     const response = await this.mailerSend.send(emailParams);
 
     return {

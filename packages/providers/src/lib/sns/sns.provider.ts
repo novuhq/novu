@@ -25,13 +25,15 @@ export class SNSSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { to, content } = options;
 
     const publish = new PublishCommand({
       PhoneNumber: to,
       Message: content,
+      ...bridgeProviderData,
     });
 
     const snsResponse = await this.client.send(publish);

@@ -30,12 +30,14 @@ export class NexmoSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.vonageClient.sms.send({
       to: options.to,
       from: this.config.from,
       text: options.content,
+      ...bridgeProviderData,
     });
 
     return {

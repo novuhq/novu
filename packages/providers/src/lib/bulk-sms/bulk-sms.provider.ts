@@ -19,12 +19,14 @@ export class BulkSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = {
       to: options.to,
       body: options.content,
       from: options.from || null,
+      ...bridgeProviderData,
     };
     const url = this.DEFAULT_BASE_URL;
     const encodedToken = Buffer.from(this.config.apiToken).toString('base64');

@@ -20,15 +20,18 @@ export class PushWebhookPushProvider implements IPushProvider {
   ) {}
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { subscriber, step, payload, ...rest } = options;
     const bodyData = this.createBody({
       ...rest,
+      ...bridgeProviderData,
       payload: {
         ...payload,
         subscriber,
         step,
+        ...((bridgeProviderData.payload as object) || {}),
       },
     });
     const hmacValue = this.computeHmac(bodyData);

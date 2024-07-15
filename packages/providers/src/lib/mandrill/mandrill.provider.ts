@@ -43,7 +43,8 @@ export class MandrillProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    emailOptions: IEmailOptions
+    emailOptions: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mandrillSendOption = {
       message: {
@@ -57,6 +58,7 @@ export class MandrillProvider implements IEmailProvider {
           type: attachment.mime,
           name: attachment?.name,
         })),
+        ...bridgeProviderData,
       },
     };
 

@@ -25,7 +25,8 @@ export class GupshupSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = {
       send_to: options.to,
@@ -43,6 +44,7 @@ export class GupshupSmsProvider implements ISmsProvider {
       ...(options.customData?.dltTemplateId && {
         dltTemplateId: options.customData?.dltTemplateId,
       }),
+      ...bridgeProviderData,
     };
 
     const response = await axios.post(GupshupSmsProvider.BASE_URL, params);

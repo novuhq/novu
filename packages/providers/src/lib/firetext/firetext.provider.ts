@@ -43,13 +43,15 @@ export class FiretextSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const baseMessage = {
       apiKey: this.config.apiKey,
       to: options.to,
       from: options.from || this.config.from,
       message: options.content,
+      ...bridgeProviderData,
     };
 
     const urlSearchParams = new URLSearchParams(baseMessage);

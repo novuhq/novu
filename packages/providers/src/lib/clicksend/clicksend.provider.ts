@@ -19,7 +19,8 @@ export class ClicksendSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await axios.post(
       'https://rest.clicksend.com/v3/sms/send',
@@ -28,6 +29,7 @@ export class ClicksendSmsProvider implements ISmsProvider {
           {
             to: options.to,
             body: options.content,
+            ...bridgeProviderData,
           },
         ],
       },

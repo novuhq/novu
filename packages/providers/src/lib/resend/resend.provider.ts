@@ -25,7 +25,8 @@ export class ResendEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
@@ -44,6 +45,7 @@ export class ResendEmailProvider implements IEmailProvider {
       })),
       bcc: options.bcc,
       headers: options.headers,
+      ...bridgeProviderData,
     });
 
     if (response.error) {

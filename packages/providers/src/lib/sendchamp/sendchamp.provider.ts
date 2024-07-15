@@ -29,13 +29,15 @@ export class SendchampSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = {
       sender_name: options.from || this.config.from,
       to: options.to,
       message: options.content,
       route: 'international',
+      ...bridgeProviderData,
     };
 
     const response = await this.axiosInstance.post(`/sms/send`, payload);

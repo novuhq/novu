@@ -27,13 +27,15 @@ export class PlunkEmailProvider implements IEmailProvider {
     this.plunk = new Plunk(this.config.apiKey);
   }
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ICheckIntegrationResponse> {
     try {
       const response: IPlunkResponse = await this.plunk.emails.send({
         to: options.to,
         subject: options.subject,
         body: options.html || options.text,
+        ...bridgeProviderData,
       });
 
       return {

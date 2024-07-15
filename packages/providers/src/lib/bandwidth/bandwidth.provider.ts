@@ -27,13 +27,15 @@ export class BandwidthSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const body = {
       applicationId: this.config.accountId,
       to: [options.to],
       from: options.from,
       text: options.content,
+      ...bridgeProviderData,
     };
 
     const createMessageResponse = await this.controller.createMessage(

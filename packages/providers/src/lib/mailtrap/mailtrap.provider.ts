@@ -46,9 +46,10 @@ export class MailtrapEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await this.sendWithMailtrap(options);
+    const response = await this.sendWithMailtrap(options, bridgeProviderData);
 
     return {
       id: response.message_ids[0],
@@ -56,7 +57,10 @@ export class MailtrapEmailProvider implements IEmailProvider {
     };
   }
 
-  private sendWithMailtrap(options: IEmailOptions) {
+  private sendWithMailtrap(
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown>
+  ) {
     return this.mailtrapClient.send({
       to: options.to.map(this.mapAddress),
       from: this.mapAddress(options.from || this.config.from),
@@ -70,6 +74,7 @@ export class MailtrapEmailProvider implements IEmailProvider {
         content: attachment.file,
         type: attachment.mime,
       })),
+      ...bridgeProviderData,
     });
   }
 

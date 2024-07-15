@@ -20,11 +20,16 @@ export class GetstreamChatProvider implements IChatProvider {
     this.config = config;
   }
 
-  async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    data: IChatOptions,
+    bridgeProviderData: Record<string, unknown> = {}
+  ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(data.webhookUrl, {
       text: data.content,
+      ...bridgeProviderData,
       headers: {
         'X-API-KEY': this.config.apiKey,
+        ...((bridgeProviderData.headers as object) || {}),
       },
     });
 

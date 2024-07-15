@@ -28,12 +28,14 @@ export class BrevoSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(
-    options: ISmsOptions
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const sms = {
       sender: options.from || this.config.from,
       recipient: options.to,
       content: options.content,
+      ...bridgeProviderData,
     };
 
     const response = await fetch(`${this.BASE_URL}/transactionalSMS/sms`, {

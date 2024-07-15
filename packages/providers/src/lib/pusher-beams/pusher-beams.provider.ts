@@ -29,7 +29,8 @@ export class PusherBeamsPushProvider implements IPushProvider {
   }
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
     const payload = {
@@ -68,6 +69,7 @@ export class PusherBeamsPushProvider implements IPushProvider {
         data: options.payload,
         time_to_live: overrides.ttl,
       },
+      ...bridgeProviderData,
     };
 
     const response = await this.axiosInstance.post(`/publishes/users`, payload);
