@@ -117,6 +117,13 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     },
   });
 
+  const reloadOrganization = async () => {
+    const { data } = await getOrganizations();
+    // we need to update all organizations so current org (data) and 'organizations' are not ouf of sync
+    await refetchOrganizations();
+    setCurrentOrganization(selectOrganization(data, currentOrganization?._id));
+  };
+
   const [currentOrganization, setCurrentOrganization] = useState<IOrganizationEntity | null>(
     selectOrganization(organizations)
   );
@@ -273,7 +280,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     redirectToLogin,
     redirectToSignUp,
     switchOrganization,
-    reloadOrganization: asyncNoop,
+    reloadOrganization,
   };
 
   return <CommunityAuthContext.Provider value={value}>{children}</CommunityAuthContext.Provider>;
