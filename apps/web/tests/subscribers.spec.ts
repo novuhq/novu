@@ -18,5 +18,5 @@ test('should display subscribers list', async ({ page }) => {
     'Created At',
     'Data',
   ]);
-  await subscribersPage.assertSubscribersTableRowCount(1);
+  await subscribersPage.assertSubscribersTableRowCount(2);
 });

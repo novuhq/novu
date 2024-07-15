@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
-import { LocalNavMenu } from '../../studio/components/LocalNavMenu';
 import { RootNavMenu } from './RootNavMenu';
 import { SettingsNavMenu } from './SettingsNavMenu';
 import { Aside } from './Aside';
@@ -16,17 +15,5 @@ export const Sidebar = () => {
     return null;
   }
 
-  let Variant = RootNavMenu;
-
-  if (pathname.startsWith(ROUTES.SETTINGS)) {
-    Variant = SettingsNavMenu;
-  } else if (pathname.startsWith(ROUTES.STUDIO)) {
-    Variant = LocalNavMenu;
-  }
-
-  return (
-    <Aside>
-      <Variant />
-    </Aside>
-  );
+  return <Aside>{pathname.startsWith(ROUTES.SETTINGS) ? <SettingsNavMenu /> : <RootNavMenu />}</Aside>;
 };

@@ -4,11 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  MemberRepository,
-  UserRepository,
-  EnvironmentRepository,
-} from '@novu/dal';
+import { MemberRepository, UserRepository } from '@novu/dal';
 import { SwitchOrganizationCommand } from './switch-organization.command';
 import { AuthService } from '../../services/auth/auth.service';
 import { ApiException } from '../../utils/exceptions';
@@ -18,11 +14,10 @@ export class SwitchOrganization {
   constructor(
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
-    private environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService
   ) {}
 
-  async execute(command: SwitchOrganizationCommand): Promise<string> {
+  async execute(command: SwitchOrganizationCommand) {
     const isAuthenticated =
       await this.authService.isAuthenticatedForOrganization(
         command.userId,
@@ -43,16 +38,10 @@ export class SwitchOrganization {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new ApiException(`User ${command.userId} not found`);
 
-    const environment = await this.environmentRepository.findOne({
-      _organizationId: command.newOrganizationId,
-      _parentId: { $exists: false },
-    });
-
     const token = await this.authService.getSignedToken(
       user,
       command.newOrganizationId,
-      member,
-      environment?._id
+      member
     );
 
     return token;

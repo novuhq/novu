@@ -2,14 +2,15 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { ROUTES } from '../../../constants/routes';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';
-import { useBlueprint, useRedirectURL } from '../../../hooks';
+import { useBlueprint, useEnvironment, useRedirectURL } from '../../../hooks';
 import { useEffect, useState } from 'react';
 
 export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();
   const location = useLocation();
   const { getRedirectURL } = useRedirectURL();
-  const { currentOrganization, environmentId } = useAuth();
+  const { currentUser, currentOrganization } = useAuth();
+  const { currentEnvironment } = useEnvironment();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,11 +25,15 @@ export function EnsureOnboardingComplete({ children }: any) {
       return currentOrganization?.productUseCases !== undefined;
     }
 
-    return currentOrganization && environmentId;
+    return currentOrganization && currentEnvironment;
   }
 
   if (isLoading) {
     return null;
+  }
+
+  if (!currentUser) {
+    return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
   }
 
   if (!isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {

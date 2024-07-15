@@ -15,7 +15,6 @@ import { Timeline as MantineTimeline } from '@mantine/core';
 import { useWebhookPage } from './useWebhookPage';
 import { WebhookClaimStatusDisplay } from './WebhookClaimStatusDisplay';
 import { WebhookAdditionalInformationLink } from './WebhookAdditionalInformationLink';
-import { useSettingsEnvRedirect } from '../useSettingsEnvRedirect';
 
 const codeValueInputClassName = css({
   '& input': {
@@ -30,9 +29,6 @@ const codeValueInputClassName = css({
 const DOMAIN_REGEX = /^(?!-)[A-Za-z0-9-]+([\-\.]{1}[a-z0-9]+)*\.[A-Za-z]{2,6}$/;
 
 export const WebhookPage: FC = () => {
-  // redirect user if an invalid env name is provided in the URL
-  useSettingsEnvRedirect();
-
   const {
     claimStatus,
     handleCheckRecords,

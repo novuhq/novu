@@ -1,4 +1,4 @@
-import { HeaderObjects, HttpResponseHeaderKeysEnum } from '../types';
+import { HeaderObjects, HttpResponseHeaderKeysEnum } from '@novu/shared';
 import { RESPONSE_HEADER_CONFIG } from '../constants/headers.schema';
 import { OpenAPIObject } from '@nestjs/swagger';
 

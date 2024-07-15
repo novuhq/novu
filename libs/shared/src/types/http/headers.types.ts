@@ -6,6 +6,7 @@ export enum HttpRequestHeaderKeysEnum {
   USER_AGENT = 'User-Agent',
   CONTENT_TYPE = 'Content-Type',
   SENTRY_TRACE = 'Sentry-Trace',
+  NOVU_ENVIRONMENT_ID = 'Novu-Environment-Id',
 }
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 
