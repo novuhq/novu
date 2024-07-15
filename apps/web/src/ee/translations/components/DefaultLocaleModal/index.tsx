@@ -38,8 +38,8 @@ export const DefaultLocaleModal = ({
   const { mutateAsync: saveDefaultLocale, isLoading: isSaving } = useMutation<any, any, any>(
     (args) => api.patch('/v1/translations/language', args),
     {
-      onSuccess: () => {
-        reloadOrganization();
+      onSuccess: async () => {
+        await reloadOrganization();
         queryClient.refetchQueries([`translationGroups`]);
         queryClient.refetchQueries(['changesCount']);
 
