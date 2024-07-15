@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
+  ControlVariablesRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -41,6 +42,7 @@ import {
   ExecutionLogRoute,
   CreateExecutionDetails,
   injectRepositories,
+  ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
 import packageJson from '../../../package.json';
@@ -69,6 +71,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
+  ControlVariablesRepository,
   ...injectRepositories(),
 ];
 
@@ -96,6 +99,7 @@ const PROVIDERS = [
   ...DAL_MODELS,
   ExecutionLogRoute,
   CreateExecutionDetails,
+  ExecuteBridgeRequest,
   getFeatureFlag,
 ];
 

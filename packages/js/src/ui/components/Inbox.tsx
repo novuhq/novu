@@ -1,9 +1,10 @@
-import { JSX } from 'solid-js';
+import { createSignal, JSX, Match, Switch } from 'solid-js';
 import { useLocalization } from '../context';
 import { Bell } from './Bell';
 import { Footer } from './Footer';
-import { Header } from './Header';
+import { Header, SettingsHeader } from './Header';
 import { Popover } from './Popover';
+import { Settings } from './Settings';
 
 type InboxProps = {
   open?: boolean;
@@ -11,6 +12,7 @@ type InboxProps = {
 };
 
 export const Inbox = (props: InboxProps) => {
+  const [currentScreen, setCurrentScreen] = createSignal<'inbox' | 'settings'>('inbox');
   const { t } = useLocalization();
 
   return (
@@ -19,9 +21,17 @@ export const Inbox = (props: InboxProps) => {
         <Bell>{props.renderBell}</Bell>
       </Popover.Trigger>
       <Popover.Content appearanceKey="inbox__popoverContent">
-        <Header />
-        {/* notifications will go here */}
-        {t('inbox.title')}
+        <Switch>
+          <Match when={currentScreen() === 'inbox'}>
+            <Header updateScreen={setCurrentScreen} />
+            {t('inbox.title')}
+          </Match>
+          {/* notifications will go here */}
+          <Match when={currentScreen() === 'settings'}>
+            <SettingsHeader backAction={() => setCurrentScreen('inbox')} />
+            <Settings />
+          </Match>
+        </Switch>
         <Footer />
       </Popover.Content>
     </Popover.Root>

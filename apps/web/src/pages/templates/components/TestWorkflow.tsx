@@ -21,7 +21,7 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
 import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 
-const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
+const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity | null) => {
   const subsVars = getSubscriberValue(
     subscriberVariables,
     (variable) =>

@@ -19,7 +19,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const [payloadValue, setPayloadValue] = useState('{}');
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvironment({}, template?.bridge);
+  const { bridge } = useEnvironment({ bridge: template?.bridge });
   const path = useStepFormPath();
 
   const content = watch(`${path}.template.content`);

@@ -15,11 +15,12 @@ import {
   ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
+  HttpRequestHeaderKeysEnum,
+  HttpResponseHeaderKeysEnum,
   FeatureFlagsKeysEnum,
   UserSessionData,
 } from '@novu/shared';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
-import { HttpRequestHeaderKeysEnum, HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];

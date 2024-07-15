@@ -1,5 +1,5 @@
 import { INestApplication, Logger } from '@nestjs/common';
-import { HttpRequestHeaderKeysEnum } from '../app/shared/framework/types';
+import { HttpRequestHeaderKeysEnum } from '@novu/shared';
 
 export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req: Request, callback) {
   const corsOptions: Parameters<typeof callback>[1] = {
@@ -46,6 +46,7 @@ function enableWildcard(req: Request): boolean {
   return (
     isSandboxEnvironment() ||
     isWidgetRoute(req.url) ||
+    isInboxRoute(req.url) ||
     isBlueprintRoute(req.url) ||
     isPermittedDeployPreviewOrigin(extractOrigin(req))
   );
@@ -53,6 +54,10 @@ function enableWildcard(req: Request): boolean {
 
 function isWidgetRoute(url: string): boolean {
   return url.startsWith('/v1/widgets');
+}
+
+function isInboxRoute(url: string): boolean {
+  return url.startsWith('/v1/inbox');
 }
 
 function isBlueprintRoute(url: string): boolean {

@@ -6,17 +6,17 @@ import { CONTEXT_PATH } from '../../../../config';
 const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.webp';
 
 type ProfileMenuItemProps = {
-  currentUser?: IUserEntity;
-  currentOrganization?: IOrganizationEntity;
+  currentUser: IUserEntity;
+  currentOrganization: IOrganizationEntity;
 };
 
 export function ProfileMenuItem({ currentUser, currentOrganization }: ProfileMenuItemProps) {
   return (
     <Group spacing={16} noWrap>
-      <Avatar radius="sm" size={40} src={currentUser?.profilePicture || FALLBACK_AVATAR} />
+      <Avatar radius="sm" size={40} src={currentUser.profilePicture || FALLBACK_AVATAR} />
       <div style={{ flex: 1 }}>
         <Text data-test-id="header-dropdown-username" rows={1} weight="bold" transform="capitalize">
-          {currentUser?.firstName as string} {currentUser?.lastName as string}
+          {currentUser.firstName as string} {currentUser.lastName as string}
         </Text>
         <Text
           size={14}

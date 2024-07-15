@@ -31,7 +31,7 @@ export function TemplateChatEditor() {
   const [controlVariables, setControlVariables] = useState();
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvironment({}, template?.bridge);
+  const { bridge } = useEnvironment({ bridge: template?.bridge });
 
   return (
     <>

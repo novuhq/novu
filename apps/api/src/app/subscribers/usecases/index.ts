@@ -20,6 +20,9 @@ import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.use
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials/delete-subscriber-credentials.usecase';
 import { BulkCreateSubscribers } from './bulk-create-subscribers/bulk-create-subscribers.usecase';
 import { UpdateSubscriberGlobalPreferences } from './update-subscriber-global-preferences';
+import { CreateIntegration } from '../../integrations/usecases/create-integration/create-integration.usecase';
+import { CheckIntegration } from '../../integrations/usecases/check-integration/check-integration.usecase';
+import { CheckIntegrationEMail } from '../../integrations/usecases/check-integration/check-integration-email.usecase';
 
 export {
   SearchByExternalSubscriberIds,
@@ -46,4 +49,7 @@ export const USE_CASES = [
   BulkCreateSubscribers,
   UpdateSubscriberGlobalPreferences,
   GetSubscriberGlobalPreference,
+  CreateIntegration,
+  CheckIntegration,
+  CheckIntegrationEMail,
 ];
