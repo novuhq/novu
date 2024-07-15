@@ -4,8 +4,12 @@ import { NotificationStatus, TODO } from '../types';
 import {
   mapFromApiNotification,
   markActionAs,
+  markArchived,
   markNotificationAs,
   markNotificationsAs,
+  markRead,
+  markUnarchived,
+  markUnread,
   remove,
   removeNotifications,
 } from './helpers';
@@ -90,130 +94,46 @@ export class Feeds extends BaseModule {
 
   async read(args: InstanceArgs): Promise<Notification>;
   async read(args: ReadArgs): Promise<Notification> {
-    return this.callWithSession(async () => {
-      let notificationId: string;
-      let optimisticValue: Notification | undefined;
-
-      if ('notification' in args) {
-        notificationId = args.notification.id;
-        optimisticValue = new Notification({ ...args.notification, read: true });
-      } else {
-        notificationId = args.notificationId;
-      }
-
-      try {
-        this._emitter.emit('feeds.read.pending', {
-          args,
-          optimistic: optimisticValue,
-        });
-
-        const response = await this._inboxService.read(notificationId);
-
-        const updatedNotification = new Notification(mapFromApiNotification(response));
-        this._emitter.emit('feeds.read.success', { args, result: updatedNotification });
-
-        return updatedNotification;
-      } catch (error) {
-        this._emitter.emit('feeds.read.error', { args, error });
-        throw error;
-      }
-    });
+    return this.callWithSession(async () =>
+      markRead({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
   }
 
   async unread(args: InstanceArgs): Promise<Notification>;
   async unread(args: UnreadArgs): Promise<Notification> {
-    return this.callWithSession(async () => {
-      let notificationId: string;
-      let optimisticValue: Notification | undefined;
-
-      if ('notification' in args) {
-        notificationId = args.notification.id;
-        optimisticValue = new Notification({ ...args.notification, read: false });
-      } else {
-        notificationId = args.notificationId;
-      }
-
-      try {
-        this._emitter.emit('feeds.unread.pending', {
-          args,
-          optimistic: optimisticValue,
-        });
-
-        const response = await this._inboxService.unread(notificationId);
-
-        const updatedNotification = new Notification(mapFromApiNotification(response));
-        this._emitter.emit('feeds.unread.success', { args, result: updatedNotification });
-
-        return updatedNotification;
-      } catch (error) {
-        this._emitter.emit('feeds.unread.error', { args, error });
-        throw error;
-      }
-    });
+    return this.callWithSession(async () =>
+      markUnread({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
   }
 
   async archived(args: InstanceArgs): Promise<Notification>;
   async archived(args: ArchivedArgs): Promise<Notification> {
-    return this.callWithSession(async () => {
-      let notificationId: string;
-      let optimisticValue: Notification | undefined;
-
-      if ('notification' in args) {
-        notificationId = args.notification.id;
-        optimisticValue = new Notification({ ...args.notification, archived: true });
-      } else {
-        notificationId = args.notificationId;
-      }
-
-      try {
-        this._emitter.emit('feeds.archived.pending', {
-          args,
-          optimistic: optimisticValue,
-        });
-
-        const response = await this._inboxService.archived(notificationId);
-
-        const updatedNotification = new Notification(mapFromApiNotification(response));
-        this._emitter.emit('feeds.archived.success', { args, result: updatedNotification });
-
-        return updatedNotification;
-      } catch (error) {
-        this._emitter.emit('feeds.archived.error', { args, error });
-        throw error;
-      }
-    });
+    return this.callWithSession(async () =>
+      markArchived({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
   }
 
   async unarchived(args: InstanceArgs): Promise<Notification>;
   async unarchived(args: UnarchivedArgs): Promise<Notification> {
-    return this.callWithSession(async () => {
-      let notificationId: string;
-      let optimisticValue: Notification | undefined;
-
-      if ('notification' in args) {
-        notificationId = args.notification.id;
-        optimisticValue = new Notification({ ...args.notification, archived: false });
-      } else {
-        notificationId = args.notificationId;
-      }
-
-      try {
-        this._emitter.emit('feeds.unarchived.pending', {
-          args,
-          optimistic: optimisticValue,
-        });
-
-        const response = await this._inboxService.unarchived(notificationId);
-
-        const updatedNotification = new Notification(mapFromApiNotification(response));
-        this._emitter.emit('feeds.unarchived.success', { args, result: updatedNotification });
-
-        return updatedNotification;
-      } catch (error) {
-        this._emitter.emit('feeds.unarchived.error', { args, error });
-        throw error;
-      }
-    });
+    return this.callWithSession(async () =>
+      markUnarchived({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
   }
 
   async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
@@ -261,6 +181,9 @@ export class Feeds extends BaseModule {
     });
   }
 
+  /**
+   * @deprecated
+   */
   async markNotificationAs(args: MarkNotificationAsByIdArgs): Promise<Notification>;
   async markNotificationAs(args: MarkNotificationAsByInstanceArgs): Promise<Notification>;
   async markNotificationAs(args: MarkNotificationAsArgs): Promise<Notification> {
@@ -273,6 +196,9 @@ export class Feeds extends BaseModule {
     );
   }
 
+  /**
+   * @deprecated
+   */
   async markNotificationsAs(args: MarkNotificationsAsByIdsArgs): Promise<Notification[]>;
   async markNotificationsAs(args: MarkNotificationsAsByInstancesArgs): Promise<Notification[]>;
   async markNotificationsAs(args: MarkNotificationsAsArgs): Promise<Notification[]> {
@@ -285,6 +211,9 @@ export class Feeds extends BaseModule {
     );
   }
 
+  /**
+   * @deprecated
+   */
   async markAllNotificationsAs({
     feedIdentifier,
     status = NotificationStatus.SEEN,
@@ -314,6 +243,9 @@ export class Feeds extends BaseModule {
     });
   }
 
+  /**
+   * @deprecated
+   */
   async markNotificationActionAs(args: MarkNotificationActionAsByIdArgs): Promise<Notification>;
   async markNotificationActionAs(args: MarkNotificationActionAsByInstanceArgs): Promise<Notification>;
   async markNotificationActionAs(args: MarkNotificationActionAsArgs): Promise<Notification> {

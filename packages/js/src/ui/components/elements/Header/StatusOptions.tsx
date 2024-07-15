@@ -3,7 +3,7 @@ import { JSX } from 'solid-js/jsx-runtime';
 import { NotificationStatus } from '../../../../types';
 import { cn, useStyle } from '../../../helpers';
 import { Archived, Check, Inbox, Unread } from '../../../icons';
-import { Dropdown, dropdownItemVariants } from '../../primitives';
+import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 
 const DropdownStatus = {
   UnreadRead: 'Unread & read',

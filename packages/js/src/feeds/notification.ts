@@ -1,10 +1,20 @@
 import type { ApiService } from '@novu/client';
-import { Subscriber, Notification as NotificationType, ChannelTypeEnum } from '../api/types';
+import { InboxService } from 'src/api';
+import { InboxServiceSingleton } from 'src/utils/inbox-service-singleton';
+import { ChannelTypeEnum, Notification as NotificationType, Subscriber } from '../api/types';
 
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
-import { Avatar, NotificationActionStatus, NotificationButton, Cta, NotificationStatus, TODO } from '../types';
+import { Cta, NotificationActionStatus, NotificationButton, NotificationStatus, TODO } from '../types';
 import { ApiServiceSingleton } from '../utils/api-service-singleton';
-import { markActionAs, markNotificationAs, remove } from './helpers';
+import {
+  markActionAs,
+  markArchived,
+  markNotificationAs,
+  markRead,
+  markUnarchived,
+  markUnread,
+  remove,
+} from './helpers';
 
 type NotificationLike = Pick<
   Notification,
@@ -25,6 +35,7 @@ type NotificationLike = Pick<
 export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #apiService: ApiService;
+  #inboxService: InboxService;
 
   readonly id: string;
   readonly feedIdentifier?: string | null;
@@ -42,6 +53,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   constructor(notification: NotificationLike) {
     this.#emitter = NovuEventEmitter.getInstance();
     this.#apiService = ApiServiceSingleton.getInstance();
+    this.#inboxService = InboxServiceSingleton.getInstance();
 
     this.id = notification.id;
     this.feedIdentifier = notification.feedIdentifier;
@@ -58,27 +70,48 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   }
 
   markAsRead(): Promise<Notification> {
-    return markNotificationAs({
+    return markRead({
       emitter: this.#emitter,
-      apiService: this.#apiService,
+      apiService: this.#inboxService,
       args: {
         notification: this,
-        status: NotificationStatus.READ,
       },
     });
   }
 
   markAsUnread(): Promise<Notification> {
-    return markNotificationAs({
+    return markUnread({
       emitter: this.#emitter,
-      apiService: this.#apiService,
+      apiService: this.#inboxService,
       args: {
         notification: this,
-        status: NotificationStatus.UNREAD,
       },
     });
   }
 
+  markAsArchived(): Promise<Notification> {
+    return markArchived({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: {
+        notification: this,
+      },
+    });
+  }
+
+  markAsUnarchived(): Promise<Notification> {
+    return markUnarchived({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: {
+        notification: this,
+      },
+    });
+  }
+
+  /**
+   * @deprecated
+   */
   markAsSeen(): Promise<Notification> {
     return markNotificationAs({
       emitter: this.#emitter,
@@ -90,6 +123,9 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     });
   }
 
+  /**
+   * @deprecated
+   */
   markAsUnseen(): Promise<Notification> {
     return markNotificationAs({
       emitter: this.#emitter,
