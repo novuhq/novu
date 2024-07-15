@@ -43,16 +43,15 @@ const actionSchema = {
   additionalProperties: false,
 } as const satisfies Schema;
 
-const subscriberSchema = {
+const actorSchema = {
   type: 'object',
   properties: {
-    id: { type: 'string' },
     subscriberId: { type: 'string' },
     firstName: { type: 'string' },
     lastName: { type: 'string' },
     avatar: { type: 'string', format: 'uri' },
   },
-  required: ['id', 'subscriberId'],
+  required: ['subscriberId'],
   additionalProperties: false,
 } as const satisfies Schema;
 
@@ -61,7 +60,7 @@ const inAppOutputSchema = {
   properties: {
     subject: { type: 'string' },
     body: { type: 'string' },
-    actor: subscriberSchema,
+    actor: actorSchema,
     avatar: avatarSchema,
     primaryAction: actionSchema,
     secondaryAction: actionSchema,
