@@ -241,7 +241,7 @@ export class UserSession {
     this.token = `Bearer ${response.body.data}`;
     this.testAgent = superAgentDefaults(request(this.requestEndpoint))
       .set('Authorization', this.token)
-      .set('Novu-Environment-Id', this.environment._id);
+      .set('Novu-Environment-Id', this.environment ? this.environment._id : '');
   }
 
   private async fetchJwtEE() {
