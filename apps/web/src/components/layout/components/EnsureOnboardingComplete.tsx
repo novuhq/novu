@@ -14,10 +14,10 @@ export function EnsureOnboardingComplete({ children }: any) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (currentOrganization) {
+    if (currentOrganization && currentEnvironment) {
       setIsLoading(false);
     }
-  }, [currentOrganization]);
+  }, [currentOrganization, currentEnvironment]);
 
   function isOnboardingComplete() {
     if (IS_EE_AUTH_ENABLED) {
