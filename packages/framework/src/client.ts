@@ -35,7 +35,7 @@ import type {
 } from './types';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
-import { sanitizeHTML, sanitizeHtmlInObject } from './utils/sanitiez-html.utils';
+import { sanitizeHtmlInObject } from './utils/sanitiez-html.utils';
 
 /**
  * We want to respond with a consistent string value for preview
@@ -294,7 +294,13 @@ export class Client {
 
       if (
         (
-          [ChannelStepEnum.CHAT, ChannelStepEnum.EMAIL, ChannelStepEnum.SMS, ChannelStepEnum.IN_APP] as string[]
+          [
+            ChannelStepEnum.CHAT,
+            ChannelStepEnum.EMAIL,
+            ChannelStepEnum.SMS,
+            ChannelStepEnum.IN_APP,
+            ChannelStepEnum.PUSH,
+          ] as string[]
         ).includes(step.type)
       ) {
         return sanitizeHtmlInObject(stepResult.outputs);
