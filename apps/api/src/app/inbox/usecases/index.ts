@@ -5,6 +5,7 @@ import { MarkManyNotificationsAs } from './mark-many-notifications-as/mark-many-
 import { MarkNotificationAs } from './mark-notification-as/mark-notification-as.usecase';
 import { UpdateNotificationAction } from './update-notification-action/update-notification-action.usecase';
 import { UpdateAllNotifications } from './update-all-notifications/update-all-notifications.usecase';
+import { GetPreferences } from './get-preferences/get-preferences.usecase';
 
 export const USE_CASES = [
   Session,
@@ -14,4 +15,5 @@ export const USE_CASES = [
   MarkNotificationAs,
   UpdateNotificationAction,
   UpdateAllNotifications,
+  GetPreferences,
 ];
