@@ -9,15 +9,9 @@ export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();
   const location = useLocation();
   const { getRedirectURL } = useRedirectURL();
-  const { currentUser, currentOrganization } = useAuth();
-  const { currentEnvironment } = useEnvironment();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (currentOrganization && currentEnvironment) {
-      setIsLoading(false);
-    }
-  }, [currentOrganization, currentEnvironment]);
+  const { currentUser, currentOrganization, isLoading: isAuthLoading } = useAuth();
+  const { currentEnvironment, isLoading: isEnvLoading } = useEnvironment();
+  const isLoading = isAuthLoading || isEnvLoading;
 
   function isOnboardingComplete() {
     if (IS_EE_AUTH_ENABLED) {
@@ -25,7 +19,7 @@ export function EnsureOnboardingComplete({ children }: any) {
       return currentOrganization?.productUseCases !== undefined;
     }
 
-    return currentOrganization && currentEnvironment;
+    return !isLoading && currentOrganization && currentEnvironment;
   }
 
   if (isLoading) {
