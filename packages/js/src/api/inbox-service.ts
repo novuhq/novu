@@ -4,8 +4,9 @@ import type { ButtonTypeEnum, InboxNotification, NotificationFilter } from './ty
 
 export type InboxServiceOptions = ApiOptions;
 
+const INBOX_ROUTE = '/inbox';
+
 export class InboxService {
-  #token: string | undefined;
   #httpClient: HttpClient;
 
   constructor(options: InboxServiceOptions = {}) {
@@ -21,13 +22,12 @@ export class InboxService {
     subscriberId: string;
     subscriberHash?: string;
   }): Promise<Session> {
-    const response = (await this.#httpClient.post(`/inbox/session`, {
+    const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
       applicationIdentifier,
       subscriberId,
       subscriberHash,
     })) as Session;
-
-    this.#token = response.token;
+    this.#httpClient.setAuthorizationToken(response.token);
 
     return response;
   }
@@ -64,7 +64,14 @@ export class InboxService {
       queryParams.append('archived', `${archived}`);
     }
 
-    return await this.#httpClient.get(`/notifications?${queryParams.toString()}`);
+    const data = await this.#httpClient.get(`${INBOX_ROUTE}/notifications?${queryParams.toString()}`);
+
+    // TODO: fix this
+    return {
+      data,
+      hasMore: false,
+      filter: {},
+    };
   }
 
   async count({
@@ -93,53 +100,53 @@ export class InboxService {
       queryParams.append('archived', `${archived}`);
     }
 
-    return await this.#httpClient.get(`/notifications/count?${queryParams.toString()}`);
+    return await this.#httpClient.get(`${INBOX_ROUTE}/notifications/count?${queryParams.toString()}`);
   }
 
   async read(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-read`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/mark-as-read`);
 
     return response;
   }
 
   async unread(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-unread`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/mark-as-unread`);
 
     return response;
   }
 
   async archived(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/archived`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/archived`);
 
     return response;
   }
 
   async unarchived(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/unarchived`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unarchived`);
 
     return response;
   }
 
   async readAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`/notifications/mark-all-as-read`, { tags });
+    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/mark-all-as-read`, { tags });
 
     return response;
   }
 
   async archivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`/notifications/mark-all-as-archived`, { tags });
+    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/mark-all-as-archived`, { tags });
 
     return response;
   }
 
   async readArchivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`/notifications/mark-all-as-read-archived`, { tags });
+    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/mark-all-as-read-archived`, { tags });
 
     return response;
   }
 
   async completeAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/complete`, {
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/complete`, {
       actionType,
     });
 
@@ -147,7 +154,7 @@ export class InboxService {
   }
 
   async revertAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
-    const response = await this.#httpClient.patch(`/notifications/${notificationId}/revert`, {
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/revert`, {
       actionType,
     });
 

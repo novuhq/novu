@@ -3,14 +3,15 @@ import { useStyle } from '../../../helpers';
 import { ArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
 import { StatusOptions } from './StatusOptions';
+import { NotificationStatus } from '../../../types';
 
-const getStatusLabel = (status?: { read?: boolean; archived?: boolean }) => {
+const getStatusLabel = (status?: NotificationStatus) => {
   switch (status) {
-    case { read: undefined, archived: false }:
+    case NotificationStatus.UNREAD_READ:
       return 'Inbox';
-    case { read: false, archived: false }:
+    case NotificationStatus.UNREAD:
       return 'Unread';
-    case { read: true, archived: false }:
+    case NotificationStatus.ARCHIVED:
       return 'Archived';
     default:
       return 'Inbox';
