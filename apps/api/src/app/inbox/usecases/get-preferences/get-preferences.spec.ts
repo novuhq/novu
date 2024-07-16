@@ -13,7 +13,7 @@ const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber',
 const mockedPreferences: any = [
   {
     level: PreferenceLevelEnum.GLOBAL,
-    preferences: {
+    preference: {
       enabled: true,
       channels: {
         email: true,
