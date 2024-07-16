@@ -46,6 +46,8 @@ const mockedPreferences: any = [
   },
 ];
 
+const mockedWorkflow: any = [{}];
+
 describe('GetPreferences', () => {
   let getPreferences: GetPreferences;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
@@ -87,7 +89,7 @@ describe('GetPreferences', () => {
       await getPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
-      expect(error.message).to.equal(`Subscriber: ${command.subscriberId} not found.`);
+      expect(error.message).to.equal(`Subscriber: ${command.subscriberId} not found`);
     }
   });
 
@@ -100,6 +102,7 @@ describe('GetPreferences', () => {
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
     getSubscriberGlobalPreferenceMock.execute.resolves(mockedPreferences[0]);
+    notificationTemplateRepositoryMock.getActiveList.resolves(mockedWorkflow);
     getSubscriberWorkflowMock.execute.resolves(mockedPreferences[1]);
 
     const result = await getPreferences.execute(command);

@@ -40,15 +40,13 @@ export class GetPreferences {
       preferences: globalPreference.preference,
     };
 
-    const workflowList = await this.notificationTemplateRepository.getActiveList(
-      command.organizationId,
-      command.environmentId,
-      true
-    );
+    const workflowList =
+      (await this.notificationTemplateRepository.getActiveList(command.organizationId, command.environmentId, true)) ||
+      [];
 
     this.analyticsService.mixpanelTrack('Fetch Preferences - [Inbox]', '', {
       _organization: command.organizationId,
-      templatesSize: workflowList?.length,
+      templatesSize: workflowList.length,
     });
 
     const workflowPreferences = await Promise.all(
