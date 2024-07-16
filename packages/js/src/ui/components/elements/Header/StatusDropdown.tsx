@@ -1,22 +1,17 @@
-import { NotificationStatus } from '../../../../types';
 import { useInboxStatusContext } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
 import { StatusOptions } from './StatusOptions';
+import { NotificationStatus } from '../../../types';
 
-/**
- *
- * TODO: Implement getStatusLabel after Filter is implemented
- * currently, it is a placeholder function
- */
 const getStatusLabel = (status?: NotificationStatus) => {
   switch (status) {
-    case NotificationStatus.UNREAD:
+    case NotificationStatus.UNREAD_READ:
       return 'Inbox';
-    case NotificationStatus.UNSEEN:
+    case NotificationStatus.UNREAD:
       return 'Unread';
-    case NotificationStatus.SEEN:
+    case NotificationStatus.ARCHIVED:
       return 'Archived';
     default:
       return 'Inbox';

@@ -1,5 +1,5 @@
 import { Accessor, createContext, createSignal, ParentComponent, useContext } from 'solid-js';
-import { NotificationStatus } from '../../types';
+import { NotificationStatus } from '../types';
 
 type InboxNotificationStatusContextType = {
   setStatus: (status: NotificationStatus) => void;
@@ -10,7 +10,7 @@ const InboxNotificationStatusContext = createContext<InboxNotificationStatusCont
 
 // TODO: update this after Filter is implemented
 export const InboxNotificationStatusProvider: ParentComponent = (props) => {
-  const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD);
+  const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD_READ);
 
   const setInboxNotificationStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);

@@ -36,7 +36,7 @@
     "build": "pnpm run clean && pnpm run pre:build && tsup && pnpm run post:build",
     "build:declarations": "tsc -p tsconfig.declarations.json",
     "build:umd": "webpack --config webpack.config.cjs",
-    "build:watch": "tsup --watch",
+    "build:watch": "pnpm run pre:build && tsup --watch && pnpm run post:build",
     "post:build": "rm ./src/ui/index.directcss && node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"

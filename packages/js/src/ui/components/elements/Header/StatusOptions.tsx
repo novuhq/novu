@@ -1,48 +1,33 @@
 import { Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { NotificationStatus } from '../../../../types';
+import { NotificationStatus } from '../../../types';
 import { cn, useStyle } from '../../../helpers';
 import { Archived, Check, Inbox, Unread } from '../../../icons';
-import { Dropdown, dropdownItemVariants } from '../../primitives';
-
-const DropdownStatus = {
-  UnreadRead: 'Unread & read',
-  Unread: 'Unread only',
-  Archived: 'Archived',
-};
+import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 
 export const StatusOptions = (props: { setStatus: (status: NotificationStatus) => void }) => {
   return (
     <>
       <StatusItem
-        label={DropdownStatus.UnreadRead}
-        /**
-         * TODO: Implement setFeedOptions and isSelected after Filter is implemented
-         */
+        label={NotificationStatus.UNREAD_READ}
         onClick={() => {
-          props.setStatus(NotificationStatus.UNREAD);
+          props.setStatus(NotificationStatus.UNREAD_READ);
         }}
         isSelected={true}
         icon={Inbox}
       />
       <StatusItem
-        label={DropdownStatus.Unread}
+        label={NotificationStatus.UNREAD}
         onClick={() => {
-          /**
-           * TODO: Implement setFeedOptions after Filter is implemented
-           */
-          props.setStatus(NotificationStatus.UNSEEN);
+          props.setStatus(NotificationStatus.UNREAD);
         }}
         isSelected={false}
         icon={Unread}
       />
       <StatusItem
-        label={DropdownStatus.Archived}
+        label={NotificationStatus.ARCHIVED}
         onClick={() => {
-          /**
-           * TODO: Implement setFeedOptions after Filter is implemented
-           */
-          props.setStatus(NotificationStatus.SEEN);
+          props.setStatus(NotificationStatus.ARCHIVED);
         }}
         isSelected={false}
         icon={Archived}
