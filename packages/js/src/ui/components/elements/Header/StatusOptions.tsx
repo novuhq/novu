@@ -1,9 +1,10 @@
-import { JSX, Show } from 'solid-js';
-import { FetchFeedArgs } from '../../../feeds';
-import { NotificationStatus } from '../../../types';
-import { cn, useStyle } from '../../helpers';
-import { Archived, Check, Inbox, Unread } from '../../icons';
-import { Dropdown, dropdownItemVariants } from '../Dropdown';
+import { Show } from 'solid-js';
+import { JSX } from 'solid-js/jsx-runtime';
+import { FetchFeedArgs } from '../../../../feeds';
+import { NotificationStatus } from '../../../../types';
+import { cn, useStyle } from '../../../helpers';
+import { Archived, Check, Inbox, Unread } from '../../../icons';
+import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 const DropdownStatus = {
   UnreadRead: 'Unread & read',

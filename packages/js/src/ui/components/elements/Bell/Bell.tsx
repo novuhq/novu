@@ -1,5 +1,5 @@
 import { createSignal, JSX, onCleanup, onMount } from 'solid-js';
-import { useNovu } from '../../context';
+import { useNovu } from '../../../context';
 import { BellContainer } from './DefaultBellContainer';
 
 type BellProps = {

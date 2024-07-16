@@ -10,8 +10,8 @@ export enum Environment {
 export class SidebarPage {
   constructor(private page: Page) {}
 
-  public async getTemplatesLink() {
-    return await getAttByTestId(this.page, 'side-nav-templates-link', 'href');
+  public getTemplatesLink() {
+    return this.page.getByTestId('side-nav-templates-link');
   }
 
   public getOrganizationSwitch() {

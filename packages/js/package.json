@@ -10,30 +10,31 @@
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
       "require": "./dist/cjs/index.cjs",
       "import": "./dist/esm/index.mjs",
-      "default": "./dist/esm/index.mjs"
+      "default": "./dist/esm/index.mjs",
+      "types": "./dist/types/index.d.ts"
     },
     "./ui": {
-      "types": "./dist/types/ui/index.d.ts",
       "require": "./dist/cjs/ui/index.cjs",
       "import": "./dist/esm/ui/index.mjs",
-      "default": "./dist/esm/ui/index.mjs"
+      "default": "./dist/esm/ui/index.mjs",
+      "types": "./dist/types/ui/index.d.ts"
     }
   },
   "files": [
     "dist/cjs",
     "dist/esm",
-    "dist/types",
-    "dist/ui"
+    "dist/types"
   ],
   "sideEffects": false,
   "private": true,
   "scripts": {
+    "clean": "rimraf ./dist",
     "start": "pnpm run build -- --watch --sourcemap",
     "pre:build": "cp ./src/ui/index.css ./src/ui/index.directcss",
-    "build": "pnpm run pre:build && tsup && pnpm run post:build",
+    "build": "pnpm run clean && pnpm run pre:build && tsup && pnpm run post:build",
+    "build:declarations": "tsc -p tsconfig.declarations.json",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "tsup --watch",
     "post:build": "rm ./src/ui/index.directcss && node scripts/size-limit.mjs",

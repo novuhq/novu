@@ -11,9 +11,8 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { Bell } from './Bell';
+import { Bell, Root } from './elements';
 import { Inbox } from './Inbox';
-import { Root } from './Root';
 
 const NovuComponents = {
   Inbox,
