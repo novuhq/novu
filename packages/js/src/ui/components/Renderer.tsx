@@ -6,7 +6,7 @@ import {
   Appearance,
   AppearanceProvider,
   FocusManagerProvider,
-  InboxStatusProvider,
+  InboxNotificationStatusProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
@@ -64,13 +64,13 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxStatusProvider>
+            <InboxNotificationStatusProvider>
               {[...props.nodes].map(([node, component]) => (
                 <Portal mount={node}>
                   <Root>{NovuComponents[component.name](component.props || {})}</Root>
                 </Portal>
               ))}
-            </InboxStatusProvider>
+            </InboxNotificationStatusProvider>
           </FocusManagerProvider>
         </AppearanceProvider>
       </LocalizationProvider>

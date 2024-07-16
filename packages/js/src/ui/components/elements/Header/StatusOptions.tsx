@@ -1,6 +1,5 @@
 import { Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { FetchFeedArgs } from '../../../../feeds';
 import { NotificationStatus } from '../../../../types';
 import { cn, useStyle } from '../../../helpers';
 import { Archived, Check, Inbox, Unread } from '../../../icons';
@@ -12,7 +11,7 @@ const DropdownStatus = {
   Archived: 'Archived',
 };
 
-export const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) => void }) => {
+export const StatusOptions = (props: { setStatus: (status: NotificationStatus) => void }) => {
   return (
     <>
       <StatusItem
@@ -21,7 +20,7 @@ export const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) 
          * TODO: Implement setFeedOptions and isSelected after Filter is implemented
          */
         onClick={() => {
-          props.setFeedOptions({ status: NotificationStatus.UNREAD });
+          props.setStatus(NotificationStatus.UNREAD);
         }}
         isSelected={true}
         icon={Inbox}
@@ -32,7 +31,7 @@ export const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) 
           /**
            * TODO: Implement setFeedOptions after Filter is implemented
            */
-          props.setFeedOptions({ status: NotificationStatus.UNSEEN });
+          props.setStatus(NotificationStatus.UNSEEN);
         }}
         isSelected={false}
         icon={Unread}
@@ -43,7 +42,7 @@ export const StatusOptions = (props: { setFeedOptions: (options: FetchFeedArgs) 
           /**
            * TODO: Implement setFeedOptions after Filter is implemented
            */
-          props.setFeedOptions({ status: NotificationStatus.SEEN });
+          props.setStatus(NotificationStatus.SEEN);
         }}
         isSelected={false}
         icon={Archived}
