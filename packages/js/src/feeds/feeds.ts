@@ -1,46 +1,19 @@
-import { NotificationFilter } from '../api/types';
 import { BaseModule } from '../base-module';
-import { NotificationStatus, TODO } from '../types';
-import {
-  mapFromApiNotification,
-  markActionAs,
-  archive,
-  markNotificationAs,
-  markNotificationsAs,
-  read,
-  unarchive,
-  unread,
-  remove,
-  removeNotifications,
-} from './helpers';
+import { ActionTypeEnum, NotificationFilter } from '../types';
+import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
 import { Notification } from './notification';
 import type {
   ArchivedArgs,
+  CompleteArgs,
   FetchCountArgs,
   FetchCountResponse,
   FetchFeedArgs,
   FetchFeedResponse,
   InstanceArgs,
-  MarkAllNotificationsAsArgs,
-  MarkNotificationActionAsArgs,
-  MarkNotificationActionAsByIdArgs,
-  MarkNotificationActionAsByInstanceArgs,
-  MarkNotificationAsArgs,
-  MarkNotificationAsByIdArgs,
-  MarkNotificationAsByInstanceArgs,
-  MarkNotificationsAsArgs,
-  MarkNotificationsAsByIdsArgs,
-  MarkNotificationsAsByInstancesArgs,
   ReadArgs,
-  RemoveAllNotificationsArgs,
-  RemoveNotificationArgs,
-  RemoveNotificationByIdArgs,
-  RemoveNotificationByInstanceArgs,
-  RemoveNotificationsArgs,
-  RemoveNotificationsByIdsArgs,
-  RemoveNotificationsByInstancesArgs,
   UnarchivedArgs,
   UnreadArgs,
+  RevertArgs,
 } from './types';
 
 export class Feeds extends BaseModule {
@@ -57,7 +30,7 @@ export class Feeds extends BaseModule {
 
         const modifiedResponse: FetchFeedResponse = {
           ...response,
-          data: response.data.map((el) => new Notification(mapFromApiNotification(el as TODO))),
+          data: response.data.map((el) => new Notification(el)),
         };
 
         this._emitter.emit('feeds.fetch.success', { args, result: modifiedResponse });
@@ -136,6 +109,54 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async completePrimary(args: InstanceArgs): Promise<Notification>;
+  async completePrimary(args: CompleteArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      completeAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.PRIMARY,
+      })
+    );
+  }
+
+  async completeSecondary(args: InstanceArgs): Promise<Notification>;
+  async completeSecondary(args: CompleteArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      completeAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.SECONDARY,
+      })
+    );
+  }
+
+  async revertPrimary(args: InstanceArgs): Promise<Notification>;
+  async revertPrimary(args: RevertArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      revertAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.PRIMARY,
+      })
+    );
+  }
+
+  async revertSecondary(args: InstanceArgs): Promise<Notification>;
+  async revertSecondary(args: RevertArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      revertAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.SECONDARY,
+      })
+    );
+  }
+
   async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
     return this.callWithSession(async () => {
       try {
@@ -151,148 +172,31 @@ export class Feeds extends BaseModule {
     });
   }
 
-  async archivedAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
+  async archiveAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
     return this.callWithSession(async () => {
       try {
-        this._emitter.emit('feeds.archived_all.pending', { args: { tags } });
+        this._emitter.emit('feeds.archive_all.pending', { args: { tags } });
 
-        await this._inboxService.archivedAll({ tags });
+        await this._inboxService.archiveAll({ tags });
 
-        this._emitter.emit('feeds.archived_all.success', { args: { tags }, result: undefined });
+        this._emitter.emit('feeds.archive_all.success', { args: { tags }, result: undefined });
       } catch (error) {
-        this._emitter.emit('feeds.archived_all.error', { args: { tags }, error });
+        this._emitter.emit('feeds.archive_all.error', { args: { tags }, error });
         throw error;
       }
     });
   }
 
-  async readArchivedAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
+  async archiveAllRead({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
     return this.callWithSession(async () => {
       try {
-        this._emitter.emit('feeds.read_archived_all.pending', { args: { tags } });
+        this._emitter.emit('feeds.archive_all_read.pending', { args: { tags } });
 
-        await this._inboxService.readArchivedAll({ tags });
+        await this._inboxService.archiveAllRead({ tags });
 
-        this._emitter.emit('feeds.read_archived_all.success', { args: { tags }, result: undefined });
+        this._emitter.emit('feeds.archive_all_read.success', { args: { tags }, result: undefined });
       } catch (error) {
-        this._emitter.emit('feeds.read_archived_all.error', { args: { tags }, error });
-        throw error;
-      }
-    });
-  }
-
-  /**
-   * @deprecated
-   */
-  async markNotificationAs(args: MarkNotificationAsByIdArgs): Promise<Notification>;
-  async markNotificationAs(args: MarkNotificationAsByInstanceArgs): Promise<Notification>;
-  async markNotificationAs(args: MarkNotificationAsArgs): Promise<Notification> {
-    return this.callWithSession(async () =>
-      markNotificationAs({
-        emitter: this._emitter,
-        apiService: this._apiService,
-        args,
-      })
-    );
-  }
-
-  /**
-   * @deprecated
-   */
-  async markNotificationsAs(args: MarkNotificationsAsByIdsArgs): Promise<Notification[]>;
-  async markNotificationsAs(args: MarkNotificationsAsByInstancesArgs): Promise<Notification[]>;
-  async markNotificationsAs(args: MarkNotificationsAsArgs): Promise<Notification[]> {
-    return this.callWithSession(async () =>
-      markNotificationsAs({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  /**
-   * @deprecated
-   */
-  async markAllNotificationsAs({
-    feedIdentifier,
-    status = NotificationStatus.SEEN,
-  }: MarkAllNotificationsAsArgs): Promise<number> {
-    return this.callWithSession(async () => {
-      const args = { feedIdentifier, status };
-      try {
-        this._emitter.emit('feeds.mark_all_notifications_as.pending', { args });
-
-        let response = 0;
-        if (status === NotificationStatus.SEEN) {
-          response = await this._apiService.markAllMessagesAsSeen(feedIdentifier);
-        } else {
-          response = await this._apiService.markAllMessagesAsRead(feedIdentifier);
-        }
-
-        this._emitter.emit('feeds.mark_all_notifications_as.success', {
-          args,
-          result: response,
-        });
-
-        return response;
-      } catch (error) {
-        this._emitter.emit('feeds.mark_all_notifications_as.error', { args, error });
-        throw error;
-      }
-    });
-  }
-
-  /**
-   * @deprecated
-   */
-  async markNotificationActionAs(args: MarkNotificationActionAsByIdArgs): Promise<Notification>;
-  async markNotificationActionAs(args: MarkNotificationActionAsByInstanceArgs): Promise<Notification>;
-  async markNotificationActionAs(args: MarkNotificationActionAsArgs): Promise<Notification> {
-    return this.callWithSession(async () =>
-      markActionAs({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  async removeNotification(args: RemoveNotificationByIdArgs): Promise<void>;
-  async removeNotification(args: RemoveNotificationByInstanceArgs): Promise<Notification>;
-  async removeNotification(args: RemoveNotificationArgs): Promise<Notification | void> {
-    return this.callWithSession(async () =>
-      remove({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  async removeNotifications(args: RemoveNotificationsByIdsArgs): Promise<void>;
-  async removeNotifications(args: RemoveNotificationsByInstancesArgs): Promise<Notification[]>;
-  async removeNotifications(args: RemoveNotificationsArgs): Promise<Notification[] | void> {
-    return this.callWithSession(async () =>
-      removeNotifications({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  async removeAllNotifications(args: RemoveAllNotificationsArgs): Promise<void> {
-    return this.callWithSession(async () => {
-      try {
-        const { feedIdentifier } = args;
-        this._emitter.emit('feeds.remove_all_notifications.pending', { args });
-
-        await this._apiService.removeAllMessages(feedIdentifier);
-
-        this._emitter.emit('feeds.remove_all_notifications.success', { args, result: undefined });
-      } catch (error) {
-        this._emitter.emit('feeds.remove_all_notifications.error', { args, error });
+        this._emitter.emit('feeds.archive_all_read.error', { args: { tags }, error });
         throw error;
       }
     });
