@@ -74,9 +74,9 @@
   "license": "ISC",
   "devDependencies": {
     "@pandabox/prettier-plugin": "^0.1.3",
-    "@pandacss/dev": "^0.40.1",
+    "@pandacss/dev": "^0.42.0",
     "@pandacss/eslint-plugin": "^0.1.5",
-    "@pandacss/studio": "^0.40.1",
+    "@pandacss/studio": "^0.42.0",
     "@storybook/addon-actions": "8.1.0",
     "@storybook/addon-controls": "^8.1.0",
     "@storybook/addon-docs": "^8.1.0",
