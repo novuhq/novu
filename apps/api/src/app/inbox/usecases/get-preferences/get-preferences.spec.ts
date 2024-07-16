@@ -10,40 +10,43 @@ import {
 } from '@novu/application-generic';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
-const mockedPreferences: any = [
-  {
-    level: PreferenceLevelEnum.GLOBAL,
-    preference: {
-      enabled: true,
-      channels: {
-        email: true,
-        in_app: true,
-        sms: false,
-        push: false,
-        chat: true,
-      },
+const mockedWorkflowPreference: any = {
+  level: PreferenceLevelEnum.TEMPLATE,
+  preferences: {
+    enabled: true,
+    channels: {
+      email: true,
+      in_app: true,
+      sms: false,
+      push: false,
+      chat: true,
+    },
+    overrides: {
+      email: false,
+      in_app: false,
+      sms: true,
+      push: true,
+      chat: false,
     },
   },
-  {
-    level: PreferenceLevelEnum.TEMPLATE,
-    preferences: {
-      enabled: true,
-      channels: {
-        email: true,
-        in_app: true,
-        sms: false,
-        push: false,
-        chat: true,
-      },
-      overrides: {
-        email: false,
-        in_app: false,
-        sms: true,
-        push: true,
-        chat: false,
-      },
+};
+
+const mockedGlobalPreferences: any = {
+  level: PreferenceLevelEnum.GLOBAL,
+  preference: {
+    enabled: true,
+    channels: {
+      email: true,
+      in_app: true,
+      sms: false,
+      push: false,
+      chat: true,
     },
   },
+};
+const mockedPreferencesResponse: any = [
+  { ...mockedGlobalPreferences, preferences: mockedGlobalPreferences.preference },
+  mockedWorkflowPreference,
 ];
 
 const mockedWorkflow: any = [{}];
@@ -101,12 +104,12 @@ describe('GetPreferences', () => {
     };
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    getSubscriberGlobalPreferenceMock.execute.resolves(mockedPreferences[0]);
+    getSubscriberGlobalPreferenceMock.execute.resolves(mockedGlobalPreferences);
     notificationTemplateRepositoryMock.getActiveList.resolves(mockedWorkflow);
-    getSubscriberWorkflowMock.execute.resolves(mockedPreferences[1]);
+    getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
 
     const result = await getPreferences.execute(command);
 
-    expect(result).to.deep.equal(mockedPreferences);
+    expect(result).to.deep.equal(mockedPreferencesResponse);
   });
 });
