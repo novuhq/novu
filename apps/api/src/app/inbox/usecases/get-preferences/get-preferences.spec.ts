@@ -87,7 +87,7 @@ describe('GetPreferences', () => {
       await getPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
-      expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} is not found.`);
+      expect(error.message).to.equal(`Subscriber: ${command.subscriberId} is not found.`);
     }
   });
 
@@ -98,7 +98,7 @@ describe('GetPreferences', () => {
       subscriberId: 'test-mockSubscriber',
     };
 
-    subscriberRepositoryMock.findOne.resolves(mockedSubscriber);
+    subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
     getSubscriberGlobalPreferenceMock.execute.resolves(mockedPreferences[0]);
     getSubscriberWorkflowMock.execute.resolves(mockedPreferences[1]);
 
