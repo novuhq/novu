@@ -7,9 +7,10 @@ import {
 
 import { Message } from 'messagebird/types/messages';
 import { initClient } from 'messagebird';
+import { SmsProviderIdEnum } from '@novu/shared';
 
 export class MessageBirdSmsProvider implements ISmsProvider {
-  id = 'messagebird';
+  id = SmsProviderIdEnum.MessageBird;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private messageBirdClient: ReturnType<typeof initClient>;
   constructor(

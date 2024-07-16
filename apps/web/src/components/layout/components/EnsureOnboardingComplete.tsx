@@ -1,15 +1,42 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { ROUTES } from '../../../constants/routes';
-import { useBlueprint, useRedirectURL } from '../../../hooks';
+import { IS_EE_AUTH_ENABLED } from '../../../config/index';
+import { useBlueprint, useEnvironment, useRedirectURL } from '../../../hooks';
+import { useEffect, useState } from 'react';
 
 export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();
   const location = useLocation();
   const { getRedirectURL } = useRedirectURL();
-  const { currentOrganization, environmentId } = useAuth();
+  const { currentUser, currentOrganization } = useAuth();
+  const { currentEnvironment } = useEnvironment();
+  const [isLoading, setIsLoading] = useState(true);
 
-  if ((!currentOrganization || !environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
+  useEffect(() => {
+    if (currentOrganization) {
+      setIsLoading(false);
+    }
+  }, [currentOrganization]);
+
+  function isOnboardingComplete() {
+    if (IS_EE_AUTH_ENABLED) {
+      // TODO: replace with actual check property (e.g. isOnboardingCompleted)
+      return currentOrganization?.productUseCases !== undefined;
+    }
+
+    return currentOrganization && currentEnvironment;
+  }
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!currentUser) {
+    return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
+  }
+
+  if (!isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {
     return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
   }
 

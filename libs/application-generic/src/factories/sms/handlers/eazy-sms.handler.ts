@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { EazySmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class EazySmsHandler extends BaseSmsHandler {
   constructor() {
-    super('eazy-sms', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.EazySms, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

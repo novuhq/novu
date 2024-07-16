@@ -24,4 +24,5 @@ export * from './repositories/workflow-override';
 export * from './shared';
 export * from './repositories/base-repository';
 export * from './repositories/schema-default.options';
+export * from './repositories/control-variables';
 export * from './types';

@@ -14,7 +14,7 @@ function computeBridgeURL(state: StudioState) {
   return state.isLocalStudio ? state.localBridgeURL || state.tunnelBridgeURL : state.storedBridgeURL;
 }
 
-function convertToTestUser(currentUser?: IUserEntity) {
+function convertToTestUser(currentUser?: IUserEntity | null) {
   return {
     id: currentUser?._id || '',
     emailAddress: currentUser?.email || '',

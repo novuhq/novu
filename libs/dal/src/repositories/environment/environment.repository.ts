@@ -35,6 +35,13 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     });
   }
 
+  async findByIdAndOrganization(environmentId: string, organizationId: string) {
+    return this.findOne({
+      _id: environmentId,
+      _organizationId: organizationId,
+    });
+  }
+
   async addApiKey(environmentId: string, key: EncryptedSecret, userId: string) {
     return await this.update(
       {

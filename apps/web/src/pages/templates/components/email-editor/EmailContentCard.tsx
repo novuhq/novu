@@ -15,7 +15,7 @@ const CUSTOM_CODE = 'Custom Code';
 
 export function EmailContentCard({ organization }: { organization: IOrganizationEntity | undefined }) {
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvironment({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({ bridge: template?.bridge });
   const stepFormPath = useStepFormPath();
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`${stepFormPath}.template.contentType`);

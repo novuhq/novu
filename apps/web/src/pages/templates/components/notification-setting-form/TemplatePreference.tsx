@@ -22,7 +22,7 @@ export function TemplatePreference() {
 export function ChannelPreference() {
   const { control } = useFormContext();
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvironment({}, template?.bridge);
+  const { readonly } = useEnvironment({ bridge: template?.bridge });
 
   return (
     <Controller
@@ -75,7 +75,7 @@ export function ChannelPreference() {
 export function CriticalPreference() {
   const { control } = useFormContext();
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvironment({}, template?.bridge);
+  const { readonly } = useEnvironment({ bridge: template?.bridge });
 
   return (
     <Controller

@@ -1,27 +1,60 @@
-import { onCleanup, onMount, ParentComponent, Show } from 'solid-js';
+import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { AppearanceKey, useFocusManager } from '../../context';
 import { useStyle } from '../../helpers';
-import { usePopover } from './Popover';
-import { useFloating } from 'solid-floating-ui';
+import { Root } from '../Root';
+import { usePopover } from './PopoverRoot';
 
-import { autoUpdate, offset, flip, shift } from '@floating-ui/dom';
-export const PopoverContent: ParentComponent = (props) => {
+export const popoverContentVariants = () =>
+  'nt-flex-col nt-gap-4 nt-h-[600px] nt-min-w-[400px] nt-rounded-xl nt-bg-background nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden';
+
+const PopoverContentBody = (props: PopoverContentProps) => {
+  const { open, setFloating, floating, floatingStyles } = usePopover();
+  const { setActive, removeActive } = useFocusManager();
+  const [local, rest] = splitProps(props, ['class', 'appearanceKey', 'style']);
   const style = useStyle();
-  const { setContentRef, opened, targetRef, onClose, contentRef } = usePopover();
 
-  const position = useFloating(targetRef, contentRef, {
-    placement: 'bottom-end',
-    whileElementsMounted: autoUpdate,
+  onMount(() => {
+    const floatingEl = floating();
+    setActive(floatingEl!);
 
-    middleware: [offset(10), flip(), shift()],
+    onCleanup(() => {
+      removeActive(floatingEl!);
+    });
   });
 
-  const handleClickOutside = (e: any) => {
-    if (contentRef()?.contains(e.target)) return;
+  return (
+    <Root>
+      <div
+        ref={setFloating}
+        //id is necessary here because this is a portal
+        class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
+        style={floatingStyles()}
+        data-open={open()}
+        {...rest}
+      />
+    </Root>
+  );
+};
+
+type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+export const PopoverContent = (props: PopoverContentProps) => {
+  const { open, onClose, floating } = usePopover();
+  const { active } = useFocusManager();
+
+  const handleClickOutside = (e: MouseEvent) => {
+    if (active() !== floating() || floating()?.contains(e.target as Node)) {
+      return;
+    }
+
     onClose();
   };
 
-  const handleEscapeKey = (e: any) => {
+  const handleEscapeKey = (e: KeyboardEvent) => {
+    if (active() !== floating()) {
+      return;
+    }
+
     if (e.key === 'Escape') {
       onClose();
     }
@@ -38,25 +71,11 @@ export const PopoverContent: ParentComponent = (props) => {
   });
 
   return (
-    <Show when={opened() && targetRef()}>
-      <Portal mount={targetRef() as HTMLElement}>
-        <div
-          id="novu-popover-content"
-          ref={setContentRef}
-          class={style(
-            'popoverContent',
-            `nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background nt-translate-y-0
-         nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-[9999]
-       `
-          )}
-          style={{
-            position: position.strategy,
-            top: `${position.y ?? 0}px`,
-            left: `${position.x ?? 0}px`,
-          }}
-        >
-          {props.children}
-        </div>
+    <Show when={open()}>
+      <Portal>
+        <Root>
+          <PopoverContentBody {...props} />
+        </Root>
       </Portal>
     </Show>
   );

@@ -1,16 +1,16 @@
-import { MemberRepository, OrganizationEntity } from '@novu/dal';
+import { CommunityMemberRepository, OrganizationEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { MemberRoleEnum } from '@novu/shared';
 
-describe('Get organizations - /organizations (GET)', async () => {
+describe('Get organizations - /organizations (GET) @skip-in-ee', async () => {
   let session: UserSession;
   let otherSession: UserSession;
   let thirdSession: UserSession;
 
   let thirdOldOrganization: OrganizationEntity;
 
-  const memberRepository = new MemberRepository();
+  const memberRepository = new CommunityMemberRepository();
 
   before(async () => {
     session = new UserSession();
@@ -40,9 +40,6 @@ describe('Get organizations - /organizations (GET)', async () => {
     thirdOldOrganization = thirdSession.organization;
 
     await thirdSession.testAgent.post(`/v1/invites/${invitee.invite.token}/accept`).expect(201);
-
-    thirdSession.organization = session.organization;
-    await thirdSession.fetchJWT();
   });
 
   it('should see all organizations that you are a part of', async () => {

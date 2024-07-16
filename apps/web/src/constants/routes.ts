@@ -1,6 +1,7 @@
 export enum ROUTES {
   HOME = '/',
   AUTH_SIGNUP = '/auth/signup',
+  AUTH_SIGNUP_ORGANIZATION_LIST = '/auth/signup/organization-list',
   AUTH_LOGIN = '/auth/login',
   AUTH_RESET_REQUEST = '/auth/reset/request',
   AUTH_RESET_TOKEN = '/auth/reset/:token',
@@ -20,6 +21,7 @@ export enum ROUTES {
   TENANTS_CREATE = '/tenants/create',
   QUICKSTART = '/quickstart',
   GET_STARTED = '/get-started',
+  DASHBOARD_ONBOARDING = '/onboarding',
   GET_STARTED_PREVIEW = '/get-started/preview',
   QUICK_START_NOTIFICATION_CENTER = '/quickstart/notification-center',
   QUICK_START_SETUP = '/quickstart/notification-center/set-up',
@@ -37,8 +39,8 @@ export enum ROUTES {
   BRAND = '/brand',
   TRANSLATIONS = '/translations',
   LAYOUT = '/layouts',
-  API_KEYS = '/api-keys/:env',
-  WEBHOOK = '/webhook/:env',
+  API_KEYS = '/api-keys',
+  WEBHOOK = '/webhook',
 
   /** Settings nested routes */
   SETTINGS = '/settings',

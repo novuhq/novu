@@ -9,7 +9,7 @@ export interface IMustacheVariable {
   required?: boolean;
 }
 
-export function getTemplateVariables(bod: any[]): IMustacheVariable[] {
+export function getTemplateVariables(bod): IMustacheVariable[] {
   const pairVariables = bod
     .filter((body) => body.type === 'HashPair')
     .flatMap((body) => {

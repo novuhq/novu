@@ -55,6 +55,7 @@
     "./components.css": "./node_modules/@mantine/core/styles.css"
   },
   "scripts": {
+    "start": "npm run build:watch",
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
     "prepare:audit": "pnpm audit-components",

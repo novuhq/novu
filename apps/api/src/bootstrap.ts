@@ -50,22 +50,19 @@ validateEnv();
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
-  let rawBodyBuffer: undefined | (() => void) = undefined;
+  let rawBodyBuffer: undefined | ((...args) => void) = undefined;
   let nestOptions: Record<string, boolean> = {};
 
-  try {
-    if (
-      (process.env.NOVU_ENTERPRISE === 'true' && require('@novu/ee-billing')?.rawBodyBuffer) ||
-      process.env.CI_EE_TEST === 'true'
-    ) {
-      rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
-      nestOptions = {
-        bodyParser: false,
-        rawBody: true,
-      };
-    }
-  } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    rawBodyBuffer = (req, res, buffer, encoding): void => {
+      if (buffer && buffer.length) {
+        req.rawBody = Buffer.from(buffer);
+      }
+    };
+    nestOptions = {
+      bodyParser: false,
+      rawBody: true,
+    };
   }
 
   let app: INestApplication;

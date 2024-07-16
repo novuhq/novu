@@ -82,7 +82,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
 
       await storeInProperLocation(url);
       track('Update endpoint clicked - [Bridge Modal]');
-      successMessage('You have successfuly updated your Novu Endpoint configuration');
+      successMessage('You have successfully updated your Novu Endpoint configuration');
       toggleOpen();
     } catch (error) {
       const err = error as Error;

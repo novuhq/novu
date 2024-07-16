@@ -1,9 +1,19 @@
+import { onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import { NovuOptions } from '../../novu';
-import { Appearance, AppearanceProvider, Localization, LocalizationProvider, NovuProvider } from '../context';
+import {
+  Appearance,
+  AppearanceProvider,
+  FocusManagerProvider,
+  InboxStatusProvider,
+  Localization,
+  LocalizationProvider,
+  NovuProvider,
+} from '../context';
 import { Bell } from './Bell';
 import { Inbox } from './Inbox';
+import { Root } from './Root';
 
 const NovuComponents = {
   Inbox,
@@ -24,6 +34,7 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
+  defaultCss: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
@@ -31,13 +42,37 @@ type RendererProps = {
 };
 
 export const Renderer = (props: RendererProps) => {
+  onMount(() => {
+    const id = 'novu-default-css';
+    const el = document.getElementById(id);
+    if (el) {
+      return;
+    }
+
+    const styleEl = document.createElement('style');
+    styleEl.id = id;
+    document.head.insertBefore(styleEl, document.head.firstChild);
+    styleEl.innerHTML = props.defaultCss;
+
+    onCleanup(() => {
+      const element = document.getElementById(id);
+      element?.remove();
+    });
+  });
+
   return (
     <NovuProvider options={props.options}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-          {[...props.nodes].map(([node, component]) => (
-            <Portal mount={node}>{NovuComponents[component.name](component.props || {})}</Portal>
-          ))}
+          <FocusManagerProvider>
+            <InboxStatusProvider>
+              {[...props.nodes].map(([node, component]) => (
+                <Portal mount={node}>
+                  <Root>{NovuComponents[component.name](component.props || {})}</Root>
+                </Portal>
+              ))}
+            </InboxStatusProvider>
+          </FocusManagerProvider>
         </AppearanceProvider>
       </LocalizationProvider>
     </NovuProvider>

@@ -26,6 +26,7 @@ describe('User Preferences - Custom Filtering', function () {
           count: 1,
           organizationId: session?.organization?._id,
           templateId: session?.templates[0]?._id,
+          environmentId: this.session.environment._id,
         });
 
         cy.wait(1000);
@@ -61,6 +62,7 @@ describe('User Preferences - Custom Filtering', function () {
           count: 1,
           organizationId: session?.organization?._id,
           templateId: session?.templates[0]?._id,
+          environmentId: this.session.environment._id,
         });
 
         cy.wait(1000);

@@ -381,7 +381,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     const createdTemplate: WorkflowResponse = body.data;
 
     expect(createdTemplate.name).to.equal(testTemplate.name);
-    expect(createdTemplate.steps[0].replyCallback).to.equal(undefined);
+    expect(createdTemplate.steps[0].replyCallback).to.deep.equal({});
 
     const template: INotificationTemplate = body.data;
 
