@@ -1,8 +1,8 @@
 import { createEffect, createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { useNovu } from '../../context';
 import { FetchFeedArgs, Notification } from '../../../feeds';
 import { PaginatedResponse } from '../../../types';
+import { useNovu } from '../../context';
 
 export const useFeed = (props: {
   options: FetchFeedArgs;

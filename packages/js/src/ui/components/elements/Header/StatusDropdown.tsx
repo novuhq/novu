@@ -25,7 +25,7 @@ const getStatusLabel = (status?: NotificationStatus) => {
 
 export const StatusDropdown = () => {
   const style = useStyle();
-  const { setFeedOptions, feedOptions } = useInboxStatusContext();
+  const { status, setStatus } = useInboxStatusContext();
 
   return (
     <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement="bottom">
@@ -34,7 +34,7 @@ export const StatusDropdown = () => {
         asChild={(triggerProps) => (
           <Button variant="unstyled" size="none" {...triggerProps}>
             <span class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold nt-text-foreground')}>
-              {getStatusLabel(feedOptions.status)}
+              {getStatusLabel(status())}
             </span>
             <span class={style('inboxStatus__dropdownItemRightIcon', 'nt-text-foreground-alpha-600')}>
               <ArrowDropDown />
@@ -43,7 +43,7 @@ export const StatusDropdown = () => {
         )}
       />
       <Dropdown.Content appearanceKey="inboxStatus__dropdownContent">
-        <StatusOptions setFeedOptions={setFeedOptions} />
+        <StatusOptions setStatus={setStatus} />
       </Dropdown.Content>
     </Dropdown.Root>
   );
