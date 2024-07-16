@@ -112,8 +112,6 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/notifications/:id/mark-as-read')
-  @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/notifications/:id/read')
   async markNotificationAsRead(
     @SubscriberSession() subscriberSession: SubscriberEntity,
