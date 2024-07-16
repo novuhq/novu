@@ -53,11 +53,12 @@ export function LocalStudioAuthenticator() {
 
     // If the user is not logged in, redirect to the login or signup page
     if (!currentUser) {
-      // If user is loading, wait for user to be loaded
-      // We check for token here because on login we have a race condition
-      // that is done with the loading and is missing a user but the auth token
-      // is already present, the data just needs to refresh. Whe should investigate
-      // why this race condition exists
+      /* If user is loading, wait for user to be loaded
+       * We check for token here because on login we have a race condition
+       * that is done with the loading and is missing a user but the auth token
+       * is already present, the data just needs to refresh. Whe should investigate
+       * why this race condition exists
+       */
       if (!isLoading && !hasToken) {
         /*
          * If the user has logged in before, redirect to the login page.
