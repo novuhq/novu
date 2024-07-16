@@ -283,7 +283,7 @@ export const markNotificationsAs = async ({
   }
 };
 
-export const markRead = async ({
+export const read = async ({
   emitter,
   apiService,
   args,
@@ -314,7 +314,7 @@ export const markRead = async ({
   }
 };
 
-export const markUnread = async ({
+export const unread = async ({
   emitter,
   apiService,
   args,
@@ -344,7 +344,7 @@ export const markUnread = async ({
   }
 };
 
-export const markArchived = async ({
+export const archive = async ({
   emitter,
   apiService,
   args,
@@ -375,7 +375,7 @@ export const markArchived = async ({
   }
 };
 
-export const markUnarchived = async ({
+export const unarchive = async ({
   emitter,
   apiService,
   args,

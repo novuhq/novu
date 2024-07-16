@@ -1,6 +1,6 @@
 import { ApiOptions, HttpClient } from '@novu/client';
 import type { Session } from '../types';
-import type { ButtonTypeEnum, Notification, NotificationFilter } from './types';
+import type { ButtonTypeEnum, InboxNotification, NotificationFilter } from './types';
 
 export type InboxServiceOptions = ApiOptions;
 
@@ -35,100 +35,104 @@ export class InboxService {
   async fetchNotifications({
     after,
     archived,
-    limit,
+    limit = 10,
     offset,
     read,
     tags,
   }: {
-    tags?: Notification['tags'];
+    tags?: InboxNotification['tags'];
     read?: boolean;
     archived?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
-  }): Promise<{ data: Notification[]; hasMore: boolean; filter: NotificationFilter }> {
-    let query = `limit=${limit}`;
+  }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
+    const queryParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
-      query += `&after=${after}`;
+      queryParams.append('after', after);
     }
     if (offset) {
-      query += `&offset=${offset}`;
+      queryParams.append('offset', `${offset}`);
     }
     if (tags) {
-      query += tags.map((tag) => `&tags[]=${tag}`).join('');
+      tags.forEach((tag) => queryParams.append('tags[]', tag));
     }
     if (read !== undefined) {
-      query += `&read=${read}`;
+      queryParams.append('read', `${read}`);
     }
     if (archived !== undefined) {
-      query += `&archived=${archived}`;
+      queryParams.append('archived', `${archived}`);
     }
 
-    const response = await this.#httpClient.get(`/notifications?${query}`);
-
-    return response;
+    return await this.#httpClient.get(`/notifications?${queryParams.toString()}`);
   }
 
-  async count({ tags, read, archived }: { tags?: Notification['tags']; read?: boolean; archived?: boolean }): Promise<{
+  async count({
+    tags,
+    read,
+    archived,
+  }: {
+    tags?: InboxNotification['tags'];
+    read?: boolean;
+    archived?: boolean;
+  }): Promise<{
     data: {
       count: number;
     };
     filter: NotificationFilter;
   }> {
-    let query = '';
+    const queryParams = new URLSearchParams();
 
     if (tags) {
-      query += tags.map((tag) => `&tags[]=${tag}`).join('');
+      tags.forEach((tag) => queryParams.append('tags[]', tag));
     }
     if (read !== undefined) {
-      query += `&read=${read}`;
+      queryParams.append('read', `${read}`);
     }
     if (archived !== undefined) {
-      query += `&archived=${archived}`;
+      queryParams.append('archived', `${archived}`);
     }
 
-    const response = await this.#httpClient.get(`/notifications/count?${query}`);
-
-    return response;
+    return await this.#httpClient.get(`/notifications/count?${queryParams.toString()}`);
   }
 
-  async read(notificationId: string): Promise<Notification> {
+  async read(notificationId: string): Promise<InboxNotification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-read`);
 
     return response;
   }
 
-  async unread(notificationId: string): Promise<Notification> {
+  async unread(notificationId: string): Promise<InboxNotification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/mark-as-unread`);
 
     return response;
   }
 
-  async archived(notificationId: string): Promise<Notification> {
+  async archived(notificationId: string): Promise<InboxNotification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/archived`);
 
     return response;
   }
 
-  async unarchived(notificationId: string): Promise<Notification> {
+  async unarchived(notificationId: string): Promise<InboxNotification> {
     const response = await this.#httpClient.patch(`/notifications/${notificationId}/unarchived`);
 
     return response;
   }
 
-  async readAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
+  async readAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-read`, { tags });
 
     return response;
   }
 
-  async archivedAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
+  async archivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-archived`, { tags });
 
     return response;
   }
 
-  async readArchivedAll({ tags }: { tags?: Notification['tags'] }): Promise<void> {
+  async readArchivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
     const response = await this.#httpClient.post(`/notifications/mark-all-as-read-archived`, { tags });
 
     return response;

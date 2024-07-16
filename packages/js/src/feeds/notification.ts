@@ -1,20 +1,12 @@
 import type { ApiService } from '@novu/client';
 import { InboxService } from '../api';
 import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
-import { ChannelTypeEnum, Notification as NotificationType, Subscriber } from '../api/types';
+import { ChannelTypeEnum, InboxNotification, Subscriber } from '../api/types';
 
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { Cta, NotificationActionStatus, NotificationButton, NotificationStatus, TODO } from '../types';
 import { ApiServiceSingleton } from '../utils/api-service-singleton';
-import {
-  markActionAs,
-  markArchived,
-  markNotificationAs,
-  markRead,
-  markUnarchived,
-  markUnread,
-  remove,
-} from './helpers';
+import { markActionAs, archive, markNotificationAs, read, unarchive, unread, remove } from './helpers';
 
 type NotificationLike = Pick<
   Notification,
@@ -40,7 +32,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   readonly id: string;
   readonly feedIdentifier?: string | null;
   readonly createdAt: string;
-  readonly avatar?: NotificationType['avatar'];
+  readonly avatar?: InboxNotification['avatar'];
   readonly body: string;
   readonly read: boolean;
   readonly seen: boolean;
@@ -70,7 +62,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   }
 
   markAsRead(): Promise<Notification> {
-    return markRead({
+    return read({
       emitter: this.#emitter,
       apiService: this.#inboxService,
       args: {
@@ -80,7 +72,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   }
 
   markAsUnread(): Promise<Notification> {
-    return markUnread({
+    return unread({
       emitter: this.#emitter,
       apiService: this.#inboxService,
       args: {
@@ -90,7 +82,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   }
 
   markAsArchived(): Promise<Notification> {
-    return markArchived({
+    return archive({
       emitter: this.#emitter,
       apiService: this.#inboxService,
       args: {
@@ -100,7 +92,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   }
 
   markAsUnarchived(): Promise<Notification> {
-    return markUnarchived({
+    return unarchive({
       emitter: this.#emitter,
       apiService: this.#inboxService,
       args: {

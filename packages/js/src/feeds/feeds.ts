@@ -4,12 +4,12 @@ import { NotificationStatus, TODO } from '../types';
 import {
   mapFromApiNotification,
   markActionAs,
-  markArchived,
+  archive,
   markNotificationAs,
   markNotificationsAs,
-  markRead,
-  markUnarchived,
-  markUnread,
+  read,
+  unarchive,
+  unread,
   remove,
   removeNotifications,
 } from './helpers';
@@ -95,7 +95,7 @@ export class Feeds extends BaseModule {
   async read(args: InstanceArgs): Promise<Notification>;
   async read(args: ReadArgs): Promise<Notification> {
     return this.callWithSession(async () =>
-      markRead({
+      read({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,
@@ -106,7 +106,7 @@ export class Feeds extends BaseModule {
   async unread(args: InstanceArgs): Promise<Notification>;
   async unread(args: UnreadArgs): Promise<Notification> {
     return this.callWithSession(async () =>
-      markUnread({
+      unread({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,
@@ -114,10 +114,10 @@ export class Feeds extends BaseModule {
     );
   }
 
-  async archived(args: InstanceArgs): Promise<Notification>;
-  async archived(args: ArchivedArgs): Promise<Notification> {
+  async archive(args: InstanceArgs): Promise<Notification>;
+  async archive(args: ArchivedArgs): Promise<Notification> {
     return this.callWithSession(async () =>
-      markArchived({
+      archive({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,
@@ -125,10 +125,10 @@ export class Feeds extends BaseModule {
     );
   }
 
-  async unarchived(args: InstanceArgs): Promise<Notification>;
-  async unarchived(args: UnarchivedArgs): Promise<Notification> {
+  async unarchive(args: InstanceArgs): Promise<Notification>;
+  async unarchive(args: UnarchivedArgs): Promise<Notification> {
     return this.callWithSession(async () =>
-      markUnarchived({
+      unarchive({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,

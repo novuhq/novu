@@ -1,4 +1,4 @@
-import { Notification as InboxNotification, NotificationFilter } from '../api/types';
+import { InboxNotification, NotificationFilter } from '../api/types';
 import type { NotificationActionStatus, NotificationButton, NotificationStatus } from '../types';
 import { Notification } from './notification';
 

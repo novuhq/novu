@@ -1,4 +1,4 @@
-import { NotificationFilter, Notification as InboxNotification } from 'src/api/types';
+import type { InboxNotification } from '../api/types';
 import type {
   FetchCountArgs,
   FetchFeedArgs,
@@ -20,7 +20,7 @@ import type {
 import { Preference } from '../preferences/preference';
 import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
-import { PaginatedResponse, Session, WebSocketEvent } from '../types';
+import { Session, WebSocketEvent } from '../types';
 
 type NovuPendingEvent<A, O = undefined> = {
   args: A;
