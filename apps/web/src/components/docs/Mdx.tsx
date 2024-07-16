@@ -124,6 +124,11 @@ export const Mdx = ({ code = '', mappings = {}, isChildDocs, children, isLoading
               ? props.children.find((child) => child.type === 'img')?.props.src
               : props.children.props?.src;
 
+            const alt =
+              (Array.isArray(props.children)
+                ? props.children.find((child) => child.type === 'img')?.props.alt
+                : props.children.props?.alt) || '';
+
             if (!src) {
               return (
                 <div {...props}>
@@ -134,7 +139,7 @@ export const Mdx = ({ code = '', mappings = {}, isChildDocs, children, isLoading
 
             return (
               <div {...props}>
-                <img alt="" src={`${MINTLIFY_IMAGE_URL}${src}`} />
+                <img alt={alt} src={`${MINTLIFY_IMAGE_URL}${src}`} />
                 <Text className={css({ textAlign: 'center', fontStyle: 'italic' })}>{props.caption}</Text>
               </div>
             );

@@ -13,7 +13,7 @@ import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildBridgeHTTPClient } from '../../../../bridgeApi/bridgeApi.client';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { useDocsModal } from '../../../docs/useDocsModal';
-import { CONCEPT_PATHS } from '../../../docs/docs.const';
+import { PATHS } from '../../../docs/docs.const';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -124,7 +124,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
                 <LinkText
                   onClick={(e) => {
                     e.preventDefault();
-                    setPath(CONCEPT_PATHS.ENDPOINT);
+                    setPath(PATHS.CONCEPT_ENDPOINT);
                     toggle();
                   }}
                   href=""

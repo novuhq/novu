@@ -8,11 +8,8 @@ const globalOverrides = {
   frameworkterminal: {
     FrameworkTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
   },
+  // Needed for mdx file `quickstart/nextjs`
   framework: () => null,
-  // TODO: EchoTerminal is legacy name for framework terminal and should be removed
-  echoterminal: {
-    EchoTerminal: () => <nv-framework-terminal></nv-framework-terminal>,
-  },
 };
 
 /**

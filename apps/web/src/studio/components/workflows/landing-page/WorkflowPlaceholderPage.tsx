@@ -6,6 +6,7 @@ import { hstack } from '@novu/novui/patterns';
 import { PageContainer } from '../../../layout/PageContainer';
 import { IPageMetaProps, PageMeta } from '../../../layout/PageMeta';
 import { css } from '@novu/novui/css';
+import { PATHS } from '../../../../components/docs/docs.const';
 
 export type WorkflowPlaceholderPageContentProps = { docsButtonLabel: LocalizedMessage } & CorePropsWithChildren;
 
@@ -16,6 +17,7 @@ export function WorkflowPlaceholderPageContent({ children, docsButtonLabel }: Wo
         {children}
       </Text>
       <DocsButton
+        path={PATHS.WORKFLOW_INTRODUCTION}
         TriggerButton={({ onClick }) => (
           <button
             onClick={onClick}

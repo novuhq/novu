@@ -43,7 +43,7 @@ export const LocalStudioSidebarContent: WithLoadingSkeleton<FC<LocalStudioSideba
           <button
             onClick={(e) => {
               e.preventDefault();
-              setPath(PATHS[ROUTES.STUDIO_FLOWS] as string);
+              setPath(PATHS.WORKFLOW_INTRODUCTION);
               toggle();
             }}
             className={css({ width: 'full' })}
