@@ -87,7 +87,7 @@ describe('GetPreferences', () => {
       await getPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
-      expect(error.message).to.equal(`Subscriber: ${command.subscriberId} is not found.`);
+      expect(error.message).to.equal(`Subscriber: ${command.subscriberId} not found.`);
     }
   });
 

@@ -48,7 +48,7 @@ export class GetPreferences {
 
     this.analyticsService.mixpanelTrack('Fetch Preferences - [Inbox]', '', {
       _organization: command.organizationId,
-      templatesSize: workflowList.length,
+      templatesSize: workflowList?.length,
     });
 
     const workflowPreferences = await Promise.all(
