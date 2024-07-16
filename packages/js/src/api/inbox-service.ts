@@ -4,6 +4,7 @@ import type { ActionTypeEnum, InboxNotification, NotificationFilter, Session } f
 export type InboxServiceOptions = ApiOptions;
 
 const INBOX_ROUTE = '/inbox';
+const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 
 export class InboxService {
   #httpClient: HttpClient;
@@ -63,7 +64,7 @@ export class InboxService {
       queryParams.append('archived', `${archived}`);
     }
 
-    return this.#httpClient.getFullResponse(`${INBOX_ROUTE}/notifications?${queryParams.toString()}`);
+    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}?${queryParams.toString()}`);
   }
 
   count({ tags, read, archived }: { tags?: string[]; read?: boolean; archived?: boolean }): Promise<{
@@ -84,35 +85,35 @@ export class InboxService {
       queryParams.append('archived', `${archived}`);
     }
 
-    return this.#httpClient.getFullResponse(`${INBOX_ROUTE}/notifications/count?${queryParams.toString()}`);
+    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}/count?${queryParams.toString()}`);
   }
 
   read(notificationId: string): Promise<InboxNotification> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/read`);
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/read`);
   }
 
   unread(notificationId: string): Promise<InboxNotification> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unread`);
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unread`);
   }
 
   archive(notificationId: string): Promise<InboxNotification> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/archive`);
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/archive`);
   }
 
   unarchive(notificationId: string): Promise<InboxNotification> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unarchive`);
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unarchive`);
   }
 
   readAll({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_ROUTE}/notifications/read`, { tags });
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, { tags });
   }
 
   archiveAll({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_ROUTE}/notifications/archive`, { tags });
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, { tags });
   }
 
   archiveAllRead({ tags }: { tags?: string[] }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_ROUTE}/notifications/read-archive`, { tags });
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, { tags });
   }
 
   completeAction({
@@ -122,7 +123,7 @@ export class InboxService {
     notificationId: string;
     actionType: ActionTypeEnum;
   }): Promise<InboxNotification> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/complete`, {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/complete`, {
       actionType,
     });
   }
@@ -134,7 +135,7 @@ export class InboxService {
     notificationId: string;
     actionType: ActionTypeEnum;
   }): Promise<InboxNotification> {
-    return this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/revert`, {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/revert`, {
       actionType,
     });
   }
