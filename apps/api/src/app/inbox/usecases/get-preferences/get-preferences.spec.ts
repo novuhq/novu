@@ -45,7 +45,7 @@ const mockedGlobalPreferences: any = {
   },
 };
 const mockedPreferencesResponse: any = [
-  { ...mockedGlobalPreferences, preferences: mockedGlobalPreferences.preference },
+  { level: mockedGlobalPreferences.level, preferences: mockedGlobalPreferences.preference },
   mockedWorkflowPreference,
 ];
 
