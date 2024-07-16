@@ -15,7 +15,7 @@ export function StepSettings() {
     channel: StepTypeEnum;
   }>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvironment({}, template?.bridge);
+  const { bridge } = useEnvironment({ bridge: template?.bridge });
 
   return (
     <>

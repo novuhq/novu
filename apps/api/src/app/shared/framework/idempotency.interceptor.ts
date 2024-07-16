@@ -15,8 +15,7 @@ import { CacheService, GetFeatureFlag, GetFeatureFlagCommand, Instrument } from 
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
-import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
-import { HttpResponseHeaderKeysEnum } from './types';
+import { ApiAuthSchemeEnum, HttpResponseHeaderKeysEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 
 const LOG_CONTEXT = 'IdempotencyInterceptor';
 const IDEMPOTENCY_CACHE_TTL = 60 * 60 * 24; //24h

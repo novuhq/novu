@@ -26,7 +26,7 @@ import {
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks/index';
+import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
@@ -45,7 +45,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<UpdateExternalOrganizationDto>({});
   const navigate = useNavigate();
-  const { currentUser, currentOrganization, environmentId, reloadOrganization } = useAuth();
+  const { currentOrganization, reloadOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
@@ -55,14 +55,14 @@ export function QuestionnaireForm() {
   );
 
   useEffect(() => {
-    if (environmentId) {
+    if (currentOrganization) {
       if (isFromVercel) {
         startVercelSetup();
 
         return;
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId, currentOrganization]);
+  }, [isFromVercel, startVercelSetup, currentOrganization]);
 
   async function updateOrganization(data: UpdateExternalOrganizationDto) {
     const updateClerkOrgDto: UpdateExternalOrganizationDto = {

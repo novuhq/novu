@@ -15,7 +15,7 @@ function autodetectApiRoot() {
 
 declare global {
   interface Window {
-    _env_: any;
+    _env_: Record<string, string | undefined>;
   }
 }
 
@@ -54,7 +54,7 @@ export const IS_DOCKER_HOSTED =
 
 export const REACT_APP_VERSION = process.env.NOVU_VERSION;
 
-export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process.env.REACT_APP_INTERCOM_APP_ID;
+export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process.env.REACT_APP_INTERCOM_APP_ID || '';
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
 
@@ -83,7 +83,7 @@ export const IS_EE_AUTH_ENABLED =
   window._env_.REACT_APP_IS_EE_AUTH_ENABLED === 'true' || process.env.REACT_APP_IS_EE_AUTH_ENABLED === 'true';
 
 export const CLERK_PUBLISHABLE_KEY =
-  window._env_.REACT_APP_CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+  window._env_.REACT_APP_CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '';
 
 if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');

@@ -1,6 +1,16 @@
 /* cSpell:enableCompoundWords */
 import { WithRequired, ConvertToConstantCase, testHttpHeaderEnumValidity, ValidateHttpHeaderCase } from './utils.types';
 
+describe('HTTP headers', () => {
+  /**
+   * This describe block resolves the Jest error of a test suite not having any tests.
+   * It has no other purpose.
+   */
+  it('tests the Typescript compiler errors below', () => {
+    expect(true).toEqual(true);
+  });
+});
+
 /**
  * WithRequired tests
  */
@@ -14,7 +24,6 @@ export const validTestType: WithRequired<TestWithRequired, 'optional'> = {
   required: 1,
 };
 
-// Invalid
 // @ts-expect-error - Missing 'optional' property
 export const invalidTestType: WithRequired<TestWithRequired, 'optional'> = {
   required: 1,
@@ -52,7 +61,6 @@ export const validHttpHeaderSingleSingleEnum: ValidateHttpHeaderCase<TestCapital
 export const validHttpHeaderDoubleSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.DOUBLEWORD_STRING> =
   'DoubleWord-String';
 
-// Invalid
 // @ts-expect-error - Incorrect case - 'invalid-string' literal type is not Capital-Case
 export const invalidHttpHeaderSingleString: ValidateHttpHeaderCase<'invalid-string'> = 'Invalid';
 // @ts-expect-error - Incorrect case - 'invalid-string' union type is not Capital-Case
@@ -74,6 +82,7 @@ testHttpHeaderEnumValidity(ValidHeaderEnum);
 // Invalid
 enum InvalidKeyHeaderEnum {
   SINGLE = 'Single',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   Invalid_Key = 'Invalid-Key',
 }
 // @ts-expect-error - Invalid key - Invalid_Key should be 'INVALID_KEY'

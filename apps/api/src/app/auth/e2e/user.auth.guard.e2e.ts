@@ -1,7 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ApiAuthSchemeEnum } from '@novu/shared';
-import { HttpRequestHeaderKeysEnum } from '../../shared/framework/types';
+import { ApiAuthSchemeEnum, HttpRequestHeaderKeysEnum } from '@novu/shared';
 
 describe('UserAuthGuard', () => {
   let session: UserSession;

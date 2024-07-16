@@ -59,7 +59,7 @@ export function PrivatePageLayout() {
           onHide={() => setIsIntercomOpened(false)}
         >
           <ErrorBoundary
-            fallback={({ error, resetError, eventId }) => (
+            fallback={({ error, eventId }) => (
               <>
                 Sorry, but something went wrong. <br />
                 Our team has been notified and we are investigating.

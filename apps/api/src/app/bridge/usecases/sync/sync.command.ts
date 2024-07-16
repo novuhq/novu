@@ -99,11 +99,11 @@ export class WorkflowDefine implements IWorkflowDefine {
 }
 
 export interface ICreateBridges {
-  workflows: IWorkflowDefine[];
+  workflows?: IWorkflowDefine[];
 }
 
 export class SyncCommand extends EnvironmentWithUserCommand implements ICreateBridges {
-  workflows: WorkflowDefine[];
+  workflows?: WorkflowDefine[];
   bridgeUrl: string;
 
   source?: string;
