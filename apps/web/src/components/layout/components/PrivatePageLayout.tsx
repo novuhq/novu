@@ -4,7 +4,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
-import { BRIDGE_SYNC_SAMPLE_ENDPOINT, INTERCOM_APP_ID, IS_EE_AUTH_ENABLED } from '../../../config';
+import { BRIDGE_SYNC_SAMPLE_ENDPOINT, INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
@@ -16,9 +16,6 @@ import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 import { isStudioRoute } from '../../../studio/utils/routing';
-import { Group } from '@mantine/core';
-import { Button, Text } from '@novu/novui';
-import { colors, Warning, useColorScheme } from '@novu/design-system';
 import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
 
 const AppShell = styled.div`
