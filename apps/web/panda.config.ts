@@ -89,6 +89,8 @@ export default defineConfig({
 
   outdir: `${STYLED_SYSTEM_PATH_BASE}/styled-system`,
 
+  importMap: '@novu/novui',
+
   globalCss: GLOBAL_CSS,
 
   // Enables JSX util generation!
