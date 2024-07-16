@@ -136,6 +136,7 @@
     "@types/express": "^4.17.13",
     "@types/node": "^20.14.10",
     "@types/aws-lambda": "^8.10.141",
+    "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",
     "express": "^4.19.2",
     "h3": "^1.11.1",
@@ -161,6 +162,7 @@
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
     "liquidjs": "^10.13.1",
-    "ora": "^5.4.1"
+    "ora": "^5.4.1",
+    "sanitize-html": "^2.13.0"
   }
 }

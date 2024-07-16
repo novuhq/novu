@@ -2,7 +2,7 @@ import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
-import { FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
+import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -35,6 +35,7 @@ import type {
 } from './types';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
+import { sanitizeHTML, sanitizeHtmlInObject } from './utils/sanitiez-html.utils';
 
 /**
  * We want to respond with a consistent string value for preview
@@ -291,7 +292,15 @@ export class Client {
         setResult(stepResult);
       }
 
-      return stepResult.outputs as any;
+      if (
+        (
+          [ChannelStepEnum.CHAT, ChannelStepEnum.EMAIL, ChannelStepEnum.SMS, ChannelStepEnum.IN_APP] as string[]
+        ).includes(step.type)
+      ) {
+        return sanitizeHtmlInObject(stepResult.outputs);
+      }
+
+      return stepResult.outputs;
     };
   }
 

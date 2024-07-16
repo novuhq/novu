@@ -31,7 +31,7 @@ export type ExecuteOutputMetadata = {
 };
 
 export type ExecuteOutput = {
-  outputs: unknown;
+  outputs: Record<string, any>;
   providers: unknown;
   options: unknown;
   metadata: ExecuteOutputMetadata;
