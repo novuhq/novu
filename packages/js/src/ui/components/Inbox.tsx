@@ -1,18 +1,39 @@
 import { createSignal, JSX, Match, Switch } from 'solid-js';
 import { useLocalization } from '../context';
 import { useStyle } from '../helpers';
-import { Bell, Footer, Header, SettingsHeader } from './elements';
+import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
+import { NotificationList } from './Notification';
 import { Button, Popover } from './primitives';
-import { Settings } from './Settings';
 
 type InboxProps = {
   open?: boolean;
   renderBell?: ({ unreadCount }: { unreadCount: number }) => JSX.Element;
 };
 
-export const Inbox = (props: InboxProps) => {
+const InboxContent = () => {
   const [currentScreen, setCurrentScreen] = createSignal<'inbox' | 'settings'>('inbox');
   const { t } = useLocalization();
+
+  return (
+    <>
+      <Switch>
+        <Match when={currentScreen() === 'inbox'}>
+          <Header updateScreen={setCurrentScreen} />
+
+          <NotificationList />
+        </Match>
+
+        <Match when={currentScreen() === 'settings'}>
+          <SettingsHeader backAction={() => setCurrentScreen('inbox')} />
+          <Settings />
+        </Match>
+      </Switch>
+      <Footer />
+    </>
+  );
+};
+
+export const Inbox = (props: InboxProps) => {
   const style = useStyle();
 
   return (
@@ -25,18 +46,7 @@ export const Inbox = (props: InboxProps) => {
         )}
       />
       <Popover.Content appearanceKey="inbox__popoverContent">
-        <Switch>
-          <Match when={currentScreen() === 'inbox'}>
-            <Header updateScreen={setCurrentScreen} />
-            {t('inbox.title')}
-          </Match>
-          {/* notifications will go here */}
-          <Match when={currentScreen() === 'settings'}>
-            <SettingsHeader backAction={() => setCurrentScreen('inbox')} />
-            <Settings />
-          </Match>
-        </Switch>
-        <Footer />
+        <InboxContent />
       </Popover.Content>
     </Popover.Root>
   );

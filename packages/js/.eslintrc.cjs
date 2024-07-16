@@ -13,6 +13,7 @@ module.exports = {
       },
     ],
     'local-rules/no-class-without-style': 'error',
+    'id-length': 'off',
   },
   parserOptions: {
     project: './tsconfig.json',

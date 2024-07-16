@@ -1,6 +1,7 @@
 import { createEffect, createSignal } from 'solid-js';
 import { FetchFeedArgs, FetchFeedResponse, Notification } from '../../../feeds';
 import { useNovu } from '../../context';
+import { createInfiniteScroll } from '../../helpers';
 
 export const useFeed = (props: {
   options: FetchFeedArgs;
@@ -32,4 +33,17 @@ export const useFeed = (props: {
   });
 
   return { feed, fetchFeed, hasMore: hasMore };
+};
+
+type UseFeedInfiniteScrollProps = {
+  options?: Exclude<FetchFeedArgs, 'offset'>;
+};
+export const useFeedInfiniteScroll = (props?: UseFeedInfiniteScrollProps) => {
+  const novu = useNovu();
+
+  const infiniteScroll = createInfiniteScroll(async (offset) => {
+    return await novu.feeds.fetch({ ...(props?.options || {}), offset });
+  });
+
+  return infiniteScroll;
 };

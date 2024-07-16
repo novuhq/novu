@@ -1,5 +1,5 @@
-module.exports = { 
-  'no-class-without-style' : {
+module.exports = {
+  'no-class-without-style': {
     meta: {
       type: 'problem',
       docs: {
@@ -14,6 +14,15 @@ module.exports = {
       return {
         JSXAttribute(node) {
           if (node.name && node.name.name === 'class') {
+            const parentElement = node.parent;
+            const hasAppearanceKey = parentElement.attributes.some(
+              (attr) => attr.name && attr.name.name === 'appearanceKey'
+            );
+
+            if (hasAppearanceKey) {
+              return; // Skip reporting if appearanceKey is present, as it is mostlikely forwarded.
+            }
+
             const value = context.getSourceCode().getText(node.value);
             if (!value.includes('style(')) {
               context.report({
@@ -26,4 +35,4 @@ module.exports = {
       };
     },
   },
-}
+};

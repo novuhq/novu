@@ -10,7 +10,7 @@ export function EmptyIcon() {
       height="48"
       viewBox="0 0 48 48"
       fill="none"
-      class={style('notificationList_emptyNoticeIcon')}
+      class={style('notificationListEmptyNoticeIcon')}
     >
       <path
         fill="currentColor"

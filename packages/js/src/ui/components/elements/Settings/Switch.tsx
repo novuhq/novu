@@ -1,4 +1,4 @@
-import { useStyle } from '../../helpers';
+import { useStyle } from '../../../helpers';
 
 type SwitchProps = {
   checked?: boolean;
