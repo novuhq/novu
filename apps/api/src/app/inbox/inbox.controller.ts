@@ -98,6 +98,7 @@ export class InboxController {
     return res;
   }
 
+  @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/preferences')
   async getAllPreferences(
     @SubscriberSession() subscriberSession: SubscriberEntity
