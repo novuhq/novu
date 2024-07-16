@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
-
 import { API_ROOT } from '../config';
 import { getToken } from '../auth/getToken';
+import { getEnvironmentId } from '../components/providers/EnvironmentProvider';
 
 interface IOptions {
   absoluteUrl: boolean;
@@ -87,8 +87,14 @@ function buildUrl(url: string, absoluteUrl: boolean) {
 function getHeaders() {
   // TODO: change the way we get the clerk token
   const token = getToken();
+  const lastEnvironmentId = getEnvironmentId();
 
-  return { Authorization: `Bearer ${token}` };
+  return token
+    ? {
+        Authorization: `Bearer ${token}`,
+        'Novu-Environment-Id': lastEnvironmentId || '',
+      }
+    : {};
 }
 
 // WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.

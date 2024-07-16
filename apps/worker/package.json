@@ -86,7 +86,6 @@
   "optionalDependencies": {
     "@novu/ee-auth": "workspace:*",
     "@novu/ee-billing": "workspace:*",
-    "@novu/ee-bridge-worker": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/ee-translation": "workspace:*"
   }

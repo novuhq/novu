@@ -51,7 +51,8 @@ export function HeaderNav() {
               <div>{themeIcon}</div>
             </Tooltip>
           </ActionIcon>
-          <NotificationCenterWidget user={currentUser} />
+          {/* Ugly fallback to satisfy the restrictive typings of the NotificationCenterWidget */}
+          <NotificationCenterWidget user={currentUser || undefined} />
           {isSelfHosted ? (
             <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
               <ActionIcon variant="transparent">

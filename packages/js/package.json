@@ -10,32 +10,34 @@
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
       "require": "./dist/cjs/index.cjs",
       "import": "./dist/esm/index.mjs",
-      "default": "./dist/esm/index.mjs"
+      "default": "./dist/esm/index.mjs",
+      "types": "./dist/types/index.d.ts"
     },
     "./ui": {
-      "types": "./dist/types/ui/index.d.ts",
       "require": "./dist/cjs/ui/index.cjs",
       "import": "./dist/esm/ui/index.mjs",
-      "default": "./dist/esm/ui/index.mjs"
+      "default": "./dist/esm/ui/index.mjs",
+      "types": "./dist/types/ui/index.d.ts"
     }
   },
   "files": [
     "dist/cjs",
     "dist/esm",
-    "dist/types",
-    "dist/ui"
+    "dist/types"
   ],
   "sideEffects": false,
   "private": true,
   "scripts": {
+    "clean": "rimraf ./dist",
     "start": "pnpm run build -- --watch --sourcemap",
-    "build": "tsup && pnpm run post:build",
+    "pre:build": "cp ./src/ui/index.css ./src/ui/index.directcss",
+    "build": "pnpm run clean && pnpm run pre:build && tsup && pnpm run post:build",
+    "build:declarations": "tsc -p tsconfig.declarations.json",
     "build:umd": "webpack --config webpack.config.cjs",
-    "build:watch": "tsup --watch",
-    "post:build": "node scripts/size-limit.mjs",
+    "build:watch": "pnpm run pre:build && tsup --watch && pnpm run post:build",
+    "post:build": "rm ./src/ui/index.directcss && node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },
@@ -83,10 +85,12 @@
   "dependencies": {
     "@floating-ui/dom": "^1.6.7",
     "@novu/client": "workspace:*",
+    "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
-    "solid-js": "^1.8.11"
+    "solid-js": "^1.8.11",
+    "tailwind-merge": "^2.4.0"
   }
 }

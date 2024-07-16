@@ -70,6 +70,7 @@
     "i18next": "^23.7.6",
     "ioredis": "5.3.2",
     "jsonwebtoken": "9.0.0",
+    "json-schema-defaults": "^0.4.0",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",
     "nest-raven": "^10.0.0",
@@ -121,7 +122,6 @@
   "optionalDependencies": {
     "@novu/ee-auth": "workspace:*",
     "@novu/ee-billing": "workspace:*",
-    "@novu/ee-bridge-api": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/ee-translation": "workspace:*"
   }

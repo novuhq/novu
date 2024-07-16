@@ -1,14 +1,15 @@
-import { defineConfig, Options } from 'tsup';
-import { solidPlugin } from 'esbuild-plugin-solid';
-import { name, version } from './package.json';
-import inlineImportPlugin from 'esbuild-plugin-inline-import';
-import loadPostcssConfig from 'postcss-load-config';
 import { compress } from 'esbuild-plugin-compress';
+import inlineImportPlugin from 'esbuild-plugin-inline-import';
+import { solidPlugin } from 'esbuild-plugin-solid';
 import postcss from 'postcss';
+import loadPostcssConfig from 'postcss-load-config';
+import { defineConfig, Options } from 'tsup';
+import { name, version } from './package.json';
 
 const processCSS = async (css: string, filePath: string) => {
   const { plugins, options } = await loadPostcssConfig({}, filePath);
   const result = await postcss(plugins).process(css, { ...options, from: filePath });
+
   return result.css;
 };
 
@@ -16,6 +17,7 @@ const runAfterLast =
   (commands: Array<string | false>) =>
   (...configs: Options[]) => {
     const [last, ...rest] = configs.reverse();
+
     return [...rest.reverse(), { ...last, onSuccess: [last.onSuccess, ...commands].filter(Boolean).join(' && ') }];
   };
 
@@ -25,13 +27,13 @@ const baseConfig: Options = {
   splitting: true,
   sourcemap: false,
   clean: true,
-  dts: true,
   esbuildPlugins: [
     //@ts-expect-error types
     inlineImportPlugin({
       filter: /^directcss:/,
       transform: async (contents, args) => {
         const processedCss = processCSS(contents, args.path);
+
         return processedCss;
       },
     }),
@@ -43,7 +45,6 @@ const baseConfig: Options = {
 const baseModuleConfig: Options = {
   ...baseConfig,
   treeshake: true,
-  dts: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
   entry: {
     index: './src/index.ts',
@@ -61,16 +62,16 @@ export default defineConfig((config: Options) => {
 
   const cjs: Options = {
     ...baseModuleConfig,
-    format: 'esm',
-    outDir: 'dist/esm',
-    tsconfig: 'tsconfig.json',
+    format: 'cjs',
+    outDir: 'dist/cjs',
+    tsconfig: 'tsconfig.cjs.json',
   };
 
   const esm: Options = {
     ...baseModuleConfig,
-    format: 'cjs',
-    outDir: 'dist/cjs',
-    tsconfig: 'tsconfig.cjs.json',
+    format: 'esm',
+    outDir: 'dist/esm',
+    tsconfig: 'tsconfig.json',
   };
 
   const umd: Options = {
@@ -94,5 +95,6 @@ export default defineConfig((config: Options) => {
       }),
     ],
   };
-  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs'), 'tsc --noEmit'])(umd, esm, cjs);
+
+  return runAfterLast(['pnpm run build:declarations', copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
 });

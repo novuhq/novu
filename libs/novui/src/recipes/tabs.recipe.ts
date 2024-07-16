@@ -37,7 +37,7 @@ export const TABS_RECIPE = defineSlotRecipe({
       _active: {
         color: 'typography.text.main',
         '& svg': {
-          color: 'typography.text.main',
+          color: 'typography.text.main !important',
         },
         borderBottom: 'double',
         borderColor: 'colorPalette.start',

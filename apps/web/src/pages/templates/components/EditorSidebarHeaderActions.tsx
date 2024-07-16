@@ -24,7 +24,7 @@ const variantsCreatePath = '/variants/create';
 export const EditorSidebarHeaderActions = ({ preview = false }: { preview?: boolean }) => {
   const { control, watch, setValue } = useFormContext<IForm>();
   const { deleteStep, deleteVariant, template } = useTemplateEditorForm();
-  const { readonly: isReadonly } = useEnvironment({}, template?.bridge);
+  const { readonly: isReadonly } = useEnvironment({ bridge: template?.bridge });
   const {
     stepUuid = '',
     channel = '',

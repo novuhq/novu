@@ -13,7 +13,7 @@ const amountDefaultValue = '5';
 
 export const RegularDigestMetadata = () => {
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvironment({}, template?.bridge);
+  const { readonly } = useEnvironment({ bridge: template?.bridge });
   const {
     control,
     formState: { errors, isSubmitted },

@@ -22,6 +22,7 @@ import {
   IAttachmentOptions,
   IEmailOptions,
   LogCodeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -34,6 +35,8 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
 } from '@novu/application-generic';
 import { EmailOutput } from '@novu/framework';
 
@@ -60,7 +63,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private getFeatureFlag: GetFeatureFlag
   ) {
     super(
       messageRepository,
@@ -242,10 +246,23 @@ export class SendMessageEmail extends SendMessageBase {
           );
         }
 
-        html = await inlineCss(html, {
-          // Used for style sheet links that starts with / so should not be needed in our case.
-          url: ' ',
-        });
+        // TODO: remove as part of https://linear.app/novu/issue/NV-4117/email-html-content-issue-in-mobile-devices
+        const shouldDisableInlineCss = await this.getFeatureFlag.execute(
+          GetFeatureFlagCommand.create({
+            key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+          })
+        );
+
+        if (!shouldDisableInlineCss) {
+          // this is causing rendering issues in Gmail (especially when media queries are used), so we are disabling it
+          html = await inlineCss(html, {
+            // Used for style sheet links that starts with / so should not be needed in our case.
+            url: ' ',
+          });
+        }
       }
     } catch (error) {
       Logger.error(

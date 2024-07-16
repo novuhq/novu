@@ -10,8 +10,8 @@ export enum Environment {
 export class SidebarPage {
   constructor(private page: Page) {}
 
-  public async getTemplatesLink() {
-    return await getAttByTestId(this.page, 'side-nav-templates-link', 'href');
+  public getTemplatesLink() {
+    return this.page.getByTestId('side-nav-templates-link');
   }
 
   public getOrganizationSwitch() {
@@ -23,17 +23,13 @@ export class SidebarPage {
   }
 
   public async toggleToProduction() {
-    const responsePromise = this.page.waitForResponse('**/auth/environments/**/switch');
     await this.getEnvironmentSwitch().click();
     await this.page.getByRole('option', { name: Environment.Production }).click();
-    await responsePromise;
   }
 
   public async toggleToDevelopment() {
-    const responsePromise = this.page.waitForResponse('**/auth/environments/**/switch');
     await this.getEnvironmentSwitch().click();
     await this.page.getByRole('option', { name: Environment.Development }).click();
-    await responsePromise;
   }
 
   public async getSupportLink() {

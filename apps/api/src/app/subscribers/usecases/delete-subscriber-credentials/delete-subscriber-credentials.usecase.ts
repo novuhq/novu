@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { SubscriberRepository } from '@novu/dal';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
@@ -10,7 +10,6 @@ export class DeleteSubscriberCredentials {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
-    private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private getSubscriberUseCase: GetSubscriber
   ) {}
@@ -22,24 +21,10 @@ export class DeleteSubscriberCredentials {
       })
     );
 
-    const foundIntegration = await this.integrationRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        providerId: command.providerId,
-      },
-      '_id'
-    );
-
-    if (!foundIntegration) {
-      throw new NotFoundException(
-        `Subscribers environment (${command.environmentId}) do not have ${command.providerId} integration.`
-      );
-    }
-
-    await this.deleteSubscriberCredentials(
+    await this.deleteSubscriberCredentialsOfOneProvider(
       foundSubscriber.subscriberId,
       command.environmentId,
-      foundIntegration._id,
+      command.providerId,
       foundSubscriber._id
     );
 
@@ -50,10 +35,10 @@ export class DeleteSubscriberCredentials {
     });
   }
 
-  private async deleteSubscriberCredentials(
+  private async deleteSubscriberCredentialsOfOneProvider(
     subscriberId: string,
     environmentId: string,
-    integrationId: string,
+    providerId: string,
     _subscriberId: string
   ) {
     await this.invalidateCache.invalidateByKey({
@@ -68,7 +53,7 @@ export class DeleteSubscriberCredentials {
         _id: _subscriberId,
         _environmentId: environmentId,
       },
-      { $pull: { channels: { _integrationId: integrationId } } }
+      { $pull: { channels: { providerId } } }
     );
   }
 }

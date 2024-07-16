@@ -18,13 +18,13 @@ export class GetMyEnvironments {
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
     if (!environments?.length)
-      throw new NotFoundException(`Environments for organization ${command.organizationId} not found`);
+      throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
 
     return environments.map((environment) => {
-      if (command.includeApiKeys || environment._id === command.environmentId) {
+      if (command.includeAllApiKeys || environment._id === command.environmentId) {
         return this.decryptApiKeys(environment);
       }
-
+      // TODO: For api_v2: Remove the key from the response. This was not done yet as it's a breaking change.
       environment.apiKeys = [];
 
       return environment;
