@@ -62,7 +62,7 @@ export class Sync {
         _organization: command.organizationId,
         _environment: command.environmentId,
         workflowsCount: discover.workflows?.length || 0,
-        localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : undefined,
+        localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : false,
         source: command.source,
       });
     }

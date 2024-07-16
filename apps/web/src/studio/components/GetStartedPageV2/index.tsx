@@ -127,7 +127,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-s
             })}
             textAlign="center"
           >
-            Send your first notification in less than 5 minutes
+            Send your first notification in less than 4 minutes
           </Title>
           <HStack
             className={css({
@@ -201,7 +201,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-s
 
                 {location === 'onboarding' && (
                   <SkipCTA
-                    text="No time right now?"
+                    text="Prefer to explore the platform first?"
                     buttonText="Skip Setup"
                     onClick={() => {
                       track('Skip Onboarding Clicked', { location: 'button' });
@@ -252,7 +252,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-s
                   marginBottom: location === 'onboarding' ? '24px' : '8px',
                 })}
               >
-                Build real-life notification workflows and preview them locally
+                Code your notification workflows and preview them locally
               </Text>
 
               {location === 'get-started' && (
@@ -298,7 +298,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-s
                   marginBottom: location === 'onboarding' ? '24px' : '8px',
                 })}
               >
-                Provide your team with no-code controls to modify notification content and behavior
+                Provide your team with no-code UI controls to modify notification content and behavior
               </Text>
 
               {location === 'get-started' && (
@@ -344,7 +344,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-s
                   marginBottom: location === 'onboarding' ? '24px' : '8px',
                 })}
               >
-                Use the familiar CI/CD pipeline to get your notifications to production
+                Use your CI/CD pipeline to ship your notifications to production
               </Text>
 
               {location === 'get-started' && (

@@ -38,7 +38,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentOrganization } = useAuth();
+  const { login, currentOrganization, reloadOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const segment = useSegment();
@@ -80,6 +80,8 @@ export function QuestionnaireForm() {
         source: 'sample-workspace',
       });
     } catch (e) {
+      console.error(e);
+
       captureException(e);
     }
 
