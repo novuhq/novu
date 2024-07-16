@@ -6,6 +6,7 @@ import { MarkNotificationAs } from './mark-notification-as/mark-notification-as.
 import { UpdateNotificationAction } from './update-notification-action/update-notification-action.usecase';
 import { UpdateAllNotifications } from './update-all-notifications/update-all-notifications.usecase';
 import { GetPreferences } from './get-preferences/get-preferences.usecase';
+import { GetSubscriberGlobalPreference, GetSubscriberWorkflowPreference } from '@novu/application-generic';
 
 export const USE_CASES = [
   Session,
@@ -16,4 +17,6 @@ export const USE_CASES = [
   UpdateNotificationAction,
   UpdateAllNotifications,
   GetPreferences,
+  GetSubscriberGlobalPreference,
+  GetSubscriberWorkflowPreference,
 ];
