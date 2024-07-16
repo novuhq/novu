@@ -52,18 +52,18 @@ describe('GetPreferences', () => {
   let getSubscriberWorkflowMock: sinon.SinonStubbedInstance<GetSubscriberWorkflowPreference>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
-  let notifcationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
+  let notificationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
     getSubscriberWorkflowMock = sinon.createStubInstance(GetSubscriberWorkflowPreference);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
-    notifcationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
+    notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
 
     getPreferences = new GetPreferences(
       subscriberRepositoryMock as any,
-      notifcationTemplateRepositoryMock as any,
+      notificationTemplateRepositoryMock as any,
       getSubscriberWorkflowMock as any,
       getSubscriberGlobalPreferenceMock as any,
       analyticsServiceMock as any
