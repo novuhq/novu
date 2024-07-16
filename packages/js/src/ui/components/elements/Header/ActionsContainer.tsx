@@ -1,5 +1,5 @@
-import { useStyle } from '../../helpers';
-import { Settings } from '../../icons';
+import { useStyle } from '../../../helpers';
+import { Settings } from '../../../icons';
 import { MoreActionsDropdown } from './MoreActionsDropdown';
 
 type ActionsContainerProps = {

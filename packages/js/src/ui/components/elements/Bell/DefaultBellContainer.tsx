@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
-import { useStyle } from '../../helpers';
-import { BellIcon } from '../../icons';
+import { useStyle } from '../../../helpers';
+import { BellIcon } from '../../../icons';
 
 type DefaultBellContainerProps = {
   unreadCount: number;
@@ -13,7 +13,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
     <span
       class={style(
         'bellContainer',
-        `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md nt-relative hover:nt-bg-foreground-alpha-50 nt-text-foreground-alpha-600 nt-cursor-pointer`
+        `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md nt-relative nt-text-foreground-alpha-600 nt-cursor-pointer`
       )}
     >
       <BellIcon />

@@ -1,5 +1,5 @@
 /* eslint-disable local-rules/no-class-without-style */
-import { Novu } from '../icons';
+import { Novu } from '../../icons';
 
 export const Footer = () => {
   return (
