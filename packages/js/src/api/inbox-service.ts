@@ -104,43 +104,43 @@ export class InboxService {
   }
 
   async read(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/mark-as-read`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/read`);
 
     return response;
   }
 
   async unread(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/mark-as-unread`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unread`);
 
     return response;
   }
 
   async archived(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/archived`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/archive`);
 
     return response;
   }
 
   async unarchived(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unarchived`);
+    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unarchive`);
 
     return response;
   }
 
   async readAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/mark-all-as-read`, { tags });
+    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/read`, { tags });
 
     return response;
   }
 
   async archivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/mark-all-as-archived`, { tags });
+    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/archive`, { tags });
 
     return response;
   }
 
   async readArchivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/mark-all-as-read-archived`, { tags });
+    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/read-archive`, { tags });
 
     return response;
   }
