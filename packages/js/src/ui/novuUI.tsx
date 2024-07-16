@@ -1,14 +1,15 @@
+import { createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
-import { Appearance } from './context';
-import { generateRandomString } from './helpers';
-import { Localization } from './context/LocalizationContext';
 import { NovuComponent, NovuComponentName, Renderer } from './components/Renderer';
+import { Appearance } from './context';
+import { Localization } from './context/LocalizationContext';
+import { generateRandomString } from './helpers';
 import { NovuProviderProps } from './types';
-import { createSignal } from 'solid-js';
 //@ts-expect-error inline import esbuild syntax
 import css from 'directcss:./index.directcss';
 
+export type NovuUIOptions = NovuProviderProps;
 export class NovuUI {
   #dispose: { (): void } | null = null;
   #rootElement: HTMLElement;
