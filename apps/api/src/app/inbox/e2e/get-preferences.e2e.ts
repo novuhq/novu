@@ -1,10 +1,9 @@
+import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 
-describe('Get Subscribers preferences - /subscribers/preferences/:subscriberId (GET)', function () {
+describe('Get all preferences - /inbox/preferences (GET)', function () {
   let session: UserSession;
-  let template: NotificationTemplateEntity;
   let subscriberRepository: SubscriberRepository;
 
   beforeEach(async () => {

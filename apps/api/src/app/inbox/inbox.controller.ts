@@ -98,7 +98,7 @@ export class InboxController {
     return res;
   }
 
-  @Get('/notifications/preferences')
+  @Get('/preferences')
   async getAllPreferences(
     @SubscriberSession() subscriberSession: SubscriberEntity
   ): Promise<GetPreferencesResponseDto[]> {
