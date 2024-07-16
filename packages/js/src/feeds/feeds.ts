@@ -70,16 +70,16 @@ export class Feeds extends BaseModule {
     });
   }
 
-  async fetchCount({ archived, read, tags }: FetchCountArgs = {}): Promise<FetchCountResponse> {
+  async fetchCount(countArgs: FetchCountArgs = {}): Promise<FetchCountResponse> {
     return this.callWithSession(async () => {
-      const args = { archived, read, tags };
+      const args = { archived: countArgs.archived, read: countArgs.read, tags: countArgs.tags };
       try {
         this._emitter.emit('feeds.fetch_count.pending', { args });
 
         const response = await this._inboxService.count({
-          archived,
-          read,
-          tags,
+          archived: countArgs.archived,
+          read: countArgs.read,
+          tags: countArgs.tags,
         });
 
         this._emitter.emit('feeds.fetch_count.success', { args, result: response });
