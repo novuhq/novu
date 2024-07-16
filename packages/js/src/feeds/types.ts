@@ -1,18 +1,43 @@
+import { InboxNotification, NotificationFilter } from '../api/types';
 import type { NotificationActionStatus, NotificationButton, NotificationStatus } from '../types';
 import { Notification } from './notification';
 
 export type FetchFeedArgs = {
-  page?: number;
-  feedIdentifier?: string | string[];
-  status?: NotificationStatus;
+  tags?: InboxNotification['tags'];
+  read?: boolean;
+  archived?: boolean;
   limit?: number;
-  payload?: Record<string, unknown>;
+  after?: string;
+  offset?: number;
 };
 
+export type FetchFeedResponse = { data: Notification[]; hasMore: boolean; filter: NotificationFilter };
+
 export type FetchCountArgs = {
-  feedIdentifier?: string | string[];
-  status?: NotificationStatus;
+  tags?: InboxNotification['tags'];
+  read?: boolean;
+  archived?: boolean;
 };
+
+export type FetchCountResponse = {
+  data: {
+    count: number;
+  };
+  filter: NotificationFilter;
+};
+
+type BaseArgs = {
+  notificationId: string;
+};
+
+export type InstanceArgs = {
+  notification: Notification;
+};
+
+export type ReadArgs = BaseArgs | InstanceArgs;
+export type UnreadArgs = BaseArgs | InstanceArgs;
+export type ArchivedArgs = BaseArgs | InstanceArgs;
+export type UnarchivedArgs = BaseArgs | InstanceArgs;
 
 export type MarkNotificationAsBaseArgs = {
   status?: NotificationStatus;

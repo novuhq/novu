@@ -12,8 +12,8 @@ export default function Home() {
           // returned and couldn't be used as a cleanup successfully.
           const ui = new (NovuUI as new (options: NovuUIOptions) => NovuUI)({
             options: {
-              applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APP_ID,
-              subscriberId: '1234',
+              applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '',
+              subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '',
             },
             appearance: {},
           }) as NovuUI;
