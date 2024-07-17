@@ -8,6 +8,7 @@ import {
 } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { ISubscriberPreferences, PreferenceLevelEnum } from '@novu/shared';
+import { AnalyticsEventsEnum } from '../../utils';
 import { GetPreferencesCommand } from './get-preferences.command';
 
 @Injectable()
@@ -44,7 +45,7 @@ export class GetPreferences {
       (await this.notificationTemplateRepository.getActiveList(command.organizationId, command.environmentId, true)) ||
       [];
 
-    this.analyticsService.mixpanelTrack('Fetch Preferences - [Inbox]', '', {
+    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
       _organization: command.organizationId,
       templatesSize: workflowList.length,
     });
