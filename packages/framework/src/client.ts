@@ -292,17 +292,7 @@ export class Client {
         setResult(stepResult);
       }
 
-      if (
-        (
-          [
-            ChannelStepEnum.CHAT,
-            ChannelStepEnum.EMAIL,
-            ChannelStepEnum.SMS,
-            ChannelStepEnum.IN_APP,
-            ChannelStepEnum.PUSH,
-          ] as string[]
-        ).includes(step.type)
-      ) {
+      if (Object.values(ChannelStepEnum).includes(step.type as ChannelStepEnum)) {
         return sanitizeHtmlInObject(stepResult.outputs);
       }
 
