@@ -35,7 +35,7 @@ import type {
 } from './types';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
-import { sanitizeHtmlInObject } from './utils/sanitiez-html.utils';
+import { sanitizeHtmlInObject } from './utils/sanitize-html.utils';
 
 /**
  * We want to respond with a consistent string value for preview
