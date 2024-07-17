@@ -16,7 +16,7 @@ import { demoCode } from '../../../studio/components/workflows/step-editor/edito
 export function OnboardingPage() {
   const track = useTelemetry();
   const { colorScheme } = useColorScheme();
-  const [code, setCode] = useState(demoCode);
+  const [code, setCode] = useState(BRIDGE_CODE);
 
   return (
     <div>

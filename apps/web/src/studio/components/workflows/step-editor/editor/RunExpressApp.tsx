@@ -19,7 +19,6 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
         webContainerInstance = await WebContainer.boot();
 
         webContainerInstance.on('server-ready', (port, url) => {
-          const hostedUrl = url + ':' + port;
           setOutput((prevOutput) => prevOutput + '\nServer is running on url ' + url);
           setOutput((prevOutput) => prevOutput + '\nServer is running on port ' + port);
 
@@ -27,11 +26,13 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
           if (!iframeEl) {
             setOutput((prevOutput) => prevOutput + 'Error: Could not find iframe element');
           } else {
-            iframeEl.src = url;
+            iframeEl.src = url + '/api/novu?action=health-check';
           }
         });
 
         async function installDependencies() {
+          setOutput((prevOutput) => prevOutput + 'Installing dependencies...');
+
           const installProcess = await webContainerInstance.spawn('npm', ['install']);
 
           installProcess.output.pipeTo(
@@ -42,10 +43,14 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
             })
           );
 
+          setOutput((prevOutput) => prevOutput + 'Dependencies installed');
+
           return installProcess.exit;
         }
 
         async function startDevServer() {
+          setOutput((prevOutput) => prevOutput + 'Starting dev server...');
+
           const startOutput = await webContainerInstance.spawn('npm', ['run', 'start']);
 
           startOutput.output.pipeTo(
@@ -56,10 +61,14 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
             })
           );
 
+          setOutput((prevOutput) => prevOutput + 'Dev server started');
+
           return startOutput;
         }
 
         async function runDevScript() {
+          setOutput((prevOutput) => prevOutput + 'Running dev script');
+
           const devOutput = await webContainerInstance.spawn('npm', ['run', 'dev']);
 
           devOutput.output.pipeTo(
@@ -69,6 +78,8 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
               },
             })
           );
+
+          setOutput((prevOutput) => prevOutput + 'Dev script ran');
         }
 
         await webContainerInstance.mount(files);
@@ -100,7 +111,7 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
   }, true);
 
   return (
-    <div style={{ whiteSpace: 'pre-wrap', overflow: 'auto', height: '900px' }}>
+    <div style={{ whiteSpace: 'pre-wrap', overflow: 'auto', height: '500px' }}>
       {output ? output : 'Express app is bootstrap...'}
     </div>
   );
