@@ -16,7 +16,7 @@ interface IRequestPayload {
 }
 
 export const useUserOnboardingStatus = () => {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, isUserLoading } = useAuth();
   const queryClient = useQueryClient();
 
   const mutationFunction = ({ showOnboarding }) => updateUserOnBoarding(showOnboarding);
@@ -34,7 +34,7 @@ export const useUserOnboardingStatus = () => {
 
   return {
     updateOnboardingStatus: updateOnBoardingStatus,
-    isLoading: isLoading || isLoadingUpdate,
+    isLoading: isUserLoading || isLoadingUpdate,
     showOnboarding: shouldShowOnboarding(currentUser?.showOnBoarding),
   };
 };

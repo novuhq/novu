@@ -7,7 +7,8 @@ import { EnterpriseAuthContext, EnterpriseAuthProvider } from '../../ee/clerk/pr
 export type AuthContextValue = {
   inPublicRoute: boolean;
   inPrivateRoute: boolean;
-  isLoading: boolean;
+  isUserLoading: boolean;
+  isOrganizationLoading: boolean;
   currentUser?: IUserEntity | null;
   currentOrganization?: IOrganizationEntity | null;
   organizations?: IOrganizationEntity[] | null;

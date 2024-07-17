@@ -18,7 +18,8 @@ const asyncNoop = async () => {};
 export const EnterpriseAuthContext = createContext<AuthContextValue>({
   inPublicRoute: false,
   inPrivateRoute: false,
-  isLoading: false,
+  isUserLoading: false,
+  isOrganizationLoading: false,
   currentUser: null,
   organizations: [],
   currentOrganization: null,
@@ -197,7 +198,8 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   const value = {
     inPublicRoute,
     inPrivateRoute,
-    isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
+    isUserLoading: !isUserLoaded,
+    isOrganizationLoading: !isOrganizationLoaded,
     currentUser: user,
     // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
     organizations,

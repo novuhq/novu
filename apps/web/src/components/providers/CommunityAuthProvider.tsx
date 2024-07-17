@@ -24,7 +24,8 @@ const asyncNoop = async () => {};
 export const CommunityAuthContext = createContext<AuthContextValue>({
   inPublicRoute: false,
   inPrivateRoute: false,
-  isLoading: false,
+  isUserLoading: false,
+  isOrganizationLoading: false,
   currentUser: null,
   currentOrganization: null,
   organizations: [],
@@ -270,7 +271,8 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   const value = {
     inPublicRoute,
     inPrivateRoute,
-    isLoading: hasToken && (isUserLoading || isOrganizationLoading),
+    isUserLoading,
+    isOrganizationLoading,
     currentUser: user,
     organizations,
     currentOrganization,

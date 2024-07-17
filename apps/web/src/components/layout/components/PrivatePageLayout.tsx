@@ -5,10 +5,9 @@ import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../../config';
-import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
-import { useEnvironment } from '../../../hooks';
+import { useEnvironment, useRedirectURL } from '../../../hooks';
 // TODO: Move sidebar under layout folder as it belongs here
 import { Sidebar } from '../../nav/Sidebar';
 import { HeaderNav } from './v2/HeaderNav';
@@ -35,6 +34,7 @@ export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
   const { environment } = useEnvironment();
   const location = useLocation();
+  const { getRedirectURL } = useRedirectURL();
 
   /**
    * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.
@@ -46,43 +46,50 @@ export function PrivatePageLayout() {
     [environment, location]
   );
 
+  const redirectURL = getRedirectURL();
+
+  if (redirectURL) {
+    // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
+    window.location.replace(redirectURL);
+
+    return null;
+  }
+
   return (
-    <EnsureOnboardingComplete>
-      <SpotLightProvider>
-        <IntercomProvider
-          appId={INTERCOM_APP_ID}
-          onShow={() => setIsIntercomOpened(true)}
-          onHide={() => setIsIntercomOpened(false)}
+    <SpotLightProvider>
+      <IntercomProvider
+        appId={INTERCOM_APP_ID}
+        onShow={() => setIsIntercomOpened(true)}
+        onHide={() => setIsIntercomOpened(false)}
+      >
+        <ErrorBoundary
+          fallback={({ error, eventId }) => (
+            <>
+              Sorry, but something went wrong. <br />
+              Our team has been notified and we are investigating.
+              <br />
+              <code>
+                <small style={{ color: 'lightGrey' }}>
+                  Event Id: {eventId}.
+                  <br />
+                  {error.toString()}
+                </small>
+              </code>
+            </>
+          )}
         >
-          <ErrorBoundary
-            fallback={({ error, eventId }) => (
-              <>
-                Sorry, but something went wrong. <br />
-                Our team has been notified and we are investigating.
-                <br />
-                <code>
-                  <small style={{ color: 'lightGrey' }}>
-                    Event Id: {eventId}.
-                    <br />
-                    {error.toString()}
-                  </small>
-                </code>
-              </>
-            )}
-          >
-            <SpotLight>
-              <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
-                <Sidebar />
-                <ContentShell>
-                  <FreeTrialBanner />
-                  <HeaderNav />
-                  <Outlet />
-                </ContentShell>
-              </AppShell>
-            </SpotLight>
-          </ErrorBoundary>
-        </IntercomProvider>
-      </SpotLightProvider>
-    </EnsureOnboardingComplete>
+          <SpotLight>
+            <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
+              <Sidebar />
+              <ContentShell>
+                <FreeTrialBanner />
+                <HeaderNav />
+                <Outlet />
+              </ContentShell>
+            </AppShell>
+          </SpotLight>
+        </ErrorBoundary>
+      </IntercomProvider>
+    </SpotLightProvider>
   );
 }

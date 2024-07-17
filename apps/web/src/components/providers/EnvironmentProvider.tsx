@@ -70,6 +70,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { currentOrganization } = useAuth();
+  console.log('currentOrganization', currentOrganization);
   const {
     data: environments,
     isLoading,
