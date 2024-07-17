@@ -45,7 +45,11 @@ const mockedGlobalPreferences: any = {
 };
 const mockedPreferencesResponse: any = [
   { level: PreferenceLevelEnum.GLOBAL, preferences: mockedGlobalPreferences.preference },
-  { level: PreferenceLevelEnum.TEMPLATE, preferences: mockedWorkflowPreference.preference },
+  {
+    level: PreferenceLevelEnum.TEMPLATE,
+    preferences: mockedWorkflowPreference.preference,
+    worflow: mockedWorkflowPreference.template,
+  },
 ];
 
 const mockedWorkflow: any = [{}];
