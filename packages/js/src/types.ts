@@ -51,6 +51,11 @@ export enum WebSocketEvent {
   UNSEEN = 'unseen_count_changed',
 }
 
+export enum ActionTypeEnum {
+  PRIMARY = 'primary',
+  SECONDARY = 'secondary',
+}
+
 export type Session = {
   token: string;
   unreadCount: number;
@@ -76,12 +81,42 @@ export type MessageAction = {
   };
 };
 
-export type Cta = {
-  type: CtaType;
-  data: {
-    url?: string;
-  };
-  action?: MessageAction;
+export type Subscriber = {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  subscriberId: string;
+};
+
+export type Action = {
+  label: string;
+  url?: string;
+  isCompleted: boolean;
+};
+
+export type InboxNotification = {
+  id: string;
+  // subject?: string;
+  body: string;
+  to: Subscriber;
+  isRead: boolean;
+  isArchived: boolean;
+  createdAt: string;
+  readAt?: string | null;
+  archivedAt?: string | null;
+  actor?: Subscriber;
+  avatar?: Avatar;
+  primaryAction?: Action;
+  secondaryAction?: Action;
+  channelType: ChannelType;
+  tags?: string[];
+};
+
+export type NotificationFilter = {
+  tags?: string[];
+  read?: boolean;
+  archived?: boolean;
 };
 
 export type Workflow = {

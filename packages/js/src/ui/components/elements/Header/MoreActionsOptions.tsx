@@ -1,8 +1,8 @@
 import { JSX } from 'solid-js';
-import { useReadAll } from '../../api';
-import { cn, useStyle } from '../../helpers';
-import { Archived, ArchiveRead, ReadAll } from '../../icons';
-import { Dropdown, dropdownItemVariants } from '../Dropdown';
+import { useReadAll } from '../../../api';
+import { cn, useStyle } from '../../../helpers';
+import { Archived, ArchiveRead, ReadAll } from '../../../icons';
+import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 export const MoreActionsOptions = () => {
   const { markAllAsRead } = useReadAll();

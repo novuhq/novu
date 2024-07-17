@@ -1,5 +1,5 @@
-import { useStyle } from '../../helpers';
-import { ArrowLeft } from '../../icons';
+import { useStyle } from '../../../helpers';
+import { ArrowLeft } from '../../../icons';
 
 type SettingsHeaderProps = {
   backAction: () => void;

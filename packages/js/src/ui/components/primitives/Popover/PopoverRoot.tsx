@@ -1,7 +1,7 @@
 import { autoUpdate, flip, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
-import { useUncontrolledState } from '../../helpers';
+import { useUncontrolledState } from '../../../helpers';
 
 type PopoverProps = {
   open?: boolean;

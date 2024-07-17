@@ -7,25 +7,14 @@ import { captureException } from '@sentry/react';
 
 import { FeatureFlagsKeysEnum, ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
 import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
-import {
-  Button,
-  Digest,
-  HalfClock,
-  Input,
-  inputStyles,
-  MultiChannel,
-  RingingBell,
-  Select,
-  Translation,
-} from '@novu/design-system';
+import { Button, Input, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useEnvironment, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
-import { useDomainParser } from './useDomainHook';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 
@@ -38,7 +27,8 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentOrganization, reloadOrganization } = useAuth();
+  const { login, currentOrganization } = useAuth();
+  const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const segment = useSegment();
@@ -73,6 +63,7 @@ export function QuestionnaireForm() {
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
+    await refetchEnvironments();
 
     try {
       await api.post(`/v1/bridge/sync`, {

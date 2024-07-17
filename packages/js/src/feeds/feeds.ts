@@ -1,52 +1,36 @@
 import { BaseModule } from '../base-module';
+import { ActionTypeEnum, NotificationFilter } from '../types';
+import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
 import { Notification } from './notification';
-import { PaginatedResponse, NotificationStatus, TODO } from '../types';
 import type {
-  FetchFeedArgs,
+  ArchivedArgs,
+  CompleteArgs,
   FetchCountArgs,
-  MarkNotificationAsArgs,
-  MarkAllNotificationsAsArgs,
-  RemoveNotificationArgs,
-  RemoveAllNotificationsArgs,
-  MarkNotificationActionAsArgs,
-  MarkNotificationsAsArgs,
-  RemoveNotificationsArgs,
-  MarkNotificationAsByIdArgs,
-  MarkNotificationAsByInstanceArgs,
-  MarkNotificationsAsByIdsArgs,
-  MarkNotificationsAsByInstancesArgs,
-  RemoveNotificationByIdArgs,
-  RemoveNotificationByInstanceArgs,
-  RemoveNotificationsByIdsArgs,
-  RemoveNotificationsByInstancesArgs,
-  MarkNotificationActionAsByIdArgs,
-  MarkNotificationActionAsByInstanceArgs,
+  FetchCountResponse,
+  FetchFeedArgs,
+  FetchFeedResponse,
+  InstanceArgs,
+  ReadArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+  RevertArgs,
 } from './types';
-import { READ_OR_UNREAD, SEEN_OR_UNSEEN } from '../utils/notification-utils';
-import {
-  mapFromApiNotification,
-  markActionAs,
-  markNotificationAs,
-  markNotificationsAs,
-  remove,
-  removeNotifications,
-} from './helpers';
 
 export class Feeds extends BaseModule {
-  async fetch({ page = 0, status, ...restOptions }: FetchFeedArgs = {}): Promise<PaginatedResponse<Notification>> {
+  async fetch({ limit = 10, ...restOptions }: FetchFeedArgs = {}): Promise<FetchFeedResponse> {
     return this.callWithSession(async () => {
-      const args = { page, status, ...restOptions };
+      const args = { limit, ...restOptions };
       try {
         this._emitter.emit('feeds.fetch.pending', { args });
 
-        const response = await this._apiService.getNotificationsList(page, {
+        const response = await this._inboxService.fetchNotifications({
+          limit,
           ...restOptions,
-          ...(status && SEEN_OR_UNSEEN.includes(status) && { seen: status === NotificationStatus.SEEN }),
-          ...(status && READ_OR_UNREAD.includes(status) && { seen: status === NotificationStatus.READ }),
         });
-        const modifiedResponse: PaginatedResponse<Notification> = {
+
+        const modifiedResponse: FetchFeedResponse = {
           ...response,
-          data: response.data.map((el) => new Notification(mapFromApiNotification(el as TODO))),
+          data: response.data.map((el) => new Notification(el)),
         };
 
         this._emitter.emit('feeds.fetch.success', { args, result: modifiedResponse });
@@ -59,28 +43,21 @@ export class Feeds extends BaseModule {
     });
   }
 
-  async fetchCount({ feedIdentifier, status = NotificationStatus.UNSEEN }: FetchCountArgs = {}): Promise<number> {
+  async fetchCount(countArgs: FetchCountArgs = {}): Promise<FetchCountResponse> {
     return this.callWithSession(async () => {
-      const args = { feedIdentifier, status };
+      const args = { archived: countArgs.archived, read: countArgs.read, tags: countArgs.tags };
       try {
         this._emitter.emit('feeds.fetch_count.pending', { args });
 
-        let response: { count: number };
-        if (SEEN_OR_UNSEEN.includes(status)) {
-          response = await this._apiService.getUnseenCount({
-            feedIdentifier,
-            seen: status === NotificationStatus.SEEN,
-          });
-        } else {
-          response = await this._apiService.getUnreadCount({
-            feedIdentifier,
-            read: status === NotificationStatus.READ,
-          });
-        }
+        const response = await this._inboxService.count({
+          archived: countArgs.archived,
+          read: countArgs.read,
+          tags: countArgs.tags,
+        });
 
-        this._emitter.emit('feeds.fetch_count.success', { args, result: response.count });
+        this._emitter.emit('feeds.fetch_count.success', { args, result: response });
 
-        return response.count;
+        return response;
       } catch (error) {
         this._emitter.emit('feeds.fetch_count.error', { args, error });
         throw error;
@@ -88,106 +65,138 @@ export class Feeds extends BaseModule {
     });
   }
 
-  async markNotificationAs(args: MarkNotificationAsByIdArgs): Promise<Notification>;
-  async markNotificationAs(args: MarkNotificationAsByInstanceArgs): Promise<Notification>;
-  async markNotificationAs(args: MarkNotificationAsArgs): Promise<Notification> {
+  async read(args: InstanceArgs): Promise<Notification>;
+  async read(args: ReadArgs): Promise<Notification> {
     return this.callWithSession(async () =>
-      markNotificationAs({
+      read({
         emitter: this._emitter,
-        apiService: this._apiService,
+        apiService: this._inboxService,
         args,
       })
     );
   }
 
-  async markNotificationsAs(args: MarkNotificationsAsByIdsArgs): Promise<Notification[]>;
-  async markNotificationsAs(args: MarkNotificationsAsByInstancesArgs): Promise<Notification[]>;
-  async markNotificationsAs(args: MarkNotificationsAsArgs): Promise<Notification[]> {
+  async unread(args: InstanceArgs): Promise<Notification>;
+  async unread(args: UnreadArgs): Promise<Notification> {
     return this.callWithSession(async () =>
-      markNotificationsAs({
-        apiService: this._apiService,
+      unread({
         emitter: this._emitter,
+        apiService: this._inboxService,
         args,
       })
     );
   }
 
-  async markAllNotificationsAs({
-    feedIdentifier,
-    status = NotificationStatus.SEEN,
-  }: MarkAllNotificationsAsArgs): Promise<number> {
+  async archive(args: InstanceArgs): Promise<Notification>;
+  async archive(args: ArchivedArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      archive({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async unarchive(args: InstanceArgs): Promise<Notification>;
+  async unarchive(args: UnarchivedArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      unarchive({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async completePrimary(args: InstanceArgs): Promise<Notification>;
+  async completePrimary(args: CompleteArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      completeAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.PRIMARY,
+      })
+    );
+  }
+
+  async completeSecondary(args: InstanceArgs): Promise<Notification>;
+  async completeSecondary(args: CompleteArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      completeAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.SECONDARY,
+      })
+    );
+  }
+
+  async revertPrimary(args: InstanceArgs): Promise<Notification>;
+  async revertPrimary(args: RevertArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      revertAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.PRIMARY,
+      })
+    );
+  }
+
+  async revertSecondary(args: InstanceArgs): Promise<Notification>;
+  async revertSecondary(args: RevertArgs): Promise<Notification> {
+    return this.callWithSession(async () =>
+      revertAction({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+        actionType: ActionTypeEnum.SECONDARY,
+      })
+    );
+  }
+
+  async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
     return this.callWithSession(async () => {
-      const args = { feedIdentifier, status };
       try {
-        this._emitter.emit('feeds.mark_all_notifications_as.pending', { args });
+        this._emitter.emit('feeds.read_all.pending', { args: { tags } });
 
-        let response = 0;
-        if (status === NotificationStatus.SEEN) {
-          response = await this._apiService.markAllMessagesAsSeen(feedIdentifier);
-        } else {
-          response = await this._apiService.markAllMessagesAsRead(feedIdentifier);
-        }
+        await this._inboxService.readAll({ tags });
 
-        this._emitter.emit('feeds.mark_all_notifications_as.success', {
-          args,
-          result: response,
-        });
-
-        return response;
+        this._emitter.emit('feeds.read_all.success', { args: { tags }, result: undefined });
       } catch (error) {
-        this._emitter.emit('feeds.mark_all_notifications_as.error', { args, error });
+        this._emitter.emit('feeds.read_all.error', { args: { tags }, error });
         throw error;
       }
     });
   }
 
-  async markNotificationActionAs(args: MarkNotificationActionAsByIdArgs): Promise<Notification>;
-  async markNotificationActionAs(args: MarkNotificationActionAsByInstanceArgs): Promise<Notification>;
-  async markNotificationActionAs(args: MarkNotificationActionAsArgs): Promise<Notification> {
-    return this.callWithSession(async () =>
-      markActionAs({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  async removeNotification(args: RemoveNotificationByIdArgs): Promise<void>;
-  async removeNotification(args: RemoveNotificationByInstanceArgs): Promise<Notification>;
-  async removeNotification(args: RemoveNotificationArgs): Promise<Notification | void> {
-    return this.callWithSession(async () =>
-      remove({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  async removeNotifications(args: RemoveNotificationsByIdsArgs): Promise<void>;
-  async removeNotifications(args: RemoveNotificationsByInstancesArgs): Promise<Notification[]>;
-  async removeNotifications(args: RemoveNotificationsArgs): Promise<Notification[] | void> {
-    return this.callWithSession(async () =>
-      removeNotifications({
-        apiService: this._apiService,
-        emitter: this._emitter,
-        args,
-      })
-    );
-  }
-
-  async removeAllNotifications(args: RemoveAllNotificationsArgs): Promise<void> {
+  async archiveAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
     return this.callWithSession(async () => {
       try {
-        const { feedIdentifier } = args;
-        this._emitter.emit('feeds.remove_all_notifications.pending', { args });
+        this._emitter.emit('feeds.archive_all.pending', { args: { tags } });
 
-        await this._apiService.removeAllMessages(feedIdentifier);
+        await this._inboxService.archiveAll({ tags });
 
-        this._emitter.emit('feeds.remove_all_notifications.success', { args, result: undefined });
+        this._emitter.emit('feeds.archive_all.success', { args: { tags }, result: undefined });
       } catch (error) {
-        this._emitter.emit('feeds.remove_all_notifications.error', { args, error });
+        this._emitter.emit('feeds.archive_all.error', { args: { tags }, error });
+        throw error;
+      }
+    });
+  }
+
+  async archiveAllRead({ tags }: { tags?: NotificationFilter['tags'] } = {}): Promise<void> {
+    return this.callWithSession(async () => {
+      try {
+        this._emitter.emit('feeds.archive_all_read.pending', { args: { tags } });
+
+        await this._inboxService.archiveAllRead({ tags });
+
+        this._emitter.emit('feeds.archive_all_read.success', { args: { tags }, result: undefined });
+      } catch (error) {
+        this._emitter.emit('feeds.archive_all_read.error', { args: { tags }, error });
         throw error;
       }
     });

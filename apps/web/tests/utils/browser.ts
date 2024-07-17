@@ -11,10 +11,23 @@ export async function initializeSession(page: Page, settings: ISessionOptions = 
 
   const session = await getSession(settings);
 
-  await page.addInitScript((sess) => {
-    localStorage.setItem('auth_token', sess.token);
-    localStorage.setItem('novu_last_environment_id', sess.environment._id);
+  /*
+   * Why is this necessary?
+   *
+   * Most Playwright tests, create a sessions using some utility functions. The session
+   * is injected in the test, but also needs to be injected in the browser storage, so that
+   * the app can work as expected. Currently, the apps shares token and environment information
+   * between React hooks and the api.client.ts via the localStorage. This needs to be revised
+   * in favor of an in-memory approach.
+   */
+  await page.addInitScript((currentSession) => {
+    window.addEventListener('DOMContentLoaded', () => {
+      localStorage.setItem('auth_token', currentSession.token);
+      localStorage.setItem('novu_last_environment_id', currentSession.environment._id);
+    });
   }, session);
+
+  // TODO: Remove the first navigation from this function and move it per test to have more control per test
   await page.goto('/');
 
   return { session };
