@@ -56,8 +56,6 @@ export function QuestionnaireForm() {
         startVercelSetup();
 
         return;
-      } else {
-        navigate(ROUTES.DASHBOARD_ONBOARDING);
       }
     }
   }, [currentOrganization, isFromVercel, startVercelSetup, navigate]);
@@ -93,6 +91,7 @@ export function QuestionnaireForm() {
       await createOrganization({ ...data });
     }
 
+    await refetchEnvironments();
     setLoading(false);
     if (isFromVercel) {
       startVercelSetup();
