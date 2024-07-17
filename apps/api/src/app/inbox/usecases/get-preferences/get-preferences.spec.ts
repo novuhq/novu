@@ -11,8 +11,8 @@ import { GetPreferences } from './get-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
 const mockedWorkflowPreference: any = {
-  level: PreferenceLevelEnum.TEMPLATE,
-  preferences: {
+  template: {},
+  preference: {
     enabled: true,
     channels: {
       email: true,
@@ -32,7 +32,6 @@ const mockedWorkflowPreference: any = {
 };
 
 const mockedGlobalPreferences: any = {
-  level: PreferenceLevelEnum.GLOBAL,
   preference: {
     enabled: true,
     channels: {
@@ -45,8 +44,8 @@ const mockedGlobalPreferences: any = {
   },
 };
 const mockedPreferencesResponse: any = [
-  { level: mockedGlobalPreferences.level, preferences: mockedGlobalPreferences.preference },
-  mockedWorkflowPreference,
+  { level: PreferenceLevelEnum.GLOBAL, preferences: mockedGlobalPreferences.preference },
+  { level: PreferenceLevelEnum.TEMPLATE, preferences: mockedWorkflowPreference.preference },
 ];
 
 const mockedWorkflow: any = [{}];
