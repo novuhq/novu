@@ -3,7 +3,7 @@ import { token } from '../../styled-system/tokens';
 import { hstack } from '../../styled-system/patterns';
 import { Title } from '../components';
 import { IconExpandLess, IconExpandMore } from '../icons';
-import { CorePropsWithChildren } from '../types';
+import { CoreProps, CorePropsWithChildren } from '../types';
 import { cva, cx } from '../../styled-system/css';
 
 export const FormGroupTitle: FC<CorePropsWithChildren> = ({ children, ...titleProps }) => {
@@ -14,17 +14,20 @@ export const FormGroupTitle: FC<CorePropsWithChildren> = ({ children, ...titlePr
   );
 };
 
-type SectionTitleToggleProps = CorePropsWithChildren &
-  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
+type SectionTitleToggleProps = CoreProps &
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'children' | 'title'> & {
     onToggle: () => void;
     isExpanded: boolean;
+    sectionDepth: number;
+    sectionTitle?: React.ReactNode;
   };
 
 const toggleButtonRecipe = cva({
   base: {
     gap: 'margins.icons.Icon20-txt',
-    cursor: 'pointer',
-    _hover: { opacity: 'hover' },
+
+    '&:not(:disabled)': { cursor: 'pointer' },
+    '&:hover:not(:disabled)': { opacity: 'hover' },
   },
   variants: {
     isExpanded: {
@@ -34,20 +37,43 @@ const toggleButtonRecipe = cva({
   },
 });
 
-export const SectionTitleToggle: FC<SectionTitleToggleProps> = ({ children, onToggle, isExpanded, ...buttonProps }) => {
+export const SectionTitleToggle: FC<SectionTitleToggleProps> = ({
+  onToggle,
+  isExpanded,
+  sectionDepth,
+  sectionTitle,
+  ...buttonProps
+}) => {
   const handleToggle: MouseEventHandler<HTMLButtonElement> = (event) => {
     event.preventDefault();
     onToggle();
   };
 
+  const shouldShowToggle = sectionDepth > 0;
+
+  if (!sectionTitle && !shouldShowToggle) {
+    return null;
+  }
+
   return (
-    <button onClick={handleToggle} className={cx(hstack(), toggleButtonRecipe({ isExpanded }))} {...buttonProps}>
-      {isExpanded ? (
-        <IconExpandLess title="expand-less-section-icon" color={token('colors.typography.text.main')} />
+    <button
+      onClick={handleToggle}
+      disabled={!shouldShowToggle}
+      className={cx(hstack(), toggleButtonRecipe({ isExpanded: isExpanded || !shouldShowToggle }))}
+      {...buttonProps}
+    >
+      {!shouldShowToggle ? (
+        sectionTitle
       ) : (
-        <IconExpandMore title="expand-more-section-icon" />
+        <>
+          {isExpanded ? (
+            <IconExpandLess title="expand-less-section-icon" color={token('colors.typography.text.main')} />
+          ) : (
+            <IconExpandMore title="expand-more-section-icon" />
+          )}
+          {sectionTitle}
+        </>
       )}
-      {children}
     </button>
   );
 };

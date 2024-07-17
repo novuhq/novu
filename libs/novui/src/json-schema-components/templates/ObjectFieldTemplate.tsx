@@ -8,16 +8,21 @@ import { useExpandToggle } from '../useExpandToggle';
 export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const [isExpanded, toggleExpanded] = useExpandToggle();
 
-  const depthVariant = getVariantFromDepth(calculateSectionDepth({ sectionId: props.idSchema.$id }));
+  const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });
+  const depthVariant = getVariantFromDepth(sectionDepth);
+
   const sectionClassNames = jsonSchemaFormSection({
     depth: depthVariant,
   });
 
   return (
     <Box className={sectionClassNames.sectionRoot}>
-      <SectionTitleToggle onToggle={toggleExpanded} isExpanded={isExpanded}>
-        <FormGroupTitle>{props.title}</FormGroupTitle>
-      </SectionTitleToggle>
+      <SectionTitleToggle
+        onToggle={toggleExpanded}
+        isExpanded={isExpanded}
+        sectionDepth={sectionDepth}
+        sectionTitle={props.title ? <FormGroupTitle>{props.title}</FormGroupTitle> : undefined}
+      ></SectionTitleToggle>
       {isExpanded ? (
         <>
           {props.properties.map((element) => (

@@ -24,23 +24,32 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
   const ArrayFieldItemTemplate = getTemplate('ArrayFieldItemTemplate', registry, uiOptions);
 
-  const depthVariant = getVariantFromDepth(calculateSectionDepth({ sectionId: props.idSchema.$id }));
+  const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });
+  const depthVariant = getVariantFromDepth(sectionDepth);
+
   const sectionClassNames = jsonSchemaFormSection({
     depth: depthVariant,
   });
 
   return (
     <Box className={sectionClassNames.sectionRoot}>
-      <SectionTitleToggle onToggle={toggleExpanded} isExpanded={isExpanded}>
-        <ArrayFieldTitleTemplate
-          idSchema={idSchema}
-          title={uiOptions.title || title}
-          schema={schema}
-          uiSchema={uiSchema}
-          required={required}
-          registry={registry}
-        />
-      </SectionTitleToggle>
+      <SectionTitleToggle
+        onToggle={toggleExpanded}
+        isExpanded={isExpanded}
+        sectionDepth={sectionDepth}
+        sectionTitle={
+          uiOptions.title || title ? (
+            <ArrayFieldTitleTemplate
+              idSchema={idSchema}
+              title={uiOptions.title || title}
+              schema={schema}
+              uiSchema={uiSchema}
+              required={required}
+              registry={registry}
+            />
+          ) : undefined
+        }
+      />
       {isExpanded ? (
         <>
           {items.map(({ key, ...itemProps }) => {

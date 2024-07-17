@@ -178,7 +178,6 @@ MatchDesigns.args = {
 
 const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
   type: 'array',
-  title: 'Contacts',
   minItems: 2,
   items: {
     type: 'array',
