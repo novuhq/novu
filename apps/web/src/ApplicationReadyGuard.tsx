@@ -8,7 +8,7 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   const { isLoading: isLoadingAuth, inPublicRoute } = useAuth();
   const { isLoading: isLoadingEnvironment } = useEnvironment();
 
-  const isLoading = isLoadingAuth || (!isStudioRoute(location.pathname) && isLoadingEnvironment);
+  const isLoading = isStudioRoute(location.pathname) ? isLoadingAuth : isLoadingAuth && isLoadingEnvironment;
 
   // Clean up the skeleton loader when the app is ready
   useLayoutEffect(() => {

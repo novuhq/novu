@@ -69,7 +69,7 @@ function selectEnvironment(environments: IEnvironment[] | undefined | null, sele
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { currentOrganization, inPrivateRoute } = useAuth();
+  const { currentOrganization } = useAuth();
   const {
     data: environments,
     isLoading,
@@ -166,10 +166,6 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     isLoading,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
-
-  if (inPrivateRoute && !currentEnvironment) {
-    return null;
-  }
 
   return <EnvironmentCtx.Provider value={{ value }}>{children}</EnvironmentCtx.Provider>;
 }

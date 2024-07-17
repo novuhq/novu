@@ -76,10 +76,10 @@ Error.args = {
 const FormTemplate: StoryFn<typeof Input> = ({ ...args }) => {
   return (
     <form noValidate onSubmit={(event) => event.preventDefault()}>
-      <Input {...args} />
-      <Input {...args} />
-      <Input {...args} placeholder="This won't have an error" error={undefined} />
-      <Input {...args} />
+      <Input variant="preventLayoutShift" {...args} />
+      <Input variant="preventLayoutShift" {...args} />
+      <Input variant="preventLayoutShift" {...args} placeholder="This won't have an error" error={undefined} />
+      <Input variant="preventLayoutShift" {...args} />
       <Button type="submit">Submit</Button>
     </form>
   );
