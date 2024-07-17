@@ -13,7 +13,7 @@ import {
   BUTTON_VARIANT_TO_EXTERNAL_BUTTON_VARIANT,
   DEFAULT_SIZE,
   DEFAULT_VARIANT,
-} from './Button.shared';
+} from './Button.const';
 
 export interface ButtonCoreProps
   extends CorePropsWithChildren,
