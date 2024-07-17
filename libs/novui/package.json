@@ -129,9 +129,9 @@
     }
   },
   "dependencies": {
-    "@mantine/code-highlight": "^7.10.2",
-    "@mantine/core": "^7.10.0",
-    "@mantine/hooks": "^7.10.0",
+    "@mantine/code-highlight": "^7.11.2",
+    "@mantine/core": "^7.11.2",
+    "@mantine/hooks": "^7.11.2",
     "@mantine/tiptap": "^7.11.2",
     "@rjsf/core": "^5.17.1",
     "@rjsf/utils": "^5.17.1",
