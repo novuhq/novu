@@ -5,8 +5,7 @@ import { css } from '../styled-system/css';
 import { MantineThemeProvider } from '@mantine/core';
 import { NovuiProvider } from '../src/components';
 
-import '@mantine/core/styles.css';
-// Bring in the Panda-generated stylesheets
+// Bring in the Panda-generated stylesheets + CSS Layers
 import '../src/index.css';
 
 export const parameters: Parameters = {
