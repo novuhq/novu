@@ -3,8 +3,8 @@ import {
   AnalyticsService,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
-  GetSubscriberWorkflowPreference,
-  GetSubscriberWorkflowPreferenceCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
 } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { ISubscriberPreferences, PreferenceLevelEnum } from '@novu/shared';
@@ -16,7 +16,7 @@ export class GetPreferences {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private getSubscriberWorkflowPreferenceUsecase: GetSubscriberWorkflowPreference,
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private analyticsService: AnalyticsService
   ) {}
@@ -51,18 +51,23 @@ export class GetPreferences {
     });
 
     const workflowPreferences = await Promise.all(
-      workflowList.map(
-        async (workflow) =>
-          await this.getSubscriberWorkflowPreferenceUsecase.execute(
-            GetSubscriberWorkflowPreferenceCommand.create({
-              organizationId: command.organizationId,
-              subscriberId: command.subscriberId,
-              environmentId: command.environmentId,
-              workflow,
-              subscriber,
-            })
-          )
-      )
+      workflowList.map(async (workflow) => {
+        const workflowPreference = await this.getSubscriberTemplatePreferenceUsecase.execute(
+          GetSubscriberTemplatePreferenceCommand.create({
+            organizationId: command.organizationId,
+            subscriberId: command.subscriberId,
+            environmentId: command.environmentId,
+            template: workflow,
+            subscriber,
+          })
+        );
+
+        return {
+          preferences: workflowPreference.preference,
+          level: PreferenceLevelEnum.TEMPLATE,
+          workflow: workflowPreference.template,
+        };
+      })
     );
 
     return [updatedGlobalPreference, ...workflowPreferences];
