@@ -20,7 +20,7 @@ import {
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useEnvironment, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
@@ -37,6 +37,7 @@ export function QuestionnaireForm() {
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
   const { login, currentOrganization } = useAuth();
+  const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
@@ -72,6 +73,7 @@ export function QuestionnaireForm() {
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
+    await refetchEnvironments();
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',
