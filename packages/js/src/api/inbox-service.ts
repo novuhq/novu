@@ -1,10 +1,10 @@
 import { ApiOptions, HttpClient } from '@novu/client';
-import type { Session } from '../types';
-import type { ButtonTypeEnum, InboxNotification, NotificationFilter } from './types';
+import type { ActionTypeEnum, InboxNotification, NotificationFilter, Session } from '../types';
 
 export type InboxServiceOptions = ApiOptions;
 
 const INBOX_ROUTE = '/inbox';
+const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 
 export class InboxService {
   #httpClient: HttpClient;
@@ -32,7 +32,7 @@ export class InboxService {
     return response;
   }
 
-  async fetchNotifications({
+  fetchNotifications({
     after,
     archived,
     limit = 10,
@@ -40,7 +40,7 @@ export class InboxService {
     read,
     tags,
   }: {
-    tags?: InboxNotification['tags'];
+    tags?: string[];
     read?: boolean;
     archived?: boolean;
     limit?: number;
@@ -64,25 +64,10 @@ export class InboxService {
       queryParams.append('archived', `${archived}`);
     }
 
-    const data = await this.#httpClient.get(`${INBOX_ROUTE}/notifications?${queryParams.toString()}`);
-
-    // TODO: fix this
-    return {
-      data,
-      hasMore: false,
-      filter: {},
-    };
+    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}?${queryParams.toString()}`);
   }
 
-  async count({
-    tags,
-    read,
-    archived,
-  }: {
-    tags?: InboxNotification['tags'];
-    read?: boolean;
-    archived?: boolean;
-  }): Promise<{
+  count({ tags, read, archived }: { tags?: string[]; read?: boolean; archived?: boolean }): Promise<{
     data: {
       count: number;
     };
@@ -100,64 +85,58 @@ export class InboxService {
       queryParams.append('archived', `${archived}`);
     }
 
-    return await this.#httpClient.get(`${INBOX_ROUTE}/notifications/count?${queryParams.toString()}`);
+    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}/count?${queryParams.toString()}`);
   }
 
-  async read(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/read`);
-
-    return response;
+  read(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/read`);
   }
 
-  async unread(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unread`);
-
-    return response;
+  unread(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unread`);
   }
 
-  async archived(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/archive`);
-
-    return response;
+  archive(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/archive`);
   }
 
-  async unarchived(notificationId: string): Promise<InboxNotification> {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/unarchive`);
-
-    return response;
+  unarchive(notificationId: string): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/unarchive`);
   }
 
-  async readAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/read`, { tags });
-
-    return response;
+  readAll({ tags }: { tags?: string[] }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read`, { tags });
   }
 
-  async archivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/archive`, { tags });
-
-    return response;
+  archiveAll({ tags }: { tags?: string[] }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive`, { tags });
   }
 
-  async readArchivedAll({ tags }: { tags?: InboxNotification['tags'] }): Promise<void> {
-    const response = await this.#httpClient.post(`${INBOX_ROUTE}/notifications/read-archive`, { tags });
-
-    return response;
+  archiveAllRead({ tags }: { tags?: string[] }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, { tags });
   }
 
-  async completeAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/complete`, {
+  completeAction({
+    actionType,
+    notificationId,
+  }: {
+    notificationId: string;
+    actionType: ActionTypeEnum;
+  }): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/complete`, {
       actionType,
     });
-
-    return response;
   }
 
-  async revertAction({ actionType, notificationId }: { notificationId: string; actionType: ButtonTypeEnum }) {
-    const response = await this.#httpClient.patch(`${INBOX_ROUTE}/notifications/${notificationId}/revert`, {
+  revertAction({
+    actionType,
+    notificationId,
+  }: {
+    notificationId: string;
+    actionType: ActionTypeEnum;
+  }): Promise<InboxNotification> {
+    return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/revert`, {
       actionType,
     });
-
-    return response;
   }
 }

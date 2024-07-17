@@ -1,4 +1,4 @@
-import { ActorTypeEnum, ChannelTypeEnum, ButtonTypeEnum } from '@novu/shared';
+import { ActorTypeEnum, ChannelTypeEnum } from '@novu/shared';
 
 type Avatar = {
   type: ActorTypeEnum;
@@ -14,7 +14,6 @@ export type Subscriber = {
 };
 
 type Action = {
-  type: ButtonTypeEnum;
   label: string;
   url?: string;
   isCompleted: boolean;
@@ -25,8 +24,8 @@ export type InboxNotification = {
   subject?: string;
   body: string;
   to: Subscriber;
-  read?: boolean;
-  archived?: boolean;
+  isRead: boolean;
+  isArchived: boolean;
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
