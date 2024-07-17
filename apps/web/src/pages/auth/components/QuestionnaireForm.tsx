@@ -92,6 +92,7 @@ export function QuestionnaireForm() {
       await createOrganization({ ...data });
     }
 
+    await refetchEnvironments();
     setLoading(false);
     if (isFromVercel) {
       startVercelSetup();
