@@ -58,7 +58,7 @@ export function QuestionnaireForm() {
         return;
       }
     }
-  }, [currentOrganization, isFromVercel, startVercelSetup, navigate]);
+  }, [currentOrganization, isFromVercel, startVercelSetup]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
