@@ -50,6 +50,7 @@ describe('Notifications List', function () {
           count: 5,
           organizationId: session.organization._id,
           templateId: session.templates[0]._id,
+          environmentId: session.environment._id,
         });
 
         cy.wait(1000);
@@ -81,6 +82,7 @@ describe('Notifications List', function () {
       count: 3,
       organizationId: this.session.organization._id,
       templateId: this.session.templates[0]._id,
+      environmentId: this.session.environment._id,
     });
 
     cy.wait('@getNotificationsFirstPage');
@@ -97,6 +99,7 @@ describe('Notifications List', function () {
       count: 1,
       organizationId: this.session.organization._id,
       templateId: this.session.templates[0]._id,
+      environmentId: this.session.environment._id,
     });
 
     cy.wait(['@getNotificationsFirstPage', '@unseenCountRequest']);
@@ -115,6 +118,7 @@ describe('Notifications List', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 20,
+      environmentId: this.session.environment._id,
     });
     cy.intercept('**/notifications/feed?page=0').as('firstPage');
     cy.intercept('**/notifications/feed?page=1').as('secondPage');
@@ -159,6 +163,7 @@ describe('Notifications List', function () {
       count: 100,
       organizationId: this.session.organization._id,
       templateId: this.session.templates[0]._id,
+      environmentId: this.session.environment._id,
     });
 
     cy.wait('@unseenCountRequest').then(({ request, response }) => {
@@ -181,6 +186,7 @@ describe('Notifications List', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 21,
+      environmentId: this.session.environment._id,
     });
 
     cy.getByTestId('notification-list-item').should('have.length', 10);

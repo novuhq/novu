@@ -6,14 +6,13 @@ import {
   Appearance,
   AppearanceProvider,
   FocusManagerProvider,
-  InboxStatusProvider,
+  InboxNotificationStatusProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { Bell } from './Bell';
+import { Bell, Root } from './elements';
 import { Inbox } from './Inbox';
-import { Root } from './Root';
 
 const NovuComponents = {
   Inbox,
@@ -65,13 +64,13 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxStatusProvider>
+            <InboxNotificationStatusProvider>
               {[...props.nodes].map(([node, component]) => (
                 <Portal mount={node}>
                   <Root>{NovuComponents[component.name](component.props || {})}</Root>
                 </Portal>
               ))}
-            </InboxStatusProvider>
+            </InboxNotificationStatusProvider>
           </FocusManagerProvider>
         </AppearanceProvider>
       </LocalizationProvider>

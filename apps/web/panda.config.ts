@@ -1,5 +1,5 @@
 import { defineConfig } from '@pandacss/dev';
-import { novuPandaPreset } from '@novu/novui';
+import { GLOBAL_CSS, novuPandaPreset } from '@novu/novui';
 
 const STYLED_SYSTEM_PATH_BASE = './node_modules/@novu/novui/';
 
@@ -15,11 +15,7 @@ export default defineConfig({
    *
    * Per Panda docs, use the above approach if app code lives in an internal monorepo
    */
-  include: [
-    './src/**/*.{js,jsx,ts,tsx}',
-    `${STYLED_SYSTEM_PATH_BASE}/dist/**/*.{js,jsx}`,
-    // '../../libs/novui/src/**/*.{js,jsx,ts,tsx}',
-  ],
+  include: ['./src/**/*.{js,jsx,ts,tsx}', `${STYLED_SYSTEM_PATH_BASE}/dist/**/*.{js,jsx}`],
 
   // Files to exclude
   exclude: ['**/*.spec.{js,jsx,ts,tsx}', '**/*/styled-system'],
@@ -91,10 +87,11 @@ export default defineConfig({
 
   outExtension: 'js',
 
-  // TODO: have to confirm this with the panda maintainer
   outdir: `${STYLED_SYSTEM_PATH_BASE}/styled-system`,
 
   importMap: '@novu/novui',
+
+  globalCss: GLOBAL_CSS,
 
   // Enables JSX util generation!
   jsxFramework: 'react',

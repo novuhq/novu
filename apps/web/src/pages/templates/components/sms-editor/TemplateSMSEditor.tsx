@@ -26,7 +26,7 @@ const templateFields = ['content'];
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvironment({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({ bridge: template?.bridge });
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);

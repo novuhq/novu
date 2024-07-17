@@ -62,9 +62,10 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('initializeSession', function (settings = {} as IInitializeSessionSetting, templateOverride?) {
-  return cy.initializeOrganization({}, templateOverride).then(function (session: any) {
+  return cy.initializeOrganization({}, templateOverride).then(function (session: UserSession) {
     cy.log('Session created');
     cy.log(`Organization id: ${session?.organization?._id || undefined}`);
+    cy.log(`Environment id: ${session?.environment?._id || undefined}`);
     cy.log(`App id: ${session?.environment?.identifier || undefined}`);
     cy.log(`Widget initialized: ${session?.subscriberId || undefined}`);
 

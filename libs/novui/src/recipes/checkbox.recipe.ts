@@ -26,23 +26,23 @@ export const CHECKBOX_RECIPE = defineSlotRecipe({
       _hoverNotDisabled: {
         opacity: 'hover',
         '& input, & label': {
-          cursor: 'pointer !important',
+          cursor: 'pointer',
         },
       },
     },
     icon: {
-      color: 'button.icon.filled !important',
+      color: 'button.icon.filled',
     },
     input: {
       border: 'solid',
-      borderColor: 'input.border !important',
-      borderRadius: '50 !important',
-      background: 'transparent !important',
+      borderColor: 'input.border',
+      borderRadius: '50',
+      background: 'transparent',
 
       _checked: {
         ...colorPaletteGradientHorizontal,
         color: 'typography.text.main',
-        border: 'transparent !important',
+        border: 'transparent',
       },
       _disabled: {
         opacity: 'disabled',
@@ -50,7 +50,7 @@ export const CHECKBOX_RECIPE = defineSlotRecipe({
     },
     label: {
       ...INPUT_RECIPE.base.label,
-      paddingLeft: '50 !important',
+      paddingLeft: '50',
       _disabled: {
         opacity: 'disabled',
       },

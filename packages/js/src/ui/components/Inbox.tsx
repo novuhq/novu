@@ -1,9 +1,8 @@
 import { createSignal, JSX, Match, Switch } from 'solid-js';
 import { useLocalization } from '../context';
-import { Bell } from './Bell';
-import { Footer } from './Footer';
-import { Header, SettingsHeader } from './Header';
-import { Popover } from './Popover';
+import { useStyle } from '../helpers';
+import { Bell, Footer, Header, SettingsHeader } from './elements';
+import { Button, Popover } from './primitives';
 import { Settings } from './Settings';
 
 type InboxProps = {
@@ -14,12 +13,17 @@ type InboxProps = {
 export const Inbox = (props: InboxProps) => {
   const [currentScreen, setCurrentScreen] = createSignal<'inbox' | 'settings'>('inbox');
   const { t } = useLocalization();
+  const style = useStyle();
 
   return (
     <Popover.Root open={props?.open}>
-      <Popover.Trigger appearanceKey="inbox__popoverTrigger">
-        <Bell>{props.renderBell}</Bell>
-      </Popover.Trigger>
+      <Popover.Trigger
+        asChild={(triggerProps) => (
+          <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>
+            <Bell>{props.renderBell}</Bell>
+          </Button>
+        )}
+      />
       <Popover.Content appearanceKey="inbox__popoverContent">
         <Switch>
           <Match when={currentScreen() === 'inbox'}>

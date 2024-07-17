@@ -1,31 +1,33 @@
 import { IconOutlineVisibility, IconOutlineVisibilityOff, IconRefresh, IconSize, Input } from '@novu/design-system';
-import { FC } from 'react';
 import { IconButton, ClipboardIconButton } from '../../../components/';
 import { Flex } from '@novu/novui/jsx';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegenerationModal';
-import { useSettingsEnvRedirect } from '../useSettingsEnvRedirect';
+import { useEnvironment } from '../../../hooks/useEnvironment';
 import { useApiKeysPage } from './useApiKeysPage';
-
-type ApiKeysRendererProps = ReturnType<typeof useApiKeysPage>;
 
 const INPUT_ICON_SIZE: IconSize = '16';
 
-const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
-  secretKey,
-  environmentIdentifier,
-  environmentId,
-  isSecretKeyMasked,
-  toggleSecretKeyVisibility,
-  clipboardSecretKey,
-  clipboardEnvironmentIdentifier,
-  clipboardEnvironmentId,
-  regenerationModalProps,
-}) => {
+export const ApiKeysPage = () => {
+  const { environment } = useEnvironment();
+  const {
+    secretKey,
+    isSecretKeyMasked,
+    toggleSecretKeyVisibility,
+    clipboardSecretKey,
+    clipboardEnvironmentIdentifier,
+    clipboardEnvironmentId,
+    regenerationModalProps,
+  } = useApiKeysPage();
+
+  if (!environment) {
+    return null;
+  }
+
   const { openModal, ...modalComponentProps } = regenerationModalProps;
 
   return (
-    <>
+    <SettingsPageContainer title="API keys">
       <Flex direction={'column'} gap={'200'} maxW="37.5rem">
         <Input
           readOnly
@@ -71,12 +73,12 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
           rightSection={
             <ClipboardIconButton
               isCopied={clipboardEnvironmentIdentifier.copied}
-              handleCopy={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}
+              handleCopy={() => clipboardEnvironmentIdentifier.copy(environment.identifier)}
               testId={'application-identifier-copy'}
               size={INPUT_ICON_SIZE}
             />
           }
-          value={environmentIdentifier}
+          value={environment.identifier}
           data-test-id="application-identifier"
         />
         <Input
@@ -85,29 +87,16 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
           rightSection={
             <ClipboardIconButton
               isCopied={clipboardEnvironmentId.copied}
-              handleCopy={() => clipboardEnvironmentId.copy(environmentId)}
+              handleCopy={() => clipboardEnvironmentId.copy(environment._id)}
               testId={'environment-id-copy'}
               size={INPUT_ICON_SIZE}
             />
           }
-          value={environmentId}
+          value={environment._id}
           data-test-id="environment-id"
         />
       </Flex>
       <ConfirmRegenerationModal {...modalComponentProps} />
-    </>
-  );
-};
-
-export const ApiKeysPage = () => {
-  // redirect user if an invalid env name is provided in the URL
-  useSettingsEnvRedirect();
-
-  const props = useApiKeysPage();
-
-  return (
-    <SettingsPageContainer title={`API keys (${props.pageEnv})`}>
-      <ApiKeysRenderer {...props} />
     </SettingsPageContainer>
   );
 };

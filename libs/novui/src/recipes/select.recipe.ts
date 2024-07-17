@@ -27,25 +27,25 @@ export const SELECT_RECIPE = defineSlotRecipe({
   base: {
     ...INPUT_RECIPE.base,
     dropdown: {
-      bg: 'surface.popover !important',
-      borderRadius: 'input !important',
+      bg: 'surface.popover',
+      borderRadius: 'input',
       padding: '25',
       marginY: '25',
-      border: 'none !important',
-      boxShadow: 'medium !important',
+      border: 'none',
+      boxShadow: 'medium',
       color: 'typography.text.main',
     },
     option: {
-      padding: '50 !important',
+      padding: '50',
       marginY: '25',
-      borderRadius: '50 !important',
+      borderRadius: '50',
       color: 'typography.text.main',
       _hover: {
-        bg: 'select.option.surface.hover !important',
+        bg: 'select.option.surface.hover',
       },
       _selected: {
         fontWeight: 'strong',
-        bg: 'select.option.surface.selected !important',
+        bg: 'select.option.surface.selected',
       },
     },
   },

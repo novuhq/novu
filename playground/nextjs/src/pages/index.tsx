@@ -1,21 +1,22 @@
 import { Mounter } from '@/components/Mounter';
+import type { NovuUI, NovuUIOptions } from '@novu/js/ui';
 
 export default function Home() {
   return (
-    <div className="h-screen w-full bg-neutral-100">
+    <div className="h-screen w-full bg-white">
       <Mounter
         mount={(el) => {
-          const NovuUI = require('@novu/js/ui').NovuUI;
-          const ui = new NovuUI({
+          //require here as it won't work in SSR.
+          const { NovuUI } = require('@novu/js/ui');
+          // we could import above and have types here but `mount` can't be async, since the unmount method is
+          // returned and couldn't be used as a cleanup successfully.
+          const ui = new (NovuUI as new (options: NovuUIOptions) => NovuUI)({
             options: {
-              applicationIdentifier: 'applicationIdentifier',
-              subscriberId: 'subscriberId',
+              applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '',
+              subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '',
             },
-            appearance: {
-              variables: { colorPrimary: 'purple' },
-            },
-          });
-          console.log('mounting', ui);
+            appearance: {},
+          }) as NovuUI;
           ui.mountInbox(el);
 
           return () => {

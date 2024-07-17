@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SubscriberEntity, UserEntity, MemberEntity } from '@novu/dal';
+import { MemberEntity, SubscriberEntity, UserEntity } from '@novu/dal';
 import {
   AuthProviderEnum,
   SignUpOriginEnum,

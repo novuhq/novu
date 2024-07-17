@@ -27,7 +27,6 @@ const baseConfig: Options = {
   splitting: true,
   sourcemap: false,
   clean: true,
-  dts: true,
   esbuildPlugins: [
     //@ts-expect-error types
     inlineImportPlugin({
@@ -46,7 +45,6 @@ const baseConfig: Options = {
 const baseModuleConfig: Options = {
   ...baseConfig,
   treeshake: true,
-  dts: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
   entry: {
     index: './src/index.ts',
@@ -64,16 +62,16 @@ export default defineConfig((config: Options) => {
 
   const cjs: Options = {
     ...baseModuleConfig,
-    format: 'esm',
-    outDir: 'dist/esm',
-    tsconfig: 'tsconfig.json',
+    format: 'cjs',
+    outDir: 'dist/cjs',
+    tsconfig: 'tsconfig.cjs.json',
   };
 
   const esm: Options = {
     ...baseModuleConfig,
-    format: 'cjs',
-    outDir: 'dist/cjs',
-    tsconfig: 'tsconfig.cjs.json',
+    format: 'esm',
+    outDir: 'dist/esm',
+    tsconfig: 'tsconfig.json',
   };
 
   const umd: Options = {
@@ -98,5 +96,5 @@ export default defineConfig((config: Options) => {
     ],
   };
 
-  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs'), 'tsc --noEmit'])(umd, esm, cjs);
+  return runAfterLast(['pnpm run build:declarations', copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
 });
