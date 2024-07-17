@@ -21,9 +21,9 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => 
 
   return (
     <form onSubmit={onSubmit} className={css({ colorPalette })}>
-      <HStack justifyContent="space-between">
+      <HStack justifyContent="space-between" mb="50">
         <Title variant="subsection">Step controls</Title>
-        <Button type="submit" Icon={IconOutlineSave}>
+        <Button type="submit" size="sm" Icon={IconOutlineSave}>
           Save
         </Button>
       </HStack>
@@ -67,6 +67,29 @@ const schema: RJSFSchema = {
         location: {
           title: 'Location',
           $ref: '#/definitions/locations',
+        },
+        anotherObject: {
+          type: 'object',
+          title: 'Nested example',
+          properties: {
+            isResidential: {
+              type: 'boolean',
+              title: 'Is residential?',
+            },
+            addressType: {
+              type: 'string',
+              title: 'Address type',
+            },
+            doubleNestedArray: {
+              title: 'Double nested array',
+              description: 'An array nested twice',
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              minItems: 1,
+            },
+          },
         },
       },
       required: ['address'],
@@ -151,4 +174,33 @@ const MATCH_DESIGNS_SCHEMA: RJSFSchema = {
 export const MatchDesigns = Template.bind({});
 MatchDesigns.args = {
   schema: MATCH_DESIGNS_SCHEMA,
+};
+
+const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
+  type: 'array',
+  minItems: 2,
+  items: {
+    type: 'array',
+    title: 'Phone numbers',
+    minItems: 2,
+    items: {
+      type: 'object',
+      title: 'Digits',
+      properties: {
+        strokes: {
+          title: 'Strokes',
+          type: 'array',
+          minItems: 2,
+          items: {
+            type: 'integer',
+          },
+        },
+      },
+    },
+  },
+};
+
+export const ArrayDesigns = Template.bind({});
+ArrayDesigns.args = {
+  schema: ARRAY_DESIGNS_SCHEMA,
 };
