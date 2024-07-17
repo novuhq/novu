@@ -1,13 +1,13 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
-import { PreferenceLevelEnum } from '@novu/shared';
-import { GetPreferences } from './get-preferences.usecase';
-import { MessageRepository, SubscriberRepository, NotificationTemplateRepository } from '@novu/dal';
 import {
   AnalyticsService,
   GetSubscriberGlobalPreference,
-  GetSubscriberWorkflowPreference,
+  GetSubscriberTemplatePreference,
 } from '@novu/application-generic';
+import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
+import { PreferenceLevelEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { GetPreferences } from './get-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
 const mockedWorkflowPreference: any = {
@@ -54,14 +54,14 @@ const mockedWorkflow: any = [{}];
 describe('GetPreferences', () => {
   let getPreferences: GetPreferences;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
-  let getSubscriberWorkflowMock: sinon.SinonStubbedInstance<GetSubscriberWorkflowPreference>;
+  let getSubscriberWorkflowMock: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let notificationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
-    getSubscriberWorkflowMock = sinon.createStubInstance(GetSubscriberWorkflowPreference);
+    getSubscriberWorkflowMock = sinon.createStubInstance(GetSubscriberTemplatePreference);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
