@@ -11,16 +11,17 @@ import CodeEditor from '../../../studio/components/workflows/step-editor/editor/
 import { RunExpressApp } from '../../../studio/components/workflows/step-editor/editor/RunExpressApp';
 import { useState } from 'react';
 import { BRIDGE_CODE } from '../../../studio/components/workflows/step-editor/editor/bridge-code.const';
+import { demoCode } from '../../../studio/components/workflows/step-editor/editor/files';
 
 export function OnboardingPage() {
   const track = useTelemetry();
   const { colorScheme } = useColorScheme();
-  const [code, setCode] = useState('{}');
+  const [code, setCode] = useState(demoCode);
 
   return (
     <div>
       <CodeEditor code={code} setCode={setCode} />
-      {/*<CodeEditor code={code} setCode={setCode} />*/}
+      <iframe></iframe>
       <RunExpressApp code={code} />
     </div>
   );
