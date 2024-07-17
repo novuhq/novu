@@ -33,9 +33,8 @@ import type {
   ValidationError,
   Workflow,
 } from './types';
-import { EMOJI, log } from './utils';
+import { EMOJI, log, sanitizeHtmlInObject } from './utils';
 import { transformSchema, validateData } from './validators';
-import { sanitizeHtmlInObject } from './utils/sanitize-html.utils';
 
 /**
  * We want to respond with a consistent string value for preview

@@ -47,6 +47,14 @@ export const sanitizeHtmlInObject = (object: Record<string, any>): Record<string
   return Object.keys(object).reduce((acc: Record<string, any>, key) => {
     const value = object[key];
 
+    if (typeof value === 'object') {
+      acc[key] = sanitizeHtmlInObject(value);
+    }
+
+    if (typeof value === 'string') {
+      acc[key] = sanitizeHTML(value);
+    }
+
     if (Array.isArray(value)) {
       acc[key] = value.map((item) => {
         if (typeof item === 'object') {
@@ -59,23 +67,7 @@ export const sanitizeHtmlInObject = (object: Record<string, any>): Record<string
 
         return item;
       });
-
-      return acc;
     }
-
-    if (typeof value === 'object') {
-      acc[key] = sanitizeHtmlInObject(value);
-
-      return acc;
-    }
-
-    if (typeof value === 'string') {
-      acc[key] = sanitizeHTML(value);
-
-      return acc;
-    }
-
-    acc[key] = value;
 
     return acc;
   }, {});
