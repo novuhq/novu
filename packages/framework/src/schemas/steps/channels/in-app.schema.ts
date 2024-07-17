@@ -1,38 +1,5 @@
 import { Schema } from '../../../types/schema.types';
 
-const avatarSchema = {
-  type: 'object',
-  properties: {
-    type: { type: 'string', enum: ['user', 'system', 'custom'] },
-  },
-  oneOf: [
-    {
-      properties: {
-        type: { const: 'user' },
-        url: { type: 'string', format: 'uri' },
-      },
-      required: ['type', 'url'],
-      additionalProperties: false,
-    },
-    {
-      properties: {
-        type: { const: 'custom' },
-        url: { type: 'string', format: 'uri' },
-      },
-      required: ['type', 'url'],
-      additionalProperties: false,
-    },
-    {
-      properties: {
-        type: { const: 'system' },
-        icon: { type: 'string' },
-      },
-      required: ['type', 'icon'],
-      additionalProperties: false,
-    },
-  ],
-} as const satisfies Schema;
-
 const actionSchema = {
   type: 'object',
   properties: {
@@ -43,25 +10,12 @@ const actionSchema = {
   additionalProperties: false,
 } as const satisfies Schema;
 
-const actorSchema = {
-  type: 'object',
-  properties: {
-    subscriberId: { type: 'string' },
-    firstName: { type: 'string' },
-    lastName: { type: 'string' },
-    avatar: { type: 'string', format: 'uri' },
-  },
-  required: ['subscriberId'],
-  additionalProperties: false,
-} as const satisfies Schema;
-
 const inAppOutputSchema = {
   type: 'object',
   properties: {
     subject: { type: 'string' },
     body: { type: 'string' },
-    actor: actorSchema,
-    avatar: avatarSchema,
+    avatar: { type: 'string', format: 'uri' },
     primaryAction: actionSchema,
     secondaryAction: actionSchema,
   },
