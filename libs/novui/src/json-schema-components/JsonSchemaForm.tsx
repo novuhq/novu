@@ -30,7 +30,9 @@ const UI_SCHEMA: UiSchema = {
 
 export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
   CoreProps &
-  Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'>;
+  Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'> & {
+    variables?: string[];
+  };
 
 /**
  * Specialized form editor for data passed as JSON.
@@ -59,6 +61,7 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
       widgets={WIDGETS}
       validator={validator}
       autoComplete={'false'}
+      formContext={formProps.variables}
       liveValidate
       templates={{
         ArrayFieldTitleTemplate,
