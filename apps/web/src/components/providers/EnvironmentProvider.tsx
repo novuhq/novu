@@ -69,15 +69,19 @@ function selectEnvironment(environments: IEnvironment[] | undefined | null, sele
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, isLoading: isLoadingAuth } = useAuth();
+  const [internalLoading, setInternalLoading] = useState(true);
   const {
     data: environments,
-    isLoading,
+    isLoading: isLoadingEnvironments,
     refetch: refetchEnvironments,
   } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, currentOrganization?._id], getEnvironments, {
     enabled: !!currentOrganization,
     retry: false,
     staleTime: Infinity,
+    onSettled: (data, error) => {
+      setInternalLoading(false);
+    },
   });
 
   const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(
@@ -163,7 +167,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     switchEnvironment,
     switchToDevelopmentEnvironment,
     switchToProductionEnvironment,
-    isLoading,
+    isLoading: isLoadingEnvironments || isLoadingAuth || internalLoading,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
 
