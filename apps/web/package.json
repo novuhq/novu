@@ -77,6 +77,7 @@
     "@types/jest": "^29.5.0",
     "@types/node": "^20.14.10",
     "@types/react-table": "^7.7.12",
+    "@webcontainer/api": "^1.1.5",
     "ace-builds": "^1.4.12",
     "antd": "^4.10.0",
     "autoprefixer": "^9.8.6",
