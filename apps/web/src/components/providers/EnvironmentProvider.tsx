@@ -1,12 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  useQuery,
-  useQueryClient,
-  type QueryObserverResult,
-  type RefetchOptions,
-  type RefetchQueryFilters,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 import { QueryKeys } from '../../api/query.keys';
 import { getEnvironments } from '../../api/environment';
@@ -32,13 +26,11 @@ export function clearEnvironmentId() {
 }
 
 type EnvironmentContextValue = {
-  currentEnvironment?: IEnvironment;
+  currentEnvironment?: IEnvironment | null;
   // @deprecated use currentEnvironment instead;
-  environment?: IEnvironment;
+  environment?: IEnvironment | null;
   environments?: IEnvironment[];
-  refetchEnvironments: <TPageData>(
-    options?: (RefetchOptions & RefetchQueryFilters<TPageData>) | undefined
-  ) => Promise<QueryObserverResult<IEnvironment[], unknown>>;
+  refetchEnvironments: () => Promise<void>;
   switchEnvironment: (params: Partial<{ environmentId: string; redirectUrl: string }>) => Promise<void>;
   switchToDevelopmentEnvironment: (redirectUrl?: string) => Promise<void>;
   switchToProductionEnvironment: (redirectUrl?: string) => Promise<void>;
@@ -48,11 +40,11 @@ type EnvironmentContextValue = {
 
 const [EnvironmentCtx, useEnvironmentCtx] = createContextAndHook<EnvironmentContextValue>('Environment Context');
 
-function selectEnvironment(environments: IEnvironment[] | undefined, selectedEnvironmentId?: string) {
-  let e: IEnvironment | undefined;
+function selectEnvironment(environments: IEnvironment[] | undefined | null, selectedEnvironmentId?: string) {
+  let e: IEnvironment | undefined | null = null;
 
   if (!environments) {
-    return;
+    return null;
   }
 
   // Find the environment based on the current user's last environment
@@ -77,7 +69,7 @@ function selectEnvironment(environments: IEnvironment[] | undefined, selectedEnv
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, inPrivateRoute } = useAuth();
   const {
     data: environments,
     isLoading,
@@ -88,12 +80,16 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     staleTime: Infinity,
   });
 
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | undefined>(
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(
     selectEnvironment(environments, getEnvironmentId())
   );
 
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
+      if (currentEnvironment?._id === environmentId) {
+        return;
+      }
+
       setCurrentEnvironment(selectEnvironment(environments, environmentId));
 
       /*
@@ -104,10 +100,10 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       await queryClient.invalidateQueries();
 
       if (redirectUrl) {
-        await navigate(redirectUrl);
+        navigate(redirectUrl);
       }
     },
-    [queryClient, navigate, setCurrentEnvironment, environments]
+    [queryClient, navigate, setCurrentEnvironment, currentEnvironment, environments]
   );
 
   const switchToProductionEnvironment = useCallback(
@@ -143,24 +139,37 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   );
 
   useEffect(() => {
-    (async () => {
-      if (environments) {
-        await switchEnvironment({ environmentId: getEnvironmentId() });
-      }
-    })();
-  }, [environments, switchEnvironment]);
+    if (environments) {
+      switchEnvironment({ environmentId: getEnvironmentId() });
+    }
+  }, [currentEnvironment, environments, switchEnvironment]);
+
+  const reloadEnvironments = async () => {
+    await refetchEnvironments();
+
+    /**
+     * TODO: remove this once the race condition after calling API
+     * request right after login() on same path is resolved
+     */
+    const envs = await getEnvironments();
+    selectEnvironment(envs);
+  };
 
   const value = {
     currentEnvironment,
     environment: currentEnvironment,
     environments,
-    refetchEnvironments,
+    refetchEnvironments: reloadEnvironments,
     switchEnvironment,
     switchToDevelopmentEnvironment,
     switchToProductionEnvironment,
     isLoading,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
+
+  if (inPrivateRoute && !currentEnvironment) {
+    return null;
+  }
 
   return <EnvironmentCtx.Provider value={{ value }}>{children}</EnvironmentCtx.Provider>;
 }

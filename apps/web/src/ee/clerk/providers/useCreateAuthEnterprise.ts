@@ -212,7 +212,7 @@ export function useCreateAuthEnterprise() {
   return {
     inPublicRoute,
     inPrivateRoute,
-    isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
+    isLoading: !(isUserLoaded && isOrganizationLoaded),
     currentUser: user,
     organizations: getOrganizations(),
     currentOrganization: organization,

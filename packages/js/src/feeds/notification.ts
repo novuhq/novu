@@ -1,67 +1,51 @@
-import type { ApiService } from '@novu/client';
 import { InboxService } from '../api';
 import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
-import { ChannelTypeEnum, InboxNotification, Subscriber } from '../api/types';
-
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
-import { Cta, NotificationActionStatus, NotificationButton, NotificationStatus, TODO } from '../types';
-import { ApiServiceSingleton } from '../utils/api-service-singleton';
-import { markActionAs, archive, markNotificationAs, read, unarchive, unread, remove } from './helpers';
+import { ActionTypeEnum, InboxNotification } from '../types';
+import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
 
-type NotificationLike = Pick<
-  Notification,
-  | 'id'
-  | 'feedIdentifier'
-  | 'createdAt'
-  | 'avatar'
-  | 'body'
-  | 'read'
-  | 'seen'
-  | 'deleted'
-  | 'cta'
-  | 'to'
-  | 'channelType'
-  | 'archived'
->;
-
-export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
+export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, InboxNotification {
   #emitter: NovuEventEmitter;
-  #apiService: ApiService;
   #inboxService: InboxService;
 
-  readonly id: string;
-  readonly feedIdentifier?: string | null;
-  readonly createdAt: string;
+  readonly id: InboxNotification['id'];
+  // readonly subject?: InboxNotification['subject'];
+  readonly body: InboxNotification['body'];
+  readonly to: InboxNotification['to'];
+  readonly isRead: InboxNotification['isRead'];
+  readonly isArchived: InboxNotification['isArchived'];
+  readonly createdAt: InboxNotification['createdAt'];
+  readonly readAt?: InboxNotification['readAt'];
+  readonly archivedAt?: InboxNotification['archivedAt'];
+  readonly actor?: InboxNotification['actor'];
   readonly avatar?: InboxNotification['avatar'];
-  readonly body: string;
-  readonly read: boolean;
-  readonly seen: boolean;
-  readonly deleted: boolean;
-  readonly cta: Cta;
-  readonly to: Subscriber;
-  readonly channelType: ChannelTypeEnum;
-  readonly archived: boolean;
+  readonly primaryAction?: InboxNotification['primaryAction'];
+  readonly secondaryAction?: InboxNotification['secondaryAction'];
+  readonly channelType: InboxNotification['channelType'];
+  readonly tags: InboxNotification['tags'];
 
-  constructor(notification: NotificationLike) {
+  constructor(notification: InboxNotification) {
     this.#emitter = NovuEventEmitter.getInstance();
-    this.#apiService = ApiServiceSingleton.getInstance();
     this.#inboxService = InboxServiceSingleton.getInstance();
 
     this.id = notification.id;
-    this.feedIdentifier = notification.feedIdentifier;
-    this.createdAt = notification.createdAt;
-    this.avatar = notification.avatar;
+    // this.subject = notification.subject;
     this.body = notification.body;
-    this.read = notification.read;
-    this.seen = notification.seen;
-    this.deleted = notification.deleted;
-    this.cta = notification.cta;
     this.to = notification.to;
+    this.isRead = notification.isRead;
+    this.isArchived = notification.isArchived;
+    this.createdAt = notification.createdAt;
+    this.readAt = notification.readAt;
+    this.archivedAt = notification.archivedAt;
+    this.actor = notification.actor;
+    this.avatar = notification.avatar;
+    this.primaryAction = notification.primaryAction;
+    this.secondaryAction = notification.secondaryAction;
     this.channelType = notification.channelType;
-    this.archived = notification.archived;
+    this.tags = notification.tags;
   }
 
-  markAsRead(): Promise<Notification> {
+  read(): Promise<Notification> {
     return read({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -71,7 +55,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     });
   }
 
-  markAsUnread(): Promise<Notification> {
+  unread(): Promise<Notification> {
     return unread({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -81,7 +65,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     });
   }
 
-  markAsArchived(): Promise<Notification> {
+  archive(): Promise<Notification> {
     return archive({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -91,7 +75,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     });
   }
 
-  markAsUnarchived(): Promise<Notification> {
+  unarchive(): Promise<Notification> {
     return unarchive({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -101,66 +85,64 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     });
   }
 
-  /**
-   * @deprecated
-   */
-  markAsSeen(): Promise<Notification> {
-    return markNotificationAs({
+  completePrimary(): Promise<Notification> {
+    if (!this.primaryAction) {
+      throw new Error('Primary action is not available');
+    }
+
+    return completeAction({
       emitter: this.#emitter,
-      apiService: this.#apiService,
+      apiService: this.#inboxService,
       args: {
         notification: this,
-        status: NotificationStatus.SEEN,
       },
+      actionType: ActionTypeEnum.PRIMARY,
     });
   }
 
-  /**
-   * @deprecated
-   */
-  markAsUnseen(): Promise<Notification> {
-    return markNotificationAs({
+  completeSecondary(): Promise<Notification> {
+    if (!this.primaryAction) {
+      throw new Error('Secondary action is not available');
+    }
+
+    return completeAction({
       emitter: this.#emitter,
-      apiService: this.#apiService,
+      apiService: this.#inboxService,
       args: {
         notification: this,
-        status: NotificationStatus.UNSEEN,
       },
+      actionType: ActionTypeEnum.SECONDARY,
     });
   }
 
-  markActionAsDone(button: NotificationButton = NotificationButton.PRIMARY): Promise<Notification> {
-    return markActionAs({
-      apiService: this.#apiService,
+  revertPrimary(): Promise<Notification> {
+    if (!this.primaryAction) {
+      throw new Error('Primary action is not available');
+    }
+
+    return revertAction({
       emitter: this.#emitter,
+      apiService: this.#inboxService,
       args: {
         notification: this,
-        button,
-        status: NotificationActionStatus.DONE,
       },
+      actionType: ActionTypeEnum.PRIMARY,
     });
   }
 
-  markActionAsPending(button: NotificationButton = NotificationButton.PRIMARY): Promise<Notification> {
-    return markActionAs({
-      apiService: this.#apiService,
-      emitter: this.#emitter,
-      args: {
-        notification: this,
-        button,
-        status: NotificationActionStatus.PENDING,
-      },
-    });
-  }
+  revertSecondary(): Promise<Notification> {
+    if (!this.primaryAction) {
+      throw new Error('Secondary action is not available');
+    }
 
-  remove(): Promise<Notification> {
-    return remove({
-      apiService: this.#apiService,
+    return revertAction({
       emitter: this.#emitter,
+      apiService: this.#inboxService,
       args: {
         notification: this,
       },
-    }) as TODO;
+      actionType: ActionTypeEnum.SECONDARY,
+    });
   }
 
   on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
