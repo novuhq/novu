@@ -35,7 +35,7 @@ const sanitizeOptions: IOptions = {
   parseStyleAttributes: false,
 };
 
-export const sanitizeHTML = (html: string) => {
+export const sanitizeHTML = (html: string): string => {
   if (!html) {
     return html;
   }
@@ -43,32 +43,22 @@ export const sanitizeHTML = (html: string) => {
   return sanitizeTypes(html, sanitizeOptions);
 };
 
-export const sanitizeHtmlInObject = (object: Record<string, any>): Record<string, any> => {
-  return Object.keys(object).reduce((acc: Record<string, any>, key) => {
+export const sanitizeHtmlInObject = <T extends Record<string, unknown>>(object: T): T => {
+  return Object.keys(object).reduce((acc, key: keyof T) => {
     const value = object[key];
 
-    if (typeof value === 'object') {
-      acc[key] = sanitizeHtmlInObject(value);
-    }
-
     if (typeof value === 'string') {
-      acc[key] = sanitizeHTML(value);
-    }
-
-    if (Array.isArray(value)) {
-      acc[key] = value.map((item) => {
-        if (typeof item === 'object') {
-          return sanitizeHtmlInObject(item);
-        }
-
-        if (typeof item === 'string') {
-          return sanitizeHTML(item);
-        }
-
-        return item;
-      });
+      acc[key] = sanitizeHTML(value) as T[keyof T];
+    } else if (Array.isArray(value)) {
+      acc[key] = value.map((item) =>
+        typeof item === 'string' ? sanitizeHTML(item) : typeof item === 'object' ? sanitizeHtmlInObject(item) : item
+      ) as T[keyof T];
+    } else if (typeof value === 'object' && value !== null) {
+      acc[key] = sanitizeHtmlInObject(value as Record<string, unknown>) as T[keyof T];
+    } else {
+      acc[key] = value;
     }
 
     return acc;
-  }, {});
+  }, {} as T);
 };
