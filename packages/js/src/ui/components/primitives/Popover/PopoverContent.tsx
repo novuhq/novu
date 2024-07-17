@@ -1,8 +1,8 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { AppearanceKey, useFocusManager } from '../../context';
-import { useStyle } from '../../helpers';
-import { Root } from '../Root';
+import { AppearanceKey, useFocusManager } from '../../../context';
+import { useStyle } from '../../../helpers';
+import { Root } from '../../elements';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
@@ -24,25 +24,28 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   });
 
   return (
-    <Root>
-      <div
-        ref={setFloating}
-        //id is necessary here because this is a portal
-        class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
-        style={floatingStyles()}
-        data-open={open()}
-        {...rest}
-      />
-    </Root>
+    <div
+      ref={setFloating}
+      //id is necessary here because this is a portal
+      class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
+      style={floatingStyles()}
+      data-open={open()}
+      {...rest}
+    />
   );
 };
 
 type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
 export const PopoverContent = (props: PopoverContentProps) => {
-  const { open, onClose, floating } = usePopover();
+  const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
 
   const handleClickOutside = (e: MouseEvent) => {
+    // Don't count the trigger as outside click
+    if (reference()?.contains(e.target as Node)) {
+      return;
+    }
+
     if (active() !== floating() || floating()?.contains(e.target as Node)) {
       return;
     }

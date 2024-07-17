@@ -1,14 +1,19 @@
 import type { ApiService } from '@novu/client';
+import { InboxService } from '../api';
 
 import type { NovuEventEmitter } from '../event-emitter';
 import { NotificationActionStatus, NotificationButton, NotificationStatus, TODO } from '../types';
 import { Notification } from './notification';
 import {
+  ArchivedArgs,
   MarkNotificationActionAsArgs,
   MarkNotificationAsArgs,
   MarkNotificationsAsArgs,
+  ReadArgs,
   RemoveNotificationArgs,
   RemoveNotificationsArgs,
+  UnarchivedArgs,
+  UnreadArgs,
 } from './types';
 
 export const mapFromApiNotification = (apiNotification: TODO): Notification =>
@@ -22,6 +27,9 @@ export const mapFromApiNotification = (apiNotification: TODO): Notification =>
     seen: apiNotification.seen,
     deleted: apiNotification.deleted,
     cta: apiNotification.cta,
+    channelType: apiNotification.channelType,
+    to: apiNotification.to,
+    archived: apiNotification.archived,
   });
 
 const getOptimisticMarkAs = (status: NotificationStatus): Partial<Notification> => {
@@ -272,5 +280,144 @@ export const markNotificationsAs = async ({
       : undefined;
     emitter.emit('feeds.mark_notifications_as.error', { args, error, fallback: fallbackNotifications });
     throw error;
+  }
+};
+
+export const read = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: ReadArgs;
+}): Promise<Notification> => {
+  {
+    const { notificationId, optimisticValue } = getNotificationDetails(args, { read: true });
+
+    try {
+      emitter.emit('feeds.read.pending', {
+        args,
+        optimistic: optimisticValue,
+      });
+
+      const response = await apiService.read(notificationId);
+
+      const updatedNotification = new Notification(mapFromApiNotification(response));
+      emitter.emit('feeds.read.success', { args, result: updatedNotification });
+
+      return updatedNotification;
+    } catch (error) {
+      emitter.emit('feeds.read.error', { args, error });
+      throw error;
+    }
+  }
+};
+
+export const unread = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: UnreadArgs;
+}): Promise<Notification> => {
+  {
+    const { notificationId, optimisticValue } = getNotificationDetails(args, { read: false });
+    try {
+      emitter.emit('feeds.unread.pending', {
+        args,
+        optimistic: optimisticValue,
+      });
+
+      const response = await apiService.unread(notificationId);
+
+      const updatedNotification = new Notification(mapFromApiNotification(response));
+      emitter.emit('feeds.unread.success', { args, result: updatedNotification });
+
+      return updatedNotification;
+    } catch (error) {
+      emitter.emit('feeds.unread.error', { args, error });
+      throw error;
+    }
+  }
+};
+
+export const archive = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: ArchivedArgs;
+}): Promise<Notification> => {
+  {
+    const { notificationId, optimisticValue } = getNotificationDetails(args, { archived: true });
+
+    try {
+      emitter.emit('feeds.archived.pending', {
+        args,
+        optimistic: optimisticValue,
+      });
+
+      const response = await apiService.archived(notificationId);
+
+      const updatedNotification = new Notification(mapFromApiNotification(response));
+      emitter.emit('feeds.archived.success', { args, result: updatedNotification });
+
+      return updatedNotification;
+    } catch (error) {
+      emitter.emit('feeds.archived.error', { args, error });
+      throw error;
+    }
+  }
+};
+
+export const unarchive = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: UnarchivedArgs;
+}): Promise<Notification> => {
+  {
+    const { notificationId, optimisticValue } = getNotificationDetails(args, { archived: false });
+
+    try {
+      emitter.emit('feeds.unarchived.pending', {
+        args,
+        optimistic: optimisticValue,
+      });
+
+      const response = await apiService.unarchived(notificationId);
+
+      const updatedNotification = new Notification(mapFromApiNotification(response));
+      emitter.emit('feeds.unarchived.success', { args, result: updatedNotification });
+
+      return updatedNotification;
+    } catch (error) {
+      emitter.emit('feeds.unarchived.error', { args, error });
+      throw error;
+    }
+  }
+};
+
+const getNotificationDetails = (
+  args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs,
+  update: Partial<Notification>
+): { notificationId: string; optimisticValue?: Notification } => {
+  if ('notification' in args) {
+    return {
+      notificationId: args.notification.id,
+      optimisticValue: new Notification({ ...args.notification, ...update }),
+    };
+  } else {
+    return {
+      notificationId: args.notificationId,
+    };
   }
 };

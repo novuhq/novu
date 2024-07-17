@@ -1,5 +1,5 @@
 export * from './AppearanceContext';
 export * from './FocusManagerContext';
-export * from './InboxStatusContext';
+export * from './InboxNotificationStatusContext';
 export * from './LocalizationContext';
 export * from './NovuContext';

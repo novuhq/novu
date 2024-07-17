@@ -1,6 +1,5 @@
 {
   "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/**", "**/dist/**"],
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit",
     "source.fixAll.eslint": "explicit"

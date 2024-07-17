@@ -1,3 +1,4 @@
+import type { InboxNotification } from '../api/types';
 import type {
   FetchCountArgs,
   FetchFeedArgs,
@@ -9,11 +10,17 @@ import type {
   RemoveNotificationArgs,
   RemoveAllNotificationsArgs,
   RemoveNotificationsArgs,
+  FetchFeedResponse,
+  FetchCountResponse,
+  ReadArgs,
+  UnreadArgs,
+  ArchivedArgs,
+  UnarchivedArgs,
 } from '../feeds';
 import { Preference } from '../preferences/preference';
 import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
-import { PaginatedResponse, Session, WebSocketEvent } from '../types';
+import { Session, WebSocketEvent } from '../types';
 
 type NovuPendingEvent<A, O = undefined> = {
   args: A;
@@ -49,8 +56,27 @@ type BaseEvents<T extends string, ARGS, RESULT, OPTIMISTIC = undefined, FALLBACK
 };
 
 type SessionInitializeEvents = BaseEvents<'session.initialize', InitializeSessionArgs, Session>;
-type FeedFetchEvents = BaseEvents<'feeds.fetch', FetchFeedArgs, PaginatedResponse<Notification>>;
-type FeedFetchCountEvents = BaseEvents<'feeds.fetch_count', FetchCountArgs, number>;
+type FeedFetchEvents = BaseEvents<'feeds.fetch', FetchFeedArgs, FetchFeedResponse>;
+type FeedFetchCountEvents = BaseEvents<'feeds.fetch_count', FetchCountArgs, FetchCountResponse>;
+type FeedReadEvents = BaseEvents<'feeds.read', ReadArgs, InboxNotification, InboxNotification, InboxNotification>;
+type FeedReadAllEvents = BaseEvents<'feeds.read_all', { tags?: InboxNotification['tags'] }, void>;
+type FeedUnreadEvents = BaseEvents<'feeds.unread', UnreadArgs, InboxNotification, InboxNotification, InboxNotification>;
+type FeedArchivedEvents = BaseEvents<
+  'feeds.archived',
+  ArchivedArgs,
+  InboxNotification,
+  InboxNotification,
+  InboxNotification
+>;
+type FeedUnarchivedEvents = BaseEvents<
+  'feeds.unarchived',
+  UnarchivedArgs,
+  InboxNotification,
+  InboxNotification,
+  InboxNotification
+>;
+type FeedArchivedAllEvents = BaseEvents<'feeds.archived_all', { tags?: InboxNotification['tags'] }, void>;
+type FeedReadArchivedAllEvents = BaseEvents<'feeds.read_archived_all', { tags?: InboxNotification['tags'] }, void>;
 type FeedMarkNotificationsAsEvents = BaseEvents<
   'feeds.mark_notifications_as',
   MarkNotificationsAsArgs,
@@ -132,7 +158,14 @@ export type Events = SessionInitializeEvents &
   PreferencesFetchEvents &
   PreferencesUpdateEvents &
   SocketConnectEvents &
-  SocketEvents;
+  SocketEvents &
+  FeedReadEvents &
+  FeedReadAllEvents &
+  FeedArchivedEvents &
+  FeedArchivedAllEvents &
+  FeedReadArchivedAllEvents &
+  FeedUnreadEvents &
+  FeedUnarchivedEvents;
 
 export type EventNames = keyof Events;
 export type SocketEventNames = keyof SocketEvents;
