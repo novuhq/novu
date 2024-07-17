@@ -17,7 +17,7 @@ export type Event = {
 
 export type State = {
   stepId: string;
-  outputs: any;
+  outputs: Record<string, unknown>;
   state: { status: string; error?: string };
 };
 
@@ -31,7 +31,7 @@ export type ExecuteOutputMetadata = {
 };
 
 export type ExecuteOutput = {
-  outputs: unknown;
+  outputs: Record<string, unknown>;
   providers: unknown;
   options: unknown;
   metadata: ExecuteOutputMetadata;
