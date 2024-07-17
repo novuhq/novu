@@ -1,4 +1,6 @@
 import { createSignal, JSX, onCleanup, onMount } from 'solid-js';
+import { requestLock } from '../../../helpers/browser';
+import { NV_INBOX_WEBSOCKET } from '../../../helpers/constants';
 import { useNovu } from '../../../context';
 import { BellContainer } from './DefaultBellContainer';
 
@@ -14,11 +16,14 @@ export function Bell(props: BellProps) {
   };
 
   onMount(() => {
-    novu.on('notifications.unread_count_changed', updateReadCount);
-  });
+    const resolveLock = requestLock(NV_INBOX_WEBSOCKET, () => {
+      novu.on('notifications.unread_count_changed', updateReadCount);
+    });
 
-  onCleanup(() => {
-    novu.off('notifications.unread_count_changed', updateReadCount);
+    onCleanup(() => {
+      novu.off('notifications.unread_count_changed', updateReadCount);
+      resolveLock();
+    });
   });
 
   if (props.children) {
