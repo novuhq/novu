@@ -139,6 +139,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       transparent: {
         root: {
           border: 'none',
+          borderRadius: '0',
           bg: '[transparent]',
           px: '0',
         },
