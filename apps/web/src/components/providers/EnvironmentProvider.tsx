@@ -26,9 +26,9 @@ export function clearEnvironmentId() {
 }
 
 type EnvironmentContextValue = {
-  currentEnvironment?: IEnvironment;
+  currentEnvironment?: IEnvironment | null;
   // @deprecated use currentEnvironment instead;
-  environment?: IEnvironment;
+  environment?: IEnvironment | null;
   environments?: IEnvironment[];
   refetchEnvironments: () => Promise<void>;
   switchEnvironment: (params: Partial<{ environmentId: string; redirectUrl: string }>) => Promise<void>;
@@ -40,11 +40,11 @@ type EnvironmentContextValue = {
 
 const [EnvironmentCtx, useEnvironmentCtx] = createContextAndHook<EnvironmentContextValue>('Environment Context');
 
-function selectEnvironment(environments: IEnvironment[] | undefined, selectedEnvironmentId?: string) {
-  let e: IEnvironment | undefined;
+function selectEnvironment(environments: IEnvironment[] | undefined | null, selectedEnvironmentId?: string) {
+  let e: IEnvironment | undefined | null = null;
 
   if (!environments) {
-    return;
+    return null;
   }
 
   // Find the environment based on the current user's last environment
@@ -80,12 +80,16 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     staleTime: Infinity,
   });
 
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | undefined>(
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(
     selectEnvironment(environments, getEnvironmentId())
   );
 
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
+      if (currentEnvironment?._id === environmentId) {
+        return;
+      }
+
       setCurrentEnvironment(selectEnvironment(environments, environmentId));
 
       /*
@@ -99,7 +103,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
         navigate(redirectUrl);
       }
     },
-    [queryClient, navigate, setCurrentEnvironment, environments]
+    [queryClient, navigate, setCurrentEnvironment, currentEnvironment, environments]
   );
 
   const switchToProductionEnvironment = useCallback(
@@ -135,7 +139,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   );
 
   useEffect(() => {
-    if (environments && environments.length > 0 && !currentEnvironment) {
+    if (environments) {
       switchEnvironment({ environmentId: getEnvironmentId() });
     }
   }, [currentEnvironment, environments, switchEnvironment]);
