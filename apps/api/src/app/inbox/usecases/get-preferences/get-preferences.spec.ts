@@ -113,14 +113,31 @@ describe('GetPreferences', () => {
     notificationTemplateRepositoryMock.getActiveList.resolves(mockedWorkflow);
     getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
 
+    const result = await getPreferences.execute(command);
+
     expect(subscriberRepositoryMock.findBySubscriberId.calledOnce).to.be.true;
-    expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([command.subscriberId]);
+    expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([
+      command.environmentId,
+      command.subscriberId,
+    ]);
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
     expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args).to.deep.equal([command]);
     expect(notificationTemplateRepositoryMock.getActiveList.calledOnce).to.be.true;
-    expect(notificationTemplateRepositoryMock.getActiveList.firstCall.args).to.deep.equal([command]);
+    expect(notificationTemplateRepositoryMock.getActiveList.firstCall.args).to.deep.equal([
+      command.organizationId,
+      command.environmentId,
+      true,
+    ]);
     expect(getSubscriberWorkflowMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberWorkflowMock.execute.firstCall.args).to.deep.equal([command]);
+    expect(getSubscriberWorkflowMock.execute.firstCall.args).to.deep.equal([
+      {
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+        template: mockedWorkflow[0],
+        subscriber: mockedSubscriber,
+      },
+    ]);
 
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
     expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
@@ -132,7 +149,6 @@ describe('GetPreferences', () => {
         workflowSize: 1,
       },
     ]);
-    const result = await getPreferences.execute(command);
 
     expect(result).to.deep.equal(mockedPreferencesResponse);
   });
