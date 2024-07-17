@@ -20,7 +20,7 @@ import {
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useEnvironment, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
@@ -36,7 +36,8 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentUser, currentOrganization, environmentId } = useAuth();
+  const { login, currentOrganization } = useAuth();
+  const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
@@ -50,14 +51,14 @@ export function QuestionnaireForm() {
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
   useEffect(() => {
-    if (environmentId) {
+    if (currentOrganization) {
       if (isFromVercel) {
         startVercelSetup();
 
         return;
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId]);
+  }, [currentOrganization, isFromVercel, startVercelSetup]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
@@ -72,6 +73,7 @@ export function QuestionnaireForm() {
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
+    await refetchEnvironments();
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',
@@ -89,6 +91,7 @@ export function QuestionnaireForm() {
       await createOrganization({ ...data });
     }
 
+    await refetchEnvironments();
     setLoading(false);
     if (isFromVercel) {
       startVercelSetup();
@@ -97,7 +100,19 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
+      const isTechnicalJobTitle = [
+        JobTitleEnum.ENGINEER,
+        JobTitleEnum.ENGINEERING_MANAGER,
+        JobTitleEnum.ARCHITECT,
+        JobTitleEnum.FOUNDER,
+        JobTitleEnum.STUDENT,
+      ].includes(data.jobTitle);
+
+      if (isTechnicalJobTitle) {
+        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      } else {
+        navigate(ROUTES.WORKFLOWS);
+      }
 
       return;
     }

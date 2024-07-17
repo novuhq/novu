@@ -4,8 +4,22 @@ import sinon from 'sinon';
 import chai from 'chai';
 
 import { bootstrap } from '../src/bootstrap';
+import { isClerkEnabled } from '@novu/shared';
 
 const dalService = new DalService();
+
+async function seedClerkMongo() {
+  if (isClerkEnabled()) {
+    const clerkClientMock = require('@novu/ee-auth')?.ClerkClientMock;
+
+    if (clerkClientMock) {
+      const clerkClient = new clerkClientMock();
+      await clerkClient.seedDatabase();
+    } else {
+      throw new Error('ClerkClientMock not found');
+    }
+  }
+}
 
 before(async () => {
   /**
@@ -15,6 +29,7 @@ before(async () => {
   await testServer.create(await bootstrap());
 
   await dalService.connect(process.env.MONGO_URL);
+  await seedClerkMongo();
 });
 
 after(async () => {

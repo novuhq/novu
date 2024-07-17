@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -8,7 +9,7 @@ import axios from 'axios';
 import { v4 as uuid } from 'uuid';
 
 export class GrafanaOnCallChatProvider implements IChatProvider {
-  id = 'grafana-on-call';
+  id = ChatProviderIdEnum.GrafanaOnCall;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
   constructor(

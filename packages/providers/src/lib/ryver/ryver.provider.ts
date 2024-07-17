@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import axios from 'axios';
 
 export class RyverChatProvider implements IChatProvider {
-  public id = 'ryver';
+  public id = ChatProviderIdEnum.Ryver;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
 

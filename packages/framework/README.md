@@ -25,8 +25,8 @@ npm install @novu/framework
 ## Quickstart
 
 ```typescript
-import { workflow, CronExpression, } from "@novu/framework";
-import { serve } from "@novu/framework/next";
+import { workflow, CronExpression } from '@novu/framework';
+import { serve } from '@novu/framework/next';
 import { z } from 'zod';
 
 // Define your notification workflow
@@ -41,15 +41,19 @@ const weeklyComments = workflow(
       cron: CronExpression.EVERY_WEEK,
     }));
 
-    await step.email('weekly-comments', async (controls) => ({
-      subject: `${controls.prefix} - Weekly post comments (${weeklyDigest.events.length})`,
-      body: `Weekly digest: ${weeklyDigest.events.map(({ payload }) => payload.comment).join(', ')}`,
-    }), {
-      // Skip the notification if the user has already seen it
-      skip: () => inAppResponse.seen,
-      // Non-technical stakeholders can modify strongly-validated copy in Novu Cloud
-      inputSchema: z.object({ prefix: z.string().describe('The prefix of the subject.').default('Hi!') }),
-    });
+    await step.email(
+      'weekly-comments',
+      async (controls) => ({
+        subject: `${controls.prefix} - Weekly post comments (${weeklyDigest.events.length})`,
+        body: `Weekly digest: ${weeklyDigest.events.map(({ payload }) => payload.comment).join(', ')}`,
+      }),
+      {
+        // Skip the notification if the user has already seen it
+        skip: () => inAppResponse.seen,
+        // Non-technical stakeholders can modify strongly-validated copy in Novu Cloud
+        inputSchema: z.object({ prefix: z.string().describe('The prefix of the subject.').default('Hi!') }),
+      }
+    );
   },
   { payloadSchema: z.object({ comment: z.string().describe('The comment on the post.') }) }
 );

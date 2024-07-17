@@ -5,6 +5,7 @@ import {
   IChatOptions,
   IChatProvider,
 } from '@novu/stateless';
+import { ChatProviderIdEnum } from '@novu/shared';
 
 interface IMattermostPayload {
   channel?: string;
@@ -13,7 +14,7 @@ interface IMattermostPayload {
 
 export class MattermostProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  public id = 'mattermost';
+  public id = ChatProviderIdEnum.Mattermost;
   private axiosInstance = axios.create();
 
   async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {

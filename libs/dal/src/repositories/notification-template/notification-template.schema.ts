@@ -217,7 +217,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     rawData: Schema.Types.Mixed,
     payloadSchema: Schema.Types.Mixed,
   },
-  schemaOptions
+  { ...schemaOptions, minimize: false }
 );
 
 notificationTemplateSchema.virtual('steps.template', {

@@ -1,11 +1,15 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 import { MailersendEmailProvider } from '@novu/providers';
 
 import { BaseHandler } from './base.handler';
 
 export class MailerSendHandler extends BaseHandler {
   constructor() {
-    super('mailersend', ChannelTypeEnum.EMAIL);
+    super(EmailProviderIdEnum.MailerSend, ChannelTypeEnum.EMAIL);
   }
 
   buildProvider(credentials: ICredentials, from?: string) {

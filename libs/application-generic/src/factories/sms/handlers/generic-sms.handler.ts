@@ -1,10 +1,10 @@
 import { GenericSmsProvider } from '@novu/providers';
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 
 export class GenericSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('generic-sms', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.GenericSms, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

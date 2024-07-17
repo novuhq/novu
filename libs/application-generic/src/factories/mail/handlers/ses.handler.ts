@@ -1,11 +1,15 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 import { SESConfig } from '@novu/providers';
 import { SESEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class SESHandler extends BaseHandler {
   constructor() {
-    super('ses', ChannelTypeEnum.EMAIL);
+    super(EmailProviderIdEnum.SES, ChannelTypeEnum.EMAIL);
   }
 
   buildProvider(credentials: ICredentials, from?: string) {

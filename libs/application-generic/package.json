@@ -75,6 +75,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
+    "got": "^11.8.6",
     "handlebars": "^4.7.7",
     "i18next": "^23.7.6",
     "ioredis": "^5.2.4",
@@ -97,14 +98,14 @@
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
-    "@novu/ee-bridge-worker": "workspace:*",
+    "@novu/ee-auth": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@types/got": "^9.6.12",
     "@types/jest": "29.5.2",
-    "@types/json-schema": "^7.0.15",
     "@types/newrelic": "^9",
     "@types/sanitize-html": "^2.11.0",
     "@types/sinon": "^9.0.0",

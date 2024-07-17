@@ -1,8 +1,15 @@
 import clsx, { ClassValue } from 'clsx';
 import { CSSProperties, Elements, Variables } from '../context';
+import { extendTailwindMerge, type ClassNameValue } from 'tailwind-merge';
+
+const twMerge = extendTailwindMerge({
+  prefix: 'nt-',
+});
+
+export type ClassName = ClassNameValue;
 
 export function cn(...inputs: ClassValue[]) {
-  return clsx(inputs);
+  return twMerge(clsx(inputs));
 }
 
 export function generateRandomString(length: number): string {

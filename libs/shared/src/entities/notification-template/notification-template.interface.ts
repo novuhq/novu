@@ -1,4 +1,4 @@
-import { JSONSchema7 } from 'json-schema';
+import { JSONSchema } from 'json-schema-to-ts';
 
 import type {
   BuilderFieldType,
@@ -6,6 +6,7 @@ import type {
   TemplateVariableTypeEnum,
   FilterParts,
   WorkflowTypeEnum,
+  NotificationTemplateCustomData,
 } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
@@ -30,8 +31,12 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
+  blueprintId?: string;
   type?: WorkflowTypeEnum;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
+  rawData?: any;
+  data?: NotificationTemplateCustomData;
 }
 
 export class IGroupedBlueprint {
@@ -72,6 +77,7 @@ export interface ITriggerReservedVariable {
 
 export interface INotificationTriggerVariable {
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   type?: TemplateVariableTypeEnum;
 }
@@ -93,10 +99,10 @@ export interface IStepVariant {
   };
   metadata?: IWorkflowStepMetadata;
   inputs?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
   };
   controls?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
   };
   /*
    * controlVariables exists

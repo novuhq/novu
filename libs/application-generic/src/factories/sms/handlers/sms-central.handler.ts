@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 import { SmsCentralSmsProvider } from '@novu/providers';
 
 export class SmsCentralHandler extends BaseSmsHandler {
   constructor() {
-    super('sms-central', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.SmsCentral, ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     if (!credentials.user || !credentials.password || !credentials.from) {

@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 import { FiretextSmsProvider } from '@novu/providers';
 
 export class FiretextSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('firetext', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Firetext, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

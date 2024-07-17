@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 
 import axios from 'axios';
 export class SimpletextingSmsProvider implements ISmsProvider {
-  id = 'simpletexting';
+  id = SmsProviderIdEnum.Simpletexting;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   constructor(

@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -14,7 +15,7 @@ import {
 } from 'braze-api';
 
 export class BrazeEmailProvider implements IEmailProvider {
-  id = 'braze';
+  id = EmailProviderIdEnum.Braze;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private braze: Braze;
 

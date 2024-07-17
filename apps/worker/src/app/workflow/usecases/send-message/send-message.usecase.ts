@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 
 import {
   DigestTypeEnum,
@@ -18,7 +17,6 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   GetSubscriberGlobalPreference,
@@ -32,8 +30,7 @@ import {
   IBridgeChannelResponse,
   NormalizeVariables,
   NormalizeVariablesCommand,
-  requireInject,
-  IUseCaseInterface,
+  ExecuteOutput,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -55,14 +52,10 @@ import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
 import { ExecuteStepCustom } from './execute-step-custom.usecase';
+import { ExecuteBridgeJob } from '../execute-bridge-job';
 
 @Injectable()
 export class SendMessage {
-  private executeBridgeJob: IUseCaseInterface<
-    SendMessageCommand & { variables: IFilterVariables },
-    ExecuteOutput<IBridgeChannelResponse> | null
-  >;
-
   constructor(
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
@@ -82,10 +75,8 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    protected moduleRef: ModuleRef
-  ) {
-    this.executeBridgeJob = requireInject('execute-bridge-job', this.moduleRef);
-  }
+    private executeBridgeJob: ExecuteBridgeJob
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<{ status: 'success' | 'canceled' }> {
@@ -105,12 +96,12 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    let bridgeResponse: Awaited<ReturnType<typeof this.executeBridgeJob.execute>> = null;
+    let bridgeResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
-      bridgeResponse = await this.executeBridgeJob.execute({
+      bridgeResponse = (await this.executeBridgeJob.execute({
         ...command,
         variables,
-      });
+      })) as ExecuteOutput<IBridgeChannelResponse> | null;
     }
     const isBridgeSkipped = bridgeResponse?.options?.skip;
     const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(

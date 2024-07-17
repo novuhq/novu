@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IChatOptions,
@@ -8,7 +9,7 @@ import axios from 'axios';
 
 export class DiscordProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  public id = 'discord';
+  public id = ChatProviderIdEnum.Discord;
   private axiosInstance = axios.create();
 
   constructor(private config) {}

@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -19,7 +20,7 @@ interface ISparkPostResponse {
 }
 
 export class SparkPostEmailProvider implements IEmailProvider {
-  readonly id = 'sparkpost';
+  readonly id = EmailProviderIdEnum.SparkPost;
   readonly channelType = ChannelTypeEnum.EMAIL;
   private readonly endpoint: string;
 

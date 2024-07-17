@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -10,7 +11,7 @@ import {
 import axios, { Axios } from 'axios';
 
 export class ClickatellSmsProvider implements ISmsProvider {
-  id = 'clickatell';
+  id = SmsProviderIdEnum.Clickatell;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axios: Axios;
 

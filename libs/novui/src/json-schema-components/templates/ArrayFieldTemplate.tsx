@@ -1,16 +1,20 @@
-import React from 'react';
 import {
-  ArrayFieldTitleProps,
+  ArrayFieldTemplateItemType,
   ArrayFieldTemplateProps,
+  ArrayFieldTitleProps,
   getTemplate,
   getUiOptions,
-  ArrayFieldTemplateItemType,
 } from '@rjsf/utils';
-import { css, cx } from '../../../styled-system/css';
-import { Box, HStack } from '../../../styled-system/jsx';
-import { formItemClassName, FormGroupTitle } from '../shared';
+import { css } from '../../../styled-system/css';
+import { Box } from '../../../styled-system/jsx';
+import { jsonSchemaFormArrayToolbar, jsonSchemaFormSection } from '../../../styled-system/recipes';
+import { FormGroupTitle, SectionTitleToggle } from '../shared';
+import { calculateSectionDepth, getVariantFromDepth } from '../utils';
+import { useExpandToggle } from '../useExpandToggle';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
+  const [isExpanded, toggleExpanded] = useExpandToggle();
+
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
     props;
   const {
@@ -20,20 +24,47 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
   const ArrayFieldItemTemplate = getTemplate('ArrayFieldItemTemplate', registry, uiOptions);
 
+  const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });
+  const depthVariant = getVariantFromDepth(sectionDepth);
+
+  const sectionClassNames = jsonSchemaFormSection({
+    depth: depthVariant,
+  });
+
   return (
-    <Box>
-      <ArrayFieldTitleTemplate
-        idSchema={idSchema}
-        title={uiOptions.title || title}
-        schema={schema}
-        uiSchema={uiSchema}
-        required={required}
-        registry={registry}
+    <Box className={sectionClassNames.sectionRoot}>
+      <SectionTitleToggle
+        onToggle={toggleExpanded}
+        isExpanded={isExpanded}
+        sectionDepth={sectionDepth}
+        sectionTitle={
+          uiOptions.title || title ? (
+            <ArrayFieldTitleTemplate
+              idSchema={idSchema}
+              title={uiOptions.title || title}
+              schema={schema}
+              uiSchema={uiSchema}
+              required={required}
+              registry={registry}
+            />
+          ) : undefined
+        }
       />
-      {items.map(({ key, ...itemProps }) => {
-        return <ArrayFieldItemTemplate key={key} {...itemProps} />;
-      })}
-      {canAdd && <AddButton onClick={onAddClick} disabled={disabled || readonly} registry={registry} />}
+      {isExpanded ? (
+        <>
+          {items.map(({ key, ...itemProps }) => {
+            return <ArrayFieldItemTemplate key={key} {...itemProps} />;
+          })}
+          {canAdd && (
+            <AddButton
+              onClick={onAddClick}
+              disabled={disabled || readonly}
+              registry={registry}
+              className={css({ mt: '150' })}
+            />
+          )}
+        </>
+      ) : null}
     </Box>
   );
 }
@@ -54,25 +85,18 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
     onReorderClick,
     readonly,
     registry,
+    schema,
   } = props;
   const { MoveDownButton, MoveUpButton, RemoveButton } = registry.templates.ButtonTemplates;
 
+  const toolbarClassNames = jsonSchemaFormArrayToolbar({
+    itemType: typeof schema.type === 'object' ? schema.type[0] : schema.type,
+  });
+
   return (
-    <HStack
-      gap="50"
-      // align the buttons with the input itself rather than centered with the input and its label
-      className={cx(
-        formItemClassName,
-        css({
-          '&:has(input[type="text"],input[type="checkbox"],textarea[type="text"]) [role="toolbar"]': {
-            paddingTop: '0',
-            alignSelf: 'flex-start',
-          },
-        })
-      )}
-    >
-      <div className={css({ width: 'full' })}>{children}</div>
-      <HStack role="toolbar" gap="25" py="25">
+    <div className={toolbarClassNames.toolbarWrapper}>
+      {children}
+      <div role="toolbar" className={toolbarClassNames.toolbar}>
         {(hasMoveUp || hasMoveDown) && (
           <MoveUpButton
             disabled={disabled || readonly || !hasMoveUp}
@@ -90,7 +114,7 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
         {hasRemove && (
           <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
         )}
-      </HStack>
-    </HStack>
+      </div>
+    </div>
   );
 }
