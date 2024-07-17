@@ -68,11 +68,20 @@
       }
 
       #loader {
-          display: grid;
-          width: 100dvw;
-          height: 100dvh;
-          place-items: center;
-        }
+        display: grid;
+        width: 100dvw;
+        height: 100dvh;
+        place-items: center;
+      }
+
+      .fade-in {
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+      }
+
+      .fade-out {
+        opacity: 0;
+      }
     </style>
   </head>
   <body>
@@ -90,7 +99,7 @@
     <!-- End Google Tag Manager (noscript) -->
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <!-- Instant loader -->
-    <div id="loader">
+    <div id="loader" class="fade-in">
       <svg viewBox="0 0 135 140" xmlns="http://www.w3.org/2000/svg" fill="#ef3f5a" width="64px" role="presentation">
         <rect y="10" width="15" height="120" rx="6">
           <animate attributeName="height" begin="0.5s" dur="1s" values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear" repeatCount="indefinite"></animate>

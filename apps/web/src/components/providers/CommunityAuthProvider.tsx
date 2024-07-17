@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import { flushSync } from 'react-dom';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { setUser as sentrySetUser, configureScope as sentryConfigureScope } from '@sentry/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import { clearEnvironmentId } from './EnvironmentProvider';
 import { getToken } from '../../auth/getToken';
 import { getTokenClaims } from '../../auth/getTokenClaims';
 import { getUser } from '../../api/user';
-import { switchOrganization as apiSwitchOrganization, getOrganizations } from '../../api/organization';
+import { switchOrganization as apiSwitchOrganization, getOrganization } from '../../api/organization';
 import { type AuthContextValue } from './AuthProvider';
 
 // TODO: Add a novu prefix to the local storage key
@@ -24,16 +25,16 @@ const asyncNoop = async () => {};
 export const CommunityAuthContext = createContext<AuthContextValue>({
   inPublicRoute: false,
   inPrivateRoute: false,
-  isLoading: false,
+  isUserLoading: false,
+  isOrganizationLoading: false,
   currentUser: null,
   currentOrganization: null,
-  organizations: [],
   login: asyncNoop,
   logout: noop,
   redirectToLogin: noop,
   redirectToSignUp: noop,
   switchOrganization: asyncNoop,
-  reloadOrganization: asyncNoop,
+  reloadOrganization: async () => ({}),
 });
 
 CommunityAuthContext.displayName = 'CommunityAuthProvider';
@@ -91,7 +92,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     }
   }, [navigate, inPrivateRoute, location]);
 
-  const { data: user = null, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
+  const { data: currentUser = null, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
     enabled: hasToken,
     retry: false,
     staleTime: Infinity,
@@ -103,10 +104,10 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   });
 
   const {
-    data: organizations = null,
+    data: currentOrganization = null,
     isLoading: isOrganizationLoading,
-    refetch: refetchOrganizations,
-  } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
+    refetch: reloadOrganization,
+  } = useQuery<IOrganizationEntity>(['/v1/organizations/me'], getOrganization, {
     enabled: hasToken,
     retry: false,
     staleTime: Infinity,
@@ -116,17 +117,6 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
       }
     },
   });
-
-  const reloadOrganization = async () => {
-    const { data } = await getOrganizations();
-    // we need to update all organizations so current org (data) and 'organizations' are not ouf of sync
-    await refetchOrganizations();
-    setCurrentOrganization(selectOrganization(data, currentOrganization?._id));
-  };
-
-  const [currentOrganization, setCurrentOrganization] = useState<IOrganizationEntity | null>(
-    selectOrganization(organizations)
-  );
 
   const login = useCallback(
     async (newToken: string, redirectUrl?: string) => {
@@ -138,24 +128,20 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
       clearEnvironmentId();
 
       saveToken(newToken);
-      await refetchOrganizations();
-      /*
-       * TODO: Revise if this is needed as the following useEffect will switch to the latest org
-       * setCurrentOrganization(selectOrganization(organizations, getTokenClaims()?.organizationId));
-       */
+      await reloadOrganization();
+
       redirectUrl ? navigate(redirectUrl) : void 0;
     },
-    [navigate, refetchOrganizations]
+    [navigate, reloadOrganization]
   );
 
   const logout = useCallback(() => {
     saveToken(null);
-    queryClient.clear();
-    segment.reset();
     // TODO: Revise storing environment id in local storage to avoid having to clear it during org or env switching
     clearEnvironmentId();
+    queryClient.clear();
+    segment.reset();
     navigate(ROUTES.AUTH_LOGIN);
-    setCurrentOrganization(null);
   }, [navigate, queryClient, segment]);
 
   const redirectTo = useCallback(
@@ -220,32 +206,26 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
 
       const token = await apiSwitchOrganization(orgId);
       await login(token);
-      setCurrentOrganization(selectOrganization(organizations, orgId));
+      await reloadOrganization();
     },
-    [organizations, currentOrganization, setCurrentOrganization, login]
+    [currentOrganization, reloadOrganization, login]
   );
 
   useEffect(() => {
-    if (organizations) {
-      setCurrentOrganization(selectOrganization(organizations, getTokenClaims()?.organizationId));
-    }
-  }, [organizations, currentOrganization, switchOrganization]);
-
-  useEffect(() => {
-    if (user && currentOrganization) {
-      segment.identify(user);
+    if (currentUser && currentOrganization) {
+      segment.identify(currentUser);
 
       sentrySetUser({
-        email: user.email ?? '',
-        username: `${user.firstName} ${user.lastName}`,
-        id: user._id,
+        email: currentUser.email ?? '',
+        username: `${currentUser.firstName} ${currentUser.lastName}`,
+        id: currentUser._id,
         organizationId: currentOrganization._id,
         organizationName: currentOrganization.name,
       });
     } else {
       sentryConfigureScope((scope) => scope.setUser(null));
     }
-  }, [user, currentOrganization, segment]);
+  }, [currentUser, currentOrganization, segment]);
 
   useEffect(() => {
     if (!ldClient) {
@@ -270,9 +250,9 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   const value = {
     inPublicRoute,
     inPrivateRoute,
-    isLoading: hasToken && (isUserLoading || isOrganizationLoading),
-    currentUser: user,
-    organizations,
+    isUserLoading,
+    isOrganizationLoading,
+    currentUser,
     currentOrganization,
     login,
     logout,

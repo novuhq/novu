@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
@@ -69,24 +70,34 @@ function selectEnvironment(environments: IEnvironment[] | undefined | null, sele
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { currentOrganization, isLoading: isLoadingAuth } = useAuth();
-  const [internalLoading, setInternalLoading] = useState(true);
+  const { currentOrganization } = useAuth();
+
+  // Start with a null environment
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(null);
+
+  /*
+   * Loading environments depends on the current organization. Fetching should start only when the current
+   * organization is set and it should happens once, on full page reload, until the cache is invalidated on-demand
+   * or a refetch is triggered manually.
+   */
   const {
     data: environments,
-    isLoading: isLoadingEnvironments,
+    isLoading,
+    isInitialLoading,
     refetch: refetchEnvironments,
   } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, currentOrganization?._id], getEnvironments, {
     enabled: !!currentOrganization,
     retry: false,
     staleTime: Infinity,
-    onSettled: (data, error) => {
-      setInternalLoading(false);
+    onSuccess(envs) {
+      console.log('Foo Fetched envs');
+      /*
+       * This is a required hack to ensure that fetching environments, isLoading = false and currentEnvironment
+       * are all set as part of the same rendering cycle.
+       */
+      flushSync(() => setCurrentEnvironment(selectEnvironment(envs, getEnvironmentId())));
     },
   });
-
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(
-    selectEnvironment(environments, getEnvironmentId())
-  );
 
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
@@ -142,12 +153,6 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     [environments, switchEnvironment]
   );
 
-  useEffect(() => {
-    if (environments) {
-      switchEnvironment({ environmentId: getEnvironmentId() });
-    }
-  }, [currentEnvironment, environments, switchEnvironment]);
-
   const reloadEnvironments = async () => {
     await refetchEnvironments();
 
@@ -159,6 +164,18 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     selectEnvironment(envs);
   };
 
+  /*
+   * This effect ensures that switching takes place every time environments change. The most common is usecase,
+   * is switching to a new organization
+   */
+  useEffect(() => {
+    if (environments) {
+      switchEnvironment({ environmentId: getEnvironmentId() });
+    }
+  }, [currentEnvironment, environments, switchEnvironment]);
+
+  console.log('EnvironmentProvider', isLoading, isInitialLoading);
+
   const value = {
     currentEnvironment,
     environment: currentEnvironment,
@@ -167,7 +184,12 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     switchEnvironment,
     switchToDevelopmentEnvironment,
     switchToProductionEnvironment,
-    isLoading: isLoadingEnvironments || isLoadingAuth || internalLoading,
+    /*
+     * This is a hack to override the default react-query behavior. Environment loading depends on organization loading.
+     * However, if there is no current organization (for example during sign-up) isLoading is always set to true.
+     * For such dependent queries we need isLoading to be true only if the query is enabled and is actually loading.
+     */
+    isLoading: currentOrganization ? isLoading : false,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
 

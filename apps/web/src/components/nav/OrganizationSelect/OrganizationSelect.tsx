@@ -9,6 +9,7 @@ import { arrowStyles, navSelectStyles, tooltipStyles } from '../NavSelect.styles
 import { useAuth as useAuth } from '../../providers/AuthProvider';
 import { addOrganization } from '../../../api/organization';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { useOrganizations } from '../../../hooks/useOrganizations';
 
 export function OrganizationSelect() {
   const [canShowTooltip, setCanShowTooltip] = useState<boolean>(false);
@@ -17,7 +18,8 @@ export function OrganizationSelect() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { addItem, removeItems } = useSpotlightContext();
 
-  const { currentOrganization, organizations, switchOrganization } = useAuth();
+  const { currentOrganization, switchOrganization } = useAuth();
+  const { data: organizations, isLoading: isOrganizationsLoading } = useOrganizations();
 
   const { mutateAsync: createOrganization } = useMutation<IOrganizationEntity, IResponseError, string>(
     (name) => addOrganization(name),
@@ -101,7 +103,7 @@ export function OrganizationSelect() {
         className={navSelectStyles}
         creatable
         searchable
-        loading={isLoading}
+        loading={isLoading || isOrganizationsLoading}
         getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
         value={value}
         onCreate={onCreate}

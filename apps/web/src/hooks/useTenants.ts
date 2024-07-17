@@ -18,7 +18,6 @@ export function useTenants({
   const { environment } = useEnvironment();
   const { data, isLoading, ...rest } = useQuery<IPaginatedResponseDto<ITenantEntity>, any>(
     [QueryKeys.tenantsList, environment?._id, page, limit],
-
     () => getTenants({ page, limit }),
     {
       refetchOnMount: false,

@@ -25,7 +25,9 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 }
 
 export function LocalStudioAuthenticator() {
-  const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
+  const { currentUser, isUserLoading, redirectToLogin, redirectToSignUp, currentOrganization, isOrganizationLoading } =
+    useAuth();
+  const isLoading = isUserLoading || isOrganizationLoading;
   const location = useLocation();
   const { environments } = useEnvironment();
   const hasToken = !!getToken();
