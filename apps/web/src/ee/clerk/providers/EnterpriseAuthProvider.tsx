@@ -154,7 +154,11 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 
   // refetch queries on organization switch
   useEffect(() => {
-    if (organization && organization._id !== clerkOrganization?.id) {
+    // if linked, externalOrgId = internal org ObjectID, which is required on backend
+    const isInternalOrgLinked = !!clerkOrganization?.publicMetadata.externalOrgId;
+    const isOrgChanged = organization && organization._id !== clerkOrganization?.id;
+
+    if (isInternalOrgLinked && isOrgChanged) {
       switchOrgCallback();
     }
   }, [organization, clerkOrganization, switchOrgCallback]);
