@@ -138,10 +138,9 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       },
       transparent: {
         root: {
-          border: 'none !important',
-          borderRadius: '0 !important',
-          bg: '[transparent !important]',
-          px: '0 !important',
+          border: 'none',
+          bg: '[transparent]',
+          px: '0',
         },
         label: {
           ...colorPaletteGradientText,
