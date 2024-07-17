@@ -677,8 +677,7 @@
     "subresource",
     "htmlonly",
     "apidevtools",
-    "contenteditable",
-    "conjuction"
+    "contenteditable"
   ],
   "flagWords": [],
   "patterns": [
