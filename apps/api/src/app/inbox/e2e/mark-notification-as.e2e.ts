@@ -136,9 +136,9 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.true;
+    expect(body.data.isRead).to.be.true;
     expect(body.data.readAt).not.to.be.undefined;
-    expect(body.data.archived).to.be.false;
+    expect(body.data.isArchived).to.be.false;
     expect(body.data.archivedAt).to.be.undefined;
   });
 
@@ -161,9 +161,9 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.false;
+    expect(body.data.isRead).to.be.false;
     expect(body.data.readAt).to.be.null;
-    expect(body.data.archived).to.be.false;
+    expect(body.data.isArchived).to.be.false;
     expect(body.data.archivedAt).to.be.null;
   });
 
@@ -180,9 +180,9 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.true;
+    expect(body.data.isRead).to.be.true;
     expect(body.data.readAt).not.to.be.undefined;
-    expect(body.data.archived).to.be.true;
+    expect(body.data.isArchived).to.be.true;
     expect(body.data.archivedAt).not.to.be.undefined;
   });
 
@@ -205,9 +205,9 @@ describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,u
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.true;
+    expect(body.data.isRead).to.be.true;
     expect(body.data.readAt).not.to.be.undefined;
-    expect(body.data.archived).to.be.false;
+    expect(body.data.isArchived).to.be.false;
     expect(body.data.archivedAt).to.be.null;
   });
 });
