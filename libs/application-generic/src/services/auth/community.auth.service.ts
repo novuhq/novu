@@ -289,19 +289,7 @@ export class CommunityAuthService implements IAuthService {
       ? this.isAuthenticatedForOrganization(payload._id, payload.organizationId)
       : Promise.resolve(true);
 
-    const environmentPromise =
-      payload.organizationId && payload.environmentId
-        ? this.environmentRepository.findByIdAndOrganization(
-            payload.environmentId,
-            payload.organizationId
-          )
-        : Promise.resolve(true);
-
-    const [user, isMember, environment] = await Promise.all([
-      userPromise,
-      isMemberPromise,
-      environmentPromise,
-    ]);
+    const [user, isMember] = await Promise.all([userPromise, isMemberPromise]);
 
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
@@ -309,10 +297,6 @@ export class CommunityAuthService implements IAuthService {
         `User ${payload._id} is not a member of organization ${payload.organizationId}`
       );
     }
-    if (payload.organizationId && payload.environmentId && !environment)
-      throw new UnauthorizedException(
-        `Environment ${payload.environmentId} doesn't belong to organization ${payload.organizationId}`
-      );
 
     return user;
   }
