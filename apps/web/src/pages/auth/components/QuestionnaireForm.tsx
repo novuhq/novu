@@ -56,9 +56,11 @@ export function QuestionnaireForm() {
         startVercelSetup();
 
         return;
+      } else {
+        navigate(ROUTES.DASHBOARD_ONBOARDING);
       }
     }
-  }, [currentOrganization, isFromVercel, startVercelSetup]);
+  }, [currentOrganization, isFromVercel, startVercelSetup, navigate]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
