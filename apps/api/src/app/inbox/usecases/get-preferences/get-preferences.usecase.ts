@@ -47,7 +47,8 @@ export class GetPreferences {
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
       _organization: command.organizationId,
-      templatesSize: workflowList.length,
+      subscriberId: command.subscriberId,
+      workflowSize: workflowList.length,
     });
 
     const workflowPreferences = await Promise.all(

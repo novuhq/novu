@@ -6,7 +6,9 @@ import {
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
+import { sub } from 'date-fns';
 import sinon from 'sinon';
+import { AnalyticsEventsEnum } from '../../utils';
 import { GetPreferences } from './get-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
@@ -111,6 +113,25 @@ describe('GetPreferences', () => {
     notificationTemplateRepositoryMock.getActiveList.resolves(mockedWorkflow);
     getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
 
+    expect(subscriberRepositoryMock.findBySubscriberId.calledOnce).to.be.true;
+    expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([command.subscriberId]);
+    expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
+    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args).to.deep.equal([command]);
+    expect(notificationTemplateRepositoryMock.getActiveList.calledOnce).to.be.true;
+    expect(notificationTemplateRepositoryMock.getActiveList.firstCall.args).to.deep.equal([command]);
+    expect(getSubscriberWorkflowMock.execute.calledOnce).to.be.true;
+    expect(getSubscriberWorkflowMock.execute.firstCall.args).to.deep.equal([command]);
+
+    expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
+    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
+      AnalyticsEventsEnum.FETCH_PREFERENCES,
+      '',
+      {
+        _organization: command.organizationId,
+        subscriberId: command.subscriberId,
+        workflowSize: 1,
+      },
+    ]);
     const result = await getPreferences.execute(command);
 
     expect(result).to.deep.equal(mockedPreferencesResponse);
