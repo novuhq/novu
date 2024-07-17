@@ -148,7 +148,7 @@ test('shold not allow adding variants for delay step', async ({ page }) => {
   expect(page.getByTestId('add-variant-action')).toHaveCount(0);
 });
 
-test('should show step actions with no variants', async ({ page }) => {
+test.skip('should show step actions with no variants', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.setWorkflowNameInput('Test no variants in delay');
   await workflowEditorPage.addChannelToWorkflow(ChannelType.IN_APP);

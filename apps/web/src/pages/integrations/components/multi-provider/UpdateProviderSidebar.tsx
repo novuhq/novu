@@ -60,7 +60,7 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const { isLoading: areEnvironmentsLoading } = useEnvironment();
+  const { isLoaded: isEnvironmentLoaded } = useEnvironment();
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
@@ -263,7 +263,7 @@ export function UpdateProviderSidebar({
       <FormProvider {...methods}>
         <Sidebar
           isOpened={isSidebarOpened}
-          isLoading={areProvidersLoading || areEnvironmentsLoading}
+          isLoading={areProvidersLoading || !isEnvironmentLoaded}
           onClose={onSidebarClose}
           onSubmit={onSubmit}
           customHeader={
@@ -301,7 +301,7 @@ export function UpdateProviderSidebar({
     <FormProvider {...methods}>
       <Sidebar
         isOpened={isSidebarOpened}
-        isLoading={areProvidersLoading || areEnvironmentsLoading}
+        isLoading={areProvidersLoading || !isEnvironmentLoaded}
         isExpanded={sidebarState === SidebarStateEnum.EXPANDED}
         onSubmit={onSubmit}
         onClose={onSidebarClose}
