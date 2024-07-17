@@ -63,8 +63,8 @@ export class GetPreferences {
         );
 
         return {
-          preferences: workflowPreference.preference,
           level: PreferenceLevelEnum.TEMPLATE,
+          preferences: workflowPreference.preference,
           workflow: workflowPreference.template,
         };
       })

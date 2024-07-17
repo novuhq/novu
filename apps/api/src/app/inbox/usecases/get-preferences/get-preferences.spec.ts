@@ -48,7 +48,7 @@ const mockedPreferencesResponse: any = [
   {
     level: PreferenceLevelEnum.TEMPLATE,
     preferences: mockedWorkflowPreference.preference,
-    worflow: mockedWorkflowPreference.template,
+    workflow: mockedWorkflowPreference.template,
   },
 ];
 
