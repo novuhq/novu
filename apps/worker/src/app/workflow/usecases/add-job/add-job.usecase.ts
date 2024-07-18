@@ -286,7 +286,6 @@ export class AddJob {
         unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
       } as IDigestRegularMetadata;
 
-      Logger.log({ metadata }, LOG_CONTEXT);
       await this.jobRepository.updateOne(
         {
           _id: command.job._id,
@@ -336,7 +335,6 @@ export class AddJob {
         payload: job.payload,
         overrides: job.overrides,
       });
-    Logger.log({ digestAmount }, LOG_CONTEXT);
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
