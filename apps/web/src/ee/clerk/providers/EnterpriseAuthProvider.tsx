@@ -4,12 +4,10 @@ import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
-import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../constants/routes';
+import { useCommonAuth } from '../../../hooks/useCommonAuth';
 import { useQueryClient } from '@tanstack/react-query';
-import { setUser as setSentryUser, configureScope } from '@sentry/react';
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
+import { useNavigate } from 'react-router-dom';
 
 const noop = () => {};
 const asyncNoop = async () => {};
@@ -27,11 +25,14 @@ export const EnterpriseAuthContext = createContext<AuthContextValue>({
   redirectToLogin: noop,
   redirectToSignUp: noop,
   switchOrganization: asyncNoop,
-  reloadOrganization: () => Promise.resolve(),
+  reloadOrganization: asyncNoop,
 });
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
@@ -44,65 +45,11 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   const [user, setUser] = useState<IUserEntity | undefined>(undefined);
   const [organization, setOrganization] = useState<IOrganizationEntity | undefined>(undefined);
 
-  const ldClient = useLDClient();
-  const segment = useSegment();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const inPublicRoute =
-    !!Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) => location.pathname.startsWith(prefix)) || false;
-  const inPrivateRoute = !inPublicRoute;
-
-  const logout = useCallback(() => {
-    queryClient.clear();
-    segment.reset();
-    navigate(ROUTES.AUTH_LOGIN);
-    signOut();
-  }, [navigate, queryClient, segment, signOut]);
-
-  const redirectTo = useCallback(
-    ({
-      url,
-      redirectURL,
-      origin,
-      anonymousId,
-    }: {
-      url: string;
-      redirectURL?: string;
-      origin?: string;
-      anonymousId?: string | null;
-    }) => {
-      const finalURL = new URL(url, window.location.origin);
-
-      if (redirectURL) {
-        finalURL.searchParams.append('redirect_url', redirectURL);
-      }
-
-      if (origin) {
-        finalURL.searchParams.append('origin', origin);
-      }
-
-      if (anonymousId) {
-        finalURL.searchParams.append('anonymous_id', anonymousId);
-      }
-
-      // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
-      window.location.replace(finalURL.href);
-    },
-    []
-  );
-
-  const redirectToLogin = useCallback(
-    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_LOGIN, redirectURL }),
-    [redirectTo]
-  );
-
-  const redirectToSignUp = useCallback(
-    ({ redirectURL, origin, anonymousId }: { redirectURL?: string; origin?: string; anonymousId?: string } = {}) =>
-      redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL, origin, anonymousId }),
-    [redirectTo]
-  );
+  const { inPublicRoute, inPrivateRoute, logout, redirectToLogin, redirectToSignUp } = useCommonAuth({
+    user,
+    organization,
+    logoutCallback: async () => signOut(),
+  });
 
   const switchOrgCallback = useCallback(async () => {
     await queryClient.refetchQueries();
@@ -125,11 +72,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 
   // check if user has active organization
   useEffect(() => {
-    if (orgId) {
-      return;
-    }
-
-    if (isOrgListLoaded && clerkUser) {
+    if (!orgId && isOrgListLoaded && clerkUser) {
       const hasOrgs = clerkUser.organizationMemberships.length > 0;
 
       if (hasOrgs) {
@@ -166,47 +109,11 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     }
   }, [organization, clerkOrganization, switchOrgCallback]);
 
-  // sentry tracking
-  useEffect(() => {
-    if (user && organization) {
-      segment.identify(user);
-
-      setSentryUser({
-        email: user.email ?? '',
-        username: `${user.firstName} ${user.lastName}`,
-        id: user._id,
-        organizationId: organization._id,
-        organizationName: organization.name,
-      });
-    } else {
-      configureScope((scope) => scope.setUser(null));
-    }
-  }, [user, organization, segment]);
-
-  // launch darkly
-  useEffect(() => {
-    if (!ldClient) return;
-
-    if (organization) {
-      ldClient.identify({
-        kind: 'organization',
-        key: organization._id,
-        name: organization.name,
-      });
-    } else {
-      ldClient.identify({
-        kind: 'user',
-        anonymous: true,
-      });
-    }
-  }, [ldClient, organization]);
-
   const value = {
     inPublicRoute,
     inPrivateRoute,
     isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
     currentUser: user,
-    // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
     organizations,
     currentOrganization: organization,
     logout,
