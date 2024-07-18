@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
@@ -8,26 +8,11 @@ import { ROUTES } from '../../../constants/routes';
 import { useCommonAuth } from '../../../hooks/useCommonAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { createContextAndHook } from '../../../components/providers/createContextAndHook';
 
-const noop = () => {};
 const asyncNoop = async () => {};
 
-// TODO: Replace with createContextAndHook
-export const EnterpriseAuthContext = createContext<AuthContextValue>({
-  inPublicRoute: false,
-  inPrivateRoute: false,
-  isLoading: false,
-  currentUser: null,
-  organizations: [],
-  currentOrganization: null,
-  login: asyncNoop,
-  logout: noop,
-  redirectToLogin: noop,
-  redirectToSignUp: noop,
-  switchOrganization: asyncNoop,
-  reloadOrganization: asyncNoop,
-});
-EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
+export const [EnterpriseAuthCtx] = createContextAndHook<AuthContextValue>('Enterprise Auth Context');
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -124,7 +109,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     reloadOrganization,
   };
 
-  return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;
+  return <EnterpriseAuthCtx.Provider value={{ value }}>{children}</EnterpriseAuthCtx.Provider>;
 };
 
 const toUserEntity = (clerkUser: UserResource): IUserEntity => ({

@@ -1,4 +1,3 @@
-import { createContext } from 'react';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
@@ -12,29 +11,10 @@ import { switchOrganization as apiSwitchOrganization, getOrganizations } from '.
 import { type AuthContextValue } from './AuthProvider';
 import { useCommonAuth } from '../../hooks/useCommonAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { createContextAndHook } from './createContextAndHook';
 
 // TODO: Add a novu prefix to the local storage key
 export const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
-
-const noop = () => {};
-const asyncNoop = async () => {};
-
-export const CommunityAuthContext = createContext<AuthContextValue>({
-  inPublicRoute: false,
-  inPrivateRoute: false,
-  isLoading: false,
-  currentUser: null,
-  organizations: [],
-  currentOrganization: null,
-  login: asyncNoop,
-  logout: noop,
-  redirectToLogin: noop,
-  redirectToSignUp: noop,
-  switchOrganization: asyncNoop,
-  reloadOrganization: asyncNoop,
-});
-
-CommunityAuthContext.displayName = 'CommunityAuthProvider';
 
 function saveToken(token: string | null) {
   if (token) {
@@ -70,6 +50,8 @@ function selectOrganization(organizations: IOrganizationEntity[] | undefined, se
 
   return org;
 }
+
+export const [CommunityAuthCtx] = createContextAndHook<AuthContextValue>('Community Auth Context');
 
 export const CommunityAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -187,5 +169,5 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     reloadOrganization,
   };
 
-  return <CommunityAuthContext.Provider value={value}>{children}</CommunityAuthContext.Provider>;
+  return <CommunityAuthCtx.Provider value={{ value }}>{children}</CommunityAuthCtx.Provider>;
 };
