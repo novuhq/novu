@@ -33,6 +33,20 @@ describe('sanitize util', () => {
     });
   });
 
+  it('should convert camelCased attributes to lowercase', () => {
+    const myTestObject = {
+      input:
+        '<table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation"><tr><td>Hello</td></tr></table>',
+    };
+
+    const result = sanitizeHtmlInObject(myTestObject);
+
+    expect(result).toStrictEqual({
+      input:
+        '<table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation"><tr><td>Hello</td></tr></table>',
+    });
+  });
+
   type TestCase = {
     tag: string;
     input: string;

@@ -39,6 +39,10 @@ const sanitizeOptions: IOptions = {
    * formatting of style attributes in the In-App Editor.
    */
   parseStyleAttributes: false,
+  parser: {
+    // Convert the case of attribute names to lowercase.
+    lowerCaseAttributeNames: true,
+  },
 };
 
 export const sanitizeHTML = (html: string): string => {
