@@ -40,16 +40,10 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
         )}
         {...hoverProps}
       >
-        {({ isActive }) => {
-          setIsOpen(isActive);
-
-          return (
-            <HStack justifyContent={'space-between'} w="inherit" className={css(truncatedFlexTextCss)}>
-              <NavMenuButtonInner icon={icon}>{label}</NavMenuButtonInner>
-              {isOpen ? <IconKeyboardArrowUp /> : isHovered ? <IconKeyboardArrowDown /> : null}
-            </HStack>
-          );
-        }}
+        <HStack justifyContent={'space-between'} w="inherit" className={css(truncatedFlexTextCss)}>
+          <NavMenuButtonInner icon={icon}>{label}</NavMenuButtonInner>
+          {isOpen ? <IconKeyboardArrowUp /> : isHovered ? <IconKeyboardArrowDown /> : null}
+        </HStack>
       </NavLink>
       <Stack pl="100" gap="25">
         {!isOpen ? null : children}
