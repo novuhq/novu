@@ -11,7 +11,6 @@ import CodeEditor from '../../../studio/components/workflows/step-editor/editor/
 import { RunExpressApp } from '../../../studio/components/workflows/step-editor/editor/RunExpressApp';
 import { useState } from 'react';
 import { BRIDGE_CODE } from '../../../studio/components/workflows/step-editor/editor/bridge-code.const';
-import { demoCode } from '../../../studio/components/workflows/step-editor/editor/files';
 
 export function OnboardingPage() {
   const track = useTelemetry();

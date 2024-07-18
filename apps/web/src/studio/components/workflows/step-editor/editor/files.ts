@@ -1,25 +1,4 @@
-import { TEST_CODE } from './test-code';
 import { BRIDGE_CODE } from './bridge-code.const';
-
-export const demoCode = `
-import express from 'express';
-
-console.log('Starting app');
-
-const app = express();
-const port = 3111;
-
-app.get('/', (req, res) => {
-  res.send('Welcome to a WebContainers app! 🥳');
-});
-
-app.listen(port, () => {
-  console.log(\`App is live at http://localhost:\${port}\`);
-});
-
-console.log('Finished starting app');
-
-`;
 
 export const files = {
   'index.js': {
@@ -41,7 +20,7 @@ export const files = {
     "nodemon": "latest"
   },
   "scripts": {
-    "dev": "novu dev --port 3111",
+    "dev": "novu dev",
     "test": "curl  http://localhost:3111",
     "start": "nodemon --watch './' index.js"
   }
