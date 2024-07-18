@@ -1,13 +1,13 @@
 export function requestLock(id: string, cb: (id: string) => void) {
-  let isFullfilled = false;
-  let resolve: () => void;
+  let isFulfilled = false;
+  let promiseResolve: () => void;
 
-  const promise = new Promise<void>((res) => {
-    resolve = res;
+  const promise = new Promise<void>((resolve) => {
+    promiseResolve = resolve;
   });
 
   navigator.locks.request(id, () => {
-    if (!isFullfilled) {
+    if (!isFulfilled) {
       cb(id);
     }
 
@@ -15,7 +15,7 @@ export function requestLock(id: string, cb: (id: string) => void) {
   });
 
   return () => {
-    isFullfilled = true;
-    resolve();
+    isFulfilled = true;
+    promiseResolve();
   };
 }

@@ -1,7 +1,7 @@
 import { createSignal, onCleanup, onMount } from 'solid-js';
 import { NV_INBOX_TABS_CHANNEL } from './constants';
 
-export const useTabsChannel = <T = unknown>({ onMessage }: { onMessage: (args: T) => void }) => {
+export const useBrowserTabsChannel = <T = unknown>({ onMessage }: { onMessage: (args: T) => void }) => {
   const [tabsChannel] = createSignal(new BroadcastChannel(NV_INBOX_TABS_CHANNEL));
 
   const postMessage = (data: T) => {
