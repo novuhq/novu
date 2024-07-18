@@ -93,13 +93,13 @@ export const TextareaWidget = (props: WidgetProps) => {
   return (
     <Input.Wrapper
       classNames={classNames}
-      className={css(cssProps)}
+      className={cx('group', css(cssProps))}
       required={required}
       label={label}
       description={props.schema.description}
       error={error}
     >
-      <RichTextEditor data-error={!!error} classNames={stylesTry} editor={editor}>
+      <RichTextEditor classNames={stylesTry} editor={editor}>
         <RichTextEditor.Content />
       </RichTextEditor>
     </Input.Wrapper>
@@ -126,8 +126,7 @@ const stylesTry = {
   root: css({
     background: 'input.surface !important',
     borderColor: 'input.border !important',
-    // '&:has([data-error="true"])': {
-    _error: {
+    _groupError: {
       borderColor: 'input.border.error !important',
     },
   }),

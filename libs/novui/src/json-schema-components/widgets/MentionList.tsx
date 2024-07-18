@@ -1,59 +1,83 @@
 import { Menu } from '@mantine/core';
-import { type SuggestionProps } from '@tiptap/suggestion';
+import { type SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
 import { css } from '../../../styled-system/css';
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
+import { useDisclosure } from '@mantine/hooks';
 
 type VariableItem = {
   id: string;
   label: string;
 };
+export type MentionRef = {
+  onKeyDown: (props: SuggestionKeyDownProps) => boolean;
+};
 
 type MentionListProps = SuggestionProps<VariableItem>;
 
-export const MentionList = forwardRef<HTMLDivElement, MentionListProps>(
-  ({ clientRect, command, query, items }, ref) => {
-    const handleCommand = (id: string) => {
-      const item = items.find((item) => item.id === id);
-      if (!item) return;
-      command(item);
-    };
+export const MentionList = forwardRef<MentionRef, MentionListProps>(({ clientRect, command, query, items }, ref) => {
+  const [opened, handlers] = useDisclosure(true);
 
-    return createPortal(
-      <Menu
-        opened
-        closeOnClickOutside
-        closeOnEscape
-        clickOutsideEvents={['click', 'mousedown', 'touchstart']}
-        classNames={stylesTry}
-        position="bottom-start"
-        width={200}
-      >
-        <Menu.Target>
-          <div
-            style={{
-              position: 'absolute',
-              top: clientRect?.()?.bottom,
-              left: clientRect?.()?.left,
-            }}
-          />
-        </Menu.Target>
+  const enterHandler = () => {
+    handlers.close();
+  };
+  useImperativeHandle(ref, () => ({
+    onBlur: () => {
+      console.log('nknk');
+    },
+    onKeyDown: ({ event }) => {
+      console.log(event);
+      if (event.key === 'Escape') {
+        enterHandler();
 
-        <Menu.Dropdown>
-          {items.map((item) => {
-            return (
-              <Menu.Item key={item.id} onClick={() => handleCommand(item.id)}>
-                {item.label}
-              </Menu.Item>
-            );
-          })}
-        </Menu.Dropdown>
-      </Menu>,
-      document.body
-    );
-  }
-);
+        return true;
+      }
+
+      return false;
+    },
+  }));
+
+  const handleCommand = (id: string) => {
+    const item = items.find((item) => item.id === id);
+    if (!item) return;
+    command(item);
+  };
+
+  return createPortal(
+    <Menu
+      opened={opened}
+      closeOnClickOutside
+      closeOnEscape
+      clickOutsideEvents={['click', 'mousedown', 'touchstart']}
+      classNames={stylesTry}
+      position="bottom-start"
+      width={200}
+    >
+      <Menu.Target>
+        <div
+          style={{
+            position: 'absolute',
+            top: clientRect?.()?.bottom,
+            left: clientRect?.()?.left,
+          }}
+        />
+      </Menu.Target>
+
+      <Menu.Dropdown>
+        {items.map((item) => {
+          return (
+            <Menu.Item key={item.id} onClick={() => handleCommand(item.id)}>
+              {item.label}
+            </Menu.Item>
+          );
+        })}
+      </Menu.Dropdown>
+    </Menu>,
+    document.body
+  );
+});
+
 const stylesTry = {
   root: css({
     background: 'input.surface !important',

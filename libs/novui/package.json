@@ -140,6 +140,7 @@
     "@tiptap/extension-document": "^2.5.0",
     "@tiptap/extension-mention": "^2.5.0",
     "@tiptap/extension-paragraph": "^2.5.0",
+    "@tiptap/extension-strike": "^2.5.4",
     "@tiptap/extension-text": "^2.5.0",
     "@tiptap/pm": "^3.0.0",
     "@tiptap/react": "^3.0.0",

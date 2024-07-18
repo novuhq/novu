@@ -15,8 +15,8 @@ const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,
   SelectWidget: SelectWidget,
   TextWidget: TextareaWidget,
-  URLWidget: InputWidget,
-  EmailWidget: InputWidget,
+  URLWidget: TextareaWidget,
+  EmailWidget: TextareaWidget,
 };
 
 const UI_SCHEMA: UiSchema = {
