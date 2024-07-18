@@ -13,6 +13,8 @@ module.exports = {
       },
     ],
     'local-rules/no-class-without-style': 'error',
+    'id-length': 'off',
+    '@typescript-eslint/no-shadow': 'off',
   },
   parserOptions: {
     project: './tsconfig.json',

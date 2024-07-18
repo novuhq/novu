@@ -13,8 +13,8 @@ const mapSingleItem = ({
   archivedAt,
   channel,
   subscriber,
-  actorSubscriber,
-  actor,
+  subject,
+  avatar,
   cta,
   tags,
 }: MessageEntity): InboxNotification => {
@@ -32,7 +32,7 @@ const mapSingleItem = ({
 
   return {
     id: _id,
-    // subject: subject,
+    subject,
     body: content as string,
     to,
     isRead: read,
@@ -40,16 +40,7 @@ const mapSingleItem = ({
     createdAt,
     readAt: lastReadDate,
     archivedAt,
-    actor: actorSubscriber
-      ? {
-          id: actorSubscriber._id,
-          firstName: actorSubscriber.firstName,
-          lastName: actorSubscriber.lastName,
-          avatar: actorSubscriber.avatar,
-          subscriberId: actorSubscriber.subscriberId,
-        }
-      : undefined,
-    avatar: actor,
+    avatar,
     primaryAction: primaryCta && {
       label: primaryCta.content,
       url: cta?.data.url,

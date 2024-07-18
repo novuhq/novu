@@ -1,9 +1,9 @@
 import { useInboxStatusContext } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown } from '../../../icons';
+import { NotificationStatus } from '../../../types';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
 import { StatusOptions } from './StatusOptions';
-import { NotificationStatus } from '../../../types';
 
 const getStatusLabel = (status?: NotificationStatus) => {
   switch (status) {
@@ -28,9 +28,7 @@ export const StatusDropdown = () => {
         class={style('inboxStatus__dropdownTrigger', buttonVariants({ variant: 'unstyled', size: 'none' }))}
         asChild={(triggerProps) => (
           <Button variant="unstyled" size="none" {...triggerProps}>
-            <span class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold nt-text-foreground')}>
-              {getStatusLabel(status())}
-            </span>
+            <span class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold')}>{getStatusLabel(status())}</span>
             <span class={style('inboxStatus__dropdownItemRightIcon', 'nt-text-foreground-alpha-600')}>
               <ArrowDropDown />
             </span>
