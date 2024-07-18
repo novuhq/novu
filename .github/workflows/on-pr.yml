@@ -242,8 +242,8 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
       ee-clerk: ${{ contains (matrix.name,'-ee-clerk') }}
-      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
-      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') || contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/worker') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') || contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/worker') }}
       job-name: ${{ matrix.name }}
     secrets: inherit    
 
