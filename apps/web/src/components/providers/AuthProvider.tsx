@@ -1,7 +1,8 @@
 import { IS_EE_AUTH_ENABLED } from '../../config/index';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { CommunityAuthCtx, CommunityAuthProvider } from './CommunityAuthProvider';
-import { EnterpriseAuthCtx, EnterpriseAuthProvider } from '../../ee/clerk/providers/EnterpriseAuthProvider';
+import EnterpriseAuthProvider, { EnterpriseAuthCtx } from '../../ee/clerk/providers/EnterpriseAuthProvider';
+import { useContext } from 'react';
 
 export type AuthContextValue = {
   inPublicRoute: boolean;
@@ -28,11 +29,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = () => {
-  const context = IS_EE_AUTH_ENABLED ? EnterpriseAuthCtx : CommunityAuthCtx;
+  const ctx = IS_EE_AUTH_ENABLED ? EnterpriseAuthCtx : CommunityAuthCtx;
+  const context = useContext(ctx);
   const value = (context as any).value as AuthContextValue;
 
   if (!value) {
-    throw new Error('useAuth must be used within ' + context.displayName);
+    throw new Error('useAuth must be used within ' + ctx.displayName);
   }
 
   return value;

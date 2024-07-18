@@ -4,28 +4,22 @@ import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
-import { ROUTES } from '../../../constants/routes';
 import { useCommonAuth } from '../../../hooks/useCommonAuth';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { createContextAndHook } from '../../../components/providers/createContextAndHook';
+import { withOrganizationGuard } from './withOrganizationGuard';
 
 const asyncNoop = async () => {};
 
 export const [EnterpriseAuthCtx] = createContextAndHook<AuthContextValue>('Enterprise Auth Context');
 
-export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
+const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
 
-  const { signOut, orgId } = useAuth();
+  const { signOut } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
-  const {
-    setActive,
-    isLoaded: isOrgListLoaded,
-    userMemberships,
-  } = useOrganizationList({ userMemberships: { infinite: true } });
+  const { userMemberships } = useOrganizationList({ userMemberships: { infinite: true } });
 
   const [user, setUser] = useState<IUserEntity | undefined>(undefined);
   const [organization, setOrganization] = useState<IOrganizationEntity | undefined>(undefined);
@@ -54,20 +48,6 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
       setOrganization(toOrganizationEntity(clerkOrganization));
     }
   }, [clerkOrganization]);
-
-  // check if user has active organization
-  useEffect(() => {
-    if (!orgId && isOrgListLoaded && clerkUser) {
-      const hasOrgs = clerkUser.organizationMemberships.length > 0;
-
-      if (hasOrgs) {
-        const firstOrg = clerkUser.organizationMemberships[0].organization;
-        setActive({ organization: firstOrg });
-      } else {
-        navigate(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST);
-      }
-    }
-  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId]);
 
   // transform Clerk user to internal user entity
   useEffect(() => {
@@ -111,6 +91,8 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 
   return <EnterpriseAuthCtx.Provider value={{ value }}>{children}</EnterpriseAuthCtx.Provider>;
 };
+
+export default withOrganizationGuard(EnterpriseAuthProvider);
 
 const toUserEntity = (clerkUser: UserResource): IUserEntity => ({
   _id: clerkUser.id,
