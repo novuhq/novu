@@ -9,7 +9,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   #inboxService: InboxService;
 
   readonly id: InboxNotification['id'];
-  // readonly subject?: InboxNotification['subject'];
+  readonly subject?: InboxNotification['subject'];
   readonly body: InboxNotification['body'];
   readonly to: InboxNotification['to'];
   readonly isRead: InboxNotification['isRead'];
@@ -17,7 +17,6 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   readonly createdAt: InboxNotification['createdAt'];
   readonly readAt?: InboxNotification['readAt'];
   readonly archivedAt?: InboxNotification['archivedAt'];
-  readonly actor?: InboxNotification['actor'];
   readonly avatar?: InboxNotification['avatar'];
   readonly primaryAction?: InboxNotification['primaryAction'];
   readonly secondaryAction?: InboxNotification['secondaryAction'];
@@ -29,7 +28,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     this.#inboxService = InboxServiceSingleton.getInstance();
 
     this.id = notification.id;
-    // this.subject = notification.subject;
+    this.subject = notification.subject;
     this.body = notification.body;
     this.to = notification.to;
     this.isRead = notification.isRead;
@@ -37,7 +36,6 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     this.createdAt = notification.createdAt;
     this.readAt = notification.readAt;
     this.archivedAt = notification.archivedAt;
-    this.actor = notification.actor;
     this.avatar = notification.avatar;
     this.primaryAction = notification.primaryAction;
     this.secondaryAction = notification.secondaryAction;
