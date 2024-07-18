@@ -9,5 +9,5 @@ export const Root = (props: RootProps) => {
   const { id } = useAppearance();
   const style = useStyle();
 
-  return <div id={`novu-root-${id}`} class={(style('root'), cn('novu', id))} {...rest} />;
+  return <div id={`novu-root-${id}`} class={(style('root'), cn('novu', id, 'nt-text-foreground'))} {...rest} />;
 };

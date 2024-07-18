@@ -19,9 +19,7 @@ export const SettingsHeader = (props: SettingsHeaderProps) => {
       >
         <ArrowLeft />
       </button>
-      <div class={style('settingsHeader__title', 'nt-text-xl nt-text-foreground nt-font-semibold')}>
-        Notification Settings
-      </div>
+      <div class={style('settingsHeader__title', 'nt-text-xl nt-font-semibold')}>Notification Settings</div>
     </div>
   );
 };

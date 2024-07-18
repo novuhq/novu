@@ -1,9 +1,8 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
-import { Preference } from '../../../preferences/preference';
-import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../types';
-import { usePreferences } from '../../api';
-import { useStyle } from '../../helpers';
-import { ArrowDropDown } from '../../icons';
+import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
+import { usePreferences } from '../../../api';
+import { useStyle } from '../../../helpers';
+import { ArrowDropDown } from '../../../icons';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
 
@@ -103,9 +102,7 @@ const SettingsRow = (props: {
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <div>
-            <div class={style('workflowLabel', 'nt-text-base nt-font-semibold nt-text-foreground nt-text-start')}>
-              {props.label}
-            </div>
+            <div class={style('workflowLabel', 'nt-text-base nt-font-semibold nt-text-start')}>{props.label}</div>
             <ChannelsLabel channels={props.channels} />
           </div>
           <ArrowDropDown />
