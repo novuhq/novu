@@ -75,9 +75,9 @@ export function PrivatePageLayout() {
               <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
                 <Sidebar />
                 <ContentShell>
-                  {location.pathname !== '/get-started' && environment?.bridge?.url === BRIDGE_SYNC_SAMPLE_ENDPOINT && (
-                    <SampleModeBanner />
-                  )}
+                  {environment?.bridge?.url &&
+                    location.pathname.includes('/workflows') &&
+                    environment?.bridge?.url === BRIDGE_SYNC_SAMPLE_ENDPOINT && <SampleModeBanner />}
                   <FreeTrialBanner />
                   <HeaderNav />
                   <Outlet />
