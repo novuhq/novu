@@ -57,13 +57,14 @@ export async function deleteIndexedDB(page: Page, dbName: string) {
 }
 
 export async function isDarkTheme(page: Page) {
+  // TODO: there should be a more idiomatic way to find out what theme is selected
   const backgroundColor = await page.evaluate(() => {
     const body = document.body;
 
     return window.getComputedStyle(body).backgroundColor;
   });
 
-  return backgroundColor.toLowerCase() !== '#EDF0F2' && backgroundColor.toLowerCase() !== 'rgb(237, 240, 242)';
+  return backgroundColor.toLowerCase() === 'rgb(30, 30, 38)';
 }
 
 export async function getAttByTestId(page: Page, testId: string, att: string) {

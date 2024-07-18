@@ -1,3 +1,3 @@
 export * from './useFeed';
-export * from './useReadAll';
 export * from './usePreferences';
+export * from './useReadAll';

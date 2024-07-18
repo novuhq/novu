@@ -99,6 +99,8 @@ export class MessageEntity {
   _actorId?: string;
 
   tags?: string[];
+
+  avatar?: string;
 }
 
 export type MessageDBModel = ChangePropsValueType<

@@ -15,13 +15,6 @@ export enum NotificationActionStatus {
   DONE = 'done',
 }
 
-export enum AvatarType {
-  NONE = 'none',
-  USER = 'user',
-  SYSTEM_ICON = 'system_icon',
-  SYSTEM_CUSTOM = 'system_custom',
-}
-
 export enum CtaType {
   REDIRECT = 'redirect',
 }
@@ -61,11 +54,6 @@ export type Session = {
   unreadCount: number;
 };
 
-export type Avatar = {
-  type: AvatarType;
-  data: string | null;
-};
-
 export type MessageButton = {
   type: NotificationButton;
   content: string;
@@ -97,7 +85,7 @@ export type Action = {
 
 export type InboxNotification = {
   id: string;
-  // subject?: string;
+  subject?: string;
   body: string;
   to: Subscriber;
   isRead: boolean;
@@ -105,8 +93,7 @@ export type InboxNotification = {
   createdAt: string;
   readAt?: string | null;
   archivedAt?: string | null;
-  actor?: Subscriber;
-  avatar?: Avatar;
+  avatar?: string;
   primaryAction?: Action;
   secondaryAction?: Action;
   channelType: ChannelType;
