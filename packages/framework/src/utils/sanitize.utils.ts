@@ -3,21 +3,27 @@ import sanitizeTypes, { IOptions } from 'sanitize-html';
 /**
  * Options for the sanitize-html library.
  *
+ * We are providing a permissive approach by default, with the exception of
+ * disabling `script` tags.
+ *
  * @see https://www.npmjs.com/package/sanitize-html#default-options
  */
 const sanitizeOptions: IOptions = {
   /**
    * Additional tags to allow.
    */
-  allowedTags: sanitizeTypes.defaults.allowedTags.concat(['style', 'img']),
-  allowedAttributes: {
-    ...sanitizeTypes.defaults.allowedAttributes,
-    /**
-     * Additional attributes to allow on all tags.
-     */
-    '*': ['style'],
-    img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
-  },
+  allowedTags: sanitizeTypes.defaults.allowedTags.concat([
+    'style',
+    'img',
+    'html',
+    'head',
+    'body',
+    'link',
+    'meta',
+    'title',
+  ]),
+  // Setting this to false to allow all attributes.
+  allowedAttributes: false,
   /**
    * Required to disable console warnings when allowing style tags.
    *
@@ -40,7 +46,14 @@ export const sanitizeHTML = (html: string): string => {
     return html;
   }
 
-  return sanitizeTypes(html, sanitizeOptions);
+  // Sanitize-html removes the DOCTYPE tag, so we need to add it back.
+  const doctypeRegex = new RegExp('^<!DOCTYPE .*?>');
+  const doctypeTags = html.match(doctypeRegex);
+  const cleanHtml = sanitizeTypes(html, sanitizeOptions);
+
+  const cleanHtmlWithDocType = doctypeTags ? doctypeTags[0] + cleanHtml : cleanHtml;
+
+  return cleanHtmlWithDocType;
 };
 
 export const sanitizeHtmlInObject = <T extends Record<string, unknown>>(object: T): T => {
