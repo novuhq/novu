@@ -27,7 +27,7 @@ export const EnterpriseAuthContext = createContext<AuthContextValue>({
   redirectToLogin: noop,
   redirectToSignUp: noop,
   switchOrganization: asyncNoop,
-  reloadOrganization: asyncNoop,
+  reloadOrganization: () => Promise.resolve(),
 });
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
@@ -117,7 +117,10 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   }, [userMemberships]);
 
   const reloadOrganization = useCallback(async () => {
-    await clerkOrganization?.reload();
+    if (clerkOrganization) {
+      await clerkOrganization.reload();
+      setOrganization(toOrganizationEntity(clerkOrganization));
+    }
   }, [clerkOrganization]);
 
   // check if user has active organization
@@ -211,7 +214,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     redirectToLogin,
     redirectToSignUp,
     switchOrganization: asyncNoop,
-    reloadOrganization: asyncNoop,
+    reloadOrganization,
   };
 
   return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;
