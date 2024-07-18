@@ -20,7 +20,7 @@ module.exports = {
             );
 
             if (hasAppearanceKey) {
-              return; // Skip reporting if appearanceKey is present, as it is mostlikely forwarded.
+              return; // Skip reporting if appearanceKey is present, as it is most likely forwarded.
             }
 
             const value = context.getSourceCode().getText(node.value);

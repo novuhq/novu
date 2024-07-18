@@ -54,7 +54,6 @@ export const appearanceKeys = [
 
   //Notifications
   'notificationList',
-  'notificationListContainer',
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',
   'notificationListEmptyNoticeIcon',

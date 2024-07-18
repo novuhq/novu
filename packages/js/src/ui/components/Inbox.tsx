@@ -1,5 +1,4 @@
 import { createSignal, JSX, Match, Switch } from 'solid-js';
-import { useLocalization } from '../context';
 import { useStyle } from '../helpers';
 import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
 import { NotificationList } from './Notification';
@@ -10,21 +9,22 @@ type InboxProps = {
   renderBell?: ({ unreadCount }: { unreadCount: number }) => JSX.Element;
 };
 
+enum Screen {
+  Inbox = 'inbox',
+  Settings = 'settings',
+}
 const InboxContent = () => {
-  const [currentScreen, setCurrentScreen] = createSignal<'inbox' | 'settings'>('inbox');
-  const { t } = useLocalization();
+  const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
 
   return (
     <>
       <Switch>
-        <Match when={currentScreen() === 'inbox'}>
+        <Match when={currentScreen() === Screen.Inbox}>
           <Header updateScreen={setCurrentScreen} />
-
           <NotificationList />
         </Match>
-
-        <Match when={currentScreen() === 'settings'}>
-          <SettingsHeader backAction={() => setCurrentScreen('inbox')} />
+        <Match when={currentScreen() === Screen.Settings}>
+          <SettingsHeader backAction={() => setCurrentScreen(Screen.Inbox)} />
           <Settings />
         </Match>
       </Switch>

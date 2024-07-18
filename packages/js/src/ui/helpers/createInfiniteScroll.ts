@@ -20,7 +20,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
   if (!isServer) {
     const io = new IntersectionObserver((e) => {
       if (e.length > 0 && e[0]!.isIntersecting && !end() && !contents.loading) {
-        setOffset((o) => o + e.length);
+        setOffset(setOffset(data().length));
       }
     });
     onCleanup(() => io.disconnect());

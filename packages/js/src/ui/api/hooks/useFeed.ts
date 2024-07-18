@@ -41,9 +41,7 @@ type UseFeedInfiniteScrollProps = {
 export const useFeedInfiniteScroll = (props?: UseFeedInfiniteScrollProps) => {
   const novu = useNovu();
 
-  const infiniteScroll = createInfiniteScroll(async (offset) => {
+  return createInfiniteScroll(async (offset) => {
     return await novu.feeds.fetch({ ...(props?.options || {}), offset });
   });
-
-  return infiniteScroll;
 };

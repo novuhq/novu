@@ -1,6 +1,4 @@
-import { Localization } from '../context/LocalizationContext';
-
-export const defaultLocalization: Required<Localization> = {
+export const defaultLocalization = {
   'inbox.title': 'Inbox',
-  'notifications.emptyNotice': 'No messages',
+  'notifications.emptyNotice': 'No notifications',
 };
