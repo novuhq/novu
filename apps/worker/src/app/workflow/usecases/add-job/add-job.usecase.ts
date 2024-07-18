@@ -314,6 +314,16 @@ export class AddJob {
   ) {
     const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
 
+    let metadata: IWorkflowStepMetadata;
+    if (bridgeResponse) {
+      metadata = await this.updateMetadata(bridgeResponse, command);
+    } else {
+      metadata = job.digest;
+    }
+
+    // Update the job digest directly to avoid an extra database call
+    command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
+
     const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse);
 
     validateDigest(job);
@@ -321,7 +331,7 @@ export class AddJob {
     digestAmount =
       bridgeAmount ??
       this.computeJobWaitDurationService.calculateDelay({
-        stepMetadata: job.digest,
+        stepMetadata: metadata,
         payload: job.payload,
         overrides: job.overrides,
       });
