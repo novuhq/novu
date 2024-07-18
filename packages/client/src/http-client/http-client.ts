@@ -6,7 +6,6 @@ const DEFAULT_BACKEND_URL = 'https://api.novu.co';
 const PACKAGE_NAME = '@novu/client';
 const PACKAGE_VERSION = '2.0.0-canary.0';
 const DEFAULT_USER_AGENT = `${PACKAGE_NAME}-${PACKAGE_VERSION}`;
-const NOVU_API_VERSION = '2024-06-26';
 
 export class HttpClient {
   private backendUrl: string;
@@ -23,7 +22,6 @@ export class HttpClient {
     this.headers = {
       'Content-Type': 'application/json',
       'User-Agent': userAgent,
-      'Novu-API-Version': NOVU_API_VERSION,
     };
   }
 
@@ -33,6 +31,13 @@ export class HttpClient {
 
   disposeAuthorizationToken() {
     delete this.headers.Authorization;
+  }
+
+  updateHeaders(headers: Record<string, string>) {
+    this.headers = {
+      ...this.headers,
+      ...headers,
+    };
   }
 
   async getFullResponse(url: string, params?: CustomDataType) {
