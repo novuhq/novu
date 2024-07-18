@@ -37,9 +37,10 @@ export const BUTTON_RECIPE = defineSlotRecipe({
         root: {
           '&:not([data-variant="transparent"])': {
             px: '50',
+            pt: '25',
+            pb: '25',
+            fontSize: 'button.small',
           },
-          py: '25',
-          fontSize: 'button.small',
         },
         label: {
           lineHeight: 'sm',
@@ -49,8 +50,9 @@ export const BUTTON_RECIPE = defineSlotRecipe({
         root: {
           '&:not([data-variant="transparent"])': {
             px: '75',
+            pt: '25',
+            pb: '25',
           },
-          py: '25',
         },
 
         label: {
@@ -62,9 +64,10 @@ export const BUTTON_RECIPE = defineSlotRecipe({
         root: {
           '&:not([data-variant="transparent"])': {
             px: '100',
+            pt: '50',
+            pb: '50',
+            borderRadius: '100',
           },
-          py: '50',
-          borderRadius: '100',
         },
         label: {
           fontSize: 'button',
@@ -77,9 +80,10 @@ export const BUTTON_RECIPE = defineSlotRecipe({
         root: {
           '&:not([data-variant="transparent"])': {
             px: '150',
+            pt: '75',
+            pb: '75',
+            borderRadius: '150',
           },
-          py: '75',
-          borderRadius: '150',
         },
         label: {
           fontSize: 'button',
@@ -135,6 +139,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       transparent: {
         root: {
           border: 'none',
+          borderRadius: '0',
           bg: '[transparent]',
           px: '0',
         },
