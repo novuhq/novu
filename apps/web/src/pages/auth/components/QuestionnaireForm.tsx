@@ -71,7 +71,7 @@ export function QuestionnaireForm() {
         source: 'sample-workspace',
       });
     } catch (e) {
-      // @eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console
       console.error(e);
 
       captureException(e);
