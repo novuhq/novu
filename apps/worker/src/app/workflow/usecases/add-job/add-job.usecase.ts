@@ -143,7 +143,7 @@ export class AddJob {
     }
 
     if (job.type === StepTypeEnum.DELAY) {
-      delayAmount = await this.handleDelay(command, filterVariables, delayAmount);
+      delayAmount = await this.handleDelay(command, filterVariables);
 
       if (delayAmount === undefined) {
         Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
@@ -170,13 +170,30 @@ export class AddJob {
     await this.queueJob(job, 0);
   }
 
-  private async handleDelay(
-    command: AddJobCommand,
-    filterVariables: IFilterVariables,
-    delayAmount: number | undefined
-  ) {
-    await this.fetchBridgeData(command, filterVariables);
-    delayAmount = await this.addDelayJob.execute(command);
+  private async handleDelay(command: AddJobCommand, filterVariables: IFilterVariables) {
+    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
+
+    let metadata: IWorkflowStepMetadata;
+    if (bridgeResponse) {
+      // Assign V2 metadata from Bridge response
+      metadata = await this.updateMetadata(bridgeResponse, command);
+    } else {
+      // Assign V1 metadata from known values
+      metadata = command.job.step.metadata as IWorkflowStepMetadata;
+    }
+
+    const delayAmount = await this.addDelayJob.execute(
+      AddJobCommand.create({
+        ...command,
+        job: {
+          ...command.job,
+          step: {
+            ...command.job.step,
+            metadata,
+          },
+        },
+      })
+    );
 
     Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
 
@@ -199,21 +216,16 @@ export class AddJob {
       return null;
     }
 
-    const job = await this.updateJob(response, command);
-
-    // Update the job digest directly to avoid an extra database call
-    command.job.digest = { ...command.job.digest, ...job } as IWorkflowStepMetadata;
-
     return response;
   }
 
-  private async updateJob(response: ExecuteOutput<DigestOutput>, command: AddJobCommand) {
-    let job = {} as IWorkflowStepMetadata;
+  private async updateMetadata(response: ExecuteOutput<DigestOutput>, command: AddJobCommand) {
+    let metadata = {} as IWorkflowStepMetadata;
     const outputs = response.outputs;
     const digestType = getDigestType(response.outputs);
 
     if (isTimedDigestOutput(outputs)) {
-      job = {
+      metadata = {
         type: DigestTypeEnum.TIMED,
         digestKey: outputs?.digestKey,
         timed: { cronExpression: outputs?.cron },
@@ -226,18 +238,18 @@ export class AddJob {
         },
         {
           $set: {
-            'digest.type': job.type,
-            'digest.digestKey': job.digestKey,
-            'digest.amount': job.amount,
-            'digest.unit': job.unit,
-            'digest.timed.cronExpression': job.timed?.cronExpression,
+            'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
+            'digest.amount': metadata.amount,
+            'digest.unit': metadata.unit,
+            'digest.timed.cronExpression': metadata.timed?.cronExpression,
           },
         }
       );
     }
 
     if (isLookBackDigestOutput(outputs)) {
-      job = {
+      metadata = {
         type: digestType,
         amount: outputs?.amount,
         digestKey: outputs?.digestKey,
@@ -254,20 +266,20 @@ export class AddJob {
         },
         {
           $set: {
-            'digest.type': job.type,
-            'digest.digestKey': job.digestKey,
-            'digest.amount': job.amount,
-            'digest.unit': job.unit,
-            'digest.backoff': job.backoff,
-            'digest.backoffAmount': job.backoffAmount,
-            'digest.backoffUnit': job.backoffUnit,
+            'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
+            'digest.amount': metadata.amount,
+            'digest.unit': metadata.unit,
+            'digest.backoff': metadata.backoff,
+            'digest.backoffAmount': metadata.backoffAmount,
+            'digest.backoffUnit': metadata.backoffUnit,
           },
         }
       );
     }
 
     if (isRegularDigestOutput(outputs)) {
-      job = {
+      metadata = {
         type: digestType,
         amount: outputs?.amount,
         digestKey: outputs?.digestKey,
@@ -281,16 +293,16 @@ export class AddJob {
         },
         {
           $set: {
-            'digest.type': job.type,
-            'digest.digestKey': job.digestKey,
-            'digest.amount': job.amount,
-            'digest.unit': job.unit,
+            'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
+            'digest.amount': metadata.amount,
+            'digest.unit': metadata.unit,
           },
         }
       );
     }
 
-    return job;
+    return metadata;
   }
 
   private async handleDigest(
