@@ -1,14 +1,13 @@
-import { BRIDGE_CODE } from './bridge-code.const';
-
-export const files = {
-  'index.js': {
-    file: {
-      contents: BRIDGE_CODE,
+export const dynamicFiles = (indexCode: string) => {
+  return {
+    'index.js': {
+      file: {
+        contents: indexCode,
+      },
     },
-  },
-  'package.json': {
-    file: {
-      contents: `
+    'package.json': {
+      file: {
+        contents: `
 {
   "name": "example-app",
   "type": "module",
@@ -25,6 +24,7 @@ export const files = {
     "start": "nodemon --watch './' index.js"
   }
 }`,
+      },
     },
-  },
+  };
 };

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { files } from './files';
+import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
 import { sandboxBridge } from '../../../../../index';
-import { useStudioState, useWorkflowTrigger } from '../../../../hooks';
+import { useDiscover, useStudioState } from '../../../../hooks';
+import { BRIDGE_CODE } from './bridge-code.const';
 
 interface RunExpressAppProps {
   code: string;
@@ -14,10 +15,11 @@ const { WebContainer } = require('@webcontainer/api');
 
 export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
   const [output, setOutput] = useState<string>('');
-  const { trigger, isLoading: isTestLoading } = useWorkflowTrigger();
   const studioState = useStudioState() || {};
-  const { testUser, devSecretKey, setBridgeURL, bridgeURL } = studioState;
+  const { setBridgeURL } = studioState;
+  const { refetch } = useDiscover();
 
+  // Responsible to bootstrap and run express app
   useEffectOnce(() => {
     (async () => {
       try {
@@ -82,7 +84,7 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
           return startOutput;
         }
 
-        await webContainerInstance.mount(files);
+        await webContainerInstance.mount(dynamicFiles(BRIDGE_CODE));
 
         await installDependencies();
         await startDevServer();
@@ -93,6 +95,7 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
     })();
   }, true);
 
+  // Responsible to run dev server in order to create novu.sh tunnel
   useEffectOnce(async () => {
     async function runDevScript() {
       setOutput((prevOutput) => prevOutput + 'Running dev script');
@@ -129,30 +132,24 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
     await runDevScript();
   }, !!webContainerInstance && !!sandboxBridge.url);
 
+  const DEBOUNCE_DELAY = 1000; // 1 second
+
+  // Responsible to update server code, once the editor code
   useEffect(() => {
-    const triggerFunc = async () => {
-      const response = await fetch('http://localhost:3000/v1/events/trigger', {
-        method: 'POST',
-        body: JSON.stringify({
-          bridgeUrl: bridgeURL,
-          name: 'hello-world',
-          to: { subscriberId: testUser.id, email: testUser.emailAddress },
-          payload: { __source: 'studio-onboarding-test-workflow' },
-        }),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: `ApiKey 53c194c99833b63fc9c19d39f015f0e0`,
-        },
-      });
+    let debounceTimeout;
 
-      const res = await response.json();
+    if (BRIDGE_CODE !== code) {
+      debounceTimeout = setTimeout(() => {
+        webContainerInstance?.mount(dynamicFiles(code));
 
-      console.log(res);
-    };
+        webContainerInstance.on('server-ready', (port, url) => {
+          refetch();
+        });
+      }, DEBOUNCE_DELAY);
+    }
 
-    triggerFunc();
-  }, [bridgeURL]);
+    return () => clearTimeout(debounceTimeout);
+  }, [code, refetch]);
 
   return (
     <div style={{ whiteSpace: 'pre-wrap', overflow: 'auto', height: '500px' }}>
