@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 import { QueryKeys } from '../../api/query.keys';
 import { getEnvironments } from '../../api/environment';
-import { createContextAndHook } from './createContextandHook';
+import { createContextAndHook } from './createContextAndHook';
 import { IS_DOCKER_HOSTED } from '../../config/index';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useAuth } from './AuthProvider';
@@ -69,15 +69,19 @@ function selectEnvironment(environments: IEnvironment[] | undefined | null, sele
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, isLoading: isLoadingAuth } = useAuth();
+  const [internalLoading, setInternalLoading] = useState(true);
   const {
     data: environments,
-    isLoading,
+    isLoading: isLoadingEnvironments,
     refetch: refetchEnvironments,
   } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, currentOrganization?._id], getEnvironments, {
     enabled: !!currentOrganization,
     retry: false,
     staleTime: Infinity,
+    onSettled: (data, error) => {
+      setInternalLoading(false);
+    },
   });
 
   const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(
@@ -163,7 +167,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     switchEnvironment,
     switchToDevelopmentEnvironment,
     switchToProductionEnvironment,
-    isLoading,
+    isLoading: isLoadingEnvironments || isLoadingAuth || internalLoading,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
 

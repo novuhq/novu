@@ -27,6 +27,9 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
 import { UpdateAllNotificationsCommand } from './usecases/update-all-notifications/update-all-notifications.command';
 import { UpdateAllNotifications } from './usecases/update-all-notifications/update-all-notifications.usecase';
+import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
+import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -38,7 +41,8 @@ export class InboxController {
     private notificationsCountUsecase: NotificationsCount,
     private markNotificationAsUsecase: MarkNotificationAs,
     private updateNotificationActionUsecase: UpdateNotificationAction,
-    private updateAllNotifications: UpdateAllNotifications
+    private updateAllNotifications: UpdateAllNotifications,
+    private getPreferencesUsecase: GetPreferences
   ) {}
 
   @Post('/session')
@@ -92,6 +96,20 @@ export class InboxController {
     );
 
     return res;
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/preferences')
+  async getAllPreferences(
+    @SubscriberSession() subscriberSession: SubscriberEntity
+  ): Promise<GetPreferencesResponseDto[]> {
+    return await this.getPreferencesUsecase.execute(
+      GetPreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

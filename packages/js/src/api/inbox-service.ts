@@ -3,6 +3,7 @@ import type { ActionTypeEnum, InboxNotification, NotificationFilter, Session } f
 
 export type InboxServiceOptions = ApiOptions;
 
+const NOVU_API_VERSION = '2024-06-26';
 const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 
@@ -11,6 +12,9 @@ export class InboxService {
 
   constructor(options: InboxServiceOptions = {}) {
     this.#httpClient = new HttpClient(options);
+    this.#httpClient.updateHeaders({
+      'Novu-API-Version': NOVU_API_VERSION,
+    });
   }
 
   async initializeSession({

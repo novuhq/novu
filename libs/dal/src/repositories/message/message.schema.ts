@@ -115,6 +115,7 @@ const messageSchema = new Schema<MessageDBModel>(
     },
     expireAt: Schema.Types.Date,
     tags: [Schema.Types.String],
+    avatar: Schema.Types.String,
   },
   schemaOptions
 );

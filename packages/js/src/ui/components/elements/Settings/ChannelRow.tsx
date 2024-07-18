@@ -1,8 +1,8 @@
 import { JSX } from 'solid-js';
-import { ChannelType } from '../../../types';
-import { useNovu } from '../../context';
-import { useStyle } from '../../helpers';
-import { Chat, Email, InApp, Push, Sms } from '../../icons';
+import { ChannelType } from '../../../../types';
+import { useNovu } from '../../../context';
+import { useStyle } from '../../../helpers';
+import { Chat, Email, InApp, Push, Sms } from '../../../icons';
 import { Switch } from './Switch';
 
 type ChannelRowProps = {
@@ -39,9 +39,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
     <div class={style('channelContainer', 'nt-flex nt-justify-between nt-items-center nt-h-11')}>
       <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
         <div>{getIcon(props.channel)}</div>
-        <span class={style('channelLabel', 'nt-text-base nt-font-semibold nt-text-foreground')}>
-          {getLabel(props.channel)}
-        </span>
+        <span class={style('channelLabel', 'nt-text-base nt-font-semibold')}>{getLabel(props.channel)}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
         <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
