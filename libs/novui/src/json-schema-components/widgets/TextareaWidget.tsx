@@ -2,33 +2,51 @@ import { getInputProps, WidgetProps } from '@rjsf/utils';
 import { TextInputType, Textarea } from '../../components';
 import '@mantine/tiptap/styles.css';
 import { RichTextEditor } from '@mantine/tiptap';
-import { useEditor } from '@tiptap/react';
+import { markInputRule, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Text from '@tiptap/extension-text';
 import Paragraph from '@tiptap/extension-paragraph';
 import { ReactRenderer } from '@tiptap/react';
 
-import { MentionList } from './MentionList';
+import { MentionList, MentionRef } from './MentionList';
 import { Input } from '@mantine/core';
 import { css, cx } from '../../../styled-system/css';
 import Document from '@tiptap/extension-document';
 import Mention from '@tiptap/extension-mention';
+import Strike from '@tiptap/extension-strike';
 
 import { input } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
+import { useEffect } from 'react';
+
+const inputRegex = /(?:^|\s)((?:~)((?:[^~]+))(?:~))$/;
 
 export const TextareaWidget = (props: WidgetProps) => {
   const { type, value, label, schema, formContext, onChange, options, required, readonly, rawErrors, disabled } = props;
   const inputProps1 = getInputProps(schema, type, options);
+
   const [variantProps, inputProps] = input.splitVariantProps({});
   const [cssProps, localProps] = splitCssProps(inputProps);
   const variables = formContext;
   // const { onChange, className, rightSection, ...otherProps } = localProps;
   const classNames = input(variantProps);
-
+  const CustomStrike = Strike.extend({
+    addInputRules() {
+      return [
+        markInputRule({
+          find: inputRegex,
+          type: this.type,
+        }),
+      ];
+    },
+  });
   const editor = useEditor({
+    // parseOptions: {
+    //   preserveWhitespace: true,
+    // },
     extensions: [
       // StarterKit,
+      CustomStrike,
       Document,
       Paragraph,
       Text,
@@ -62,7 +80,7 @@ export const TextareaWidget = (props: WidgetProps) => {
           },
           char: '{{',
           render() {
-            let reactRenderer: ReactRenderer | null = null;
+            let reactRenderer: ReactRenderer<MentionRef> | null = null;
 
             return {
               onStart: (props) => {
@@ -74,6 +92,13 @@ export const TextareaWidget = (props: WidgetProps) => {
               onUpdate(props) {
                 reactRenderer?.updateProps(props);
               },
+              onKeyDown(props) {
+                if (!reactRenderer?.ref) {
+                  return false;
+                }
+
+                return reactRenderer?.ref.onKeyDown(props);
+              },
               onExit() {
                 reactRenderer?.destroy();
               },
@@ -82,13 +107,22 @@ export const TextareaWidget = (props: WidgetProps) => {
         },
       }),
     ],
-    content: value,
+    content: '',
+    onBlur: () => {
+      console.log('blur editor---');
+    },
     onUpdate: ({ editor }) => {
       const content = editor.isEmpty ? undefined : editor.getText();
       onChange(content);
     },
   });
   const error = rawErrors?.length > 0 && rawErrors;
+
+  useEffect(() => {
+    if (editor) {
+      editor.commands.setContent(value);
+    }
+  }, []);
 
   return (
     <Input.Wrapper
