@@ -134,6 +134,9 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
         return;
       }
 
+      // TODO: Revise storing environment id in local storage to avoid having to clear it during org or env switching
+      clearEnvironmentId();
+
       saveToken(newToken);
       await refetchOrganizations();
       /*
@@ -205,7 +208,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   const switchOrganization = useCallback(
     async (orgId: string) => {
       if (!orgId) {
-        return;
+        throw new Error('Organization ID is required');
       }
 
       if (orgId === currentOrganization?._id) {
@@ -213,9 +216,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
       }
 
       // TODO: Revise storing environment id in local storage to avoid having to clear it during org or env switching
-      if (currentOrganization) {
-        clearEnvironmentId();
-      }
+      clearEnvironmentId();
 
       const token = await apiSwitchOrganization(orgId);
       await login(token);
@@ -225,11 +226,9 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   );
 
   useEffect(() => {
-    (async () => {
-      if (organizations && !currentOrganization) {
-        await switchOrganization(getTokenClaims()?.organizationId || '');
-      }
-    })();
+    if (organizations) {
+      setCurrentOrganization(selectOrganization(organizations, getTokenClaims()?.organizationId));
+    }
   }, [organizations, currentOrganization, switchOrganization]);
 
   useEffect(() => {

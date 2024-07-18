@@ -31,13 +31,7 @@ export const Settings = () => {
     mutate((prev) =>
       prev?.map((preference) => {
         if (preference.workflow?.id === workflowId || (!workflowId && preference.level === PreferenceLevel.GLOBAL)) {
-          return {
-            ...preference,
-            channels: {
-              ...preference.channels,
-              [channel]: enabled,
-            },
-          } as Preference;
+          preference.channels[channel] = enabled;
         }
 
         return preference;

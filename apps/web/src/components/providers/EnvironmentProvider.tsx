@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 import { QueryKeys } from '../../api/query.keys';
 import { getEnvironments } from '../../api/environment';
-import { createContextAndHook } from './createContextandHook';
+import { createContextAndHook } from './createContextAndHook';
 import { IS_DOCKER_HOSTED } from '../../config/index';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useAuth } from './AuthProvider';
@@ -26,9 +26,9 @@ export function clearEnvironmentId() {
 }
 
 type EnvironmentContextValue = {
-  currentEnvironment?: IEnvironment;
+  currentEnvironment?: IEnvironment | null;
   // @deprecated use currentEnvironment instead;
-  environment?: IEnvironment;
+  environment?: IEnvironment | null;
   environments?: IEnvironment[];
   refetchEnvironments: () => Promise<void>;
   switchEnvironment: (params: Partial<{ environmentId: string; redirectUrl: string }>) => Promise<void>;
@@ -40,11 +40,11 @@ type EnvironmentContextValue = {
 
 const [EnvironmentCtx, useEnvironmentCtx] = createContextAndHook<EnvironmentContextValue>('Environment Context');
 
-function selectEnvironment(environments: IEnvironment[] | undefined, selectedEnvironmentId?: string) {
-  let e: IEnvironment | undefined;
+function selectEnvironment(environments: IEnvironment[] | undefined | null, selectedEnvironmentId?: string) {
+  let e: IEnvironment | undefined | null = null;
 
   if (!environments) {
-    return;
+    return null;
   }
 
   // Find the environment based on the current user's last environment
@@ -69,23 +69,31 @@ function selectEnvironment(environments: IEnvironment[] | undefined, selectedEnv
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { currentOrganization, inPrivateRoute } = useAuth();
+  const { currentOrganization, isLoading: isLoadingAuth } = useAuth();
+  const [internalLoading, setInternalLoading] = useState(true);
   const {
     data: environments,
-    isLoading,
+    isLoading: isLoadingEnvironments,
     refetch: refetchEnvironments,
   } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, currentOrganization?._id], getEnvironments, {
     enabled: !!currentOrganization,
     retry: false,
     staleTime: Infinity,
+    onSettled: (data, error) => {
+      setInternalLoading(false);
+    },
   });
 
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | undefined>(
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(
     selectEnvironment(environments, getEnvironmentId())
   );
 
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
+      if (currentEnvironment?._id === environmentId) {
+        return;
+      }
+
       setCurrentEnvironment(selectEnvironment(environments, environmentId));
 
       /*
@@ -99,7 +107,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
         navigate(redirectUrl);
       }
     },
-    [queryClient, navigate, setCurrentEnvironment, environments]
+    [queryClient, navigate, setCurrentEnvironment, currentEnvironment, environments]
   );
 
   const switchToProductionEnvironment = useCallback(
@@ -135,7 +143,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   );
 
   useEffect(() => {
-    if (environments && environments.length > 0 && !currentEnvironment) {
+    if (environments) {
       switchEnvironment({ environmentId: getEnvironmentId() });
     }
   }, [currentEnvironment, environments, switchEnvironment]);
@@ -159,13 +167,9 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     switchEnvironment,
     switchToDevelopmentEnvironment,
     switchToProductionEnvironment,
-    isLoading,
+    isLoading: isLoadingEnvironments || isLoadingAuth || internalLoading,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
-
-  if (inPrivateRoute && !currentEnvironment) {
-    return null;
-  }
 
   return <EnvironmentCtx.Provider value={{ value }}>{children}</EnvironmentCtx.Provider>;
 }

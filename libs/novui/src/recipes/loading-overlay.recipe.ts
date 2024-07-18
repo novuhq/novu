@@ -14,7 +14,7 @@ export const LOADING_OVERLAY_RECIPE = defineSlotRecipe({
       colorPalette: 'mode.cloud',
     },
     overlay: {
-      background: 'loader.overlay !important',
+      background: 'loader.overlay',
       // TODO: use semantic token when available
       opacity: '40',
     },
@@ -25,8 +25,8 @@ export const LOADING_OVERLAY_RECIPE = defineSlotRecipe({
       },
       // Specifically needed for oval loader
       _after: {
-        borderColor: 'colorPalette.middle !important',
-        borderLeftColor: 'transparent !important',
+        borderColor: 'colorPalette.middle',
+        borderLeftColor: 'transparent',
       },
     },
   },
