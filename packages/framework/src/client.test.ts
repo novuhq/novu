@@ -368,6 +368,79 @@ describe('Novu Client', () => {
       const subject = (emailExecutionResult.outputs as any).subject as string;
       expect(subject).toBe('body static prefix John');
     });
+
+    it('should sanitize the step result of all delivery channel step types', async () => {
+      const script = `<script>alert('Hello there')</script>`;
+
+      const client = new Client({ secretKey: 'some-secret-key' });
+      client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.email('send-email', async () => ({
+            body: `Start of body. ${script}`,
+            subject: `Start of subject. ${script}`,
+          }));
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.outputs).toBeDefined();
+      expect(executionResult.outputs.body).toBe('Start of body. ');
+      expect(executionResult.outputs.subject).toBe('Start of subject. ');
+    });
+
+    it('should not sanitize the step result of custom step type', async () => {
+      const script = `<script>alert('Hello there')</script>`;
+
+      const client = new Client({ secretKey: 'some-secret-key' });
+      client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.custom(
+            'send-email',
+            async () => ({
+              testVal: `Start of body. ${script}`,
+            }),
+            {
+              outputSchema: {
+                type: 'object',
+                properties: {
+                  testVal: { type: 'string' },
+                },
+                required: ['testVal'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.outputs).toBeDefined();
+      expect(executionResult.outputs.testVal).toBe(`Start of body. ${script}`);
+    });
   });
 
   describe('executeWorkflow method', () => {
@@ -781,6 +854,79 @@ describe('Novu Client', () => {
       } as any;
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
+    });
+
+    it('should sanitize the step result of all delivery channel step types', async () => {
+      const script = `<script>alert('Hello there')</script>`;
+
+      const client = new Client({ secretKey: 'some-secret-key' });
+      client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.email('send-email', async () => ({
+            body: `Start of body. ${script}`,
+            subject: `Start of subject. ${script}`,
+          }));
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.outputs).toBeDefined();
+      expect(executionResult.outputs.body).toBe('Start of body. ');
+      expect(executionResult.outputs.subject).toBe('Start of subject. ');
+    });
+
+    it('should not sanitize the step result of custom step type', async () => {
+      const script = `<script>alert('Hello there')</script>`;
+
+      const client = new Client({ secretKey: 'some-secret-key' });
+      client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.custom(
+            'send-email',
+            async () => ({
+              testVal: `Start of body. ${script}`,
+            }),
+            {
+              outputSchema: {
+                type: 'object',
+                properties: {
+                  testVal: { type: 'string' },
+                },
+                required: ['testVal'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.outputs).toBeDefined();
+      expect(executionResult.outputs.testVal).toBe(`Start of body. ${script}`);
     });
   });
 
