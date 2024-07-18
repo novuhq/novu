@@ -47,6 +47,7 @@
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
+    "@novu/worker": "workspace:*",
     "@sendgrid/mail": "^8.1.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
