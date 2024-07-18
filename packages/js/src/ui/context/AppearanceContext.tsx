@@ -43,6 +43,7 @@ export const appearanceKeys = [
   'root',
   'bellIcon',
   'bellContainer',
+  'bellDot',
   'settings__button',
   'settingsContainer',
   'inboxHeader',

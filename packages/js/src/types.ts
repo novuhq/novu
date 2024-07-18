@@ -51,7 +51,7 @@ export enum ActionTypeEnum {
 
 export type Session = {
   token: string;
-  unreadCount: number;
+  totalUnreadCount: number;
 };
 
 export type MessageButton = {

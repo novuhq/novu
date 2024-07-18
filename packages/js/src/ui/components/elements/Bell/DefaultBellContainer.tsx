@@ -1,9 +1,9 @@
-import { Show } from 'solid-js';
+import { Accessor, Show } from 'solid-js';
 import { useStyle } from '../../../helpers';
 import { BellIcon } from '../../../icons';
 
 type DefaultBellContainerProps = {
-  unreadCount: number;
+  unreadCount: Accessor<number>;
 };
 
 export const BellContainer = (props: DefaultBellContainerProps) => {
@@ -17,11 +17,13 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
       )}
     >
       <BellIcon />
-      <Show when={props.unreadCount > 0}>
-        {/* <span
-          class="nt-absolute nt-top-2 nt-right-2 nt-block nt-w-2 nt-h-2 nt-transform nt-translate-x-1/2
-        -nt-translate-y-1/2 nt-bg-primary nt-rounded-full"
-        /> */}
+      <Show when={props.unreadCount() > 0}>
+        <span
+          class={style(
+            'bellDot',
+            'nt-absolute nt-top-2 nt-right-2 nt-block nt-w-2 nt-h-2 nt-transform nt-translate-x-1/2 -nt-translate-y-1/2 nt-bg-primary nt-rounded-full nt-border nt-border-background'
+          )}
+        />
       </Show>
     </span>
   );
