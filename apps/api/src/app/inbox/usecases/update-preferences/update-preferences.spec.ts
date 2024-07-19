@@ -1,50 +1,12 @@
-import {
-  AnalyticsService,
-  GetSubscriberGlobalPreference,
-  GetSubscriberTemplatePreference,
-} from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberPreferenceRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { sub } from 'date-fns';
 import sinon from 'sinon';
 import { AnalyticsEventsEnum } from '../../utils';
 import { UpdatePreferences } from './update-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
-const mockedWorkflowPreference: any = {
-  template: {},
-  preference: {
-    enabled: true,
-    channels: {
-      email: true,
-      in_app: true,
-      sms: false,
-      push: false,
-      chat: true,
-    },
-    overrides: {
-      email: false,
-      in_app: false,
-      sms: true,
-      push: true,
-      chat: false,
-    },
-  },
-};
-
-const mockedGlobalPreferences: any = {
-  preference: {
-    enabled: true,
-    channels: {
-      email: true,
-      in_app: true,
-      sms: false,
-      push: false,
-      chat: true,
-    },
-  },
-};
 
 const mockedPreference: any = {
   _id: '123',
@@ -206,9 +168,7 @@ describe('UpdatePreferences', () => {
       },
       {
         $set: {
-          channels: {
-            chat: true,
-          },
+          'channels.chat': true,
         },
       },
     ]);
@@ -243,10 +203,8 @@ describe('UpdatePreferences', () => {
       },
       {
         $set: {
-          channels: {
-            chat: true,
-            email: false,
-          },
+          'channels.chat': true,
+          'channels.email': false,
         },
       },
     ]);
