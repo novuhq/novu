@@ -1,7 +1,7 @@
 import { css, cx } from '@novu/novui/css';
 import { IconKeyboardArrowDown, IconKeyboardArrowUp } from '@novu/novui/icons';
 import { HStack, Stack } from '@novu/novui/jsx';
-import { FC, PropsWithChildren, useState } from 'react';
+import { FC, PropsWithChildren, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useHover } from '../../../hooks/useHover';
 import { truncatedFlexTextCss } from '../../../studio/utils/shared.styles';
@@ -40,16 +40,9 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
         )}
         {...hoverProps}
       >
-        {({ isActive }) => {
-          setIsOpen(isActive);
-
-          return (
-            <HStack justifyContent={'space-between'} w="inherit" className={css(truncatedFlexTextCss)}>
-              <NavMenuButtonInner icon={icon}>{label}</NavMenuButtonInner>
-              {isOpen ? <IconKeyboardArrowUp /> : isHovered ? <IconKeyboardArrowDown /> : null}
-            </HStack>
-          );
-        }}
+        {({ isActive }) => (
+          <ToggleButtonInner isOpen={isOpen} setIsOpen={setIsOpen} icon={icon} label={label} isActive={isActive} />
+        )}
       </NavLink>
       <Stack pl="100" gap="25">
         {!isOpen ? null : children}
@@ -57,3 +50,24 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
     </>
   );
 };
+
+type ToggleButtonInnerProps = Pick<INavMenuToggleButtonProps, 'icon' | 'label'> & {
+  isActive: boolean;
+  isOpen: boolean;
+  setIsOpen: (val: boolean) => void;
+};
+
+function ToggleButtonInner({ isActive, isOpen, setIsOpen, icon, label }: ToggleButtonInnerProps) {
+  useEffect(() => {
+    if (!isActive) {
+      setIsOpen(false);
+    }
+  }, [setIsOpen, isActive]);
+
+  return (
+    <HStack justifyContent={'space-between'} w="inherit" className={css(truncatedFlexTextCss)}>
+      <NavMenuButtonInner icon={icon}>{label}</NavMenuButtonInner>
+      {isOpen && isActive ? <IconKeyboardArrowUp /> : <IconKeyboardArrowDown />}
+    </HStack>
+  );
+}
