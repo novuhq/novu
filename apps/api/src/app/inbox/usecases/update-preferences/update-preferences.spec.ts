@@ -221,6 +221,9 @@ describe('UpdatePreferences', () => {
         channels: {
           chat: true,
           email: false,
+          in_app: undefined,
+          push: undefined,
+          sms: undefined,
         },
       },
     ]);
