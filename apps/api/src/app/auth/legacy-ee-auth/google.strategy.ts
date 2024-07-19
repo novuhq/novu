@@ -37,7 +37,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, AuthProviderEnum.
         refreshToken,
         profile,
         parsedState?.distinctId,
-        parsedState?.source
+        { origin: parsedState?.source }
       );
 
       done(null, {

@@ -42,7 +42,7 @@ import {
   CachedEntity,
 } from '../cache';
 import { ApiAuthSchemeEnum, normalizeEmail } from '@novu/shared';
-import { IAuthService } from './auth.service.interface';
+import { IAuthContext, IAuthService } from './auth.service.interface';
 
 @Injectable()
 export class CommunityAuthService implements IAuthService {
@@ -71,7 +71,7 @@ export class CommunityAuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    origin?: SignUpOriginEnum
+    { origin, invitationToken }: IAuthContext = {}
   ) {
     const email = normalizeEmail(profile.email);
     let user = await this.userRepository.findByEmail(email);
@@ -109,6 +109,7 @@ export class CommunityAuthService implements IAuthService {
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
         origin: origin,
+        wasInvited: Boolean(invitationToken),
       });
     } else {
       if (

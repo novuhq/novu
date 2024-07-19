@@ -6,6 +6,11 @@ import {
   UserSessionData,
 } from '@novu/shared';
 
+export interface IAuthContext {
+  invitationToken?: string;
+  origin?: SignUpOriginEnum;
+}
+
 export interface IAuthService {
   authenticate(
     authProvider: AuthProviderEnum,
@@ -19,7 +24,7 @@ export interface IAuthService {
       id: string;
     },
     distinctId: string,
-    origin?: SignUpOriginEnum
+    additionalContext?: IAuthContext
   ): Promise<{ newUser: boolean; token: string }>;
   refreshToken(userId: string): Promise<string>;
   isAuthenticatedForOrganization(

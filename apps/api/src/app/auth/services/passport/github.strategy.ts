@@ -36,7 +36,7 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
         refreshToken,
         profile,
         parsedState?.distinctId,
-        parsedState?.source
+        { origin: parsedState?.source, invitationToken: parsedState?.invitationToken }
       );
 
       done(null, {
