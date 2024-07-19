@@ -11,7 +11,16 @@ describe('Update global preferences - /inbox/preferences (PATCH)', function () {
   });
 
   it('should throw error when made unauthorized call', async function () {
-    const response = await session.testAgent.get(`/v1/inbox/preferences`).set('Authorization', `Bearer InvalidToken`);
+    const response = await session.testAgent
+      .patch(`/v1/inbox/preferences`)
+      .send({
+        email: true,
+        in_app: true,
+        sms: false,
+        push: false,
+        chat: true,
+      })
+      .set('Authorization', `Bearer InvalidToken`);
 
     expect(response.status).to.equal(401);
   });
@@ -29,12 +38,12 @@ describe('Update global preferences - /inbox/preferences (PATCH)', function () {
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.preferences.channels.email).to.equal(true);
-    expect(response.body.preferences.channels.in_app).to.equal(true);
-    expect(response.body.preferences.channels.sms).to.equal(false);
-    expect(response.body.preferences.channels.push).to.equal(false);
-    expect(response.body.preferences.channels.chat).to.equal(true);
-    expect(response.body.level).to.equal(PreferenceLevelEnum.GLOBAL);
+    expect(response.body.data.preferences.channels.email).to.equal(true);
+    expect(response.body.data.preferences.channels.in_app).to.equal(true);
+    expect(response.body.data.preferences.channels.sms).to.equal(false);
+    expect(response.body.data.preferences.channels.push).to.equal(false);
+    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.level).to.equal(PreferenceLevelEnum.GLOBAL);
   });
 
   it('should update the particular channel sent in the body and return all channels', async function () {
@@ -50,12 +59,12 @@ describe('Update global preferences - /inbox/preferences (PATCH)', function () {
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.preferences.channels.email).to.equal(true);
-    expect(response.body.preferences.channels.in_app).to.equal(true);
-    expect(response.body.preferences.channels.sms).to.equal(false);
-    expect(response.body.preferences.channels.push).to.equal(false);
-    expect(response.body.preferences.channels.chat).to.equal(true);
-    expect(response.body.level).to.equal(PreferenceLevelEnum.GLOBAL);
+    expect(response.body.data.preferences.channels.email).to.equal(true);
+    expect(response.body.data.preferences.channels.in_app).to.equal(true);
+    expect(response.body.data.preferences.channels.sms).to.equal(false);
+    expect(response.body.data.preferences.channels.push).to.equal(false);
+    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.level).to.equal(PreferenceLevelEnum.GLOBAL);
 
     const responseSecond = await session.testAgent
       .patch('/v1/inbox/preferences')
@@ -89,7 +98,14 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     });
 
     const response = await session.testAgent
-      .get(`/v1/inbox/preferences/${workflow._id}`)
+      .patch(`/v1/inbox/preferences/${workflow._id}`)
+      .send({
+        email: true,
+        in_app: true,
+        sms: false,
+        push: false,
+        chat: true,
+      })
       .set('Authorization', `Bearer InvalidToken`);
 
     expect(response.status).to.equal(401);
@@ -97,11 +113,18 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
 
   it('should throw error when non-existing workflow id is passed', async function () {
     const response = await session.testAgent
-      .get(`/v1/inbox/preferences/1234`)
+      .patch(`/v1/inbox/preferences/1234`)
+      .send({
+        email: true,
+        in_app: true,
+        sms: false,
+        push: false,
+        chat: true,
+      })
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(404);
-    expect(response.body.message).to.equal('Workflow with id: 1234 is not found');
+    expect(response.body.data.message).to.equal('Workflow with id: 1234 is not found');
   });
 
   it('should update workflow preferences', async function () {
@@ -121,12 +144,12 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.preferences.channels.email).to.equal(true);
-    expect(response.body.preferences.channels.in_app).to.equal(true);
-    expect(response.body.preferences.channels.sms).to.equal(false);
-    expect(response.body.preferences.channels.push).to.equal(false);
-    expect(response.body.preferences.channels.chat).to.equal(true);
-    expect(response.body.level).to.equal(PreferenceLevelEnum.TEMPLATE);
+    expect(response.body.data.preferences.channels.email).to.equal(true);
+    expect(response.body.data.preferences.channels.in_app).to.equal(true);
+    expect(response.body.data.preferences.channels.sms).to.equal(false);
+    expect(response.body.data.preferences.channels.push).to.equal(false);
+    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
   });
 
   it('should update the particular channel sent in the body and return all channels', async function () {
@@ -146,12 +169,12 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.preferences.channels.email).to.equal(true);
-    expect(response.body.preferences.channels.in_app).to.equal(true);
-    expect(response.body.preferences.channels.sms).to.equal(false);
-    expect(response.body.preferences.channels.push).to.equal(false);
-    expect(response.body.preferences.channels.chat).to.equal(true);
-    expect(response.body.level).to.equal(PreferenceLevelEnum.TEMPLATE);
+    expect(response.body.data.preferences.channels.email).to.equal(true);
+    expect(response.body.data.preferences.channels.in_app).to.equal(true);
+    expect(response.body.data.preferences.channels.sms).to.equal(false);
+    expect(response.body.data.preferences.channels.push).to.equal(false);
+    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
 
     const responseSecond = await session.testAgent
       .patch(`/v1/inbox/preferences/${workflow._id}`)
