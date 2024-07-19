@@ -7,7 +7,7 @@ import { Preference } from './preference';
 import type { UpdatePreferencesArgs } from './types';
 
 export const mapPreference = (apiPreference: {
-  template?: TODO;
+  workflow?: TODO;
   preferences: {
     enabled: boolean;
     channels: {
@@ -19,7 +19,7 @@ export const mapPreference = (apiPreference: {
     };
   };
 }): Preference => {
-  const { template: workflow, preferences } = apiPreference;
+  const { workflow, preferences } = apiPreference;
   const hasWorkflow = workflow !== undefined;
   const level = hasWorkflow ? PreferenceLevel.TEMPLATE : PreferenceLevel.GLOBAL;
 
