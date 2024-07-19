@@ -89,7 +89,6 @@ export class UpdatePreferences {
       ...(command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId && { _templateId: command.workflowId }),
     });
   }
-
   private async updateUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
     const channelObj = {
       chat: command.chat,
@@ -116,6 +115,13 @@ export class UpdatePreferences {
       channels: updatePayload,
     });
 
+    const updateFields = {};
+    for (const [key, value] of Object.entries(updatePayload)) {
+      if (value !== undefined) {
+        updateFields[`channels.${key}`] = value;
+      }
+    }
+
     await this.subscriberPreferenceRepository.update(
       {
         _environmentId: command.environmentId,
@@ -126,9 +132,7 @@ export class UpdatePreferences {
           command.workflowId && { _templateId: command.workflowId }),
       },
       {
-        $set: {
-          channels: updatePayload,
-        },
+        $set: updateFields,
       }
     );
   }
