@@ -1,38 +1,46 @@
-import { Show } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { NotificationStatus } from '../../../types';
+import { useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Archived, Check, Inbox, Unread } from '../../../icons';
+import { NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
+import { notificationStatusOptionsLocalizationKeys } from './constants';
 
-export const StatusOptions = (props: { setStatus: (status: NotificationStatus) => void }) => {
+const cases = [
+  {
+    status: NotificationStatus.UNREAD_READ,
+    icon: Inbox,
+  },
+  {
+    status: NotificationStatus.UNREAD,
+    icon: Unread,
+  },
+  {
+    status: NotificationStatus.ARCHIVED,
+    icon: Archived,
+  },
+] satisfies { status: NotificationStatus; icon: () => JSX.Element }[];
+
+export const StatusOptions = (props: {
+  setStatus: (status: NotificationStatus) => void;
+  status: NotificationStatus;
+}) => {
+  const { t } = useLocalization();
+
   return (
-    <>
-      <StatusItem
-        label={NotificationStatus.UNREAD_READ}
-        onClick={() => {
-          props.setStatus(NotificationStatus.UNREAD_READ);
-        }}
-        isSelected={true}
-        icon={Inbox}
-      />
-      <StatusItem
-        label={NotificationStatus.UNREAD}
-        onClick={() => {
-          props.setStatus(NotificationStatus.UNREAD);
-        }}
-        isSelected={false}
-        icon={Unread}
-      />
-      <StatusItem
-        label={NotificationStatus.ARCHIVED}
-        onClick={() => {
-          props.setStatus(NotificationStatus.ARCHIVED);
-        }}
-        isSelected={false}
-        icon={Archived}
-      />
-    </>
+    <For each={cases}>
+      {(c) => (
+        <StatusItem
+          label={t(notificationStatusOptionsLocalizationKeys[c.status])}
+          onClick={() => {
+            props.setStatus(c.status);
+          }}
+          isSelected={props.status === c.status}
+          icon={c.icon}
+        />
+      )}
+    </For>
   );
 };
 

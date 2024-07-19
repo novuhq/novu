@@ -88,3 +88,5 @@ export const CLERK_PUBLISHABLE_KEY =
 if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
+
+export const BRIDGE_SYNC_SAMPLE_ENDPOINT = 'https://onboarding-sandbox.netlify.app/api/novu';

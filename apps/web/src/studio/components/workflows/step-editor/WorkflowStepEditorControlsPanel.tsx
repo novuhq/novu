@@ -1,11 +1,11 @@
-import { Button, JsonSchemaForm, Tabs } from '@novu/novui';
+import { Button, JsonSchemaForm, Tabs, Title } from '@novu/novui';
 import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/novui/icons';
 import { FC, useMemo } from 'react';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
-import { Container } from '@novu/novui/jsx';
+import { Container, Flex } from '@novu/novui/jsx';
 import { useDebouncedCallback } from '@novu/novui';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { SystemVariablesWithTypes } from '@novu/shared';
@@ -92,11 +92,12 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
               <Container className={formContainerClassName}>
                 <When truthy={haveControlProperties}>
                   {onSave && (
-                    <div style={{ display: 'flex', justifyContent: 'end' }}>
+                    <Flex justifyContent="space-between" alignItems={'center'} marginBottom="50">
+                      <Title variant="subsection">Email step controls</Title>
                       <Button
                         loading={isLoadingSave}
                         variant={'filled'}
-                        size={'sm'}
+                        size={'xs'}
                         Icon={IconOutlineSave}
                         onClick={() => {
                           track('Step controls saved - [Workflows Step Page]', {
@@ -107,7 +108,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                       >
                         Save
                       </Button>
-                    </div>
+                    </Flex>
                   )}
 
                   <JsonSchemaForm

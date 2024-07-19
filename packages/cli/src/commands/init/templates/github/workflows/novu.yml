@@ -12,7 +12,7 @@ jobs:
         uses: novuhq/actions-novu-sync@v2
         with:
           # The secret key used to authenticate with Novu Cloud
-          # To get the secret key, go to https://web.novu.co/api-keys.
+          # To get the secret key, go to https://dashboard.novu.co/api-keys.
           # Required.
           secret-key: ${{ secrets.NOVU_SECRET_KEY }}
 

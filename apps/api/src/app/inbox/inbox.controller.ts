@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Patch, Query, UseGua
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriberEntity } from '@novu/dal';
-import { MessageActionStatusEnum } from '@novu/shared';
+import { ISubscriberPreferences, MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
 
 import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
@@ -30,6 +30,9 @@ import { UpdateAllNotifications } from './usecases/update-all-notifications/upda
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
+import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
+import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -42,7 +45,8 @@ export class InboxController {
     private markNotificationAsUsecase: MarkNotificationAs,
     private updateNotificationActionUsecase: UpdateNotificationAction,
     private updateAllNotifications: UpdateAllNotifications,
-    private getPreferencesUsecase: GetPreferences
+    private getPreferencesUsecase: GetPreferences,
+    private updatePreferencesUsecase: UpdatePreferences
   ) {}
 
   @Post('/session')
@@ -214,6 +218,50 @@ export class InboxController {
         notificationId,
         actionType: body.actionType,
         actionStatus: MessageActionStatusEnum.PENDING,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences')
+  async updateGlobalPreference(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdatePreferencesRequestDto
+  ): Promise<ISubscriberPreferences> {
+    return await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        level: PreferenceLevelEnum.GLOBAL,
+        chat: body.chat,
+        email: body.email,
+        in_app: body.in_app,
+        push: body.push,
+        sms: body.sms,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences/:workflowId')
+  async updateWorkflowPreference(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('workflowId') workflowId: string,
+    @Body() body: UpdatePreferencesRequestDto
+  ): Promise<ISubscriberPreferences> {
+    return await this.updatePreferencesUsecase.execute(
+      UpdatePreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        level: PreferenceLevelEnum.TEMPLATE,
+        chat: body.chat,
+        email: body.email,
+        in_app: body.in_app,
+        push: body.push,
+        sms: body.sms,
+        workflowId,
       })
     );
   }

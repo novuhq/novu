@@ -6,7 +6,6 @@ import {
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { sub } from 'date-fns';
 import sinon from 'sinon';
 import { AnalyticsEventsEnum } from '../../utils';
 import { GetPreferences } from './get-preferences.usecase';

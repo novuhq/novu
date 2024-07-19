@@ -87,13 +87,17 @@ export class Socket extends BaseModule {
 
   initialize(): void {
     if (this.#token) {
-      this.#initializeSocket().then((error) => console.error(error));
+      this.#initializeSocket().catch((error) => {
+        console.error(error);
+      });
 
       return;
     }
 
     this.callWithSession(async () => {
-      this.#initializeSocket().then((error) => console.error(error));
+      this.#initializeSocket().catch((error) => {
+        console.error(error);
+      });
     });
   }
 }
