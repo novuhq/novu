@@ -1,5 +1,5 @@
-import { InboxService } from 'src/api';
-import { InboxServiceSingleton } from 'src/utils/inbox-service-singleton';
+import { InboxService } from '../api';
+import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 
 import { NovuEventEmitter } from '../event-emitter';
 import { ChannelPreference, PreferenceLevel, Workflow } from '../types';
