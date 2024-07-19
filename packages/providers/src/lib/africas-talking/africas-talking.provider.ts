@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import AfricasTalking from 'africastalking';
 
 export class AfricasTalkingSmsProvider implements ISmsProvider {
-  id: 'africas-talking';
+  id: SmsProviderIdEnum.AfricasTalking;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private africasTalkingClient: AfricasTalking;
 

@@ -3,29 +3,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
+import { captureException } from '@sentry/react';
 
 import { FeatureFlagsKeysEnum, ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
 import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
-import {
-  Button,
-  Digest,
-  HalfClock,
-  Input,
-  inputStyles,
-  MultiChannel,
-  RingingBell,
-  Select,
-  Translation,
-} from '@novu/design-system';
+import { Button, Input, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useEnvironment, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
-import { useDomainParser } from './useDomainHook';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 
 export function QuestionnaireForm() {
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
@@ -36,10 +27,10 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentUser, currentOrganization, environmentId } = useAuth();
+  const { login, currentOrganization } = useAuth();
+  const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
-  const { parse } = useDomainParser();
   const segment = useSegment();
   const location = useLocation();
 
@@ -50,14 +41,14 @@ export function QuestionnaireForm() {
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
   useEffect(() => {
-    if (environmentId) {
+    if (currentOrganization) {
       if (isFromVercel) {
         startVercelSetup();
 
         return;
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId]);
+  }, [currentOrganization, isFromVercel, startVercelSetup]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
@@ -72,6 +63,19 @@ export function QuestionnaireForm() {
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
+    await refetchEnvironments();
+
+    try {
+      await api.post(`/v1/bridge/sync`, {
+        bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
+        source: 'sample-workspace',
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+
+      captureException(e);
+    }
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',
@@ -89,6 +93,7 @@ export function QuestionnaireForm() {
       await createOrganization({ ...data });
     }
 
+    await refetchEnvironments();
     setLoading(false);
     if (isFromVercel) {
       startVercelSetup();
@@ -97,7 +102,19 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
+      const isTechnicalJobTitle = [
+        JobTitleEnum.ENGINEER,
+        JobTitleEnum.ENGINEERING_MANAGER,
+        JobTitleEnum.ARCHITECT,
+        JobTitleEnum.FOUNDER,
+        JobTitleEnum.STUDENT,
+      ].includes(data.jobTitle);
+
+      if (isTechnicalJobTitle) {
+        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      } else {
+        navigate(ROUTES.WORKFLOWS);
+      }
 
       return;
     }

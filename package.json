@@ -91,8 +91,8 @@
     "@types/inquirer": "8.2.10",
     "@types/jest": "29.5.2",
     "@types/node": "^20.14.10",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
+    "@typescript-eslint/eslint-plugin": "^5.60.1",
+    "@typescript-eslint/parser": "^5.60.1",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
     "chalk-animation": "^1.6.0",
@@ -141,6 +141,7 @@
     "eslint-plugin-switch-case": "^1.1.2",
     "eslint-plugin-unicorn": "^51.0.1",
     "eslint-plugin-xss": "^0.1.12",
+    "eslint-plugin-unused-imports": "^4.0.0",
     "execa": "^6.1.0",
     "globby": "^12.2.0",
     "gradient-string": "^2.0.1",
@@ -175,7 +176,8 @@
       "packages/*",
       "enterprise/packages/*",
       "enterprise/packages/*/*",
-      "packages/notification-center-angular/projects/*"
+      "packages/notification-center-angular/projects/*",
+      "playground/*"
     ]
   },
   "husky": {

@@ -10,3 +10,5 @@ node_modules
 
 # OSX
 .DS_Store
+
+playground/

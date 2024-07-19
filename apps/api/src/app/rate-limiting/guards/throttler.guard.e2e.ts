@@ -1,7 +1,11 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiServiceLevelEnum } from '@novu/shared';
-import { HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  ApiServiceLevelEnum,
+  HttpResponseHeaderKeysEnum,
+} from '@novu/shared';
 
 const mockSingleCost = 1;
 const mockBulkCost = 5;
@@ -309,7 +313,7 @@ describe('API Rate Limiting', () => {
         }) => {
           return () => {
             describe(`${expectedStatus === 429 ? 'Throttled' : 'Allowed'} ${name}`, () => {
-              let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
+              let lastResponse;
               let throttledResponseCount = 0;
               const throttledResponseCountTolerance = 0.5;
               const expectedWindowLimit = expectedLimit * mockWindowDuration;

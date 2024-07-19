@@ -9,14 +9,11 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import { Infobip, AuthType } from '@infobip-api/sdk';
-
-const getProviderId = (channelType) => {
-  return `infobip-${channelType}`;
-};
+import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 export class InfobipSmsProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  id = getProviderId(this.channelType);
+  id = SmsProviderIdEnum.Infobip;
 
   private infobipClient;
 
@@ -61,7 +58,7 @@ export class InfobipSmsProvider implements ISmsProvider {
 
 export class InfobipEmailProvider implements IEmailProvider {
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  id = getProviderId(this.channelType);
+  id = EmailProviderIdEnum.Infobip;
 
   private infobipClient;
 

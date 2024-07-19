@@ -18,9 +18,9 @@ import {
   GetFeatureFlag,
   GetFeatureFlagCommand,
   InvalidateCacheService,
-  requireInject,
-  IUseCaseInterface,
-  IExecuteBridgeRequestCommand,
+  ExecuteBridgeRequest,
+  ExecuteBridgeRequestCommand,
+  ExecuteBridgeRequestDto,
 } from '@novu/application-generic';
 import {
   FeatureFlagsKeysEnum,
@@ -43,7 +43,7 @@ import {
   EnvironmentEntity,
 } from '@novu/dal';
 import { Novu } from '@novu/node';
-import { DiscoverOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
+import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import {
   ParseEventRequestBroadcastCommand,
@@ -57,8 +57,6 @@ const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
-  private executeBridgeRequest: IUseCaseInterface<IExecuteBridgeRequestCommand, DiscoverOutput | null>;
-
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationRepository: NotificationRepository,
@@ -73,10 +71,9 @@ export class ParseEventRequest {
     private analyticsService: AnalyticsService,
     private getFeatureFlag: GetFeatureFlag,
     private invalidateCacheService: InvalidateCacheService,
+    private executeBridgeRequest: ExecuteBridgeRequest,
     protected moduleRef: ModuleRef
-  ) {
-    this.executeBridgeRequest = requireInject('execute-bridge-request', this.moduleRef);
-  }
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
@@ -196,11 +193,13 @@ export class ParseEventRequest {
       return null;
     }
 
-    const discover = await this.executeBridgeRequest.execute({
-      bridgeUrl: command.bridgeUrl,
-      apiKey: environment.apiKeys[0].key,
-      action: GetActionEnum.DISCOVER,
-    });
+    const discover = (await this.executeBridgeRequest.execute(
+      ExecuteBridgeRequestCommand.create({
+        bridgeUrl: command.bridgeUrl,
+        apiKey: environment.apiKeys[0].key,
+        action: GetActionEnum.DISCOVER,
+      })
+    )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
   }
@@ -352,9 +351,7 @@ export class ParseEventRequest {
       });
 
       // check if user is using personal email
-      const user = await this.userRepository.findOne({
-        _id: command.userId,
-      });
+      const user = await this.userRepository.findById(command.userId);
 
       if (!user) throw new ApiException('User not found');
 

@@ -59,7 +59,7 @@ const WorkflowEditor = () => {
     trigger,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
-  const { readonly, bridge } = useEnvironment({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({ bridge: template?.bridge });
   const steps = useWatch({
     name: 'steps',
     control,

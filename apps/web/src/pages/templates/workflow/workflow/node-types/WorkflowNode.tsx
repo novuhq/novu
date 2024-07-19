@@ -89,7 +89,7 @@ export function WorkflowNode({
   const segment = useSegment();
 
   const { template } = useTemplateEditorForm();
-  const { readonly: readonlyEnv, environment, bridge } = useEnvironment({}, template?.bridge);
+  const { readonly: readonlyEnv, environment, bridge } = useEnvironment({ bridge: template?.bridge });
   const { cx, classes, theme } = useTemplateButtonStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);

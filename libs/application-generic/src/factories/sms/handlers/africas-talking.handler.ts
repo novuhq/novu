@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { AfricasTalkingSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class AfricasTalkingSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('africas-talking', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.AfricasTalking, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

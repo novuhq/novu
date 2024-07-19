@@ -7,5 +7,5 @@ export enum CloudRegionEnum {
 export enum DashboardUrlEnum {
   US = 'https://dashboard.novu.co',
   EU = 'https://eu.dashboard.novu.co',
-  STAGING = 'https://dev.dashboard.novu.co',
+  STAGING = 'https://dashboard.novu-staging.co',
 }

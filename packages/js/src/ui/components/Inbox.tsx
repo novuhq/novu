@@ -1,31 +1,53 @@
-import { JSX } from 'solid-js';
-import { NovuOptions } from '../../novu';
-import { Appearance, Localization, useAppearance, useLocalization } from '../context';
-import { cn, useStyle } from '../helpers';
-import { Bell } from './Bell';
-import { Popover } from './Popover';
+import { Accessor, createSignal, JSX, Match, Switch } from 'solid-js';
+import { useStyle } from '../helpers';
+import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
+import { NotificationList } from './Notification';
+import { Button, Popover } from './primitives';
 
 type InboxProps = {
   open?: boolean;
-  renderBell?: ({ unreadCount }: { unreadCount: number }) => JSX.Element;
+  renderBell?: ({ unreadCount }: { unreadCount: Accessor<number> }) => JSX.Element;
+};
+
+enum Screen {
+  Inbox = 'inbox',
+  Settings = 'settings',
+}
+const InboxContent = () => {
+  const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
+
+  return (
+    <>
+      <Switch>
+        <Match when={currentScreen() === Screen.Inbox}>
+          <Header updateScreen={setCurrentScreen} />
+          <NotificationList />
+        </Match>
+        <Match when={currentScreen() === Screen.Settings}>
+          <SettingsHeader backAction={() => setCurrentScreen(Screen.Inbox)} />
+          <Settings />
+        </Match>
+      </Switch>
+      <Footer />
+    </>
+  );
 };
 
 export const Inbox = (props: InboxProps) => {
   const style = useStyle();
-  const { id } = useAppearance();
-  const { t } = useLocalization();
 
   return (
-    <div class={(style('root'), cn('novu', id))}>
-      <Popover open={props?.open}>
-        <Popover.Trigger>
-          <Bell>{props.renderBell}</Bell>
-        </Popover.Trigger>
-        <Popover.Content>
-          {/* notifications will go here */}
-          {t('inbox.title')}
-        </Popover.Content>
-      </Popover>
-    </div>
+    <Popover.Root open={props?.open}>
+      <Popover.Trigger
+        asChild={(triggerProps) => (
+          <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>
+            <Bell>{props.renderBell}</Bell>
+          </Button>
+        )}
+      />
+      <Popover.Content appearanceKey="inbox__popoverContent">
+        <InboxContent />
+      </Popover.Content>
+    </Popover.Root>
   );
 };

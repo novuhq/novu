@@ -17,7 +17,7 @@ export const useWebhookPage = () => {
 
   const [isMxRecordRefreshing, setIsMxRecordRefreshing] = useState<boolean>(false);
   const mxRecordClipboard = useClipboard({ timeout: 1000 });
-  const { environment, refetchEnvironment } = useEnvironment();
+  const { environment, refetchEnvironments } = useEnvironment();
 
   const { mutateAsync: updateDnsSettingsMutation, isLoading: isUpdateDnsSettingsLoading } = useMutation<
     { dns: { mxRecordConfigured: boolean; inboundParseDomain: string } },
@@ -25,7 +25,7 @@ export const useWebhookPage = () => {
     { payload: { inboundParseDomain: string | undefined }; environmentId: string }
   >(async ({ payload, environmentId }) => {
     const updatedSettings = await updateDnsSettings(payload, environmentId);
-    await refetchEnvironment();
+    await refetchEnvironments();
 
     return updatedSettings;
   });
@@ -74,11 +74,11 @@ export const useWebhookPage = () => {
       const record = await validateMxRecord();
 
       if (environment?.dns && record.mxRecordConfigured !== environment.dns.mxRecordConfigured) {
-        await refetchEnvironment();
+        await refetchEnvironments();
       }
     } catch (err: unknown) {
       if (checkIsResponseError(err)) {
-        errorMessage(err.message);
+        errorMessage(err?.message);
       }
     } finally {
       setIsMxRecordRefreshing(false);

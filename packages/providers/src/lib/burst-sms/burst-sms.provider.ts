@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -8,7 +9,7 @@ import axios, { AxiosInstance } from 'axios';
 import qs from 'qs';
 
 export class BurstSmsProvider implements ISmsProvider {
-  id = 'burst-sms';
+  id = SmsProviderIdEnum.BurstSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axiosInstance: AxiosInstance;
 

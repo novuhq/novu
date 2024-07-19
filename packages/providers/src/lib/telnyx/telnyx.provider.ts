@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -12,7 +13,7 @@ import Telnyx from 'telnyx';
 import { ITelnyxCLient } from './telnyx.interface';
 
 export class TelnyxSmsProvider implements ISmsProvider {
-  id = 'telnyx';
+  id = SmsProviderIdEnum.Telnyx;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private telnyxClient: ITelnyxCLient;
 

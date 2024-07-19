@@ -1,10 +1,14 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ICredentials,
+  PushProviderIdEnum,
+} from '@novu/shared';
 import { APNSPushProvider } from '@novu/providers';
 import { BasePushHandler } from './base.handler';
 
 export class APNSHandler extends BasePushHandler {
   constructor() {
-    super('apns', ChannelTypeEnum.PUSH);
+    super(PushProviderIdEnum.APNS, ChannelTypeEnum.PUSH);
   }
 
   buildProvider(credentials: ICredentials) {

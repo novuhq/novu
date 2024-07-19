@@ -10,9 +10,10 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
+import { EmailProviderIdEnum } from '@novu/shared';
 
 export class BrevoEmailProvider implements IEmailProvider {
-  id = 'sendinblue';
+  id = EmailProviderIdEnum.Sendinblue; // brevo changed name from sendinblue.
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private axiosInstance: AxiosInstance;
   public readonly BASE_URL = 'https://api.brevo.com/v3';

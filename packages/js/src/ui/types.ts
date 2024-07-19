@@ -6,3 +6,9 @@ export type NovuProviderProps = {
   localization?: Localization;
   options: NovuOptions;
 };
+
+export enum NotificationStatus {
+  UNREAD_READ = 'unreadRead',
+  UNREAD = 'unread',
+  ARCHIVED = 'archived',
+}

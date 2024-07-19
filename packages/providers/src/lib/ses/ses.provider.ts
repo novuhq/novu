@@ -11,9 +11,10 @@ import {
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';
 import nodemailer from 'nodemailer';
+import { EmailProviderIdEnum } from '@novu/shared';
 
 export class SESEmailProvider implements IEmailProvider {
-  id = 'ses';
+  id = EmailProviderIdEnum.SES;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly ses: SESClient;
 

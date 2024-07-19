@@ -1,6 +1,10 @@
 import { IEmailJsConfig } from '@novu/providers';
 import { EmailJsProvider } from '@novu/providers';
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 import { BaseHandler } from './base.handler';
 
 /**
@@ -10,7 +14,7 @@ import { BaseHandler } from './base.handler';
  */
 export class EmailJsHandler extends BaseHandler {
   constructor() {
-    super('emailjs', ChannelTypeEnum.EMAIL);
+    super(EmailProviderIdEnum.EmailJS, ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string) {
     const config: IEmailJsConfig = {

@@ -27,6 +27,9 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
 import { UpdateAllNotificationsCommand } from './usecases/update-all-notifications/update-all-notifications.command';
 import { UpdateAllNotifications } from './usecases/update-all-notifications/update-all-notifications.usecase';
+import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
+import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -38,7 +41,8 @@ export class InboxController {
     private notificationsCountUsecase: NotificationsCount,
     private markNotificationAsUsecase: MarkNotificationAs,
     private updateNotificationActionUsecase: UpdateNotificationAction,
-    private updateAllNotifications: UpdateAllNotifications
+    private updateAllNotifications: UpdateAllNotifications,
+    private getPreferencesUsecase: GetPreferences
   ) {}
 
   @Post('/session')
@@ -95,7 +99,21 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/notifications/:id/mark-as-read')
+  @Get('/preferences')
+  async getAllPreferences(
+    @SubscriberSession() subscriberSession: SubscriberEntity
+  ): Promise<GetPreferencesResponseDto[]> {
+    return await this.getPreferencesUsecase.execute(
+      GetPreferencesCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id/read')
   async markNotificationAsRead(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('id') notificationId: string
@@ -112,7 +130,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/notifications/:id/mark-as-unread')
+  @Patch('/notifications/:id/unread')
   async markNotificationAsUnread(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('id') notificationId: string
@@ -129,7 +147,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/notifications/:id/mark-as-archived')
+  @Patch('/notifications/:id/archive')
   async markNotificationAsArchived(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('id') notificationId: string
@@ -146,7 +164,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/notifications/:id/mark-as-unarchived')
+  @Patch('/notifications/:id/unarchive')
   async markNotificationAsUnarchived(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('id') notificationId: string
@@ -201,7 +219,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/notifications/mark-all-as-read')
+  @Post('/notifications/read')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsRead(
     @SubscriberSession() subscriberSession: SubscriberEntity,
@@ -223,7 +241,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/notifications/mark-all-as-archived')
+  @Post('/notifications/archive')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsArchived(
     @SubscriberSession() subscriberSession: SubscriberEntity,
@@ -245,7 +263,7 @@ export class InboxController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/notifications/mark-all-as-read-archived')
+  @Post('/notifications/read-archive')
   @HttpCode(HttpStatus.NO_CONTENT)
   async markAllAsReadArchived(
     @SubscriberSession() subscriberSession: SubscriberEntity,

@@ -2,7 +2,7 @@ import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
-import { FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
+import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -33,7 +33,7 @@ import type {
   ValidationError,
   Workflow,
 } from './types';
-import { EMOJI, log } from './utils';
+import { EMOJI, log, sanitizeHtmlInObject } from './utils';
 import { transformSchema, validateData } from './validators';
 
 /**
@@ -49,7 +49,7 @@ JSONSchemaFaker.option({
 });
 
 function isRuntimeInDevelopment() {
-  return process.env.NODE_ENV === 'development';
+  return ['development', undefined].includes(process.env.NODE_ENV);
 }
 
 export class Client {
@@ -270,7 +270,7 @@ export class Client {
       const executeStepHandler = this.executeStep.bind(this);
       const handler = isPreview ? previewStepHandler : executeStepHandler;
 
-      const stepResult = await handler(event, {
+      let stepResult = await handler(event, {
         ...step,
         providers: step.providers.map((provider) => {
           const providerResolve = options?.providers?.[provider.type];
@@ -287,11 +287,19 @@ export class Client {
         resolve: stepResolve,
       });
 
+      if (Object.values(ChannelStepEnum).includes(step.type as ChannelStepEnum)) {
+        // Sanitize the outputs to avoid XSS attacks via Channel content.
+        stepResult = {
+          ...stepResult,
+          outputs: sanitizeHtmlInObject(stepResult.outputs),
+        };
+      }
+
       if (stepId === event.stepId) {
         setResult(stepResult);
       }
 
-      return stepResult.outputs as any;
+      return stepResult.outputs;
     };
   }
 
@@ -362,10 +370,19 @@ export class Client {
             // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
             // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             email: this.executeStepFactory(event, setResult),
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             sms: this.executeStepFactory(event, setResult),
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             inApp: this.executeStepFactory(event, setResult),
             digest: this.executeStepFactory(event, setResult),
             delay: this.executeStepFactory(event, setResult),
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             push: this.executeStepFactory(event, setResult),
             // eslint-disable-next-line multiline-comment-style
             // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]

@@ -11,6 +11,7 @@ import {
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
 import { IMandrilInterface } from './mandril.interface';
+import { EmailProviderIdEnum } from '@novu/shared';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -26,7 +27,7 @@ export enum MandrillStatusEnum {
 }
 
 export class MandrillProvider implements IEmailProvider {
-  id = 'mandrill';
+  id = EmailProviderIdEnum.Mandrill;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private transporter: IMandrilInterface;

@@ -7,6 +7,13 @@ export enum NovuComponentEnum {
   WEBHOOK,
 }
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  interface Window {
+    _env_: Record<string, string | undefined>;
+  }
+}
+
 export function getContextPath(component: NovuComponentEnum) {
   /**
    * Determine if we are running in the browser or in node.js. If we are
@@ -14,7 +21,7 @@ export function getContextPath(component: NovuComponentEnum) {
    * otherwise we will have access to the window._env_ object to get the
    * environment variables.
    */
-  const env = typeof process !== 'undefined' && process?.env ? process?.env : (window as any)._env_;
+  const env = typeof process !== 'undefined' && process?.env ? process?.env : window._env_;
   if (!env) return '';
 
   const contextPaths = {

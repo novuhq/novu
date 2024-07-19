@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IEmailOptions,
@@ -9,7 +10,7 @@ import {
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 
 export class Outlook365Provider implements IEmailProvider {
-  id = 'outlook365';
+  id = EmailProviderIdEnum.Outlook365;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private transports: Transporter;
 

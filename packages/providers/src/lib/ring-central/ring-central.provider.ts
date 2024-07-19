@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -10,7 +11,7 @@ import { SDK } from '@ringcentral/sdk';
 import Platform from '@ringcentral/sdk/lib/platform/Platform';
 
 export class RingCentralSmsProvider implements ISmsProvider {
-  id = 'ring-central';
+  id = SmsProviderIdEnum.RingCentral;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   sendSMSEndpoint = '/restapi/v1.0/account/~/extension/~/sms';
   private rcClient: Platform;
