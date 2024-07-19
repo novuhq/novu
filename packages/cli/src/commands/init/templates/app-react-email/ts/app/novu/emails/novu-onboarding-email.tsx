@@ -141,7 +141,7 @@ export const NovuWelcomeEmail = ({
 
           <Container className="mt-20">
             <Text className="text-center text-gray-400 mb-45">
-              Novu, Emek Dotan 109, Apt 2, Modiin, Israel
+              Powered by Novu, the Code-First Notification Infrastructure
             </Text>
           </Container>
         </Body>
