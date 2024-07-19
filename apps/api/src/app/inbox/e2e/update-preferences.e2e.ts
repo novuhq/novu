@@ -111,6 +111,23 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.status).to.equal(401);
   });
 
+  it('should throw error when non-mongo id is passed', async function () {
+    const id = '1234';
+    const response = await session.testAgent
+      .patch(`/v1/inbox/preferences/${id}`)
+      .send({
+        email: true,
+        in_app: true,
+        sms: false,
+        push: false,
+        chat: true,
+      })
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.body.message[0]).to.equal(`workflowId must be a mongodb id`);
+    expect(response.status).to.equal(400);
+  });
+
   it('should throw error when non-existing workflow id is passed', async function () {
     const id = '666c0dfa0b55d0f06f4aaa6c';
     const response = await session.testAgent
