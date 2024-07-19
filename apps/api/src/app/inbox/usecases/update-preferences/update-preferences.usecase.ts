@@ -2,12 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
+  NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferenceLevelEnum,
   SubscriberEntity,
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { ISubscriberPreferences } from '@novu/shared';
+import { AnalyticsEventsEnum } from '../../utils';
 
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -20,25 +23,21 @@ export class UpdatePreferences {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: UpdatePreferencesCommand) {
+  async execute(command: UpdatePreferencesCommand): Promise<ISubscriberPreferences> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
-    if (!subscriber) throw new NotFoundException(`Subscriber not found`);
+    if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
+
+    let workflow: NotificationTemplateEntity | null = null;
 
     if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId) {
-      const workflow = await this.notificationTemplateRepository.findById(command.workflowId, command.environmentId);
+      workflow = await this.notificationTemplateRepository.findById(command.workflowId, command.environmentId);
 
       if (!workflow) {
         throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
       }
     }
 
-    const userPreference = await this.subscriberPreferenceRepository.findOne({
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      _subscriberId: subscriber._id,
-      _templateId: command.workflowId,
-      level: command.level,
-    });
+    const userPreference = await this.findPreference(command, subscriber);
 
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);
@@ -46,7 +45,20 @@ export class UpdatePreferences {
       await this.updateUserPreference(command, subscriber);
     }
 
-    return 'hi';
+    const updatedPreference = await this.findPreference(command, subscriber);
+
+    if (!updatedPreference) {
+      throw new NotFoundException(`Preference not found`);
+    }
+
+    return {
+      level: updatedPreference.level,
+      preferences: {
+        enabled: updatedPreference.enabled,
+        channels: updatedPreference.channels,
+      },
+      ...(workflow && updatedPreference.level === PreferenceLevelEnum.TEMPLATE && { workflow }),
+    };
   }
 
   private async createUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
@@ -58,6 +70,15 @@ export class UpdatePreferences {
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
 
+    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.CREATE_PREFERENCES, '', {
+      _organization: command.organizationId,
+      _subscriber: subscriber._id,
+      _workflowId: command.workflowId,
+      level: command.level,
+      channels: channelObj,
+      __source: 'UpdatePreferences',
+    });
+
     await this.subscriberPreferenceRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -65,6 +86,7 @@ export class UpdatePreferences {
       enabled: true,
       channels: channelObj,
       level: command.level,
+      ...(command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId && { _templateId: command.workflowId }),
     });
   }
 
@@ -77,6 +99,7 @@ export class UpdatePreferences {
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
 
+    // Remove undefined values from the object
     const updatePayload = Object.entries(channelObj).reduce((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = value;
@@ -85,12 +108,22 @@ export class UpdatePreferences {
       return acc;
     }, {} as Record<ChannelTypeEnum, boolean>);
 
+    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES, '', {
+      _organization: command.organizationId,
+      _subscriber: subscriber._id,
+      _workflowId: command.workflowId,
+      level: command.level,
+      channels: updatePayload,
+    });
+
     await this.subscriberPreferenceRepository.update(
       {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _subscriberId: subscriber._id,
         level: command.level,
+        ...(command.level === PreferenceLevelEnum.TEMPLATE &&
+          command.workflowId && { _templateId: command.workflowId }),
       },
       {
         $set: {
@@ -98,5 +131,17 @@ export class UpdatePreferences {
         },
       }
     );
+  }
+
+  private async findPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity) {
+    const query = {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      level: command.level,
+      ...(command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId && { _templateId: command.workflowId }),
+    };
+
+    return await this.subscriberPreferenceRepository.findOne(query);
   }
 }
