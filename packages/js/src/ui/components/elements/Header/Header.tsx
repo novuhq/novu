@@ -1,6 +1,6 @@
 import { cn, useStyle } from '../../../helpers';
+import { StatusDropdown } from '../InboxStatus/InboxStatusDropdown';
 import { ActionsContainer } from './ActionsContainer';
-import { StatusDropdown } from './StatusDropdown';
 
 type HeaderProps = {
   updateScreen: (screen: 'inbox' | 'settings') => void;

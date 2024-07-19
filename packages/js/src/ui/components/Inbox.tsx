@@ -1,4 +1,4 @@
-import { createSignal, JSX, Match, Switch } from 'solid-js';
+import { Accessor, createSignal, JSX, Match, Switch } from 'solid-js';
 import { useStyle } from '../helpers';
 import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
 import { NotificationList } from './Notification';
@@ -6,7 +6,7 @@ import { Button, Popover } from './primitives';
 
 type InboxProps = {
   open?: boolean;
-  renderBell?: ({ unreadCount }: { unreadCount: number }) => JSX.Element;
+  renderBell?: ({ unreadCount }: { unreadCount: Accessor<number> }) => JSX.Element;
 };
 
 enum Screen {
