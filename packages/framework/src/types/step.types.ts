@@ -92,7 +92,7 @@ export type ActionStep<T_Outputs, T_Result> = <
      */
     controlSchema?: T_ControlSchema;
     // TODO: Remove the providers from the action step options
-    providers?: Record<string, (payload: unknown) => Awaitable<unknown>>;
+    providers?: Record<string, (payload: unknown) => Awaitable<Record<string, unknown>>>;
   }
 ) => StepOutput<T_Result>;
 

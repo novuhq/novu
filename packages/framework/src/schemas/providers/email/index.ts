@@ -2,9 +2,10 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import { Schema } from '../../../types';
 import { genericProviderSchemas } from '../generic.schema';
 import { novuEmailProviderSchemas } from './novu-email.schema';
+import { sendgridProviderSchemas } from './sendgrid.schema';
 
 export const emailProviderSchemas = {
-  [EmailProviderIdEnum.SendGrid]: genericProviderSchemas,
+  [EmailProviderIdEnum.SendGrid]: sendgridProviderSchemas,
   [EmailProviderIdEnum.EmailJS]: genericProviderSchemas,
   [EmailProviderIdEnum.Mailgun]: genericProviderSchemas,
   [EmailProviderIdEnum.Mailjet]: genericProviderSchemas,

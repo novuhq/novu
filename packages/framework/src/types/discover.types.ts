@@ -10,7 +10,7 @@ export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: ({ controls, outputs }: { controls: unknown; outputs: unknown }) => Awaitable<unknown>;
+  resolve: ({ controls, outputs }: { controls: unknown; outputs: unknown }) => Awaitable<Record<string, unknown>>;
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;

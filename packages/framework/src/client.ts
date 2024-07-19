@@ -156,7 +156,7 @@ export class Client {
     return JSONSchemaFaker.generate(transformSchema(schema) as any) as Record<string, unknown>;
   }
 
-  private async validate<T>(
+  private async validate<T extends Record<string, unknown>>(
     data: T,
     schema: Schema,
     component: 'event' | 'step' | 'provider',
@@ -522,7 +522,10 @@ export class Client {
         );
         spinner.succeed(`Executed provider: \`${provider.type}\``);
 
-        return validatedOutput;
+        return {
+          ...validatedOutput,
+          _passthrough: result._passthrough,
+        };
       } else {
         // No-op. We don't execute providers for hydrated steps
         spinner.stopAndPersist({

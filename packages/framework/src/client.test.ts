@@ -626,7 +626,7 @@ describe('Novu Client', () => {
           } as const,
           providers: {
             sendgrid: async ({ controls, outputs }) => ({
-              ip_pool_name: `${controls.foo} ${outputs.subject}`,
+              ipPoolName: `${controls.foo} ${outputs.subject}`,
               from: {
                 email: 'test@example.com',
                 name: 'Test',
@@ -656,8 +656,72 @@ describe('Novu Client', () => {
 
       expect(executionResult.providers).toEqual({
         sendgrid: {
-          ip_pool_name: 'foo Subject',
+          ipPoolName: 'foo Subject',
           from: { email: 'test@example.com', name: 'Test' },
+        },
+      });
+    });
+
+    it('should support a passthrough object for the provider execution', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          controlSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            required: ['foo'],
+            additionalProperties: false,
+          } as const,
+          providers: {
+            sendgrid: async ({ controls, outputs }) => ({
+              _passthrough: {
+                body: {
+                  fooBody: 'barBody',
+                },
+                headers: {
+                  'X-Custom-Header': 'test',
+                },
+                query: {
+                  fooQuery: 'barQuery',
+                },
+              },
+            }),
+          },
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {
+          foo: 'foo',
+        },
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({
+        sendgrid: {
+          _passthrough: {
+            body: {
+              fooBody: 'barBody',
+            },
+            headers: {
+              'X-Custom-Header': 'test',
+            },
+            query: {
+              fooQuery: 'barQuery',
+            },
+          },
         },
       });
     });
