@@ -26,8 +26,13 @@ const toggleButtonRecipe = cva({
   base: {
     gap: 'margins.icons.Icon20-txt',
 
-    '&:not(:disabled)': { cursor: 'pointer' },
-    '&:hover:not(:disabled)': { opacity: 'hover' },
+    cursor: 'pointer',
+    _disabled: {
+      cursor: 'default',
+    },
+    '&:hover:not(:disabled)': {
+      opacity: 'hover',
+    },
   },
   variants: {
     isExpanded: {
