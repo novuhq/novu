@@ -1,20 +1,22 @@
+import React from "react";
 import {
   Body,
   Button,
+  CodeInline,
   Column,
   Container,
   Head,
+  Heading,
   Html,
   Img,
   Preview,
+  render,
   Row,
   Section,
-  Text,
   Tailwind,
-  render,
-  CodeInline,
+  Text,
 } from "@react-email/components";
-import React from "react";
+
 import { ControlSchema, PayloadSchema } from "../workflows";
 
 type NovuWelcomeEmailProps = ControlSchema & PayloadSchema;
@@ -54,7 +56,7 @@ export const NovuWelcomeEmail = ({
               src={`https://images.spr.so/cdn-cgi/imagedelivery/j42No7y-dcokJuNgXeA0ig/dca73b36-cf39-4e28-9bc7-8a0d0cd8ac70/standalone-gradient2x_2/w=128,quality=90,fit=scale-down`}
               width="56"
               height="56"
-              alt="Netlify"
+              alt="Novu"
               className="mx-auto my-20"
             />
           ) : null}
@@ -64,22 +66,22 @@ export const NovuWelcomeEmail = ({
               return (
                 <Section key={componentIndex}>
                   {component.type === "heading" ? (
-                    <Column>
-                      <h1 className={`text-${component.align}`}>
+                    <Section>
+                      <Heading as="h1" className={`text-${component.align}`}>
                         {component.text}
-                      </h1>
-                    </Column>
+                      </Heading>
+                    </Section>
                   ) : null}
 
                   {component.type === "button" ? (
-                    <Column className={`text-${component.align}`}>
+                    <Section className={`text-${component.align}`}>
                       <Button
                         href={"http://localhost:2022"}
                         className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
                       >
                         {component.text}
                       </Button>
-                    </Column>
+                    </Section>
                   ) : null}
 
                   {component.type === "text" ? (
@@ -128,9 +130,9 @@ export const NovuWelcomeEmail = ({
                     </Section>
                   ) : null}
                   {component.type === "code" ? (
-                    <Column>
+                    <Section>
                       <CodeInline>{component.text}</CodeInline>;
-                    </Column>
+                    </Section>
                   ) : null}
                 </Section>
               );
@@ -149,13 +151,6 @@ export const NovuWelcomeEmail = ({
 };
 
 export default NovuWelcomeEmail;
-
-const heading = {
-  fontSize: "30px",
-  lineHeight: "1.1",
-  fontWeight: "700",
-  color: "#000000",
-};
 
 export function renderEmail(controls: ControlSchema, payload: PayloadSchema) {
   return render(<NovuWelcomeEmail {...controls} {...payload} />);
