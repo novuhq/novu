@@ -8,7 +8,7 @@ import {
   getStudioWorkflowStepLink,
   getStudioWorkflowTestLink,
 } from '../../../../studio/utils/routing';
-import { NavMenuLinkButton, NavMenuToggleButton } from '../../../nav/NavMenuButton/index';
+import { NavMenuLinkButton, NavMenuToggleButton } from '../../../nav/NavMenuButton';
 
 type LocalStudioSidebarToggleButtonProps = {
   workflow: IBridgeWorkflow;
