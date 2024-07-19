@@ -372,7 +372,6 @@ describe('Novu Client', () => {
     it('should sanitize the step result of all delivery channel step types', async () => {
       const script = `<script>alert('Hello there')</script>`;
 
-      const client = new Client({ secretKey: 'some-secret-key' });
       client.addWorkflows([
         workflow('test-workflow', async ({ step }) => {
           await step.email('send-email', async () => ({
@@ -403,7 +402,6 @@ describe('Novu Client', () => {
     it('should not sanitize the step result of custom step type', async () => {
       const script = `<script>alert('Hello there')</script>`;
 
-      const client = new Client({ secretKey: 'some-secret-key' });
       client.addWorkflows([
         workflow('test-workflow', async ({ step }) => {
           await step.custom(
@@ -859,7 +857,6 @@ describe('Novu Client', () => {
     it('should sanitize the step result of all delivery channel step types', async () => {
       const script = `<script>alert('Hello there')</script>`;
 
-      const client = new Client({ secretKey: 'some-secret-key' });
       client.addWorkflows([
         workflow('test-workflow', async ({ step }) => {
           await step.email('send-email', async () => ({
@@ -890,7 +887,6 @@ describe('Novu Client', () => {
     it('should not sanitize the step result of custom step type', async () => {
       const script = `<script>alert('Hello there')</script>`;
 
-      const client = new Client({ secretKey: 'some-secret-key' });
       client.addWorkflows([
         workflow('test-workflow', async ({ step }) => {
           await step.custom(
