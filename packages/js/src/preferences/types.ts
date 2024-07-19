@@ -1,4 +1,4 @@
-import { ChannelType, PreferenceLevel } from '../types';
+import { ChannelPreference, ChannelType, PreferenceLevel } from '../types';
 
 export type FetchPreferencesArgs = {
   level?: PreferenceLevel;
@@ -6,6 +6,5 @@ export type FetchPreferencesArgs = {
 
 export type UpdatePreferencesArgs = {
   workflowId?: string;
-  enabled: boolean;
-  channel: ChannelType;
+  channelPreferences: ChannelPreference;
 };

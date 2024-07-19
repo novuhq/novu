@@ -1,18 +1,18 @@
 import type {
-  FetchCountArgs,
-  FetchFeedArgs,
-  Notification,
-  FetchFeedResponse,
-  FetchCountResponse,
-  ReadArgs,
-  UnreadArgs,
   ArchivedArgs,
-  UnarchivedArgs,
   CompleteArgs,
+  FetchCountArgs,
+  FetchCountResponse,
+  FetchFeedArgs,
+  FetchFeedResponse,
+  Notification,
+  ReadArgs,
   RevertArgs,
+  UnarchivedArgs,
+  UnreadArgs,
 } from '../feeds';
 import { Preference } from '../preferences/preference';
-import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
+import { UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import { InboxNotification, Session, WebSocketEvent } from '../types';
 
@@ -97,7 +97,7 @@ type NotificationRevertActionEvents = BaseEvents<
 type FeedReadAllEvents = BaseEvents<'feeds.read_all', { tags?: string[] }, void>;
 type FeedArchivedAllEvents = BaseEvents<'feeds.archive_all', { tags?: string[] }, void>;
 type FeedReadArchivedAllEvents = BaseEvents<'feeds.archive_all_read', { tags?: string[] }, void>;
-type PreferencesFetchEvents = BaseEvents<'preferences.fetch', FetchPreferencesArgs, Preference[]>;
+type PreferencesFetchEvents = BaseEvents<'preferences.fetch', undefined, Preference[]>;
 type PreferencesUpdateEvents = BaseEvents<'preferences.update', UpdatePreferencesArgs, Preference>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;

@@ -1,4 +1,4 @@
-import type { ApiService } from '@novu/client';
+import { InboxService } from '../api';
 
 import type { NovuEventEmitter } from '../event-emitter';
 import type { TODO } from '../types';
@@ -8,7 +8,7 @@ import type { UpdatePreferencesArgs } from './types';
 
 export const mapPreference = (apiPreference: {
   template?: TODO;
-  preference: {
+  preferences: {
     enabled: boolean;
     channels: {
       email?: boolean;
@@ -19,14 +19,14 @@ export const mapPreference = (apiPreference: {
     };
   };
 }): Preference => {
-  const { template: workflow, preference } = apiPreference;
+  const { template: workflow, preferences } = apiPreference;
   const hasWorkflow = workflow !== undefined;
   const level = hasWorkflow ? PreferenceLevel.TEMPLATE : PreferenceLevel.GLOBAL;
 
   return new Preference({
     level,
-    enabled: preference.enabled,
-    channels: preference.channels,
+    enabled: preferences.enabled,
+    channels: preferences.channels,
     workflow: hasWorkflow
       ? {
           id: workflow?._id,
@@ -45,18 +45,18 @@ export const updatePreference = async ({
   args,
 }: {
   emitter: NovuEventEmitter;
-  apiService: ApiService;
+  apiService: InboxService;
   args: UpdatePreferencesArgs;
 }): Promise<Preference> => {
-  const { workflowId, enabled, channel } = args;
+  const { workflowId, channelPreferences } = args;
   try {
     emitter.emit('preferences.update.pending', { args });
 
     let response;
     if (workflowId) {
-      response = await apiService.updateSubscriberPreference(workflowId, channel, enabled);
+      response = await apiService.updateWorkflowPreferences({ workflowId, channelPreferences });
     } else {
-      response = await apiService.updateSubscriberGlobalPreference([{ channelType: channel, enabled }]);
+      response = await apiService.updateGlobalPreferences(channelPreferences);
     }
 
     const preference = new Preference(mapPreference(response));
