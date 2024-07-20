@@ -4,7 +4,7 @@ import { css } from '../../../styled-system/css';
 
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
-import { useDisclosure } from '@mantine/hooks';
+import { useClickOutside, useDisclosure } from '@mantine/hooks';
 
 type VariableItem = {
   id: string;
@@ -19,12 +19,17 @@ type MentionListProps = SuggestionProps<VariableItem>;
 export const MentionList = forwardRef<MentionRef, MentionListProps>(({ clientRect, command, query, items }, ref) => {
   const [opened, handlers] = useDisclosure(true);
 
+  // ref for closing the menu any time there's a click elsewhere.
+  const clickOutRef = useClickOutside(() => {
+    handlers.close();
+  });
+
   const enterHandler = () => {
     handlers.close();
   };
   useImperativeHandle(ref, () => ({
-    onBlur: () => {
-      console.log('nknk');
+    close: () => {
+      handlers.close();
     },
     onKeyDown: ({ event }) => {
       console.log(event);
@@ -47,12 +52,13 @@ export const MentionList = forwardRef<MentionRef, MentionListProps>(({ clientRec
   return createPortal(
     <Menu
       opened={opened}
-      closeOnClickOutside
       closeOnEscape
-      clickOutsideEvents={['click', 'mousedown', 'touchstart']}
       classNames={stylesTry}
       position="bottom-start"
       width={200}
+      // for some reason these don't seem to work, so we use clickOutRef on the dropdown
+      closeOnClickOutside
+      clickOutsideEvents={['click', 'mousedown', 'touchstart']}
     >
       <Menu.Target>
         <div
@@ -64,7 +70,7 @@ export const MentionList = forwardRef<MentionRef, MentionListProps>(({ clientRec
         />
       </Menu.Target>
 
-      <Menu.Dropdown>
+      <Menu.Dropdown ref={clickOutRef}>
         {items.map((item) => {
           return (
             <Menu.Item key={item.id} onClick={() => handleCommand(item.id)}>
