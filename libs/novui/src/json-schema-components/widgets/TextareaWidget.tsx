@@ -17,7 +17,7 @@ import Strike from '@tiptap/extension-strike';
 
 import { input } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 const inputRegex = /(?:^|\s)((?:~)((?:[^~]+))(?:~))$/;
 
@@ -40,6 +40,9 @@ export const TextareaWidget = (props: WidgetProps) => {
       ];
     },
   });
+
+  const reactRenderer = useRef<ReactRenderer<MentionRef>>(null);
+
   const editor = useEditor({
     // parseOptions: {
     //   preserveWhitespace: true,
@@ -80,27 +83,25 @@ export const TextareaWidget = (props: WidgetProps) => {
           },
           char: '{{',
           render() {
-            let reactRenderer: ReactRenderer<MentionRef> | null = null;
-
             return {
               onStart: (props) => {
-                reactRenderer = new ReactRenderer(MentionList, {
+                reactRenderer.current = new ReactRenderer(MentionList, {
                   props,
                   editor: props.editor,
                 });
               },
               onUpdate(props) {
-                reactRenderer?.updateProps(props);
+                reactRenderer.current?.updateProps(props);
               },
               onKeyDown(props) {
-                if (!reactRenderer?.ref) {
+                if (!reactRenderer.current?.ref) {
                   return false;
                 }
 
-                return reactRenderer?.ref.onKeyDown(props);
+                return reactRenderer.current?.ref.onKeyDown(props);
               },
               onExit() {
-                reactRenderer?.destroy();
+                reactRenderer.current?.destroy();
               },
             };
           },
@@ -109,7 +110,7 @@ export const TextareaWidget = (props: WidgetProps) => {
     ],
     content: '',
     onBlur: () => {
-      console.log('blur editor---');
+      console.log('blur editor---', reactRenderer.current?.ref);
     },
     onUpdate: ({ editor }) => {
       const content = editor.isEmpty ? undefined : editor.getText();
