@@ -8,7 +8,7 @@ export type NovuProviderProps = {
 };
 
 export enum NotificationStatus {
-  UNREAD_READ = 'Unread & read',
-  UNREAD = 'Unread only',
-  ARCHIVED = 'Archived',
+  UNREAD_READ = 'unreadRead',
+  UNREAD = 'unread',
+  ARCHIVED = 'archived',
 }

@@ -3,6 +3,7 @@ import { defaultLocalization } from '../config/defaultLocalization';
 import { Path } from '../helpers/types';
 
 export type Localization = Partial<Record<keyof typeof defaultLocalization, string>>;
+export type LocalizationKey = keyof typeof defaultLocalization;
 
 type LocalizationPath = Path<Localization>;
 
