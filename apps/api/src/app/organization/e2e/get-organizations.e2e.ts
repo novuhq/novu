@@ -40,9 +40,6 @@ describe('Get organizations - /organizations (GET) @skip-in-ee', async () => {
     thirdOldOrganization = thirdSession.organization;
 
     await thirdSession.testAgent.post(`/v1/invites/${invitee.invite.token}/accept`).expect(201);
-
-    thirdSession.organization = session.organization;
-    await thirdSession.fetchJWT();
   });
 
   it('should see all organizations that you are a part of', async () => {

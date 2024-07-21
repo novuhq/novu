@@ -21,7 +21,7 @@ const GroupStyled = styled(Group)`
 
 export const DigestMetadata = () => {
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvironment({}, template?.bridge);
+  const { readonly } = useEnvironment({ bridge: template?.bridge });
   const stepFormPath = useStepFormPath();
   const { control, watch } = useFormContext();
 

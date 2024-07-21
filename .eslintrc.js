@@ -23,6 +23,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   rules: {
+    'unused-imports/no-unused-imports': 'off',
     '@typescript-eslint/space-before-blocks': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',

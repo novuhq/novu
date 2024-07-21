@@ -1,8 +1,10 @@
 import type { ApiService } from '@novu/client';
+import { InboxService } from './api';
 
 import { NovuEventEmitter } from './event-emitter';
 import { Session } from './types';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
+import { InboxServiceSingleton } from './utils/inbox-service-singleton';
 
 interface CallQueueItem {
   fn: () => Promise<unknown>;
@@ -13,6 +15,7 @@ interface CallQueueItem {
 
 export class BaseModule {
   _apiService: ApiService;
+  _inboxService: InboxService;
   _emitter: NovuEventEmitter;
   #callsQueue: CallQueueItem[] = [];
   #sessionError: unknown;
@@ -20,6 +23,7 @@ export class BaseModule {
   constructor() {
     this._emitter = NovuEventEmitter.getInstance();
     this._apiService = ApiServiceSingleton.getInstance();
+    this._inboxService = InboxServiceSingleton.getInstance();
     this._emitter.on('session.initialize.success', ({ result }) => {
       this.onSessionSuccess(result);
       this.#callsQueue.forEach(async ({ fn, resolve }) => {

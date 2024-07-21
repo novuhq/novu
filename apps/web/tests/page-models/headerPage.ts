@@ -25,7 +25,7 @@ export class HeaderPage {
   }
 
   getOrganizationName() {
-    return this.page.getByTestId('header-dropdown-organization-name');
+    return this.page.getByTestId('header-dropdown-organization-name').textContent();
   }
 
   async clickAvatar() {

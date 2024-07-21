@@ -44,6 +44,8 @@ import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
 import { GetStartedPageV2 } from '../../studio/components/GetStartedPageV2/index';
+import { HStack } from '@novu/novui/jsx';
+import { Title } from '@novu/novui';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -254,10 +256,6 @@ function WorkflowListPage() {
     debouncedSearchChange(value);
   };
 
-  if ((isV2Enabled && shouldShowEmptyState) || (isV2Enabled && areWorkflowsLoading && isOnboarding)) {
-    return <GetStartedPageV2 location="workflows" />;
-  }
-
   return (
     <ListPage
       title="Workflows"
@@ -272,16 +270,21 @@ function WorkflowListPage() {
     >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         <TableActionsContainer>
-          <CreateWorkflowDropdown
-            readonly={readonly}
-            blueprints={popular?.blueprints}
-            isLoading={areBlueprintsLoading}
-            isCreating={isCreatingTemplateFromBlueprint}
-            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={handleOnBlueprintClick}
-            onAllTemplatesClick={openModal}
-          />
+          {!isV2Enabled ? (
+            <CreateWorkflowDropdown
+              readonly={readonly}
+              blueprints={popular?.blueprints}
+              isLoading={areBlueprintsLoading}
+              isCreating={isCreatingTemplateFromBlueprint}
+              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+              onTemplateClick={handleOnBlueprintClick}
+              onAllTemplatesClick={openModal}
+            />
+          ) : (
+            <div></div>
+          )}
+
           <SearchInput
             value={searchValue}
             placeholder="Type name or identifier..."
@@ -303,7 +306,7 @@ function WorkflowListPage() {
             noDataPlaceholder={shouldShowNoResults && <WorkflowListNoMatches />}
           />
         </When>
-        <When truthy={shouldShowEmptyState}>
+        <When truthy={shouldShowEmptyState && !isV2Enabled}>
           <TemplatesListNoData
             readonly={readonly}
             blueprints={popular?.blueprints}
@@ -314,6 +317,9 @@ function WorkflowListPage() {
             onTemplateClick={handleOnBlueprintClick}
             onAllTemplatesClick={openModal}
           />
+        </When>
+        <When truthy={shouldShowEmptyState && isV2Enabled}>
+          <GetStartedPageV2 location="get-started" />
         </When>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>

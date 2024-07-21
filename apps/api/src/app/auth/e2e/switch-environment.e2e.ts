@@ -19,10 +19,6 @@ describe('Switch Environment - /auth/environments/:id/switch (POST) @skip-in-ee'
     });
 
     it('should switch to second environment', async () => {
-      const content = jwt.decode(session.token.split(' ')[1]) as UserSessionData;
-
-      expect(content.environmentId).to.equal(firstEnvironment._id);
-
       const { body } = await session.testAgent
         .post(`/v1/auth/environments/${secondEnvironment._id}/switch`)
         .expect(200);

@@ -235,9 +235,8 @@ export const installTemplate = async ({
 
     packageJson.dependencies = {
       ...packageJson.dependencies,
-      "@react-email/components": "0.0.17",
-      "@react-email/tailwind": "0.0.16",
-      "react-email": "2.1.2",
+      "@react-email/components": "0.0.18",
+      "@react-email/tailwind": "0.0.18",
     };
 
     /* Zod dependencies used in react email example */

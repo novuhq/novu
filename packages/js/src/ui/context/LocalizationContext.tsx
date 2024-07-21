@@ -1,10 +1,9 @@
-import { ParentProps, createContext, createMemo, useContext } from 'solid-js';
-import { defaultLocalization } from '../config/default-localization';
+import { createContext, createMemo, ParentProps, useContext } from 'solid-js';
+import { defaultLocalization } from '../config/defaultLocalization';
 import { Path } from '../helpers/types';
 
-export type Localization = {
-  'inbox.title': string;
-};
+export type Localization = Partial<Record<keyof typeof defaultLocalization, string>>;
+export type LocalizationKey = keyof typeof defaultLocalization;
 
 type LocalizationPath = Path<Localization>;
 

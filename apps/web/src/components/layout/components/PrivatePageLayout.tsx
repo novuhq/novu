@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ErrorBoundary } from '@sentry/react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
-import { INTERCOM_APP_ID, IS_EE_AUTH_ENABLED } from '../../../config';
+import { BRIDGE_SYNC_SAMPLE_ENDPOINT, INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
@@ -16,6 +16,7 @@ import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 import { isStudioRoute } from '../../../studio/utils/routing';
+import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
 
 const AppShell = styled.div`
   display: flex;
@@ -55,7 +56,7 @@ export function PrivatePageLayout() {
           onHide={() => setIsIntercomOpened(false)}
         >
           <ErrorBoundary
-            fallback={({ error, resetError, eventId }) => (
+            fallback={({ error, eventId }) => (
               <>
                 Sorry, but something went wrong. <br />
                 Our team has been notified and we are investigating.
@@ -74,6 +75,9 @@ export function PrivatePageLayout() {
               <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
                 <Sidebar />
                 <ContentShell>
+                  {environment?.bridge?.url &&
+                    location.pathname.includes('/workflows') &&
+                    environment?.bridge?.url === BRIDGE_SYNC_SAMPLE_ENDPOINT && <SampleModeBanner />}
                   <FreeTrialBanner />
                   <HeaderNav />
                   <Outlet />

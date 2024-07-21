@@ -6,14 +6,14 @@ import {
   Appearance,
   AppearanceProvider,
   FocusManagerProvider,
-  InboxStatusProvider,
+  InboxNotificationStatusProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { Bell } from './Bell';
+import { UnreadCountProvider } from '../context/UnreadCountContext';
+import { Bell, Root } from './elements';
 import { Inbox } from './Inbox';
-import { Root } from './Root';
 
 const NovuComponents = {
   Inbox,
@@ -62,19 +62,21 @@ export const Renderer = (props: RendererProps) => {
 
   return (
     <NovuProvider options={props.options}>
-      <LocalizationProvider localization={props.localization}>
-        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-          <FocusManagerProvider>
-            <InboxStatusProvider>
-              {[...props.nodes].map(([node, component]) => (
-                <Portal mount={node}>
-                  <Root>{NovuComponents[component.name](component.props || {})}</Root>
-                </Portal>
-              ))}
-            </InboxStatusProvider>
-          </FocusManagerProvider>
-        </AppearanceProvider>
-      </LocalizationProvider>
+      <UnreadCountProvider>
+        <LocalizationProvider localization={props.localization}>
+          <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
+            <FocusManagerProvider>
+              <InboxNotificationStatusProvider>
+                {[...props.nodes].map(([node, component]) => (
+                  <Portal mount={node}>
+                    <Root>{NovuComponents[component.name](component.props || {})}</Root>
+                  </Portal>
+                ))}
+              </InboxNotificationStatusProvider>
+            </FocusManagerProvider>
+          </AppearanceProvider>
+        </LocalizationProvider>
+      </UnreadCountProvider>
     </NovuProvider>
   );
 };

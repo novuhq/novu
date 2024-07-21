@@ -34,9 +34,10 @@ module.exports = (on, config) => {
       organizationId,
       enumerate = false,
       ordered = false,
+      environmentId,
     }) {
       const triggerIdentifier = identifier;
-      const service = new NotificationsService(token);
+      const service = new NotificationsService(token, environmentId);
       const session = new UserSession(config.env.API_URL);
 
       // eslint-disable-next-line no-plusplus

@@ -66,6 +66,17 @@ describe('CORS Configuration', () => {
         expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
       });
 
+      it('inbox routes should be wildcarded', () => {
+        const callbackSpy = spy();
+
+        // @ts-ignore
+        corsOptionsDelegate({ url: '/v1/inbox/session' }, callbackSpy);
+
+        expect(callbackSpy.calledOnce).to.be.ok;
+        expect(callbackSpy.firstCall.firstArg).to.be.null;
+        expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
+      });
+
       if (environment === 'dev') {
         it('should allow all origins for dev environment from pr preview', () => {
           const callbackSpy = spy();

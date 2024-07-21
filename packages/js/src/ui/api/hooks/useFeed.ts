@@ -1,30 +1,27 @@
 import { createEffect, createSignal } from 'solid-js';
-import { createStore } from 'solid-js/store';
+import { FetchFeedArgs, FetchFeedResponse, Notification } from '../../../feeds';
 import { useNovu } from '../../context';
-import { FetchFeedArgs, Notification } from '../../../feeds';
-import { PaginatedResponse } from '../../../types';
+import { createInfiniteScroll } from '../../helpers';
 
 export const useFeed = (props: {
   options: FetchFeedArgs;
-  onSuccess?: (data: PaginatedResponse<Notification>) => void;
+  onSuccess?: (data: FetchFeedResponse) => void;
   onError?: (err: unknown) => void;
 }) => {
   const [feed, setFeed] = createSignal<Notification[]>([]);
-  const [pagination, setPagination] = createStore({ currentPage: 1, hasMore: true });
+
+  const [hasMore, setHasMore] = createSignal(true);
 
   const novu = useNovu();
 
   const fetchFeed = async ({ options }: { options: FetchFeedArgs }) => {
-    if (!pagination.hasMore) return;
+    if (!hasMore()) return;
 
     try {
       const response = await novu.feeds.fetch(options);
 
       setFeed((prev) => [...prev, ...response.data]);
-      setPagination({
-        currentPage: response.page,
-        hasMore: response.hasMore,
-      });
+      setHasMore(response.hasMore);
       props.onSuccess?.(response);
     } catch (error) {
       props.onError?.(error);
@@ -35,5 +32,16 @@ export const useFeed = (props: {
     fetchFeed({ options: props.options });
   });
 
-  return { feed, fetchFeed, hasMore: pagination.hasMore, page: pagination.currentPage };
+  return { feed, fetchFeed, hasMore: hasMore };
+};
+
+type UseFeedInfiniteScrollProps = {
+  options?: Exclude<FetchFeedArgs, 'offset'>;
+};
+export const useFeedInfiniteScroll = (props?: UseFeedInfiniteScrollProps) => {
+  const novu = useNovu();
+
+  return createInfiniteScroll(async (offset) => {
+    return await novu.feeds.fetch({ ...(props?.options || {}), offset });
+  });
 };
