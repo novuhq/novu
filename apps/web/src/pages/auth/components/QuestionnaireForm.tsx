@@ -30,7 +30,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentOrganization } = useAuth();
+  const { login, currentOrganization, reloadOrganization } = useAuth();
   const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
@@ -87,9 +87,8 @@ export function QuestionnaireForm() {
       await refetchEnvironments();
 
       try {
-        await api.post(`/v1/bridge/sync`, {
+        await api.post(`/v1/bridge/sync?source=sample-workspace`, {
           bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
-          source: 'sample-workspace',
         });
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -98,7 +97,7 @@ export function QuestionnaireForm() {
         captureException(e);
       }
 
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.myEnvironments, organization?._id] });
+      await queryClient.refetchQueries({ queryKey: [QueryKeys.myEnvironments, organization?._id] });
     } else {
       await refetchEnvironments();
     }

@@ -88,6 +88,12 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     selectEnvironment(environments, getEnvironmentId())
   );
 
+  useEffect(() => {
+    if (environments) {
+      setCurrentEnvironment(selectEnvironment(environments, getEnvironmentId()));
+    }
+  }, [environments]);
+
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
       if (currentEnvironment?._id === environmentId) {
