@@ -6,6 +6,7 @@ import { ArrowDropDown } from '../../../icons';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
 
+/* This is also going to be exported as a separate component. Keep it pure. */
 export const Settings = () => {
   const style = useStyle();
 
