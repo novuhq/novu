@@ -7,6 +7,7 @@ import { NotificationsCount } from './notifications-count/notifications-count.us
 import { Session } from './session/session.usecase';
 import { UpdateAllNotifications } from './update-all-notifications/update-all-notifications.usecase';
 import { UpdateNotificationAction } from './update-notification-action/update-notification-action.usecase';
+import { UpdatePreferences } from './update-preferences/update-preferences.usecase';
 
 export const USE_CASES = [
   Session,
@@ -19,4 +20,5 @@ export const USE_CASES = [
   GetPreferences,
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
+  UpdatePreferences,
 ];

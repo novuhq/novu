@@ -38,6 +38,14 @@ export const WorkflowsTestPage = () => {
   const { data: workflow, isLoading: isWorkflowLoading } = useWorkflow(templateId, { enabled: isLocalStudio });
   const { trigger, isLoading: isTestLoading } = useWorkflowTrigger();
 
+  useEffect(() => {
+    track('Test Page Visit', {
+      workflowName: workflow?.name,
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const isLoading = useMemo(
     () => (isLocalStudio ? isWorkflowLoading : isTemplateLoading),
     [isWorkflowLoading, isTemplateLoading, isLocalStudio]
