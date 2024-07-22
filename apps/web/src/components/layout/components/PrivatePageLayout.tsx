@@ -4,7 +4,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 
 import { IntercomProvider } from 'react-use-intercom';
-import { BRIDGE_SYNC_SAMPLE_ENDPOINT, INTERCOM_APP_ID } from '../../../config';
+import { BRIDGE_SYNC_SAMPLE_ENDPOINT, BRIDGE_ENDPOINTS_LEGACY_VERSIONS, INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
@@ -47,6 +47,12 @@ export function PrivatePageLayout() {
     [environment, location]
   );
 
+  const isEqualToSampleEndpoint =
+    environment?.bridge?.url &&
+    (environment?.bridge?.url === BRIDGE_SYNC_SAMPLE_ENDPOINT ||
+      BRIDGE_ENDPOINTS_LEGACY_VERSIONS.includes(environment?.bridge?.url));
+  const showSampleModeBanner = isEqualToSampleEndpoint && location.pathname.includes('/workflows');
+
   return (
     <EnsureOnboardingComplete>
       <SpotLightProvider>
@@ -75,9 +81,7 @@ export function PrivatePageLayout() {
               <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
                 <Sidebar />
                 <ContentShell>
-                  {environment?.bridge?.url &&
-                    location.pathname.includes('/workflows') &&
-                    environment?.bridge?.url === BRIDGE_SYNC_SAMPLE_ENDPOINT && <SampleModeBanner />}
+                  {showSampleModeBanner && <SampleModeBanner />}
                   <FreeTrialBanner />
                   <HeaderNav />
                   <Outlet />

@@ -43,16 +43,6 @@ export function QuestionnaireForm() {
     ICreateOrganizationDto
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
-  useEffect(() => {
-    if (currentOrganization) {
-      if (isFromVercel) {
-        startVercelSetup();
-
-        return;
-      }
-    }
-  }, [currentOrganization, isFromVercel, startVercelSetup]);
-
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
     const selectedLanguages = Object.keys(data.language || {}).filter((key) => data.language && data.language[key]);
