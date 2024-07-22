@@ -3,7 +3,7 @@ import { type AuthContextValue } from './AuthProvider';
 const noop = () => {};
 const asyncNoop = async () => {};
 
-export const defaultAuthContextValue: AuthContextValue = {
+export const DEFAULT_AUTH_CONTEXT_VALUE: AuthContextValue = {
   isUserLoaded: false,
   isOrganizationLoaded: false,
   currentUser: undefined,

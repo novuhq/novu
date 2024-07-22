@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
-import { defaultAuthContextValue } from '../../../components/providers/constants';
+import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
@@ -13,7 +13,7 @@ import { ROUTES } from '../../../constants/routes';
 const asyncNoop = async () => {};
 
 // TODO: Replace with createContextAndHook
-export const EnterpriseAuthContext = createContext<AuthContextValue>(defaultAuthContextValue);
+export const EnterpriseAuthContext = createContext<AuthContextValue>(DEFAULT_AUTH_CONTEXT_VALUE);
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -151,10 +151,10 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     reloadOrganization,
   } as AuthContextValue;
   /*
-   * Necessary assertion as Boolean and true or false discriminating unions don't work with inference.
-   * See here https://github.com/microsoft/TypeScript/issues/19360
+   * The previous assestion is necessary as Boolean and true or false discriminating unions
+   * don't work with inference. See here https://github.com/microsoft/TypeScript/issues/19360
    *
-   * Alternatively, we will have to conditionally generate the value object based on the loading values.
+   * Alternatively, we will have to conditionally generate the value object based on the isLoaded values.
    */
 
   return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;

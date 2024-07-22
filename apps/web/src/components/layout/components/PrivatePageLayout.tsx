@@ -6,7 +6,7 @@ import { IntercomProvider } from 'react-use-intercom';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT, BRIDGE_ENDPOINTS_LEGACY_VERSIONS, INTERCOM_APP_ID } from '../../../config';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
-import { useEnvironment, useRedirectURL, useRoutes } from '../../../hooks';
+import { useEnvironment, useRedirectURL, useRouteScopes } from '../../../hooks';
 // TODO: Move sidebar under layout folder as it belongs here
 import { Sidebar } from '../../nav/Sidebar';
 import { HeaderNav } from './v2/HeaderNav';
@@ -34,7 +34,7 @@ export function PrivatePageLayout() {
   const { environment } = useEnvironment();
   const location = useLocation();
   const { getRedirectURL } = useRedirectURL();
-  const { inStudioRoute } = useRoutes();
+  const { inStudioRoute } = useRouteScopes();
 
   /**
    * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.

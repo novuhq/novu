@@ -27,7 +27,7 @@ export * from './useNovu';
 export * from './useProcessVariables';
 export * from './usePrompt';
 export * from './useRedirectURL';
-export * from './useRoutes';
+export * from './useRouteScopes';
 export * from './useSubscribers';
 export * from './useTemplates';
 export * from './useThemeChange';

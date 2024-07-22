@@ -48,12 +48,7 @@ test.describe('Invites', () => {
     await signUpPage.assertNavigationPath('/get-started**');
 
     const sidebarPage = await SidebarPage.goTo(pageForInvitedUser);
-
-    // TODO: Find more stable criteria for this
-    await page.waitForTimeout(1000);
-
-    const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
-    expect(orgSwitchValue).toBe(invitation.organization.name.toLowerCase());
+    await expect(sidebarPage.getOrganizationSwitch()).toHaveValue(new RegExp(invitation.organization.name, 'i'));
   });
 
   test('invite an existing user to the organization', async ({ browser, page }) => {

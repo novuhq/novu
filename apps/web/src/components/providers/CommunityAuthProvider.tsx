@@ -9,9 +9,9 @@ import { useSegment } from './SegmentProvider';
 import { clearEnvironmentId } from './EnvironmentProvider';
 import { getUser } from '../../api/user';
 import { switchOrganization as apiSwitchOrganization, getOrganization } from '../../api/organization';
-import { defaultAuthContextValue } from './constants';
+import { DEFAULT_AUTH_CONTEXT_VALUE } from './constants';
 import { type AuthContextValue } from './AuthProvider';
-import { useRoutes } from '../../hooks/useRoutes';
+import { useRouteScopes } from '../../hooks/useRouteScopes';
 import { inIframe } from '../../utils/iframe';
 
 export const LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -34,7 +34,7 @@ export function getToken() {
   );
 }
 
-export const CommunityAuthContext = createContext<AuthContextValue>(defaultAuthContextValue);
+export const CommunityAuthContext = createContext<AuthContextValue>(DEFAULT_AUTH_CONTEXT_VALUE);
 
 CommunityAuthContext.displayName = 'CommunityAuthProvider';
 
@@ -43,7 +43,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { inPrivateRoute } = useRoutes();
+  const { inPrivateRoute } = useRouteScopes();
   const hasToken = !!getToken();
 
   useEffect(() => {
@@ -188,10 +188,10 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     reloadOrganization,
   } as AuthContextValue;
   /*
-   * Necessary assertion as Boolean and true or false discriminating unions don't work with inference.
-   * See here https://github.com/microsoft/TypeScript/issues/19360
+   * The previous assestion is necessary as Boolean and true or false discriminating unions
+   * don't work with inference. See here https://github.com/microsoft/TypeScript/issues/19360
    *
-   * Alternatively, we will have to conditionally generate the value object based on the loading values.
+   * Alternatively, we will have to conditionally generate the value object based on the isLoaded values.
    */
 
   return <CommunityAuthContext.Provider value={value}>{children}</CommunityAuthContext.Provider>;
