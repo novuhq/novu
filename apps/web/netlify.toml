@@ -14,8 +14,21 @@
   status = 200
 
 [[headers]]
+  for = "/studio/*"
+  [headers.values]
+    Content-Security-Policy = "frame-ancestors http://localhost:*"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "no-referrer"
+    X-Content-Type-Options = "nosniff"
+    Permissions-Policy = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()"
+    Strict-Transport-Security = '''
+    max-age=63072000;
+    includeSubDomains;
+    preload'''
   for = "/*"
   [headers.values]
+    X-Frame-Options = "Deny"
+    Content-Security-Policy = "frame-ancestors 'none'"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "no-referrer"
     X-Content-Type-Options = "nosniff"
