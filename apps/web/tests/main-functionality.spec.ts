@@ -289,7 +289,7 @@ test('should allow uploading a logo from email editor', async ({ page }) => {
   await emailPage.getUploadImageButton().click();
 
   await page.getByRole('button', { name: 'Yes' }).click();
-  await waitForNetworkIdle(page);
+  // await waitForNetworkIdle(page);
   expect(page.url()).toContain('/brand');
 });
 
