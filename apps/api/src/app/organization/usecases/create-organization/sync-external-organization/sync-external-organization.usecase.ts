@@ -14,9 +14,7 @@ import { ModuleRef } from '@nestjs/core';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth
-@Injectable({
-  scope: Scope.REQUEST,
-})
+@Injectable()
 export class SyncExternalOrganization {
   constructor(
     private readonly organizationRepository: OrganizationRepository,
