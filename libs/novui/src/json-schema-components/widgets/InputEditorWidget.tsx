@@ -1,70 +1,52 @@
-import { getInputProps, WidgetProps } from '@rjsf/utils';
-import { TextInputType, Textarea } from '../../components';
-import '@mantine/tiptap/styles.css';
+import { useEffect, useMemo, useRef } from 'react';
+
+import { WidgetProps } from '@rjsf/utils';
+
+import { Input } from '@mantine/core';
 import { RichTextEditor } from '@mantine/tiptap';
-import { markInputRule, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+
+import { type Extensions, useEditor } from '@tiptap/react';
 import Text from '@tiptap/extension-text';
 import Paragraph from '@tiptap/extension-paragraph';
 import { ReactRenderer } from '@tiptap/react';
-
-import { MentionList, MentionRef } from './MentionList';
-import { Input } from '@mantine/core';
-import { css, cx } from '../../../styled-system/css';
 import Document from '@tiptap/extension-document';
 import Mention from '@tiptap/extension-mention';
-import Strike from '@tiptap/extension-strike';
 
+import { css, cx } from '../../../styled-system/css';
 import { input } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { useEffect, useRef } from 'react';
 
-const inputRegex = /(?:^|\s)((?:~)((?:[^~]+))(?:~))$/;
+import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
-export const TextareaWidget = (props: WidgetProps) => {
-  const { type, value, label, schema, formContext, onChange, options, required, readonly, rawErrors, disabled } = props;
-  const inputProps1 = getInputProps(schema, type, options);
+import '@mantine/tiptap/styles.css';
 
+export const InputEditorWidget = (props: WidgetProps) => {
+  const { value, label, formContext, onChange, required, readonly, rawErrors } = props;
   const [variantProps, inputProps] = input.splitVariantProps({});
-  const [cssProps, localProps] = splitCssProps(inputProps);
-  const variables = formContext;
-  // const { onChange, className, rightSection, ...otherProps } = localProps;
+  const [cssProps] = splitCssProps(inputProps);
   const classNames = input(variantProps);
-  const CustomStrike = Strike.extend({
-    addInputRules() {
-      return [
-        markInputRule({
-          find: inputRegex,
-          type: this.type,
-        }),
-      ];
-    },
-  });
 
-  const reactRenderer = useRef<ReactRenderer<MentionRef>>(null);
+  const { variables = [] } = formContext;
+  const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
 
-  const editor = useEditor({
-    // parseOptions: {
-    //   preserveWhitespace: true,
-    // },
-    extensions: [
-      // StarterKit,
-      CustomStrike,
-      Document,
-      Paragraph,
-      Text,
+  const variablesList = useMemo<VariableItem[]>(() => {
+    return variables?.map((variable: string) => {
+      return { label: variable, id: variable };
+    });
+  }, [variables]);
+
+  const baseExtensions: Extensions = [Document, Paragraph, Text];
+  if (variables.length) {
+    baseExtensions.push(
       Mention.configure({
         HTMLAttributes: {
-          class: 'mention',
+          class: 'suggestion',
         },
         renderHTML: ({ options, node }) => {
           const closeTag = '}}';
-
           return [
             'span',
-            {
-              style: `border: 1px solid #ccc; padding: 2px 4px; border-radius: 4px;`,
-            },
+            options.HTMLAttributes,
             `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}${closeTag}`,
           ];
         },
@@ -75,17 +57,13 @@ export const TextareaWidget = (props: WidgetProps) => {
         },
         suggestion: {
           items: ({ query }) => {
-            return variables
-              ?.map((variable) => {
-                return { label: variable, id: variable };
-              })
-              .filter((item) => item.label.includes(query));
+            return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
           },
           char: '{{',
           render() {
             return {
               onStart: (props) => {
-                reactRenderer.current = new ReactRenderer(MentionList, {
+                reactRenderer.current = new ReactRenderer(VariableSuggestionList, {
                   props,
                   editor: props.editor,
                 });
@@ -106,22 +84,33 @@ export const TextareaWidget = (props: WidgetProps) => {
             };
           },
         },
-      }),
-    ],
+      })
+    );
+  }
+
+  const editor = useEditor({
+    extensions: baseExtensions,
     content: '',
-    onBlur: () => {
-      console.log('blur editor---', reactRenderer.current?.ref);
+    editable: !readonly,
+    onFocus: () => {
+      reactRenderer.current?.ref?.focus();
     },
     onUpdate: ({ editor }) => {
       const content = editor.isEmpty ? undefined : editor.getText();
       onChange(content);
     },
   });
-  const error = rawErrors?.length > 0 && rawErrors;
 
   useEffect(() => {
     if (editor) {
-      editor.commands.setContent(value);
+      const regexpString = `\{\{(.*?(.*?)\)}\}`;
+      const regexp = new RegExp(regexpString, 'gm');
+
+      const newValue = value
+        ?.toString()
+        .replace(regexp, '<span data-id="$1" contenteditable="false" class="suggestion" data-type="mention">$1</span>');
+
+      editor.commands.setContent(newValue);
     }
   }, []);
 
@@ -132,30 +121,13 @@ export const TextareaWidget = (props: WidgetProps) => {
       required={required}
       label={label}
       description={props.schema.description}
-      error={error}
+      error={rawErrors?.length > 0 && rawErrors}
     >
       <RichTextEditor classNames={stylesTry} editor={editor}>
         <RichTextEditor.Content />
       </RichTextEditor>
     </Input.Wrapper>
   );
-
-  // return (
-  //   <Textarea
-  //     description={props.schema.description}
-  //     onChange={(event) => {
-  //       event.preventDefault();
-  //       onChange(event.target.value);
-  //     }}
-  //     value={value || value === 0 ? value : ''}
-  //     required={required}
-  //     label={label}
-  //     type={inputProps.type as TextInputType}
-  //     error={rawErrors?.length > 0 && rawErrors}
-  //     readOnly={readonly}
-  //     disabled={disabled}
-  //   />
-  // );
 };
 const stylesTry = {
   root: css({
@@ -163,6 +135,15 @@ const stylesTry = {
     borderColor: 'input.border !important',
     _groupError: {
       borderColor: 'input.border.error !important',
+    },
+    '& .suggestion': {
+      color: 'suggestion.text !important',
+      borderRadius: 'xs',
+      background: 'suggestion.surface !important',
+      p: '25',
+      lineHeight: '125',
+      borderColor: 'input.border !important',
+      border: 'solid',
     },
   }),
   content: css({

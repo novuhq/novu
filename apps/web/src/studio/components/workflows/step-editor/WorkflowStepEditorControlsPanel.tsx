@@ -8,7 +8,7 @@ import { css } from '@novu/novui/css';
 import { Container, Flex } from '@novu/novui/jsx';
 import { useDebouncedCallback } from '@novu/novui';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
-import { SystemVariablesWithTypes } from '@novu/shared';
+import { getSuggestionVariables, subscriberVariables } from '../../../utils';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -43,36 +43,19 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
       ).length > 0
     );
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
-  const systemVars = Object.keys(SystemVariablesWithTypes)
-    .filter((name) => name === 'subscriber')
-    .flatMap((name) => {
-      const type = SystemVariablesWithTypes[name];
-      if (typeof type === 'object') {
-        return Object.keys(type).map((subName) => {
-          return `${name}.${subName}`;
-        });
-      }
-
-      return name;
-    });
 
   const payloadProperties = useMemo(() => {
-    return Object.keys(
+    const payloadObject =
       workflow?.payload?.schema?.properties ||
-        workflow?.options?.payloadSchema?.properties ||
-        workflow?.payloadSchema?.properties ||
-        {}
-    ).map((name) => `payload.${name}`);
+      workflow?.options?.payloadSchema?.properties ||
+      workflow?.payloadSchema?.properties ||
+      {};
+
+    return getSuggestionVariables(payloadObject, 'payload');
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
   const haveControlProperties = useMemo(() => {
     return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
-  }, [step?.controls?.schema, step?.inputs?.schema]);
-
-  const controlProperties = useMemo(() => {
-    return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).map(
-      (name) => `controls.${name}`
-    );
   }, [step?.controls?.schema, step?.inputs?.schema]);
 
   const handleOnChange = useDebouncedCallback(async (type: OnChangeType, data: any, id?: string) => {
@@ -115,7 +98,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
-                    variables={[...(systemVars || []), ...(payloadProperties || []), ...(controlProperties || [])]}
+                    variables={[...(subscriberVariables || []), ...(payloadProperties || [])]}
                   />
                 </When>
                 <When truthy={!haveControlProperties}>

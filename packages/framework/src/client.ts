@@ -618,7 +618,6 @@ export class Client {
     const compiledString = await this.templateEngine.render(templateString, {
       payload: event.payload || event.data,
       subscriber: event.subscriber,
-      controls: event.controls,
     });
 
     return JSON.parse(compiledString);

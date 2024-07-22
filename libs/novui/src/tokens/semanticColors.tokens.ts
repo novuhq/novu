@@ -203,6 +203,16 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  suggestion: {
+    surface: {
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    text: {
+      value: { base: '#B743FF', _dark: '#AD74FF' },
+      type: 'color',
+    },
+  },
   loader: {
     overlay: {
       value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
