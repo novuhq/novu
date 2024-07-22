@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ErrorBoundary } from '@sentry/react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
