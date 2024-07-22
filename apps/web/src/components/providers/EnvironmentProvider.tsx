@@ -88,15 +88,14 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     selectEnvironment(environments, getEnvironmentId())
   );
 
-  useEffect(() => {
-    if (environments) {
-      setCurrentEnvironment(selectEnvironment(environments, getEnvironmentId()));
-    }
-  }, [environments]);
-
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
       if (currentEnvironment?._id === environmentId) {
+        /**
+         * This is for handling the case when the environment is the same, but was updated on the database and re-fetched
+         */
+        setCurrentEnvironment(selectEnvironment(environments, environmentId));
+
         return;
       }
 
