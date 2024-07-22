@@ -90,16 +90,15 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
-      if (currentEnvironment?._id === environmentId) {
-        /**
-         * This is for handling the case when the environment is the same, but was updated on the database and re-fetched
-         */
-        setCurrentEnvironment(selectEnvironment(environments, environmentId));
+      /**
+       * This is for handling the case when the environment is the same, but was updated on the database and re-fetched.
+       * So we want to call this all the time.
+       */
+      setCurrentEnvironment(selectEnvironment(environments, environmentId));
 
+      if (currentEnvironment?._id === environmentId) {
         return;
       }
-
-      setCurrentEnvironment(selectEnvironment(environments, environmentId));
 
       /*
        * TODO: Replace this revalidation by moving environment ID or name to the URL.
