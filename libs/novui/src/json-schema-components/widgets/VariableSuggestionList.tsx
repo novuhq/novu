@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useClickOutside, useDisclosure } from '@mantine/hooks';
 import { Menu } from '@mantine/core';
 import { type SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
-import { css } from '../../../styled-system/css';
+import classes from './VariableSuggestionList.styles';
 
 export type VariableItem = {
   id: string;
@@ -56,7 +56,7 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       <Menu
         opened={opened}
         closeOnEscape
-        classNames={stylesTry}
+        classNames={classes}
         position="bottom-start"
         width={200}
         // for some reason these don't seem to work, so we use clickOutRef on the dropdown
@@ -87,39 +87,3 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
     );
   }
 );
-
-const stylesTry = {
-  root: css({
-    background: 'input.surface !important',
-    borderColor: 'input.border !important',
-  }),
-  item: css({
-    padding: '50 !important',
-    marginY: '25',
-    borderRadius: '50 !important',
-
-    overflow: 'none !important',
-    textOverflow: 'ellipsis',
-    color: 'typography.text.main !important',
-    _hover: {
-      bg: 'select.option.surface.hover !important',
-    },
-    _selected: {
-      fontWeight: 'strong',
-      bg: 'select.option.surface.selected !important',
-    },
-  }),
-  dropdown: css({
-    bg: 'surface.popover !important',
-    borderRadius: 'input !important',
-    padding: '25',
-    marginY: '25',
-    border: 'none !important',
-    boxShadow: 'medium !important',
-    color: 'typography.text.main',
-    maxHeight: '[200px]',
-    overflow: 'none !important',
-    overflowY: 'auto',
-    textOverflow: 'ellipsis',
-  }),
-};

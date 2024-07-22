@@ -15,6 +15,7 @@ import Mention from '@tiptap/extension-mention';
 import { css, cx } from '../../../styled-system/css';
 import { input } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
+import classes from './InputEditorWidget.styles';
 
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
@@ -103,7 +104,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
 
   useEffect(() => {
     if (editor) {
-      const regexpString = `\{\{(.*?(.*?)\)}\}`;
+      const regexpString = `{{(.*?(.*?))}}`;
       const regexp = new RegExp(regexpString, 'gm');
 
       const newValue = value
@@ -123,33 +124,9 @@ export const InputEditorWidget = (props: WidgetProps) => {
       description={props.schema.description}
       error={rawErrors?.length > 0 && rawErrors}
     >
-      <RichTextEditor classNames={stylesTry} editor={editor}>
+      <RichTextEditor classNames={classes} editor={editor}>
         <RichTextEditor.Content />
       </RichTextEditor>
     </Input.Wrapper>
   );
-};
-const stylesTry = {
-  root: css({
-    background: 'input.surface !important',
-    borderColor: 'input.border !important',
-    _groupError: {
-      borderColor: 'input.border.error !important',
-    },
-    '& .suggestion': {
-      color: 'suggestion.text !important',
-      borderRadius: 'xs',
-      background: 'suggestion.surface !important',
-      p: '25',
-      lineHeight: '125',
-      borderColor: 'input.border !important',
-      border: 'solid',
-    },
-  }),
-  content: css({
-    background: 'input.surface !important',
-    borderColor: 'input.border !important',
-    borderRadius: 'input !important',
-    lineHeight: '125 !important',
-  }),
 };
