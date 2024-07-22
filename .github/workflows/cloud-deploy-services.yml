@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       env:
-        description: 'Deployment environment - choose between dev and prod'
+        description: 'Deployment environment - choose between staging and production'
         required: true
         type: string
       service:
@@ -38,10 +38,10 @@ jobs:
 
       - id: set_env
         run: |
-          if echo "${{ inputs.env }}" | grep -qwi 'prod'; then
+          if echo "${{ inputs.env }}" | grep -qwi 'production'; then
             echo "environment=Production" >> "$GITHUB_OUTPUT"
           else
-            echo "environment=Development" >> "$GITHUB_OUTPUT"
+            echo "environment=Staging" >> "$GITHUB_OUTPUT"
           fi
 
   build_image:

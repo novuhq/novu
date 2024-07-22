@@ -1,59 +1,58 @@
-name: Deploy Widget
+name: Deploy Widget to Netlify
 
+# Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
     inputs:
-      env:
-        description: 'Deployment environment - choose between dev and prod'
+      environment:
         required: true
         type: string
 
 jobs:
+  reusable_widget_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
 
-  deploy_widget:
-    uses: ./.github/workflows/reusable-widget-deploy.yml
-    if: ${{ contains(inputs.env, 'dev') }}
-    with:
-      environment: Development
-      react_app_api_url: https://dev.api.novu.co
-      react_app_ws_url: https://dev.ws.novu.co
-      react_app_webhook_url: https://dev.webhook.novu.co
-      react_app_sentry_dsn: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
-      react_app_environment: dev
-      netlify_deploy_message: Dev deployment
-      netlify_alias: dev
-      netlify_gh_env: development
-      netlify_site_id: b9147448-b835-4eb1-a2f0-11102f611f5f
-    secrets: inherit
+      - name: Create env file
+        working-directory: apps/widget
+        run: |
+          touch .env
+          echo REACT_APP_API_URL=${{ env.WIDGET_REACT_APP_API_URL }} >> .env
+          echo REACT_APP_WS_URL=${{ env.WIDGET_REACT_APP_WS_URL }} >> .env
+          echo REACT_APP_WEBHOOK_URL=${{ env.WIDGET_REACT_APP_WEBHOOK_URL }} >> .env
+          echo REACT_APP_SENTRY_DSN=${{ env.WIDGET_REACT_APP_SENTRY_DSN }} >> .env
+          echo REACT_APP_ENVIRONMENT=${{ env.WIDGET_REACT_APP_ENVIRONMENT }} >> .env
 
-  deploy_widget_eu:
-    uses: ./.github/workflows/reusable-widget-deploy.yml
-    if: ${{ !contains(inputs.env, 'dev') }}
-    with:
-      environment: Production
-      react_app_api_url: https://eu.api.novu.co
-      react_app_ws_url: https://eu.ws.novu.co
-      react_app_webhook_url: https://eu.webhook.novu.co
-      react_app_sentry_dsn: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
-      react_app_environment: production
-      netlify_deploy_message: Prod deployment
-      netlify_alias: prod
-      netlify_gh_env: Production
-      netlify_site_id: 20a64bdd-1934-4284-875f-862410c69a3b
-    secrets: inherit
+      - name: Envsetup
+        working-directory: apps/widget
+        run: npm run envsetup
 
-  deploy_widget_us:
-    uses: ./.github/workflows/reusable-widget-deploy.yml
-    if: ${{ !contains(inputs.env, 'dev') }}
-    with:
-      environment: Production
-      react_app_api_url: https://api.novu.co
-      react_app_ws_url: https://ws.novu.co
-      react_app_webhook_url: https://webhook.novu.co
-      react_app_sentry_dsn: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
-      react_app_environment: production
-      netlify_deploy_message: Prod deployment
-      netlify_alias: prod
-      netlify_gh_env: Production
-      netlify_site_id: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034
-    secrets: inherit
+      - name: Build
+        run: CI='' pnpm build:widget
+
+      - name: Deploy Widget
+        uses: scopsy/actions-netlify@develop
+        with:
+          publish-dir: apps/widget/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: ${{ env.WIDGET_NETLIFY_DEPLOY_MESSAGE }}
+          production-deploy: true
+          alias: ${{ env.WIDGET_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ env.WIDGET_NETLIFY_GH_ENV }}
+          github-deployment-description: Widget Deployment
+          netlify-config-path: apps/widget/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ env.WIDGET_NETLIFY_SITE_ID }}
+        timeout-minutes: 1

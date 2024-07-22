@@ -1,77 +1,74 @@
-# This is a basic workflow to help you get started with Actions
-
-name: Deploy WEB
+name: Deploy Web to Netlify
 
 # Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   workflow_call:
     inputs:
-      env:
-        description: 'Deployment environment - choose between dev and prod'
+      environment:
         required: true
         type: string
 
-
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  deploy_web_dev:
-    name: Deploy Web Dev
-    uses: ./.github/workflows/cloud-deploy-reusable-web-deploy.yml
-    if: ${{ contains(inputs.env, 'dev') }}
-    with:
-      environment: Development
-      react_app_api_url: https://dev.api.novu.co
-      react_app_ws_url: https://dev.ws.novu.co
-      react_app_webhook_url: https://dev.webhook.novu.co
-      react_app_widget_embed_path: https://dev.embed.novu.co/embed.umd.min.js
-      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
-      react_app_environment: dev
-      react_app_mail_server_domain: dev.inbound-mail.novu.co
-      react_app_hubspot_embed: 44416662
-      netlify_deploy_message: Dev deployment
-      netlify_alias: dev
-      netlify_gh_env: development
-      netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
-    secrets: inherit
+  reusable_web_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
 
-  deploy_web_eu:
-    name: Deploy Web EU
-    uses: ./.github/workflows/cloud-deploy-reusable-web-deploy.yml
-    if: ${{ !contains(inputs.env, 'dev') }}
-    with:
-      environment: Production
-      react_app_api_url: https://eu.api.novu.co
-      react_app_ws_url: https://eu.ws.novu.co
-      react_app_webhook_url: https://eu.webhook.novu.co
-      react_app_widget_embed_path: https://eu.embed.novu.co/embed.umd.min.js
-      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
-      react_app_environment: production
-      react_app_mail_server_domain: eu.inbound-mail.novu.co
-      react_app_hubspot_embed: 44416662
-      netlify_deploy_message: Prod deployment
-      netlify_alias: prod
-      netlify_gh_env: Production
-      netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a
-    secrets: inherit
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
+          submodules: true
 
-  deploy_web_us:
-    name: Deploy Web US
-    uses: ./.github/workflows/cloud-deploy-reusable-web-deploy.yml
-    if: ${{ !contains(inputs.env, 'dev') }}
-    with:
-      environment: Production
-      react_app_api_url: https://api.novu.co
-      react_app_ws_url: https://ws.novu.co
-      react_app_webhook_url: https://webhook.novu.co
-      react_app_widget_embed_path: https://embed.novu.co/embed.umd.min.js
-      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
-      react_app_environment: production
-      react_app_mail_server_domain: inbound-mail.novu.co
-      react_app_hubspot_embed: 44416662
-      netlify_deploy_message: Prod deployment
-      netlify_alias: prod
-      netlify_gh_env: Production
-      netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff
-    secrets: inherit
+      - name: Create env file
+        working-directory: apps/web
+        run: |
+          touch .env
+          echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
+          echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
+          echo REACT_APP_API_URL=${{ env.WEB_REACT_APP_API_URL }} >> .env
+          echo REACT_APP_WS_URL=${{ env.WEB_REACT_APP_WS_URL }} >> .env
+          echo REACT_APP_WEBHOOK_URL=${{ env.WEB_REACT_APP_WEBHOOK_URL }} >> .env
+          echo REACT_APP_WIDGET_EMBED_PATH=${{ env.WEB_REACT_APP_WIDGET_EMBED_PATH }} >> .env
+          echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
+          echo REACT_APP_SENTRY_DSN=${{ env.WEB_REACT_APP_SENTRY_DSN }} >> .env
+          echo REACT_APP_ENVIRONMENT=${{ env.WEB_REACT_APP_ENVIRONMENT }} >> .env
+          echo REACT_APP_MAIL_SERVER_DOMAIN=${{ env.WEB_REACT_APP_MAIL_SERVER_DOMAIN }} >> .env
+          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
+          echo REACT_APP_HUBSPOT_EMBED=${{ env.WEB_REACT_APP_HUBSPOT_EMBED }} >> .env
+          echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
+          echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
+          echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
+      - name: Envsetup
+        working-directory: apps/web
+        run: npm run envsetup
 
+      - name: Build
+        run: CI='' pnpm build:web --skip-nx-cache
+
+      - name: Deploy WEB
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: apps/web/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: ${{ env.WEB_NETLIFY_DEPLOY_MESSAGE }}
+          production-deploy: true
+          alias: ${{ env.WEB_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ env.WEB_NETLIFY_GH_ENV }}
+          github-deployment-description: Web Deployment
+          netlify-config-path: apps/web/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ env.WEB_NETLIFY_SITE_ID }}
+        timeout-minutes: 1

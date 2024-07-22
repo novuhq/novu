@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target environment (prod, dev)'
+        description: 'Target environment (Staging, Production-EU, Production-US)'
         required: true
-        default: 'dev'
+        default: 'Staging'
 
 jobs:
   pre-release:
@@ -19,18 +19,18 @@ jobs:
         id: setenvname
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "envName=Prod" >> "$GITHUB_OUTPUT"
+            echo "envName=Production" >> "$GITHUB_OUTPUT"
           else
-            echo "envName=Dev" >> "$GITHUB_OUTPUT"
+            echo "envName=Staging" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check branch and set environment
         id: setenv
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "envValue=prod" >> "$GITHUB_OUTPUT"
+            echo "envValue=production" >> "$GITHUB_OUTPUT"
           else
-             echo "envValue=dev" >> "$GITHUB_OUTPUT"
+             echo "envValue=staging" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check output values
@@ -75,33 +75,33 @@ jobs:
       deployments: write
       id-token: write
     with:
-      env: ${{ needs.pre-release.outputs.environment }}
+      environment: ${{ needs.pre-release.outputs.environment }}
 
 # Unique deploy process
   release-web:
     uses: ./.github/workflows/cloud-deploy-web.yml
     needs: [pre-release]
     secrets: inherit
-    with:
-      env: ${{ needs.pre-release.outputs.environment }}
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
+    with:
+      environment: ${{ needs.pre-release.outputs.environment }}
 
 # Unique deploy process
   release-web-components:
     uses: ./.github/workflows/cloud-deploy-web-components.yml
     needs: [pre-release]
     secrets: inherit
-    with:
-      env: ${{ needs.pre-release.outputs.environment }}
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
+    with:
+      environment: ${{ needs.pre-release.outputs.environment }}
 
 # Unique deploy process
   release-widget:
@@ -114,7 +114,7 @@ jobs:
       deployments: write
       id-token: write
     with:
-      env: ${{ needs.pre-release.outputs.environment }}
+      environment: ${{ needs.pre-release.outputs.environment }}
 
   release-services:
     needs: [ pre-release ]

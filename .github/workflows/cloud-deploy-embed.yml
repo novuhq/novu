@@ -1,51 +1,51 @@
-# This is a basic workflow to help you get started with Actions
-
-name: Deploy EMBED
+name: Deploy Embed to Netlify
 
 # Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   workflow_call:
     inputs:
-      env:
-        description: 'Deployment environment - choose between dev and prod'
+      environment:
         required: true
         type: string
+
 jobs:
-  # This workflow contains a single job called "build"
-  deploy_embed:
-    if: ${{ contains(inputs.env, 'dev') }}
-    uses: ./.github/workflows/cloud-deploy-reusable-embed-deploy.yml
-    with:
-      environment: Development
-      widget_url: https://dev.widget.novu.co
-      netlify_deploy_message: Dev deployment
-      netlify_alias: dev
-      netlify_gh_env: development
-      netlify_site_id: 22682666-3a8d-40be-af26-017bfadf5ae9
-    secrets: inherit
+  reusable_embed_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
 
-  deploy_embed_eu:
-    if: ${{ !contains(inputs.env, 'dev') }}
-    uses: ./.github/workflows/cloud-deploy-reusable-embed-deploy.yml
-    with:
-      environment: Production
-      widget_url: https://eu.widget.novu.co
-      netlify_deploy_message: Production deployment
-      netlify_alias: prod
-      netlify_gh_env: Production
-      netlify_site_id: 0c830b50-df83-480b-ba36-a7f3176efcc8
-    secrets: inherit
+      - name: Build
+        run: CI='' npm run build:embed
 
-  deploy_embed_us:
-    if: ${{ !contains(inputs.env, 'dev') }}
-    uses: ./.github/workflows/cloud-deploy-reusable-embed-deploy.yml
-    with:
-      environment: Production
-      widget_url: https://widget.novu.co
-      netlify_deploy_message: Production deployment
-      netlify_alias: prod
-      netlify_gh_env: Production
-      netlify_site_id: 0689c015-fca0-4940-a26d-3e33f561bc48
-    secrets: inherit
+      - name: Build
+        working-directory: libs/embed
+        env:
+          WIDGET_URL: ${{ env.WIDGET_URL }}
+        run: CI='' npm run build:prod
+
+      - name: Deploy Embed
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: libs/embed/dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: ${{ env.EMBED_NETLIFY_DEPLOY_MESSAGE }}
+          production-deploy: true
+          alias: ${{ env.EMBED_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ env.EMBED_NETLIFY_GH_ENV }}
+          github-deployment-description: Embed Deployment
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ env.EMBED_NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+
 

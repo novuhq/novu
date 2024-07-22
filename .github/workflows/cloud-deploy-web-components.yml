@@ -3,23 +3,28 @@ name: Deploy Notification Center Web Component
 on:
   workflow_call:
     inputs:
-      env:
-        description: 'Deployment environment - choose between dev and prod'
+      environment:
+        description: 'Deployment environment - choose between Staging, Production-EU, Production-US'
         required: true
         type: string
+        default: 'staging'
 
 jobs:
   set_environment:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     outputs:
       environment: ${{ steps.set_env.outputs.environment }}
+      production-deploy: ${{ steps.set_env.outputs.production-deploy }}
     steps:
       - id: set_env
         run: |
-          if echo "${{ inputs.env }}" | grep -qwi 'prod'; then
+          if echo "${{ inputs.environment }}" | grep -qwi 'prod'; then
             echo "environment=Production" >> "$GITHUB_OUTPUT"
+            echo "production-deploy=true" >> "$GITHUB_OUTPUT"
           else
-            echo "environment=Development" >> "$GITHUB_OUTPUT"
+            echo "environment=Staging" >> "$GITHUB_OUTPUT"
+           echo "production-deploy=false" >> "$GITHUB_OUTPUT"
           fi
 
   build:
@@ -30,7 +35,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: ${{ needs.set_environment.outputs.environment }}
+    environment: ${{ inputs.environment }}
 
     steps:
       - uses: actions/checkout@v4
@@ -41,36 +46,18 @@ jobs:
           name: notification-center-web-component
           path: packages/notification-center/dist/umd
 
-      - name: Deploy Notification Center Web Component Dev
-        if: ${{ contains(inputs.env, 'dev') }}
+      - name: Deploy Notification Center Web Component
         uses: scopsy/actions-netlify@develop
         with:
           publish-dir: packages/notification-center/dist/umd
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: dev
-          production-deploy: false
-          alias: dev
-          github-deployment-environment: development
+          deploy-message: ${{ env.WEB_COMPONENTS_NETLIFY_DEPLOY_MESSAGE }}
+          production-deploy: ${{ needs.set_environment.outputs.production-deploy }}
+          alias: ${{ env.WEB_COMPONENTS_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ env.WEB_COMPONENTS_NETLIFY_GH_ENV }}
           github-deployment-description: Notification Center Web Component Deployment
           netlify-config-path: packages/notification-center/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 69f27d21-6946-455f-8715-eae2c7931fe0
-        timeout-minutes: 1
-
-      - name: Deploy Notification Center Web Component Prod
-        if: ${{ !contains(inputs.env, 'dev') }}
-        uses: scopsy/actions-netlify@develop
-        with:
-          publish-dir: packages/notification-center/dist/umd
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: prod
-          production-deploy: true
-          alias: prod
-          github-deployment-environment: Production
-          github-deployment-description: Notification Center Web Component Deployment
-          netlify-config-path: packages/notification-center/netlify.toml
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 468165e2-bd64-4f33-9fd9-4b93ef8a0be0
+          NETLIFY_SITE_ID: ${{ env.WEB_COMPONENTS_NETLIFY_SITE_ID }}
         timeout-minutes: 1
