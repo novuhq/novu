@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useClipboard } from '@mantine/hooks';
 
-import { getApiKeys } from '../../../api/environment';
-import { useEnvironment } from '../../../hooks';
+import { useAPIKeys, useEnvironment } from '../../../hooks';
 import { useRegenerateSecretKeyModal } from './useRegenerateApiKeyModal';
+import { useApiKeys } from '../../../hooks/useNovuAPI';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
 
@@ -19,10 +18,9 @@ export const useApiKeysPage = () => {
   const clipboardSecretKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentId = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
-  const { data: secretKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const { apiKey: secretKey } = useAPIKeys();
   const { environment } = useEnvironment();
 
-  const secretKey = secretKeys?.length ? secretKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const environmentId = environment?._id ? environment._id : '';
 

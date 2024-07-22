@@ -6,4 +6,5 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   inputs: any;
   controls: any;
   data: any;
+  bridgeUrl?: string;
 }

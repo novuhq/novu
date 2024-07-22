@@ -1,107 +1,108 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
-import { sandboxBridge } from '../../../../../index';
 import { useDiscover, useStudioState } from '../../../../hooks';
 import { BRIDGE_CODE } from './bridge-code.const';
+import { TerminalComponent } from './Terminal';
 
 interface RunExpressAppProps {
   code: string;
 }
 
-let webContainerInstance: any;
-
 const { WebContainer } = require('@webcontainer/api');
 
 export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
-  const [output, setOutput] = useState<string>('');
+  const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
+  const terminalRef = useRef<{ write: (data: string) => void }>(null);
+  const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
   const studioState = useStudioState() || {};
   const { setBridgeURL } = studioState;
   const { refetch } = useDiscover();
+
+  const writeOutput = (data: string) => {
+    if (terminalRef.current) {
+      terminalRef.current.write(data);
+    }
+  };
 
   // Responsible to bootstrap and run express app
   useEffectOnce(() => {
     (async () => {
       try {
-        webContainerInstance = await WebContainer.boot();
+        setWebContainer(await WebContainer.boot());
+      } catch (error: any) {
+        writeOutput('\nError booting web container: ' + error.message);
+        writeOutput(error);
+      }
+    })();
+  }, true);
 
-        webContainerInstance.on('server-ready', (port, url) => {
-          setOutput((prevOutput) => prevOutput + '\nServer is running on url ' + url);
-          setOutput((prevOutput) => prevOutput + '\nServer is running on port ' + port);
-
-          const iframeEl = document.querySelector('iframe');
-          if (!iframeEl) {
-            setOutput((prevOutput) => prevOutput + 'Error: Could not find iframe element');
-            console.log('Error: Could not find iframe element');
-          } else {
-            console.log('sandboxBridge url ' + url);
-            sandboxBridge.url = url;
-            sandboxBridge.port = port;
-            Object.freeze(sandboxBridge);
-            iframeEl.src = url + '/api/novu?action=health-check';
-          }
+  // Responsible to bootstrap and run express app
+  useEffectOnce(() => {
+    (async () => {
+      try {
+        webContainer.on('server-ready', (port, url) => {
+          writeOutput('\nServer is running on url ' + url);
+          writeOutput('\nServer is running on port ' + port);
+          setSandboxBridge({ url, port });
         });
 
         async function installDependencies() {
-          setOutput((prevOutput) => prevOutput + 'Installing dependencies...');
-
-          const installProcess = await webContainerInstance.spawn('npm', ['install']);
+          const installProcess = await webContainer.spawn('npm', ['install']);
 
           installProcess.output.pipeTo(
             new WritableStream({
               write(data) {
-                setOutput((prevOutput) => prevOutput + data);
+                writeOutput(data);
               },
             })
           );
-
-          setOutput((prevOutput) => prevOutput + 'Dependencies installed');
 
           return installProcess.exit;
         }
 
         async function startDevServer() {
-          setOutput((prevOutput) => prevOutput + 'Starting dev server...');
-
-          const startOutput = await webContainerInstance.spawn('npm', [
+          const startOutput = await webContainer.spawn('npm', [
             'run',
             'start',
-            '--',
-            'NOVU_SECRET_KEY=53c194c99833b63fc9c19d39f015f0e0',
-            'NOVU_API_URL=https://crazy-maps-rest.loca.lt',
+            // '--',
+            // 'NOVU_SECRET_KEY=53c194c99833b63fc9c19d39f015f0e0',
+            // 'NOVU_API_URL=https://crazy-maps-rest.loca.lt',
           ]);
 
           startOutput.output.pipeTo(
             new WritableStream({
               write(data) {
-                setOutput((prevOutput) => prevOutput + data);
+                writeOutput(data);
               },
             })
           );
 
-          setOutput((prevOutput) => prevOutput + 'Dev server started');
-
           return startOutput;
         }
 
-        await webContainerInstance.mount(dynamicFiles(BRIDGE_CODE));
+        await webContainer.mount(dynamicFiles(BRIDGE_CODE));
 
         await installDependencies();
         await startDevServer();
       } catch (error: any) {
-        setOutput((prevOutput) => prevOutput + '\nError server-ready: ' + error.message);
-        setOutput((prevOutput) => prevOutput + error);
+        writeOutput('\nError server-ready: ' + error.message);
+        writeOutput(error);
       }
     })();
-  }, true);
+  }, !!webContainer);
 
   // Responsible to run dev server in order to create novu.sh tunnel
   useEffectOnce(async () => {
     async function runDevScript() {
-      setOutput((prevOutput) => prevOutput + 'Running dev script');
+      if (sandboxBridge === null) {
+        return;
+      }
+
       const { url, port } = sandboxBridge;
 
-      const devOutput = await webContainerInstance.spawn('npm', [
+      const devOutput = await webContainer.spawn('npm', [
         'run',
         'dev',
         '--',
@@ -121,16 +122,14 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
               const newBridgeTunnelURL = 'https'.trim() + split[1].trim();
               setBridgeURL(newBridgeTunnelURL.trim());
             }
-            setOutput((prevOutput) => prevOutput + data);
+            writeOutput(data);
           },
         })
       );
-
-      setOutput((prevOutput) => prevOutput + 'Dev script ran');
     }
 
     await runDevScript();
-  }, !!webContainerInstance && !!sandboxBridge.url);
+  }, !!webContainer && !!sandboxBridge?.url);
 
   const DEBOUNCE_DELAY = 1000; // 1 second
 
@@ -140,9 +139,9 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
 
     if (BRIDGE_CODE !== code) {
       debounceTimeout = setTimeout(() => {
-        webContainerInstance?.mount(dynamicFiles(code));
+        webContainer?.mount(dynamicFiles(code));
 
-        webContainerInstance.on('server-ready', (port, url) => {
+        webContainer.on('server-ready', (port, url) => {
           refetch();
         });
       }, DEBOUNCE_DELAY);
@@ -152,8 +151,8 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
   }, [code, refetch]);
 
   return (
-    <div style={{ whiteSpace: 'pre-wrap', overflow: 'auto', height: '500px' }}>
-      {output ? output : 'Express app is bootstrap...'}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+      <TerminalComponent ref={terminalRef} />
     </div>
   );
 };
