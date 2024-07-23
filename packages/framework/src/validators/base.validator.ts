@@ -11,6 +11,7 @@ export const validateData = async <T extends Record<string, unknown>>(
 ): Promise<ValidateResult<T>> => {
   for (const validator of validators) {
     if (validator.isSchema(schema)) {
+      // TODO: fix validator type guards
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return validator.validate(data, schema as any);
     }
@@ -22,6 +23,7 @@ export const validateData = async <T extends Record<string, unknown>>(
 export const transformSchema = (schema: Schema): JsonSchema => {
   for (const validator of validators) {
     if (validator.isSchema(schema)) {
+      // TODO: fix validator type guards
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return validator.transformToJsonSchema(schema as any);
     }

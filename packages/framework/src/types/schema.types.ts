@@ -1,9 +1,9 @@
 import type { JSONSchema, FromSchema as JsonSchemaInfer } from 'json-schema-to-ts';
 import zod from 'zod';
 
-export type Schema = JSONSchema | zod.ZodSchema;
+export type JsonSchema = Exclude<JSONSchema, boolean>;
 
-export type JsonSchema = JSONSchema;
+export type Schema = JsonSchema | zod.ZodSchema;
 
 export type FromSchema<T extends Schema> =
   /*
