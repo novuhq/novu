@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
@@ -22,10 +22,6 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
   // TODO @ChmaraX: Can we use setActive from useSession, useSignIn, or useSignUp to avoid loading the list?
   const { setActive, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
-
-  const [user, setUser] = useState<IUserEntity | undefined>(undefined);
-  // TODO @ChmaraX: Do we need this setState? Clerk state changes should be enough
-  const [organization, setOrganization] = useState<IOrganizationEntity | undefined>(undefined);
 
   const segment = useSegment();
   const queryClient = useQueryClient();
@@ -89,7 +85,6 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   const reloadOrganization = useCallback(async () => {
     if (clerkOrganization) {
       await clerkOrganization.reload();
-      setOrganization(toOrganizationEntity(clerkOrganization));
     }
 
     return {};
@@ -113,36 +108,28 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     }
   }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId]);
 
-  // transform Clerk user to internal user entity
-  useEffect(() => {
-    if (isUserLoaded && clerkUser) {
-      setUser(toUserEntity(clerkUser));
-    }
-  }, [clerkUser, isUserLoaded]);
-
-  // transform Clerk organization to internal organization entity
-  useEffect(() => {
-    if (isOrganizationLoaded && clerkOrganization) {
-      setOrganization(toOrganizationEntity(clerkOrganization));
-    }
-  }, [clerkOrganization, isOrganizationLoaded]);
+  const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
+  const currentOrganization = useMemo(
+    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization) : undefined),
+    [clerkOrganization]
+  );
 
   // refetch queries on organization switch
   useEffect(() => {
     // if linked, externalOrgId = internal org ObjectID, which is required on backend
     const isInternalOrgLinked = !!clerkOrganization?.publicMetadata.externalOrgId;
-    const isOrgChanged = organization && organization._id !== clerkOrganization?.id;
+    const isOrgChanged = currentOrganization && currentOrganization._id !== clerkOrganization?.id;
 
     if (isInternalOrgLinked && isOrgChanged) {
       switchOrgCallback();
     }
-  }, [organization, clerkOrganization, switchOrgCallback]);
+  }, [currentOrganization, clerkOrganization, switchOrgCallback]);
 
   const value = {
     isUserLoaded,
     isOrganizationLoaded,
-    currentUser: user,
-    currentOrganization: organization,
+    currentUser,
+    currentOrganization,
     logout,
     login: asyncNoop,
     redirectToLogin,
