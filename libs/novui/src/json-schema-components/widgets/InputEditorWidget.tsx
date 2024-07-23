@@ -16,16 +16,18 @@ import { css, cx } from '../../../styled-system/css';
 import { input } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
 import classes from './InputEditorWidget.styles';
+import { inputEditorWidget } from '../../../styled-system/recipes';
 
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
-import '@mantine/tiptap/styles.css';
+import '@mantine/tiptap/styles.layer.css';
 
 export const InputEditorWidget = (props: WidgetProps) => {
   const { value, label, formContext, onChange, required, readonly, rawErrors } = props;
   const [variantProps, inputProps] = input.splitVariantProps({});
   const [cssProps] = splitCssProps(inputProps);
   const classNames = input(variantProps);
+  const suggestionListClassNames = inputEditorWidget({});
 
   const { variables = [] } = formContext;
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
@@ -124,7 +126,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       description={props.schema.description}
       error={rawErrors?.length > 0 && rawErrors}
     >
-      <RichTextEditor classNames={classes} editor={editor}>
+      <RichTextEditor classNames={suggestionListClassNames} editor={editor}>
         <RichTextEditor.Content />
       </RichTextEditor>
     </Input.Wrapper>

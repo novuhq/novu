@@ -36,6 +36,7 @@ import {
   JSON_SCHEMA_FORM_SECTION_RECIPE,
   JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
   VARIABLE_SUGGESTION_LIST_RECIPE,
+  INPUT_EDITOR_WIDGET_RECIPE,
 } from './recipes';
 
 /**
@@ -108,6 +109,7 @@ export const novuPandaPreset = definePreset({
         jsonSchemaFormSection: JSON_SCHEMA_FORM_SECTION_RECIPE,
         jsonSchemaFormArrayToolbar: JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
         variableSuggestionList: VARIABLE_SUGGESTION_LIST_RECIPE,
+        inputEditorWidget: INPUT_EDITOR_WIDGET_RECIPE,
       },
     },
   },
