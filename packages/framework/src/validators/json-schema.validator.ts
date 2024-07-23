@@ -48,7 +48,7 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
 
     // const valid = validateFn(data);
     const valid = validateFn(clonedData);
-    console.error({ data, clonedData });
+
     if (valid) {
       return { success: true, data: clonedData };
     } else {

@@ -1,8 +1,7 @@
 import type { JSONSchema, FromSchema as JsonSchemaInfer } from 'json-schema-to-ts';
-// eslint-disable-next-line id-length
-import z from 'zod';
+import zod from 'zod';
 
-export type Schema = JSONSchema | z.ZodSchema;
+export type Schema = JSONSchema | zod.ZodSchema;
 
 export type JsonSchema = JSONSchema;
 
@@ -16,7 +15,7 @@ export type FromSchema<T extends Schema> =
   T extends JSONSchema
     ? JsonSchemaInfer<T>
     : // ZodSchema
-    T extends z.ZodSchema
-    ? z.infer<T>
+    T extends zod.ZodSchema
+    ? zod.infer<T>
     : // All schema types exhausted.
       never;

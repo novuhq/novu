@@ -369,6 +369,10 @@ export class Client {
       }
 
       const executionData = await this.createExecutionPayload(event, workflow);
+      const validatedEvent = {
+        ...event,
+        payload: executionData,
+      };
       await Promise.race([
         earlyExitPromise,
         workflow.execute({
@@ -378,14 +382,14 @@ export class Client {
           controls: {},
           subscriber: event.subscriber,
           step: {
-            email: this.executeStepFactory(event, setResult),
-            sms: this.executeStepFactory(event, setResult),
-            inApp: this.executeStepFactory(event, setResult),
-            digest: this.executeStepFactory(event, setResult),
-            delay: this.executeStepFactory(event, setResult),
-            push: this.executeStepFactory(event, setResult),
-            chat: this.executeStepFactory(event, setResult),
-            custom: this.executeStepFactory(event, setResult),
+            email: this.executeStepFactory(validatedEvent, setResult),
+            sms: this.executeStepFactory(validatedEvent, setResult),
+            inApp: this.executeStepFactory(validatedEvent, setResult),
+            digest: this.executeStepFactory(validatedEvent, setResult),
+            delay: this.executeStepFactory(validatedEvent, setResult),
+            push: this.executeStepFactory(validatedEvent, setResult),
+            chat: this.executeStepFactory(validatedEvent, setResult),
+            custom: this.executeStepFactory(validatedEvent, setResult),
           },
         }),
       ]);
