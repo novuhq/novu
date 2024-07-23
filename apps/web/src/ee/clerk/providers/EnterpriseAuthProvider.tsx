@@ -131,7 +131,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   useEffect(() => {
     // if linked, externalOrgId = internal org ObjectID, which is required on backend
     const isInternalOrgLinked = !!clerkOrganization?.publicMetadata.externalOrgId;
-    const isOrgChanged = organization && organization._id !== clerkOrganization?.publicMetadata.externalOrgId;
+    const isOrgChanged = organization && organization._id !== clerkOrganization?.id;
 
     if (isInternalOrgLinked && isOrgChanged) {
       switchOrgCallback();
@@ -160,39 +160,27 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;
 };
 
-const toUserEntity = (clerkUser: UserResource): IUserEntity => {
-  if (!clerkUser.externalId) {
-    throw new Error('user externalId should exist');
-  }
+const toUserEntity = (clerkUser: UserResource): IUserEntity => ({
+  _id: clerkUser.id,
+  firstName: clerkUser.firstName,
+  lastName: clerkUser.lastName,
+  email: clerkUser.emailAddresses[0].emailAddress,
+  profilePicture: clerkUser.imageUrl,
+  createdAt: clerkUser.createdAt?.toString() ?? '',
+  showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
+  showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
+  servicesHashes: clerkUser.publicMetadata.servicesHashes,
+  jobTitle: clerkUser.publicMetadata.jobTitle,
+  hasPassword: clerkUser.passwordEnabled,
+});
 
-  return {
-    _id: clerkUser.externalId,
-    firstName: clerkUser.firstName,
-    lastName: clerkUser.lastName,
-    email: clerkUser.emailAddresses[0].emailAddress,
-    profilePicture: clerkUser.imageUrl,
-    createdAt: clerkUser.createdAt?.toString() ?? '',
-    showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
-    showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
-    servicesHashes: clerkUser.publicMetadata.servicesHashes,
-    jobTitle: clerkUser.publicMetadata.jobTitle,
-    hasPassword: clerkUser.passwordEnabled,
-  };
-};
-
-const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
-  if (!clerkOrganization.publicMetadata.externalOrgId) {
-    throw new Error('user externalId should exist');
-  }
-
-  return {
-    _id: clerkOrganization.publicMetadata.externalOrgId,
-    name: clerkOrganization.name,
-    createdAt: clerkOrganization.createdAt.toString(),
-    updatedAt: clerkOrganization.updatedAt.toString(),
-    apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
-    defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
-    domain: clerkOrganization.publicMetadata.domain,
-    productUseCases: clerkOrganization.publicMetadata.productUseCases,
-  };
-};
+const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => ({
+  _id: clerkOrganization.id,
+  name: clerkOrganization.name,
+  createdAt: clerkOrganization.createdAt.toString(),
+  updatedAt: clerkOrganization.updatedAt.toString(),
+  apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
+  defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
+  domain: clerkOrganization.publicMetadata.domain,
+  productUseCases: clerkOrganization.publicMetadata.productUseCases,
+});
