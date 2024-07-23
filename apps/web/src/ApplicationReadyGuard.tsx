@@ -22,17 +22,11 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
         return;
       }
 
-      // Playwright doesn't always trigger transitionend, so this is workaround for the E2E tests
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      if (window.isPlaywright) {
-        el.remove();
-
-        return;
-      }
-
-      el.addEventListener('transitionend', () => el.remove(), { once: true });
-
+      /*
+       * Playwright doesn't always trigger transitionend, so we are using setTimeout
+       * instead to remove the skeleton loader at the end of the animation.
+       */
+      setTimeout(() => el.remove(), 550);
       requestAnimationFrame(() => el.classList.add('fade-out'));
     }
   }, [inPublicRoute, inStudioRoute, isLoaded]);
