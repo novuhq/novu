@@ -65,7 +65,6 @@ import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
-import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -121,7 +120,7 @@ export const AppRoutes = () => {
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
         {isV2Enabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 location="get-started" />} />
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
         )}

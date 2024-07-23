@@ -1,4 +1,4 @@
-import { ROUTES } from '../../../constants/routes';
+import { ROUTES } from '../../../../constants/routes';
 
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';

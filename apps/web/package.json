@@ -89,6 +89,7 @@
     "date-fns": "^2.29.2",
     "dotenv": "^16.4.5",
     "eslint-plugin-react-hooks": "^4.4.0",
+    "framer-motion": "^11.3.9",
     "handlebars": "^4.7.7",
     "highlight.js": "11.9.0",
     "html-webpack-plugin": "5.5.3",

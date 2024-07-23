@@ -1,4 +1,4 @@
-import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { css, cx } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
@@ -8,7 +8,7 @@ import { text, title } from '@novu/novui/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 import { useEffect } from 'react';
 import { useMantineTheme } from '@mantine/core';
-import { useFrameworkTerminalScript } from '../../../../hooks/useFrameworkTerminalScript';
+import { useFrameworkTerminalScript } from '../../../../../hooks/useFrameworkTerminalScript';
 
 const link = 'https://docs.novu.co/framework/quickstart';
 
