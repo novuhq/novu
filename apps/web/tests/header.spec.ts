@@ -42,5 +42,5 @@ test('logout user successfully', async ({ page }) => {
   await headerPage.clickAvatar();
   await headerPage.clickLogout();
   expect(page.url()).toContain('/auth/login');
-  expect(await page.evaluate(() => localStorage.getItem('auth_token'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('nv_auth_token'))).toBeNull();
 });

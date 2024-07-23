@@ -33,6 +33,6 @@ test('should use a different jwt token after switching organization', async ({ p
   await selectItem.click({ force: true });
   await responsePromise;
 
-  const newToken = await page.evaluate(() => localStorage.getItem('auth_token'));
+  const newToken = await page.evaluate(() => localStorage.getItem('nv_auth_token'));
   expect(newToken).not.toBe(originToken);
 });

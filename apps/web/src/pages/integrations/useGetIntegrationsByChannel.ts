@@ -10,9 +10,9 @@ export interface IUseGetIntegrationsByChannelProps {
  * Fetch the integrations for a specified channel type in the current environment.
  */
 export const useGetIntegrationsByChannel = ({ channelType }: IUseGetIntegrationsByChannelProps) => {
-  const { environment, isLoading: isEnvLoading } = useEnvironment();
+  const { environment, isLoaded } = useEnvironment();
   const { integrations: allIntegrations, loading: areIntegrationsLoading } = useIntegrations();
-  const isLoading = isEnvLoading || areIntegrationsLoading;
+  const isLoading = !isLoaded || areIntegrationsLoading;
 
   const integrations = useMemo(() => {
     if (isLoading || !environment || !allIntegrations) {

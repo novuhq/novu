@@ -76,9 +76,9 @@ export const IntegrationsList = ({
   onRowClickCallback: (row: Row<ITableIntegration>) => void;
   onChannelClick: (channel: ChannelTypeEnum) => void;
 }) => {
-  const { environments, isLoading: areEnvironmentsLoading } = useEnvironment();
+  const { environments, isLoaded } = useEnvironment();
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
-  const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
+  const isLoading = !isLoaded || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
 
   const data = useMemo<ITableIntegration[] | undefined>(() => {
