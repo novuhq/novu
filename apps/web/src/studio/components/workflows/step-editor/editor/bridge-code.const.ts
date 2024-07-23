@@ -1,5 +1,4 @@
-export const BRIDGE_CODE = `
-import express from 'express';
+export const BRIDGE_CODE = `import express from 'express';
 import { Client, workflow } from '@novu/framework';
 import { serve } from '@novu/framework/express';
 

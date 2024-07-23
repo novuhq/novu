@@ -14,8 +14,8 @@ const { WebContainer } = require('@webcontainer/api');
 
 export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
-  const terminalRef = useRef<{ write: (data: string) => void }>(null);
   const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
+  const terminalRef = useRef<{ write: (data: string) => void }>(null);
   const studioState = useStudioState() || {};
   const { setBridgeURL } = studioState;
   const { refetch } = useDiscover();
@@ -151,7 +151,7 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
   }, [code, refetch]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <TerminalComponent ref={terminalRef} />
     </div>
   );
