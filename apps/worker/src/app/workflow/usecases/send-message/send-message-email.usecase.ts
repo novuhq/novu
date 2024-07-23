@@ -53,7 +53,6 @@ export class SendMessageEmail extends SendMessageBase {
 
   constructor(
     protected environmentRepository: EnvironmentRepository,
-    protected organizationRepository: OrganizationRepository,
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
@@ -212,12 +211,10 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      const organization = await this.getOrganization(command.organizationId);
-
       const i18nInstance = await this.initiateTranslations(
         command.environmentId,
         command.organizationId,
-        command.payload.subscriber?.locale || organization?.defaultLocale
+        subscriber.locale
       );
 
       if (!command.bridgeData) {
@@ -546,16 +543,6 @@ export class SendMessageEmail extends SendMessageBase {
 
       return layoutOverride?._id;
     }
-  }
-
-  protected async getOrganization(organizationId: string): Promise<OrganizationEntity | undefined> {
-    const organization = await this.organizationRepository.findById(organizationId, 'branding defaultLocale');
-
-    if (!organization) {
-      throw new NotFoundException(`Organization ${organizationId} not found`);
-    }
-
-    return organization;
   }
 
   public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
