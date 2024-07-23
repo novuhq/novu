@@ -37,16 +37,16 @@ jobs:
           touch .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
           echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
-          echo REACT_APP_API_URL=${{ env.WEB_REACT_APP_API_URL }} >> .env
-          echo REACT_APP_WS_URL=${{ env.WEB_REACT_APP_WS_URL }} >> .env
-          echo REACT_APP_WEBHOOK_URL=${{ env.WEB_REACT_APP_WEBHOOK_URL }} >> .env
-          echo REACT_APP_WIDGET_EMBED_PATH=${{ env.WEB_REACT_APP_WIDGET_EMBED_PATH }} >> .env
+          echo REACT_APP_API_URL=${{ vars.WEB_REACT_APP_API_URL }} >> .env
+          echo REACT_APP_WS_URL=${{ vars.WEB_REACT_APP_WS_URL }} >> .env
+          echo REACT_APP_WEBHOOK_URL=${{ vars.WEB_REACT_APP_WEBHOOK_URL }} >> .env
+          echo REACT_APP_WIDGET_EMBED_PATH=${{ vars.WEB_REACT_APP_WIDGET_EMBED_PATH }} >> .env
           echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
-          echo REACT_APP_SENTRY_DSN=${{ env.WEB_REACT_APP_SENTRY_DSN }} >> .env
-          echo REACT_APP_ENVIRONMENT=${{ env.WEB_REACT_APP_ENVIRONMENT }} >> .env
-          echo REACT_APP_MAIL_SERVER_DOMAIN=${{ env.WEB_REACT_APP_MAIL_SERVER_DOMAIN }} >> .env
+          echo REACT_APP_SENTRY_DSN=${{ vars.WEB_REACT_APP_SENTRY_DSN }} >> .env
+          echo REACT_APP_ENVIRONMENT=${{ vars.WEB_REACT_APP_ENVIRONMENT }} >> .env
+          echo REACT_APP_MAIL_SERVER_DOMAIN=${{ vars.WEB_REACT_APP_MAIL_SERVER_DOMAIN }} >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
-          echo REACT_APP_HUBSPOT_EMBED=${{ env.WEB_REACT_APP_HUBSPOT_EMBED }} >> .env
+          echo REACT_APP_HUBSPOT_EMBED=${{ vars.WEB_REACT_APP_HUBSPOT_EMBED }} >> .env
           echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
           echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
           echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
@@ -62,13 +62,13 @@ jobs:
         with:
           publish-dir: apps/web/build
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: ${{ env.WEB_NETLIFY_DEPLOY_MESSAGE }}
+          deploy-message: ${{ vars.WEB_NETLIFY_DEPLOY_MESSAGE }}
           production-deploy: true
-          alias: ${{ env.WEB_NETLIFY_ALIAS }}
-          github-deployment-environment: ${{ env.WEB_NETLIFY_GH_ENV }}
+          alias: ${{ vars.WEB_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ vars.WEB_NETLIFY_GH_ENV }}
           github-deployment-description: Web Deployment
           netlify-config-path: apps/web/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ env.WEB_NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ vars.WEB_NETLIFY_SITE_ID }}
         timeout-minutes: 1

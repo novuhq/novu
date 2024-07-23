@@ -30,7 +30,7 @@ jobs:
       - name: Build
         working-directory: libs/embed
         env:
-          WIDGET_URL: ${{ env.WIDGET_URL }}
+          WIDGET_URL: ${{ vars.WIDGET_URL }}
         run: CI='' npm run build:prod
 
       - name: Deploy Embed
@@ -38,14 +38,14 @@ jobs:
         with:
           publish-dir: libs/embed/dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: ${{ env.EMBED_NETLIFY_DEPLOY_MESSAGE }}
+          deploy-message: ${{ vars.EMBED_NETLIFY_DEPLOY_MESSAGE }}
           production-deploy: true
-          alias: ${{ env.EMBED_NETLIFY_ALIAS }}
-          github-deployment-environment: ${{ env.EMBED_NETLIFY_GH_ENV }}
+          alias: ${{ vars.EMBED_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ vars.EMBED_NETLIFY_GH_ENV }}
           github-deployment-description: Embed Deployment
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ env.EMBED_NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ vars.EMBED_NETLIFY_SITE_ID }}
         timeout-minutes: 1
 
 

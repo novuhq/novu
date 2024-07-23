@@ -37,7 +37,7 @@ jobs:
       aws_region: ${{ steps.terraform.outputs.aws_region }}
       services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ env.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ vars.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Checkout cloud infra
         uses: actions/checkout@v4
@@ -88,7 +88,7 @@ jobs:
       matrix:
         worker: ${{fromJson(needs.infrastructure_data.outputs.services_to_deploy)}}
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ env.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ vars.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -129,7 +129,7 @@ jobs:
       contents: read
       deployments: write
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ env.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ vars.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -172,14 +172,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: get-npm-version
-        if: ${{ env.DEPLOY_SENTRY_RELEASE }}
+        if: ${{ vars.DEPLOY_SENTRY_RELEASE }}
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
         with:
           path: apps/${{ inputs.sentry_project }}
 
       - name: Create Sentry release
-        if: ${{ env.DEPLOY_SENTRY_RELEASE }}
+        if: ${{ vars.DEPLOY_SENTRY_RELEASE }}
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

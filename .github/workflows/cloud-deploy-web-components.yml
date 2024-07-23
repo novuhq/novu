@@ -51,13 +51,13 @@ jobs:
         with:
           publish-dir: packages/notification-center/dist/umd
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: ${{ env.WEB_COMPONENTS_NETLIFY_DEPLOY_MESSAGE }}
+          deploy-message: ${{ vars.WEB_COMPONENTS_NETLIFY_DEPLOY_MESSAGE }}
           production-deploy: ${{ needs.set_environment.outputs.production-deploy }}
-          alias: ${{ env.WEB_COMPONENTS_NETLIFY_ALIAS }}
-          github-deployment-environment: ${{ env.WEB_COMPONENTS_NETLIFY_GH_ENV }}
+          alias: ${{ vars.WEB_COMPONENTS_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ vars.WEB_COMPONENTS_NETLIFY_GH_ENV }}
           github-deployment-description: Notification Center Web Component Deployment
           netlify-config-path: packages/notification-center/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ env.WEB_COMPONENTS_NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ vars.WEB_COMPONENTS_NETLIFY_SITE_ID }}
         timeout-minutes: 1
