@@ -7,9 +7,6 @@ on:
       environment:
         required: true
         type: string
-      terraform_workspace:
-        required: true
-        type: string
       service_name:
         required: true
         type: string
@@ -22,20 +19,15 @@ on:
       New_Relic_GUID:
         required: false
         type: string
-      deploy_sentry_release:
-        required: false
-        default: false
-        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   infrastructure_data:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     env:
-      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+      TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
     permissions:
       contents: read
       deployments: write
@@ -47,7 +39,7 @@ jobs:
       aws_region: ${{ steps.terraform.outputs.aws_region }}
       services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ env.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Checkout cloud infra
         uses: actions/checkout@v4
@@ -92,7 +84,7 @@ jobs:
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     env:
-      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+      TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
     permissions:
       contents: read
       deployments: write
@@ -100,7 +92,7 @@ jobs:
       matrix:
         worker: ${{fromJson(needs.infrastructure_data.outputs.services_to_deploy)}}
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ env.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -138,12 +130,12 @@ jobs:
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     env:
-      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+      TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
     permissions:
       contents: read
       deployments: write
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ env.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -186,14 +178,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: get-npm-version
-        if: ${{ inputs.deploy_sentry_release }}
+        if: ${{ env.DEPLOY_SENTRY_RELEASE }}
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
         with:
           path: apps/${{ inputs.sentry_project }}
 
       - name: Create Sentry release
-        if: ${{ inputs.deploy_sentry_release }}
+        if: ${{ env.DEPLOY_SENTRY_RELEASE }}
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

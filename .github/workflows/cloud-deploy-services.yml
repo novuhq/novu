@@ -3,7 +3,7 @@ name: Deploy Service
 on:
   workflow_call:
     inputs:
-      env:
+      environment:
         description: 'Deployment environment - choose between staging and production'
         required: true
         type: string
@@ -29,72 +29,25 @@ on:
         type: string
 
 jobs:
-  set_environment:
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.set_env.outputs.environment }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: set_env
-        run: |
-          if echo "${{ inputs.env }}" | grep -qwi 'production'; then
-            echo "environment=Production" >> "$GITHUB_OUTPUT"
-          else
-            echo "environment=Staging" >> "$GITHUB_OUTPUT"
-          fi
-
   build_image:
-    needs: set_environment
     secrets: inherit
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
-      environment: ${{ needs.set_environment.outputs.environment }}
+      environment: ${{ inputs.environment }}
       package_name: ${{ inputs.package_name }}
       project_path: ${{ inputs.project_path }}
       test_port: ${{ inputs.test_port }}
       health_check: true
       local_tag: ${{ inputs.local_tag }}
-      env_tag: ${{ inputs.env }}
       enterprise: true
 
-  deploy_dev_service:
+  deploy_service:
     needs:
       - build_image
-      - set_environment
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
-    if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
-      environment: ${{ needs.set_environment.outputs.environment }}
+      environment: ${{ inputs.environment }}
       service_name: ${{ inputs.service }}
-      terraform_workspace: novu-dev
       docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
-
-  deploy_prod_service_eu:
-    needs:
-      - build_image
-      - set_environment
-    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
-    if: ${{ !contains(inputs.env, 'dev') }}
-    secrets: inherit
-    with:
-      environment: ${{ needs.set_environment.outputs.environment }}
-      service_name: ${{ inputs.service }}
-      terraform_workspace: novu-prod-eu
-      docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
-
-  deploy_prod_service_us:
-    needs:
-      - build_image
-      - set_environment
-    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
-    if: ${{ !contains(inputs.env, 'dev') }}
-    secrets: inherit
-    with:
-      environment: ${{ needs.set_environment.outputs.environment }}
-      service_name: ${{ inputs.service }}
-      terraform_workspace: novu-prod
-      docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
-      deploy_sentry_release: true
       sentry_project: ${{ inputs.service }}

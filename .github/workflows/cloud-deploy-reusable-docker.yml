@@ -31,10 +31,6 @@ on:
       local_tag:
         required: true
         type: string
-      # The environment tag. Possible values are dev, stg, and prod. This is not a required input of type string.
-      env_tag:
-        required: false
-        type: string
       enterprise:
         required: false
         type: boolean
@@ -111,13 +107,13 @@ jobs:
           DOCKER_NAME: ${{ needs.job-setup.outputs.dockerName }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
-          ENV_TAG: ${{ inputs.env_tag }}
+          ENV_TAG: ${{ env.DOCKER_ENV_TAG }}
           PROJECT_PATH: ${{ inputs.project_path }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
-            --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
+            --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ env.DOCKER_ENV_TAG }}
+            --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ env.DOCKER_ENV_TAG }},mode=max
             --platform=linux/amd64
             --output=type=image,name=ghcr.io/novuhq/${{ steps.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |

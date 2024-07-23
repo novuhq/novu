@@ -19,7 +19,7 @@ jobs:
     steps:
       - id: set_env
         run: |
-          if echo "${{ inputs.environment }}" | grep -qwi 'prod'; then
+          if echo "${{ inputs.environment }}" | grep -qi 'prod'; then
             echo "environment=Production" >> "$GITHUB_OUTPUT"
             echo "production-deploy=true" >> "$GITHUB_OUTPUT"
           else
