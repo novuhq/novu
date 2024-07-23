@@ -34,6 +34,7 @@ jobs:
           echo REACT_APP_SENTRY_DSN=$WIDGET_REACT_APP_SENTRY_DSN >> .env
           echo REACT_APP_ENVIRONMENT=$WIDGET_REACT_APP_ENVIRONMENT >> .env
           echo TEST=${{ env.WIDGET_REACT_APP_ENVIRONMENT }} >> .env
+          echo TEST=${{ vars.WIDGET_REACT_APP_ENVIRONMENT }} >> .env
 
       - name: Cat env file
         working-directory: apps/widget
