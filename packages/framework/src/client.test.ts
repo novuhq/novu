@@ -621,8 +621,10 @@ describe('Novu Client', () => {
         stepId: 'send-email',
         subscriber: {},
         state: [],
-        data: {},
-        payload: {},
+        // @ts-expect-error - testing undefined data and payload
+        data: undefined,
+        // @ts-expect-error - testing undefined data and payload
+        payload: undefined,
         inputs: {},
         controls: {},
       };
