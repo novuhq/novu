@@ -15,6 +15,20 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
       },
     },
   },
+  containers: {
+    '200': {
+      value: '{sizes.1250}',
+      type: 'sizes',
+    },
+    '300': {
+      value: '{sizes.1875}',
+      type: 'sizes',
+    },
+    '400': {
+      value: '{sizes.2500}',
+      type: 'sizes',
+    },
+  },
   icon: {
     '16': {
       value: '{sizes.100}',

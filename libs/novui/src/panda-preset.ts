@@ -35,6 +35,7 @@ import {
   LOADING_OVERLAY_RECIPE,
   JSON_SCHEMA_FORM_SECTION_RECIPE,
   JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
+  VARIABLE_SUGGESTION_LIST_RECIPE,
 } from './recipes';
 
 /**
@@ -106,6 +107,7 @@ export const novuPandaPreset = definePreset({
         loadingOverlay: LOADING_OVERLAY_RECIPE,
         jsonSchemaFormSection: JSON_SCHEMA_FORM_SECTION_RECIPE,
         jsonSchemaFormArrayToolbar: JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
+        variableSuggestionList: VARIABLE_SUGGESTION_LIST_RECIPE,
       },
     },
   },

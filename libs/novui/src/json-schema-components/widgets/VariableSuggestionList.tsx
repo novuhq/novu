@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useClickOutside, useDisclosure } from '@mantine/hooks';
 import { Menu } from '@mantine/core';
 import { type SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
-import classes from './VariableSuggestionList.styles';
+import { variableSuggestionList } from '../../../styled-system/recipes';
 
 export type VariableItem = {
   id: string;
@@ -13,6 +13,7 @@ export type VariableItem = {
 export type SuggestionListRef = {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;
   focus: () => void;
+  close: () => void;
 };
 
 type SuggestionListProps = SuggestionProps<VariableItem>;
@@ -20,7 +21,7 @@ type SuggestionListProps = SuggestionProps<VariableItem>;
 export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
   ({ clientRect, command, query, items }, ref) => {
     const [opened, { close: closeSuggestionList, open: openSuggestionList }] = useDisclosure(true);
-
+    const suggestionListClassNames = variableSuggestionList({});
     // ref for closing the menu any time there's a click elsewhere.
     const clickOutRef = useClickOutside(() => {
       closeSuggestionList();
@@ -56,9 +57,8 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       <Menu
         opened={opened}
         closeOnEscape
-        classNames={classes}
+        classNames={suggestionListClassNames}
         position="bottom-start"
-        width={200}
         // for some reason these don't seem to work, so we use clickOutRef on the dropdown
         closeOnClickOutside
         clickOutsideEvents={['click', 'mousedown', 'touchstart']}
