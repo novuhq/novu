@@ -118,8 +118,10 @@ export const novuPandaPreset = definePreset({
       // Mantine uses *-error.
       error: '&:is(:error, [data-error=true], [aria-error=true])',
       groupError: '.group:is(:error, [data-error=true], [aria-error=true]) &',
+      /** Mantine uses hover*ed*, so extend the selector to support it */
+      hover: '&:is(:hover, [data-hover], [data-hovered])',
       /** apply hover only when element or child is not disabled */
-      hoverNotDisabled: '&:is(:hover, [data-hover])&:not(:has(:disabled))',
+      hoverNotDisabled: '&:is(:hover, [data-hover], [data-hovered])&:not(:has(:disabled))',
     },
   },
   staticCss: {
