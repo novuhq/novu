@@ -547,22 +547,6 @@ describe('Novu Client', () => {
                 required: [],
                 additionalProperties: false,
               } as const,
-              providers: {
-                sendgrid: async ({ controls, outputs }) => ({
-                  ipPoolName: `${controls.name} ${outputs.subject}`,
-                  _passthrough: {
-                    body: {
-                      foo: 'bar',
-                    },
-                    headers: {
-                      'X-Custom-Header': 'test',
-                    },
-                    query: {
-                      fooQuery: 'barQuery',
-                    },
-                  },
-                }),
-              },
             }
           );
         },
