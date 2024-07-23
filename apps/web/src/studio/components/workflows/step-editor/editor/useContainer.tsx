@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
 import { useDiscover, useStudioState } from '../../../../hooks';
 import { BRIDGE_CODE } from './bridge-code.const';
-import { TerminalComponent } from './Terminal';
 
 interface RunExpressAppProps {
   code: string;
@@ -12,7 +11,8 @@ interface RunExpressAppProps {
 
 const { WebContainer } = require('@webcontainer/api');
 
-export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
+export const useContainer = () => {
+  const [code, setCode] = useState(BRIDGE_CODE);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
   const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
   const terminalRef = useRef<{ write: (data: string) => void }>(null);
@@ -150,9 +150,5 @@ export const RunExpressApp: React.FC<RunExpressAppProps> = ({ code }) => {
     return () => clearTimeout(debounceTimeout);
   }, [code, refetch]);
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <TerminalComponent ref={terminalRef} />
-    </div>
-  );
+  return { terminalRef, code, setCode };
 };

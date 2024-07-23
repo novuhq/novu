@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Allotment } from 'allotment';
+import 'allotment/dist/style.css';
 
 import { useColorScheme } from '@novu/design-system';
 import { HStack } from '@novu/novui/jsx';
@@ -7,16 +9,14 @@ import { css } from '@novu/novui/css';
 import { IconClose } from '@novu/novui/icons';
 
 import CodeEditor from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
-import { RunExpressApp } from '../../../studio/components/workflows/step-editor/editor/RunExpressApp';
-import { BRIDGE_CODE } from '../../../studio/components/workflows/step-editor/editor/bridge-code.const';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { useDiscover } from '../../../studio/hooks';
 import { WorkflowsStepEditorPageV2 } from '../../templates/editor_v2/TemplateStepEditorV2';
 import { COMPANY_LOGO_TEXT_PATH, COMPANY_LOGO_TEXT_PATH_DARK_TEXT } from '../../../constants/assets';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { ROUTES } from '../../../constants/routes';
-import { Allotment } from 'allotment';
-import 'allotment/dist/style.css';
+import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
+import { TerminalComponent } from '../../../studio/components/workflows/step-editor/editor/Terminal';
 const { Pane } = Allotment;
 
 export function OnboardingPage() {
@@ -69,7 +69,7 @@ function Header() {
 }
 
 function Playground() {
-  const [code, setCode] = useState(BRIDGE_CODE);
+  const { code, setCode, terminalRef } = useContainer();
 
   return (
     <div style={{ height: '100vh' }}>
@@ -79,7 +79,9 @@ function Playground() {
             <CodeEditor code={code} setCode={setCode} />
           </Pane>
           <Pane>
-            <RunExpressApp code={code} />
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <TerminalComponent ref={terminalRef} />
+            </div>
           </Pane>
         </Allotment>
         <Pane>

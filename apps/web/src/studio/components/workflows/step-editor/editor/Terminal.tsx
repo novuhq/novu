@@ -1,37 +1,34 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
-import { Terminal } from '@xterm/xterm';
+import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 
 export const TerminalComponent = React.forwardRef((_, ref) => {
-  const terminalRef = useRef(null);
+  const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
+  // const fitAddon = useRef(new FitAddon());
 
-  useImperativeHandle(ref, () => ({
-    write: (data: string) => {
-      if (terminalInstance.current) {
-        terminalInstance.current.write(data.replace(/\n/g, '\r\n'));
-      }
-    },
-  }));
+  useImperativeHandle(
+    ref,
+    () => ({
+      write: (data: string) => {
+        terminalInstance.current?.write(data.replace(/\n/g, '\r\n'));
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
+    if (!terminalRef.current) return;
+
     const terminal = new Terminal();
-    // const fitAddon = new FitAddon();
-    // terminal.loadAddon(fitAddon);
-
-    if (!terminalRef.current) {
-      return;
-    }
-
+    // terminal.loadAddon(fitAddon.current);
     terminal.open(terminalRef.current);
-    // fitAddon.fit();
+    // fitAddon.current.fit();
     terminalInstance.current = terminal;
 
     const handleResize = () => {
-      if (terminalRef.current) {
-        // fitAddon.fit();
-      }
+      // fitAddon.current.fit();
     };
 
     window.addEventListener('resize', handleResize);
