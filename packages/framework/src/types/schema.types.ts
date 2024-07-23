@@ -18,5 +18,5 @@ export type FromSchema<T extends Schema> =
     : // ZodSchema
     T extends z.ZodSchema
     ? z.infer<T>
-    : // All schema types exhaused.
+    : // All schema types exhausted.
       never;
