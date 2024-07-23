@@ -28,11 +28,11 @@ jobs:
         working-directory: apps/widget
         run: |
           touch .env
-          echo REACT_APP_API_URL=${{ env.WIDGET_REACT_APP_API_URL }} >> .env
-          echo REACT_APP_WS_URL=${{ env.WIDGET_REACT_APP_WS_URL }} >> .env
-          echo REACT_APP_WEBHOOK_URL=${{ env.WIDGET_REACT_APP_WEBHOOK_URL }} >> .env
-          echo REACT_APP_SENTRY_DSN=${{ env.WIDGET_REACT_APP_SENTRY_DSN }} >> .env
-          echo REACT_APP_ENVIRONMENT=${{ env.WIDGET_REACT_APP_ENVIRONMENT }} >> .env
+          echo REACT_APP_API_URL=$WIDGET_REACT_APP_API_URL >> .env
+          echo REACT_APP_WS_URL=$WIDGET_REACT_APP_WS_URL >> .env
+          echo REACT_APP_WEBHOOK_URL=$WIDGET_REACT_APP_WEBHOOK_URL >> .env
+          echo REACT_APP_SENTRY_DSN=$WIDGET_REACT_APP_SENTRY_DSN >> .env
+          echo REACT_APP_ENVIRONMENT=$WIDGET_REACT_APP_ENVIRONMENT >> .env
 
       - name: Envsetup
         working-directory: apps/widget
@@ -46,13 +46,13 @@ jobs:
         with:
           publish-dir: apps/widget/build
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: ${{ env.WIDGET_NETLIFY_DEPLOY_MESSAGE }}
+          deploy-message: $WIDGET_NETLIFY_DEPLOY_MESSAGE
           production-deploy: true
-          alias: ${{ env.WIDGET_NETLIFY_ALIAS }}
-          github-deployment-environment: ${{ env.WIDGET_NETLIFY_GH_ENV }}
+          alias: $WIDGET_NETLIFY_ALIAS
+          github-deployment-environment: $WIDGET_NETLIFY_GH_ENV
           github-deployment-description: Widget Deployment
           netlify-config-path: apps/widget/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ env.WIDGET_NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: $WIDGET_NETLIFY_SITE_ID
         timeout-minutes: 1
