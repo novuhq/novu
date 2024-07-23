@@ -89,4 +89,9 @@ if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
 
-export const BRIDGE_SYNC_SAMPLE_ENDPOINT = 'https://onboarding-sandbox.netlify.app/api/novu';
+export const BRIDGE_SYNC_SAMPLE_ENDPOINT = 'https://deploy-preview-1--onboarding-sandbox.netlify.app/api/novu';
+/**
+ * This is used for versioning the sandbox endpoints across revisions
+ * On change, we should move the current one to the legacy list
+ */
+export const BRIDGE_ENDPOINTS_LEGACY_VERSIONS = ['https://onboarding-sandbox.netlify.app/api/novu'];
