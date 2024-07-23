@@ -247,9 +247,9 @@ export class SendMessageEmail extends SendMessageBase {
         const shouldDisableInlineCss = await this.getFeatureFlag.execute(
           GetFeatureFlagCommand.create({
             key: FeatureFlagsKeysEnum.IS_EMAIL_INLINE_CSS_DISABLED,
-            environmentId: command.environmentId,
+            environmentId: 'system',
             organizationId: command.organizationId,
-            userId: command.userId,
+            userId: 'system',
           })
         );
 
