@@ -6,8 +6,17 @@ export type Schema = JSONSchema | z.ZodSchema;
 
 export type JsonSchema = JSONSchema;
 
-export type FromSchema<T extends Schema> = T extends JSONSchema
-  ? JsonSchemaInfer<T>
-  : T extends z.ZodSchema
-  ? z.infer<T>
-  : never;
+export type FromSchema<T extends Schema> =
+  /*
+   * Handle each Schema's type inference individually until
+   * all Schema types are exhausted.
+   */
+
+  // JSONSchema
+  T extends JSONSchema
+    ? JsonSchemaInfer<T>
+    : // ZodSchema
+    T extends z.ZodSchema
+    ? z.infer<T>
+    : // All schema types exhaused.
+      never;

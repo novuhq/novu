@@ -26,7 +26,7 @@ export const delayResultSchema = {
   additionalProperties: false,
 } as const satisfies Schema;
 
-export const delayChannelSchemas = {
+export const delayActionSchemas = {
   output: delayOutputSchema,
   result: delayResultSchema,
 };
