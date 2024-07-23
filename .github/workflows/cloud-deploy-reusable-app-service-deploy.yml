@@ -26,8 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
-    env:
-      TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
     permissions:
       contents: read
       deployments: write
@@ -83,8 +81,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
-    env:
-      TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
     permissions:
       contents: read
       deployments: write
@@ -129,8 +125,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
-    env:
-      TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
     permissions:
       contents: read
       deployments: write
