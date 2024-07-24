@@ -9,14 +9,14 @@ export const MoreActionsDropdown = () => {
   return (
     <Dropdown.Root>
       <Dropdown.Trigger
-        class={style('moreActions__dropdownTrigger')}
+        class={style('actions__dropdownTrigger')}
         asChild={(triggerProps) => (
           <Button variant="ghost" size="icon" {...triggerProps}>
             <DotsMenu />
           </Button>
         )}
       />
-      <Dropdown.Content appearanceKey="moreActions__dropdownContent">
+      <Dropdown.Content appearanceKey="actions__dropdownContent">
         <MoreActionsOptions />
       </Dropdown.Content>
     </Dropdown.Root>

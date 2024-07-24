@@ -20,7 +20,7 @@ export const novuComponents = {
   Bell,
 };
 
-export type NovuComponent = { name: NovuComponentName; props?: unknown };
+export type NovuComponent = { name: NovuComponentName; props?: any };
 
 export type NovuMounterProps = NovuComponent & { element: MountableElement };
 
@@ -68,11 +68,16 @@ export const Renderer = (props: RendererProps) => {
             <FocusManagerProvider>
               <InboxNotificationStatusProvider>
                 <For each={[...props.nodes]}>
-                  {([node, component]) => (
-                    <Portal mount={node}>
-                      <Root>{novuComponents[component.name](component.props || {})}</Root>
-                    </Portal>
-                  )}
+                  {([node, component]) => {
+                    const Component = novuComponents[component.name];
+                    return (
+                      <Portal mount={node}>
+                        <Root>
+                          <Component {...component.props} />
+                        </Root>
+                      </Portal>
+                    );
+                  }}
                 </For>
               </InboxNotificationStatusProvider>
             </FocusManagerProvider>

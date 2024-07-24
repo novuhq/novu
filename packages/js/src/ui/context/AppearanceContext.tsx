@@ -45,6 +45,12 @@ export const appearanceKeys = [
 
   'skeletonText',
   'skeletonAvatar',
+  'tabsContainer',
+  'tabsList',
+  'tabsPanel',
+  'tabsTab',
+  'tabsTabLabel',
+  'tabsTabCount',
 
   //General
   'root',
@@ -91,14 +97,13 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItemLeftIcon',
   'inboxStatus__dropdownItemRightIcon',
 
-  //More actions
-  'moreActionsContainer',
-  'moreActions__dropdownTrigger',
-  'moreActions__dropdownContent',
-  'moreActions__dropdownItem',
-  'moreActions__dropdownItemLabel',
-  'moreActions__dropdownItemLabelContainer',
-  'moreActions__dropdownItemLeftIcon',
+  //Actions dropdown
+  'actionsContainer',
+  'actions__dropdownTrigger',
+  'actions__dropdownContent',
+  'actions__dropdownItem',
+  'actions__dropdownItemLabel',
+  'actions__dropdownItemLeftIcon',
 
   //workflow
   'workflowContainer',

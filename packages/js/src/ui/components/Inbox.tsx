@@ -1,12 +1,14 @@
-import { Accessor, createSignal, JSX, Match, Switch } from 'solid-js';
+import { Accessor, createSignal, JSX, Match, Show, Switch } from 'solid-js';
 import { useStyle } from '../helpers';
 import { NotificationMounter } from '../types';
 import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
+import { InboxTabs } from './InboxTabs';
 import { NotificationList } from './Notification';
 import { Button, Popover } from './primitives';
 
 export type InboxProps = {
   open?: boolean;
+  tabs?: Array<{ label: string; value: Array<string> }>;
   mountNotification?: NotificationMounter;
   renderBell?: ({ unreadCount }: { unreadCount: Accessor<number> }) => JSX.Element;
 };
@@ -17,8 +19,10 @@ enum Screen {
 }
 
 type InboxContentProps = {
+  tabs?: InboxProps['tabs'];
   mountNotification?: NotificationMounter;
 };
+
 const InboxContent = (props: InboxContentProps) => {
   const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
 
@@ -27,7 +31,12 @@ const InboxContent = (props: InboxContentProps) => {
       <Switch>
         <Match when={currentScreen() === Screen.Inbox}>
           <Header updateScreen={setCurrentScreen} />
-          <NotificationList mountNotification={props.mountNotification} />
+          <Show
+            when={props.tabs && props.tabs.length > 0}
+            fallback={<NotificationList mountNotification={props.mountNotification} />}
+          >
+            <InboxTabs tabs={props.tabs ?? []} />
+          </Show>
         </Match>
         <Match when={currentScreen() === Screen.Settings}>
           <SettingsHeader backAction={() => setCurrentScreen(Screen.Inbox)} />
@@ -52,7 +61,7 @@ export const Inbox = (props: InboxProps) => {
         )}
       />
       <Popover.Content appearanceKey="inbox__popoverContent">
-        <InboxContent mountNotification={props.mountNotification} />
+        <InboxContent tabs={props.tabs} mountNotification={props.mountNotification} />
       </Popover.Content>
     </Popover.Root>
   );
