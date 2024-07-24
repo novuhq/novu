@@ -3,6 +3,7 @@ import { useStyle } from '../../../helpers';
 import { TabsList } from './TabsList';
 import { TabsPanel } from './TabsPanel';
 import { TabsTab } from './TabsTab';
+import { useKeyboardNavigation } from './useKeyboardNavigation';
 
 type TabsProps = ParentProps & {
   defaultValue?: string;
@@ -29,9 +30,12 @@ export const useTabsContext = () => {
 };
 
 export const Tabs = (props: TabsProps) => {
+  const [tabsContainer, setTabsContainer] = createSignal<HTMLDivElement>();
   const [visibleTabs, setVisibleTabs] = createSignal<Array<string>>([]);
   const [activeTab, setActiveTab] = createSignal(props.defaultValue ?? '');
   const style = useStyle();
+
+  useKeyboardNavigation({ tabsContainer, activeTab, setActiveTab });
 
   createEffect(() => {
     if (props.value) {
@@ -45,7 +49,9 @@ export const Tabs = (props: TabsProps) => {
 
   return (
     <TabsContext.Provider value={{ activeTab, setActiveTab, visibleTabs, setVisibleTabs }}>
-      <div class={style('tabsContainer', `nt-flex nt-flex-col ${props.class ?? ''}`)}>{props.children}</div>
+      <div ref={setTabsContainer} class={style('tabsContainer', `nt-flex nt-flex-col ${props.class ?? ''}`)}>
+        {props.children}
+      </div>
     </TabsContext.Provider>
   );
 };
