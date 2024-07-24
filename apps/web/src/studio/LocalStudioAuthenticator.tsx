@@ -7,7 +7,7 @@ import { StudioState } from './types';
 import { useLocation } from 'react-router-dom';
 import { novuOnboardedCookie } from '../utils/cookies';
 import { LocalStudioPageLayout } from '../components/layout/components/LocalStudioPageLayout';
-import { getToken } from '../auth/getToken';
+import { getToken } from '../components/providers/AuthProvider';
 
 function buildBridgeURL(origin: string | null, tunnelPath: string) {
   if (!origin) {
@@ -25,7 +25,9 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 }
 
 export function LocalStudioAuthenticator() {
-  const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
+  const { currentUser, isUserLoaded, redirectToLogin, redirectToSignUp, currentOrganization, isOrganizationLoaded } =
+    useAuth();
+  const isLoading = !isUserLoaded && !isOrganizationLoaded;
   const location = useLocation();
   const { environments } = useEnvironment();
   const hasToken = !!getToken();

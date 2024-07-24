@@ -6,18 +6,18 @@ import { Select, Tooltip, When, successMessage } from '@novu/design-system';
 import { css } from '@novu/novui/css';
 import { COMPANY_LOGO_PATH } from '../../../constants/assets';
 import { arrowStyles, navSelectStyles, tooltipStyles } from '../NavSelect.styles';
-import { useAuth as useAuth } from '../../providers/AuthProvider';
+import { useAuth } from '../../providers/AuthProvider';
 import { addOrganization } from '../../../api/organization';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { useOrganizations } from '../../../hooks/useOrganizations';
 
 export function OrganizationSelect() {
   const [canShowTooltip, setCanShowTooltip] = useState<boolean>(false);
-
+  const { isOrganizationLoaded, currentOrganization, switchOrganization } = useAuth();
+  const { data: organizations, isLoading: isOrganizationsLoading } = useOrganizations();
   const [search, setSearch] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { addItem, removeItems } = useSpotlightContext();
-
-  const { currentOrganization, organizations, switchOrganization } = useAuth();
 
   const { mutateAsync: createOrganization } = useMutation<IOrganizationEntity, IResponseError, string>(
     (name) => addOrganization(name),
@@ -101,7 +101,7 @@ export function OrganizationSelect() {
         className={navSelectStyles}
         creatable
         searchable
-        loading={isLoading}
+        loading={isLoading || isOrganizationsLoading || !isOrganizationLoaded}
         getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
         value={value}
         onCreate={onCreate}
