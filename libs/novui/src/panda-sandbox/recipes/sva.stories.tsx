@@ -10,7 +10,13 @@ export default {
 /**
  * sva is a function to create recipes that target specific named parts / elements ("slots")
  * of a component -- it returns an object of classNames.
+ *
  * https://panda-css.com/docs/concepts/slot-recipes#atomic-slot-recipe-or-sva
+ *
+ * sva is similar to cva, but is typically used when we have a composition of components (i.e. a composite component)
+ * that contains multiple atomic components that we would like to style independently. A good example of where we would
+ * use sva is for a form input component recipe, where we have a label, text input, and helper text that each have
+ * their own styles.
  */
 const uploadStatusRecipe = sva({
   // specify the names of the different slots

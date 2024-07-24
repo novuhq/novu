@@ -8,8 +8,12 @@ export default {
 } as Meta;
 
 /**
- * cva is a way to create Atomic Recipes
+ * cva is a way to create Atomic Recipes with one or more variant.
+ * We use cva when we need to define multiple states for a single atomic component.
  * https://panda-css.com/docs/concepts/recipes#atomic-recipe-or-cva
+ *
+ * An example is a status indicator where we have a mixture of shared styling
+ * but also some status-specific (variant-specific) styling.
  */
 const uploadStatusDotRecipe = cva({
   // styles that should be applied to all variants (and can be overridden) are defined in base
@@ -68,6 +72,9 @@ ClassName.args = {};
 
 /**
  * Here we're using the `styled` function from Panda to create a type-safe JSX element based on the same recipe!
+ *
+ * This provides a better DX when the component needs to be consumed in multiple places because we only need
+ * to import the JSX component, rather than both the recipe and the component we'd like to apply styles to
  */
 const UploadStatusDot = styled('span', uploadStatusDotRecipe);
 

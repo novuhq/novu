@@ -35,7 +35,7 @@ export const Standard = StandardTemplate.bind({});
 Standard.args = {};
 
 /**
- * cx is a Panda-generated function for merging classNames.
+ * cx is a Panda-generated function for merging classNames. You can just concatenate strings, but cx is cleaner.
  * Like in normal css, later-defined properties take precedence.
  */
 const CombinedTemplate: StoryFn = ({ ...args }) => {
