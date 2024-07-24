@@ -22,13 +22,19 @@ export const InboxTabs = (props: InboxTabsProps) => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visibleTabs = entries
+        let visibleTabIds = entries
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio === 1)
-          .map((entry) => entry.target.id)
-          .slice(0, -1);
+          .map((entry) => entry.target.id);
 
-        setVisibleTabs(props.tabs.filter((tab) => visibleTabs.includes(tab.label)));
-        setDropdownTabs(props.tabs.filter((tab) => !visibleTabs.includes(tab.label)));
+        if (tabs.length === visibleTabIds.length) {
+          setVisibleTabs(props.tabs.filter((tab) => visibleTabIds.includes(tab.label)));
+          observer.disconnect();
+          return;
+        }
+
+        visibleTabIds = visibleTabIds.slice(0, -1);
+        setVisibleTabs(props.tabs.filter((tab) => visibleTabIds.includes(tab.label)));
+        setDropdownTabs(props.tabs.filter((tab) => !visibleTabIds.includes(tab.label)));
         observer.disconnect();
       },
       { root: tabsListEl }
@@ -55,7 +61,9 @@ export const InboxTabs = (props: InboxTabsProps) => {
           {visibleTabs().map((tab) => (
             <InboxTab label={tab.label} />
           ))}
-          <MoreTabsDropdown dropdownTabs={dropdownTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <Show when={dropdownTabs().length > 0}>
+            <MoreTabsDropdown dropdownTabs={dropdownTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+          </Show>
         </Tabs.List>
       </Show>
       {props.tabs.map((tab) => (
