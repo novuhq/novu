@@ -9,7 +9,15 @@ export default function OrganizationListPage() {
       description="Please select or create an organization to continue."
     >
       <OrganizationList
+        appearance={{
+          elements: {
+            organizationAvatarUploaderContainer: {
+              display: 'none',
+            },
+          },
+        }}
         hidePersonal
+        skipInvitationScreen
         afterSelectOrganizationUrl={ROUTES.GET_STARTED}
         afterCreateOrganizationUrl={ROUTES.AUTH_APPLICATION}
       />

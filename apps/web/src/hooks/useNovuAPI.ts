@@ -4,7 +4,7 @@ import { buildApiHttpClient } from '../api/api.client';
 // eslint-disable-next-line import/no-namespace
 import * as mixpanel from 'mixpanel-browser';
 import { useStudioState } from '../studio/StudioStateProvider';
-import { getToken } from '../auth/getToken';
+import { getToken } from '../components/providers/AuthProvider';
 
 function useNovuAPI() {
   const { devSecretKey } = useStudioState();

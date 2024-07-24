@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { test } from './utils/baseTest';
 import { AuthLoginPage } from './page-models/authLoginPage';
 import { HeaderPage } from './page-models/headerPage';
@@ -48,8 +48,7 @@ test.describe('Invites', () => {
     await signUpPage.assertNavigationPath('/get-started**');
 
     const sidebarPage = await SidebarPage.goTo(pageForInvitedUser);
-    const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
-    expect(orgSwitchValue).toBe(invitation.organization.name.toLowerCase());
+    await expect(sidebarPage.getOrganizationSwitch()).toHaveValue(new RegExp(invitation.organization.name, 'i'));
   });
 
   test('invite an existing user to the organization', async ({ browser, page }) => {
