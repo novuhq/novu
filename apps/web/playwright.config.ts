@@ -28,7 +28,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     permissions: ['clipboard-read'],
   },
-  timeout: 30_000,
+  timeout: process.env.CI ? 30_000 : 60_000,
   expect: {
     timeout: 15000,
   },
