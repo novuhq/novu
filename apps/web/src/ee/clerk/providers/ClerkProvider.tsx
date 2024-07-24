@@ -44,10 +44,12 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
     })();
   }, []);
 
-  if (!clerkInstance) return null;
-
   if (!IS_EE_AUTH_ENABLED) {
     return <>{children}</>;
+  }
+
+  if (IS_EE_AUTH_ENABLED && !clerkInstance) {
+    return null;
   }
 
   return (
