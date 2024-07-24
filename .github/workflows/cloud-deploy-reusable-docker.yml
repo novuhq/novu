@@ -110,7 +110,7 @@ jobs:
           ENV_TAG: ${{ vars.DOCKER_ENV_TAG }}
           PROJECT_PATH: ${{ inputs.project_path }}
           GH_ACTOR: ${{ github.actor }}
-          GH_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ vars.DOCKER_ENV_TAG }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ vars.DOCKER_ENV_TAG }},mode=max
