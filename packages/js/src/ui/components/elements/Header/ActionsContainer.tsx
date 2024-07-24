@@ -10,7 +10,7 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
 
   return (
-    <div class={style('moreActionsContainer', 'nt-flex nt-gap-2')}>
+    <div class={style('actionsContainer', 'nt-flex nt-gap-2')}>
       <MoreActionsDropdown />
       <button
         class={style(
