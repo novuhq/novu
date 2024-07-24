@@ -27,7 +27,7 @@ const localization = {
   },
 };
 
-const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*'];
+const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', location.origin];
 
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const navigate = useNavigate();
