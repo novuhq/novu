@@ -11,10 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test('should display organization select with the current organization', async ({ page }) => {
   const sidebarPage = await SidebarPage.goTo(page);
-  const orgSwitch = sidebarPage.getOrganizationSwitch();
-  await expect(orgSwitch).toBeVisible();
-  const orgName = await orgSwitch.getAttribute('value');
-  expect(orgName?.toLowerCase()).toEqual(session.organization.name.toLowerCase());
+  await expect(sidebarPage.getOrganizationSwitch()).toHaveValue(new RegExp(session.organization.name, 'i'));
 });
 
 test('should use a different jwt token after switching organization', async ({ page }) => {
