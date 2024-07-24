@@ -75,9 +75,15 @@ jobs:
         id: prepare
         shell: bash
         run: |
-          service=${{ inputs.package_name }}
-          servicename=${service#*/} 
-          echo "SERVICE_NAME=$servicename" >> "$GITHUB_OUTPUT"
+          if [[ "${{ inputs.enterprise }}" == "true" ]]; then
+            service=${{ inputs.package_name }}
+            servicename=${service#*/} 
+            echo "SERVICE_NAME=$servicename-ee" >> "$GITHUB_OUTPUT"
+          else
+            service=${{ inputs.package_name }}
+            servicename=${service#*/} 
+            echo "SERVICE_NAME=$servicename" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: ./.github/actions/setup-project
         with:
