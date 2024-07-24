@@ -38,7 +38,9 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
 
   useEffect(() => {
     (async () => {
-      setClerkInstance(await buildClerk({ publishableKey: CLERK_PUBLISHABLE_KEY }));
+      if (IS_EE_AUTH_ENABLED) {
+        setClerkInstance(await buildClerk({ publishableKey: CLERK_PUBLISHABLE_KEY }));
+      }
     })();
   }, []);
 
