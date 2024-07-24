@@ -176,6 +176,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   );
 
   const value = {
+    shouldMonitor: true,
     isUserLoaded: isUserInitialLoading === false,
     isOrganizationLoaded: isOrganizationInitialLoading === false,
     currentUser,

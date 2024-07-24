@@ -125,7 +125,13 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     }
   }, [currentOrganization, clerkOrganization, switchOrgCallback]);
 
+  const isNovuUser = currentUser && !currentUser._id.startsWith('user_');
+  const isNovuOrganization = currentOrganization && !currentOrganization._id.startsWith('org_');
+
+  const shouldMonitor = isNovuUser && isNovuOrganization;
+
   const value = {
+    shouldMonitor,
     isUserLoaded,
     isOrganizationLoaded,
     currentUser,
@@ -147,27 +153,43 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;
 };
 
-const toUserEntity = (clerkUser: UserResource): IUserEntity => ({
-  _id: clerkUser.id,
-  firstName: clerkUser.firstName,
-  lastName: clerkUser.lastName,
-  email: clerkUser.emailAddresses[0].emailAddress,
-  profilePicture: clerkUser.imageUrl,
-  createdAt: clerkUser.createdAt?.toString() ?? '',
-  showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
-  showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
-  servicesHashes: clerkUser.publicMetadata.servicesHashes,
-  jobTitle: clerkUser.publicMetadata.jobTitle,
-  hasPassword: clerkUser.passwordEnabled,
-});
+const toUserEntity = (clerkUser: UserResource): IUserEntity => {
+  if (clerkUser.externalId) {
+    console.log('[[]]I DO HAVE AN USER EXTERNAL ID');
+  } else {
+    console.log('[[]]***THE USER EXTERNAL ID IS MISSING***');
+  }
 
-const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => ({
-  _id: clerkOrganization.id,
-  name: clerkOrganization.name,
-  createdAt: clerkOrganization.createdAt.toString(),
-  updatedAt: clerkOrganization.updatedAt.toString(),
-  apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
-  defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
-  domain: clerkOrganization.publicMetadata.domain,
-  productUseCases: clerkOrganization.publicMetadata.productUseCases,
-});
+  return {
+    _id: clerkUser.externalId ?? clerkUser.id,
+    firstName: clerkUser.firstName,
+    lastName: clerkUser.lastName,
+    email: clerkUser.emailAddresses[0].emailAddress,
+    profilePicture: clerkUser.imageUrl,
+    createdAt: clerkUser.createdAt?.toString() ?? '',
+    showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
+    showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
+    servicesHashes: clerkUser.publicMetadata.servicesHashes,
+    jobTitle: clerkUser.publicMetadata.jobTitle,
+    hasPassword: clerkUser.passwordEnabled,
+  };
+};
+
+const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
+  if (clerkOrganization.publicMetadata.externalOrgId) {
+    console.log('[[]]I DO HAVE A ORGANIZATION EXTERNAL ID');
+  } else {
+    console.log('[[]]***THE ORGANIZATION EXTERNAL ID IS MISSING***');
+  }
+
+  return {
+    _id: clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id,
+    name: clerkOrganization.name,
+    createdAt: clerkOrganization.createdAt.toString(),
+    updatedAt: clerkOrganization.updatedAt.toString(),
+    apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
+    defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
+    domain: clerkOrganization.publicMetadata.domain,
+    productUseCases: clerkOrganization.publicMetadata.productUseCases,
+  };
+};

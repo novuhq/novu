@@ -5,12 +5,12 @@ import { useSegment } from '../components/providers/SegmentProvider';
 import { useAuth } from './useAuth';
 
 export function useMonitoring() {
-  const { currentUser, currentOrganization } = useAuth();
+  const { currentUser, currentOrganization, shouldMonitor } = useAuth();
   const ldClient = useLDClient();
   const segment = useSegment();
 
   useEffect(() => {
-    if (currentUser && currentOrganization) {
+    if (currentUser && currentOrganization && shouldMonitor) {
       segment.identify(currentUser);
 
       sentrySetUser({
@@ -23,14 +23,14 @@ export function useMonitoring() {
     } else {
       sentryConfigureScope((scope) => scope.setUser(null));
     }
-  }, [currentUser, currentOrganization, segment]);
+  }, [currentUser, currentOrganization, segment, shouldMonitor]);
 
   useEffect(() => {
     if (!ldClient) {
       return;
     }
 
-    if (currentOrganization) {
+    if (currentOrganization && shouldMonitor) {
       ldClient.identify({
         kind: 'organization',
         key: currentOrganization._id,
@@ -43,5 +43,5 @@ export function useMonitoring() {
         anonymous: true,
       });
     }
-  }, [ldClient, currentOrganization]);
+  }, [ldClient, currentOrganization, shouldMonitor]);
 }
