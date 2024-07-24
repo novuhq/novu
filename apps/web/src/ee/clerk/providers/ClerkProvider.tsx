@@ -1,12 +1,10 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
-import { BrowserClerk, ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
-import { Clerk } from '@clerk/clerk-js';
+import { ClerkProp, ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { useColorScheme } from '@novu/design-system';
 import { dark } from '@clerk/themes';
-import { normalizeEmail } from '@novu/shared';
-import { api } from '../../../api/api.client';
+import { buildClerk } from './clerk-singleton';
 
 const ClerkModalElement = {
   modalContent: {
@@ -32,51 +30,19 @@ const localization = {
 
 const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*'];
 
-const clerk = new Clerk(CLERK_PUBLISHABLE_KEY);
-
-function getEmailFromQuery(query: string): string | null {
-  const params = new URLSearchParams(query);
-  const identifier = params.get('identifier');
-
-  return identifier ? decodeURIComponent(identifier) : null;
-}
-
-function normalizeEmailData(email: string) {
-  return api.post('/clerk/user/normalize', { email });
-}
-
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
-  const [clerkInstance, setClerkInstance] = useState<Clerk>();
+  const [clerkInstance, setClerkInstance] = useState<ClerkProp>();
 
   const navigate = useNavigate();
   const { colorScheme } = useColorScheme();
 
   useEffect(() => {
     (async () => {
-      // setting Clerk onBeforeRequest to be used in the AuthProvider
-      console.log('setting Clerk onBeforeRequest to be used in the AuthProvider');
-
-      clerk.__unstable__onBeforeRequest(async (requestInit) => {
-        console.log('requestInit', requestInit);
-        const { path, method, body } = requestInit;
-        const isSignIn = path === '/client/sign_ins' && method === 'POST';
-
-        if (isSignIn) {
-          const email = getEmailFromQuery(body as string);
-          if (email && email !== normalizeEmail(email)) {
-            await normalizeEmailData(email);
-          }
-        }
-
-        return requestInit;
-      });
-
-      await clerk.load();
-      setClerkInstance(clerk);
+      setClerkInstance(await buildClerk({ publishableKey: CLERK_PUBLISHABLE_KEY }));
     })();
   }, []);
 
-  if (!clerkInstance) return <div>Loading...</div>;
+  if (!clerkInstance) return null;
 
   if (!IS_EE_AUTH_ENABLED) {
     return <>{children}</>;
@@ -84,7 +50,7 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
 
   return (
     <_ClerkProvider
-      Clerk={clerkInstance as unknown as BrowserClerk}
+      Clerk={clerkInstance}
       routerPush={(to) => navigate(to)}
       routerReplace={(to) => navigate(to, { replace: true })}
       publishableKey={CLERK_PUBLISHABLE_KEY}
