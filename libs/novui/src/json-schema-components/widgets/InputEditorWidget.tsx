@@ -15,19 +15,19 @@ import Mention from '@tiptap/extension-mention';
 import { css, cx } from '../../../styled-system/css';
 import { input } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
-import classes from './InputEditorWidget.styles';
 import { inputEditorWidget } from '../../../styled-system/recipes';
 
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
-import '@mantine/tiptap/styles.layer.css';
+// TODO: use @mantine/tiptap/styles.layer.css instead
+import '@mantine/tiptap/styles.css';
 
 export const InputEditorWidget = (props: WidgetProps) => {
-  const { value, label, formContext, onChange, required, readonly, rawErrors } = props;
+  const { value, label, formContext, onChange, required, readonly, rawErrors, options, schema } = props;
   const [variantProps, inputProps] = input.splitVariantProps({});
   const [cssProps] = splitCssProps(inputProps);
   const classNames = input(variantProps);
-  const suggestionListClassNames = inputEditorWidget({});
+  const inputEditorClassNames = inputEditorWidget({});
 
   const { variables = [] } = formContext;
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
@@ -39,6 +39,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
   }, [variables]);
 
   const baseExtensions: Extensions = [Document, Paragraph, Text];
+
   if (variables.length) {
     baseExtensions.push(
       Mention.configure({
@@ -126,7 +127,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       description={props.schema.description}
       error={rawErrors?.length > 0 && rawErrors}
     >
-      <RichTextEditor classNames={suggestionListClassNames} editor={editor}>
+      <RichTextEditor classNames={inputEditorClassNames} editor={editor}>
         <RichTextEditor.Content />
       </RichTextEditor>
     </Input.Wrapper>

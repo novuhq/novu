@@ -12,8 +12,8 @@ export const VARIABLE_SUGGESTION_LIST_RECIPE = defineSlotRecipe({
   base: {
     dropdown: {
       ...SELECT_RECIPE.base.dropdown,
-      maxHeight: 'containers.400',
-      width: 'containers.300 !important',
+      maxHeight: 'components.menu.height',
+      width: 'components.menu.width !important',
       overflowY: 'auto',
     },
     item: {

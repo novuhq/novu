@@ -70,16 +70,4 @@ export const SIZES_TOKENS = defineTokens.sizes({
     value: '3.75rem',
     type: 'sizes',
   },
-  '1250': {
-    value: '12.5rem',
-    type: 'sizes',
-  },
-  '1875': {
-    value: '18.75rem',
-    type: 'sizes',
-  },
-  '2500': {
-    value: '25rem',
-    type: 'sizes',
-  },
 });
