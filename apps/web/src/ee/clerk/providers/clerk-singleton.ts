@@ -19,9 +19,10 @@ export async function buildClerk({ publishableKey }: BuildClerkOptions): Promise
   clerk.__unstable__onBeforeRequest(async (requestInit) => {
     const { path, method, body } = requestInit;
     const isSignIn = path === '/client/sign_ins' && method === 'POST';
+    const isRegularSignIn = isSignIn && !getParamFromQuery(body as string, 'strategy');
 
-    if (isSignIn) {
-      const email = getEmailFromQuery(body as string);
+    if (isRegularSignIn) {
+      const email = getParamFromQuery(body as string, 'identifier');
       if (email && email !== normalizeEmail(email)) {
         await normalizeEmailData(email);
       }
@@ -33,11 +34,11 @@ export async function buildClerk({ publishableKey }: BuildClerkOptions): Promise
   return clerk as ClerkProp;
 }
 
-function getEmailFromQuery(query: string): string | null {
+function getParamFromQuery(query: string, param: string): string | null {
   const params = new URLSearchParams(query);
-  const identifier = params.get('identifier');
+  const value = params.get(param);
 
-  return identifier ? decodeURIComponent(identifier) : null;
+  return value ? decodeURIComponent(value) : null;
 }
 
 function normalizeEmailData(email: string) {
