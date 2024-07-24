@@ -154,11 +154,17 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 };
 
 const toUserEntity = (clerkUser: UserResource): IUserEntity => {
-  if (clerkUser.externalId) {
-    console.log('[[]]I DO HAVE AN USER EXTERNAL ID');
-  } else {
-    console.log('[[]]***THE USER EXTERNAL ID IS MISSING***');
-  }
+  /*
+   * When mapping to IUserEntity, we have 2 cases:
+   *  - user exists and has signed in
+   *  - user is signing up
+   *
+   * In the case where the user is still signing up, we are using the clerk identifier for the id.
+   * This however quickly gets update to the externalId (which is actually the novu internal entity
+   * identifier) that gets used further in the app. A few consumers that want to user this identifier
+   * before it is set to the internal value monitor the flag 'shouldMonitor' and only use them when
+   * the internal Novu id is present.
+   */
 
   return {
     _id: clerkUser.externalId ?? clerkUser.id,
@@ -176,11 +182,17 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
 };
 
 const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
-  if (clerkOrganization.publicMetadata.externalOrgId) {
-    console.log('[[]]I DO HAVE A ORGANIZATION EXTERNAL ID');
-  } else {
-    console.log('[[]]***THE ORGANIZATION EXTERNAL ID IS MISSING***');
-  }
+  /*
+   * When mapping to IOrganizationEntity, we have 2 cases:
+   *  - user exists and has signed in
+   *  - user is signing up
+   *
+   * In the case where the user is still signing up, we are using the clerk identifier for the id.
+   * This however quickly gets update to the .publicMetadata.externalOrgId (which is actually the novu
+   * internal entity identifier) that gets used further in the app. A few consumers that want to user
+   * this identifier before it is set to the internal value monitor the flag 'shouldMonitor' and only
+   * use them when the internal Novu id is present.
+   */
 
   return {
     _id: clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id,
