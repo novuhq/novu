@@ -29,3 +29,9 @@ export const isLookBackDigestOutput = (
     (outputs as digestRegularOutput)?.lookBackWindow?.unit != null
   );
 };
+
+export const isRegularDigestOutput = (
+  outputs: DigestOutput
+): outputs is digestRegularOutput => {
+  return !isTimedDigestOutput(outputs) && !isLookBackDigestOutput(outputs);
+};
