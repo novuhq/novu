@@ -99,6 +99,13 @@ jobs:
         with:
           driver-opts: 'image=moby/buildkit:v0.13.1'
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build, tag and push docker image to ghcr.io
         id: build-image
         env:
@@ -109,15 +116,12 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ vars.DOCKER_ENV_TAG }}
           PROJECT_PATH: ${{ inputs.project_path }}
-          GH_ACTOR: ${{ github.actor }}
-          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ vars.DOCKER_ENV_TAG }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:cloud-build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ vars.DOCKER_ENV_TAG }},mode=max
             --platform=linux/amd64
             --output=type=image,name=ghcr.io/novuhq/${{ steps.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
-          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           echo -n $BULL_MQ_PRO_NPM_TOKEN | wc -c
           cd $PROJECT_PATH && npm run docker:build
