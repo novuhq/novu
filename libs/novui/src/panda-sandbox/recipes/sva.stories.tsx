@@ -8,13 +8,16 @@ export default {
 } as Meta;
 
 /**
- * sva is a way to create Atomic Recipes
- * https://panda-css.com/docs/concepts/recipes#atomic-recipe-or-sva
+ * sva is a function to create recipes that target specific named parts / elements ("slots")
+ * of a component -- it returns an object of classNames.
+ * https://panda-css.com/docs/concepts/slot-recipes#atomic-slot-recipe-or-sva
  */
 const uploadStatusRecipe = sva({
+  // specify the names of the different slots
   slots: ['root', 'label', 'indicator'],
   // styles that should be applied to all variants (and can be overridden) are defined in base
   base: {
+    // scope the styles below exclusively to the "root" element.
     root: {
       border: 'solid',
       borderRadius: 'pill',
@@ -39,6 +42,7 @@ const uploadStatusRecipe = sva({
   variants: {
     status: {
       SUCCESS: {
+        // based on the variant, we can style each slot differently
         indicator: {
           bg: '[green]',
         },
