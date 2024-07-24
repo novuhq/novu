@@ -123,8 +123,7 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=ghcr.io/novuhq/${{ steps.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
-          echo $GH_PASSWORD |           GH_ACTOR: ${{ github.actor }}
-          GH_PASSWORD: ${{ secrets.GH_PACKAGES }} ghcr.io -u $GH_ACTOR --password-stdin
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           echo -n $BULL_MQ_PRO_NPM_TOKEN | wc -c
           cd $PROJECT_PATH && npm run docker:build
