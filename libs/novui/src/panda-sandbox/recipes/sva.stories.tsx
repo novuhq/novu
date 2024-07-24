@@ -4,7 +4,7 @@ import { RecipeVariant, sva } from '../../../styled-system/css';
 import { Stack } from '../../../styled-system/jsx';
 
 export default {
-  title: 'PandaSandbox/recipes/sva',
+  title: 'Panda Sandbox/recipes/sva',
 } as Meta;
 
 /**

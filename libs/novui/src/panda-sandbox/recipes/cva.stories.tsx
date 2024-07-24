@@ -4,7 +4,7 @@ import { css, cva, cx } from '../../../styled-system/css';
 import { Stack, styled, Wrap } from '../../../styled-system/jsx';
 
 export default {
-  title: 'PandaSandbox/recipes/cva',
+  title: 'Panda Sandbox/recipes/cva',
 } as Meta;
 
 /**

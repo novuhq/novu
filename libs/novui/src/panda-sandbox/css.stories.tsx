@@ -3,7 +3,7 @@ import React from 'react';
 import { css, cx } from '../../styled-system/css';
 
 export default {
-  title: 'PandaSandbox/css',
+  title: 'Panda Sandbox/css',
 } as Meta;
 
 // css simply outputs a className string
