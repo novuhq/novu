@@ -22,8 +22,8 @@ export const deployGuides = [
           return (
             <>
               <TextElement>
-                Novu works as part of your existing CI/CD flow, so first, make sure that your application is pushed to a
-                remote Git repository.
+                Novu works as part of your CI/CD flow, so first, make sure that your application is pushed to a remote
+                Git repository, so that the GitHub action can be triggered.
               </TextElement>
             </>
           );
@@ -37,7 +37,10 @@ export const deployGuides = [
               <TextElement>
                 Novu can be synced and updated automatically, on each push to your GitHub repository.
                 <br />
-                We offer a GitHub action that you can use to sync your workflows.
+                We offer a GitHub action that you can use to sync your workflows, on each push to the <code>
+                  main
+                </code>{' '}
+                branch.
               </TextElement>
 
               <br />
@@ -87,8 +90,8 @@ jobs:
           return (
             <>
               <TextElement>
-                Novu works as part of your existing CI/CD flow, so first, make sure that your application is pushed to a
-                remote Git repository.
+                Novu works as part of your CI/CD flow, so first, make sure that your application is pushed to a remote
+                Git repository, so that a Vercel project can be connected.
               </TextElement>
             </>
           );
@@ -100,8 +103,9 @@ jobs:
           return (
             <>
               <TextElement>
-                Publish your application on Vercel following their guide, so that the Novu bridge can be accessed from
-                the internet. We are currently working on a Vercel marketplace integration to streamline your process.
+                Publish your application to Vercel following their onboarding instructions, so that the Novu bridge can
+                be accessed from the internet. We are currently working on a Vercel marketplace integration to
+                streamline your process.
               </TextElement>
             </>
           );
@@ -133,8 +137,9 @@ jobs:
           return (
             <>
               <TextElement>
-                Publish your application on Netlify following their guide, so that the Novu bridge can be accessed from
-                the internet. We are currently working on a Netlify marketplace integration to streamline your process.
+                Publish your application to Netlify following their onboarding instructions, so that the Novu bridge can
+                be accessed from the internet. We are currently working on a Netlify marketplace integration to
+                streamline your process.
               </TextElement>
             </>
           );
@@ -181,7 +186,7 @@ jobs:
 
           return (
             <TextElement>
-              Sync manually with our CLI from any other CI/CD pipeline like GitLab CI, Jenkins, AWS CodePipeline, etc.
+              Sync manually with our CLI from any CI/CD pipeline like GitLab CI, Jenkins, AWS CodePipeline, etc.
               <CodeSnippet
                 command={`npx novu@latest sync --bridge-url <YOUR_DEPLOYED_URL> --secret-key=${
                   (environment as any)?.apiKeys[0].key

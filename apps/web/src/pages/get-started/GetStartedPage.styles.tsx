@@ -26,10 +26,16 @@ export const stepperClassNames = {
     width: '40px !important',
     height: '40px !important',
     '&[data-progress] svg': {
-      color: '#23232B !important',
+      color: {
+        base: '#fff !important',
+        _dark: '#23232B !important',
+      },
     },
     '&[data-progress]': {
-      backgroundColor: 'white !important',
+      backgroundColor: {
+        base: '#616161 !important',
+        _dark: 'white !important',
+      },
     },
     '&[data-completed] .mantine-Stepper-stepCompletedIcon': {
       opacity: '0.6 !important',

@@ -8,6 +8,9 @@ import { useEnvironment } from '../../../hooks/useEnvironment';
 import { CodeEditor } from '../CodeBlock';
 import { TextElement } from '../TextElement';
 import { CardButton, CardButtonGroupWrapper } from './CardsButtonGroup';
+import { HStack } from '@novu/novui/jsx';
+import { css } from '@novu/novui/css';
+import { IconOutlineMenuBook } from '@novu/design-system';
 
 export const buildGuides = [
   {
@@ -36,9 +39,9 @@ export const buildGuides = [
           return (
             <div>
               <TextElement>
-                To define a new workflow you will use the <code>@novu/framework</code> Typescript SDK.
+                To define a new workflow you will use the <Code>@novu/framework</Code> Typescript SDK.
                 <br />
-                In a new file let's define a sample workflow and review it's building blocks:
+                In a new file let's define a workflow with a simple email step.
                 <br /> <br />
               </TextElement>
 
@@ -58,6 +61,13 @@ export const myWorkflow = workflow('my-workflow', async ({ step }) => {
 });
                 `}
               />
+
+              <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>
+                <IconOutlineMenuBook />
+                <a href="https://docs.novu.co/workflow/introduction" target={'_blank'}>
+                  Learn more on building workflows
+                </a>
+              </HStack>
             </div>
           );
         },
@@ -68,7 +78,8 @@ export const myWorkflow = workflow('my-workflow', async ({ step }) => {
           return (
             <>
               <TextElement>
-                Once a workflow has been created, we would need to expose it to the <code>serve</code> function
+                Once a workflow has been created, we would need to expose it to the <code>serve</code> function so that
+                it will be visible on the Novu Studio.
               </TextElement>
               <br /> <br />
               <CodeEditor
@@ -93,13 +104,19 @@ export const { GET, POST, OPTIONS } = serve({
         content: () => {
           return (
             <TextElement>
-              Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your
-              email.
+              Novu Studio is used to preview your local workflows, inspect controls and trigger test workflows.
               <br />
               To Start Novu Studio, run the following command in your terminal:
               <br />
               <br />
               <CodeSnippet command={`npx novu@latest dev --port 4000`} />
+              Change the port in case your application is running on other than port 4000
+              <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>
+                <IconOutlineMenuBook />
+                <a href="https://docs.novu.co/workflow/studio" target={'_blank'}>
+                  Learn more about Novu Studio
+                </a>
+              </HStack>
             </TextElement>
           );
         },
@@ -109,7 +126,8 @@ export const { GET, POST, OPTIONS } = serve({
         content: () => {
           return (
             <TextElement>
-              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
+              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button. This will
+              send a test notification to your inbox.
             </TextElement>
           );
         },
@@ -208,6 +226,8 @@ function getReusableSteps({
       title: 'Install the framework package',
       content: () => (
         <TextElement>
+          To start working with Novu we would need to install the <Code>@novu/framework</Code> package. We also
+          recommend installing Zod for defining your controls and trigger payload.
           <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
         </TextElement>
       ),
@@ -217,7 +237,7 @@ function getReusableSteps({
       content: () => (
         <>
           <TextElement>
-            To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code> function at{' '}
+            Now, we would need to expose the bridge endpoint via the <code>serve</code> function at{' '}
             <Code>{bridgeEndpointPath}</Code>
           </TextElement>
           <br /> <br />
@@ -244,8 +264,8 @@ function getReusableSteps({
       content: () => (
         <>
           <TextElement>
-            Add a novu folder in your lib folder at <Code>{workflowPath}</Code> that will contain your workflow
-            definitions.
+            Create a new workflows file at a novu folder at <Code>{workflowPath}</Code> that will contain your workflow
+            definitions. You can also organize your workflows in separate files
           </TextElement>
           <br /> <br />
           <CodeEditor
@@ -274,6 +294,12 @@ export const testWorkflow = workflow('test-workflow', async ({ step, payload }) 
   });
 });`}
           />
+          <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>
+            <IconOutlineMenuBook />
+            <a href="https://docs.novu.co/workflow/introduction" target={'_blank'}>
+              Learn more on building workflows
+            </a>
+          </HStack>
         </>
       ),
     },
@@ -285,12 +311,18 @@ export const testWorkflow = workflow('test-workflow', async ({ step, payload }) 
       title: 'Run Novu Studio',
       content: () => (
         <TextElement>
-          Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your email.
+          Novu Studio is used to preview your local workflows, inspect controls and trigger test workflows.
           <br />
           To Start Novu Studio, run the following command in your terminal:
           <br />
           <br />
           <CodeSnippet command={`npx novu@latest dev --port 4000`} />
+          <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>
+            <IconOutlineMenuBook />
+            <a href="https://docs.novu.co/workflow/studio" target={'_blank'}>
+              Learn more about Novu Studio
+            </a>
+          </HStack>
         </TextElement>
       ),
     },
@@ -298,7 +330,7 @@ export const testWorkflow = workflow('test-workflow', async ({ step, payload }) 
       title: 'Send a test notification',
       content: () => (
         <TextElement>
-          Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
+          Once the Studio is open, navigate to the 'test-workflow' tab and click on the 'Send test' button.
         </TextElement>
       ),
     },
