@@ -22,19 +22,26 @@ function isReactElement(value: Record<string, unknown>) {
   return value.$$typeof === REACT_ELEMENT_TYPE;
 }
 
-function emptyTarget(val: any) {
+function emptyTarget(val: unknown) {
   return Array.isArray(val) ? [] : {};
 }
 
-function cloneUnlessOtherwiseSpecified(value: Record<string, unknown>, options: IOptions) {
+function cloneUnlessOtherwiseSpecified(
+  value: Record<string, unknown>,
+  options: IOptions
+): Record<string, unknown> | Record<string, unknown>[] {
   return options.clone !== false && options.isMergeableObject(value)
     ? deepmerge(emptyTarget(value), value, options)
     : value;
 }
 
-function defaultArrayMerge(target: Record<string, unknown>[], source: Record<string, unknown>[], options: IOptions) {
+function defaultArrayMerge(
+  target: Record<string, unknown>[],
+  source: Record<string, unknown>[],
+  options: IOptions
+): Record<string, unknown>[] {
   return target.concat(source).map(function (element) {
-    return cloneUnlessOtherwiseSpecified(element, options);
+    return cloneUnlessOtherwiseSpecified(element, options) as Record<string, unknown>;
   });
 }
 
@@ -101,20 +108,36 @@ function mergeObject(target: Record<string, unknown>, source: Record<string, unk
 }
 
 interface IOptions {
-  customMerge: (key: string) => (target: Record<string, unknown>, source: Record<string, unknown>, options: any) => any;
-  arrayMerge: (target: Record<string, unknown>[], source: Record<string, unknown>[], options: any) => any;
+  customMerge: (
+    key: string
+  ) => (target: Record<string, unknown>, source: Record<string, unknown>, options: IOptions) => Record<string, unknown>;
+  arrayMerge: (
+    target: Record<string, unknown>[],
+    source: Record<string, unknown>[],
+    options: IOptions
+  ) => Record<string, unknown>[];
   isMergeableObject: (value: unknown) => boolean;
-  cloneUnlessOtherwiseSpecified: (value: any, options: any) => any;
+  cloneUnlessOtherwiseSpecified: (
+    value: Record<string, unknown>,
+    options: IOptions
+  ) => Record<string, unknown> | Record<string, unknown>[];
   clone?: boolean;
 }
 
 interface IDeepmergeOptions {
   customMerge?: (
     key: string
-  ) => (target: Record<string, unknown>, source: Record<string, unknown>, options: any) => any;
-  arrayMerge?: (target: Record<string, unknown>[], source: Record<string, unknown>[], options: any) => any;
+  ) => (target: Record<string, unknown>, source: Record<string, unknown>, options: IOptions) => Record<string, unknown>;
+  arrayMerge?: (
+    target: Record<string, unknown>[],
+    source: Record<string, unknown>[],
+    options: IOptions
+  ) => Record<string, unknown>[];
   isMergeableObject?: (value: unknown) => boolean;
-  cloneUnlessOtherwiseSpecified?: (value: any, options: any) => any;
+  cloneUnlessOtherwiseSpecified?: (
+    value: Record<string, unknown>,
+    options: IOptions
+  ) => Record<string, unknown> | Record<string, unknown>[];
   clone?: boolean;
 }
 
@@ -122,7 +145,7 @@ export function deepmerge(
   target: Record<string, unknown> | Record<string, unknown>[],
   source: Record<string, unknown> | Record<string, unknown>[],
   options?: IDeepmergeOptions
-): Record<string, unknown> {
+): Record<string, unknown> | Record<string, unknown>[] {
   options = options || {};
   options.arrayMerge = options.arrayMerge || defaultArrayMerge;
   options.isMergeableObject = options.isMergeableObject || isMergeableObject;
@@ -140,13 +163,17 @@ export function deepmerge(
     return cloneUnlessOtherwiseSpecified(source as Record<string, unknown>, options as IOptions);
   }
   if (sourceIsArray) {
-    return options.arrayMerge(target as Record<string, unknown>[], source as Record<string, unknown>[], options);
+    return options.arrayMerge(
+      target as Record<string, unknown>[],
+      source as Record<string, unknown>[],
+      options as IOptions
+    );
   }
 
   return mergeObject(target as Record<string, unknown>, source, options as IOptions);
 }
 
-function deepmergeAll(array: unknown[], options: IDeepmergeOptions) {
+export function deepmergeAll(array: unknown[], options: IDeepmergeOptions) {
   if (!Array.isArray(array)) {
     throw new Error('first argument should be an array');
   }

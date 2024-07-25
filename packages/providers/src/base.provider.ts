@@ -27,13 +27,13 @@ export abstract class BaseProvider {
 
   protected transform<Input = Record<string, unknown>, Output = unknown>(
     bridgeProvderData: Input & {
-      passthrough: {
+      _passthrough: {
         body: Record<string, unknown>;
         headers: Record<string, string>;
       };
     }
   ): TransformOutput<Output> {
-    const { passthrough, ...data } = bridgeProvderData;
+    const { _passthrough, ...data } = bridgeProvderData;
     let casing = camelCase;
 
     switch (this.casing) {
@@ -57,9 +57,9 @@ export abstract class BaseProvider {
     const body = casing(data) as Record<string, unknown>;
 
     return {
-      body: deepmerge(body, passthrough.body) as Record<string, Output>,
+      body: deepmerge(body, _passthrough.body) as Record<string, Output>,
       headers: {
-        ...passthrough.headers,
+        ..._passthrough.headers,
       },
     };
   }
