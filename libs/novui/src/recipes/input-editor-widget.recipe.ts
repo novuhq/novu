@@ -28,6 +28,8 @@ export const INPUT_EDITOR_WIDGET_RECIPE = defineSlotRecipe({
       },
     },
     content: {
+      bg: 'inherit',
+
       // override tiptap styles
       '& .tiptap': {
         p: '0',
