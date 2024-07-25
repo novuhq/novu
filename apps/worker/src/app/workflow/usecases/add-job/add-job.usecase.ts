@@ -14,7 +14,7 @@ import {
   IWorkflowStepMetadata,
   StepTypeEnum,
 } from '@novu/shared';
-import { DigestOutput } from '@novu/framework';
+import { DigestOutput, ExecuteOutput } from '@novu/framework';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -27,7 +27,6 @@ import {
   JobsOptions,
   LogDecorator,
   StandardQueueService,
-  ExecuteOutput,
   NormalizeVariablesCommand,
   NormalizeVariables,
   getDigestType,
@@ -203,14 +202,14 @@ export class AddJob {
   private async fetchBridgeData(
     command: AddJobCommand,
     filterVariables: IFilterVariables
-  ): Promise<ExecuteOutput<DigestOutput> | null> {
-    const response = (await this.executeBridgeJob.execute(
+  ): Promise<ExecuteOutput | null> {
+    const response = await this.executeBridgeJob.execute(
       ExecuteBridgeJobCommand.create({
         identifier: command.job.identifier,
         ...command,
         variables: filterVariables,
       })
-    )) as ExecuteOutput<DigestOutput>;
+    );
 
     if (!response) {
       return null;
@@ -219,10 +218,10 @@ export class AddJob {
     return response;
   }
 
-  private async updateMetadata(response: ExecuteOutput<DigestOutput>, command: AddJobCommand) {
+  private async updateMetadata(response: ExecuteOutput, command: AddJobCommand) {
     let metadata = {} as IWorkflowStepMetadata;
-    const outputs = response.outputs;
-    const digestType = getDigestType(response.outputs);
+    const outputs = response.outputs as DigestOutput;
+    const digestType = getDigestType(outputs);
 
     if (isTimedDigestOutput(outputs)) {
       metadata = {
@@ -356,9 +355,9 @@ export class AddJob {
     return { digestAmount, digestCreationResult };
   }
 
-  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput<DigestOutput> | null): number | null {
+  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput | null): number | null {
     let bridgeAmount: number | null = null;
-    const outputs = bridgeResponse?.outputs;
+    const outputs = bridgeResponse?.outputs as DigestOutput;
 
     if (!isTimedDigestOutput(outputs)) {
       return null;
