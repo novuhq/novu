@@ -1,0 +1,55 @@
+{
+  "name": "@novu/react",
+  "version": "2.0.0-canary.0",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's React SDK for building custom inbox notification experiences",
+  "author": "",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "private": true,
+  "scripts": {
+    "dev": "pnpm build --watch",
+    "build": "tsup",
+    "lint": "eslint --ext .ts,.tsx src",
+    "test": "jest"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.2.1",
+    "typescript": "4.9.5"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  }, 
+  "dependencies": {
+    "@novu/js": "workspace:*"
+  }
+}
