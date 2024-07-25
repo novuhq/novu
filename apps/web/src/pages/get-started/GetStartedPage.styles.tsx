@@ -9,10 +9,17 @@ export const stepperClassNames = {
     backgroundColor: 'transparent !important',
     borderBottom: 'dashed',
     borderColor: { base: 'typography.text.main', _dark: 'table.header.border' },
+    display: 'none !important',
+  }),
+  verticalSeparator: css({
+    display: 'none !important',
+  }),
+  root: css({
+    display: 'flex !important',
   }),
   steps: css({
-    maxWidth: '400px !important',
-    margin: '0 auto !important',
+    minWidth: '248px !important',
+    width: '248px !important',
   }),
   stepWrapper: css({
     width: '40px !important',
@@ -21,37 +28,39 @@ export const stepperClassNames = {
 
   stepIcon: css({
     border: 'none !important',
-    backgroundColor: 'surface.popover !important',
+    backgroundColor: 'transparent !important',
     color: 'typography.text.secondary !important',
-    width: '40px !important',
-    height: '40px !important',
+    width: '20px !important',
+    height: '20px !important',
+    marginTop: '5px !important',
     '&[data-progress] svg': {
       color: {
         base: '#fff !important',
-        _dark: '#23232B !important',
+        _dark: '#fff !important',
       },
     },
     '&[data-progress]': {
-      backgroundColor: {
-        base: '#616161 !important',
-        _dark: 'white !important',
-      },
+      backgroundColor: 'transparent !important',
     },
-    '&[data-completed] .mantine-Stepper-stepCompletedIcon': {
-      opacity: '0.6 !important',
-    },
+    '&[data-completed] .mantine-Stepper-stepCompletedIcon': {},
     '&[data-completed] svg': {
       width: '14px !important',
       height: '14px !important',
     },
   }),
   stepBody: css({
-    marginTop: '8px !important',
-    marginLeft: '0 !important',
+    marginTop: '0 !important',
+    marginLeft: '4px !important',
     width: '100% !important',
   }),
+  stepDescription: css({
+    marginTop: '4px !important',
+    fontSize: '12px !important',
+    marginBottom: '0 !important',
+    lineHeight: '16px !important',
+  }),
   stepCompletedIcon: css({
-    backgroundColor: 'typography.text.feedback.success',
+    backgroundColor: 'transparent !important',
     borderRadius: '200',
     '&[data-progress]': {
       backgroundColor: 'table.header.border !important',
@@ -61,20 +70,23 @@ export const stepperClassNames = {
   stepLabel: css({
     fontSize: '16px !important',
     fontWeight: '600 !important',
-    textAlign: 'center !important',
     lineHeight: '24px !important',
     color: 'typography.text.secondary !important',
   }),
   step: css({
+    padding: '16px !important',
+    borderRadius: '12px !important',
+    width: '100% !important',
     display: 'flex !important',
-    alignItems: 'center !important',
-    justifyContent: 'center !important',
-    flexDirection: 'column !important',
+    minHeight: 'auto !important',
     '&[data-progress] .mantine-Stepper-stepLabel': {
       color: 'typography.text.main !important',
     },
     '&[data-progress] .mantine-Stepper-stepWrapper': {
       color: 'typography.text.main !important',
+    },
+    '&[data-progress]': {
+      bg: '#292933 !important',
     },
     _hover: {
       cursor: 'pointer !important',
@@ -82,7 +94,8 @@ export const stepperClassNames = {
     },
   }),
   content: css({
-    marginTop: '52px !important',
+    marginTop: '0px !important',
     paddingTop: '0 !important',
+    paddingLeft: '40px !important',
   }),
 };

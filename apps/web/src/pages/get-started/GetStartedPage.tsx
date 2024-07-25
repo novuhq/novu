@@ -23,9 +23,7 @@ export function GetStartedPage() {
     <PageContainer>
       <div
         className={css({
-          paddingLeft: '64px',
-          paddingRight: '64px',
-          maxWidth: '880px',
+          maxWidth: '1000px',
           margin: '0 auto !important',
           width: '100%',
         })}
@@ -48,10 +46,11 @@ function StepperForm() {
 
   return (
     <>
-      <Stepper active={active} onStepClick={setActive} classNames={stepperClassNames}>
+      <Stepper active={active} onStepClick={setActive} classNames={stepperClassNames} orientation="vertical">
         {onboardingTabs.map((tab, index) => (
           <Stepper.Step
             key={index}
+            description={tab.description}
             icon={
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 {tab.icon}
@@ -60,34 +59,23 @@ function StepperForm() {
             label={tab.stepperTitle}
             onClick={() => setActive(index)}
           >
-            <Title
-              className={css({
-                fontWeight: 'bold',
-                marginBottom: 'margins.layout.page.section.titleBottom',
-                fontSize: '20px',
-                color: 'typography.text.secondary',
-              })}
-            >
-              {tab.title}
-            </Title>
             {tab.content}
 
             {tab.steps && <OnboardingStepsTimeline steps={tab.steps} />}
+            <Group position="apart" mt="xl">
+              <Button disabled={active === 0} onClick={prevStep} variant="transparent">
+                Back
+              </Button>
+
+              {active !== 2 && (
+                <Button onClick={nextStep} variant="filled" disabled={active === 2}>
+                  Next step
+                </Button>
+              )}
+            </Group>
           </Stepper.Step>
         ))}
       </Stepper>
-
-      <Group position="apart" mt="xl">
-        <Button disabled={active === 0} onClick={prevStep} variant="transparent">
-          Back
-        </Button>
-
-        {active !== 2 && (
-          <Button onClick={nextStep} variant="filled" disabled={active === 2}>
-            Next step
-          </Button>
-        )}
-      </Group>
     </>
   );
 }

@@ -21,18 +21,21 @@ export const onboardingTabs = [
     icon: <IconLaptopMac className={iconStyles} />,
     stepperTitle: 'Build',
     content: <SetupTab />,
+    description: 'Build and test your first workflow in Novu Studio',
     title: 'Build your first workflow',
   },
   {
     icon: <IconOutlineCloudUpload className={iconStyles} />,
     stepperTitle: 'Deploy',
     content: <DeployTab />,
+    description: 'Publish your changes to share with your team',
     title: 'Push your flow to the cloud',
   },
   {
     icon: <IconGroup className={iconStyles} />,
     stepperTitle: 'Collaborate',
     steps: collaborateSteps,
+    description: 'Enable your team members to modify notification content',
     title: 'Collaborate with your team',
   },
 ];

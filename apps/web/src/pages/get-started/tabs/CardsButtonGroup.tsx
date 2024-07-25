@@ -19,10 +19,10 @@ export function CardButton({
       variant={active ? 'light' : 'subtle'}
       classNames={{
         root: css({
-          padding: '6px 16px !important',
+          padding: '2px 0px !important',
           display: 'flex !important',
-          width: '112px !important',
-          minWidth: '112px !important',
+          width: '100px !important',
+          minWidth: '100px !important',
           height: 'auto !important',
           borderRadius: '12px !important',
           justifyContent: 'center !important',
