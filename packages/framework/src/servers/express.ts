@@ -29,6 +29,7 @@ export const frameworkName: SupportedFrameworkName = 'express';
  * );
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const serve = (options: ServeHandlerOptions): any => {
   const novuHandler = new NovuRequestHandler({
     frameworkName,

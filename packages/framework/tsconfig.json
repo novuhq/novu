@@ -9,6 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
+    "noImplicitAny": true,
     "sourceMap": true,
     "rootDir": ".",
     "outDir": "./dist",

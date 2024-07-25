@@ -9,7 +9,7 @@ module.exports = {
   plugins: ['unused-imports'],
   rules: {
     'max-len': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-explicit-any': 'error',
     'import/prefer-default-export': 0,
     'no-else-return': 0,
     'sonarjs/prefer-immediate-return': 0,
