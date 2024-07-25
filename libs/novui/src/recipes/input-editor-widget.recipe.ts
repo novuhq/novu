@@ -22,26 +22,29 @@ export const INPUT_EDITOR_WIDGET_RECIPE = defineSlotRecipe({
   slots: SLOTS,
   base: {
     root: {
-      borderColor: 'input.border !important',
+      borderColor: 'input.border',
       _groupError: {
-        borderColor: 'input.border.error !important',
-      },
-      '& .suggestion': {
-        color: 'variable.text !important',
-        borderRadius: 'xs',
-        background: 'variable.surface !important',
-        p: '25',
-        lineHeight: '125',
-        borderColor: 'variable.border !important',
-        border: 'solid',
+        borderColor: 'input.border.error',
       },
     },
     content: {
       // After fixing the layer css we would like to spread  INPUT_RECIPE.base.input
-      background: 'input.surface !important',
-      borderColor: 'input.border !important',
-      borderRadius: 'input !important',
-      lineHeight: '125 !important',
+      background: 'input.surface',
+      borderColor: 'input.border',
+      borderRadius: 'input',
+      lineHeight: '125',
+      color: 'typography.text.main',
+
+      '& .suggestion': {
+        color: 'variable.text',
+        borderRadius: 'xs',
+        background: 'variable.surface',
+        p: '25',
+        lineHeight: '125',
+        borderColor: 'variable.border',
+        border: 'solid',
+      },
     },
   },
+  staticCss: ['*'],
 });

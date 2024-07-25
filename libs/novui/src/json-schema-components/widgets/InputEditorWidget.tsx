@@ -13,21 +13,18 @@ import Document from '@tiptap/extension-document';
 import Mention from '@tiptap/extension-mention';
 
 import { css, cx } from '../../../styled-system/css';
-import { input } from '../../../styled-system/recipes';
+import { input, inputEditorWidget } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { inputEditorWidget } from '../../../styled-system/recipes';
 
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
-// TODO: use @mantine/tiptap/styles.layer.css instead
-import '@mantine/tiptap/styles.css';
+const inputEditorClassNames = inputEditorWidget();
 
 export const InputEditorWidget = (props: WidgetProps) => {
   const { value, label, formContext, onChange, required, readonly, rawErrors, options, schema } = props;
   const [variantProps, inputProps] = input.splitVariantProps({});
   const [cssProps] = splitCssProps(inputProps);
   const classNames = input(variantProps);
-  const inputEditorClassNames = inputEditorWidget({});
 
   const { variables = [] } = formContext;
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);

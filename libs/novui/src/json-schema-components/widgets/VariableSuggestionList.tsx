@@ -18,10 +18,11 @@ export type SuggestionListRef = {
 
 type SuggestionListProps = SuggestionProps<VariableItem>;
 
+const suggestionListClassNames = variableSuggestionList();
+
 export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
   ({ clientRect, command, query, items }, ref) => {
     const [opened, { close: closeSuggestionList, open: openSuggestionList }] = useDisclosure(true);
-    const suggestionListClassNames = variableSuggestionList({});
     // ref for closing the menu any time there's a click elsewhere.
     const clickOutRef = useClickOutside(() => {
       closeSuggestionList();
