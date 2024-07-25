@@ -7,6 +7,7 @@ import {
   snakeCase,
 } from './utils/change-case';
 import { deepmerge } from './utils/deepmerge.utils';
+import { WithPassthrough } from './utils/types';
 
 export enum CasingEnum {
   CAMEL_CASE = 'camelCase',
@@ -20,18 +21,14 @@ export enum CasingEnum {
 type TransformOutput<T> = {
   body: Record<string, T>;
   headers: Record<string, string>;
+  query: Record<string, string>;
 };
 
 export abstract class BaseProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
 
   protected transform<Input = Record<string, unknown>, Output = unknown>(
-    bridgeProvderData: Input & {
-      _passthrough: {
-        body: Record<string, unknown>;
-        headers: Record<string, string>;
-      };
-    }
+    bridgeProvderData: WithPassthrough<Input>
   ): TransformOutput<Output> {
     const { _passthrough, ...data } = bridgeProvderData;
     let casing = camelCase;
@@ -60,6 +57,9 @@ export abstract class BaseProvider {
       body: deepmerge(body, _passthrough.body) as Record<string, Output>,
       headers: {
         ..._passthrough.headers,
+      },
+      query: {
+        ..._passthrough.query,
       },
     };
   }
