@@ -189,7 +189,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     reloadOrganization,
   } as AuthContextValue;
   /*
-   * The previous assestion is necessary as Boolean and true or false discriminating unions
+   * The 'as AuthContextValue' is necessary as Boolean and true or false discriminating unions
    * don't work with inference. See here https://github.com/microsoft/TypeScript/issues/19360
    *
    * Alternatively, we will have to conditionally generate the value object based on the isLoaded values.
