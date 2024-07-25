@@ -4,8 +4,8 @@ import { ConditionsPage } from '../page-models/conditionsPage';
 export async function logout(page: Page, settings = {}) {
   await page.goto('/');
   await page.evaluate(() => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('novu_last_environment_id');
+    localStorage.removeItem('nv_auth_token');
+    localStorage.removeItem('nv_last_environment_id');
   });
 }
 
