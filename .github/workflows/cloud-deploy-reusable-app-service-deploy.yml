@@ -29,6 +29,8 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    env:
+      TF_WORKSPACE: ${{ vars.TF_WORKSPACE }}
     outputs:
       ecs_container_name: ${{ steps.terraform.outputs.ecs_container_name }}
       ecs_service: ${{ steps.terraform.outputs.ecs_service }}
