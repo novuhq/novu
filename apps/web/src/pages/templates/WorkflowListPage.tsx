@@ -1,6 +1,6 @@
-import { ChangeEventHandler, useState } from 'react';
+import { ChangeEventHandler, useMemo, useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
-import { createSearchParams, Link, useNavigate } from 'react-router-dom';
+import { createSearchParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 import {
@@ -19,6 +19,7 @@ import {
   Tooltip,
   SearchInput,
 } from '@novu/design-system';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import {
   useTemplates,
@@ -26,6 +27,7 @@ import {
   useNotificationGroup,
   INotificationTemplateExtended,
   useDebouncedSearch,
+  useFeatureFlag,
 } from '../../hooks';
 import { ROUTES } from '../../constants/routes';
 import { parseUrl } from '../../utils/routeUtils';
@@ -41,6 +43,9 @@ import { TemplateCreationSourceEnum } from './shared';
 import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
+import { GetStartedPageV2 } from '../../studio/components/GetStartedPageV2/index';
+import { HStack } from '@novu/novui/jsx';
+import { Title } from '@novu/novui';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -52,7 +57,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
       <Group spacing={8}>
         <Group spacing={4}>
           <When truthy={original.bridge}>
-            <Tooltip label="Workflow is handled by Echo" position="top">
+            <Tooltip label="Workflow is handled by Novu Framework" position="top">
               <div>
                 <Bolt color="#4c6dd4" width="24px" height="24px" />
               </div>
@@ -190,14 +195,23 @@ function WorkflowListPage() {
       errorMessage('Something went wrong while creating template from blueprint, please try again later.');
     },
   });
+  const { search } = useLocation();
   const hasGroups = general && general.length > 0;
   const hasTemplates = templates && templates.length > 0;
   const isLoading = areNotificationGroupLoading || areWorkflowsLoading;
   const shouldShowEmptyState = !isLoading && !isFetching && !hasTemplates && searchValue === '';
   const shouldShowNoResults = !isLoading && !isFetching && !hasTemplates && searchValue !== '';
   const isSearchInputDisabled = isLoading || (!hasTemplates && searchValue === '');
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
+
+  const isOnboarding = useMemo(() => {
+    const params = search.replace('?', '').split('&');
+    const found = params.find((param) => param === 'onboarding=true');
+
+    return !!found;
+  }, [search]);
 
   function handleTableChange(pageIndex: number) {
     setCurrentPageNumberQueryParam(pageIndex);
@@ -256,16 +270,21 @@ function WorkflowListPage() {
     >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         <TableActionsContainer>
-          <CreateWorkflowDropdown
-            readonly={readonly}
-            blueprints={popular?.blueprints}
-            isLoading={areBlueprintsLoading}
-            isCreating={isCreatingTemplateFromBlueprint}
-            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={handleOnBlueprintClick}
-            onAllTemplatesClick={openModal}
-          />
+          {!isV2Enabled ? (
+            <CreateWorkflowDropdown
+              readonly={readonly}
+              blueprints={popular?.blueprints}
+              isLoading={areBlueprintsLoading}
+              isCreating={isCreatingTemplateFromBlueprint}
+              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+              onTemplateClick={handleOnBlueprintClick}
+              onAllTemplatesClick={openModal}
+            />
+          ) : (
+            <div></div>
+          )}
+
           <SearchInput
             value={searchValue}
             placeholder="Type name or identifier..."
@@ -287,7 +306,7 @@ function WorkflowListPage() {
             noDataPlaceholder={shouldShowNoResults && <WorkflowListNoMatches />}
           />
         </When>
-        <When truthy={shouldShowEmptyState}>
+        <When truthy={shouldShowEmptyState && !isV2Enabled}>
           <TemplatesListNoData
             readonly={readonly}
             blueprints={popular?.blueprints}
@@ -298,6 +317,9 @@ function WorkflowListPage() {
             onTemplateClick={handleOnBlueprintClick}
             onAllTemplatesClick={openModal}
           />
+        </When>
+        <When truthy={shouldShowEmptyState && isV2Enabled}>
+          <GetStartedPageV2 location="get-started" />
         </When>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>

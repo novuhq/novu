@@ -1,10 +1,10 @@
 // Source is taken from the un-maintained https://github.com/Flolagale/mailin and refactored
 
-import './config';
+import './config/env.config';
 
 import mailin from './server/index';
 import logger from './server/logger';
-import * as Sentry from '@sentry/node';
+import { init } from '@sentry/node';
 import { version } from '../package.json';
 
 const LOG_CONTEXT = 'Main';
@@ -12,7 +12,7 @@ const LOG_CONTEXT = 'Main';
 const env = process.env;
 
 if (process.env.SENTRY_DSN) {
-  Sentry.init({
+  init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${version}`,

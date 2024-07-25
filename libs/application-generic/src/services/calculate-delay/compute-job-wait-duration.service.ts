@@ -8,10 +8,11 @@ import {
   IWorkflowStepMetadata,
   DigestTypeEnum,
   IDelayScheduledMetadata,
+  IDelayRegularMetadata,
 } from '@novu/shared';
 
 import { ApiException } from '../../utils/exceptions';
-import { isRegularDigest } from '../../utils/digest';
+import { isRegularDelay, isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 
 export class ComputeJobWaitDurationService {
@@ -24,7 +25,9 @@ export class ComputeJobWaitDurationService {
     payload: any;
     overrides: any;
   }): number {
-    if (!stepMetadata) throw new ApiException(`Step metadata not found`);
+    if (!stepMetadata) {
+      throw new ApiException(`Step metadata not found`);
+    }
 
     const digestType = stepMetadata.type;
 
@@ -66,6 +69,23 @@ export class ComputeJobWaitDurationService {
           ...timedDigestMeta.timed,
         },
       });
+    } else if (
+      (stepMetadata as IDelayRegularMetadata)?.unit &&
+      (stepMetadata as IDelayRegularMetadata)?.amount
+    ) {
+      if (this.isValidDelayOverride(overrides)) {
+        return this.toMilliseconds(
+          overrides.delay.amount as number,
+          overrides.delay.unit as DigestUnitEnum
+        );
+      }
+
+      const regularDigestMeta = stepMetadata as IDelayRegularMetadata;
+
+      return this.toMilliseconds(
+        regularDigestMeta.amount,
+        regularDigestMeta.unit
+      );
     }
 
     return 0;

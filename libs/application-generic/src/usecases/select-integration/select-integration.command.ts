@@ -1,9 +1,9 @@
 import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 import { ChannelTypeEnum, ITenantDefine, ProvidersIdEnum } from '@novu/shared';
 
-import { EnvironmentWithUserCommand } from '../../commands/project.command';
+import { EnvironmentCommand } from '../../commands/project.command';
 
-export class SelectIntegrationCommand extends EnvironmentWithUserCommand {
+export class SelectIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
   @IsMongoId()
   id?: string;
@@ -21,4 +21,7 @@ export class SelectIntegrationCommand extends EnvironmentWithUserCommand {
   filterData: {
     tenant?: ITenantDefine;
   };
+
+  @IsOptional()
+  userId?: string;
 }

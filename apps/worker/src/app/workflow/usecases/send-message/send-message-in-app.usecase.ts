@@ -1,8 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
+import {
+  MessageRepository,
+  NotificationStepEntity,
+  SubscriberRepository,
+  MessageEntity,
+  OrganizationEntity,
+  OrganizationRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -64,7 +71,7 @@ export class SendMessageInApp extends SendMessageBase {
   public async execute(command: SendMessageCommand) {
     if (!command.step.template) throw new PlatformException('Template not found');
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending In App',
     });
 
@@ -100,6 +107,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
+    const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
 
     if (template) {
@@ -108,6 +116,12 @@ export class SendMessageInApp extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
+        const i18nInstance = await this.initiateTranslations(
+          command.environmentId,
+          command.organizationId,
+          subscriber.locale
+        );
+
         const compiled = await this.compileInAppTemplate.execute(
           CompileInAppTemplateCommand.create({
             organizationId: command.organizationId,
@@ -117,7 +131,7 @@ export class SendMessageInApp extends SendMessageBase {
             cta: step.template.cta,
             userId: command.userId,
           }),
-          this.initiateTranslations.bind(this)
+          i18nInstance
         );
         content = compiled.content;
 
@@ -190,6 +204,7 @@ export class SendMessageInApp extends SendMessageBase {
             actor,
             _actorId: command.job?._actorId,
           }),
+        tags: command.tags,
       });
     }
 

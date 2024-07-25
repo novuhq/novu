@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 
 import {
   DigestTypeEnum,
@@ -8,6 +7,7 @@ import {
   IDigestRegularMetadata,
   IPreferenceChannels,
   StepTypeEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import {
   AnalyticsService,
@@ -17,7 +17,6 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   GetSubscriberGlobalPreference,
@@ -28,11 +27,8 @@ import {
   IFilterVariables,
   Instrument,
   InstrumentUsecase,
-  IBridgeChannelResponse,
-  IUseCaseInterfaceInline,
   NormalizeVariables,
   NormalizeVariablesCommand,
-  requireInject,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -43,6 +39,7 @@ import {
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
+import { ExecuteOutput } from '@novu/framework';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageDelay } from './send-message-delay.usecase';
@@ -54,11 +51,10 @@ import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
 import { ExecuteStepCustom } from './execute-step-custom.usecase';
+import { ExecuteBridgeJob } from '../execute-bridge-job';
 
 @Injectable()
 export class SendMessage {
-  private resonateUsecase: IUseCaseInterfaceInline;
-
   constructor(
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
@@ -78,10 +74,8 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    protected moduleRef: ModuleRef
-  ) {
-    this.resonateUsecase = requireInject('resonate', this.moduleRef);
-  }
+    private executeBridgeJob: ExecuteBridgeJob
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<{ status: 'success' | 'canceled' }> {
@@ -101,30 +95,31 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    let resonateResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
+    let bridgeResponse: ExecuteOutput | null = null;
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
-      resonateResponse = await this.resonateUsecase.execute<
-        SendMessageCommand & { variables: IFilterVariables },
-        ExecuteOutput<IBridgeChannelResponse> | null
-      >({
+      bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
       });
     }
-    const endpointSkip = resonateResponse?.options?.skip;
-    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(endpointSkip, command, variables);
+    const isBridgeSkipped = bridgeResponse?.options?.skip;
+    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(
+      isBridgeSkipped,
+      command,
+      variables
+    );
 
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
-        endpointSkip,
+        isBridgeSkipped,
         filterResult,
         channelPreferenceResult,
-        !!resonateResponse?.outputs
+        !!bridgeResponse?.outputs
       );
     }
 
-    if (!filterResult?.passed || !channelPreferenceResult || endpointSkip) {
+    if (!filterResult?.passed || !channelPreferenceResult || isBridgeSkipped) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       await this.executionLogRoute.execute(
@@ -138,7 +133,7 @@ export class SendMessage {
           raw: JSON.stringify({
             ...(filterResult ? { filter: { conditions: filterResult?.conditions, passed: filterResult?.passed } } : {}),
             ...(channelPreferenceResult ? { preferences: { passed: channelPreferenceResult } } : {}),
-            ...(endpointSkip ? { skip: endpointSkip } : {}),
+            ...(isBridgeSkipped ? { skip: isBridgeSkipped } : {}),
           }),
         })
       );
@@ -162,7 +157,7 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      bridgeData: resonateResponse,
+      bridgeData: bridgeResponse,
     });
 
     switch (stepType) {
@@ -204,12 +199,13 @@ export class SendMessage {
   }
 
   private async getStepExecutionHalt(
-    resonateSkip: boolean | undefined,
+    bridgeSkip: boolean | undefined,
     command: SendMessageCommand,
     variables: IFilterVariables
   ): Promise<{ filterResult: IConditionsFilterResponse | null; channelPreferenceResult: boolean | null }> {
-    if (resonateSkip === true) {
-      return { filterResult: null, channelPreferenceResult: null };
+    const skipHalt = this.shouldSkipHalt(bridgeSkip, command.job?.step?.bridgeUrl);
+    if (skipHalt) {
+      return { filterResult: { passed: true, conditions: [], variables: {} }, channelPreferenceResult: true };
     }
 
     const [filterResult, channelPreferenceResult] = await Promise.all([
@@ -218,6 +214,20 @@ export class SendMessage {
     ]);
 
     return { filterResult, channelPreferenceResult };
+  }
+
+  /**
+   * This function checks if a bridge skip is happening.
+   *
+   * - If `bridgeSkip` is true (highest priority), skips all checks.
+   * - If `bridgeUrl` is provided, skips all checks (use `skip` option in workflow definition instead).
+   *
+   * @param bridgeSkip Whether to skip bridge checks (optional).
+   * @param bridgeUrl URL of the bridge (optional).
+   * @return True if bridge skip is happening, false otherwise.
+   */
+  private shouldSkipHalt(bridgeSkip: boolean | undefined, bridgeUrl: string | undefined): boolean {
+    return bridgeSkip === true || !!bridgeUrl;
   }
 
   private async filter(command: SendMessageCommand, variables: IFilterVariables) {
@@ -236,10 +246,10 @@ export class SendMessage {
 
   private sendProcessStepEvent(
     command: SendMessageCommand,
-    resonateSkip: boolean | undefined,
+    isBridgeSkipped: boolean | undefined,
     filterResult: IConditionsFilterResponse | null,
     preferredResult: boolean | null,
-    isEcho: boolean
+    isBridgeWorkflow: boolean
   ) {
     const usedFilters = filterResult?.conditions?.reduce(ConditionsFilter.sumFilters, {
       filters: [],
@@ -265,7 +275,7 @@ export class SendMessage {
      * This is intentional, so that mixpanel can automatically reshard it.
      */
     this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-      workflowType: isEcho ? 'ECHO' : 'REGULAR',
+      workflowType: isBridgeWorkflow ? WorkflowTypeEnum.BRIDGE : WorkflowTypeEnum.REGULAR,
       _template: command.job._templateId,
       _organization: command.organizationId,
       _environment: command.environmentId,
@@ -281,7 +291,7 @@ export class SendMessage {
       ...timedInfo,
       filterPassed: filterResult?.passed,
       preferencesPassed: preferredResult,
-      echoSkip: resonateSkip,
+      isBridgeSkipped,
       ...(usedFilters || {}),
       source: command.payload.__source || 'api',
     });

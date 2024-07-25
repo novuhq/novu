@@ -9,11 +9,13 @@ import {
 
 import {
   AddressingTypeEnum,
+  ControlsDto,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
 } from '@novu/shared';
+import { DiscoverWorkflowOutput } from '@novu/framework';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 
@@ -45,6 +47,15 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  @IsOptional()
+  @IsString()
+  bridgeUrl?: string;
+
+  @IsOptional()
+  bridgeWorkflow?: DiscoverWorkflowOutput;
+
+  controls?: ControlsDto;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {

@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IEmailOptions,
@@ -8,15 +9,15 @@ import {
   IEmailEventBody,
   EmailEventStatusEnum,
 } from '@novu/stateless';
-import * as Mailjet from 'node-mailjet';
+import { Client, type SendEmailV3_1 } from 'node-mailjet';
 
 const MAILJET_API_VERSION = 'v3.1';
 
 export class MailjetEmailProvider implements IEmailProvider {
-  id = 'mailjet';
+  id = EmailProviderIdEnum.Mailjet;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private mailjetClient: Mailjet.Client;
+  private mailjetClient: Client;
   constructor(
     private config: {
       apiKey: string;
@@ -25,7 +26,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    this.mailjetClient = new Mailjet.Client({
+    this.mailjetClient = new Client({
       apiKey: config.apiKey,
       apiSecret: config.apiSecret,
     });
@@ -38,9 +39,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       .post('send', {
         version: MAILJET_API_VERSION,
       })
-      .request<Mailjet.SendEmailV3_1.Response>(
-        this.createMailData(emailOptions)
-      );
+      .request<SendEmailV3_1.Response>(this.createMailData(emailOptions));
 
     const { body, response: clientResponse } = response;
 
@@ -74,15 +73,15 @@ export class MailjetEmailProvider implements IEmailProvider {
     }
   }
 
-  private createMailData(options: IEmailOptions): Mailjet.SendEmailV3_1.Body {
-    const message: Mailjet.SendEmailV3_1.Message = {
+  private createMailData(options: IEmailOptions): SendEmailV3_1.Body {
+    const message: SendEmailV3_1.Message = {
       From: {
         Email: options.from || this.config.from,
         Name: options.senderName || this.config.senderName,
       },
       To: options.to.map((email) => ({
         Email: email,
-      })) as Mailjet.SendEmailV3_1.EmailAddressTo[],
+      })) as SendEmailV3_1.EmailAddressTo[],
       Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
       Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
       Subject: options.subject,

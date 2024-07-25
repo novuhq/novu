@@ -1,17 +1,12 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
-import { SharedModule } from '../../shared/shared.module';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import {
-  EvaluateEventResourceLimit,
-  GetPlatformNotificationUsage,
-  GetSubscription,
-  BillingModule,
-} from '@novu/ee-billing';
+import { EvaluateEventResourceLimit, GetPlatformNotificationUsage, GetSubscription } from '@novu/ee-billing';
 import { randomUUID } from 'node:crypto';
+import { AppModule } from '../../../app.module';
 
 describe('EvaluateEventResourceLimit', async () => {
   let useCase: EvaluateEventResourceLimit;
@@ -24,7 +19,7 @@ describe('EvaluateEventResourceLimit', async () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, BillingModule.forRoot()],
+      imports: [AppModule],
     })
       .overrideProvider(CacheService)
       .useValue(MockCacheService.createClient())

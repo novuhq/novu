@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 
 import {
   IntegrationRepository,
@@ -7,6 +7,7 @@ import {
   JobRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
+  NotificationTemplateEntity,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -37,8 +38,19 @@ import {
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '../trigger-multicast';
+import { GetActionEnum, PostActionEnum } from '@novu/framework';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
+
+export interface IExecuteBridgeRequestCommand {
+  bridgeUrl: string;
+  payload?: Record<string, unknown>;
+  apiKey: string;
+  searchParams?: Record<string, string>;
+  afterResponse?: any;
+  action: GetActionEnum | PostActionEnum;
+  retriesLimit?: number;
+}
 
 @Injectable()
 export class TriggerEvent {
@@ -72,7 +84,7 @@ export class TriggerEvent {
         environmentId
       );
 
-      Sentry.addBreadcrumb({
+      addBreadcrumb({
         message: 'Sending trigger',
         data: {
           triggerIdentifier: identifier,
@@ -85,16 +97,15 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: mappedCommand.environmentId,
-        triggerIdentifier: mappedCommand.identifier,
-      });
+      let storedWorkflow: NotificationTemplateEntity | null = null;
+      if (!command.bridgeWorkflow) {
+        storedWorkflow = await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: mappedCommand.environmentId,
+          triggerIdentifier: mappedCommand.identifier,
+        });
+      }
 
-      /*
-       * Makes no sense to execute anything if template doesn't exist
-       * TODO: Send a 404?
-       */
-      if (!template) {
+      if (!storedWorkflow && !command.bridgeWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -139,7 +150,9 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              template,
+              template:
+                storedWorkflow ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -149,7 +162,9 @@ export class TriggerEvent {
             TriggerBroadcastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
-              template,
+              template:
+                storedWorkflow ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -160,13 +175,16 @@ export class TriggerEvent {
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
-              template,
+              template:
+                storedWorkflow ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
         }
       }
     } catch (e) {
+      Logger.error(e);
       Logger.error(
         {
           transactionId: command.transactionId,

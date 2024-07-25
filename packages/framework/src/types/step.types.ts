@@ -1,28 +1,32 @@
-import { FromSchema } from 'json-schema-to-ts';
-
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import {
-  delayOutputSchema,
-  delayResultSchema,
-  digestOutputSchema,
-  digestRegularOutputSchema,
-  digestResultSchema,
-  digestTimedOutputSchema,
-} from '../schemas';
-import { channelStepSchemas } from '../schemas/steps/channels';
-import { Providers } from './provider.types';
-import { Schema } from './schema.types';
-import { Skip } from './skip.types';
-import { Awaitable } from './util.types';
+import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas';
 import { actionStepSchemas } from '../schemas/steps/actions';
+import { channelStepSchemas } from '../schemas/steps/channels';
+import type { Providers } from './provider.types';
+import type { FromSchema, Schema } from './schema.types';
+import type { Skip } from './skip.types';
+import type { Awaitable, Prettify } from './util.types';
 
-// @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
-export type ActionStepOptions = {
-  skip?: Skip<unknown>;
-  inputSchema?: Schema;
-  credentials?: (input: unknown) => Promise<Record<string, unknown>>;
-  providers?: Record<string, (payload: unknown) => unknown | Promise<unknown>>;
-  preferences?: (input: unknown) => Promise<Record<string, unknown>>;
+export type StepOptions<
+  T_ControlSchema extends Schema = Schema,
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
+> = {
+  /**
+   * Skip the step. If the skip function returns true, the step will be skipped.
+   *
+   * @param controls The controls for the step.
+   */
+  skip?: Skip<T_Controls>;
+  /**
+   * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+   *
+   * @deprecated Use `controlSchema` instead
+   */
+  inputSchema?: T_ControlSchema;
+  /**
+   * The schema for the controls of the step. Used to validate the user-provided controls from Novu Web.
+   */
+  controlSchema?: T_ControlSchema;
 };
 
 export enum JobStatusEnum {
@@ -37,7 +41,7 @@ export enum JobStatusEnum {
   SKIPPED = 'skipped',
 }
 
-type StepContext = {
+export type StepContext = {
   /** The context of the step. */
   _ctx: {
     /** The timestamp of the step. */
@@ -52,31 +56,54 @@ type StepContext = {
   };
 };
 
-type StepOutput<T_Result> = Promise<T_Result & StepContext>;
+export type StepOutput<T_Result> = Promise<T_Result & StepContext>;
 
-export type ActionStep<T_Outputs, T_Result> = (
+export type ActionStep<
+  T_Outputs extends Record<string, unknown> = Record<string, unknown>,
+  T_Result extends Record<string, unknown> = Record<string, unknown>
+> = <
+  /**
+   * The schema for the controls of the step.
+   */
+  T_ControlSchema extends Schema,
+  /**
+   * The controls for the step.
+   */
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
+>(
+  /**
+   * The name of the step. This is used to identify the step in the workflow.
+   */
   name: string,
-  resolve: (inputs: any) => Awaitable<T_Outputs>,
-  options?: ActionStepOptions
+  /**
+   * The function to resolve the step notification content for the step.
+   *
+   * @param controls The controls for the step.
+   */
+  resolve: (controls: T_Controls) => Awaitable<T_Outputs>,
+  /**
+   * The options for the step.
+   */
+  options?: StepOptions<T_ControlSchema, T_Controls>
 ) => StepOutput<T_Result>;
 
 export type CustomStep = <
   /**
-   * The schema for the inputs of the step.
+   * The schema for the controls of the step.
    */
-  T_InputSchema extends Schema,
+  T_ControlSchema extends Schema = Schema,
   /**
    * The schema for the outputs of the step.
    */
-  T_OutputsSchema extends Schema,
+  T_OutputsSchema extends Schema = Schema,
   /**
-   * The inputs for the step.
+   * The controls for the step.
    */
-  T_Inputs = FromSchema<T_InputSchema>,
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
   /**
    * The result for the step.
    */
-  T_Intermediary = FromSchema<T_OutputsSchema>,
+  T_Intermediary extends Record<string, unknown> = FromSchema<T_OutputsSchema>,
   T_Outputs extends T_Intermediary = T_Intermediary,
   T_Result extends T_Intermediary = T_Intermediary
 >(
@@ -87,52 +114,42 @@ export type CustomStep = <
   /**
    * The function to resolve the step notification content for the step.
    *
-   * @param inputs The inputs for the step.
+   * @param controls The controls for the step.
    */
-  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
+  resolve: (controls: T_Controls) => Awaitable<T_Outputs>,
   /**
    * The options for the step.
    */
-  options?: {
+  options?: StepOptions<T_ControlSchema, T_Controls> & {
     /**
-     * Skip the step. If the skip function returns true, the step will be skipped.
-     *
-     * @param inputs The inputs for the step.
+     * The schema for the outputs of the step. Used to validate the output of the `resolve` function.
      */
-    skip?: Skip<T_Inputs>;
-    /**
-     * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
-     */
-    inputSchema?: T_InputSchema;
     outputSchema?: T_OutputsSchema;
-    /**
-     * The providers for the step. Used to override the behaviour of the providers for the step.
-     */
   }
-) => Promise<T_Result & StepContext>;
+) => StepOutput<T_Result>;
 
 export type ChannelStep<
   /**
    * The type of channel step.
    */
-  T_StepType extends keyof typeof channelStepSchemas,
+  T_StepType extends keyof typeof channelStepSchemas = keyof typeof channelStepSchemas,
   /**
    * The outputs for the step.
    */
-  T_Outputs,
+  T_Outputs extends Record<string, unknown> = Record<string, unknown>,
   /**
    * The result for the step.
    */
-  T_Result
+  T_Result extends Record<string, unknown> = Record<string, unknown>
 > = <
   /**
-   * The schema for the inputs of the step.
+   * The schema for the controls of the step.
    */
-  T_InputSchema extends Schema,
+  T_ControlSchema extends Schema,
   /**
-   * The inputs for the step.
+   * The controls for the step.
    */
-  T_Inputs = FromSchema<T_InputSchema>
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
 >(
   /**
    * The name of the step. This is used to identify the step in the workflow.
@@ -141,33 +158,19 @@ export type ChannelStep<
   /**
    * The function to resolve the step notification content for the step.
    *
-   * @param inputs The inputs for the step.
+   * @param controls The controls for the step.
    */
-  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
+  resolve: (controls: T_Controls) => Awaitable<T_Outputs>,
   /**
    * The options for the step.
    */
-  options?: {
-    /**
-     * Skip the step. If the skip function returns true, the step will be skipped.
-     *
-     * @param inputs The inputs for the step.
-     */
-    skip?: Skip<T_Inputs>;
-    /**
-     * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
-     */
-    inputSchema?: T_InputSchema;
+  options?: StepOptions<T_ControlSchema, T_Controls> & {
     /**
      * The providers for the step. Used to override the behaviour of the providers for the step.
      */
-    providers?: Providers<T_StepType, T_Inputs, T_Outputs>;
-    /*
-     * credentials?: (inputs: T_Inputs) => Promise<Record<string, unknown>>;
-     * preferences?: (input: T_Inputs) => Promise<Record<string, unknown>>;
-     */
+    providers?: Prettify<Providers<T_StepType, T_Controls, T_Outputs>>;
   }
-) => Promise<T_Result & StepContext>;
+) => StepOutput<T_Result>;
 
 export type EmailOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['output']>;
 export type EmailResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['result']>;
@@ -208,9 +211,9 @@ export type Step = {
   /** Send an in-app notification. */
   inApp: ChannelStep<ChannelStepEnum.IN_APP, InAppOutput, InAppResult>;
   /** Aggregate events for a period of time. */
-  digest: ActionStep<FromSchema<typeof digestOutputSchema>, FromSchema<typeof digestResultSchema>>;
+  digest: ActionStep<DigestOutput, DigestResult>;
   /** Delay the workflow for a period of time. */
-  delay: ActionStep<FromSchema<typeof delayOutputSchema>, FromSchema<typeof delayResultSchema>>;
+  delay: ActionStep<DelayOutput, DelayResult>;
   /** Execute custom code */
   custom: CustomStep;
 };

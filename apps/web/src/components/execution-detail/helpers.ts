@@ -18,6 +18,7 @@ import {
   Sms,
   Timer,
   WarningIcon,
+  CurlyBrackets,
 } from '@novu/design-system';
 
 export const getColorByStatus = (theme: MantineTheme, status: ExecutionDetailsStatusEnum): string => {
@@ -76,6 +77,10 @@ export const getLogoByType = (
 
   if (type === StepTypeEnum.PUSH) {
     return Mobile;
+  }
+
+  if (type === StepTypeEnum.CUSTOM) {
+    return CurlyBrackets;
   }
 
   return null;

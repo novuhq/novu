@@ -1,10 +1,6 @@
 import { api } from '.';
 
-export function getCurrentEnvironment() {
-  return api.get('/v1/environments/me');
-}
-
-export function getMyEnvironments() {
+export function getEnvironments() {
   return api.get('/v1/environments');
 }
 
@@ -18,4 +14,8 @@ export function regenerateApiKeys() {
 
 export function updateDnsSettings(payload: { inboundParseDomain: string | undefined }, environmentId: string) {
   return api.put(`/v1/environments/${environmentId}`, { dns: payload });
+}
+
+export function updateBridgeUrl(payload: { url: string | undefined }, environmentId: string) {
+  return api.put(`/v1/environments/${environmentId}`, { bridge: payload });
 }

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import slugify from 'slugify';
-import * as shortid from 'shortid';
+import shortid from 'shortid';
 
 import {
   FeedRepository,
@@ -20,6 +20,7 @@ import {
   ChangeEntityTypeEnum,
   INotificationTemplateStep,
   INotificationTrigger,
+  isBridgeWorkflow,
   IStepVariant,
   TriggerTypeEnum,
   WorkflowTypeEnum,
@@ -208,7 +209,7 @@ export class CreateWorkflow {
     item,
     parentChangeId: string
   ) {
-    if (command.type !== WorkflowTypeEnum.ECHO) {
+    if (!isBridgeWorkflow(command.type)) {
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
@@ -244,7 +245,6 @@ export class CreateWorkflow {
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
       type: command.type,
-      // ...(command.inputs ? { inputs: command.inputs } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema
         ? { payloadSchema: command.payloadSchema }
@@ -294,7 +294,8 @@ export class CreateWorkflow {
             preheader: step.template.preheader,
             senderName: step.template.senderName,
             actor: step.template.actor,
-            inputs: step.template.inputs,
+            inputs: step.template.controls || step.template.inputs,
+            controls: step.template.controls || step.template.inputs,
             output: step.template.output,
             stepId: step.template.stepId,
             parentChangeId,
@@ -488,7 +489,7 @@ export class CreateWorkflow {
           _organizationId: command.organizationId,
         });
 
-        if (command.type !== WorkflowTypeEnum.ECHO) {
+        if (!isBridgeWorkflow(command.type)) {
           await this.createChange.execute(
             CreateChangeCommand.create({
               item: feedItem,
@@ -528,7 +529,7 @@ export class CreateWorkflow {
         name: command.notificationGroup.name,
       });
 
-      if (command.type !== WorkflowTypeEnum.ECHO) {
+      if (!isBridgeWorkflow(command.type)) {
         await this.createChange.execute(
           CreateChangeCommand.create({
             item: notificationGroup,

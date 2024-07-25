@@ -1,2 +1,2 @@
-export * from './components/InputVariables';
-export * from './components/InputVariablesForm';
+export * from './components/ControlVariables';
+export * from './components/ControlVariablesForm';

@@ -1,6 +1,6 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
-import * as mongooseDelete from 'mongoose-delete';
+const mongooseDelete = require('mongoose-delete');
 import { ActorTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
@@ -82,12 +82,13 @@ const messageSchema = new Schema<MessageDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    archived: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     lastSeenDate: Schema.Types.Date,
     lastReadDate: Schema.Types.Date,
-    createdAt: {
-      type: Schema.Types.Date,
-      default: Date.now,
-    },
+    archivedAt: Schema.Types.Date,
     status: {
       type: Schema.Types.String,
       default: 'sent',
@@ -113,6 +114,8 @@ const messageSchema = new Schema<MessageDBModel>(
       ref: 'Subscriber',
     },
     expireAt: Schema.Types.Date,
+    tags: [Schema.Types.String],
+    avatar: Schema.Types.String,
   },
   schemaOptions
 );

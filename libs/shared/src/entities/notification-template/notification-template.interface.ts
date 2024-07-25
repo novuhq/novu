@@ -1,15 +1,18 @@
-import { JSONSchema7 } from 'json-schema';
+import { JSONSchema } from 'json-schema-to-ts';
 
-import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
+import type {
+  BuilderFieldType,
+  BuilderGroupValues,
+  TemplateVariableTypeEnum,
+  FilterParts,
+  WorkflowTypeEnum,
+  NotificationTemplateCustomData,
+} from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
 import { INotificationGroup } from '../notification-group';
-
-export enum NotificationTemplateTypeEnum {
-  REGULAR = 'REGULAR',
-  ECHO = 'ECHO',
-}
+import { ControlsDto } from '../../dto';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -28,8 +31,12 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
-  type?: NotificationTemplateTypeEnum;
+  blueprintId?: string;
+  type?: WorkflowTypeEnum;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
+  rawData?: any;
+  data?: NotificationTemplateCustomData;
 }
 
 export class IGroupedBlueprint {
@@ -70,6 +77,7 @@ export interface ITriggerReservedVariable {
 
 export interface INotificationTriggerVariable {
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   type?: TemplateVariableTypeEnum;
 }
@@ -91,8 +99,17 @@ export interface IStepVariant {
   };
   metadata?: IWorkflowStepMetadata;
   inputs?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
   };
+  controls?: {
+    schema: JSONSchema;
+  };
+  /*
+   * controlVariables exists
+   * only on none production environment in order to provide stateless control variables on fly
+   */
+  controlVariables?: ControlsDto;
+  bridgeUrl?: string;
 }
 
 export interface INotificationTemplateStep extends IStepVariant {

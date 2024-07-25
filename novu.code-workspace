@@ -65,6 +65,10 @@
       "path": "libs/testing"
     },
     {
+      "name": "📦 @novu/application-generic",
+      "path": "libs/application-generic"
+    },
+    {
       "name": "📦 @novu/stateless",
       "path": "packages/stateless"
     },
@@ -89,9 +93,13 @@
       "path": "packages/react-native"
     },
     {
-      "name": "📦 @novu/application-generic",
-      "path": "packages/application-generic"
+      "name": "📦 @novu/js",
+      "path": "packages/js"
     },
+    {
+      "name": "🎮 @novu/nextjs-playground",
+      "path": "playground/nextjs"
+    }
   ],
   "settings": {
     "typescript.tsdk": "node_modules/typescript/lib",
@@ -108,8 +116,6 @@
   "extensions": {
     "recommendations": [
       "folke.vscode-monorepo-workspace",
-      "seatonjiang.gitmoji-vscode",
-      "jondot.vscode-hygen",
       "esbenp.prettier-vscode",
       "dbaeumer.vscode-eslint"
     ]

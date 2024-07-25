@@ -1,6 +1,7 @@
-import * as mongoose from 'mongoose';
+import { WorkflowTypeEnum } from '@novu/shared';
+import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
-import * as mongooseDelete from 'mongoose-delete';
+const mongooseDelete = require('mongoose-delete');
 
 import { schemaOptions } from '../schema-default.options';
 import { NotificationTemplateDBModel } from './notification-template.entity';
@@ -23,7 +24,7 @@ const variantSchemePart = {
   name: Schema.Types.String,
   type: {
     type: Schema.Types.String,
-    default: 'REGULAR',
+    default: WorkflowTypeEnum.REGULAR,
   },
   filters: [
     {
@@ -110,7 +111,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     },
     type: {
       type: Schema.Types.String,
-      default: 'REGULAR',
+      default: WorkflowTypeEnum.REGULAR,
     },
     draft: {
       type: Schema.Types.Boolean,
@@ -216,7 +217,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     rawData: Schema.Types.Mixed,
     payloadSchema: Schema.Types.Mixed,
   },
-  schemaOptions
+  { ...schemaOptions, minimize: false }
 );
 
 notificationTemplateSchema.virtual('steps.template', {

@@ -1,6 +1,6 @@
 {
   "name": "@novu/providers",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "description": "Novu Provider Wrappers",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -10,6 +10,7 @@
   "license": "MIT",
   "keywords": [],
   "scripts": {
+    "start": "npm run watch:build",
     "prebuild": "rimraf build",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
@@ -48,7 +49,7 @@
     "braze-api": "^2.5.6",
     "cross-fetch": "^4.0.0",
     "date-fns": "2.29.3",
-    "emailjs": "^3.6.0",
+    "emailjs": "^4.0.3",
     "expo-server-sdk": "^3.6.0",
     "firebase-admin": "^11.10.1",
     "form-data": "^4.0.0",

@@ -24,6 +24,7 @@ export interface IBroadcastPayloadOptions {
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
+  bridgeUrl?: string;
 }
 export interface IIntegrationOverride {
   integrationIdentifier?: string;

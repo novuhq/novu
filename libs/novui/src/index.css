@@ -1,1 +1,3 @@
-@layer reset, base, tokens, recipes, utilities;
+@layer reset, base, mantine, tokens, recipes, utilities;
+
+@import '@mantine/core/styles.layer.css';

@@ -7,7 +7,7 @@ import {
   OrganizationId,
   MessageTemplateContentType,
 } from '@novu/shared';
-import { JSONSchema7 } from 'json-schema';
+import { JSONSchema } from 'json-schema-to-ts';
 
 import { IEmailBlock, ITemplateVariable } from './types';
 import type { ChangePropsValueType } from '../../types/helpers';
@@ -57,11 +57,14 @@ export class MessageTemplateEntity implements IMessageTemplate {
   deleted?: boolean;
 
   inputs?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
+  };
+  controls?: {
+    schema: JSONSchema;
   };
 
   output?: {
-    schema: JSONSchema7;
+    schema: JSONSchema;
   };
 
   code?: string;

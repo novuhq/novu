@@ -14,6 +14,7 @@ const codeValueInputClassName = css({
 
 interface ICodeSnippetProps {
   command: string;
+  description?: string;
   onClick?: () => void;
   className?: string;
   'data-test-id'?: string;
@@ -22,7 +23,7 @@ interface ICodeSnippetProps {
 /**
  * Read-only code snippet with copy-paste functionality
  */
-export const CodeSnippet = ({ command, onClick, className, ...props }: ICodeSnippetProps) => {
+export const CodeSnippet = ({ command, description, onClick, className, ...props }: ICodeSnippetProps) => {
   const { copy, copied } = useClipboard();
 
   const handleCopy = () => {
@@ -32,6 +33,7 @@ export const CodeSnippet = ({ command, onClick, className, ...props }: ICodeSnip
 
   return (
     <Input
+      description={description}
       readOnly
       className={cx(codeValueInputClassName, className)}
       styles={inputStyles}

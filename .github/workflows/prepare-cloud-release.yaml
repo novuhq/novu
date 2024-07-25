@@ -35,7 +35,7 @@ jobs:
       - name: Create Novu Cloud release PR
         id: create-pr
         run: |
-          echo "pr_url=$(gh pr create --base prod --head ${{steps.output-variables.outputs.branch_name}} --title 'Release ${{steps.output-variables.outputs.date_humanized}}' --body 'Automated daily production Novu Cloud release')" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$(gh pr create --base prod --head ${{steps.output-variables.outputs.branch_name}} --title 'chore(root): Release ${{steps.output-variables.outputs.date_humanized}}' --body 'Automated daily production Novu Cloud release')" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -43,7 +43,7 @@ jobs:
         id: enable-pr-automerge
         if: ${{ steps.create-pr.outputs.pr_url != '' }}
         run: |
-          gh pr merge --auto -s ${{steps.create-pr.outputs.pr_url}}
+          gh pr merge --auto -m ${{steps.create-pr.outputs.pr_url}}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

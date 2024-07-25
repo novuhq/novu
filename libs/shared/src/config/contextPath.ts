@@ -3,50 +3,39 @@ export enum NovuComponentEnum {
   API,
   WIDGET,
   WS,
+  INBOUND_MAIL,
+  WEBHOOK,
+}
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  interface Window {
+    _env_: Record<string, string | undefined>;
+  }
 }
 
 export function getContextPath(component: NovuComponentEnum) {
-  let contextPath = '';
-
   /**
    * Determine if we are running in the browser or in node.js. If we are
    * running in node.js, we will have access to the process.env object,
    * otherwise we will have access to the window._env_ object to get the
    * environment variables.
    */
+  const env = typeof process !== 'undefined' && process?.env ? process?.env : window._env_;
+  if (!env) return '';
 
-  // eslint-disable-next-line no-undef
-  const env = typeof process !== 'undefined' && process?.env ? process?.env : (window as any)._env_;
+  const contextPaths = {
+    [NovuComponentEnum.API]: env.API_CONTEXT_PATH,
+    [NovuComponentEnum.WEB]: env.FRONT_BASE_CONTEXT_PATH,
+    [NovuComponentEnum.WIDGET]: env.WIDGET_CONTEXT_PATH,
+    [NovuComponentEnum.WS]: env.WS_CONTEXT_PATH,
+    [NovuComponentEnum.INBOUND_MAIL]: env.INBOUND_MAIL_CONTEXT_PATH,
+    [NovuComponentEnum.WEBHOOK]: env.WEBHOOK_CONTEXT_PATH,
+  };
 
-  if (!env) {
-    return contextPath;
-  }
-
-  if (env.GLOBAL_CONTEXT_PATH) {
-    contextPath += env.GLOBAL_CONTEXT_PATH + '/';
-  }
-
-  switch (component) {
-    case NovuComponentEnum.API:
-      if (env.API_CONTEXT_PATH) {
-        contextPath += env.API_CONTEXT_PATH + '/';
-      }
-      break;
-    case NovuComponentEnum.WEB:
-      if (env.FRONT_BASE_CONTEXT_PATH) {
-        contextPath += env.FRONT_BASE_CONTEXT_PATH + '/';
-      }
-      break;
-    case NovuComponentEnum.WIDGET:
-      if (env.WIDGET_CONTEXT_PATH) {
-        contextPath += env.WIDGET_CONTEXT_PATH + '/';
-      }
-      break;
-    case NovuComponentEnum.WS:
-      if (env.WS_CONTEXT_PATH) {
-        contextPath += env.WS_CONTEXT_PATH + '/';
-      }
-      break;
+  let contextPath = env.GLOBAL_CONTEXT_PATH ? `${env.GLOBAL_CONTEXT_PATH}/` : '';
+  if (contextPaths[component]) {
+    contextPath += `${contextPaths[component]}/`;
   }
 
   return contextPath;

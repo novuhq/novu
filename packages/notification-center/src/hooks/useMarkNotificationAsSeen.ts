@@ -17,12 +17,12 @@ export const useMarkNotificationsAsSeen = ({
 }: {
   onSuccess?: () => void;
   query?: IStoreQuery;
-} & UseMutationOptions<IMessage[], Error, IMarkNotificationsAsReadVariables> = {}) => {
+} & UseMutationOptions<number, Error, IMarkNotificationsAsReadVariables> = {}) => {
   const queryClient = useQueryClient();
   const { apiService } = useNovuContext();
   const fetchNotificationsQueryKey = useFetchNotificationsQueryKey();
 
-  const { mutate, ...result } = useMutation<IMessage[], Error, IMarkNotificationsAsReadVariables>(
+  const { mutate, ...result } = useMutation<number, Error, IMarkNotificationsAsReadVariables>(
     ({ feedId }) => apiService.markAllMessagesAsSeen(feedId),
     {
       ...options,

@@ -1,18 +1,16 @@
 import { expect } from 'chai';
-import axios from 'axios';
 import { UserSession } from '@novu/testing';
 import { MessageRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import { TestSendEmailRequestDto } from '../dtos';
 
-const axiosInstance = axios.create();
-
 describe('Events - Test email - /v1/events/test/email (POST)', function () {
   const requestDto: TestSendEmailRequestDto = {
     contentType: 'customHtml',
     payload: {},
     inputs: {},
+    controls: {},
     subject: 'subject',
     preheader: 'preheader',
     content: '<html><head></head><body>Hello world!</body></html>',
@@ -28,12 +26,8 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
     integrationRepository = new IntegrationRepository();
   });
 
-  const sendTestEmail = async (body: TestSendEmailRequestDto) => {
-    return await axiosInstance.post(`${session.serverUrl}/v1/events/test/email`, body, {
-      headers: {
-        authorization: session.token,
-      },
-    });
+  const sendTestEmail = (body: TestSendEmailRequestDto) => {
+    return session.testAgent.post('/v1/events/test/email').send(body);
   };
 
   const deleteEmailIntegration = async () => {

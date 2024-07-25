@@ -1,19 +1,35 @@
-import React from 'react';
 import { ObjectFieldTemplateProps } from '@rjsf/utils';
-import { Box, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
-
-const Title = styled('h2', title);
+import { Box } from '../../../styled-system/jsx';
+import { jsonSchemaFormSection } from '../../../styled-system/recipes';
+import { FormGroupTitle, SectionTitleToggle } from '../shared';
+import { calculateSectionDepth, getVariantFromDepth } from '../utils';
+import { useExpandToggle } from '../useExpandToggle';
 
 export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
+  const [isExpanded, toggleExpanded] = useExpandToggle();
+
+  const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });
+  const depthVariant = getVariantFromDepth(sectionDepth);
+
+  const sectionClassNames = jsonSchemaFormSection({
+    depth: depthVariant,
+  });
+
   return (
-    <Box>
-      <Title variant={'subsection'}>{props.title}</Title>
-      {props.properties.map((element) => (
-        <Box pl={'125'} key={element.name}>
-          {element.content}
-        </Box>
-      ))}
+    <Box className={sectionClassNames.sectionRoot}>
+      <SectionTitleToggle
+        onToggle={toggleExpanded}
+        isExpanded={isExpanded}
+        sectionDepth={sectionDepth}
+        sectionTitle={props.title ? <FormGroupTitle>{props.title}</FormGroupTitle> : undefined}
+      ></SectionTitleToggle>
+      {isExpanded ? (
+        <>
+          {props.properties.map((element) => (
+            <Box key={element.name}>{element.content}</Box>
+          ))}
+        </>
+      ) : null}
     </Box>
   );
 }

@@ -1,5 +1,3 @@
-export const DEFAULT_NOVU_API_BASE_URL = 'https://api.novu.co';
-
 export enum NovuApiEndpointsEnum {
   SYNC = '/v1/bridge/sync',
   DIFF = '/v1/bridge/diff',

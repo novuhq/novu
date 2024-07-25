@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as hat from 'hat';
+import { randomBytes } from 'crypto';
 import { StorageService } from '@novu/application-generic';
 import { UploadTypesEnum, FILE_EXTENSION_TO_MIME_TYPE } from '@novu/shared';
 
@@ -11,12 +11,13 @@ export class GetSignedUrl {
   constructor(private storageService: StorageService) {}
 
   private mapTypeToPath(command: GetSignedUrlCommand) {
+    const randomId = randomBytes(16).toString('hex');
     switch (command.type) {
       case UploadTypesEnum.USER_PROFILE:
-        return `users/${command.userId}/profile-pictures/${hat()}.${command.extension}`;
+        return `users/${command.userId}/profile-pictures/${randomId}.${command.extension}`;
       case UploadTypesEnum.BRANDING:
       default:
-        return `${command.organizationId}/${command.environmentId}/${hat()}.${command.extension}`;
+        return `${command.organizationId}/${command.environmentId}/${randomId}.${command.extension}`;
     }
   }
 

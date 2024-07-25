@@ -2,10 +2,11 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { applyDecorators } from '@nestjs/common';
+// eslint-disable-next-line import/no-namespace
 import * as nestSwagger from '@nestjs/swagger';
 import { ApiResponseOptions } from '@nestjs/swagger';
 import { COMMON_RESPONSE_HEADERS, COMMON_RESPONSES } from '../constants';
-import { ApiResponseDecoratorName } from '../types';
+import { ApiResponseDecoratorName } from '@novu/shared';
 import { createReusableHeaders } from './headers.decorator';
 
 const createCustomResponseDecorator = (decoratorName: ApiResponseDecoratorName) => {

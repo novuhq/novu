@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.24.2",
+  "version": "2.0.0-canary.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -46,7 +46,7 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^29.2.3",
-    "@types/node": "^18.11.12",
+    "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "acorn": "^8.7.1",

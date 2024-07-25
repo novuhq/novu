@@ -1,13 +1,15 @@
 import { ThemeProvider } from '@novu/design-system';
-import { SegmentProvider } from './components/providers/SegmentProvider';
-import { CONTEXT_PATH } from './config';
-import * as Sentry from '@sentry/react';
+import { HelmetProvider } from 'react-helmet-async';
+import { withProfiler } from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
 import { NovuiProvider } from '@novu/novui';
+import { AuthProvider } from './components/providers/AuthProvider';
+import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
+import { EnvironmentProvider } from './components/providers/EnvironmentProvider';
+import { SegmentProvider } from './components/providers/SegmentProvider';
+import { StudioStateProvider } from './studio/StudioStateProvider';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -27,18 +29,24 @@ const queryClient = new QueryClient({
 
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
-    <ThemeProvider>
+    <ThemeProvider shouldDisableGlobals>
       <NovuiProvider>
-        <SegmentProvider>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter basename={CONTEXT_PATH}>
-              <HelmetProvider>{children}</HelmetProvider>
-            </BrowserRouter>
-          </QueryClientProvider>
-        </SegmentProvider>
+        <ClerkProvider>
+          <SegmentProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <EnvironmentProvider>
+                  <HelmetProvider>
+                    <StudioStateProvider>{children}</StudioStateProvider>
+                  </HelmetProvider>
+                </EnvironmentProvider>
+              </AuthProvider>
+            </QueryClientProvider>
+          </SegmentProvider>
+        </ClerkProvider>
       </NovuiProvider>
     </ThemeProvider>
   );
 };
 
-export default Sentry.withProfiler(Providers);
+export default withProfiler(Providers);

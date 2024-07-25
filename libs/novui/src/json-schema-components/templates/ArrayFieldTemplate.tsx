@@ -1,19 +1,20 @@
-import React from 'react';
 import {
-  ArrayFieldTitleProps,
+  ArrayFieldTemplateItemType,
   ArrayFieldTemplateProps,
+  ArrayFieldTitleProps,
   getTemplate,
   getUiOptions,
-  ArrayFieldTemplateItemType,
 } from '@rjsf/utils';
-import { Grid } from '@mantine/core';
 import { css } from '../../../styled-system/css';
-import { Box, Flex, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
-
-const Title = styled('h2', title);
+import { Box } from '../../../styled-system/jsx';
+import { jsonSchemaFormArrayToolbar, jsonSchemaFormSection } from '../../../styled-system/recipes';
+import { FormGroupTitle, SectionTitleToggle } from '../shared';
+import { calculateSectionDepth, getVariantFromDepth } from '../utils';
+import { useExpandToggle } from '../useExpandToggle';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
+  const [isExpanded, toggleExpanded] = useExpandToggle();
+
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
     props;
   const {
@@ -23,32 +24,53 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
   const ArrayFieldItemTemplate = getTemplate('ArrayFieldItemTemplate', registry, uiOptions);
 
+  const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });
+  const depthVariant = getVariantFromDepth(sectionDepth);
+
+  const sectionClassNames = jsonSchemaFormSection({
+    depth: depthVariant,
+  });
+
   return (
-    <Box>
-      <ArrayFieldTitleTemplate
-        idSchema={idSchema}
-        title={uiOptions.title || title}
-        schema={schema}
-        uiSchema={uiSchema}
-        required={required}
-        registry={registry}
+    <Box className={sectionClassNames.sectionRoot}>
+      <SectionTitleToggle
+        onToggle={toggleExpanded}
+        isExpanded={isExpanded}
+        sectionDepth={sectionDepth}
+        sectionTitle={
+          uiOptions.title || title ? (
+            <ArrayFieldTitleTemplate
+              idSchema={idSchema}
+              title={uiOptions.title || title}
+              schema={schema}
+              uiSchema={uiSchema}
+              required={required}
+              registry={registry}
+            />
+          ) : undefined
+        }
       />
-      {items.map(({ key, ...itemProps }) => {
-        return <ArrayFieldItemTemplate key={key} {...itemProps} />;
-      })}
-      {canAdd && <AddButton onClick={onAddClick} disabled={disabled || readonly} registry={registry} />}
+      {isExpanded ? (
+        <>
+          {items.map(({ key, ...itemProps }) => {
+            return <ArrayFieldItemTemplate key={key} {...itemProps} />;
+          })}
+          {canAdd && (
+            <AddButton
+              onClick={onAddClick}
+              disabled={disabled || readonly}
+              registry={registry}
+              className={css({ mt: '150' })}
+            />
+          )}
+        </>
+      ) : null}
     </Box>
   );
 }
 
-export function ArrayFieldTitleTemplate(props: ArrayFieldTitleProps) {
-  const { title } = props;
-
-  return (
-    <Title py={'75'} variant={'subsection'}>
-      {title}
-    </Title>
-  );
+export function ArrayFieldTitleTemplate({ title }: ArrayFieldTitleProps) {
+  return <FormGroupTitle>{title}</FormGroupTitle>;
 }
 
 export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
@@ -63,35 +85,36 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
     onReorderClick,
     readonly,
     registry,
+    schema,
   } = props;
   const { MoveDownButton, MoveUpButton, RemoveButton } = registry.templates.ButtonTemplates;
 
+  const toolbarClassNames = jsonSchemaFormArrayToolbar({
+    itemType: typeof schema.type === 'object' ? schema.type[0] : schema.type,
+  });
+
   return (
-    <Grid>
-      <Grid.Col span={'auto'}>
-        <div className={css({ pl: '125' })}>{children}</div>
-      </Grid.Col>
-      <Grid.Col span={'content'}>
-        <Flex>
-          {(hasMoveUp || hasMoveDown) && (
-            <MoveUpButton
-              disabled={disabled || readonly || !hasMoveUp}
-              onClick={onReorderClick(index, index - 1)}
-              registry={registry}
-            />
-          )}
-          {(hasMoveUp || hasMoveDown) && (
-            <MoveDownButton
-              disabled={disabled || readonly || !hasMoveDown}
-              onClick={onReorderClick(index, index + 1)}
-              registry={registry}
-            />
-          )}
-          {hasRemove && (
-            <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
-          )}
-        </Flex>
-      </Grid.Col>
-    </Grid>
+    <div className={toolbarClassNames.toolbarWrapper}>
+      {children}
+      <div role="toolbar" className={toolbarClassNames.toolbar}>
+        {(hasMoveUp || hasMoveDown) && (
+          <MoveUpButton
+            disabled={disabled || readonly || !hasMoveUp}
+            onClick={onReorderClick(index, index - 1)}
+            registry={registry}
+          />
+        )}
+        {(hasMoveUp || hasMoveDown) && (
+          <MoveDownButton
+            disabled={disabled || readonly || !hasMoveDown}
+            onClick={onReorderClick(index, index + 1)}
+            registry={registry}
+          />
+        )}
+        {hasRemove && (
+          <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
+        )}
+      </div>
+    </div>
   );
 }

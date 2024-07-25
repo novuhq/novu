@@ -6,18 +6,18 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { IEmailJsConfig } from './emailjs.config';
-import { MessageHeaders } from 'emailjs/smtp/message';
+import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
+import { EmailProviderIdEnum } from '@novu/shared';
 
 export class EmailJsProvider implements IEmailProvider {
-  readonly id = 'emailjs';
+  readonly id = EmailProviderIdEnum.EmailJS;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly client: SMTPClient;
 
   constructor(private readonly config: IEmailJsConfig) {
     const { host, port, secure: ssl, user, password } = this.config;
-    this.client = new SMTPClient({
+    this.client = new (require('emailjs').SMTPClient)({
       host,
       port,
       ssl,
@@ -29,7 +29,7 @@ export class EmailJsProvider implements IEmailProvider {
   async sendMessage(
     emailOptions: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const headers: Partial<MessageHeaders> = {
+    const headers: Message['header'] = {
       from: emailOptions.from || this.config.from,
       to: emailOptions.to,
       subject: emailOptions.subject,
@@ -43,7 +43,9 @@ export class EmailJsProvider implements IEmailProvider {
       headers['reply-to'] = emailOptions.replyTo;
     }
 
-    const sent = await this.client.sendAsync(new Message(headers));
+    const sent = await this.client.sendAsync(
+      new (require('emailjs').Message(headers))()
+    );
 
     return {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

@@ -23,6 +23,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   rules: {
+    'unused-imports/no-unused-imports': 'off',
     '@typescript-eslint/space-before-blocks': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',
@@ -53,6 +54,7 @@ module.exports = {
     'import/prefer-default-export': 'off',
     // A temporary hack related to IDE not resolving correct package.json
     'import/no-extraneous-dependencies': 'off',
+    'import/no-namespace': 'error',
     'react/jsx-one-expression-per-line': 'off',
     'react/jsx-no-bind': 'off',
     'lines-between-class-members': 'off',

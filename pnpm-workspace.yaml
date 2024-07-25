@@ -1,6 +1,5 @@
 packages:
   # all packages in subdirs of packages/ and components/
-  - 'automation'
   - 'packages/*'
   # Angular projects - these are nested under the Angular workspace root, and need version bumps during release.
   - 'packages/notification-center-angular/projects/*'
@@ -10,5 +9,5 @@ packages:
   - '!**/test/**'
   # all packages in enterprise modules
   - 'enterprise/packages/*'
-  - 'enterprise/packages/libs/*'
-  - 'enterprise/packages/echo/*'
+  # playground apps
+  - 'playground/*'

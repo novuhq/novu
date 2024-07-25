@@ -1,1 +1,1 @@
-export * from './novu';
+export { Novu } from './novu';

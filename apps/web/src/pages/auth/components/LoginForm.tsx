@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import * as Sentry from '@sentry/react';
+import { captureException } from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
-import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError } from '@novu/shared';
-import { useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useAuth, useRedirectURL, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
 import { useAcceptInvite } from './useAcceptInvite';
@@ -28,15 +27,21 @@ export interface LocationState {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
-  const { login, currentUser, organizations } = useAuth();
+
+  const { setRedirectURL } = useRedirectURL();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setRedirectURL(), []);
+
+  const { login, currentUser, currentOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
   const tokenInQuery = params.get('token');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
-  const invitationTokenFromGithub = params.get('invitationToken') as string;
-  const isRedirectedFromLoginPage = params.get('isLoginPage') as string;
+  // TODO: Deprecate the legacy cameCased format in search param
+  const invitationTokenFromGithub = params.get('invitationToken') || params.get('invitation_token') || '';
+  const isRedirectedFromLoginPage = params.get('isLoginPage') || params.get('is_login_page') || '';
 
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
@@ -54,6 +59,8 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const handleLoginInUseEffect = async () => {
     // if currentUser is true, it means user exists, then while accepting invitation, InvitationPage will handle accept this case
     if (currentUser) {
+      handleVercelFlow();
+
       return;
     }
 
@@ -74,18 +81,13 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
     }
 
-    if (organizations) {
+    if (currentOrganization) {
       navigate(ROUTES.WORKFLOWS);
     } else {
       await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
     }
 
-    if (isFromVercel) {
-      await login(tokenInQuery);
-      startVercelSetup();
-
-      return;
-    }
+    await handleVercelFlow();
 
     if (source === 'cli') {
       segment.track('Dashboard Visit', {
@@ -100,10 +102,20 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     await login(tokenInQuery, ROUTES.WORKFLOWS);
   };
 
+  async function handleVercelFlow() {
+    if (isFromVercel) {
+      if (tokenInQuery) {
+        await login(tokenInQuery);
+      }
+
+      startVercelSetup();
+    }
+  }
+
   useEffect(() => {
     handleLoginInUseEffect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [login]);
+  }, [login, currentUser]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel
@@ -148,7 +160,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
-        Sentry.captureException(e);
+        captureException(e);
       }
     }
   };

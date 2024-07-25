@@ -23,7 +23,7 @@ import {
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
-import { JSONSchema7 } from 'json-schema';
+import { JsonSchema } from '@novu/framework';
 
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
@@ -74,14 +74,18 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   inputs?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
+  };
+  @IsOptional()
+  controls?: {
+    schema: JsonSchema;
   };
 
   @IsOptional()
   rawData?: Record<string, unknown>;
 
   @IsOptional()
-  payloadSchema?: JSONSchema7;
+  payloadSchema?: JsonSchema;
 
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
@@ -145,12 +149,16 @@ export class NotificationStepVariantCommand {
 
   @IsOptional()
   inputs?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
+  };
+  @IsOptional()
+  controls?: {
+    schema: JsonSchema;
   };
 
   @IsOptional()
   output?: {
-    schema: JSONSchema7;
+    schema: JsonSchema;
   };
 
   @IsOptional()

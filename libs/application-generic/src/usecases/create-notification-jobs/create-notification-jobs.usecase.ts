@@ -9,7 +9,6 @@ import {
 } from '@novu/dal';
 import {
   DigestTypeEnum,
-  NotificationTemplateTypeEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
@@ -22,6 +21,7 @@ import { InstrumentUsecase } from '../../instrumentation';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
 import { ComputeJobWaitDurationService } from '../../services';
+import { isBridgeWorkflow } from '@novu/shared';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -62,6 +62,8 @@ export class CreateNotificationJobs {
       payload: command.payload,
       expireAt: this.calculateExpireAt(command),
       channels,
+      bridge: command.bridge,
+      controls: command.controls,
     });
 
     if (!notification) {
@@ -90,7 +92,12 @@ export class CreateNotificationJobs {
         payload: command.payload,
         overrides: command.overrides,
         tenant: command.tenant,
-        step,
+        step: {
+          ...step,
+          ...(command.bridge?.workflow
+            ? { bridgeUrl: command.bridge?.url }
+            : {}),
+        },
         transactionId: command.transactionId,
         _notificationId: notification._id,
         _environmentId: command.environmentId,
@@ -138,6 +145,7 @@ export class CreateNotificationJobs {
       overrides: command.overrides,
       tenant: command.tenant,
       step: {
+        bridgeUrl: command.bridge?.url,
         template: {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
@@ -224,7 +232,7 @@ export class CreateNotificationJobs {
        * If the workflow is a framework workflow, we'll set the expiration date to 1 month from now
        * todo decide if we want to add another request in order to get more accurate expire at amount
        */
-      if (command.template.type === NotificationTemplateTypeEnum.ECHO) {
+      if (isBridgeWorkflow(command.template.type)) {
         return addMonths(Date.now(), 1);
       }
 

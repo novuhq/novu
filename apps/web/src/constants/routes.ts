@@ -1,6 +1,7 @@
 export enum ROUTES {
   HOME = '/',
   AUTH_SIGNUP = '/auth/signup',
+  AUTH_SIGNUP_ORGANIZATION_LIST = '/auth/signup/organization-list',
   AUTH_LOGIN = '/auth/login',
   AUTH_RESET_REQUEST = '/auth/reset/request',
   AUTH_RESET_TOKEN = '/auth/reset/:token',
@@ -13,12 +14,14 @@ export enum ROUTES {
   WORKFLOWS_CREATE = '/workflows/create',
   WORKFLOWS_EDIT_TEMPLATEID = '/workflows/edit/:templateId',
   WORKFLOWS_V2_STEP_EDIT = '/workflows/edit/:templateId/step/:stepId',
+  WORKFLOWS_V2_TEST = '/workflows/edit/:templateId/test',
   WORKFLOWS_VARIANT_PREVIEW = '/workflows/edit/:templateId/:channel/:stepUuid/variants/:variantUuid/preview',
   WORKFLOWS = '/workflows',
   TENANTS = '/tenants',
   TENANTS_CREATE = '/tenants/create',
   QUICKSTART = '/quickstart',
   GET_STARTED = '/get-started',
+  DASHBOARD_ONBOARDING = '/onboarding',
   GET_STARTED_PREVIEW = '/get-started/preview',
   QUICK_START_NOTIFICATION_CENTER = '/quickstart/notification-center',
   QUICK_START_SETUP = '/quickstart/notification-center/set-up',
@@ -36,8 +39,8 @@ export enum ROUTES {
   BRAND = '/brand',
   TRANSLATIONS = '/translations',
   LAYOUT = '/layouts',
-  API_KEYS = '/api-keys/:env',
-  WEBHOOK = '/webhook/:env',
+  API_KEYS = '/api-keys',
+  WEBHOOK = '/webhook',
 
   /** Settings nested routes */
   SETTINGS = '/settings',
@@ -49,15 +52,18 @@ export enum ROUTES {
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
-  /** Novu V2 routes */
+
+  /** Novu V2 routes, defined as nested routes */
   STUDIO = '/studio',
   STUDIO_FLOWS = '/studio/flows',
   STUDIO_FLOWS_VIEW = '/studio/flows/:templateId',
+  STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
+  STUDIO_FLOWS_TEST = '/studio/flows/:templateId/test',
   STUDIO_ONBOARDING = '/studio/onboarding',
   STUDIO_ONBOARDING_PREVIEW = '/studio/onboarding/preview',
   STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',
-  STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
-  STUDIO_FLOWS_TEST = '/studio/flows/:templateId/test',
+
+  LOCAL_STUDIO_AUTH = '/local-studio/auth',
 }
 
-export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth']);
+export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/local-studio']);

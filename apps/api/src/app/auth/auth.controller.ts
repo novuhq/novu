@@ -17,7 +17,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberEntity, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
@@ -33,7 +33,7 @@ import { PasswordResetCommand } from './usecases/password-reset/password-reset.c
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
 import { ApiException } from '../shared/exceptions/api.exception';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { PasswordResetBodyDto } from './dtos/password-reset.dto';
+import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
 import {
   AuthService,
   buildOauthRedirectUrl,
@@ -59,7 +59,6 @@ export class AuthController {
     private authService: AuthService,
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
-    private organizationRepository: OrganizationRepository,
     private switchEnvironmentUsecase: SwitchEnvironment,
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
@@ -121,11 +120,11 @@ export class AuthController {
   }
 
   @Post('/reset/request')
-  async forgotPasswordRequest(@Body() body: { email: string }, @Query('src') src?: PasswordResetFlowEnum) {
+  async forgotPasswordRequest(@Body() body: PasswordResetRequestBodyDto, @Query('src') src?: string) {
     return await this.passwordResetRequestUsecase.execute(
       PasswordResetRequestCommand.create({
         email: body.email,
-        src,
+        src: src as PasswordResetFlowEnum,
       })
     );
   }
@@ -155,18 +154,16 @@ export class AuthController {
   @UserAuthentication()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
-  async organizationSwitch(
-    @UserSession() user: UserSessionData,
-    @Param('organizationId') organizationId: string
-  ): Promise<string> {
+  async organizationSwitch(@UserSession() user: UserSessionData, @Param('organizationId') organizationId: string) {
     const command = SwitchOrganizationCommand.create({
       userId: user._id,
       newOrganizationId: organizationId,
     });
 
-    return await this.switchOrganizationUsecase.execute(command);
+    return this.switchOrganizationUsecase.execute(command);
   }
 
+  // @deprecated - Will be removed after full deployment of Api and Dashboard.
   @Post('/environments/:environmentId/switch')
   @Header('Cache-Control', 'no-store')
   @UserAuthentication()
@@ -204,11 +201,7 @@ export class AuthController {
   }
 
   @Get('/test/token/:userId')
-  async authenticateTest(
-    @Param('userId') userId: string,
-    @Query('organizationId') organizationId: string,
-    @Query('environmentId') environmentId: string
-  ) {
+  async authenticateTest(@Param('userId') userId: string, @Query('organizationId') organizationId: string) {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const user = await this.userRepository.findById(userId);
@@ -216,6 +209,6 @@ export class AuthController {
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
-    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
+    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity);
   }
 }

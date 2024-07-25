@@ -1,10 +1,14 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ICredentials,
+  PushProviderIdEnum,
+} from '@novu/shared';
 import { FcmPushProvider } from '@novu/providers';
 import { BasePushHandler } from './base.handler';
 
 export class FCMHandler extends BasePushHandler {
   constructor() {
-    super('fcm', ChannelTypeEnum.PUSH);
+    super(PushProviderIdEnum.FCM, ChannelTypeEnum.PUSH);
   }
 
   buildProvider(credentials: ICredentials) {

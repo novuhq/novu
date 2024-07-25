@@ -4,6 +4,8 @@ import { Badge, Switch } from '@mantine/core';
 
 import { Table } from './Table';
 import { ColumnDef } from '@tanstack/react-table';
+import { Button } from '../Button';
+import { IconOutlineAdd } from '../../icons';
 
 export default {
   title: 'Components/Table',
@@ -54,7 +56,14 @@ const data: IExampleData[] = [
   { name: 'Whats up?', category: 'Done', status: 'Enabled', creationDate: '01/01/2021 16:36' },
 ];
 
-const Template: StoryFn<typeof Table> = ({ ...args }) => <Table columns={columns} data={data} {...args} />;
+const Template: StoryFn<typeof Table> = ({ ...args }) => (
+  <>
+    <Button Icon={IconOutlineAdd} variant="transparent" py="50">
+      Add row
+    </Button>
+    <Table columns={columns} data={data} {...args} />
+  </>
+);
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {};

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateRepository, EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
@@ -22,6 +22,7 @@ import {
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
 import { CreateWorkflowRequestDto } from '../../workflows/dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
+// eslint-disable-next-line import/no-namespace
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET)', async () => {
@@ -91,11 +92,9 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
       prodEnv,
     });
 
-    const data = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
-
-    expect(data.statusCode).to.equal(200);
-
-    const groupedBlueprints = (data.body.data as GroupedBlueprintResponse).general;
+    const res1 = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
+    expect(res1.statusCode).to.equal(200);
+    const groupedBlueprints = (res1.body.data as GroupedBlueprintResponse).general;
 
     expect(groupedBlueprints.length).to.equal(1);
     expect(groupedBlueprints[0].name).to.equal('General');
@@ -103,9 +102,9 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     const categoryName = 'Life Style';
     await updateBlueprintCategory({ categoryName });
 
-    let updatedGroupedBluePrints = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
-
-    updatedGroupedBluePrints = (updatedGroupedBluePrints.body.data as GroupedBlueprintResponse).general;
+    const res2 = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
+    expect(res2.statusCode).to.equal(200);
+    const updatedGroupedBluePrints = (res2.body.data as GroupedBlueprintResponse).general;
 
     expect(updatedGroupedBluePrints.length).to.equal(2);
     expect(updatedGroupedBluePrints[0].name).to.equal('General');

@@ -10,14 +10,7 @@ export class OrganizationEntity implements IOrganizationEntity {
   // TODO: NV-3067 - Remove optional once all organizations have a service level
   apiServiceLevel?: ApiServiceLevelEnum;
 
-  branding?: {
-    fontFamily?: string;
-    fontColor?: string;
-    contentBackground?: string;
-    logo: string;
-    color: string;
-    direction?: 'ltr' | 'rtl';
-  };
+  branding?: Branding;
 
   partnerConfigurations?: IPartnerConfiguration[];
 
@@ -27,12 +20,25 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   productUseCases?: ProductUseCases;
 
+  language?: string[];
+
   createdAt: string;
 
   updatedAt: string;
 
   externalId?: string;
+
+  createdBy?: string;
 }
+
+export type Branding = {
+  fontFamily?: string;
+  fontColor?: string;
+  contentBackground?: string;
+  logo: string;
+  color: string;
+  direction?: 'ltr' | 'rtl';
+};
 
 export type OrganizationDBModel = OrganizationEntity;
 

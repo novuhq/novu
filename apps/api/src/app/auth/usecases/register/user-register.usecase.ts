@@ -1,6 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
-import * as bcrypt from 'bcrypt';
+import { hash } from 'bcrypt';
 import { SignUpOriginEnum } from '@novu/shared';
 import { AnalyticsService, AuthService, createHash } from '@novu/application-generic';
 
@@ -26,7 +26,7 @@ export class UserRegister {
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) throw new ApiException('User already exists');
 
-    const passwordHash = await bcrypt.hash(command.password, 10);
+    const passwordHash = await hash(command.password, 10);
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
@@ -55,7 +55,7 @@ export class UserRegister {
           userId: user._id,
           jobTitle: command.jobTitle,
           domain: command.domain,
-          productUseCases: command.productUseCases,
+          language: command.language,
         })
       );
     }

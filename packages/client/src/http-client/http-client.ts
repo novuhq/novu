@@ -1,10 +1,10 @@
 import { ApiOptions } from '..';
-import { CustomDataType } from '@novu/shared';
+import type { CustomDataType } from '@novu/shared';
 
 const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_BACKEND_URL = 'https://api.novu.co';
 const PACKAGE_NAME = '@novu/client';
-const PACKAGE_VERSION = '0.42.0';
+const PACKAGE_VERSION = '2.0.0-canary.0';
 const DEFAULT_USER_AGENT = `${PACKAGE_NAME}-${PACKAGE_VERSION}`;
 
 export class HttpClient {
@@ -31,6 +31,13 @@ export class HttpClient {
 
   disposeAuthorizationToken() {
     delete this.headers.Authorization;
+  }
+
+  updateHeaders(headers: Record<string, string>) {
+    this.headers = {
+      ...this.headers,
+      ...headers,
+    };
   }
 
   async getFullResponse(url: string, params?: CustomDataType) {

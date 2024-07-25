@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -10,7 +11,7 @@ import {
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
 
 export class MailersendEmailProvider implements IEmailProvider {
-  readonly id = 'mailersend';
+  readonly id = EmailProviderIdEnum.MailerSend;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private mailerSend: MailerSend;
 

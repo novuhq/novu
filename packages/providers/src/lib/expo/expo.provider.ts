@@ -1,3 +1,4 @@
+import { PushProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 
 export class ExpoPushProvider implements IPushProvider {
-  id = 'expo';
+  id = PushProviderIdEnum.EXPO;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private expo: Expo;

@@ -17,7 +17,7 @@ import {
 
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { NotificationStep } from '../..';
-import { JSONSchema7 } from 'json-schema';
+import { JsonSchema } from '@novu/framework';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -73,19 +73,21 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   data?: NotificationTemplateCustomData;
 
   @IsOptional()
-  inputs?: IStepInput;
+  inputs?: IStepControl;
+  @IsOptional()
+  controls?: IStepControl;
 
   @IsOptional()
   rawData?: any;
 
   @IsOptional()
-  payloadSchema?: Record<string, unknown>;
+  payloadSchema?: JsonSchema;
 
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   type: WorkflowTypeEnum;
 }
 
-export interface IStepInput {
-  schema: JSONSchema7;
+export interface IStepControl {
+  schema: JsonSchema;
 }

@@ -97,7 +97,7 @@ export const PreviewWeb = ({
   bridge = false,
   classNames = {},
 }: {
-  integration: any;
+  integration?: any;
   subject?: string;
   content: string;
   loading?: boolean;
@@ -111,6 +111,7 @@ export const PreviewWeb = ({
     frame?: string;
     content?: string;
     contentContainer?: string;
+    skeleton?: string;
   };
   bridge?: boolean;
 }) => {
@@ -188,7 +189,7 @@ export const PreviewWeb = ({
             </When>
             <div className={cx(classes.content, classNames.content)}>
               <When truthy={loading}>
-                <ContentSkeleton />
+                <ContentSkeleton className={classNames.skeleton} />
               </When>
               <When truthy={!loading}>
                 <ErrorBoundary
@@ -206,7 +207,7 @@ export const PreviewWeb = ({
                     className={cx(classes.frame, classNames.frame)}
                     data-test-id="preview-content"
                   />
-                  {/*    
+                  {/*
               Issue with rendering email without html
               <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
                     <></>

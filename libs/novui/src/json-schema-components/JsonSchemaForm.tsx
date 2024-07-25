@@ -1,25 +1,26 @@
-import React from 'react';
-import { RJSFSchema } from '@rjsf/utils';
+import Form, { FormProps } from '@rjsf/core';
+import { RegistryWidgetsType, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import Form from '@rjsf/core';
-
-import { CheckboxWidget, SelectWidget, InputWidget } from './widgets';
-
-import { AddButton, MoveDownButton, RemoveButton, MoveUpButton } from './templates/IconButton';
+import { splitCssProps } from '../../styled-system/jsx';
+import { JsxStyleProps } from '../../styled-system/types';
+import { css, cx } from '../../styled-system/css';
+import { CoreProps } from '../types';
 import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } from './templates/ArrayFieldTemplate';
+import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templates/IconButton';
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
-import { css } from '../../styled-system/css';
+import { CheckboxWidget, InputWidget, SelectWidget, TextareaWidget } from './widgets';
+import { JSON_SCHEMA_FORM_ID_DELIMITER } from './utils';
 
-const WIDGETS = {
+const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,
   SelectWidget: SelectWidget,
-  TextWidget: InputWidget,
+  TextWidget: TextareaWidget,
   URLWidget: InputWidget,
   EmailWidget: InputWidget,
 };
 
-const UI_SCHEMA = {
-  'ui:globalOptions': { addable: true, copyable: false, label: true, hideError: true, orderable: true },
+const UI_SCHEMA: UiSchema = {
+  'ui:globalOptions': { addable: true, copyable: false, label: true, orderable: true },
   'ui:options': {
     hideError: true,
     submitButtonOptions: {
@@ -27,42 +28,48 @@ const UI_SCHEMA = {
     },
   },
 };
-export const JsonSchemaForm = ({
-  schema,
-  formData,
-  onChange,
-}: {
-  schema: RJSFSchema;
-  formData: any;
-  onChange?: (data: any) => void;
-}) => {
+
+export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
+  CoreProps &
+  Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'>;
+
+/**
+ * Specialized form editor for data passed as JSON.
+ */
+export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TFormData>) {
+  const [cssProps, { className, ...formProps }] = splitCssProps(props);
+
   return (
-    <>
-      <Form
-        tagName={'div'}
-        className={css({
-          '& .control-label': {
+    <Form
+      tagName={'fieldset'}
+      className={cx(
+        css({
+          // default elements to hide
+          '& .control-label, & .field-description': {
             display: 'none',
           },
-          '& .field-description': {
+          // hide raw text errors
+          '& .panel.panel-danger.errors': {
             display: 'none',
           },
-        })}
-        uiSchema={UI_SCHEMA}
-        schema={schema}
-        formData={formData}
-        widgets={WIDGETS}
-        validator={validator}
-        onChange={onChange}
-        liveValidate={true}
-        templates={{
-          ArrayFieldTitleTemplate,
-          ArrayFieldTemplate,
-          ArrayFieldItemTemplate,
-          ObjectFieldTemplate,
-          ButtonTemplates: { MoveDownButton, AddButton, RemoveButton, MoveUpButton },
-        }}
-      />
-    </>
+        }),
+        css(cssProps),
+        className
+      )}
+      uiSchema={UI_SCHEMA}
+      widgets={WIDGETS}
+      validator={validator}
+      autoComplete={'false'}
+      idSeparator={JSON_SCHEMA_FORM_ID_DELIMITER}
+      liveValidate
+      templates={{
+        ArrayFieldTitleTemplate,
+        ArrayFieldTemplate,
+        ArrayFieldItemTemplate,
+        ObjectFieldTemplate,
+        ButtonTemplates: { MoveDownButton, AddButton, RemoveButton, MoveUpButton },
+      }}
+      {...formProps}
+    />
   );
-};
+}

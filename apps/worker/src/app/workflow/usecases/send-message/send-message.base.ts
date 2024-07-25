@@ -1,4 +1,4 @@
-import * as i18next from 'i18next';
+import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { format } from 'date-fns';
@@ -9,6 +9,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IMessageTemplate,
+  ITenantDefine,
+  ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -42,10 +44,19 @@ export abstract class SendMessageBase extends SendMessageType {
     super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
-  protected async getIntegration(
-    selectIntegrationCommand: SelectIntegrationCommand
-  ): Promise<IntegrationEntity | undefined> {
-    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+  protected async getIntegration(params: {
+    id?: string;
+    providerId?: ProvidersIdEnum;
+    identifier?: string;
+    organizationId: string;
+    environmentId: string;
+    channelType: ChannelTypeEnum;
+    userId: string;
+    filterData: {
+      tenant: ITenantDefine | undefined;
+    };
+  }): Promise<IntegrationEntity | undefined> {
+    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
     if (!integration) {
       return;
@@ -57,7 +68,7 @@ export abstract class SendMessageBase extends SendMessageType {
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,
-        userId: selectIntegrationCommand.userId,
+        userId: params.userId,
       });
     }
 
@@ -149,8 +160,7 @@ export abstract class SendMessageBase extends SendMessageType {
           organizationId
         );
 
-        const instance = i18next.createInstance();
-        await instance.init({
+        const instance = i18next.createInstance({
           resources,
           ns: namespaces,
           defaultNS: false,
@@ -169,6 +179,8 @@ export abstract class SendMessageBase extends SendMessageType {
             },
           },
         });
+
+        await instance.init();
 
         return instance;
       }

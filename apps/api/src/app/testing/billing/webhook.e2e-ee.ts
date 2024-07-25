@@ -1,4 +1,4 @@
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
@@ -194,6 +194,7 @@ describe('Stripe webhooks', () => {
     let verifyCustomerStub: sinon.SinonStub;
     const organizationRepositoryStub = {
       update: sinon.stub().resolves({ matched: 1, modified: 1 }),
+      updateServiceLevel: sinon.stub().resolves({ matched: 1, modified: 1 }),
     };
     const analyticsServiceStub = {
       track: sinon.stub(),
@@ -300,7 +301,7 @@ describe('Stripe webhooks', () => {
     });
 
     afterEach(() => {
-      organizationRepositoryStub.update.reset();
+      organizationRepositoryStub.updateServiceLevel.reset();
     });
 
     const createHandler = () => {
@@ -338,12 +339,8 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(
-        organizationRepositoryStub.update.calledWith(
-          { _id: 'organization_id' },
-          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
-        )
-      ).to.be.true;
+      expect(organizationRepositoryStub.updateServiceLevel.calledWith('organization_id', ApiServiceLevelEnum.BUSINESS))
+        .to.be.true;
     });
 
     it('should exit early with unknown organization', async () => {
@@ -375,7 +372,7 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.update.called).to.be.false;
+      expect(organizationRepositoryStub.updateServiceLevel.called).to.be.false;
     });
 
     it('should handle event with known organization and licensed subscription', async () => {
@@ -412,12 +409,8 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(
-        organizationRepositoryStub.update.calledWith(
-          { _id: 'organization_id' },
-          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
-        )
-      ).to.be.true;
+      expect(organizationRepositoryStub.updateServiceLevel.calledWith('organization_id', ApiServiceLevelEnum.BUSINESS))
+        .to.be.true;
     });
 
     it('should invalidate the subscription cache with known organization and licensed subscription', async () => {
@@ -491,12 +484,8 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(
-        organizationRepositoryStub.update.calledWith(
-          { _id: 'organization_id' },
-          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
-        )
-      ).to.be.true;
+      expect(organizationRepositoryStub.updateServiceLevel.calledWith('organization_id', ApiServiceLevelEnum.BUSINESS))
+        .to.be.true;
     });
 
     it('should exit early with known organization and invalid apiServiceLevel', async () => {
@@ -570,7 +559,7 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.update.called).to.be.false;
+      expect(organizationRepositoryStub.updateServiceLevel.called).to.be.false;
     });
   });
 });

@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 import { BurstSmsProvider } from '@novu/providers';
 
 export class BurstSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('burst-sms', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.BurstSms, ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     this.provider = new BurstSmsProvider({

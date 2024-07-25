@@ -5,33 +5,11 @@ import {
   MessageTemplateDto,
   ProvidersIdEnum,
   StepTypeEnum,
+  TriggerTypeEnum,
 } from '@novu/shared';
 import { StepFilter } from '@novu/dal';
 
-class ActivityNotificationStepTemplateResponseDto {
-  @ApiProperty()
-  _id: string;
-
-  @ApiProperty()
-  active: boolean;
-
-  @ApiPropertyOptional()
-  content?: Record<string, unknown>[];
-
-  @ApiPropertyOptional()
-  contentType?: string;
-
-  @ApiPropertyOptional()
-  name?: string;
-
-  @ApiPropertyOptional()
-  subject?: string;
-
-  @ApiProperty()
-  type: StepTypeEnum;
-}
-
-class ActivityNotificationStepResponseDto {
+export class ActivityNotificationStepResponseDto {
   @ApiProperty()
   _id: string;
 
@@ -45,7 +23,7 @@ class ActivityNotificationStepResponseDto {
   template?: MessageTemplateDto;
 }
 
-class ActivityNotificationExecutionDetailResponseDto {
+export class ActivityNotificationExecutionDetailResponseDto {
   @ApiProperty()
   _id: string;
 
@@ -78,7 +56,7 @@ class ActivityNotificationExecutionDetailResponseDto {
   source: ExecutionDetailsSourceEnum;
 }
 
-class ActivityNotificationJobResponseDto {
+export class ActivityNotificationJobResponseDto {
   @ApiProperty()
   _id: string;
 
@@ -104,7 +82,7 @@ class ActivityNotificationJobResponseDto {
   status: string;
 }
 
-class ActivityNotificationSubscriberResponseDto {
+export class ActivityNotificationSubscriberResponseDto {
   @ApiPropertyOptional()
   firstName?: string;
 
@@ -121,13 +99,15 @@ class ActivityNotificationSubscriberResponseDto {
   phone?: string;
 }
 
-class NotificationTriggerVariable {
+export class NotificationTriggerVariable {
   name: string;
 }
 
-class NotificationTrigger {
-  @ApiProperty()
-  type: 'event';
+export class NotificationTrigger {
+  @ApiProperty({
+    enum: TriggerTypeEnum,
+  })
+  type: TriggerTypeEnum;
 
   @ApiProperty()
   identifier: string;

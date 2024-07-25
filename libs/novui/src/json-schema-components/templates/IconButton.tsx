@@ -1,48 +1,40 @@
-import React from 'react';
 import { IconButtonProps } from '@rjsf/utils';
-import { ActionIcon } from '@mantine/core';
-import {
-  IconArrowDownward,
-  IconArrowUpward,
-  IconLocalHospital,
-  IconOutlineDeleteOutline,
-} from '../../icons/icon-registry';
+import { css, cx } from '../../../styled-system/css';
+import { Button, IconButton } from '../../components';
+import { IconAdd, IconArrowDownward, IconArrowUpward, IconOutlineDeleteOutline } from '../../icons/icon-registry';
 
-export function RemoveButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
+type Props = Omit<IconButtonProps, 'color' | 'translate' | 'iconType' | 'icon'>;
 
-  return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconOutlineDeleteOutline title={'Remove'} />
-    </ActionIcon>
-  );
+export function RemoveButton(props: Props) {
+  return <IconButton {...props} Icon={IconOutlineDeleteOutline} title="remove" />;
 }
 
-export function MoveUpButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
-
-  return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconArrowUpward title={'Move up'} />
-    </ActionIcon>
-  );
-}
-export function AddButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
-
-  return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconLocalHospital title={'Add item'} />
-    </ActionIcon>
-  );
+export function MoveUpButton(props: Props) {
+  return <IconButton {...props} Icon={IconArrowUpward} title="move-up" />;
 }
 
-export function MoveDownButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
+export function MoveDownButton(props: Props) {
+  return <IconButton {...props} Icon={IconArrowDownward} title="move-down" />;
+}
 
+export function AddButton({ className, ...props }: Props) {
   return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconArrowDownward title={'Move down'} />
-    </ActionIcon>
+    <Button
+      {...props}
+      variant={'transparent'}
+      size="md"
+      Icon={IconAdd}
+      className={cx(
+        css({
+          '& span': {
+            color: 'typography.text.main',
+            WebkitTextFillColor: 'unset',
+          },
+        }),
+        className
+      )}
+    >
+      Add item
+    </Button>
   );
 }

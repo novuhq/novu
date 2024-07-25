@@ -1,3 +1,3 @@
-import { type IBridgeWorkflow } from '../../../studio.types';
+import { type IBridgeWorkflow } from '../../../types';
 
 export type WorkflowTableRow = IBridgeWorkflow;

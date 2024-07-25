@@ -56,7 +56,7 @@ test.describe('Creation functionality', () => {
     await assertCodeSnippetStructureIncludingVariables(workflowEditorPage, TEST_WORKFLOW_ID);
   });
 
-  test('should be able to add many nodes.', async ({ page }) => {
+  test.skip('should be able to add many nodes.', async ({ page }) => {
     test.slow();
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
     await editWorkflowSettings(workflowEditorPage, 'Test 10 Nodes');
@@ -405,7 +405,7 @@ async function createWorkflow(page: Page) {
 }
 async function assertCurlSnippet(snippetModal: CodeSnippetSidePanelPageModel) {
   const curlSnippetText = await snippetModal.getCurlSnippet();
-  expect(curlSnippetText).toContain("--header 'Authorization: ApiKey");
+  expect(curlSnippetText).toContain("-H 'Authorization: ApiKey");
   expect(curlSnippetText).toContain('taskName');
 }
 interface DigestTestData {

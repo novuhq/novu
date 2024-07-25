@@ -11,6 +11,14 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
       type: 'color',
     },
+    panelSection: {
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    panelSubsection: {
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
+      type: 'color',
+    },
     popover: {
       value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B20}' },
       type: 'color',
@@ -185,25 +193,49 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  codeBlock: {
+    surface: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    text: {
+      value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.white}' },
+      type: 'color',
+    },
+  },
+  loader: {
+    overlay: {
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
+      type: 'color',
+    },
+  },
   // color palette semantic testing
   mode: {
     cloud: {
       start: {
-        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
+        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
+        type: 'color',
+      },
+      middle: {
+        value: { base: '{colors.legacy.gradientMiddle}', _dark: '{colors.legacy.gradientMiddle}' },
         type: 'color',
       },
       end: {
-        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
+        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
         type: 'color',
       },
     },
     local: {
       start: {
-        value: { base: '{colors.green.30.light}', _dark: '{colors.green.30.dark}' },
+        value: { base: '{colors.green.30.light}', _dark: '{colors.green.50.dark}' },
+        type: 'color',
+      },
+      middle: {
+        value: { base: '{colors.green.40.light}', _dark: '{colors.green.40.dark}' },
         type: 'color',
       },
       end: {
-        value: { base: '{colors.green.50.light}', _dark: '{colors.green.50.dark}' },
+        value: { base: '{colors.green.50.light}', _dark: '{colors.green.30.dark}' },
         type: 'color',
       },
     },

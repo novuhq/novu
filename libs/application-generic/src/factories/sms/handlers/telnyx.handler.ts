@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { TelnyxSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class TelnyxHandler extends BaseSmsHandler {
   constructor() {
-    super('telnyx', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Telnyx, ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

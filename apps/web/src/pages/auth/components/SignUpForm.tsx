@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
@@ -9,11 +9,13 @@ import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/desi
 
 import { useAuth } from '../../../hooks/useAuth';
 import { api } from '../../../api/api.client';
-import { useVercelParams } from '../../../hooks';
+import { useRedirectURL, useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { ROUTES } from '../../../constants/routes';
 import { OAuth } from './OAuth';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useStudioState } from '../../../studio/hooks';
 
 type SignUpFormProps = {
   invitationToken?: string;
@@ -28,11 +30,17 @@ export type SignUpFormInputType = {
 
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
+  const { setRedirectURL } = useRedirectURL();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setRedirectURL(), []);
+  const location = useLocation();
 
   const { login } = useAuth();
   const { isLoading: isAcceptInviteLoading, acceptInvite } = useAcceptInvite();
   const { params, isFromVercel } = useVercelParams();
   const loginLink = isFromVercel ? `${ROUTES.AUTH_LOGIN}?${params.toString()}` : ROUTES.AUTH_LOGIN;
+  const segment = useSegment();
+  const state = useStudioState();
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -46,17 +54,26 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   >((data) => api.post('/v1/auth/register', data));
 
   const onSubmit = async (data) => {
+    const parsedSearchParams = new URLSearchParams(location.search);
+    const origin = parsedSearchParams.get('origin');
+    const anonymousId = parsedSearchParams.get('anonymous_id');
+
     const [firstName, lastName] = data?.fullName.trim().split(' ');
     const itemData = {
       firstName,
       lastName,
       email: data.email,
       password: data.password,
+      origin: origin,
     };
 
     const response = await mutateAsync(itemData);
     const token = (response as any).token;
     await login(token);
+
+    if (state?.anonymousId && anonymousId) {
+      segment.alias(anonymousId, (response as any).user?.id);
+    }
 
     if (invitationToken) {
       const updatedToken = await acceptInvite(invitationToken);
@@ -65,7 +82,11 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       }
       navigate(ROUTES.AUTH_APPLICATION);
     } else {
-      navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
+      navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION, {
+        state: {
+          origin,
+        },
+      });
     }
   };
 

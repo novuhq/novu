@@ -29,7 +29,7 @@ export enum ViewEnum {
   EDIT = 'Edit',
   PREVIEW = 'Preview',
   CODE = 'Code',
-  INPUTS = 'Inputs',
+  CONTROLS = 'Controls',
   TEST = 'Test',
 }
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];
@@ -37,7 +37,7 @@ const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'sende
 export function EmailMessagesCards() {
   const { currentOrganization } = useAuth();
   const { template } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvironment({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({ bridge: template?.bridge });
   const [view, setView] = useState<ViewEnum>(bridge ? ViewEnum.PREVIEW : ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();

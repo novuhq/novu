@@ -40,7 +40,6 @@ export class InitializeSession {
       SelectIntegrationCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
-        userId: command.subscriberId,
         channelType: ChannelTypeEnum.IN_APP,
         providerId: InAppProviderIdEnum.Novu,
         filterData: {},

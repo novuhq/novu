@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import { MarkMessagesAsEnum, WebSocketEventEnum } from '@novu/shared';
+import { MessagesStatusEnum, WebSocketEventEnum } from '@novu/shared';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -66,7 +66,7 @@ export class MarkMessageAsByMark {
     return messages;
   }
 
-  private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MarkMessagesAsEnum) {
+  private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MessagesStatusEnum) {
     this.updateSocketCount(subscriber, markAs);
     const analyticMessage =
       command.__source === 'notification_center'
@@ -82,7 +82,7 @@ export class MarkMessageAsByMark {
     }
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, markAs: MarkMessagesAsEnum) {
+  private updateSocketCount(subscriber: SubscriberEntity, markAs: MessagesStatusEnum) {
     const eventMessage = mapMarkMessageToWebSocketEvent(markAs);
 
     if (eventMessage === undefined) {

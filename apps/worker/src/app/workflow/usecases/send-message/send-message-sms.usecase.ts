@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
+import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -22,6 +22,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
+import { SmsOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -70,7 +71,7 @@ export class SendMessageSms extends SendMessageBase {
       },
     });
 
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       message: 'Sending SMS',
     });
 
@@ -80,7 +81,7 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    const i18nextInstance = await this.initiateTranslations(
+    const i18nInstance = await this.initiateTranslations(
       command.environmentId,
       command.organizationId,
       subscriber.locale
@@ -90,8 +91,8 @@ export class SendMessageSms extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeBody = command.bridgeData?.outputs.body;
-    let content: string = bridgeBody || '';
+    const bridgeOutput = command.bridgeData?.outputs as SmsOutput | undefined;
+    let content: string = bridgeOutput?.body || '';
 
     try {
       if (!command.bridgeData) {
@@ -99,7 +100,8 @@ export class SendMessageSms extends SendMessageBase {
           CompileTemplateCommand.create({
             template: step.template.content as string,
             data: this.getCompilePayload(command.compileContext),
-          })
+          }),
+          i18nInstance
         );
 
         if (!content) {
@@ -162,6 +164,7 @@ export class SendMessageSms extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.executionLogRoute.execute(

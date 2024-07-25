@@ -9,7 +9,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, MarkMessagesAsEnum } from '@novu/shared';
+import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
 
 const axiosInstance = axios.create();
 
@@ -48,7 +48,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
   });
 
   it('should change the seen status', async function () {
-    await markAs(session.apiKey, message._id, MarkMessagesAsEnum.SEEN, subscriberId);
+    await markAs(session.apiKey, message._id, MessagesStatusEnum.SEEN, subscriberId);
 
     const updatedMessage = await getMessage(session, messageRepository, subscriber);
 
@@ -59,7 +59,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
   });
 
   it('should change the read status', async function () {
-    await markAs(session.apiKey, message._id, MarkMessagesAsEnum.READ, subscriberId);
+    await markAs(session.apiKey, message._id, MessagesStatusEnum.READ, subscriberId);
 
     const updatedMessage = await getMessage(session, messageRepository, subscriber);
 
@@ -71,7 +71,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
 
   it('should change the seen status to unseen', async function () {
     // simulate user seen
-    await markAs(session.apiKey, message._id, MarkMessagesAsEnum.SEEN, subscriberId);
+    await markAs(session.apiKey, message._id, MessagesStatusEnum.SEEN, subscriberId);
 
     const seenMessage = await getMessage(session, messageRepository, subscriber);
     expect(seenMessage.seen).to.equal(true);
@@ -79,7 +79,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
     expect(seenMessage.lastSeenDate).to.be.ok;
     expect(seenMessage.lastReadDate).to.be.not.ok;
 
-    await markAs(session.apiKey, message._id, MarkMessagesAsEnum.UNSEEN, subscriberId);
+    await markAs(session.apiKey, message._id, MessagesStatusEnum.UNSEEN, subscriberId);
 
     const updatedMessage = await getMessage(session, messageRepository, subscriber);
     expect(updatedMessage.seen).to.equal(false);
@@ -90,7 +90,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
 
   it('should change the read status to unread', async function () {
     // simulate user read
-    await markAs(session.apiKey, message._id, MarkMessagesAsEnum.READ, subscriberId);
+    await markAs(session.apiKey, message._id, MessagesStatusEnum.READ, subscriberId);
 
     const readMessage = await getMessage(session, messageRepository, subscriber);
     expect(readMessage.seen).to.equal(true);
@@ -98,7 +98,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
     expect(readMessage.lastSeenDate).to.be.ok;
     expect(readMessage.lastReadDate).to.be.ok;
 
-    await markAs(session.apiKey, message._id, MarkMessagesAsEnum.UNREAD, subscriberId);
+    await markAs(session.apiKey, message._id, MessagesStatusEnum.UNREAD, subscriberId);
     const updateMessage = await getMessage(session, messageRepository, subscriber);
     expect(updateMessage.seen).to.equal(true);
     expect(updateMessage.read).to.equal(false);
@@ -110,7 +110,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
     const failureMessage = 'should not reach here, should throw error';
 
     try {
-      await markAs(session.apiKey, undefined, MarkMessagesAsEnum.SEEN, subscriberId);
+      await markAs(session.apiKey, undefined, MessagesStatusEnum.SEEN, subscriberId);
 
       expect.fail(failureMessage);
     } catch (e) {
@@ -123,7 +123,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST)', async () => {
     }
 
     try {
-      await markAs(session.apiKey, [], MarkMessagesAsEnum.SEEN, subscriberId);
+      await markAs(session.apiKey, [], MessagesStatusEnum.SEEN, subscriberId);
 
       expect.fail(failureMessage);
     } catch (e) {
@@ -159,7 +159,7 @@ async function getMessage(
 async function markAs(
   apiKey: string,
   messageIds: string | string[] | undefined,
-  mark: MarkMessagesAsEnum,
+  mark: MessagesStatusEnum,
   subscriberId: string
 ) {
   return await axiosInstance.post(

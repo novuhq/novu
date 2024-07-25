@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
 import { JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
-import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
-import { getNotification } from '../../api/activity';
+import { useNotification } from '../../hooks/useNovuAPI';
 import { colors, shadows, Text, Title } from '@novu/design-system';
 import { When } from '../utils/When';
 import { useNotificationStatus } from '../../pages/activities/hooks/useNotificationStatus';
@@ -23,14 +21,10 @@ export function ExecutionDetailsModal({
 }) {
   const theme = useMantineTheme();
   const [shouldRefetch, setShouldRefetch] = useState(true);
-  const { data: response, isInitialLoading } = useQuery(
-    ['activity', notificationId],
-    () => getNotification(notificationId),
-    {
-      enabled: !!notificationId,
-      refetchInterval: shouldRefetch ? 1000 : false,
-    }
-  );
+  const { data: response, isInitialLoading } = useNotification(notificationId, {
+    enabled: !!notificationId,
+    refetchInterval: shouldRefetch ? 1000 : false,
+  });
 
   const status = useNotificationStatus(response?.data);
 
@@ -48,6 +42,7 @@ export function ExecutionDetailsModal({
     _digestedNotificationId: digestedNotificationId,
     to: subscriberVariables,
     template,
+    bridge,
   } = response?.data || {};
   const { triggers } = template || {};
   const identifier = triggers ? triggers[0]?.identifier : undefined;
@@ -67,7 +62,7 @@ export function ExecutionDetailsModal({
           paddingInline: '8px',
         },
       }}
-      title={<Title size={2}>Execution Details for {template?.name ?? ''}</Title>}
+      title={<Title size={2}>Execution Details for {template?.name || bridge?.workflow?.workflowId || ''}</Title>}
       sx={{ backdropFilter: 'blur(10px)' }}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
@@ -104,7 +99,6 @@ export function ExecutionDetailsModal({
           </Center>
         </When>
       </When>
-      <ExecutionDetailsFooter />
     </Modal>
   );
 }

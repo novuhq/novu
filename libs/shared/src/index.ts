@@ -1,6 +1,7 @@
 export * from './config';
 export * from './consts';
 export * from './dto';
+export * from './entities/apiKeys';
 export * from './entities/change';
 export * from './entities/environment';
 export * from './entities/execution-details';

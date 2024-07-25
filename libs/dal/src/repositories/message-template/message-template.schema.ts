@@ -1,7 +1,7 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { ActorTypeEnum } from '@novu/shared';
-import * as mongooseDelete from 'mongoose-delete';
+const mongooseDelete = require('mongoose-delete');
 
 import { schemaOptions } from '../schema-default.options';
 import { MessageTemplateDBModel } from './message-template.entity';
@@ -80,6 +80,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       data: Schema.Types.Mixed,
     },
     inputs: { schema: Schema.Types.Mixed },
+    controls: { schema: Schema.Types.Mixed },
     output: { schema: Schema.Types.Mixed },
     code: Schema.Types.String,
   },

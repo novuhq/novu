@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -7,7 +8,7 @@ import {
 import axios from 'axios';
 
 export class KannelSmsProvider implements ISmsProvider {
-  id = 'kannel';
+  id = SmsProviderIdEnum.Kannel;
   apiBaseUrl: string;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 

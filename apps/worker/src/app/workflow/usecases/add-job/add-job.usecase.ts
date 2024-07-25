@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
-import { ModuleRef } from '@nestjs/core';
 
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
@@ -15,7 +14,7 @@ import {
   IWorkflowStepMetadata,
   StepTypeEnum,
 } from '@novu/shared';
-import { DigestOutput } from '@novu/framework';
+import { DigestOutput, ExecuteOutput } from '@novu/framework';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -25,12 +24,9 @@ import {
   ExecutionLogRouteCommand,
   IFilterVariables,
   InstrumentUsecase,
-  IUseCaseInterfaceInline,
   JobsOptions,
   LogDecorator,
-  requireInject,
   StandardQueueService,
-  ExecuteOutput,
   NormalizeVariablesCommand,
   NormalizeVariables,
   getDigestType,
@@ -44,6 +40,7 @@ import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
 import { validateDigest } from './validation';
+import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -53,8 +50,6 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private resonateUsecase: IUseCaseInterfaceInline;
-
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
@@ -68,10 +63,8 @@ export class AddJob {
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private moduleRef: ModuleRef
-  ) {
-    this.resonateUsecase = requireInject('resonate', this.moduleRef);
-  }
+    private executeBridgeJob: ExecuteBridgeJob
+  ) {}
 
   @InstrumentUsecase()
   @LogDecorator()
@@ -149,7 +142,7 @@ export class AddJob {
     }
 
     if (job.type === StepTypeEnum.DELAY) {
-      delayAmount = await this.handleDelay(command, filterVariables, delayAmount);
+      delayAmount = await this.handleDelay(command, filterVariables);
 
       if (delayAmount === undefined) {
         Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
@@ -176,47 +169,62 @@ export class AddJob {
     await this.queueJob(job, 0);
   }
 
-  private async handleDelay(
-    command: AddJobCommand,
-    filterVariables: IFilterVariables,
-    delayAmount: number | undefined
-  ) {
-    await this.fetchResonateData(command, filterVariables);
-    delayAmount = await this.addDelayJob.execute(command);
+  private async handleDelay(command: AddJobCommand, filterVariables: IFilterVariables) {
+    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
+
+    let metadata: IWorkflowStepMetadata;
+    if (bridgeResponse) {
+      // Assign V2 metadata from Bridge response
+      metadata = await this.updateMetadata(bridgeResponse, command);
+    } else {
+      // Assign V1 metadata from known values
+      metadata = command.job.step.metadata as IWorkflowStepMetadata;
+    }
+
+    const delayAmount = await this.addDelayJob.execute(
+      AddJobCommand.create({
+        ...command,
+        job: {
+          ...command.job,
+          step: {
+            ...command.job.step,
+            metadata,
+          },
+        },
+      })
+    );
 
     Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
 
     return delayAmount;
   }
 
-  private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
-    const response = await this.resonateUsecase.execute<
-      AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<DigestOutput> | null
-    >({
-      ...command,
-      variables: filterVariables,
-    });
+  private async fetchBridgeData(
+    command: AddJobCommand,
+    filterVariables: IFilterVariables
+  ): Promise<ExecuteOutput | null> {
+    const response = await this.executeBridgeJob.execute(
+      ExecuteBridgeJobCommand.create({
+        identifier: command.job.identifier,
+        ...command,
+        variables: filterVariables,
+      })
+    );
 
     if (!response) {
       return null;
     }
 
-    const job = await this.updateJob(response, command);
-
-    // Update the job digest directly to avoid an extra database call
-    command.job.digest = { ...command.job.digest, ...job } as IWorkflowStepMetadata;
-
     return response;
   }
 
-  private async updateJob(response: ExecuteOutput<DigestOutput>, command: AddJobCommand) {
-    let job = {} as IWorkflowStepMetadata;
-    const outputs = response.outputs;
-    const digestType = getDigestType(response.outputs);
+  private async updateMetadata(response: ExecuteOutput, command: AddJobCommand) {
+    let metadata = {} as IWorkflowStepMetadata;
+    const outputs = response.outputs as DigestOutput;
+    const digestType = getDigestType(outputs);
 
     if (isTimedDigestOutput(outputs)) {
-      job = {
+      metadata = {
         type: DigestTypeEnum.TIMED,
         digestKey: outputs?.digestKey,
         timed: { cronExpression: outputs?.cron },
@@ -229,18 +237,18 @@ export class AddJob {
         },
         {
           $set: {
-            'digest.type': job.type,
-            'digest.digestKey': job.digestKey,
-            'digest.amount': job.amount,
-            'digest.unit': job.unit,
-            'digest.timed.cronExpression': job.timed?.cronExpression,
+            'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
+            'digest.amount': metadata.amount,
+            'digest.unit': metadata.unit,
+            'digest.timed.cronExpression': metadata.timed?.cronExpression,
           },
         }
       );
     }
 
     if (isLookBackDigestOutput(outputs)) {
-      job = {
+      metadata = {
         type: digestType,
         amount: outputs?.amount,
         digestKey: outputs?.digestKey,
@@ -257,20 +265,20 @@ export class AddJob {
         },
         {
           $set: {
-            'digest.type': job.type,
-            'digest.digestKey': job.digestKey,
-            'digest.amount': job.amount,
-            'digest.unit': job.unit,
-            'digest.backoff': job.backoff,
-            'digest.backoffAmount': job.backoffAmount,
-            'digest.backoffUnit': job.backoffUnit,
+            'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
+            'digest.amount': metadata.amount,
+            'digest.unit': metadata.unit,
+            'digest.backoff': metadata.backoff,
+            'digest.backoffAmount': metadata.backoffAmount,
+            'digest.backoffUnit': metadata.backoffUnit,
           },
         }
       );
     }
 
     if (isRegularDigestOutput(outputs)) {
-      job = {
+      metadata = {
         type: digestType,
         amount: outputs?.amount,
         digestKey: outputs?.digestKey,
@@ -284,16 +292,16 @@ export class AddJob {
         },
         {
           $set: {
-            'digest.type': job.type,
-            'digest.digestKey': job.digestKey,
-            'digest.amount': job.amount,
-            'digest.unit': job.unit,
+            'digest.type': metadata.type,
+            'digest.digestKey': metadata.digestKey,
+            'digest.amount': metadata.amount,
+            'digest.unit': metadata.unit,
           },
         }
       );
     }
 
-    return job;
+    return metadata;
   }
 
   private async handleDigest(
@@ -303,16 +311,26 @@ export class AddJob {
     digestAmount: number | undefined,
     filtered: boolean
   ) {
-    const resonateResponse = await this.fetchResonateData(command, filterVariables);
+    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
 
-    const bridgeAmount = this.mapBridgeTimedDigestAmount(resonateResponse);
+    let metadata: IWorkflowStepMetadata;
+    if (bridgeResponse) {
+      metadata = await this.updateMetadata(bridgeResponse, command);
+    } else {
+      metadata = job.digest;
+    }
+
+    // Update the job digest directly to avoid an extra database call
+    command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
+
+    const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse);
 
     validateDigest(job);
 
     digestAmount =
       bridgeAmount ??
       this.computeJobWaitDurationService.calculateDelay({
-        stepMetadata: job.digest,
+        stepMetadata: metadata,
         payload: job.payload,
         overrides: job.overrides,
       });
@@ -337,9 +355,9 @@ export class AddJob {
     return { digestAmount, digestCreationResult };
   }
 
-  private mapBridgeTimedDigestAmount(resonateResponse: ExecuteOutput<DigestOutput> | null): number | null {
+  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput | null): number | null {
     let bridgeAmount: number | null = null;
-    const outputs = resonateResponse?.outputs;
+    const outputs = bridgeResponse?.outputs as DigestOutput;
 
     if (!isTimedDigestOutput(outputs)) {
       return null;

@@ -6,8 +6,9 @@ import {
 } from '@novu/stateless';
 
 import { Client, ApiController } from '@bandwidth/messaging';
+import { SmsProviderIdEnum } from '@novu/shared';
 export class BandwidthSmsProvider implements ISmsProvider {
-  id = 'bandwidth';
+  id = SmsProviderIdEnum.Bandwidth;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public controller: ApiController;
 

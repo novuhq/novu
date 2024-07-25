@@ -22,6 +22,7 @@ COPY --chown=1000:1000 libs/application-generic ./libs/application-generic
 COPY --chown=1000:1000 packages/client ./packages/client
 COPY --chown=1000:1000 packages/stateless ./packages/stateless
 COPY --chown=1000:1000 packages/node ./packages/node
+COPY --chown=1000:1000 packages/framework ./packages/framework
 COPY --chown=1000:1000 packages/providers ./packages/providers
 
 COPY --chown=1000:1000 ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
@@ -38,9 +39,9 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/ws
 
-RUN cp src/.example.env dist/src/.env
-RUN cp src/.env.test dist/src/.env.test
-RUN cp src/.env.development dist/src/.env.development
-RUN cp src/.env.production dist/src/.env.production
+RUN cp src/.example.env dist/.env
+RUN cp src/.env.test dist/.env.test
+RUN cp src/.env.development dist/.env.development
+RUN cp src/.env.production dist/.env.production
 
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+CMD [ "pm2-runtime", "dist/main.js" ]

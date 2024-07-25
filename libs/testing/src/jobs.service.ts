@@ -67,14 +67,23 @@ export class JobsService {
     let runningJobs = 0;
     let totalCount = 0;
 
+    const workflowMatch = templateId
+      ? { _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId }
+      : {};
+    const typeMatch = delay
+      ? {
+          type: {
+            $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
+          },
+        }
+      : {};
+
     do {
       totalCount = (await this.getQueueMetric()).totalCount;
       runningJobs = await this.jobRepository.count({
         _organizationId: organizationId,
-        type: {
-          $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
-        },
-        _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
+        ...typeMatch,
+        ...workflowMatch,
         status: {
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },

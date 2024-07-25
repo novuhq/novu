@@ -25,12 +25,12 @@ class TemplateResponse {
 
 class Overrides {
   @ApiProperty({
-    type: ChannelTypeEnum,
+    enum: ChannelTypeEnum,
     description: 'The channel type which is overridden',
   })
   channel: ChannelTypeEnum;
   @ApiProperty({
-    type: PreferenceOverrideSourceEnum,
+    enum: PreferenceOverrideSourceEnum,
     description: 'The source of overrides',
   })
   source: PreferenceOverrideSourceEnum;

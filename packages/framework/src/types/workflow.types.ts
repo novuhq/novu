@@ -1,33 +1,48 @@
-import { Step } from './step.types';
-import { Subscriber } from './subscriber.types';
+import type { Step } from './step.types';
+import type { Subscriber } from './subscriber.types';
+import type { Prettify } from './util.types';
+import type { Schema } from './schema.types';
 
 /**
- * The input for the workflow function.
+ * The parameters for the workflow function.
  */
-export type ExecuteInput<T_Payload, T_Input> = {
+export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = {
   /** Define a step in your workflow. */
   step: Step;
   /** The payload for the event, provided during trigger. */
   payload: T_Payload;
   /** The subscriber for the event, provided during trigger. */
-  subscriber: Subscriber;
+  subscriber: Prettify<Subscriber>;
   /** The environment the workflow is running in. */
   environment: Record<string, unknown>;
-  /** The inputs for the event. Provided via the UI. */
-  input: T_Input;
+  /**
+   * The controls for the event. Provided via the UI.
+   *
+   * @deprecated Use `controls` instead
+   */
+  input: T_Controls;
+  /** The controls for the event. Provided via the UI. */
+  controls: T_Controls;
 };
 
 /**
  * The function to execute the workflow.
  */
-export type Execute<T_Payload, T_Input> = (event: ExecuteInput<T_Payload, T_Input>) => Promise<void>;
+export type Execute<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = (
+  event: ExecuteInput<T_Payload, T_Controls>
+) => Promise<void>;
 
 /**
  * The options for the workflow.
  */
-export type WorkflowOptions<T_PayloadSchema, T_InputSchema> = {
+export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema extends Schema> = {
   /** The schema for the payload. */
   payloadSchema?: T_PayloadSchema;
-  /** The schema for the inputs. */
-  inputSchema?: T_InputSchema;
+  /**
+   * The schema for the controls.
+   *
+   * @deprecated Use `controlSchema` instead
+   */
+  inputSchema?: T_ControlSchema;
+  controlSchema?: T_ControlSchema;
 };

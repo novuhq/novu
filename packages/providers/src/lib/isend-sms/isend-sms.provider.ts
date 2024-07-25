@@ -1,3 +1,4 @@
+import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -31,7 +32,7 @@ export interface ISendSmsResponse {
 }
 
 export class ISendSmsProvider implements ISmsProvider {
-  id = 'isend-sms';
+  id = SmsProviderIdEnum.ISendSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   protected Instance: AxiosInstance;

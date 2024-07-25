@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   IEmailOptions,
@@ -26,7 +27,7 @@ interface INodemailerConfig {
 }
 
 export class NodemailerProvider implements IEmailProvider {
-  id = 'nodemailer';
+  id = EmailProviderIdEnum.CustomSMTP; // nodemailer
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 

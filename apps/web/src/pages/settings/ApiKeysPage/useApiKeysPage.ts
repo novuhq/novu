@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
-
 import { getApiKeys } from '../../../api/environment';
 import { useEnvironment } from '../../../hooks';
-import { useRegenerateApiKeyModal } from './useRegenerateApiKeyModal';
+import { useRegenerateSecretKeyModal } from './useRegenerateApiKeyModal';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
 
@@ -16,32 +15,32 @@ export const useApiKeysPage = () => {
    * const { env } = useParams<'env'>();
    */
 
-  const clipboardApiKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
+  const clipboardSecretKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentId = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
-  const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const { environment } = useEnvironment();
 
-  const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
-  const environmentId = environment?._id ? environment._id : '';
 
-  const [isApiKeyMasked, setIsApiKeyMasked] = useState<boolean>(true);
+  const { data: secretKeys } = useQuery<{ key: string }[]>(['getApiKeys', environment?._id], getApiKeys);
 
-  const toggleApiKeyVisibility = () => setIsApiKeyMasked((prevHidden) => !prevHidden);
+  const secretKey = secretKeys?.length ? secretKeys[0].key : '';
 
-  const regenerationModalProps = useRegenerateApiKeyModal();
+  const [isSecretKeyMasked, setIsSecretKeyMasked] = useState<boolean>(true);
+
+  const toggleSecretKeyVisibility = () => setIsSecretKeyMasked((prevHidden) => !prevHidden);
+
+  const regenerationModalProps = useRegenerateSecretKeyModal();
 
   return {
-    apiKey,
+    secretKey,
     environmentIdentifier,
-    environmentId,
-    isApiKeyMasked,
-    toggleApiKeyVisibility,
-    clipboardApiKey,
+    environmentId: environment?._id,
+    isSecretKeyMasked,
+    toggleSecretKeyVisibility,
+    clipboardSecretKey,
     clipboardEnvironmentIdentifier,
     clipboardEnvironmentId,
-    pageEnv: environment?.name ?? '',
     regenerationModalProps,
   };
 };

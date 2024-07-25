@@ -12,6 +12,7 @@ describe('App Branding', function () {
           token: session.token,
           subscriberId: session.subscriber.subscriberId,
           count: 5,
+          environmentId: session.environment._id,
         });
       });
   });

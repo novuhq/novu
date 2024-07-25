@@ -46,6 +46,7 @@ import {
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  ExecuteBridgeJob,
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
@@ -73,12 +74,6 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         Logger.log('Importing enterprise billing module', 'EnterpriseImport');
         const activeWorkers = workersToProcess.length ? workersToProcess : Object.values(JobTopicNameEnum);
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
-      }
-
-      if (require('@novu/ee-echo-worker')?.EchoGatewayModule) {
-        Logger.log('Importing enterprise bridge connector module', 'EnterpriseImport');
-
-        modules.push(require('@novu/ee-echo-worker')?.EchoGatewayModule);
       }
     }
   } catch (e) {
@@ -138,6 +133,7 @@ const USE_CASES = [
   CompileInAppTemplate,
   InboundEmailParse,
   ExecutionLogRoute,
+  ExecuteBridgeJob,
 ];
 
 const PROVIDERS: Provider[] = [];

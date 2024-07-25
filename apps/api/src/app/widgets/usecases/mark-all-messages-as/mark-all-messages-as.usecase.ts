@@ -7,7 +7,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
 } from '@novu/application-generic';
-import { ChannelTypeEnum, MarkMessagesAsEnum, WebSocketEventEnum } from '@novu/shared';
+import { ChannelTypeEnum, MessagesStatusEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
 import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';

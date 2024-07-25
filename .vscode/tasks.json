@@ -1,0 +1,239 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "API",
+      "path": "/apps/api",
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "fileLocation": "autoDetect",
+        "owner": "typescript",
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Successfully compiled",
+          "endsPattern": "Started application in NODE_ENV"
+        }
+      },
+      "dependsOn": [
+        "SHARED",
+        "APPLICATION GENERIC",
+        "DAL"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "WORKER",
+      "path": "/apps/worker",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Successfully compiled",
+          "endsPattern": "Started application in NODE_ENV"
+        }
+      },
+      "icon": {
+        "id": "server",
+        "color": "terminal.ansiGreen"
+      },
+      "dependsOn": [
+        "SHARED",
+        "API",
+        "APPLICATION GENERIC",
+        "DAL",
+        "EE - TRANSLATION",
+        "EE - BILLING"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "WEB",
+      "path": "/apps/web",
+      "icon": {
+        "id": "browser",
+        "color": "terminal.ansiGreen"
+      },
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "owner": "typescript",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling...",
+          "endsPattern": "webpack compiled successfully"
+        }
+      },
+      "dependsOn": [
+        "SHARED",
+        "API",
+        "DESIGN SYSTEM",
+        "NOVUI",
+        "NOTIFICATION CENTER"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "SHARED",
+      "path": "/libs/shared",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "APPLICATION GENERIC",
+      "path": "/libs/application-generic",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED",
+        "TESTING",
+        "STATELESS",
+        "NODE",
+        "PROVIDERS"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "DAL",
+      "path": "/libs/dal",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "STATELESS",
+      "path": "/packages/stateless",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "PROVIDERS",
+      "path": "/packages/providers",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED",
+        "STATELESS"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "NODE",
+      "path": "/packages/node",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "TESTING",
+      "path": "/libs/testing",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": [
+        "SHARED"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - TRANSLATION",
+      "path": "/enterprise/packages/translation",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED", "EE - DAL", "EE - SHARED SERVICES"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - BILLING",
+      "path": "/enterprise/packages/billing",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED", "EE - DAL"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - DAL",
+      "path": "/enterprise/packages/dal",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED"]
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "isBackground": true,
+      "label": "EE - SHARED SERVICES",
+      "path": "/enterprise/packages/shared-services",
+      "problemMatcher": "$tsc-watch",
+      "dependsOn": ["SHARED"]
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "DESIGN SYSTEM",
+      "path": "/libs/design-system",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NOVUI",
+      "path": "/libs/novui",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NOTIFICATION CENTER",
+      "path": "/packages/notification-center",
+      "problemMatcher": "$tsc",
+      "dependsOn": [
+        "NC CLIENT",
+        "SHARED"
+      ]
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "label": "NC CLIENT",
+      "path": "/packages/client",
+      "problemMatcher": "$tsc",
+      "dependsOn": [
+        "SHARED"
+      ]
+    }
+  ]
+}
