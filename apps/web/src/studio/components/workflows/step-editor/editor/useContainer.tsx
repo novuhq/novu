@@ -4,18 +4,21 @@ import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
 import { useDiscover, useStudioState } from '../../../../hooks';
 import { BRIDGE_CODE } from './bridge-code.const';
-
-interface RunExpressAppProps {
-  code: string;
-}
+import { ITerminalDimensions } from 'xterm-addon-fit';
 
 const { WebContainer } = require('@webcontainer/api');
 
+export type TerminalHandle = {
+  write: (data: string) => void;
+  fit: () => void;
+  proposeDimensions: () => ITerminalDimensions | undefined;
+};
 export const useContainer = () => {
   const [code, setCode] = useState(BRIDGE_CODE);
+  const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
   const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
-  const terminalRef = useRef<{ write: (data: string) => void }>(null);
+  const terminalRef = useRef<TerminalHandle>(null);
   const studioState = useStudioState() || {};
   const { setBridgeURL } = studioState;
   const { refetch } = useDiscover();
@@ -36,15 +39,13 @@ export const useContainer = () => {
         writeOutput(error);
       }
     })();
-  }, true);
+  }, !webContainer);
 
-  // Responsible to bootstrap and run express app
+  // Responsible to bootstrap and run bridge app
   useEffectOnce(() => {
     (async () => {
       try {
         webContainer.on('server-ready', (port, url) => {
-          writeOutput('\nServer is running on url ' + url);
-          writeOutput('\nServer is running on port ' + port);
           setSandboxBridge({ url, port });
         });
 
@@ -63,13 +64,7 @@ export const useContainer = () => {
         }
 
         async function startDevServer() {
-          const startOutput = await webContainer.spawn('npm', [
-            'run',
-            'start',
-            // '--',
-            // 'NOVU_SECRET_KEY=53c194c99833b63fc9c19d39f015f0e0',
-            // 'NOVU_API_URL=https://crazy-maps-rest.loca.lt',
-          ]);
+          const startOutput = await webContainer.spawn('npm', ['run', 'start']);
 
           startOutput.output.pipeTo(
             new WritableStream({
@@ -87,13 +82,12 @@ export const useContainer = () => {
         await installDependencies();
         await startDevServer();
       } catch (error: any) {
-        writeOutput('\nError server-ready: ' + error.message);
         writeOutput(error);
       }
     })();
   }, !!webContainer);
 
-  // Responsible to run dev server in order to create novu.sh tunnel
+  // Responsible to run dev cli in order to create novu.sh tunnel
   useEffectOnce(async () => {
     async function runDevScript() {
       if (sandboxBridge === null) {
@@ -102,17 +96,7 @@ export const useContainer = () => {
 
       const { url, port } = sandboxBridge;
 
-      const devOutput = await webContainer.spawn('npm', [
-        'run',
-        'dev',
-        '--',
-        '--origin',
-        url,
-        '--port',
-        port,
-        '-d',
-        'http://localhost:4200',
-      ]);
+      const devOutput = await webContainer.spawn('npm', ['run', 'dev', '--', '--origin', url, '--port', port]);
 
       devOutput.output.pipeTo(
         new WritableStream({
@@ -121,6 +105,7 @@ export const useContainer = () => {
               const split = data.split('https');
               const newBridgeTunnelURL = 'https'.trim() + split[1].trim();
               setBridgeURL(newBridgeTunnelURL.trim());
+              setIsBridgeAppLoading(false);
             }
             writeOutput(data);
           },
@@ -150,5 +135,5 @@ export const useContainer = () => {
     return () => clearTimeout(debounceTimeout);
   }, [code, refetch]);
 
-  return { terminalRef, code, setCode };
+  return { terminalRef, code, setCode, isBridgeAppLoading };
 };

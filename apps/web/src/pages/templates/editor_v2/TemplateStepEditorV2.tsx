@@ -7,9 +7,10 @@ import { WorkflowStepEditorControlsPanel } from '../../../studio/components/work
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useWorkflowStepEditor } from './useWorkflowStepEditor';
+import { When } from '../../../components/utils/When';
 
 export const WorkflowsStepEditorPageV2 = (props: {
-  workflowId?: string;
+  // workflowId?: string;
   stepId?: string;
   workflow?: DiscoverWorkflowOutput;
 }) => {
@@ -21,36 +22,43 @@ export const WorkflowsStepEditorPageV2 = (props: {
     error,
     handleTestClick,
     onControlsChange,
-    onControlsSave,
     controls,
     workflow,
-  } = useWorkflowStepEditor(props);
+    isStateless,
+  } = useWorkflowStepEditor(props.stepId);
   const title = step?.stepId;
 
   return (
-    <WorkflowsPageTemplate
-      title={title}
-      icon={<Icon size="32" stepType={step?.type} />}
-      actions={
-        <>
-          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
-            Test workflow
-          </OutlineButton>
-        </>
-      }
-    >
-      <WorkflowsPanelLayout>
-        <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
-        <WorkflowStepEditorControlsPanel
-          isLoadingSave={isSavingControls}
-          onSave={onControlsSave}
-          step={step?.template}
-          workflow={workflow}
-          defaultControls={controls || step?.controls || {}}
-          onChange={onControlsChange}
-        />
-      </WorkflowsPanelLayout>
-    </WorkflowsPageTemplate>
+    <>
+      <WorkflowsPageTemplate
+        title={title}
+        icon={<Icon size="32" stepType={step?.type} />}
+        actions={
+          <When truthy={!isStateless}>
+            <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+              Test workflow
+            </OutlineButton>
+          </When>
+        }
+      >
+        <WorkflowsPanelLayout>
+          <WorkflowStepEditorContentPanel
+            error={error}
+            step={step}
+            preview={preview}
+            isLoadingPreview={loadingPreview}
+            onlyPreviewView={isStateless}
+          />
+          <WorkflowStepEditorControlsPanel
+            isLoadingSave={isSavingControls}
+            step={step?.template}
+            workflow={workflow}
+            defaultControls={controls || step?.controls || {}}
+            onChange={onControlsChange}
+          />
+        </WorkflowsPanelLayout>
+      </WorkflowsPageTemplate>
+    </>
   );
 };
 

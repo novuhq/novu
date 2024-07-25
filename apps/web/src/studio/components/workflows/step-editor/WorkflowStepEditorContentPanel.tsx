@@ -21,6 +21,7 @@ interface IWorkflowStepEditorContentPanelProps {
   isLoadingPreview: boolean;
   error?: any;
   step: any;
+  onlyPreviewView?: boolean;
 }
 
 export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({
@@ -28,7 +29,21 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
   isLoadingPreview,
   error,
   step,
+  onlyPreviewView,
 }) => {
+  if (onlyPreviewView) {
+    return (
+      <VStack className={css({ width: '100%' })}>
+        {error && <ErrorPrettyRender error={error} />}
+        <PreviewStep
+          channel={step?.template?.type || step?.type}
+          preview={preview}
+          loadingPreview={error || isLoadingPreview}
+        />
+      </VStack>
+    );
+  }
+
   const tabs = [
     {
       icon: <IconVisibility />,

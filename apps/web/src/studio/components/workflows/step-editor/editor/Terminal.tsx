@@ -1,43 +1,64 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
-import { Terminal } from 'xterm';
+import { Terminal } from '@xterm/xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 
-export const TerminalComponent = React.forwardRef((_, ref) => {
-  const terminalRef = useRef<HTMLDivElement>(null);
-  const terminalInstance = useRef<Terminal | null>(null);
-  // const fitAddon = useRef(new FitAddon());
+import { TerminalHandle } from './useContainer';
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      write: (data: string) => {
-        terminalInstance.current?.write(data.replace(/\n/g, '\r\n'));
-      },
-    }),
-    []
-  );
+interface TerminalComponentProps {
+  onChange?: (data: string) => void;
+  height?: string;
+}
 
-  useEffect(() => {
-    if (!terminalRef.current) return;
+export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalComponentProps>(
+  ({ onChange, height = '100%' }, ref) => {
+    const terminalRef = useRef<HTMLDivElement>(null);
+    const terminalInstance = useRef<Terminal | null>(null);
+    const fitAddon = useRef(new FitAddon());
 
-    const terminal = new Terminal();
-    // terminal.loadAddon(fitAddon.current);
-    terminal.open(terminalRef.current);
-    // fitAddon.current.fit();
-    terminalInstance.current = terminal;
+    useImperativeHandle(
+      ref,
+      () => ({
+        write: (data: string) => {
+          terminalInstance.current?.write(data.replace(/\n/g, '\r\n'));
+        },
+        fit: () => fitAddon.current.fit(),
+        proposeDimensions: () => fitAddon.current.proposeDimensions(),
+      }),
+      []
+    );
 
-    const handleResize = () => {
-      // fitAddon.current.fit();
-    };
+    useEffect(() => {
+      if (!terminalRef.current) return;
 
-    window.addEventListener('resize', handleResize);
+      const terminal = new Terminal();
+      terminal.loadAddon(fitAddon.current);
+      terminal.open(terminalRef.current);
+      fitAddon.current.fit();
+      terminalInstance.current = terminal;
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      terminal.dispose();
-    };
-  }, []);
+      const handleResize = () => {
+        fitAddon.current.fit();
+      };
 
-  return <div ref={terminalRef} style={{ height: '500px' }} />;
-});
+      // const observer = new MutationObserver(() => {
+      //   handleResize();
+      // });
+
+      window.addEventListener('resize', handleResize);
+      // observer.observe(terminalRef.current, { attributes: true, childList: true, subtree: true });
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        // observer.disconnect();
+        terminal.dispose();
+      };
+    }, []);
+
+    return (
+      <div style={{ display: 'flex' }}>
+        <div ref={terminalRef} />
+      </div>
+    );
+  }
+);

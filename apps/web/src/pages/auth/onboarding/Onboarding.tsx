@@ -1,144 +1,188 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useDisclosure } from '@mantine/hooks';
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
+const { Pane } = Allotment;
 
-import { useColorScheme } from '@novu/design-system';
+import { useColorScheme, Button } from '@novu/design-system';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
-import { IconClose } from '@novu/novui/icons';
+import { IconClose, IconPlayArrow } from '@novu/novui/icons';
 
-import CodeEditor from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
-import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
-import { useDiscover } from '../../../studio/hooks';
-import { WorkflowsStepEditorPageV2 } from '../../templates/editor_v2/TemplateStepEditorV2';
-import { COMPANY_LOGO_TEXT_PATH, COMPANY_LOGO_TEXT_PATH_DARK_TEXT } from '../../../constants/assets';
-import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { ROUTES } from '../../../constants/routes';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
 import { TerminalComponent } from '../../../studio/components/workflows/step-editor/editor/Terminal';
-const { Pane } = Allotment;
+import { CodeEditor } from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
+import { WorkflowFlow } from './WorkflowFlow';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
+import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
+import { successMessage } from '../../../utils/notifications';
+import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 
 export function OnboardingPage() {
+  const [clickedStepId, setClickedStepId] = useState<string>('');
+  const { handleTestClick } = useWorkflowStepEditor(clickedStepId);
+
   return (
     <div
       className={css({
         bg: 'surface.page',
       })}
     >
-      <Header />
-      <Playground />
+      <Header handleTestClick={handleTestClick} />
+      <Playground clickedStepId={clickedStepId} setClickedStepId={setClickedStepId} />
     </div>
   );
 }
 
-function Header() {
-  const track = useTelemetry();
+function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
   const { colorScheme } = useColorScheme();
+  const navigate = useNavigate();
+  const segment = useSegment();
+
+  const handleContinue = () => {
+    navigate(ROUTES.WORKFLOWS);
+    segment.track(OnBoardingAnalyticsEnum.BRIDGE_PLAYGROUND_CONTINUE_CLICK, {
+      // todo implement type [skip | get started]
+      type: 'skip',
+    });
+  };
 
   return (
     <HStack
+      justify={'space-between'}
       className={css({
-        padding: '32px',
+        width: '100%',
+        height: '44px',
+        padding: '8px',
       })}
     >
-      <div className={css({ width: '100%', height: '375' })}>
-        <img
-          // TODO: these assets are not the same dimensions!
-          src={colorScheme === 'dark' ? COMPANY_LOGO_TEXT_PATH : COMPANY_LOGO_TEXT_PATH_DARK_TEXT}
-          className={css({
-            h: '200',
-          })}
-        />
-      </div>
-      <Link
-        to={ROUTES.WORKFLOWS}
-        onClick={() => {
-          track('Skip Onboarding Clicked', { location: 'x-icon' });
-        }}
+      <span
         className={css({
-          position: 'relative',
-          top: '-16px',
-          right: '-16px',
+          color: 'typography.text.secondary',
+          fontFamily: 'SF Pro Text',
+          fontSize: '14px',
+          fontStyle: 'normal',
+          fontWeight: '600',
+          lineHeight: '20px',
         })}
       >
-        <IconClose />
-      </Link>
+        Playground
+      </span>
+      <div>
+        <TriggerActionModal handleTestClick={handleTestClick} />
+        <Button
+          variant="outline"
+          onClick={handleContinue}
+          icon={<IconClose />}
+          iconPosition={'right'}
+          className={css({
+            height: '44px',
+            padding: '8px',
+            color: colorScheme === 'light' ? 'typography.text.primary' : 'typography.text.secondary',
+          })}
+        >
+          Skip
+        </Button>
+      </div>
     </HStack>
   );
 }
 
-function Playground() {
-  const { code, setCode, terminalRef } = useContainer();
+function Playground({
+  clickedStepId,
+  setClickedStepId,
+}: {
+  clickedStepId: string;
+  setClickedStepId: (stepId: string) => void;
+}) {
+  const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
+  const [editorSizes, setEditorSizes] = useState<number[]>([300, 200]);
+  // const [playgroundSizes, setPlaygroundSizes] = useState<number[]>([479, 479]);
 
   return (
-    <div style={{ height: '100vh' }}>
-      <Allotment>
-        <Allotment vertical>
-          <Pane>
-            <CodeEditor code={code} setCode={setCode} />
+    <div
+      className={css({
+        bg: 'surface.page',
+        height: '100vh',
+        '--separator-border': 'transparent',
+      })}
+    >
+      <Allotment
+        // proportionalLayout
+        onChange={(value) => {
+          // eslint-disable-next-line no-console
+          // console.log('playgroundSizes ', value);
+          // setPlaygroundSizes(value);
+        }}
+        // defaultSizes={playgroundSizes}
+      >
+        <Allotment
+          vertical
+          onVisibleChange={
+            // eslint-disable-next-line no-console
+            (visible) => console.log('visible ', visible)
+          }
+          onChange={(value) => {
+            // todo create memo
+            // eslint-disable-next-line no-console
+            console.log('editorSizes ', value);
+            setEditorSizes(value);
+            // console.log((terminalRef?.current as any)?.proposeDimensions.?());
+            console.log((terminalRef?.current as any)?.proposeDimensions());
+            // terminalRef?.current?.fit();
+          }}
+          defaultSizes={editorSizes}
+        >
+          <Pane preferredSize={'70%'}>
+            <div style={{ height: editorSizes?.[0], margin: '10px 10px 0 10px' }}>
+              <CodeEditor code={code} setCode={setCode} />
+            </div>
           </Pane>
-          <Pane>
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Pane preferredSize={'30%'}>
+            <div style={{ height: editorSizes?.[1], margin: '0 10px 10px 10px' }}>
               <TerminalComponent ref={terminalRef} />
             </div>
           </Pane>
         </Allotment>
         <Pane>
-          <WorkflowFlow />
+          <div style={{ height: '100%', margin: '10px 10px 10px 10px' }}>
+            <WorkflowFlow
+              isBridgeAppLoading={isBridgeAppLoading}
+              clickedStepId={clickedStepId}
+              setClickedStepId={setClickedStepId}
+            />
+          </div>
         </Pane>
       </Allotment>
     </div>
   );
 }
 
-export function WorkflowFlow() {
-  const [workflowTab, setWorkflowTab] = useState<'workflow' | 'stepEdit'>('workflow');
-  const [clickedStepId, setClickedStepId] = useState<string | null>(null);
-  const { data: discoverData, isLoading } = useDiscover();
+const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promise<any> }) => {
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
-  // todo add bridge bootstrap as loading indication as well
-  if (isLoading) {
-    return <div style={{ width: '100%' }}> Loading...</div>;
-  }
+  const handleOnRunTestClick = async () => {
+    const res = await handleTestClick();
+    successMessage('Workflow triggered successfully');
+    setTransactionId(res.data.transactionId);
+    openExecutionModal();
+  };
 
-  if (!discoverData?.workflows?.length) {
-    return <div style={{ width: '100%' }}> No workflow exist...</div>;
-  }
-
-  const { workflows } = discoverData;
-  const workflow = workflows[0];
-  const workflowId = workflow?.workflowId as string;
-  const steps =
-    workflow?.steps?.map((item) => {
-      return {
-        stepId: item.stepId,
-        type: item.type,
-      };
-    }) || [];
-
-  if (workflowTab === 'workflow') {
-    return (
-      <div style={{ width: '100%' }}>
-        <WorkflowNodes
-          steps={steps}
-          onStepClick={(step) => {
-            setWorkflowTab('stepEdit');
-            setClickedStepId(step.stepId);
-          }}
-          onTriggerClick={() => {}}
-        />
-      </div>
-    );
-  }
-
-  if (workflowTab === 'stepEdit') {
-    return (
-      <div style={{ width: '100%' }}>
-        <WorkflowsStepEditorPageV2 workflowId={workflowId} stepId={clickedStepId ?? ''} workflow={workflow} />;
-      </div>
-    );
-  }
-
-  return null;
-}
+  return (
+    <>
+      <OutlineButton Icon={IconPlayArrow} onClick={handleOnRunTestClick}>
+        Run a test
+      </OutlineButton>
+      <ExecutionDetailsModalWrapper
+        transactionId={transactionId}
+        isOpen={executionModalOpened}
+        onClose={closeExecutionModal}
+      />
+    </>
+  );
+};

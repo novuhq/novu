@@ -1,41 +1,39 @@
 export const BRIDGE_CODE = `import express from 'express';
-import { Client, workflow } from '@novu/framework';
+import { workflow } from '@novu/framework';
 import { serve } from '@novu/framework/express';
 
-let server;
-let client = new Client({ strictAuthentication: false });
-const newWorkflow = workflow('hello-world', async ({ step, payload }) => {
-    await step.email('send-email', async (controls) => {
+const newWorkflow = workflow(
+  'hello-world',
+  async ({ step, payload }) => {
+    await step.email(
+      'send-email',
+      async (controls) => {
         return {
-            subject: 'This is an email subject ' + controls.name,
-            body: 'Body result ' + payload.name,
+          subject: 'This email is about: ' + controls.emailTopic,
+          body: 'This notification was triggered from ' + payload.notificationSource,
         };
-    }, {
+      },
+      {
         controlSchema: {
-            type: 'object',
-            properties: {
-                name: { type: 'string', default: 'TEST' },
-            },
+          type: 'object',
+          properties: {
+            emailTopic: { type: 'string', default: 'Potato' },
+          },
         },
-    });
-    
-        await step.email('send-email-2', async (controls) => {
-        return {
-            subject: 'This is an email subject ' + controls.name,
-            body: 'Body result ' + payload.name,
-        };
-    }, {
-        controlSchema: {
-            type: 'object',
-            properties: {
-                name: { type: 'string', default: 'TEST' },
-            },
-        },
-    });
-    
-});
-server = express();
+      }
+    );
+  },
+  {
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        notificationSource: { type: 'string', default: 'web' },
+      },
+    },
+  }
+);
+const server = express();
 server.use(express.json());
-server.use(serve({ client: client, workflows: [newWorkflow] }));
+server.use(serve({ workflows: [newWorkflow] }));
 server.listen(9999);
 `;

@@ -12,31 +12,28 @@ import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useAPIKeys } from '../../../hooks';
 import { useTemplateController } from '../components/useTemplateController';
 import type { DiscoverWorkflowOutput } from '@novu/framework';
+import { useDiscover } from '../../../studio/hooks';
 
-export function useWorkflowStepEditor(props: {
-  workflowId?: string;
-  stepId?: string;
-  workflow?: DiscoverWorkflowOutput;
-}) {
+export function useWorkflowStepEditor(stepId?: string) {
+  const [controls, setStepControls] = useState({});
+  const [payload, setPayload] = useState({});
+  const { data: discoverData, isLoading: isDiscoverLoading } = useDiscover();
   const track = useTelemetry();
   const studioState = useStudioState() || {};
   const { apiKey } = useAPIKeys();
   const navigate = useNavigate();
   const { templateId = '', stepId: paramStepId = '' } = useParams<{ templateId: string; stepId: string }>();
-  const workflowIdentifier = props.workflowId || templateId;
+
+  const { workflow, workflowId, steps } = normalizeDiscovery(discoverData);
+  const workflowIdentifier = workflowId || templateId;
   const { template } = useTemplateController(workflowIdentifier);
-
-  const [controls, setStepControls] = useState({});
-  const [payload, setPayload] = useState({});
-
-  const { workflow, stepId } = props;
   const isStateless = !!workflow;
   const currentWorkflow = workflow || template;
   const currentStepId = stepId || paramStepId;
   const workflowName = workflow?.workflowId || template?.name;
   const { testUser, bridgeURL } = studioState;
   let step = (currentWorkflow?.steps as any)?.find((item) => item.stepId === currentStepId);
-  step = step.template ? step : { ...step, template: step };
+  step = step?.template ? step : { ...step, template: step };
 
   const { data: controlVariables, isInitialLoading } = useQuery(
     ['controls', workflowName, currentStepId],
@@ -71,7 +68,8 @@ export function useWorkflowStepEditor(props: {
           Authorization: `ApiKey ${apiKey}`,
         },
       });
-      const response = await res.json();
+
+      return await res.json();
     } else {
       navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { workflowId: workflowIdentifier }));
     }
@@ -126,6 +124,7 @@ export function useWorkflowStepEditor(props: {
   };
 
   return {
+    isStateless,
     step,
     preview,
     loadingPreview,
@@ -139,5 +138,27 @@ export function useWorkflowStepEditor(props: {
     payload,
     setPayload,
     workflow: currentWorkflow,
+    steps,
+    isDiscoverLoading,
   };
+}
+
+function normalizeDiscovery(discoverData: { workflows: DiscoverWorkflowOutput[] } | undefined) {
+  const workflows = discoverData ? discoverData.workflows : null;
+  if (!workflows?.length) {
+    return { workflow: null, workflowId: null, steps: null };
+  }
+
+  const workflow = workflows[0];
+  const workflowId = workflow?.workflowId as string;
+  // todo check if needed
+  const steps =
+    workflow?.steps?.map((item) => {
+      return {
+        stepId: item.stepId,
+        type: item.type,
+      };
+    }) || [];
+
+  return { workflow, workflowId, steps };
 }
