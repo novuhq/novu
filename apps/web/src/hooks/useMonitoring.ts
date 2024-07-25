@@ -9,8 +9,9 @@ export function useMonitoring() {
   const ldClient = useLDClient();
   const segment = useSegment();
 
-  const isNovuUser = currentUser && !currentUser._id.startsWith('user_');
-  const isNovuOrganization = currentOrganization && !currentOrganization._id.startsWith('org_');
+  const isNovuUser = currentUser && currentUser._id && !currentUser._id.startsWith('user_');
+  const isNovuOrganization =
+    currentOrganization && currentOrganization._id && !currentOrganization._id.startsWith('org_');
 
   /*
    * if the identifier present isn't a novu identifier, we don't want to pollute our data with
