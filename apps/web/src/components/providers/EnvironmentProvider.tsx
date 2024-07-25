@@ -1,23 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import {
-  useQuery,
-  useQueryClient,
-  type QueryObserverResult,
-  type RefetchOptions,
-  type RefetchQueryFilters,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 import { QueryKeys } from '../../api/query.keys';
 import { getEnvironments } from '../../api/environment';
-import { createContextAndHook } from './createContextandHook';
+import { createContextAndHook } from './createContextAndHook';
 import { IS_DOCKER_HOSTED } from '../../config/index';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useAuth } from './AuthProvider';
 
 export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
 
-const LOCAL_STORAGE_LAST_ENVIRONMENT_ID = 'novu_last_environment_id';
+const LOCAL_STORAGE_LAST_ENVIRONMENT_ID = 'nv_last_environment_id';
 
 export function saveEnvironmentId(environmentId: string) {
   localStorage.setItem(LOCAL_STORAGE_LAST_ENVIRONMENT_ID, environmentId);
@@ -32,27 +27,26 @@ export function clearEnvironmentId() {
 }
 
 type EnvironmentContextValue = {
-  currentEnvironment?: IEnvironment;
+  currentEnvironment?: IEnvironment | null;
   // @deprecated use currentEnvironment instead;
-  environment?: IEnvironment;
+  environment?: IEnvironment | null;
   environments?: IEnvironment[];
-  refetchEnvironments: <TPageData>(
-    options?: (RefetchOptions & RefetchQueryFilters<TPageData>) | undefined
-  ) => Promise<QueryObserverResult<IEnvironment[], unknown>>;
+  refetchEnvironments: () => Promise<void>;
   switchEnvironment: (params: Partial<{ environmentId: string; redirectUrl: string }>) => Promise<void>;
   switchToDevelopmentEnvironment: (redirectUrl?: string) => Promise<void>;
   switchToProductionEnvironment: (redirectUrl?: string) => Promise<void>;
-  isLoading: boolean;
+  isLoaded: boolean;
   readOnly: boolean;
 };
 
 const [EnvironmentCtx, useEnvironmentCtx] = createContextAndHook<EnvironmentContextValue>('Environment Context');
 
-function selectEnvironment(environments: IEnvironment[] | undefined, selectedEnvironmentId?: string) {
-  let e: IEnvironment | undefined;
+// TODO: Move this logic to the server and use the environments /me endpoint instead
+function selectEnvironment(environments: IEnvironment[] | undefined | null, selectedEnvironmentId?: string) {
+  let e: IEnvironment | undefined | null = null;
 
   if (!environments) {
-    return;
+    return null;
   }
 
   // Find the environment based on the current user's last environment
@@ -78,36 +72,54 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { currentOrganization } = useAuth();
+
+  // Start with a null environment
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(null);
+
+  /*
+   * Loading environments depends on the current organization. Fetching should start only when the current
+   * organization is set and it should happens once, on full page reload, until the cache is invalidated on-demand
+   * or a refetch is triggered manually.
+   */
   const {
     data: environments,
-    isLoading,
+    isInitialLoading,
     refetch: refetchEnvironments,
   } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, currentOrganization?._id], getEnvironments, {
     enabled: !!currentOrganization,
     retry: false,
     staleTime: Infinity,
+    onSuccess(envs) {
+      /*
+       * This is a required hack to ensure that fetching environments, isLoading = false and currentEnvironment
+       * are all set as part of the same rendering cycle.
+       */
+      flushSync(() => setCurrentEnvironment(selectEnvironment(envs, getEnvironmentId())));
+    },
   });
-
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | undefined>(
-    selectEnvironment(environments, getEnvironmentId())
-  );
 
   const switchEnvironment = useCallback(
     async ({ environmentId, redirectUrl }: Partial<{ environmentId: string; redirectUrl: string }> = {}) => {
+      /**
+       * This is for handling the case when the environment is the same, but was updated on the database and re-fetched.
+       * So we want to call this all the time.
+       */
       setCurrentEnvironment(selectEnvironment(environments, environmentId));
+
+      if (currentEnvironment?._id === environmentId) {
+        return;
+      }
 
       /*
        * TODO: Replace this revalidation by moving environment ID or name to the URL.
-       * This call creates an avalanche of HTTP requests as the more you navigate across the app in a
-       * single environment the more invalidations will be triggered on environment switching.
        */
       await queryClient.invalidateQueries();
 
       if (redirectUrl) {
-        await navigate(redirectUrl);
+        navigate(redirectUrl);
       }
     },
-    [queryClient, navigate, setCurrentEnvironment, environments]
+    [queryClient, navigate, setCurrentEnvironment, currentEnvironment, environments]
   );
 
   const switchToProductionEnvironment = useCallback(
@@ -142,23 +154,36 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     [environments, switchEnvironment]
   );
 
+  const reloadEnvironments = async () => {
+    await refetchEnvironments();
+
+    /**
+     * TODO: remove this once the race condition after calling API
+     * request right after login() on same path is resolved
+     */
+    const envs = await getEnvironments();
+    selectEnvironment(envs);
+  };
+
+  /*
+   * This effect ensures that switching takes place every time environments change. The most common usecase
+   * is switching to a new organization
+   */
   useEffect(() => {
-    (async () => {
-      if (environments) {
-        await switchEnvironment({ environmentId: getEnvironmentId() });
-      }
-    })();
-  }, [environments, switchEnvironment]);
+    if (environments) {
+      switchEnvironment({ environmentId: getEnvironmentId() });
+    }
+  }, [currentEnvironment, environments, switchEnvironment]);
 
   const value = {
     currentEnvironment,
     environment: currentEnvironment,
     environments,
-    refetchEnvironments,
+    refetchEnvironments: reloadEnvironments,
     switchEnvironment,
     switchToDevelopmentEnvironment,
     switchToProductionEnvironment,
-    isLoading,
+    isLoaded: !isInitialLoading,
     readOnly: currentEnvironment?._parentId !== undefined,
   };
 

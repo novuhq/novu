@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
 import { API_ROOT } from '../config';
-import { getToken } from '../auth/getToken';
+import { getToken } from '../components/providers/AuthProvider';
 import { getEnvironmentId } from '../components/providers/EnvironmentProvider';
 
 interface IOptions {

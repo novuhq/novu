@@ -1,42 +1,22 @@
 import { createContext } from 'react';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
-import { setUser as sentrySetUser, configureScope as sentryConfigureScope } from '@sentry/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../../constants/routes';
+import { ROUTES } from '../../constants/routes';
 import { useSegment } from './SegmentProvider';
 import { clearEnvironmentId } from './EnvironmentProvider';
-import { getToken } from '../../auth/getToken';
-import { getTokenClaims } from '../../auth/getTokenClaims';
 import { getUser } from '../../api/user';
-import { switchOrganization as apiSwitchOrganization, getOrganizations } from '../../api/organization';
+import { switchOrganization as apiSwitchOrganization, getOrganization } from '../../api/organization';
+import { DEFAULT_AUTH_CONTEXT_VALUE } from './constants';
 import { type AuthContextValue } from './AuthProvider';
+import { useRouteScopes } from '../../hooks/useRouteScopes';
+import { inIframe } from '../../utils/iframe';
 
-// TODO: Add a novu prefix to the local storage key
-export const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
+export const LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
 
-const noop = () => {};
-const asyncNoop = async () => {};
-
-export const CommunityAuthContext = createContext<AuthContextValue>({
-  inPublicRoute: false,
-  inPrivateRoute: false,
-  isLoading: false,
-  currentUser: null,
-  currentOrganization: null,
-  organizations: [],
-  login: asyncNoop,
-  logout: noop,
-  redirectToLogin: noop,
-  redirectToSignUp: noop,
-  switchOrganization: asyncNoop,
-  reloadOrganization: asyncNoop,
-});
-
-CommunityAuthContext.displayName = 'CommunityAuthProvider';
+export const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'nv_auth_token';
 
 function saveToken(token: string | null) {
   if (token) {
@@ -44,45 +24,26 @@ function saveToken(token: string | null) {
   } else {
     localStorage.removeItem(LOCAL_STORAGE_AUTH_TOKEN_KEY);
   }
+  // Clean up legacy token when the next token arrives
+  localStorage.removeItem(LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY);
 }
 
-function inIframe() {
-  try {
-    return window.self !== window.top;
-  } catch (e) {
-    return true;
-  }
+export function getToken() {
+  return (
+    localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY)
+  );
 }
 
-function selectOrganization(organizations: IOrganizationEntity[] | null, selectedOrganizationId?: string) {
-  let org: IOrganizationEntity | null = null;
+export const CommunityAuthContext = createContext<AuthContextValue>(DEFAULT_AUTH_CONTEXT_VALUE);
 
-  if (!organizations) {
-    return null;
-  }
-
-  if (selectedOrganizationId) {
-    org = organizations.find((currOrg) => currOrg._id === selectedOrganizationId) || null;
-  }
-
-  // Or pick the development environment
-  if (!org) {
-    org = organizations[0];
-  }
-
-  return org;
-}
+CommunityAuthContext.displayName = 'CommunityAuthProvider';
 
 export const CommunityAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const ldClient = useLDClient();
+  const location = useLocation();
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const location = useLocation();
-  const inPublicRoute = !!Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
-    location.pathname.startsWith(prefix)
-  );
-  const inPrivateRoute = !inPublicRoute;
+  const { inPrivateRoute } = useRouteScopes();
   const hasToken = !!getToken();
 
   useEffect(() => {
@@ -91,22 +52,26 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     }
   }, [navigate, inPrivateRoute, location]);
 
-  const { data: user = null, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
-    enabled: hasToken,
-    retry: false,
-    staleTime: Infinity,
-    onError: (error: any) => {
-      if (error?.statusCode === HttpStatusCode.Unauthorized) {
-        logout();
-      }
-    },
-  });
+  const { data: currentUser, isInitialLoading: isUserInitialLoading } = useQuery<IUserEntity>(
+    ['/v1/users/me'],
+    getUser,
+    {
+      enabled: hasToken,
+      retry: false,
+      staleTime: Infinity,
+      onError: (error: any) => {
+        if (error?.statusCode === HttpStatusCode.Unauthorized) {
+          logout();
+        }
+      },
+    }
+  );
 
   const {
-    data: organizations = null,
-    isLoading: isOrganizationLoading,
-    refetch: refetchOrganizations,
-  } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
+    data: currentOrganization,
+    isInitialLoading: isOrganizationInitialLoading,
+    refetch: reloadOrganization,
+  } = useQuery<IOrganizationEntity>(['/v1/organizations/me'], getOrganization, {
     enabled: hasToken,
     retry: false,
     staleTime: Infinity,
@@ -116,17 +81,6 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
       }
     },
   });
-
-  const reloadOrganization = async () => {
-    const { data } = await getOrganizations();
-    // we need to update all organizations so current org (data) and 'organizations' are not ouf of sync
-    await refetchOrganizations();
-    setCurrentOrganization(selectOrganization(data, currentOrganization?._id));
-  };
-
-  const [currentOrganization, setCurrentOrganization] = useState<IOrganizationEntity | null>(
-    selectOrganization(organizations)
-  );
 
   const login = useCallback(
     async (newToken: string, redirectUrl?: string) => {
@@ -134,25 +88,24 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
         return;
       }
 
+      // TODO: Revise storing environment id in local storage to avoid having to clear it during org or env switching
+      clearEnvironmentId();
+
       saveToken(newToken);
-      await refetchOrganizations();
-      /*
-       * TODO: Revise if this is needed as the following useEffect will switch to the latest org
-       * setCurrentOrganization(selectOrganization(organizations, getTokenClaims()?.organizationId));
-       */
+      await reloadOrganization();
+
       redirectUrl ? navigate(redirectUrl) : void 0;
     },
-    [navigate, refetchOrganizations]
+    [navigate, reloadOrganization]
   );
 
   const logout = useCallback(() => {
     saveToken(null);
-    queryClient.clear();
-    segment.reset();
     // TODO: Revise storing environment id in local storage to avoid having to clear it during org or env switching
     clearEnvironmentId();
+    queryClient.clear();
+    segment.reset();
     navigate(ROUTES.AUTH_LOGIN);
-    setCurrentOrganization(null);
   }, [navigate, queryClient, segment]);
 
   const redirectTo = useCallback(
@@ -205,7 +158,7 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
   const switchOrganization = useCallback(
     async (orgId: string) => {
       if (!orgId) {
-        return;
+        throw new Error('Organization ID is required');
       }
 
       if (orgId === currentOrganization?._id) {
@@ -213,67 +166,19 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
       }
 
       // TODO: Revise storing environment id in local storage to avoid having to clear it during org or env switching
-      if (currentOrganization) {
-        clearEnvironmentId();
-      }
+      clearEnvironmentId();
 
       const token = await apiSwitchOrganization(orgId);
       await login(token);
-      setCurrentOrganization(selectOrganization(organizations, orgId));
+      await reloadOrganization();
     },
-    [organizations, currentOrganization, setCurrentOrganization, login]
+    [currentOrganization, reloadOrganization, login]
   );
 
-  useEffect(() => {
-    (async () => {
-      if (organizations && !currentOrganization) {
-        await switchOrganization(getTokenClaims()?.organizationId || '');
-      }
-    })();
-  }, [organizations, currentOrganization, switchOrganization]);
-
-  useEffect(() => {
-    if (user && currentOrganization) {
-      segment.identify(user);
-
-      sentrySetUser({
-        email: user.email ?? '',
-        username: `${user.firstName} ${user.lastName}`,
-        id: user._id,
-        organizationId: currentOrganization._id,
-        organizationName: currentOrganization.name,
-      });
-    } else {
-      sentryConfigureScope((scope) => scope.setUser(null));
-    }
-  }, [user, currentOrganization, segment]);
-
-  useEffect(() => {
-    if (!ldClient) {
-      return;
-    }
-
-    if (currentOrganization) {
-      ldClient.identify({
-        kind: 'organization',
-        key: currentOrganization._id,
-        name: currentOrganization.name,
-        createdAt: currentOrganization.createdAt,
-      });
-    } else {
-      ldClient.identify({
-        kind: 'user',
-        anonymous: true,
-      });
-    }
-  }, [ldClient, currentOrganization]);
-
   const value = {
-    inPublicRoute,
-    inPrivateRoute,
-    isLoading: hasToken && (isUserLoading || isOrganizationLoading),
-    currentUser: user,
-    organizations,
+    isUserLoaded: isUserInitialLoading === false,
+    isOrganizationLoaded: isOrganizationInitialLoading === false,
+    currentUser,
     currentOrganization,
     login,
     logout,
@@ -281,7 +186,13 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     redirectToSignUp,
     switchOrganization,
     reloadOrganization,
-  };
+  } as AuthContextValue;
+  /*
+   * The previous assestion is necessary as Boolean and true or false discriminating unions
+   * don't work with inference. See here https://github.com/microsoft/TypeScript/issues/19360
+   *
+   * Alternatively, we will have to conditionally generate the value object based on the isLoaded values.
+   */
 
   return <CommunityAuthContext.Provider value={value}>{children}</CommunityAuthContext.Provider>;
 };

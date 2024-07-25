@@ -16,7 +16,7 @@ import {
   CommunityAuthService,
   CommunityUserAuthGuard,
 } from '../services';
-import { CreateUser, SwitchOrganization, SwitchEnvironment } from '../usecases';
+import { CreateUser, SwitchOrganization } from '../usecases';
 
 class PlatformException extends Error {}
 
@@ -60,8 +60,7 @@ export function injectRepositories(
         organizationRepository: OrganizationRepository,
         environmentRepository: EnvironmentRepository,
         memberRepository: MemberRepository,
-        switchOrganizationUsecase: SwitchOrganization,
-        switchEnvironmentUsecase: SwitchEnvironment
+        switchOrganizationUsecase: SwitchOrganization
       ) => {
         return new CommunityAuthService(
           userRepository,
@@ -72,8 +71,7 @@ export function injectRepositories(
           organizationRepository,
           environmentRepository,
           memberRepository,
-          switchOrganizationUsecase,
-          switchEnvironmentUsecase
+          switchOrganizationUsecase
         );
       },
       inject: [
@@ -86,7 +84,6 @@ export function injectRepositories(
         EnvironmentRepository,
         MemberRepository,
         SwitchOrganization,
-        SwitchEnvironment,
       ],
     };
 

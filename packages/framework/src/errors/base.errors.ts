@@ -13,7 +13,7 @@ export abstract class FrameworkError extends Error {
   /**
    * Additional data that can be used to provide more information about the error.
    */
-  public data?: any;
+  public data?: unknown;
 
   /**
    * The error code, which is used to identify the error type.

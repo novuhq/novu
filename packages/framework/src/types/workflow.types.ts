@@ -1,11 +1,12 @@
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
 import type { Prettify } from './util.types';
+import type { Schema } from './schema.types';
 
 /**
  * The parameters for the workflow function.
  */
-export type ExecuteInput<T_Payload, T_Control> = {
+export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = {
   /** Define a step in your workflow. */
   step: Step;
   /** The payload for the event, provided during trigger. */
@@ -19,20 +20,22 @@ export type ExecuteInput<T_Payload, T_Control> = {
    *
    * @deprecated Use `controls` instead
    */
-  input: T_Control;
+  input: T_Controls;
   /** The controls for the event. Provided via the UI. */
-  controls: T_Control;
+  controls: T_Controls;
 };
 
 /**
  * The function to execute the workflow.
  */
-export type Execute<T_Payload, T_Control> = (event: ExecuteInput<T_Payload, T_Control>) => Promise<void>;
+export type Execute<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = (
+  event: ExecuteInput<T_Payload, T_Controls>
+) => Promise<void>;
 
 /**
  * The options for the workflow.
  */
-export type WorkflowOptions<T_PayloadSchema, T_ControlSchema> = {
+export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema extends Schema> = {
   /** The schema for the payload. */
   payloadSchema?: T_PayloadSchema;
   /**

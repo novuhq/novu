@@ -65,9 +65,15 @@ export class AuthService implements IAuthService {
   getSignedToken(
     user: UserEntity,
     organizationId?: string,
-    member?: MemberEntity
+    member?: MemberEntity,
+    environmentId?: string
   ): Promise<string> {
-    return this.authService.getSignedToken(user, organizationId, member);
+    return this.authService.getSignedToken(
+      user,
+      organizationId,
+      member,
+      environmentId
+    );
   }
 
   validateUser(payload: UserSessionData): Promise<UserEntity> {

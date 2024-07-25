@@ -45,7 +45,6 @@ export class SendMessageInApp extends SendMessageBase {
   constructor(
     private invalidateCache: InvalidateCacheService,
     protected messageRepository: MessageRepository,
-    protected organizationRepository: OrganizationRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
     protected executionLogRoute: ExecutionLogRoute,
@@ -108,6 +107,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
+    const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
 
     if (template) {
@@ -116,12 +116,10 @@ export class SendMessageInApp extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
-        const organization = await this.getOrganization(command.organizationId);
-
         const i18nInstance = await this.initiateTranslations(
           command.environmentId,
           command.organizationId,
-          command.payload.subscriber?.locale || organization?.defaultLocale
+          subscriber.locale
         );
 
         const compiled = await this.compileInAppTemplate.execute(
@@ -270,15 +268,5 @@ export class SendMessageInApp extends SendMessageBase {
         isRetry: false,
       })
     );
-  }
-
-  protected async getOrganization(organizationId: string): Promise<OrganizationEntity | undefined> {
-    const organization = await this.organizationRepository.findById(organizationId, 'branding defaultLocale');
-
-    if (!organization) {
-      throw new NotFoundException(`Organization ${organizationId} not found`);
-    }
-
-    return organization;
   }
 }

@@ -18,7 +18,7 @@ import {
 
 import { mapToDto } from '../utils/notification-mapper';
 
-describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATCH)', async () => {
+describe('Mark Notification As - /inbox/notifications/:id/{read,unread,archive,unarchive} (PATCH)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
@@ -31,10 +31,10 @@ describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATC
     status,
   }: {
     id: string;
-    status: 'read' | 'unread' | 'archived' | 'unarchived';
+    status: 'read' | 'unread' | 'archive' | 'unarchive';
   }) => {
     return await session.testAgent
-      .patch(`/v1/inbox/notifications/${id}/mark-as-${status}`)
+      .patch(`/v1/inbox/notifications/${id}/${status}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`)
       .send();
   };
@@ -136,9 +136,9 @@ describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATC
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.true;
+    expect(body.data.isRead).to.be.true;
     expect(body.data.readAt).not.to.be.undefined;
-    expect(body.data.archived).to.be.false;
+    expect(body.data.isArchived).to.be.false;
     expect(body.data.archivedAt).to.be.undefined;
   });
 
@@ -161,14 +161,14 @@ describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATC
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.false;
+    expect(body.data.isRead).to.be.false;
     expect(body.data.readAt).to.be.null;
-    expect(body.data.archived).to.be.false;
+    expect(body.data.isArchived).to.be.false;
     expect(body.data.archivedAt).to.be.null;
   });
 
   it('should update the archived status', async function () {
-    const { body, status } = await updateNotification({ id: message._id, status: 'archived' });
+    const { body, status } = await updateNotification({ id: message._id, status: 'archive' });
 
     const updatedMessage = (await messageRepository.findOne({
       _environmentId: session.environment._id,
@@ -180,9 +180,9 @@ describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATC
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.true;
+    expect(body.data.isRead).to.be.true;
     expect(body.data.readAt).not.to.be.undefined;
-    expect(body.data.archived).to.be.true;
+    expect(body.data.isArchived).to.be.true;
     expect(body.data.archivedAt).not.to.be.undefined;
   });
 
@@ -193,7 +193,7 @@ describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATC
       { $set: { seen: true, lastSeenDate: now, read: true, lastReadDate: now, archived: true, archivedAt: now } }
     );
 
-    const { body, status } = await updateNotification({ id: message._id, status: 'unarchived' });
+    const { body, status } = await updateNotification({ id: message._id, status: 'unarchive' });
 
     const updatedMessage = (await messageRepository.findOne({
       _environmentId: session.environment._id,
@@ -205,9 +205,9 @@ describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATC
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
     expect(updatedMessage.seen).to.be.true;
     expect(updatedMessage.lastSeenDate).not.to.be.undefined;
-    expect(body.data.read).to.be.true;
+    expect(body.data.isRead).to.be.true;
     expect(body.data.readAt).not.to.be.undefined;
-    expect(body.data.archived).to.be.false;
+    expect(body.data.isArchived).to.be.false;
     expect(body.data.archivedAt).to.be.null;
   });
 });

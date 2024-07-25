@@ -32,10 +32,6 @@ import { ApiException } from '../../utils/exceptions';
 import { Instrument } from '../../instrumentation';
 import { CreateUser, CreateUserCommand } from '../../usecases/create-user';
 import {
-  SwitchEnvironment,
-  SwitchEnvironmentCommand,
-} from '../../usecases/switch-environment';
-import {
   SwitchOrganization,
   SwitchOrganizationCommand,
 } from '../../usecases/switch-organization';
@@ -60,9 +56,7 @@ export class CommunityAuthService implements IAuthService {
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
     @Inject(forwardRef(() => SwitchOrganization))
-    private switchOrganizationUsecase: SwitchOrganization,
-    @Inject(forwardRef(() => SwitchEnvironment))
-    private switchEnvironmentUsecase: SwitchEnvironment
+    private switchOrganizationUsecase: SwitchOrganization
   ) {}
 
   public async authenticate(
@@ -295,19 +289,7 @@ export class CommunityAuthService implements IAuthService {
       ? this.isAuthenticatedForOrganization(payload._id, payload.organizationId)
       : Promise.resolve(true);
 
-    const environmentPromise =
-      payload.organizationId && payload.environmentId
-        ? this.environmentRepository.findByIdAndOrganization(
-            payload.environmentId,
-            payload.organizationId
-          )
-        : Promise.resolve(true);
-
-    const [user, isMember, environment] = await Promise.all([
-      userPromise,
-      isMemberPromise,
-      environmentPromise,
-    ]);
+    const [user, isMember] = await Promise.all([userPromise, isMemberPromise]);
 
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
@@ -315,10 +297,6 @@ export class CommunityAuthService implements IAuthService {
         `User ${payload._id} is not a member of organization ${payload.organizationId}`
       );
     }
-    if (payload.organizationId && payload.environmentId && !environment)
-      throw new UnauthorizedException(
-        `Environment ${payload.environmentId} doesn't belong to organization ${payload.organizationId}`
-      );
 
     return user;
   }

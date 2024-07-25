@@ -1,58 +1,31 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
+import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
 import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
-import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { setUser as setSentryUser, configureScope } from '@sentry/react';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { PUBLIC_ROUTES_PREFIXES, ROUTES } from '../../../constants/routes';
+import { ROUTES } from '../../../constants/routes';
 
-const noop = () => {};
 const asyncNoop = async () => {};
 
 // TODO: Replace with createContextAndHook
-export const EnterpriseAuthContext = createContext<AuthContextValue>({
-  inPublicRoute: false,
-  inPrivateRoute: false,
-  isLoading: false,
-  currentUser: null,
-  organizations: [],
-  currentOrganization: null,
-  login: asyncNoop,
-  logout: noop,
-  redirectToLogin: noop,
-  redirectToSignUp: noop,
-  switchOrganization: asyncNoop,
-  reloadOrganization: asyncNoop,
-});
+export const EnterpriseAuthContext = createContext<AuthContextValue>(DEFAULT_AUTH_CONTEXT_VALUE);
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
-  const {
-    setActive,
-    isLoaded: isOrgListLoaded,
-    userMemberships,
-  } = useOrganizationList({ userMemberships: { infinite: true } });
+  // TODO @ChmaraX: Can we use setActive from useSession, useSignIn, or useSignUp to avoid loading the list?
+  const { setActive, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
 
-  const [user, setUser] = useState<IUserEntity | undefined>(undefined);
-  const [organization, setOrganization] = useState<IOrganizationEntity | undefined>(undefined);
-
-  const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const inPublicRoute =
-    !!Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) => location.pathname.startsWith(prefix)) || false;
-  const inPrivateRoute = !inPublicRoute;
 
   const logout = useCallback(() => {
     queryClient.clear();
@@ -61,6 +34,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     signOut();
   }, [navigate, queryClient, segment, signOut]);
 
+  // TODO @ChmaraX: Enhance Clerk redirect methods with our own logic
   const redirectTo = useCallback(
     ({
       url,
@@ -108,16 +82,12 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     await queryClient.refetchQueries();
   }, [queryClient]);
 
-  const organizations = useMemo(() => {
-    if (userMemberships && userMemberships.data) {
-      return userMemberships.data.map((membership) => toOrganizationEntity(membership.organization));
+  const reloadOrganization = useCallback(async () => {
+    if (clerkOrganization) {
+      await clerkOrganization.reload();
     }
 
-    return [];
-  }, [userMemberships]);
-
-  const reloadOrganization = useCallback(async () => {
-    await clerkOrganization?.reload();
+    return {};
   }, [clerkOrganization]);
 
   // check if user has active organization
@@ -138,77 +108,41 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     }
   }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId]);
 
-  // transform Clerk user to internal user entity
-  useEffect(() => {
-    if (isUserLoaded && clerkUser) {
-      setUser(toUserEntity(clerkUser));
-    }
-  }, [clerkUser, isUserLoaded]);
-
-  // transform Clerk organization to internal organization entity
-  useEffect(() => {
-    if (isOrganizationLoaded && clerkOrganization) {
-      setOrganization(toOrganizationEntity(clerkOrganization));
-    }
-  }, [clerkOrganization, isOrganizationLoaded]);
+  const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
+  const currentOrganization = useMemo(
+    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization) : undefined),
+    [clerkOrganization]
+  );
 
   // refetch queries on organization switch
   useEffect(() => {
-    if (organization && organization._id !== clerkOrganization?.id) {
+    // if linked, externalOrgId = internal org ObjectID, which is required on backend
+    const isInternalOrgLinked = !!clerkOrganization?.publicMetadata.externalOrgId;
+    const isOrgChanged = currentOrganization && currentOrganization._id !== clerkOrganization?.id;
+
+    if (isInternalOrgLinked && isOrgChanged) {
       switchOrgCallback();
     }
-  }, [organization, clerkOrganization, switchOrgCallback]);
-
-  // sentry tracking
-  useEffect(() => {
-    if (user && organization) {
-      segment.identify(user);
-
-      setSentryUser({
-        email: user.email ?? '',
-        username: `${user.firstName} ${user.lastName}`,
-        id: user._id,
-        organizationId: organization._id,
-        organizationName: organization.name,
-      });
-    } else {
-      configureScope((scope) => scope.setUser(null));
-    }
-  }, [user, organization, segment]);
-
-  // launch darkly
-  useEffect(() => {
-    if (!ldClient) return;
-
-    if (organization) {
-      ldClient.identify({
-        kind: 'organization',
-        key: organization._id,
-        name: organization.name,
-      });
-    } else {
-      ldClient.identify({
-        kind: 'user',
-        anonymous: true,
-      });
-    }
-  }, [ldClient, organization]);
+  }, [currentOrganization, clerkOrganization, switchOrgCallback]);
 
   const value = {
-    inPublicRoute,
-    inPrivateRoute,
-    isLoading: inPrivateRoute && (!isUserLoaded || !isOrganizationLoaded),
-    currentUser: user,
-    // TODO: (to decide) either remove/rework places where "organizations" is used or fetch from Clerk
-    organizations,
-    currentOrganization: organization,
+    isUserLoaded,
+    isOrganizationLoaded,
+    currentUser,
+    currentOrganization,
     logout,
     login: asyncNoop,
     redirectToLogin,
     redirectToSignUp,
     switchOrganization: asyncNoop,
-    reloadOrganization: asyncNoop,
-  };
+    reloadOrganization,
+  } as AuthContextValue;
+  /*
+   * The previous assestion is necessary as Boolean and true or false discriminating unions
+   * don't work with inference. See here https://github.com/microsoft/TypeScript/issues/19360
+   *
+   * Alternatively, we will have to conditionally generate the value object based on the isLoaded values.
+   */
 
   return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;
 };

@@ -22,7 +22,7 @@ const columnStyle = {
 export const PlanHeader = () => {
   const segment = useSegment();
 
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, isOrganizationLoaded } = useAuth();
   const { hasPaymentMethod } = useSubscriptionContext();
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
@@ -31,12 +31,14 @@ export const PlanHeader = () => {
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
   const [intendedApiServiceLevel, setIntendedApiServiceLevel] = useState<ApiServiceLevelEnum | null>(null);
   const [apiServiceLevel, setApiServiceLevel] = useState(
-    currentOrganization?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    isOrganizationLoaded ? currentOrganization.apiServiceLevel : ApiServiceLevelEnum.FREE
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   useEffect(() => {
-    setApiServiceLevel(currentOrganization?.apiServiceLevel || ApiServiceLevelEnum.FREE);
-  }, [currentOrganization]);
+    if (isOrganizationLoaded) {
+      setApiServiceLevel(currentOrganization.apiServiceLevel || ApiServiceLevelEnum.FREE);
+    }
+  }, [currentOrganization, isOrganizationLoaded]);
 
   const { mutateAsync: checkout, isLoading: isCheckingOut } = useMutation<
     any,

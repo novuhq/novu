@@ -1,20 +1,15 @@
 import { useNovu } from '../../context';
-import { MarkAllNotificationsAsArgs } from '../../../feeds';
-import { NotificationStatus } from '../../../types';
 
 /**
  * TODO: Update the snippet to after Filter is implemented to change the status and also add hooks for archive and other statuses
  */
-export const useReadAll = (props?: { onSuccess?: (data: number) => void; onError?: (err: unknown) => void }) => {
+export const useReadAll = (props?: { onSuccess?: () => void; onError?: (err: unknown) => void }) => {
   const novu = useNovu();
 
-  const markAllAsRead = async (feedIdentifier?: MarkAllNotificationsAsArgs['feedIdentifier']) => {
+  const markAllAsRead = async () => {
     try {
-      const response = await novu.feeds.markAllNotificationsAs({
-        feedIdentifier,
-        status: NotificationStatus.READ,
-      });
-      props?.onSuccess?.(response);
+      await novu.feeds.readAll();
+      props?.onSuccess?.();
     } catch (error) {
       props?.onError?.(error);
     }
