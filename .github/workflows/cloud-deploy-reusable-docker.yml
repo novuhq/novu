@@ -118,9 +118,6 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --no-cache
-            --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ vars.DOCKER_ENV_TAG }}
-            --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ steps.prepare.outputs.SERVICE_NAME }}-${{ vars.DOCKER_ENV_TAG }},mode=max
             --platform=linux/amd64
             --output=type=image,name=ghcr.io/novuhq/${{ steps.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
