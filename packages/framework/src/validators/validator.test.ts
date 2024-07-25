@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { validateData, transformSchema } from './base.validator';
 import { ZodSchema, z } from 'zod';
-import { FromSchema, JsonSchema } from '../types/schema.types';
+import { JsonSchema } from '../types/schema.types';
 
 const schemas = ['zod', 'json'] as const;
 
@@ -426,7 +426,7 @@ describe('validators', () => {
         testCases.forEach((testCase) => {
           it(testCase.title, () => {
             const result = transformSchema(testCase.schemas[schema]);
-            expect(result).toMatchInlineSnapshot(testCase.result);
+            expect(result).deep.contains(testCase.result);
           });
         });
       });
