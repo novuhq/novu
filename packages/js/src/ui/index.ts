@@ -1,2 +1,2 @@
 export { NovuUI } from './novuUI';
-export type { NovuUIOptions } from './novuUI';
+export type { BaseNovuUIOptions, NovuUIOptions } from './novuUI';

@@ -21,7 +21,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
         <span
           class={style(
             'bellDot',
-            'nt-absolute nt-top-2 nt-right-2 nt-block nt-w-2 nt-h-2 nt-transform nt-translate-x-1/2 -nt-translate-y-1/2 nt-bg-primary nt-rounded-full nt-border nt-border-background'
+            'nt-absolute nt-top-2 nt-right-2 nt-block nt-size-2 nt-transform nt-translate-x-1/2 -nt-translate-y-1/2 nt-bg-primary nt-rounded-full nt-border nt-border-background'
           )}
         />
       </Show>
