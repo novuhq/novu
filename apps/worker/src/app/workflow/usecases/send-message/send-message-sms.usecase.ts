@@ -22,6 +22,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
+import { SmsOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -90,8 +91,8 @@ export class SendMessageSms extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeBody = command.bridgeData?.outputs.body;
-    let content: string = bridgeBody || '';
+    const bridgeOutput = command.bridgeData?.outputs as SmsOutput | undefined;
+    let content: string = bridgeOutput?.body || '';
 
     try {
       if (!command.bridgeData) {
