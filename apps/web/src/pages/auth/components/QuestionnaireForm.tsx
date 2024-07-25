@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
 import { captureException } from '@sentry/react';
 
@@ -17,8 +17,11 @@ import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
+import { QueryKeys } from '../../../api/query.keys';
 
 export function QuestionnaireForm() {
+  const queryClient = useQueryClient();
+
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
@@ -27,7 +30,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentOrganization } = useAuth();
+  const { login, currentOrganization, reloadOrganization } = useAuth();
   const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
@@ -53,25 +56,14 @@ export function QuestionnaireForm() {
 
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
     await login(organizationResponseToken);
-    await refetchEnvironments();
-
-    try {
-      await api.post(`/v1/bridge/sync`, {
-        bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
-        source: 'sample-workspace',
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-
-      captureException(e);
-    }
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',
       language: selectedLanguages,
       jobTitle: data.jobTitle,
     });
+
+    return organization;
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -80,10 +72,26 @@ export function QuestionnaireForm() {
     setLoading(true);
 
     if (!currentOrganization) {
-      await createOrganization({ ...data });
+      const organization = await createOrganization({ ...data });
+
+      await refetchEnvironments();
+
+      try {
+        await api.post(`/v1/bridge/sync?source=sample-workspace`, {
+          bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+
+        captureException(e);
+      }
+
+      await queryClient.refetchQueries({ queryKey: [QueryKeys.myEnvironments, organization?._id] });
+    } else {
+      await refetchEnvironments();
     }
 
-    await refetchEnvironments();
     setLoading(false);
     if (isFromVercel) {
       startVercelSetup();

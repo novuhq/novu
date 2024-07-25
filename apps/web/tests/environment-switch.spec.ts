@@ -14,8 +14,8 @@ test('should switch between development and production environment via the envir
   expect(envSwitch).toHaveValue(Environment.Development);
 
   await sidebarPage.toggleToProduction();
-  expect(envSwitch).toHaveValue(Environment.Production);
+  await expect(sidebarPage.getEnvironmentSwitch()).toHaveValue(Environment.Production);
 
   await sidebarPage.toggleToDevelopment();
-  expect(envSwitch).toHaveValue(Environment.Development);
+  await expect(sidebarPage.getEnvironmentSwitch()).toHaveValue(Environment.Development);
 });

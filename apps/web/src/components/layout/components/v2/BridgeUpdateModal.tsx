@@ -29,7 +29,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   const [isUpdating, setIsUpdating] = useState(false);
   const { Component, toggle, setPath } = useDocsModal();
 
-  const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
+  const { environment, isLoaded: isEnvironmentLoaded } = useEnvironment();
 
   useEffect(() => {
     setUrl(bridgeURL);
@@ -99,7 +99,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
     }
   };
 
-  const isLoading = isLoadingEnvironment || isUpdating;
+  const isLoading = !isEnvironmentLoaded || isUpdating;
 
   return (
     <>

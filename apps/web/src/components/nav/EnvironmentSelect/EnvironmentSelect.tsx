@@ -6,7 +6,7 @@ import { useEnvironment } from '../../../components/providers/EnvironmentProvide
 import { BaseEnvironmentEnum } from '../../../constants/BaseEnvironmentEnum';
 
 export function EnvironmentSelect() {
-  const { environment, environments, isLoading, switchEnvironment } = useEnvironment();
+  const { environment, environments, isLoaded, switchEnvironment } = useEnvironment();
 
   const onChange = async (environmentId) => await switchEnvironment({ environmentId });
 
@@ -15,12 +15,12 @@ export function EnvironmentSelect() {
       className={navSelectStyles}
       data-test-id="environment-switch"
       allowDeselect={false}
-      loading={isLoading}
+      loading={!isLoaded}
       value={environment?._id}
       data={(environments || []).map(({ _id: value, name: label }) => ({ label, value }))}
       onChange={onChange}
       icon={
-        !isLoading && (
+        isLoaded && (
           <span
             className={css({
               p: '50',

@@ -8,10 +8,6 @@ export function isStudioHome(pathname: string) {
   return matchPath(STUDIO_WORKFLOWS_HOME_ROUTE, pathname);
 }
 
-export function isStudioRoute(path: string) {
-  return path.includes('/studio');
-}
-
 export function isStudioOnboardingRoute(path: string) {
   return path.includes(ROUTES.STUDIO_ONBOARDING);
 }

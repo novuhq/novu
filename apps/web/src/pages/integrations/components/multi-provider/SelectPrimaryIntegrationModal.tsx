@@ -127,7 +127,7 @@ export const SelectPrimaryIntegrationModal = ({
   const [{ selectedIntegrationId, isActive, selectedRowId, isPopoverOpened }, setSelectedState] =
     useState(initialState);
 
-  const { environments, isLoading: areEnvironmentsLoading } = useEnvironment();
+  const { environments, isLoaded } = useEnvironment();
   const environmentName = environments?.find((el) => el._id === environmentId)?.name ?? '';
 
   const onCloseCallback = useCallback(() => {
@@ -165,7 +165,7 @@ export const SelectPrimaryIntegrationModal = ({
     return -1;
   }, [integrationsByEnvAndChannel]);
 
-  const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
+  const isLoading = !isLoaded || areIntegrationsLoading;
   const isInitialProviderSelected = !selectedRowId || selectedRowId === `${initialSelectedIndex}`;
   const makePrimaryButtonDisabled = !selectedIntegrationId || isLoading || isInitialProviderSelected;
   const channelName = CHANNEL_TYPE_TO_STRING[channelType];
