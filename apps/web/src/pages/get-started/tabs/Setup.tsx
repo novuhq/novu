@@ -1,14 +1,13 @@
 import { NextJSLogo, SvelteLogo, H3Logo, RemixLogo, ExpressLogo, NuxtLogo } from '../Logos';
-import { motion, AnimatePresence, useAnimate, stagger } from 'framer-motion';
-import { useEffect, useState, useRef } from 'react';
-import { Timeline as MantineTimeline, Button, Code } from '@mantine/core';
-import { css } from '@novu/novui/css';
+import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { Button, Code } from '@mantine/core';
 import { OnboardingStepsTimeline } from '../OnboardingSteps';
 import { CodeSnippet } from '../legacy-onboarding/components/CodeSnippet';
-import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEnvironment } from '../../../hooks/useEnvironment';
 import { CodeEditor } from '../CodeBlock';
 import { TextElement } from '../TextElement';
+import { CardButton, CardButtonGroupWrapper } from './CardsButtonGroup';
 
 export const buildGuides = [
   {
@@ -100,7 +99,7 @@ export const { GET, POST, OPTIONS } = serve({
               To Start Novu Studio, run the following command in your terminal:
               <br />
               <br />
-              <CodeSnippet command={`npx novu@latest dev --port 4000`} />;
+              <CodeSnippet command={`npx novu@latest dev --port 4000`} />
             </TextElement>
           );
         },
@@ -121,545 +120,67 @@ export const { GET, POST, OPTIONS } = serve({
     id: 'svelte',
     title: 'Svelte',
     logo: SvelteLogo,
-    steps: [
-      {
-        title: 'Install the framework package',
-        content: () => {
-          return (
-            <TextElement>
-              <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Connect the bridge endpoint',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
-                function at <Code>src/routes/api/novu/+server.ts</Code>
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="120px"
-                readonly
-                setCode={() => {}}
-                code={`import { testWorkflow } from '$lib/novu/workflows';
+    steps: getReusableSteps({
+      workflowPath: 'src/lib/novu/workflows.ts',
+      bridgeEndpointPath: 'src/routes/api/novu/+server.ts',
+      bridgeEndpointCode: `import { testWorkflow } from '$lib/novu/workflows';
 import { serve } from '@novu/framework/sveltekit';
 
-export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
-                `}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Add a Novu Secret Key Environment Variable',
-        content: () => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const { environment } = useEnvironment();
-
-          return (
-            <TextElement>
-              Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
-              <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Create a workflow',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                Add a novu folder in your lib folder at <Code>src/lib/novu/workflows.ts</Code> that will contain your
-                workflow definitions.
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="400px"
-                readonly
-                setCode={() => {}}
-                code={`import { workflow } from '@novu/framework';
-import { z } from 'zod';
-
-export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
-    await step.email('send-email', async (controls) => {
-        return {
-            subject: controls.subject,
-            body: 'This is your first Novu Email ' + payload.userName,
-        };
-    },
-    {
-        controlSchema: z.object({
-            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
-        }),
-    });
-    }, {
-        payloadSchema: z.object({
-            userName: z.string().default('John Doe'),
-        }),
-    });
-});`}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Run the application server',
-        content: () => {
-          return <CodeSnippet command={`cd my-novu-app && npm run dev`} />;
-        },
-      },
-      {
-        title: 'Run Novu Studio',
-        content: () => {
-          return (
-            <TextElement>
-              Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your
-              email.
-              <br />
-              To Start Novu Studio, run the following command in your terminal:
-              <br />
-              <br />
-              <CodeSnippet command={`npx novu@latest dev --port 4000`} />;
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Send a test notification',
-        content: () => {
-          return (
-            <TextElement>
-              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
-            </TextElement>
-          );
-        },
-      },
-    ],
+export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });`,
+    }),
   },
   {
     id: 'remix',
     title: 'Remix',
     logo: RemixLogo,
-    steps: [
-      {
-        title: 'Install the framework package',
-        content: () => {
-          return (
-            <TextElement>
-              <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Connect the bridge endpoint',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
-                function at <Code>app/routes/api.novu.ts</Code>
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="120px"
-                readonly
-                setCode={() => {}}
-                code={`import { serve } from "@novu/framework/remix";
+    steps: getReusableSteps({
+      workflowPath: 'app/novu/workflows.ts',
+      bridgeEndpointPath: 'app/routes/api.novu.ts',
+      bridgeEndpointCode: `import { serve } from "@novu/framework/remix";
 import { testWorkflow } from "../novu/workflows";
 
 const handler = serve({
     workflows: [testWorkflow]
 });
 
-export { handler as action, handler as loader };
-                `}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Add a Novu Secret Key Environment Variable',
-        content: () => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const { environment } = useEnvironment();
-
-          return (
-            <TextElement>
-              Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
-              <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Create a workflow',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
-                workflow definitions.
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="400px"
-                readonly
-                setCode={() => {}}
-                code={`import { workflow } from '@novu/framework';
-import { z } from 'zod';
-
-export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
-    await step.email('send-email', async (controls) => {
-        return {
-            subject: controls.subject,
-            body: 'This is your first Novu Email ' + payload.userName,
-        };
-    },
-    {
-        controlSchema: z.object({
-            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
-        }),
-    });
-    }, {
-        payloadSchema: z.object({
-            userName: z.string().default('John Doe'),
-        }),
-    });
-});`}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Run the application server',
-        content: () => {
-          return <CodeSnippet command={`cd my-novu-app && npm run dev`} />;
-        },
-      },
-      {
-        title: 'Run Novu Studio',
-        content: () => {
-          return (
-            <TextElement>
-              Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your
-              email.
-              <br />
-              To Start Novu Studio, run the following command in your terminal:
-              <br />
-              <br />
-              <CodeSnippet command={`npx novu@latest dev --port 4000`} />;
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Send a test notification',
-        content: () => {
-          return (
-            <TextElement>
-              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
-            </TextElement>
-          );
-        },
-      },
-    ],
+export { handler as action, handler as loader };`,
+    }),
   },
   {
     id: 'express',
     title: 'Express.js',
     logo: ExpressLogo,
-    steps: [
-      {
-        title: 'Install the framework package',
-        content: () => {
-          return (
-            <TextElement>
-              <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Connect the bridge endpoint',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
-                function at <Code>app/server.ts</Code>
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="120px"
-                readonly
-                setCode={() => {}}
-                code={`import { serve } from "@novu/framework/express";
+    steps: getReusableSteps({
+      workflowPath: 'app/novu/workflows.ts',
+      bridgeEndpointPath: 'app/server.ts',
+      bridgeEndpointCode: `import { serve } from "@novu/framework/express";
 import { testWorkflow } from "../novu/workflows";
 
 app.use(express.json()); // Required for Novu POST requests
-app.use( "/api/novu", serve({ workflows: [testWorkflow] }) );
-                `}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Add a Novu Secret Key Environment Variable',
-        content: () => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const { environment } = useEnvironment();
-
-          return (
-            <TextElement>
-              Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
-              <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Create a workflow',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
-                workflow definitions.
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="400px"
-                readonly
-                setCode={() => {}}
-                code={`import { workflow } from '@novu/framework';
-import { z } from 'zod';
-
-export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
-    await step.email('send-email', async (controls) => {
-        return {
-            subject: controls.subject,
-            body: 'This is your first Novu Email ' + payload.userName,
-        };
-    },
-    {
-        controlSchema: z.object({
-            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
-        }),
-    });
-    }, {
-        payloadSchema: z.object({
-            userName: z.string().default('John Doe'),
-        }),
-    });
-});`}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Run the application server',
-        content: () => {
-          return <CodeSnippet command={`cd my-novu-app && npm run dev`} />;
-        },
-      },
-      {
-        title: 'Run Novu Studio',
-        content: () => {
-          return (
-            <TextElement>
-              Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your
-              email.
-              <br />
-              To Start Novu Studio, run the following command in your terminal:
-              <br />
-              <br />
-              <CodeSnippet command={`npx novu@latest dev --port 4000`} />;
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Send a test notification',
-        content: () => {
-          return (
-            <TextElement>
-              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
-            </TextElement>
-          );
-        },
-      },
-    ],
+app.use( "/api/novu", serve({ workflows: [testWorkflow] }) );`,
+    }),
   },
   {
     id: 'nuxt',
     title: 'Nuxt',
     logo: NuxtLogo,
-    steps: [
-      {
-        title: 'Install the framework package',
-        content: () => {
-          return (
-            <TextElement>
-              <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Connect the bridge endpoint',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
-                function at <Code>app/server/api/novu.ts</Code>
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="120px"
-                readonly
-                setCode={() => {}}
-                code={`import { serve } from '@novu/framework/nuxt';
+    steps: getReusableSteps({
+      workflowPath: 'app/novu/workflows.ts',
+      bridgeEndpointPath: 'app/server/api/novu.ts',
+      bridgeEndpointCode: `import { serve } from '@novu/framework/nuxt';
 import { testWorkflow } from "../novu/workflows";
 
-export default defineEventHandler(serve({ workflows: [testWorkflow] }));
-                `}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Add a Novu Secret Key Environment Variable',
-        content: () => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const { environment } = useEnvironment();
-
-          return (
-            <TextElement>
-              Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
-              <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Create a workflow',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
-                workflow definitions.
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="400px"
-                readonly
-                setCode={() => {}}
-                code={`import { workflow } from '@novu/framework';
-import { z } from 'zod';
-
-export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
-    await step.email('send-email', async (controls) => {
-        return {
-            subject: controls.subject,
-            body: 'This is your first Novu Email ' + payload.userName,
-        };
-    },
-    {
-        controlSchema: z.object({
-            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
-        }),
-    });
-    }, {
-        payloadSchema: z.object({
-            userName: z.string().default('John Doe'),
-        }),
-    });
-});`}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Run the application server',
-        content: () => {
-          return <CodeSnippet command={`cd my-novu-app && npm run dev`} />;
-        },
-      },
-      {
-        title: 'Run Novu Studio',
-        content: () => {
-          return (
-            <TextElement>
-              Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your
-              email.
-              <br />
-              To Start Novu Studio, run the following command in your terminal:
-              <br />
-              <br />
-              <CodeSnippet command={`npx novu@latest dev --port 4000`} />;
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Send a test notification',
-        content: () => {
-          return (
-            <TextElement>
-              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
-            </TextElement>
-          );
-        },
-      },
-    ],
+export default defineEventHandler(serve({ workflows: [testWorkflow] }));`,
+    }),
   },
   {
     id: 'h3',
     title: 'H3',
     logo: H3Logo,
-    steps: [
-      {
-        title: 'Install the framework package',
-        content: () => {
-          return (
-            <TextElement>
-              <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Connect the bridge endpoint',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
-                function at <Code>app/server/api/novu.ts</Code>
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="120px"
-                readonly
-                setCode={() => {}}
-                code={`import { createApp, eventHandler, toNodeListener } from "h3";
+    steps: getReusableSteps({
+      workflowPath: 'app/novu/workflows.ts',
+      bridgeEndpointPath: 'app/server/api/novu.ts',
+      bridgeEndpointCode: `import { createApp, eventHandler, toNodeListener } from "h3";
 import { serve } from "@novu/framework/h3";
 import { createServer } from "node:http";
 import { testWorkflow } from "./novu/workflows";
@@ -668,102 +189,121 @@ const app = createApp();
 
 app.use("/api/novu", eventHandler(serve({ workflows: [testWorkflow] }) ));
 
-createServer(toNodeListener(app)).listen(4000);
-                `}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Add a Novu Secret Key Environment Variable',
-        content: () => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          const { environment } = useEnvironment();
+createServer(toNodeListener(app)).listen(4000);`,
+    }),
+  },
+];
 
-          return (
-            <TextElement>
-              Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
-              <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
-            </TextElement>
-          );
-        },
+function getReusableSteps({
+  workflowPath,
+  bridgeEndpointPath,
+  bridgeEndpointCode,
+}: {
+  workflowPath: string;
+  bridgeEndpointPath: string;
+  bridgeEndpointCode: string;
+}) {
+  return [
+    {
+      title: 'Install the framework package',
+      content: () => (
+        <TextElement>
+          <CodeSnippet command="npm install @novu/framework zod zod-to-json-schema" />
+        </TextElement>
+      ),
+    },
+    {
+      title: 'Connect the bridge endpoint',
+      content: () => (
+        <>
+          <TextElement>
+            To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code> function at{' '}
+            <Code>{bridgeEndpointPath}</Code>
+          </TextElement>
+          <br /> <br />
+          <CodeEditor height="120px" readonly setCode={() => {}} code={bridgeEndpointCode} />
+        </>
+      ),
+    },
+    {
+      title: 'Add a Novu Secret Key Environment Variable',
+      content: () => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const { environment } = useEnvironment();
+
+        return (
+          <TextElement>
+            Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
+            <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
+          </TextElement>
+        );
       },
-      {
-        title: 'Create a workflow',
-        content: () => {
-          return (
-            <>
-              <TextElement>
-                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
-                workflow definitions.
-              </TextElement>
-              <br /> <br />
-              <CodeEditor
-                height="400px"
-                readonly
-                setCode={() => {}}
-                code={`import { workflow } from '@novu/framework';
+    },
+    {
+      title: 'Create a workflow',
+      content: () => (
+        <>
+          <TextElement>
+            Add a novu folder in your lib folder at <Code>{workflowPath}</Code> that will contain your workflow
+            definitions.
+          </TextElement>
+          <br /> <br />
+          <CodeEditor
+            height="400px"
+            readonly
+            setCode={() => {}}
+            code={`import { workflow } from '@novu/framework';
 import { z } from 'zod';
 
 export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
-    await step.email('send-email', async (controls) => {
-        return {
-            subject: controls.subject,
-            body: 'This is your first Novu Email ' + payload.userName,
-        };
+  await step.email('send-email', async (controls) => {
+      return {
+          subject: controls.subject,
+          body: 'This is your first Novu Email ' + payload.userName,
+      };
+  },
+  {
+      controlSchema: z.object({
+          subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+      }),
+  });
+  }, {
+      payloadSchema: z.object({
+          userName: z.string().default('John Doe'),
+      }),
+  });
+});`}
+          />
+        </>
+      ),
     },
     {
-        controlSchema: z.object({
-            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
-        }),
-    });
-    }, {
-        payloadSchema: z.object({
-            userName: z.string().default('John Doe'),
-        }),
-    });
-});`}
-              />
-            </>
-          );
-        },
-      },
-      {
-        title: 'Run the application server',
-        content: () => {
-          return <CodeSnippet command={`cd my-novu-app && npm run dev`} />;
-        },
-      },
-      {
-        title: 'Run Novu Studio',
-        content: () => {
-          return (
-            <TextElement>
-              Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your
-              email.
-              <br />
-              To Start Novu Studio, run the following command in your terminal:
-              <br />
-              <br />
-              <CodeSnippet command={`npx novu@latest dev --port 4000`} />;
-            </TextElement>
-          );
-        },
-      },
-      {
-        title: 'Send a test notification',
-        content: () => {
-          return (
-            <TextElement>
-              Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
-            </TextElement>
-          );
-        },
-      },
-    ],
-  },
-];
+      title: 'Run the application server',
+      content: () => <CodeSnippet command={`cd my-novu-app && npm run dev`} />,
+    },
+    {
+      title: 'Run Novu Studio',
+      content: () => (
+        <TextElement>
+          Novu Studio is used to preview your local workflows, inspect controls and send test workflows to your email.
+          <br />
+          To Start Novu Studio, run the following command in your terminal:
+          <br />
+          <br />
+          <CodeSnippet command={`npx novu@latest dev --port 4000`} />
+        </TextElement>
+      ),
+    },
+    {
+      title: 'Send a test notification',
+      content: () => (
+        <TextElement>
+          Once the Studio is open, navigate to the 'my-workflow' tab and click on the 'Send test' button.
+        </TextElement>
+      ),
+    },
+  ];
+}
 
 export function SetupTab() {
   const [activeGuide, setActiveGuide] = useState('nextjs');
@@ -787,71 +327,5 @@ export function SetupTab() {
       </CardButtonGroupWrapper>
       <OnboardingStepsTimeline steps={activeGuideData?.steps || []} activeGuide={activeGuide} />
     </>
-  );
-}
-
-function CardButton({
-  children,
-  active = false,
-  onClick,
-}: {
-  active?: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      onClick={onClick}
-      data-active={active}
-      variant={active ? 'light' : 'subtle'}
-      classNames={{
-        root: css({
-          padding: '6px 16px !important',
-          display: 'flex !important',
-          width: '112px !important',
-          minWidth: '112px !important',
-          height: 'auto !important',
-          borderRadius: '12px !important',
-          justifyContent: 'center !important',
-          '& .mantine-Button-label svg': {
-            fill: 'typography.text.secondary !important',
-          },
-          '&[data-active="true"]': {
-            backgroundColor: '#292933 !important',
-          },
-          '&[data-active="true"] .mantine-Button-label svg': {
-            fill: '#fff !important',
-          },
-          '&[data-active="true"] .mantine-Button-label': {
-            color: '#fff !important',
-          },
-          _hover: {
-            backgroundColor: '#23232B !important',
-          },
-        }),
-        label: css({
-          padding: '16px !important',
-          display: 'flex !important',
-          flexDirection: 'column !important',
-          fontSize: '14px !important',
-          fontWeight: '400 !important',
-          color: 'typography.text.secondary !important',
-          '& svg': {
-            width: '32px !important',
-            height: '32px !important',
-            marginBottom: '8px !important',
-            color: 'typography.text.secondary !important',
-          },
-        }),
-      }}
-    >
-      {children}
-    </Button>
-  );
-}
-
-function CardButtonGroupWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={css({ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' })}>{children}</div>
   );
 }

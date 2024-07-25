@@ -82,9 +82,11 @@ function StepperForm() {
           Back
         </Button>
 
-        <Button onClick={nextStep} variant="filled" disabled={active === 2}>
-          Next step
-        </Button>
+        {active !== 2 && (
+          <Button onClick={nextStep} variant="filled" disabled={active === 2}>
+            Next step
+          </Button>
+        )}
       </Group>
     </>
   );

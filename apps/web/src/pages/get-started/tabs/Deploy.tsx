@@ -1,8 +1,6 @@
 import { GitHubLogo, VercelLogo, NetlifyLogo } from '../Logos';
 import { motion } from 'framer-motion';
-import { useState, useRef } from 'react';
-import { Button } from '@mantine/core';
-import { css } from '@novu/novui/css';
+import { useState } from 'react';
 import { IconCode } from '@novu/novui/icons';
 
 import { OnboardingStepsTimeline } from '../OnboardingSteps';
@@ -10,6 +8,7 @@ import { CodeSnippet } from '../legacy-onboarding/components/CodeSnippet';
 import { useEnvironment } from '../../../hooks/useEnvironment';
 import { CodeEditor } from '../CodeBlock';
 import { TextElement } from '../TextElement';
+import { CardButton, CardButtonGroupWrapper } from './CardsButtonGroup';
 
 export const deployGuides = [
   {
@@ -102,7 +101,7 @@ jobs:
             <>
               <TextElement>
                 Publish your application on Vercel following their guide, so that the Novu bridge can be accessed from
-                the internet.
+                the internet. We are currently working on a Vercel marketplace integration to streamline your process.
               </TextElement>
             </>
           );
@@ -135,7 +134,7 @@ jobs:
             <>
               <TextElement>
                 Publish your application on Netlify following their guide, so that the Novu bridge can be accessed from
-                the internet.
+                the internet. We are currently working on a Netlify marketplace integration to streamline your process.
               </TextElement>
             </>
           );
@@ -144,7 +143,7 @@ jobs:
     ],
   },
   {
-    id: 'code',
+    id: 'cli',
     title: 'CLI',
     logo: IconCode,
     steps: [
@@ -209,7 +208,7 @@ export function DeployTab() {
       <CardButtonGroupWrapper>
         {deployGuides.map((guide) => (
           <motion.div key={guide.id} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <CardButton active={guide.id === activeGuide} onClick={() => handleGuideClick(guide.id)}>
+            <CardButton id={guide.id} active={guide.id === activeGuide} onClick={() => handleGuideClick(guide.id)}>
               <guide.logo />
               {guide.title}
             </CardButton>
@@ -218,71 +217,5 @@ export function DeployTab() {
       </CardButtonGroupWrapper>
       <OnboardingStepsTimeline steps={activeGuideData?.steps || []} activeGuide={activeGuide} />
     </>
-  );
-}
-
-function CardButton({
-  children,
-  active = false,
-  onClick,
-}: {
-  active?: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      onClick={onClick}
-      data-active={active}
-      variant={active ? 'light' : 'subtle'}
-      classNames={{
-        root: css({
-          padding: '6px 16px !important',
-          display: 'flex !important',
-          width: '112px !important',
-          minWidth: '112px !important',
-          height: 'auto !important',
-          borderRadius: '12px !important',
-          justifyContent: 'center !important',
-          '& .mantine-Button-label svg': {
-            fill: 'typography.text.secondary !important',
-          },
-          '&[data-active="true"]': {
-            backgroundColor: '#292933 !important',
-          },
-          '&[data-active="true"] .mantine-Button-label svg': {
-            fill: '#fff !important',
-          },
-          '&[data-active="true"] .mantine-Button-label': {
-            color: '#fff !important',
-          },
-          _hover: {
-            backgroundColor: '#23232B !important',
-          },
-        }),
-        label: css({
-          padding: '16px !important',
-          display: 'flex !important',
-          flexDirection: 'column !important',
-          fontSize: '14px !important',
-          fontWeight: '400 !important',
-          color: 'typography.text.secondary !important',
-          '& svg': {
-            width: '32px !important',
-            height: '32px !important',
-            marginBottom: '8px !important',
-            color: 'typography.text.secondary !important',
-          },
-        }),
-      }}
-    >
-      {children}
-    </Button>
-  );
-}
-
-function CardButtonGroupWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={css({ display: 'flex', justifyContent: 'space-between', marginBottom: '32px' })}>{children}</div>
   );
 }
