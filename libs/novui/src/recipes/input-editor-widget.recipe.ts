@@ -22,19 +22,17 @@ export const INPUT_EDITOR_WIDGET_RECIPE = defineSlotRecipe({
   slots: SLOTS,
   base: {
     root: {
-      borderColor: 'input.border',
+      ...INPUT_RECIPE.base.input,
       _groupError: {
         borderColor: 'input.border.error',
       },
     },
     content: {
-      // After fixing the layer css we would like to spread  INPUT_RECIPE.base.input
-      background: 'input.surface',
-      borderColor: 'input.border',
-      borderRadius: 'input',
-      lineHeight: '125',
-      color: 'typography.text.main',
-
+      // override tiptap styles
+      '& .tiptap': {
+        p: '0',
+      },
+      // appearance of autocomplete suggestion after being selected and added inline to the input
       '& .suggestion': {
         color: 'variable.text',
         borderRadius: 'xs',
