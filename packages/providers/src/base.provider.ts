@@ -1,4 +1,3 @@
-import { deepmerge } from '../../framework/src/utils/deepmerge.utils';
 import {
   camelCase,
   capitalCase,
@@ -6,7 +5,8 @@ import {
   kebabCase,
   pascalCase,
   snakeCase,
-} from '../../framework/src/utils/change-case/index';
+} from './utils/change-case';
+import { deepmerge } from './utils/deepmerge.utils';
 
 export enum CasingEnum {
   CAMEL_CASE = 'camelCase',

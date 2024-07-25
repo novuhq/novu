@@ -11,15 +11,7 @@ function isNonNullObject(value: unknown) {
 function isSpecial(value: Record<string, unknown>) {
   const stringValue = Object.prototype.toString.call(value);
 
-  return stringValue === '[object RegExp]' || stringValue === '[object Date]' || isReactElement(value);
-}
-
-// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
-const canUseSymbol = typeof Symbol === 'function' && Symbol.for;
-const REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
-
-function isReactElement(value: Record<string, unknown>) {
-  return value.$$typeof === REACT_ELEMENT_TYPE;
+  return stringValue === '[object RegExp]' || stringValue === '[object Date]';
 }
 
 function emptyTarget(val: unknown) {
@@ -41,7 +33,10 @@ function defaultArrayMerge(
   options: IOptions
 ): Record<string, unknown>[] {
   return target.concat(source).map(function (element) {
-    return cloneUnlessOtherwiseSpecified(element, options) as Record<string, unknown>;
+    return cloneUnlessOtherwiseSpecified(
+      element,
+      options
+    ) as Record<string, unknown>;
   });
 }
 
@@ -54,16 +49,8 @@ function getMergeFunction(key: string, options: IOptions) {
   return typeof customMerge === 'function' ? customMerge : deepmerge;
 }
 
-function getEnumerableOwnPropertySymbols(target: Record<string, unknown>): symbol[] {
-  return Object.getOwnPropertySymbols
-    ? Object.getOwnPropertySymbols(target).filter(function (symbol) {
-        return Object.propertyIsEnumerable.call(target, symbol);
-      })
-    : [];
-}
-
 function getKeys(target: Record<string, unknown>): unknown[] {
-  return [...Object.keys(target), ...getEnumerableOwnPropertySymbols(target)];
+  return Object.keys(target);
 }
 
 function propertyIsOnObject(object: Record<string, unknown>, property: string) {
@@ -85,7 +72,11 @@ function propertyIsUnsafe(target: Record<string, unknown>, key: string) {
   ); // and also unsafe if they're nonenumerable.
 }
 
-function mergeObject(target: Record<string, unknown>, source: Record<string, unknown>, options: IOptions) {
+function mergeObject(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  options: IOptions
+) {
   const destination = {};
   if (options.isMergeableObject(target)) {
     getKeys(target).forEach((key) => {
@@ -97,8 +88,15 @@ function mergeObject(target: Record<string, unknown>, source: Record<string, unk
       return;
     }
 
-    if (propertyIsOnObject(target, key as string) && options.isMergeableObject(source[key])) {
-      destination[key] = getMergeFunction(key as string, options)(target[key], source[key], options);
+    if (
+      propertyIsOnObject(target, key as string) &&
+      options.isMergeableObject(source[key])
+    ) {
+      destination[key] = getMergeFunction(key as string, options)(
+        target[key],
+        source[key],
+        options
+      );
     } else {
       destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
     }
@@ -110,7 +108,11 @@ function mergeObject(target: Record<string, unknown>, source: Record<string, unk
 interface IOptions {
   customMerge: (
     key: string
-  ) => (target: Record<string, unknown>, source: Record<string, unknown>, options: IOptions) => Record<string, unknown>;
+  ) => (
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+    options: IOptions
+  ) => Record<string, unknown>;
   arrayMerge: (
     target: Record<string, unknown>[],
     source: Record<string, unknown>[],
@@ -127,7 +129,11 @@ interface IOptions {
 interface IDeepmergeOptions {
   customMerge?: (
     key: string
-  ) => (target: Record<string, unknown>, source: Record<string, unknown>, options: IOptions) => Record<string, unknown>;
+  ) => (
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+    options: IOptions
+  ) => Record<string, unknown>;
   arrayMerge?: (
     target: Record<string, unknown>[],
     source: Record<string, unknown>[],
@@ -160,7 +166,10 @@ export function deepmerge(
   const sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
 
   if (!sourceAndTargetTypesMatch) {
-    return cloneUnlessOtherwiseSpecified(source as Record<string, unknown>, options as IOptions);
+    return cloneUnlessOtherwiseSpecified(
+      source as Record<string, unknown>,
+      options as IOptions
+    );
   }
   if (sourceIsArray) {
     return options.arrayMerge(
@@ -170,7 +179,11 @@ export function deepmerge(
     );
   }
 
-  return mergeObject(target as Record<string, unknown>, source, options as IOptions);
+  return mergeObject(
+    target as Record<string, unknown>,
+    source,
+    options as IOptions
+  );
 }
 
 export function deepmergeAll(array: unknown[], options: IDeepmergeOptions) {

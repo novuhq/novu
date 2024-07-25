@@ -46,7 +46,9 @@ export interface IOptions {
 export function split(value: string) {
   let result = value.trim();
 
-  result = result.replace(SPLIT_LOWER_UPPER_RE, SPLIT_REPLACE_VALUE).replace(SPLIT_UPPER_UPPER_RE, SPLIT_REPLACE_VALUE);
+  result = result
+    .replace(SPLIT_LOWER_UPPER_RE, SPLIT_REPLACE_VALUE)
+    .replace(SPLIT_UPPER_UPPER_RE, SPLIT_REPLACE_VALUE);
 
   result = result.replace(DEFAULT_STRIP_REGEXP, '\0');
 
@@ -84,13 +86,20 @@ export function splitSeparateNumbers(value: string) {
 export function noCaseTransformer(input: string, options?: IOptions) {
   const [prefix, words, suffix] = splitPrefixSuffix(input, options);
 
-  return prefix + words.map(lowerFactory(options?.locale)).join(options?.delimiter ?? ' ') + suffix;
+  return (
+    prefix +
+    words.map(lowerFactory(options?.locale)).join(options?.delimiter ?? ' ') +
+    suffix
+  );
 }
 
 /**
  * Convert a string to camel case (`fooBar`).
  */
-export function camelCaseTransformer(input: string, options?: IPascalCaseOptions) {
+export function camelCaseTransformer(
+  input: string,
+  options?: IPascalCaseOptions
+) {
   const [prefix, words, suffix] = splitPrefixSuffix(input, options);
   const lower = lowerFactory(options?.locale);
   const upper = upperFactory(options?.locale);
@@ -114,7 +123,10 @@ export function camelCaseTransformer(input: string, options?: IPascalCaseOptions
 /**
  * Convert a string to pascal case (`FooBar`).
  */
-export function pascalCaseTransformer(input: string, options?: IPascalCaseOptions) {
+export function pascalCaseTransformer(
+  input: string,
+  options?: IPascalCaseOptions
+) {
   const [prefix, words, suffix] = splitPrefixSuffix(input, options);
   const lower = lowerFactory(options?.locale);
   const upper = upperFactory(options?.locale);
@@ -140,7 +152,13 @@ export function capitalCaseTransformer(input: string, options?: IOptions) {
   const lower = lowerFactory(options?.locale);
   const upper = upperFactory(options?.locale);
 
-  return prefix + words.map(capitalCaseTransformFactory(lower, upper)).join(options?.delimiter ?? ' ') + suffix;
+  return (
+    prefix +
+    words
+      .map(capitalCaseTransformFactory(lower, upper))
+      .join(options?.delimiter ?? ' ') +
+    suffix
+  );
 }
 
 /**
@@ -149,7 +167,11 @@ export function capitalCaseTransformer(input: string, options?: IOptions) {
 export function constantCaseTransformer(input: string, options?: IOptions) {
   const [prefix, words, suffix] = splitPrefixSuffix(input, options);
 
-  return prefix + words.map(upperFactory(options?.locale)).join(options?.delimiter ?? '_') + suffix;
+  return (
+    prefix +
+    words.map(upperFactory(options?.locale)).join(options?.delimiter ?? '_') +
+    suffix
+  );
 }
 
 /**
@@ -210,30 +232,47 @@ export function trainCaseTransformer(input: string, options?: IOptions) {
 }
 
 function lowerFactory(locale: Locale): (input: string) => string {
-  return locale === false ? (input: string) => input.toLowerCase() : (input: string) => input.toLocaleLowerCase(locale);
+  return locale === false
+    ? (input: string) => input.toLowerCase()
+    : (input: string) => input.toLocaleLowerCase(locale);
 }
 
 function upperFactory(locale: Locale): (input: string) => string {
-  return locale === false ? (input: string) => input.toUpperCase() : (input: string) => input.toLocaleUpperCase(locale);
+  return locale === false
+    ? (input: string) => input.toUpperCase()
+    : (input: string) => input.toLocaleUpperCase(locale);
 }
 
-function capitalCaseTransformFactory(lower: (input: string) => string, upper: (input: string) => string) {
+function capitalCaseTransformFactory(
+  lower: (input: string) => string,
+  upper: (input: string) => string
+) {
   return (word: string) => `${upper(word[0])}${lower(word.slice(1))}`;
 }
 
-function pascalCaseTransformFactory(lower: (input: string) => string, upper: (input: string) => string) {
+function pascalCaseTransformFactory(
+  lower: (input: string) => string,
+  upper: (input: string) => string
+) {
   return (word: string, index: number) => {
     const char0 = word[0];
-    const initial = index > 0 && char0 >= '0' && char0 <= '9' ? '_' + char0 : upper(char0);
+    const initial =
+      index > 0 && char0 >= '0' && char0 <= '9' ? '_' + char0 : upper(char0);
 
     return initial + lower(word.slice(1));
   };
 }
 
-function splitPrefixSuffix(input: string, options: IOptions = {}): [string, string[], string] {
-  const splitFn = options.split ?? (options.separateNumbers ? splitSeparateNumbers : split);
-  const prefixCharacters = options.prefixCharacters ?? DEFAULT_PREFIX_SUFFIX_CHARACTERS;
-  const suffixCharacters = options.suffixCharacters ?? DEFAULT_PREFIX_SUFFIX_CHARACTERS;
+function splitPrefixSuffix(
+  input: string,
+  options: IOptions = {}
+): [string, string[], string] {
+  const splitFn =
+    options.split ?? (options.separateNumbers ? splitSeparateNumbers : split);
+  const prefixCharacters =
+    options.prefixCharacters ?? DEFAULT_PREFIX_SUFFIX_CHARACTERS;
+  const suffixCharacters =
+    options.suffixCharacters ?? DEFAULT_PREFIX_SUFFIX_CHARACTERS;
   let prefixIndex = 0;
   let suffixIndex = input.length;
 
@@ -250,5 +289,9 @@ function splitPrefixSuffix(input: string, options: IOptions = {}): [string, stri
     suffixIndex = index;
   }
 
-  return [input.slice(0, prefixIndex), splitFn(input.slice(prefixIndex, suffixIndex)), input.slice(suffixIndex)];
+  return [
+    input.slice(0, prefixIndex),
+    splitFn(input.slice(prefixIndex, suffixIndex)),
+    input.slice(suffixIndex),
+  ];
 }
