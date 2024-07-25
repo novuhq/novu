@@ -100,7 +100,7 @@ describe('Novu Client', () => {
     it('should discover a complex workflow with all supported step types', async () => {
       const workflowId = 'complex-workflow';
 
-      const newWorkflow = workflow(workflowId, async ({ step, payload }) => {
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
         await step.email('send-email', async () => ({
           body: 'Test Body',
           subject: 'Subject',
@@ -526,7 +526,7 @@ describe('Novu Client', () => {
 
       const newWorkflow = workflow(
         'test-workflow',
-        async ({ step, payload }) => {
+        async ({ step }) => {
           await step.email(
             'send-email',
             async (controls) => {
