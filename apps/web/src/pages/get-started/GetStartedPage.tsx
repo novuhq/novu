@@ -1,10 +1,10 @@
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { useEffect } from 'react';
 import { css } from '@novu/novui/css';
-import { Stepper, Group, Button } from '@mantine/core';
+import { Stepper, Group } from '@mantine/core';
 
 import { PageContainer } from '../../studio/layout/PageContainer';
-import { Title } from '@novu/novui';
+import { Title, Button } from '@novu/novui';
 import { useLocalStorage } from '@mantine/hooks';
 import { OnboardingStepsTimeline } from './OnboardingSteps';
 import { stepperClassNames } from './GetStartedPage.styles';
@@ -43,7 +43,7 @@ function StepperForm() {
     defaultValue: 0,
   });
 
-  const nextStep = () => setActive((current) => (current < 4 ? current + 1 : current));
+  const nextStep = () => setActive((current) => (current < 2 ? current + 1 : current));
   const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
 
   return (
@@ -77,11 +77,14 @@ function StepperForm() {
         ))}
       </Stepper>
 
-      <Group position="center" mt="xl">
-        <Button variant="default" onClick={prevStep}>
+      <Group position="apart" mt="xl">
+        <Button disabled={active === 0} onClick={prevStep} variant="transparent">
           Back
         </Button>
-        <Button onClick={nextStep}>Next step</Button>
+
+        <Button onClick={nextStep} variant="filled" disabled={active === 2}>
+          Next step
+        </Button>
       </Group>
     </>
   );

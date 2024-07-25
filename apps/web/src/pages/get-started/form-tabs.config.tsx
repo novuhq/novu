@@ -21,7 +21,7 @@ export const onboardingTabs = [
     icon: <IconLaptopMac className={iconStyles} />,
     stepperTitle: 'Build',
     content: <SetupTab />,
-    title: 'Build your first flow',
+    title: 'Build your first workflow',
   },
   {
     icon: <IconOutlineCloudUpload className={iconStyles} />,

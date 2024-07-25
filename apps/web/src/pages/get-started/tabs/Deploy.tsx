@@ -1,17 +1,7 @@
-import {
-  NextJSLogo,
-  SvelteLogo,
-  H3Logo,
-  RemixLogo,
-  ExpressLogo,
-  NuxtLogo,
-  GitHubLogo,
-  VercelLogo,
-  NetlifyLogo,
-} from '../Logos';
-import { motion, AnimatePresence, useAnimate, stagger } from 'framer-motion';
-import { useEffect, useState, useRef } from 'react';
-import { Timeline as MantineTimeline, Button, Code } from '@mantine/core';
+import { GitHubLogo, VercelLogo, NetlifyLogo } from '../Logos';
+import { motion } from 'framer-motion';
+import { useState, useRef } from 'react';
+import { Button } from '@mantine/core';
 import { css } from '@novu/novui/css';
 import { IconCode } from '@novu/novui/icons';
 
@@ -19,7 +9,6 @@ import { OnboardingStepsTimeline } from '../OnboardingSteps';
 import { CodeSnippet } from '../legacy-onboarding/components/CodeSnippet';
 import { useEnvironment } from '../../../hooks/useEnvironment';
 import { CodeEditor } from '../CodeBlock';
-import { Text } from '@novu/novui';
 import { TextElement } from '../TextElement';
 
 export const deployGuides = [
@@ -94,21 +83,29 @@ jobs:
     logo: VercelLogo,
     steps: [
       {
-        title: 'SVELTE the Novu SDK',
+        title: 'Push to a Git repository',
         content: () => {
-          return <div>SVELTE the Novu SDK</div>;
+          return (
+            <>
+              <TextElement>
+                Novu works as part of your existing CI/CD flow, so first, make sure that your application is pushed to a
+                remote Git repository.
+              </TextElement>
+            </>
+          );
         },
       },
       {
-        title: 'Install the Novu SDK',
+        title: 'Publish to Vercel',
         content: () => {
-          return <div>SVELTE the Novu SDK</div>;
-        },
-      },
-      {
-        title: 'Install the Novu SDK',
-        content: () => {
-          return <div>SVELTE the Novu SDK</div>;
+          return (
+            <>
+              <TextElement>
+                Publish your application on Vercel following their guide, so that the Novu bridge can be accessed from
+                the internet.
+              </TextElement>
+            </>
+          );
         },
       },
     ],
@@ -119,21 +116,29 @@ jobs:
     logo: NetlifyLogo,
     steps: [
       {
-        title: 'Install the Novu SDK',
+        title: 'Push to a Git repository',
         content: () => {
-          return <TextElement>SVELTE the Novu SDK</TextElement>;
+          return (
+            <>
+              <TextElement>
+                Novu works as part of your existing CI/CD flow, so first, make sure that your application is pushed to a
+                remote Git repository.
+              </TextElement>
+            </>
+          );
         },
       },
       {
-        title: 'Install the Novu SDK',
+        title: 'Publish to Netlify',
         content: () => {
-          return <TextElement>SVELTE the Novu SDK</TextElement>;
-        },
-      },
-      {
-        title: 'Install the Novu SDK',
-        content: () => {
-          return <TextElement>SVELTE the Novu SDK</TextElement>;
+          return (
+            <>
+              <TextElement>
+                Publish your application on Netlify following their guide, so that the Novu bridge can be accessed from
+                the internet.
+              </TextElement>
+            </>
+          );
         },
       },
     ],
@@ -143,6 +148,32 @@ jobs:
     title: 'CLI',
     logo: IconCode,
     steps: [
+      {
+        title: 'Push to a Git repository',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Novu works as part of your existing CI/CD flow, so first, make sure that your application is pushed to a
+                remote Git repository.
+              </TextElement>
+            </>
+          );
+        },
+      },
+      {
+        title: 'Publish the application',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Publish your application on your hosting provider, so that the Novu bridge can be accessed from the
+                internet.
+              </TextElement>
+            </>
+          );
+        },
+      },
       {
         title: 'Manually Sync',
         content: () => {
@@ -159,18 +190,6 @@ jobs:
               />
             </TextElement>
           );
-        },
-      },
-      {
-        title: 'Install the Novu SDK',
-        content: () => {
-          return <TextElement>SVELTE the Novu SDK</TextElement>;
-        },
-      },
-      {
-        title: 'Install the Novu SDK',
-        content: () => {
-          return <TextElement>SVELTE the Novu SDK</TextElement>;
         },
       },
     ],

@@ -133,12 +133,13 @@ export const { GET, POST, OPTIONS } = serve({
         },
       },
       {
-        title: 'Expose your workflow',
+        title: 'Connect the bridge endpoint',
         content: () => {
           return (
             <>
               <TextElement>
-                Once a workflow has been created, we would need to expose it to the <code>serve</code> function
+                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
+                function at <Code>src/routes/api/novu/+server.ts</Code>
               </TextElement>
               <br /> <br />
               <CodeEditor
@@ -166,6 +167,46 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
               Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
               <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
             </TextElement>
+          );
+        },
+      },
+      {
+        title: 'Create a workflow',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Add a novu folder in your lib folder at <Code>src/lib/novu/workflows.ts</Code> that will contain your
+                workflow definitions.
+              </TextElement>
+              <br /> <br />
+              <CodeEditor
+                height="400px"
+                readonly
+                setCode={() => {}}
+                code={`import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+    await step.email('send-email', async (controls) => {
+        return {
+            subject: controls.subject,
+            body: 'This is your first Novu Email ' + payload.userName,
+        };
+    },
+    {
+        controlSchema: z.object({
+            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+        }),
+    });
+    }, {
+        payloadSchema: z.object({
+            userName: z.string().default('John Doe'),
+        }),
+    });
+});`}
+              />
+            </>
           );
         },
       },
@@ -219,22 +260,27 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
         },
       },
       {
-        title: 'Expose your workflow',
+        title: 'Connect the bridge endpoint',
         content: () => {
           return (
             <>
               <TextElement>
-                Once a workflow has been created, we would need to expose it to the <code>serve</code> function
+                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
+                function at <Code>app/routes/api.novu.ts</Code>
               </TextElement>
               <br /> <br />
               <CodeEditor
                 height="120px"
                 readonly
                 setCode={() => {}}
-                code={`import { testWorkflow } from '$lib/novu/workflows';
-import { serve } from '@novu/framework/sveltekit';
+                code={`import { serve } from "@novu/framework/remix";
+import { testWorkflow } from "../novu/workflows";
 
-export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
+const handler = serve({
+    workflows: [testWorkflow]
+});
+
+export { handler as action, handler as loader };
                 `}
               />
             </>
@@ -252,6 +298,46 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
               Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
               <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
             </TextElement>
+          );
+        },
+      },
+      {
+        title: 'Create a workflow',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
+                workflow definitions.
+              </TextElement>
+              <br /> <br />
+              <CodeEditor
+                height="400px"
+                readonly
+                setCode={() => {}}
+                code={`import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+    await step.email('send-email', async (controls) => {
+        return {
+            subject: controls.subject,
+            body: 'This is your first Novu Email ' + payload.userName,
+        };
+    },
+    {
+        controlSchema: z.object({
+            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+        }),
+    });
+    }, {
+        payloadSchema: z.object({
+            userName: z.string().default('John Doe'),
+        }),
+    });
+});`}
+              />
+            </>
           );
         },
       },
@@ -305,22 +391,24 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
         },
       },
       {
-        title: 'Expose your workflow',
+        title: 'Connect the bridge endpoint',
         content: () => {
           return (
             <>
               <TextElement>
-                Once a workflow has been created, we would need to expose it to the <code>serve</code> function
+                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
+                function at <Code>app/server.ts</Code>
               </TextElement>
               <br /> <br />
               <CodeEditor
                 height="120px"
                 readonly
                 setCode={() => {}}
-                code={`import { testWorkflow } from '$lib/novu/workflows';
-import { serve } from '@novu/framework/sveltekit';
+                code={`import { serve } from "@novu/framework/express";
+import { testWorkflow } from "../novu/workflows";
 
-export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
+app.use(express.json()); // Required for Novu POST requests
+app.use( "/api/novu", serve({ workflows: [testWorkflow] }) );
                 `}
               />
             </>
@@ -338,6 +426,46 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
               Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
               <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
             </TextElement>
+          );
+        },
+      },
+      {
+        title: 'Create a workflow',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
+                workflow definitions.
+              </TextElement>
+              <br /> <br />
+              <CodeEditor
+                height="400px"
+                readonly
+                setCode={() => {}}
+                code={`import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+    await step.email('send-email', async (controls) => {
+        return {
+            subject: controls.subject,
+            body: 'This is your first Novu Email ' + payload.userName,
+        };
+    },
+    {
+        controlSchema: z.object({
+            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+        }),
+    });
+    }, {
+        payloadSchema: z.object({
+            userName: z.string().default('John Doe'),
+        }),
+    });
+});`}
+              />
+            </>
           );
         },
       },
@@ -391,22 +519,23 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
         },
       },
       {
-        title: 'Expose your workflow',
+        title: 'Connect the bridge endpoint',
         content: () => {
           return (
             <>
               <TextElement>
-                Once a workflow has been created, we would need to expose it to the <code>serve</code> function
+                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
+                function at <Code>app/server/api/novu.ts</Code>
               </TextElement>
               <br /> <br />
               <CodeEditor
                 height="120px"
                 readonly
                 setCode={() => {}}
-                code={`import { testWorkflow } from '$lib/novu/workflows';
-import { serve } from '@novu/framework/sveltekit';
+                code={`import { serve } from '@novu/framework/nuxt';
+import { testWorkflow } from "../novu/workflows";
 
-export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
+export default defineEventHandler(serve({ workflows: [testWorkflow] }));
                 `}
               />
             </>
@@ -424,6 +553,46 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
               Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
               <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
             </TextElement>
+          );
+        },
+      },
+      {
+        title: 'Create a workflow',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
+                workflow definitions.
+              </TextElement>
+              <br /> <br />
+              <CodeEditor
+                height="400px"
+                readonly
+                setCode={() => {}}
+                code={`import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+    await step.email('send-email', async (controls) => {
+        return {
+            subject: controls.subject,
+            body: 'This is your first Novu Email ' + payload.userName,
+        };
+    },
+    {
+        controlSchema: z.object({
+            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+        }),
+    });
+    }, {
+        payloadSchema: z.object({
+            userName: z.string().default('John Doe'),
+        }),
+    });
+});`}
+              />
+            </>
           );
         },
       },
@@ -477,22 +646,29 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
         },
       },
       {
-        title: 'Expose your workflow',
+        title: 'Connect the bridge endpoint',
         content: () => {
           return (
             <>
               <TextElement>
-                Once a workflow has been created, we would need to expose it to the <code>serve</code> function
+                To start working with Novu we would need to expose the bridge endpoint to the <code>serve</code>{' '}
+                function at <Code>app/server/api/novu.ts</Code>
               </TextElement>
               <br /> <br />
               <CodeEditor
                 height="120px"
                 readonly
                 setCode={() => {}}
-                code={`import { testWorkflow } from '$lib/novu/workflows';
-import { serve } from '@novu/framework/sveltekit';
+                code={`import { createApp, eventHandler, toNodeListener } from "h3";
+import { serve } from "@novu/framework/h3";
+import { createServer } from "node:http";
+import { testWorkflow } from "./novu/workflows";
 
-export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
+const app = createApp();
+
+app.use("/api/novu", eventHandler(serve({ workflows: [testWorkflow] }) ));
+
+createServer(toNodeListener(app)).listen(4000);
                 `}
               />
             </>
@@ -510,6 +686,46 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });
               Add <Code>NOVU_SECRET_KEY</Code> environment variable to your <Code>.env</Code> file
               <CodeSnippet command={`NOVU_SECRET_KEY=${(environment as any)?.apiKeys[0].key}`} />
             </TextElement>
+          );
+        },
+      },
+      {
+        title: 'Create a workflow',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Add a novu folder in your lib folder at <Code>app/novu/workflows.ts</Code> that will contain your
+                workflow definitions.
+              </TextElement>
+              <br /> <br />
+              <CodeEditor
+                height="400px"
+                readonly
+                setCode={() => {}}
+                code={`import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+    await step.email('send-email', async (controls) => {
+        return {
+            subject: controls.subject,
+            body: 'This is your first Novu Email ' + payload.userName,
+        };
+    },
+    {
+        controlSchema: z.object({
+            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+        }),
+    });
+    }, {
+        payloadSchema: z.object({
+            userName: z.string().default('John Doe'),
+        }),
+    });
+});`}
+              />
+            </>
           );
         },
       },
