@@ -102,7 +102,7 @@ describe('Session', () => {
       subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: { count: 10 }, filter: {} };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves({
@@ -133,7 +133,7 @@ describe('Session', () => {
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
     const integration = { ...mockIntegration, credentials: { hmac: false } };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: { count: 10 }, filter: {} };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
@@ -145,7 +145,7 @@ describe('Session', () => {
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.totalUnreadCount).to.equal(notificationCount.data.count);
+    expect(response.totalUnreadCount).to.equal(notificationCount.data[0].count);
     expect(
       analyticsService.mixpanelTrack.calledOnceWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,
