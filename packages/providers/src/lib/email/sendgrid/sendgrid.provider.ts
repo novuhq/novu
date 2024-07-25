@@ -11,10 +11,14 @@ import {
 
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
 
-export class SendgridEmailProvider implements IEmailProvider {
+export class SendgridEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   id = EmailProviderIdEnum.SendGrid;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private sendgridMail: MailService;
@@ -27,6 +31,7 @@ export class SendgridEmailProvider implements IEmailProvider {
       ipPoolName?: string;
     }
   ) {
+    super();
     this.sendgridMail = new MailService();
     this.sendgridMail.setApiKey(this.config.apiKey);
   }
@@ -38,7 +43,7 @@ export class SendgridEmailProvider implements IEmailProvider {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send({
       ...mailData,
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     });
 
     return {

@@ -11,6 +11,7 @@ import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import DKIM from 'nodemailer/lib/dkim';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { ConnectionOptions } from 'tls';
+import { BaseProvider } from '../../../base.provider';
 
 interface INodemailerConfig {
   from: string;
@@ -26,7 +27,7 @@ interface INodemailerConfig {
   senderName?: string;
 }
 
-export class NodemailerProvider implements IEmailProvider {
+export class NodemailerProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.CustomSMTP; // nodemailer
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -34,6 +35,7 @@ export class NodemailerProvider implements IEmailProvider {
   private transports: Transporter;
 
   constructor(private config: INodemailerConfig) {
+    super();
     let dkim = this.config.dkim;
 
     if (!dkim?.domainName || !dkim?.privateKey || !dkim?.keySelector) {
@@ -96,7 +98,7 @@ export class NodemailerProvider implements IEmailProvider {
     const mailData = this.createMailData(options);
     const info = await this.transports.sendMail({
       ...mailData,
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     });
 
     return {

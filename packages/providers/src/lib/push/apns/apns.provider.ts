@@ -6,8 +6,9 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import apn from '@parse/node-apn';
+import { BaseProvider } from '../../../base.provider';
 
-export class APNSPushProvider implements IPushProvider {
+export class APNSPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.APNS;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
@@ -21,6 +22,7 @@ export class APNSPushProvider implements IPushProvider {
       production: boolean;
     }
   ) {
+    super();
     this.config = config;
     this.provider = new apn.Provider({
       token: {
@@ -43,7 +45,7 @@ export class APNSPushProvider implements IPushProvider {
       payload: options.payload,
       topic: this.config.bundleId,
       ...options.overrides,
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     });
     const res = await this.provider.send(notification, options.target);
 

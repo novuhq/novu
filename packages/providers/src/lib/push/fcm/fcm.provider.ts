@@ -8,10 +8,12 @@ import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
 import { getMessaging, Messaging } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 import { PushProviderIdEnum } from '@novu/shared';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 
-export class FcmPushProvider implements IPushProvider {
+export class FcmPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
 
   private appName: string;
   private messaging: Messaging;
@@ -22,6 +24,7 @@ export class FcmPushProvider implements IPushProvider {
       secretKey: string;
     }
   ) {
+    super();
     this.config = config;
     this.appName = crypto.randomBytes(32).toString();
     const firebase = initializeApp(
@@ -67,7 +70,7 @@ export class FcmPushProvider implements IPushProvider {
           title: options.title,
           body: options.content,
           message: options.content,
-          ...bridgeProviderData,
+          ...this.transform(bridgeProviderData).body,
         },
         android,
         apns,

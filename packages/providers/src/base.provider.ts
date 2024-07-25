@@ -30,7 +30,14 @@ export abstract class BaseProvider {
   protected transform<Input = Record<string, unknown>, Output = unknown>(
     bridgeProvderData: WithPassthrough<Input>
   ): TransformOutput<Output> {
-    const { _passthrough, ...data } = bridgeProvderData;
+    const {
+      _passthrough = {
+        body: {},
+        headers: {},
+        query: {},
+      },
+      ...data
+    } = bridgeProvderData;
     let casing = camelCase;
 
     switch (this.casing) {

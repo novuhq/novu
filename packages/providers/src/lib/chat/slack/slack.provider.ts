@@ -6,21 +6,24 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
-export class SlackProvider implements IChatProvider {
+export class SlackProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   public id = ChatProviderIdEnum.Slack;
   private axiosInstance = axios.create();
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(data.webhookUrl, {
       text: data.content,
       blocks: data.blocks,
       ...(data.customData || {}),
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     });
 
     return {

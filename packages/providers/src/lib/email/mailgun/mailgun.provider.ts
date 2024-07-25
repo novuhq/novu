@@ -11,8 +11,12 @@ import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
+import { BaseProvider } from '../../../base.provider';
 
-export class MailgunEmailProvider implements IEmailProvider {
+export class MailgunEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   id = EmailProviderIdEnum.Mailgun;
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -28,6 +32,7 @@ export class MailgunEmailProvider implements IEmailProvider {
       from: string;
     }
   ) {
+    super();
     const mailgun = new Mailgun(formData);
 
     this.mailgunClient = mailgun.client({
@@ -54,7 +59,7 @@ export class MailgunEmailProvider implements IEmailProvider {
           filename: attachment.name,
         };
       }),
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     };
 
     if (emailOptions.replyTo) {

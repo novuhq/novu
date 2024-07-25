@@ -7,11 +7,16 @@ import {
   IPushProvider,
 } from '@novu/stateless';
 import { PushProviderIdEnum } from '@novu/shared';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 
-export class OneSignalPushProvider implements IPushProvider {
+export class OneSignalPushProvider
+  extends BaseProvider
+  implements IPushProvider
+{
   id = PushProviderIdEnum.OneSignal;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   private axiosInstance: AxiosInstance;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   public readonly BASE_URL = 'https://onesignal.com/api/v1';
 
   constructor(
@@ -20,6 +25,7 @@ export class OneSignalPushProvider implements IPushProvider {
       apiKey: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: this.BASE_URL,
     });
@@ -49,7 +55,7 @@ export class OneSignalPushProvider implements IPushProvider {
       chrome_icon: overrides.icon,
       firefox_icon: overrides.icon,
       ios_category: overrides.categoryId,
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     };
 
     const notificationOptions: AxiosRequestConfig = {

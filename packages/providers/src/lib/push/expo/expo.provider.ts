@@ -6,8 +6,9 @@ import {
   IPushProvider,
 } from '@novu/stateless';
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
+import { BaseProvider } from '../../../base.provider';
 
-export class ExpoPushProvider implements IPushProvider {
+export class ExpoPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
@@ -17,6 +18,7 @@ export class ExpoPushProvider implements IPushProvider {
       accessToken: string;
     }
   ) {
+    super();
     this.expo = new Expo({ accessToken: this.config.accessToken });
   }
 
@@ -39,7 +41,7 @@ export class ExpoPushProvider implements IPushProvider {
               ? (sound as ExpoPushMessage['sound'])
               : null,
           ...overrides,
-          ...bridgeProviderData,
+          ...this.transform(bridgeProviderData).body,
         },
       ]);
 

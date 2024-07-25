@@ -10,10 +10,15 @@ import {
   EmailEventStatusEnum,
 } from '@novu/stateless';
 import { Client, type SendEmailV3_1 } from 'node-mailjet';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 
 const MAILJET_API_VERSION = 'v3.1';
 
-export class MailjetEmailProvider implements IEmailProvider {
+export class MailjetEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
+  protected casing: CasingEnum = CasingEnum.CAPITAL_CASE;
   id = EmailProviderIdEnum.Mailjet;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
@@ -26,6 +31,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
+    super();
     this.mailjetClient = new Client({
       apiKey: config.apiKey,
       apiSecret: config.apiSecret,
@@ -42,7 +48,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       })
       .request<SendEmailV3_1.Response>({
         ...this.createMailData(emailOptions),
-        ...bridgeProviderData,
+        ...this.transform(bridgeProviderData).body,
       });
 
     const { body, response: clientResponse } = response;

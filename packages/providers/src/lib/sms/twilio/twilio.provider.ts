@@ -9,8 +9,9 @@ import {
 } from '@novu/stateless';
 
 import { Twilio } from 'twilio';
+import { BaseProvider } from '../../../base.provider';
 
-export class TwilioSmsProvider implements ISmsProvider {
+export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Twilio;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private twilioClient: Twilio;
@@ -22,6 +23,7 @@ export class TwilioSmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
+    super();
     this.twilioClient = new Twilio(config.accountSid, config.authToken);
   }
 
@@ -33,7 +35,7 @@ export class TwilioSmsProvider implements ISmsProvider {
       body: options.content,
       to: options.to,
       from: options.from || this.config.from,
-      ...bridgeProviderData,
+      ...this.transform(bridgeProviderData).body,
     });
 
     return {
