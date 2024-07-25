@@ -32,7 +32,6 @@ type OrganizationState =
 
 export type AuthContextValue = UserState &
   OrganizationState & {
-    shouldMonitor: boolean;
     login: (newToken: string, redirectUrl?: string) => Promise<void>;
     logout: () => void;
     redirectToLogin: (params: { redirectURL?: string }) => void;

@@ -5,9 +5,14 @@ import { useSegment } from '../components/providers/SegmentProvider';
 import { useAuth } from './useAuth';
 
 export function useMonitoring() {
-  const { currentUser, currentOrganization, shouldMonitor } = useAuth();
+  const { currentUser, currentOrganization } = useAuth();
   const ldClient = useLDClient();
   const segment = useSegment();
+
+  const isNovuUser = currentUser && !currentUser._id.startsWith('user_');
+  const isNovuOrganization = currentOrganization && !currentOrganization._id.startsWith('org_');
+
+  const shouldMonitor = isNovuUser && isNovuOrganization;
 
   useEffect(() => {
     if (currentUser && currentOrganization && shouldMonitor) {

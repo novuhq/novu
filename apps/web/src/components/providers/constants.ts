@@ -4,7 +4,6 @@ const noop = () => {};
 const asyncNoop = async () => {};
 
 export const DEFAULT_AUTH_CONTEXT_VALUE: AuthContextValue = {
-  shouldMonitor: false,
   isUserLoaded: false,
   isOrganizationLoaded: false,
   currentUser: undefined,

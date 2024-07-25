@@ -125,13 +125,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     }
   }, [currentOrganization, clerkOrganization, switchOrgCallback]);
 
-  const isNovuUser = currentUser && !currentUser._id.startsWith('user_');
-  const isNovuOrganization = currentOrganization && !currentOrganization._id.startsWith('org_');
-
-  const shouldMonitor = isNovuUser && isNovuOrganization;
-
   const value = {
-    shouldMonitor,
     isUserLoaded,
     isOrganizationLoaded,
     currentUser,
