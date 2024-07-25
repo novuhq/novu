@@ -91,8 +91,8 @@ export class SendMessageSms extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeOutput = command.bridgeData?.outputs as SmsOutput;
-    let content: string = bridgeOutput.body || '';
+    const bridgeOutput = command.bridgeData?.outputs as SmsOutput | undefined;
+    let content: string = bridgeOutput?.body || '';
 
     try {
       if (!command.bridgeData) {
