@@ -154,10 +154,11 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
    *  - user is signing up
    *
    * In the case where the user is still signing up, we are using the clerk identifier for the id.
-   * This however quickly gets update to the externalId (which is actually the novu internal entity
-   * identifier) that gets used further in the app. A few consumers that want to user this identifier
-   * before it is set to the internal value monitor the flag 'shouldMonitor' and only use them when
-   * the internal Novu id is present.
+   * This however quickly gets update to the externalId (which is actually the novu internal
+   * entity identifier) that gets used further in the app. There are a few consumers that
+   * want to use this identifier before it is set to the internal value. These consumers
+   * should make sure they only report with the correct value, a reference
+   * implementation can be found in 'apps/web/src/hooks/useMonitoring.ts'
    */
 
   return {
@@ -181,11 +182,13 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
    *  - user exists and has signed in
    *  - user is signing up
    *
+   *
    * In the case where the user is still signing up, we are using the clerk identifier for the id.
-   * This however quickly gets update to the .publicMetadata.externalOrgId (which is actually the novu
-   * internal entity identifier) that gets used further in the app. A few consumers that want to user
-   * this identifier before it is set to the internal value monitor the flag 'shouldMonitor' and only
-   * use them when the internal Novu id is present.
+   * This however quickly gets update to the externalId (which is actually the novu internal
+   * entity identifier) that gets used further in the app. There are a few consumers that
+   * want to use this identifier before it is set to the internal value. These consumers
+   * should make sure they only report with the correct value, a reference
+   * implementation can be found in 'apps/web/src/hooks/useMonitoring.ts'
    */
 
   return {
