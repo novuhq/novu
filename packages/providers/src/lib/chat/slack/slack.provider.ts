@@ -6,7 +6,8 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { BaseProvider } from '../../../base.provider';
+import { deepmerge } from '../../../utils/deepmerge.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
@@ -18,12 +19,17 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await this.axiosInstance.post(data.webhookUrl, {
-      text: data.content,
-      blocks: data.blocks,
-      ...(data.customData || {}),
-      ...this.transform(bridgeProviderData).body,
-    });
+    const response = await this.axiosInstance.post(
+      data.webhookUrl,
+      deepmerge(
+        {
+          text: data.content,
+          blocks: data.blocks,
+          ...(data.customData || {}),
+        },
+        this.transform(bridgeProviderData).body
+      )
+    );
 
     return {
       id: response.headers['x-slack-req-id'],

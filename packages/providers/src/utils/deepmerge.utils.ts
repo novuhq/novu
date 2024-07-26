@@ -153,11 +153,13 @@ interface IDeepmergeOptions {
   clone?: boolean;
 }
 
-export function deepmerge(
+export function deepmerge<
+  Output = Record<string, unknown> | Record<string, unknown>[]
+>(
   target: Record<string, unknown> | Record<string, unknown>[],
   source: Record<string, unknown> | Record<string, unknown>[],
   options?: IDeepmergeOptions
-): Record<string, unknown> | Record<string, unknown>[] {
+): Output {
   options = options || {};
   options.arrayMerge = options.arrayMerge || defaultArrayMerge;
   options.isMergeableObject = options.isMergeableObject || isMergeableObject;
@@ -175,21 +177,21 @@ export function deepmerge(
     return cloneUnlessOtherwiseSpecified(
       source as Record<string, unknown>,
       options as IOptions
-    );
+    ) as Output;
   }
   if (sourceIsArray) {
     return options.arrayMerge(
       target as Record<string, unknown>[],
       source as Record<string, unknown>[],
       options as IOptions
-    );
+    ) as Output;
   }
 
   return mergeObject(
     target as Record<string, unknown>,
     source,
     options as IOptions
-  );
+  ) as Output;
 }
 
 export function deepmergeAll(array: unknown[], options: IDeepmergeOptions) {

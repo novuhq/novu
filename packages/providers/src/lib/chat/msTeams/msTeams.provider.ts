@@ -21,10 +21,12 @@ export class MsTeamsProvider implements IChatProvider {
     let payload;
 
     try {
-      payload = { ...JSON.parse(data.content), ...bridgeProviderData };
+      payload = { ...JSON.parse(data.content) };
     } catch (err) {
-      payload = { text: data.content, ...bridgeProviderData };
+      payload = { text: data.content };
     }
+
+    payload = { ...payload, ...bridgeProviderData };
 
     const response = await this.axiosInstance.post(data.webhookUrl, payload);
 

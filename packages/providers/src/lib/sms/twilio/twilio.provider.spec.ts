@@ -17,15 +17,21 @@ test('should trigger Twilio correctly', async () => {
       } as any;
     });
 
-  await provider.sendMessage({
-    to: '+176543',
-    content: 'SMS Content',
-  });
+  await provider.sendMessage(
+    {
+      to: '+176543',
+      content: 'SMS Content',
+    },
+    {
+      applicationSid: 'test',
+    }
+  );
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     from: '+112345',
     body: 'SMS Content',
     to: '+176543',
+    applicationSid: 'test',
   });
 });

@@ -11,6 +11,7 @@ import {
 } from '@novu/stateless';
 import { Client, type SendEmailV3_1 } from 'node-mailjet';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { deepmerge } from '../../../utils/deepmerge.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 const MAILJET_API_VERSION = 'v3.1';
@@ -87,26 +88,28 @@ export class MailjetEmailProvider
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): SendEmailV3_1.Body {
-    const message: SendEmailV3_1.Message = {
-      From: {
-        Email: options.from || this.config.from,
-        Name: options.senderName || this.config.senderName,
+    const message: SendEmailV3_1.Message = deepmerge<SendEmailV3_1.Message>(
+      {
+        From: {
+          Email: options.from || this.config.from,
+          Name: options.senderName || this.config.senderName,
+        },
+        To: options.to.map((email) => ({
+          Email: email,
+        })) as SendEmailV3_1.EmailAddressTo[],
+        Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
+        Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
+        Subject: options.subject,
+        TextPart: options.text,
+        HTMLPart: options.html,
+        Attachments: options.attachments?.map((attachment) => ({
+          ContentType: attachment.mime,
+          Filename: attachment.name,
+          Base64Content: attachment.file.toString('base64'),
+        })),
       },
-      To: options.to.map((email) => ({
-        Email: email,
-      })) as SendEmailV3_1.EmailAddressTo[],
-      Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
-      Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
-      Subject: options.subject,
-      TextPart: options.text,
-      HTMLPart: options.html,
-      Attachments: options.attachments?.map((attachment) => ({
-        ContentType: attachment.mime,
-        Filename: attachment.name,
-        Base64Content: attachment.file.toString('base64'),
-      })),
-      ...this.transform(bridgeProviderData).body,
-    };
+      this.transform(bridgeProviderData).body
+    );
 
     if (options.replyTo) {
       message.ReplyTo.Email = options.replyTo;

@@ -70,7 +70,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     if (type === 'data') {
       res = await this.messaging.sendMulticast(
-        deepmerge(
+        deepmerge<MulticastMessage>(
           {
             tokens: options.target,
             data: {
@@ -85,11 +85,11 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
             webpush,
           },
           this.transform(bridgeProviderData).body
-        ) as unknown as MulticastMessage
+        )
       );
     } else {
       res = await this.messaging.sendMulticast(
-        deepmerge(
+        deepmerge<MulticastMessage>(
           {
             tokens: options.target,
             notification: {
@@ -104,7 +104,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
             webpush,
           },
           this.transform(bridgeProviderData).body
-        ) as unknown as MulticastMessage
+        )
       );
     }
 

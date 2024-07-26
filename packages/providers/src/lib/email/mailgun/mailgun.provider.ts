@@ -12,6 +12,7 @@ import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider } from '../../../base.provider';
+import { deepmerge } from '../../../utils/deepmerge.utils';
 
 export class MailgunEmailProvider
   extends BaseProvider
