@@ -76,7 +76,7 @@ function mergeObject(
   target: Record<string, unknown>,
   source: Record<string, unknown>,
   options: IOptions
-) {
+): Record<string, unknown> {
   const destination = {};
   if (options.isMergeableObject(target)) {
     getKeys(target).forEach((key: string) => {

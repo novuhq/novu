@@ -156,7 +156,7 @@ export function capitalCaseTransformer(input: string, options?: IOptions) {
     prefix +
     words
       .map(capitalCaseTransformFactory(lower, upper))
-      .join(options?.delimiter ?? ' ') +
+      .join(options?.delimiter ?? '') +
     suffix
   );
 }
@@ -212,7 +212,7 @@ export function sentenceCaseTransformer(input: string, options?: IOptions) {
 
         return lower(word);
       })
-      .join(options?.delimiter ?? ' ') +
+      .join(options?.delimiter ?? '') +
     suffix
   );
 }

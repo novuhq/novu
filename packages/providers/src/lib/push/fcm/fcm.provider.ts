@@ -5,10 +5,16 @@ import {
   IPushProvider,
 } from '@novu/stateless';
 import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
-import { getMessaging, Messaging } from 'firebase-admin/messaging';
+import {
+  getMessaging,
+  Messaging,
+  MulticastMessage,
+} from 'firebase-admin/messaging';
 import crypto from 'crypto';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { deepmerge } from '../../../utils/deepmerge.utils';
+import { WithPassthrough } from '../../../utils/types';
 
 export class FcmPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
@@ -42,7 +48,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const {
       deviceTokens: _,
@@ -63,35 +69,43 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     let res;
 
     if (type === 'data') {
-      res = await this.messaging.sendMulticast({
-        tokens: options.target,
-        data: {
-          ...payload,
-          title: options.title,
-          body: options.content,
-          message: options.content,
-          ...this.transform(bridgeProviderData).body,
-        },
-        android,
-        apns,
-        fcmOptions,
-        webpush,
-      });
+      res = await this.messaging.sendMulticast(
+        deepmerge(
+          {
+            tokens: options.target,
+            data: {
+              ...payload,
+              title: options.title,
+              body: options.content,
+              message: options.content,
+            },
+            android,
+            apns,
+            fcmOptions,
+            webpush,
+          },
+          this.transform(bridgeProviderData).body
+        ) as unknown as MulticastMessage
+      );
     } else {
-      res = await this.messaging.sendMulticast({
-        tokens: options.target,
-        notification: {
-          title: options.title,
-          body: options.content,
-          ...overridesData,
-          ...bridgeProviderData,
-        },
-        data,
-        android,
-        apns,
-        fcmOptions,
-        webpush,
-      });
+      res = await this.messaging.sendMulticast(
+        deepmerge(
+          {
+            tokens: options.target,
+            notification: {
+              title: options.title,
+              body: options.content,
+              ...overridesData,
+            },
+            data,
+            android,
+            apns,
+            fcmOptions,
+            webpush,
+          },
+          this.transform(bridgeProviderData).body
+        ) as unknown as MulticastMessage
+      );
     }
 
     if (res.successCount === 0) {

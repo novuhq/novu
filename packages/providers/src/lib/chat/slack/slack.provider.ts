@@ -11,7 +11,6 @@ import { WithPassthrough } from '../../../utils/types';
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   public id = ChatProviderIdEnum.Slack;
   private axiosInstance = axios.create();
 

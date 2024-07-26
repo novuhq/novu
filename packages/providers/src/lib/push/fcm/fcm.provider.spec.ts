@@ -81,25 +81,34 @@ beforeEach(() => {
 });
 
 test('should trigger fcm correctly', async () => {
-  await provider.sendMessage({
-    title: 'Test',
-    content: 'Test push',
-    target: ['tester'],
-    payload: {
-      sound: 'test_sound',
+  await provider.sendMessage(
+    {
+      title: 'Test',
+      content: 'Test push',
+      target: ['tester'],
+      payload: {
+        sound: 'test_sound',
+      },
+      subscriber,
+      step,
     },
-    subscriber,
-    step,
-  });
+    {
+      registrationIds: ['test'],
+      notification: {
+        title: 'Test 1',
+      },
+    }
+  );
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     notification: {
-      title: 'Test',
+      title: 'Test 1',
       body: 'Test push',
     },
     tokens: ['tester'],
+    registration_ids: ['test'],
   });
 });
 

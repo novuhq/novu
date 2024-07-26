@@ -11,6 +11,7 @@ import {
 } from '@novu/stateless';
 import { Client, type SendEmailV3_1 } from 'node-mailjet';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 const MAILJET_API_VERSION = 'v3.1';
 
@@ -40,15 +41,14 @@ export class MailjetEmailProvider
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.mailjetClient
       .post('send', {
         version: MAILJET_API_VERSION,
       })
       .request<SendEmailV3_1.Response>({
-        ...this.createMailData(emailOptions),
-        ...this.transform(bridgeProviderData).body,
+        ...this.createMailData(emailOptions, bridgeProviderData),
       });
 
     const { body, response: clientResponse } = response;
@@ -83,7 +83,10 @@ export class MailjetEmailProvider
     }
   }
 
-  private createMailData(options: IEmailOptions): SendEmailV3_1.Body {
+  private createMailData(
+    options: IEmailOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): SendEmailV3_1.Body {
     const message: SendEmailV3_1.Message = {
       From: {
         Email: options.from || this.config.from,
@@ -102,6 +105,7 @@ export class MailjetEmailProvider
         Filename: attachment.name,
         Base64Content: attachment.file.toString('base64'),
       })),
+      ...this.transform(bridgeProviderData).body,
     };
 
     if (options.replyTo) {
