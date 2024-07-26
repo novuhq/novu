@@ -38,7 +38,6 @@ export const ProductLead = ({
   variant?: ProductLeadVariants;
   style?: CSSProperties;
 }) => {
-  const { currentUser } = useAuth();
   const [open, setOpen] = useLocalStorage<boolean>({
     key: id,
     defaultValue: true,

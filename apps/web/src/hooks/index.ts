@@ -23,7 +23,6 @@ export * from './useLayouts';
 export * from './useLayoutsEditor';
 export * from './useMonitoring';
 export * from './useNotificationGroup';
-export * from './useNovu';
 export * from './useProcessVariables';
 export * from './usePrompt';
 export * from './useRedirectURL';
