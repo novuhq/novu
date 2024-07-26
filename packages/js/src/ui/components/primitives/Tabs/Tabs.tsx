@@ -28,6 +28,7 @@ export const useTabsContext = () => {
   if (!context) {
     throw new Error('useTabsContext must be used within an TabsContext.Provider');
   }
+
   return context;
 };
 
