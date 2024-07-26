@@ -116,8 +116,9 @@ jobs:
           echo "TASK_NAME=${{ matrix.services.task_name }}" >> $GITHUB_ENV
           echo "CONTAINER_NAME=${{ matrix.services.container_name }}" >> $GITHUB_ENV
           echo "SERVICE=${{ matrix.services.service }}" >> $GITHUB_ENV
+
       - name: Set Service Details for Non-Worker
-        if: !matrix.matrix_config
+        if: ${{ !matrix.matrix_config }}
         run: |
           echo "Setting service details for non-worker service"
           echo "TASK_NAME=${{ matrix.services[0].task_name }}" >> $GITHUB_ENV
