@@ -1,14 +1,20 @@
 import { ParentProps, Ref } from 'solid-js';
-import { useStyle } from '../../../helpers';
+import { AppearanceKey } from '../../../context';
+import { cn, useStyle } from '../../../helpers';
 
-export const TabsList = (props: ParentProps & { ref?: Ref<HTMLDivElement> }) => {
+type TabsListProps = ParentProps & { class?: string; appearanceKey?: AppearanceKey; ref?: Ref<HTMLDivElement> };
+
+export const TabsList = (props: TabsListProps) => {
   const style = useStyle();
 
   return (
     <>
       <div
         ref={props.ref}
-        class={style('tabsList', 'nt-flex nt-gap-6 nt-px-6 nt-py-1 nt-overflow-hidden')}
+        class={style(
+          props.appearanceKey ?? 'tabsList',
+          cn('nt-flex nt-gap-6 nt-px-6 nt-py-1 nt-overflow-hidden', props.class)
+        )}
         role="tablist"
       >
         {props.children}

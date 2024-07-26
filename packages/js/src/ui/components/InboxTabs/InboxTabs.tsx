@@ -1,8 +1,10 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createMemo, createSignal, onMount, Show } from 'solid-js';
 import { Tabs } from '../primitives';
 import { NotificationList } from '../Notification';
-import { MoreTabsDropdown } from './MoreTabsDropdown';
 import { InboxTab } from './InboxTab';
+import { OptionsDropdown } from '../elements/OptionsDropdown';
+import { Check } from '../../icons';
+import { cn } from '../../helpers';
 
 type InboxTabsProps = {
   tabs: Array<{ label: string; value: Array<string> }>;
@@ -45,8 +47,12 @@ export const InboxTabs = (props: InboxTabsProps) => {
     }
   });
 
+  const options = createMemo(() =>
+    dropdownTabs().map((tab) => ({ label: tab.label, rightIcon: tab.label === activeTab() ? <Check /> : undefined }))
+  );
+
   return (
-    <Tabs class="nt-flex-1 nt-overflow-hidden" value={activeTab} onChange={setActiveTab}>
+    <Tabs class="nt-flex-1 nt-overflow-hidden" value={activeTab()} onChange={setActiveTab}>
       <Show
         when={visibleTabs().length > 0}
         fallback={
@@ -62,7 +68,18 @@ export const InboxTabs = (props: InboxTabsProps) => {
             <InboxTab label={tab.label} />
           ))}
           <Show when={dropdownTabs().length > 0}>
-            <MoreTabsDropdown dropdownTabs={dropdownTabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <OptionsDropdown
+              options={options()}
+              buttonClass={cn(
+                `after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`,
+                dropdownTabs()
+                  .map((tab) => tab.label)
+                  .includes(activeTab())
+                  ? 'after:nt-border-b-primary'
+                  : 'after:nt-border-b-transparent nt-text-foreground-alpha-600'
+              )}
+              onClick={(option) => setActiveTab(option.label)}
+            />
           </Show>
         </Tabs.List>
       </Show>

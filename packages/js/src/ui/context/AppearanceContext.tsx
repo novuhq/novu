@@ -51,6 +51,7 @@ export const appearanceKeys = [
   'tabsTab',
   'tabsTabLabel',
   'tabsTabCount',
+  'dots',
 
   //General
   'root',
@@ -97,13 +98,16 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItemLeftIcon',
   'inboxStatus__dropdownItemRightIcon',
 
-  //Actions dropdown
-  'actionsContainer',
-  'actions__dropdownTrigger',
-  'actions__dropdownContent',
-  'actions__dropdownItem',
-  'actions__dropdownItemLabel',
-  'actions__dropdownItemLeftIcon',
+  // Options dropdown
+  'optionsContainer',
+  'optionsDropdown__button',
+  'optionsDropdown__dots',
+  'optionsDropdown__dropdownTrigger',
+  'optionsDropdown__dropdownContent',
+  'optionsDropdown__dropdownItem',
+  'optionsDropdown__dropdownItemLabel',
+  'optionsDropdown__dropdownItemLeftIcon',
+  'optionsDropdown__dropdownItemRightIcon',
 
   //workflow
   'workflowContainer',
