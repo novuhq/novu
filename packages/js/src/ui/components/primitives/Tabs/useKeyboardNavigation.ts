@@ -38,7 +38,7 @@ export const useKeyboardNavigation = ({
 
       const tabElements = Array.from<HTMLButtonElement>(tabsContainer()?.querySelectorAll('[role="tab"]') ?? []);
       const tabIds = tabElements.map((tab) => tab.id);
-      let currentIndex = tabIds.indexOf(activeTab());
+      const currentIndex = tabIds.indexOf(activeTab());
       const length = tabIds.length;
       let activeIndex = currentIndex;
       let newTab = activeTab();

@@ -1,3 +1,4 @@
+/* eslint-disable local-rules/no-class-without-style */
 import { createMemo, createSignal, onMount, Show } from 'solid-js';
 import { Tabs } from '../primitives';
 import { NotificationList } from '../Notification';
@@ -31,6 +32,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
         if (tabs.length === visibleTabIds.length) {
           setVisibleTabs(props.tabs.filter((tab) => visibleTabIds.includes(tab.label)));
           observer.disconnect();
+
           return;
         }
 

@@ -70,6 +70,7 @@ export const Renderer = (props: RendererProps) => {
                 <For each={[...props.nodes]}>
                   {([node, component]) => {
                     const Component = novuComponents[component.name];
+
                     return (
                       <Portal mount={node}>
                         <Root>

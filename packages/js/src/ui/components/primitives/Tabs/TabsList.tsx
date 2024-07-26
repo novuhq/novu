@@ -1,3 +1,4 @@
+/* eslint-disable local-rules/no-class-without-style */
 import { ParentProps, Ref } from 'solid-js';
 import { AppearanceKey } from '../../../context';
 import { cn, useStyle } from '../../../helpers';

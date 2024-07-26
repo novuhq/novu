@@ -1,4 +1,5 @@
-import { useStyle } from 'src/ui/helpers';
+/* eslint-disable local-rules/no-class-without-style */
+import { useStyle } from '../../helpers';
 import { Tabs } from '../primitives';
 
 export const InboxTab = (props: { label: string; class?: string }) => {
@@ -6,6 +7,7 @@ export const InboxTab = (props: { label: string; class?: string }) => {
 
   // TODO: Replace with actual count from API
   const count = Math.floor(Math.random() * 120 + 1);
+
   return (
     <Tabs.Tab value={props.label} class={`nt-flex nt-gap-2 ${props.class ?? ''}`}>
       <span class={style('tabsTabLabel', 'nt-text-sm nt-font-medium')}>{props.label}</span>
