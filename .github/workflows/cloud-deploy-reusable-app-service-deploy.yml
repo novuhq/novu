@@ -150,7 +150,6 @@ jobs:
     needs:
       - infrastructure_data
       - deploy_service
-      - deploy_service_worker
     runs-on: ubuntu-latest
     permissions:
       contents: read
