@@ -50,6 +50,9 @@ jobs:
           echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
           echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
           echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
+          echo REACT_APP_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }} >> .env
+          echo REACT_APP_IS_EE_AUTH_ENABLED=${{ secrets.IS_EE_AUTH_ENABLED }} >> .env
+
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup
