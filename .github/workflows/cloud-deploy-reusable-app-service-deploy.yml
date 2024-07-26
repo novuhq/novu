@@ -76,31 +76,21 @@ jobs:
           echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
           echo "queue_workers_services=$(terraform output -json queue_workers_services)" >> $GITHUB_OUTPUT
 
-  deploy_service:
-    needs: infrastructure_data
+  deploy_service_worker:
+    if: inputs.service_name == 'worker'
+    needs:
+      - infrastructure_data
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     permissions:
       contents: read
       deployments: write
-
     strategy:
       matrix:
-        include:
-          - service_type: worker
-            matrix_config: true
-            services: ${{ fromJson(needs.infrastructure_data.outputs.services_to_deploy) }}
-          - service_type: other
-            matrix_config: false
-            services:
-              - name: ${{ inputs.service_name }}
-                task_name: ${{ needs.infrastructure_data.outputs.task_name }}
-                container_name: ${{ needs.infrastructure_data.outputs.ecs_container_name }}
-                service: ${{ needs.infrastructure_data.outputs.ecs_service }}
-
+        worker: ${{fromJson(needs.infrastructure_data.outputs.services_to_deploy)}}
     steps:
-      - run: echo "Deploying ${{ inputs.service_name }} to ${{ vars.TF_WORKSPACE }} with Docker tag ${{ inputs.docker_image }}"
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ vars.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -109,25 +99,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
 
-      - name: Set Service Details
-        if: matrix.matrix_config
-        run: |
-          echo "Setting service details for worker services"
-          echo "TASK_NAME=${{ matrix.services.task_name }}" >> $GITHUB_ENV
-          echo "CONTAINER_NAME=${{ matrix.services.container_name }}" >> $GITHUB_ENV
-          echo "SERVICE=${{ matrix.services.service }}" >> $GITHUB_ENV
-
-      - name: Set Service Details for Non-Worker
-        if: ${{ !matrix.matrix_config }}
-        run: |
-          echo "Setting service details for non-worker service"
-          echo "TASK_NAME=${{ matrix.services[0].task_name }}" >> $GITHUB_ENV
-          echo "CONTAINER_NAME=${{ matrix.services[0].container_name }}" >> $GITHUB_ENV
-          echo "SERVICE=${{ matrix.services[0].service }}" >> $GITHUB_ENV
-
       - name: Download task definition
         run: |
-          aws ecs describe-task-definition --task-definition $TASK_NAME \
+          aws ecs describe-task-definition --task-definition ${{ matrix.worker.task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
@@ -135,14 +109,55 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
         with:
           task-definition: task-definition.json
-          container-name: $CONTAINER_NAME
+          container-name: ${{ matrix.worker.container_name }}
           image: ${{ inputs.docker_image }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: $SERVICE
+          service: ${{ matrix.worker.service }}
+          cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
+          wait-for-service-stability: true
+
+  deploy_service:
+    if: inputs.service_name != 'worker'
+    needs:
+      - infrastructure_data
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ vars.TF_WORKSPACE }} And Docker Tag ${{ inputs.docker_image }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ needs.infrastructure_data.outputs.task_name }} \
+          --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ needs.infrastructure_data.outputs.ecs_container_name }}
+          image: ${{ inputs.docker_image }}
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ needs.infrastructure_data.outputs.ecs_service }}
           cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
           wait-for-service-stability: true
 
@@ -150,6 +165,7 @@ jobs:
     needs:
       - infrastructure_data
       - deploy_service
+      - deploy_service_worker
     runs-on: ubuntu-latest
     permissions:
       contents: read
