@@ -7,7 +7,6 @@ import {
 } from '@novu/stateless';
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 import { BaseProvider } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 
 export class ExpoPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
@@ -31,21 +30,18 @@ export class ExpoPushProvider extends BaseProvider implements IPushProvider {
 
     const tickets: ExpoPushTicket[] =
       await this.expo.sendPushNotificationsAsync([
-        deepmerge(
-          {
-            to: options.target,
-            title: options.title,
-            body: options.content,
-            data: options.payload,
-            badge: badge as unknown as number,
-            sound:
-              typeof sound === 'string'
-                ? (sound as ExpoPushMessage['sound'])
-                : null,
-            ...overrides,
-          },
-          this.transform(bridgeProviderData).body
-        ),
+        this.transform<ExpoPushMessage>(bridgeProviderData, {
+          to: options.target,
+          title: options.title,
+          body: options.content,
+          data: options.payload,
+          badge: badge as unknown as number,
+          sound:
+            typeof sound === 'string'
+              ? (sound as ExpoPushMessage['sound'])
+              : null,
+          ...overrides,
+        }).body,
       ]);
 
     /*

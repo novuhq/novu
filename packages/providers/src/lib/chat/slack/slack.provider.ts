@@ -7,7 +7,6 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
@@ -21,14 +20,11 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(
       data.webhookUrl,
-      deepmerge(
-        {
-          text: data.content,
-          blocks: data.blocks,
-          ...(data.customData || {}),
-        },
-        this.transform(bridgeProviderData).body
-      )
+      this.transform(bridgeProviderData, {
+        text: data.content,
+        blocks: data.blocks,
+        ...(data.customData || {}),
+      }).body
     );
 
     return {

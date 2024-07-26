@@ -13,7 +13,6 @@ import {
 import crypto from 'crypto';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 export class FcmPushProvider extends BaseProvider implements IPushProvider {
@@ -70,41 +69,35 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     if (type === 'data') {
       res = await this.messaging.sendMulticast(
-        deepmerge<MulticastMessage>(
-          {
-            tokens: options.target,
-            data: {
-              ...payload,
-              title: options.title,
-              body: options.content,
-              message: options.content,
-            },
-            android,
-            apns,
-            fcmOptions,
-            webpush,
+        this.transform<MulticastMessage>(bridgeProviderData, {
+          tokens: options.target,
+          data: {
+            ...payload,
+            title: options.title,
+            body: options.content,
+            message: options.content,
           },
-          this.transform(bridgeProviderData).body
-        )
+          android,
+          apns,
+          fcmOptions,
+          webpush,
+        }).body
       );
     } else {
       res = await this.messaging.sendMulticast(
-        deepmerge<MulticastMessage>(
-          {
-            tokens: options.target,
-            notification: {
-              title: options.title,
-              body: options.content,
-              ...overridesData,
-            },
-            data,
-            android,
-            apns,
-            fcmOptions,
-            webpush,
+        this.transform<MulticastMessage>(bridgeProviderData, {
+          tokens: options.target,
+          notification: {
+            title: options.title,
+            body: options.content,
+            ...overridesData,
           },
-          this.transform(bridgeProviderData).body
-        )
+          data,
+          android,
+          apns,
+          fcmOptions,
+          webpush,
+        }).body
       );
     }
 

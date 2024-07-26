@@ -12,7 +12,6 @@ import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 
 export class MailgunEmailProvider
   extends BaseProvider
@@ -47,7 +46,8 @@ export class MailgunEmailProvider
     emailOptions: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const mailgunMessageData: Partial<MailgunMessageData> = deepmerge(
+    const mailgunMessageData: Partial<MailgunMessageData> = this.transform(
+      bridgeProviderData,
       {
         from: emailOptions.from || this.config.from,
         to: emailOptions.to,
@@ -61,9 +61,8 @@ export class MailgunEmailProvider
             filename: attachment.name,
           };
         }),
-      },
-      this.transform(bridgeProviderData).body
-    );
+      }
+    ).body;
 
     if (emailOptions.replyTo) {
       mailgunMessageData['h:Reply-To'] = emailOptions.replyTo;

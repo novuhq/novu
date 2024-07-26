@@ -11,7 +11,6 @@ import {
 import { Twilio } from 'twilio';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { BaseProvider } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 
 export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Twilio;
@@ -34,14 +33,11 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const twilioResponse = await this.twilioClient.messages.create(
-      deepmerge<MessageListInstanceCreateOptions>(
-        {
-          body: options.content,
-          to: options.to,
-          from: options.from || this.config.from,
-        },
-        this.transform(bridgeProviderData).body
-      )
+      this.transform<MessageListInstanceCreateOptions>(bridgeProviderData, {
+        body: options.content,
+        to: options.to,
+        from: options.from || this.config.from,
+      }).body
     );
 
     return {

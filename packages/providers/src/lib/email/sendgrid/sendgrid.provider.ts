@@ -12,7 +12,6 @@ import {
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
 
@@ -43,12 +42,10 @@ export class SendgridEmailProvider
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send(
-      deepmerge(
-        {
-          ...mailData,
-        },
-        this.transform(bridgeProviderData).body
-      )
+      this.transform<MailDataRequired>(
+        bridgeProviderData,
+        mailData as unknown as Record<string, unknown>
+      ).body
     );
 
     return {

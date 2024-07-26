@@ -7,7 +7,6 @@ import {
 } from '@novu/stateless';
 import apn from '@parse/node-apn';
 import { BaseProvider } from '../../../base.provider';
-import { deepmerge } from '../../../utils/deepmerge.utils';
 
 export class APNSPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.APNS;
@@ -41,16 +40,13 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.notificationIdentifiers;
     const notification = new apn.Notification(
-      deepmerge(
-        {
-          body: options.content,
-          title: options.title,
-          payload: options.payload,
-          topic: this.config.bundleId,
-          ...options.overrides,
-        },
-        this.transform(bridgeProviderData).body
-      )
+      this.transform(bridgeProviderData, {
+        body: options.content,
+        title: options.title,
+        payload: options.payload,
+        topic: this.config.bundleId,
+        ...options.overrides,
+      }).body
     );
     const res = await this.provider.send(notification, options.target);
 

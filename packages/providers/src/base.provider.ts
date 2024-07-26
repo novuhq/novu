@@ -19,7 +19,7 @@ export enum CasingEnum {
 }
 
 type TransformOutput<T> = {
-  body: Record<string, T>;
+  body: T;
   headers: Record<string, string>;
   query: Record<string, string>;
 };
@@ -27,7 +27,27 @@ type TransformOutput<T> = {
 export abstract class BaseProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
 
-  protected transform<Input = Record<string, unknown>, Output = unknown>(
+  protected transform<
+    Output = Record<string, unknown>,
+    Input = Record<string, unknown>,
+    Data = Record<string, unknown>
+  >(
+    bridgeProvderData: WithPassthrough<Input>,
+    data: Data
+  ): TransformOutput<Output> {
+    const result = this.casingTransform<Input, Output>(bridgeProvderData);
+
+    return {
+      body: deepmerge(
+        data as unknown as Record<string, unknown>,
+        result.body as unknown as Record<string, unknown>
+      ) as Output,
+      headers: result.headers,
+      query: result.query,
+    } as TransformOutput<Output>;
+  }
+
+  private casingTransform<Input = Record<string, unknown>, Output = unknown>(
     bridgeProvderData: WithPassthrough<Input>
   ): TransformOutput<Output> {
     const {
@@ -61,7 +81,7 @@ export abstract class BaseProvider {
     const body = casing(data) as Record<string, unknown>;
 
     return {
-      body: deepmerge(body, _passthrough.body) as Record<string, Output>,
+      body: deepmerge(body, _passthrough.body) as Output,
       headers: {
         ..._passthrough.headers,
       },
