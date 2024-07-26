@@ -29,7 +29,7 @@ on:
         type: string
 
 jobs:
-  build_image:
+  build_docker_image:
     secrets: inherit
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
@@ -41,9 +41,9 @@ jobs:
       local_tag: ${{ inputs.local_tag }}
       enterprise: true
 
-  deploy_service:
+  deploy_to_aws:
     needs:
-      - build_image
+      - build_docker_image
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     secrets: inherit
     with:

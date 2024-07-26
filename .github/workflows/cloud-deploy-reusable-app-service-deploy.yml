@@ -194,22 +194,11 @@ jobs:
           ignore_empty: true
           ignore_missing: true
 
-      - name: Set New Relic Region
-        if: ${{ inputs.New_Relic_GUID }}
-        id: set_region
-        run: |
-          if [[ "${{ env.aws_region }}" == *"us"* ]]; then
-            echo "New_Relic_Region=US" >> ${GITHUB_ENV}
-          else
-            echo "New_Relic_Region=EU" >> ${GITHUB_ENV}
-          fi
-        shell: bash
-
       - name: New Relic Application Deployment Marker
         if: ${{ inputs.New_Relic_GUID }}
         uses: newrelic/deployment-marker-action@v2.3.0
         with:
-          region: ${{ env.New_Relic_Region }}
+          region: ${{ vars.NEW_RELIC_REGION }}
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
           guid: ${{ inputs.New_Relic_GUID }}
           version: "v${{ steps.package-version.outputs.current-version }}"
