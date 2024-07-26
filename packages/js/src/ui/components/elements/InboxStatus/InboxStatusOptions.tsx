@@ -4,7 +4,7 @@ import { useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Archive, Check, Inbox, Unread } from '../../../icons';
 import { NotificationStatus } from '../../../types';
-import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
+import { Dropdown } from '../../primitives/Dropdown';
 import { notificationStatusOptionsLocalizationKeys } from './constants';
 
 const cases = [
@@ -53,10 +53,7 @@ export const StatusItem = (props: {
   const style = useStyle();
 
   return (
-    <Dropdown.Item
-      class={style('inboxStatus__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-8'))}
-      onClick={props.onClick}
-    >
+    <Dropdown.Item appearanceKey="inboxStatus__dropdownItem" class="nt-flex nt-gap-8" onClick={props.onClick}>
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
         <span class={style('inboxStatus__dropdownItemLeftIcon')}>{props.icon()}</span>
         <span class={style('inboxStatus__dropdownItemLabel')}>{props.label}</span>
