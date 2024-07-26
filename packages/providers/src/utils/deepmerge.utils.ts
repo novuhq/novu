@@ -11,7 +11,11 @@ function isNonNullObject(value: unknown) {
 function isSpecial(value: Record<string, unknown>) {
   const stringValue = Object.prototype.toString.call(value);
 
-  return stringValue === '[object RegExp]' || stringValue === '[object Date]';
+  return (
+    stringValue === '[object RegExp]' ||
+    stringValue === '[object Date]' ||
+    stringValue === '[object Uint8Array]'
+  );
 }
 
 function emptyTarget(val: unknown) {

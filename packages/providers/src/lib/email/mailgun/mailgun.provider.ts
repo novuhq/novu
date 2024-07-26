@@ -47,21 +47,23 @@ export class MailgunEmailProvider
     emailOptions: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const mailgunMessageData: Partial<MailgunMessageData> = {
-      from: emailOptions.from || this.config.from,
-      to: emailOptions.to,
-      subject: emailOptions.subject,
-      html: emailOptions.html,
-      cc: emailOptions.cc?.join(','),
-      bcc: emailOptions.bcc?.join(','),
-      attachment: emailOptions.attachments?.map((attachment) => {
-        return {
-          data: attachment.file,
-          filename: attachment.name,
-        };
-      }),
-      ...this.transform(bridgeProviderData).body,
-    };
+    const mailgunMessageData: Partial<MailgunMessageData> = deepmerge(
+      {
+        from: emailOptions.from || this.config.from,
+        to: emailOptions.to,
+        subject: emailOptions.subject,
+        html: emailOptions.html,
+        cc: emailOptions.cc?.join(','),
+        bcc: emailOptions.bcc?.join(','),
+        attachment: emailOptions.attachments?.map((attachment) => {
+          return {
+            data: attachment.file,
+            filename: attachment.name,
+          };
+        }),
+      },
+      this.transform(bridgeProviderData).body
+    );
 
     if (emailOptions.replyTo) {
       mailgunMessageData['h:Reply-To'] = emailOptions.replyTo;

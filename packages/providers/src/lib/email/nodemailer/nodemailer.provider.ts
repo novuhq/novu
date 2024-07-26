@@ -12,6 +12,7 @@ import DKIM from 'nodemailer/lib/dkim';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { ConnectionOptions } from 'tls';
 import { BaseProvider } from '../../../base.provider';
+import { deepmerge } from '../../../utils/deepmerge.utils';
 
 interface INodemailerConfig {
   from: string;
@@ -96,10 +97,14 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const info = await this.transports.sendMail({
-      ...mailData,
-      ...this.transform(bridgeProviderData).body,
-    });
+    const info = await this.transports.sendMail(
+      deepmerge(
+        {
+          ...mailData,
+        },
+        this.transform(bridgeProviderData).body
+      )
+    );
 
     return {
       id: info?.messageId,
