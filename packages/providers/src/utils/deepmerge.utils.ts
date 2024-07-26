@@ -79,11 +79,14 @@ function mergeObject(
 ) {
   const destination = {};
   if (options.isMergeableObject(target)) {
-    getKeys(target).forEach((key) => {
-      destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+    getKeys(target).forEach((key: string) => {
+      destination[key] = cloneUnlessOtherwiseSpecified(
+        target[key] as Record<string, unknown>,
+        options
+      );
     });
   }
-  getKeys(source).forEach(function (key) {
+  getKeys(source).forEach(function (key: string) {
     if (propertyIsUnsafe(target, key as string)) {
       return;
     }
@@ -93,12 +96,15 @@ function mergeObject(
       options.isMergeableObject(source[key])
     ) {
       destination[key] = getMergeFunction(key as string, options)(
-        target[key],
-        source[key],
+        target[key] as Record<string, unknown>,
+        source[key] as Record<string, unknown>,
         options
       );
     } else {
-      destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+      destination[key] = cloneUnlessOtherwiseSpecified(
+        source[key] as Record<string, unknown>,
+        options
+      );
     }
   });
 
