@@ -37,7 +37,13 @@ function ColorSchemeThemeWrapper({ children }) {
   // wraps the component preview in a full-page container with proper bg color
   return (
     <section
-      className={css({ padding: '250', bg: 'surface.page', colorPalette: DEFAULT_COLOR_PALETTE, height: 'full' })}
+      className={css({
+        padding: '250',
+        bg: 'surface.page',
+        colorPalette: DEFAULT_COLOR_PALETTE,
+        minHeight: '[100vh]',
+        height: 'full',
+      })}
     >
       {children}
     </section>
