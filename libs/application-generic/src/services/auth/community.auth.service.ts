@@ -32,10 +32,6 @@ import { ApiException } from '../../utils/exceptions';
 import { Instrument } from '../../instrumentation';
 import { CreateUser, CreateUserCommand } from '../../usecases/create-user';
 import {
-  SwitchEnvironment,
-  SwitchEnvironmentCommand,
-} from '../../usecases/switch-environment';
-import {
   SwitchOrganization,
   SwitchOrganizationCommand,
 } from '../../usecases/switch-organization';
@@ -45,7 +41,7 @@ import {
   buildUserKey,
   CachedEntity,
 } from '../cache';
-import { normalizeEmail } from '@novu/shared';
+import { ApiAuthSchemeEnum, normalizeEmail } from '@novu/shared';
 import { IAuthService } from './auth.service.interface';
 
 @Injectable()
@@ -60,9 +56,7 @@ export class CommunityAuthService implements IAuthService {
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
     @Inject(forwardRef(() => SwitchOrganization))
-    private switchOrganizationUsecase: SwitchOrganization,
-    @Inject(forwardRef(() => SwitchEnvironment))
-    private switchEnvironmentUsecase: SwitchEnvironment
+    private switchOrganizationUsecase: SwitchOrganization
   ) {}
 
   public async authenticate(
@@ -211,6 +205,7 @@ export class CommunityAuthService implements IAuthService {
       organizationId: environment._organizationId,
       environmentId: environment._id,
       exp: 0,
+      scheme: ApiAuthSchemeEnum.API_KEY,
     };
   }
 
@@ -239,36 +234,10 @@ export class CommunityAuthService implements IAuthService {
     const userActiveOrganizations =
       await this.organizationRepository.findUserActiveOrganizations(user._id);
 
-    if (userActiveOrganizations && userActiveOrganizations.length) {
+    if (userActiveOrganizations?.length > 0) {
       const organizationToSwitch = userActiveOrganizations[0];
 
-      const userActiveProjects =
-        await this.environmentRepository.findOrganizationEnvironments(
-          organizationToSwitch._id
-        );
-      let environmentToSwitch = userActiveProjects[0];
-
-      const reduceEnvsToOnlyDevelopment = (prev, current) =>
-        current.name === 'Development' ? current : prev;
-
-      if (userActiveProjects.length > 1) {
-        environmentToSwitch = userActiveProjects.reduce(
-          reduceEnvsToOnlyDevelopment,
-          environmentToSwitch
-        );
-      }
-
-      if (environmentToSwitch) {
-        return await this.switchEnvironmentUsecase.execute(
-          SwitchEnvironmentCommand.create({
-            newEnvironmentId: environmentToSwitch._id,
-            organizationId: organizationToSwitch._id,
-            userId: user._id,
-          })
-        );
-      }
-
-      return await this.switchOrganizationUsecase.execute(
+      return this.switchOrganizationUsecase.execute(
         SwitchOrganizationCommand.create({
           newOrganizationId: organizationToSwitch._id,
           userId: user._id,
@@ -298,8 +267,12 @@ export class CommunityAuthService implements IAuthService {
         email: user.email,
         profilePicture: user.profilePicture,
         organizationId: organizationId || null,
-        roles,
+        /*
+         * TODO: Remove it after deploying the new env switching logic twice to cater for outdated,
+         * cached versions of Dashboard web app in Netlify.
+         */
         environmentId: environmentId || null,
+        roles,
       },
       {
         expiresIn: '30 days',
@@ -310,17 +283,18 @@ export class CommunityAuthService implements IAuthService {
 
   @Instrument()
   public async validateUser(payload: UserSessionData): Promise<UserEntity> {
-    // We run these in parallel to speed up the query time
     const userPromise = this.getUser({ _id: payload._id });
+
     const isMemberPromise = payload.organizationId
       ? this.isAuthenticatedForOrganization(payload._id, payload.organizationId)
       : Promise.resolve(true);
+
     const [user, isMember] = await Promise.all([userPromise, isMemberPromise]);
 
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
       throw new UnauthorizedException(
-        `Not authorized for organization ${payload.organizationId}`
+        `User ${payload._id} is not a member of organization ${payload.organizationId}`
       );
     }
 

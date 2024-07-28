@@ -21,7 +21,7 @@ function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvironment({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({ bridge: template?.bridge });
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();

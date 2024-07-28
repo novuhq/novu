@@ -38,7 +38,8 @@
     }
   },
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^5.0.9",
+    "@clerk/clerk-sdk-node": "^5.0.19",
+    "@nestjs/swagger": "^7.1.8",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0"
   },

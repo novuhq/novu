@@ -9,7 +9,7 @@ export class ZodValidator implements Validator<ZodSchema> {
     return (schema as ZodSchema).safeParseAsync !== undefined;
   }
 
-  async validate<T>(data: T, schema: ZodSchema): Promise<ValidateResult<T>> {
+  async validate<T extends Record<string, unknown>>(data: T, schema: ZodSchema): Promise<ValidateResult<T>> {
     const result = schema.safeParse(data);
     if (result.success) {
       return { success: true, data: result.data };

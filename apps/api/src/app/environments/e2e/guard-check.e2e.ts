@@ -24,13 +24,11 @@ describe('Environment - Check Root Environment Guard', async () => {
     const { body: envsBody } = await session.testAgent.get('/v1/environments');
     const envs = envsBody.data;
 
-    const devEnvironment = envs.find((i) => i.name === 'Development');
-    await session.switchEnvironment(devEnvironment._id);
+    await session.switchToDevEnvironment();
     const { body: devBody } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
     expect(devBody.data).to.be.ok;
 
-    const prodEnvironment = envs.find((i) => !!i._parentId);
-    await session.switchEnvironment(prodEnvironment._id);
+    await session.switchToProdEnvironment();
     const { body: prodBody } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
     expect(prodBody.message).to.contain('This action is only allowed in Development');
     expect(prodBody.statusCode).to.eq(401);

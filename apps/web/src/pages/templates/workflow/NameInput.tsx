@@ -11,7 +11,7 @@ export const NameInput = () => {
     formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvironment({}, template?.bridge);
+  const { readonly } = useEnvironment({ bridge: template?.bridge });
   const showErrors = isSubmitted && errors?.steps;
   const { colorScheme } = useMantineColorScheme();
 

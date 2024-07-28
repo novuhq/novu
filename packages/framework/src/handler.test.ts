@@ -5,12 +5,9 @@ import { NovuRequestHandler } from './handler';
 
 describe('NovuRequestHandler', () => {
   let client: Client;
-  let httpClientMock: any;
 
   beforeEach(() => {
     client = new Client({ secretKey: 'some-secret-key' });
-
-    (client as any).httpClient = httpClientMock;
   });
 
   describe('triggerAction', () => {
@@ -35,8 +32,7 @@ describe('NovuRequestHandler', () => {
         bridgeUrl: 'http://example.com',
       };
 
-      const renamedWorkflowId = { ...triggerEvent, name: triggerEvent.workflowId };
-      delete (renamedWorkflowId as any).workflowId;
+      const { workflowId, ...renamedWorkflowId } = { ...triggerEvent, name: triggerEvent.workflowId };
 
       const postMock = vi.fn().mockResolvedValueOnce({
         ok: true,

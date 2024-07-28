@@ -30,7 +30,7 @@ const getVariableContents = (template: ITemplates) => {
 
 export function TemplateInAppEditor() {
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvironment({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({ bridge: template?.bridge });
   const { control, watch } = useFormContext<IForm>();
   const [modalOpen, setModalOpen] = useState(false);
   const stepFormPath = useStepFormPath();

@@ -1,5 +1,5 @@
 import { INestApplication, Logger } from '@nestjs/common';
-import { HttpRequestHeaderKeysEnum } from '../app/shared/framework/types';
+import { HttpRequestHeaderKeysEnum } from '@novu/shared';
 
 export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req: Request, callback) {
   const corsOptions: Parameters<typeof callback>[1] = {

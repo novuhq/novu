@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 
 test('should show/hide the API key, and display the application and environment identifier', async ({ page }) => {
   const apiKeysPage = await ApiKeysPage.goTo(page);
-  const apiKeyContainer = apiKeysPage.getApiKeyContainer();
+  const apiKeyContainer = await apiKeysPage.getApiKeyContainer();
   const apiKey = session.environment.apiKeys[0].key;
 
   expect(apiKeyContainer).toHaveValue(apiKey);
@@ -31,12 +31,12 @@ test('should show/hide the API key, and display the application and environment 
 
 test('should regenerate the API key', async ({ page }) => {
   const apiKeysPage = await ApiKeysPage.goTo(page);
-  const oldApiKeyValue = await apiKeysPage.getApiKeyContainer().inputValue();
+  const oldApiKeyValue = (await apiKeysPage.getApiKeyContainer()).inputValue();
 
   await apiKeysPage.regenerateApiKey();
   await apiKeysPage.assertCautionModal();
 
-  const newApiKeyValue = await apiKeysPage.getApiKeyContainer().inputValue();
+  const newApiKeyValue = (await apiKeysPage.getApiKeyContainer()).inputValue();
 
   await expect(newApiKeyValue).not.toBe(oldApiKeyValue);
 });

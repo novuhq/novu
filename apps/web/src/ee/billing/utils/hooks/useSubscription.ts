@@ -14,6 +14,7 @@ export const useSubscription = () => {
     ['billing-subscription', currentOrganization?._id],
     () => api.get('/v1/billing/subscription'),
     {
+      enabled: !!currentOrganization,
       initialData: {
         trialStart: today.toISOString(),
         trialEnd: today.toISOString(),

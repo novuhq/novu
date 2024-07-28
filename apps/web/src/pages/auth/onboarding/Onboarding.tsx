@@ -7,11 +7,10 @@ const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
 
-import { useColorScheme } from '@novu/design-system';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
-import { IconPlayArrow } from '@novu/novui/icons';
 import { Button } from '@novu/novui';
+import { IconPlayArrow } from '@novu/novui/icons';
 
 import { ROUTES } from '../../../constants/routes';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';

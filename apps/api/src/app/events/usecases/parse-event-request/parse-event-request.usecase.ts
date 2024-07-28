@@ -1,6 +1,6 @@
 import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
-import hat from 'hat';
+import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ModuleRef } from '@nestjs/core';
@@ -291,12 +291,16 @@ export class ParseEventRequest {
   }
 
   private modifyAttachments(command: ParseEventRequestCommand): void {
-    command.payload.attachments = command.payload.attachments.map((attachment) => ({
-      ...attachment,
-      name: attachment.name,
-      file: Buffer.from(attachment.file, 'base64'),
-      storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
-    }));
+    command.payload.attachments = command.payload.attachments.map((attachment) => {
+      const randomId = randomBytes(16).toString('hex');
+
+      return {
+        ...attachment,
+        name: attachment.name,
+        file: Buffer.from(attachment.file, 'base64'),
+        storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
+      };
+    });
   }
 
   private getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {

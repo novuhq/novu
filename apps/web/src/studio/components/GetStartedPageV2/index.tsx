@@ -103,7 +103,7 @@ const SkipCTA = ({
   </HStack>
 );
 
-export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workflows' }) => {
+export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'get-started' }) => {
   const track = useTelemetry();
   const navigate = useNavigate();
 
@@ -127,7 +127,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
             })}
             textAlign="center"
           >
-            Send your first notification in less than 5 minutes
+            Send your first notification in less than 4 minutes
           </Title>
           <HStack
             className={css({
@@ -201,7 +201,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
 
                 {location === 'onboarding' && (
                   <SkipCTA
-                    text="No time right now?"
+                    text="Prefer to explore the platform first?"
                     buttonText="Skip Setup"
                     onClick={() => {
                       track('Skip Onboarding Clicked', { location: 'button' });
@@ -210,7 +210,7 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                   />
                 )}
 
-                {location === 'workflows' && (
+                {location === 'get-started' && (
                   <SkipCTA
                     text="Not a developer? Invite your dev team"
                     buttonText="Invite"
@@ -252,10 +252,10 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                   marginBottom: location === 'onboarding' ? '24px' : '8px',
                 })}
               >
-                Build real-life notification workflows and preview them locally
+                Code your notification workflows and preview them locally
               </Text>
 
-              {location === 'workflows' && (
+              {location === 'get-started' && (
                 <BadgeButton
                   onClick={() => {
                     track('Examples link clicked - [Workflows empty state]');
@@ -298,10 +298,10 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                   marginBottom: location === 'onboarding' ? '24px' : '8px',
                 })}
               >
-                Provide your team with no-code controls to modify notification content and behavior
+                Provide your team with no-code UI controls to modify notification content and behavior
               </Text>
 
-              {location === 'workflows' && (
+              {location === 'get-started' && (
                 <BadgeButton
                   onClick={() => {
                     track('Invite team link clicked - [Workflows empty state]');
@@ -344,10 +344,10 @@ export const GetStartedPageV2 = ({ location }: { location: 'onboarding' | 'workf
                   marginBottom: location === 'onboarding' ? '24px' : '8px',
                 })}
               >
-                Use the familiar CI/CD pipeline to get your notifications to production
+                Use your CI/CD pipeline to ship your notifications to production
               </Text>
 
-              {location === 'workflows' && (
+              {location === 'get-started' && (
                 <BadgeButton
                   onClick={() => {
                     track('Deployment docs link clicked - [Workflows empty state]');

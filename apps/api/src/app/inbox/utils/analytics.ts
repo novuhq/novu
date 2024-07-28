@@ -4,4 +4,7 @@ export enum AnalyticsEventsEnum {
   MARK_NOTIFICATION_AS = 'Mark Notification As - [Inbox]',
   UPDATE_NOTIFICATION_ACTION = 'Update Notification Action - [Inbox]',
   UPDATE_ALL_NOTIFICATIONS = 'Update All Notifications - [Inbox]',
+  FETCH_PREFERENCES = 'Fetch Preferences - [Inbox]',
+  UPDATE_PREFERENCES = 'Update Preferences - [Inbox]',
+  CREATE_PREFERENCES = 'Create Preferences - [Inbox]',
 }

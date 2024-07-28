@@ -65,6 +65,7 @@ import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
+import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -82,7 +83,7 @@ const AuthRoutes = () => {
 };
 
 export const AppRoutes = () => {
-  const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   return (
     <Routes>
@@ -119,8 +120,8 @@ export const AppRoutes = () => {
           <Route path="create" element={<CreateTenantPage />} />
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
-        {isImprovedOnboardingEnabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
+        {isV2Enabled ? (
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 location="get-started" />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
         )}
@@ -158,8 +159,10 @@ export const AppRoutes = () => {
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.LAYOUT} element={<LayoutsPage />} />
-        <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
-        <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
+        {/* The * in this case is for backwards compatibility with the previous version of these paths 
+        that included the environment name in the URL i.e. /api-keys/Development */}
+        <Route path={`${ROUTES.API_KEYS}/*`} element={<ApiKeysPage />} />
+        <Route path={`${ROUTES.WEBHOOK}/*`} element={<WebhookPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
 
