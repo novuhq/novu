@@ -1,17 +1,18 @@
+import React from 'react';
 import type { NovuUI, NovuUIOptions } from '@novu/js/ui';
-import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import ReactDOM from 'react-dom';
 import { MountedElement, RendererProvider } from './context/RenderContext';
 
-type RendererProps = PropsWithChildren<{
+type RendererProps = React.PropsWithChildren<{
   options: NovuUIOptions;
 }>;
+
 export const Renderer = (props: RendererProps) => {
   const { options, children } = props;
-  const [novuUI, setNovuUI] = useState<NovuUI | undefined>();
-  const [mountedElements, setMountedElements] = useState(new Map<HTMLElement, MountedElement>());
+  const [novuUI, setNovuUI] = React.useState<NovuUI | undefined>();
+  const [mountedElements, setMountedElements] = React.useState(new Map<HTMLElement, MountedElement>());
 
-  const mountElement = useCallback(
+  const mountElement = React.useCallback(
     (el: HTMLElement, mountedElement: MountedElement) => {
       setMountedElements((prev) => {
         const newMountedElements = new Map(prev);
@@ -23,7 +24,7 @@ export const Renderer = (props: RendererProps) => {
       return () => {
         setMountedElements((prev) => {
           const newMountedElements = new Map(prev);
-          newMountedElements.set(el, mountedElement);
+          newMountedElements.delete(el);
 
           return newMountedElements;
         });
@@ -32,16 +33,15 @@ export const Renderer = (props: RendererProps) => {
     [setMountedElements]
   );
 
-  useEffect(() => {
-    //require here as it won't work in SSR.
-    const { NovuUI } = require('@novu/js/ui');
-    /*
-     * we could import above and have types here but `mount` can't be async, since the unmount method is
-     * returned and couldn't be used as a cleanup successfully.
-     */
-    const ui = new (NovuUI as new (novuOptions: NovuUIOptions) => NovuUI)(options) as NovuUI;
-    setNovuUI(ui);
-  }, []);
+  React.useEffect(() => {
+    const loadNovuUI = async () => {
+      const { NovuUI } = await import('@novu/js/ui');
+      const ui = new (NovuUI as new (novuOptions: NovuUIOptions) => NovuUI)(options);
+      setNovuUI(ui);
+    };
+
+    loadNovuUI();
+  }, [options]);
 
   if (!novuUI) {
     return null;
@@ -50,7 +50,7 @@ export const Renderer = (props: RendererProps) => {
   return (
     <RendererProvider value={{ mountElement, novuUI }}>
       {[...mountedElements].map(([element, mountedElement]) => {
-        return createPortal(mountedElement, element);
+        return ReactDOM.createPortal(mountedElement, element);
       })}
 
       {children}
