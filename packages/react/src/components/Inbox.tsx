@@ -52,7 +52,7 @@ type InboxProps = BaseNovuUIOptions &
 
 export const Inbox = (props: InboxProps) => {
   if (props.children) {
-    return <Renderer options={props} />;
+    return <Renderer options={props}>{props.children}</Renderer>;
   }
 
   const { renderNotification, ...options } = props as BaseNovuUIOptions & InboxDefaultProps;

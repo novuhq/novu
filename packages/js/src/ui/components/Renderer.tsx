@@ -12,12 +12,13 @@ import {
   NovuProvider,
 } from '../context';
 import { UnreadCountProvider } from '../context/UnreadCountContext';
-import { Bell, Root } from './elements';
+import { Bell, Root, Settings } from './elements';
 import { Inbox } from './Inbox';
 
 export const novuComponents = {
   Inbox,
   Bell,
+  Settings,
 };
 
 export type NovuComponent = { name: NovuComponentName; props?: any };

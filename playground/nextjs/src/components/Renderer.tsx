@@ -48,7 +48,6 @@ export const Renderer = (props: RendererProps) => {
       {[...mountedElements].map(([element, mountedElement]) => {
         return createPortal(mountedElement, element);
       })}
-
       {children}
     </RendererProvider>
   );

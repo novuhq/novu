@@ -1,2 +1,1 @@
-export * from './Example';
-export * from './components/Inbox';
+export * from './components';
