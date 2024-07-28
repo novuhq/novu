@@ -38,11 +38,7 @@ export function CodeEditor({
 
   return (
     <TitleBarWrapper>
-      <KeysContainer isDark={isDark}>
-        <Text color={colors.B60}>bridge-app.ts</Text>
-      </KeysContainer>
       <Editor
-        // height=""
         defaultLanguage={language}
         theme={isDark ? 'vs-dark' : 'vs'}
         language={language}

@@ -11,6 +11,8 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
     height: '100%',
     minHeight: '50vh',
     width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
   },
   bar: {
     borderRadius: '8px 8px 0 0',
@@ -73,6 +75,10 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
     display: 'flex',
     flexDirection: 'column',
   },
+  body: {
+    height: 'inherit',
+    flex: 1,
+  },
 }));
 
 export const TitleBarWrapper = ({ children }) => {
@@ -87,7 +93,7 @@ export const TitleBarWrapper = ({ children }) => {
           <div className={classes.barAction}></div>
         </Group>
       </div>
-      {children}
+      <div className={classes.body}>{children}</div>
     </div>
   );
 };

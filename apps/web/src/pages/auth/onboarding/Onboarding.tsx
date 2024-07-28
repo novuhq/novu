@@ -4,11 +4,14 @@ import { useDisclosure } from '@mantine/hooks';
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
 const { Pane } = Allotment;
+const RootView = Allotment;
+const EditorView = Allotment;
 
-import { useColorScheme, Button } from '@novu/design-system';
+import { useColorScheme } from '@novu/design-system';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
-import { IconClose, IconPlayArrow } from '@novu/novui/icons';
+import { IconPlayArrow } from '@novu/novui/icons';
+import { Button } from '@novu/novui';
 
 import { ROUTES } from '../../../constants/routes';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
@@ -17,7 +20,6 @@ import { CodeEditor } from '../../../studio/components/workflows/step-editor/edi
 import { WorkflowFlow } from './WorkflowFlow';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
-import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
@@ -29,7 +31,8 @@ export function OnboardingPage() {
   return (
     <div
       className={css({
-        bg: 'surface.page',
+        bg: 'surface.panel',
+        height: '100vh',
       })}
     >
       <Header handleTestClick={handleTestClick} />
@@ -39,7 +42,6 @@ export function OnboardingPage() {
 }
 
 function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
-  const { colorScheme } = useColorScheme();
   const navigate = useNavigate();
   const segment = useSegment();
 
@@ -60,33 +62,32 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
         padding: '8px',
       })}
     >
-      <span
-        className={css({
-          color: 'typography.text.secondary',
-          fontFamily: 'SF Pro Text',
-          fontSize: '14px',
-          fontStyle: 'normal',
-          fontWeight: '600',
-          lineHeight: '20px',
-        })}
-      >
-        Playground
-      </span>
-      <div>
-        <TriggerActionModal handleTestClick={handleTestClick} />
-        <Button
-          variant="outline"
-          onClick={handleContinue}
-          icon={<IconClose />}
-          iconPosition={'right'}
+      <HStack justify={'start'} gap={0}>
+        <img
+          src={`/static/images/novu-gray.svg`}
           className={css({
-            height: '44px',
+            h: '20px',
+            w: '20px',
+            borderRadius: '100',
+            margin: '8px',
+          })}
+        />
+        <span
+          className={css({
+            color: 'typography.text.secondary',
+            fontSize: '14px',
+            fontStyle: 'normal',
+            fontWeight: '600',
+            lineHeight: '20px',
             padding: '8px',
-            color: colorScheme === 'light' ? 'typography.text.primary' : 'typography.text.secondary',
           })}
         >
-          Skip
-        </Button>
+          NOVU Playground
+        </span>
+      </HStack>
+      <div>
+        <TriggerActionModal handleTestClick={handleTestClick} />
+        <Button onClick={handleContinue}>Skip</Button>
       </div>
     </HStack>
   );
@@ -104,61 +105,74 @@ function Playground({
   // const [playgroundSizes, setPlaygroundSizes] = useState<number[]>([479, 479]);
 
   return (
-    <div
+    // <div
+    //   className={css({
+    //     height: '100vh',
+    //   })}
+    // >
+    <RootView
+      // proportionalLayout
+      onChange={(value) => {
+        // eslint-disable-next-line no-console
+        // console.log('playgroundSizes ', value);
+        // setPlaygroundSizes(value);
+      }}
+      // defaultSizes={playgroundSizes}
       className={css({
-        bg: 'surface.page',
-        height: '100vh',
+        height: 'calc(100vh - 54px) !important',
         '--separator-border': 'transparent',
       })}
     >
-      <Allotment
-        // proportionalLayout
-        onChange={(value) => {
+      <EditorView
+        vertical
+        onVisibleChange={
           // eslint-disable-next-line no-console
-          // console.log('playgroundSizes ', value);
-          // setPlaygroundSizes(value);
+          (visible) => console.log('visible ', visible)
+        }
+        onChange={(value) => {
+          // todo create memo
+          // eslint-disable-next-line no-console
+          console.log('editorSizes ', value);
+          setEditorSizes(value);
+          // console.log((terminalRef?.current as any)?.proposeDimensions.?());
+          console.log((terminalRef?.current as any)?.proposeDimensions());
+          // terminalRef?.current?.fit();
         }}
-        // defaultSizes={playgroundSizes}
+        defaultSizes={editorSizes}
+        className={css({
+          // height: 'calc(100vh - 44px)',
+          borderRadius: '8px 8px 8px 8px',
+        })}
       >
-        <Allotment
-          vertical
-          onVisibleChange={
-            // eslint-disable-next-line no-console
-            (visible) => console.log('visible ', visible)
-          }
-          onChange={(value) => {
-            // todo create memo
-            // eslint-disable-next-line no-console
-            console.log('editorSizes ', value);
-            setEditorSizes(value);
-            // console.log((terminalRef?.current as any)?.proposeDimensions.?());
-            console.log((terminalRef?.current as any)?.proposeDimensions());
-            // terminalRef?.current?.fit();
-          }}
-          defaultSizes={editorSizes}
-        >
-          <Pane preferredSize={'70%'}>
-            <div style={{ height: editorSizes?.[0], margin: '10px 10px 0 10px' }}>
-              <CodeEditor code={code} setCode={setCode} />
-            </div>
-          </Pane>
-          <Pane preferredSize={'30%'}>
-            <div style={{ height: editorSizes?.[1], margin: '0 10px 10px 10px' }}>
-              <TerminalComponent ref={terminalRef} />
-            </div>
-          </Pane>
-        </Allotment>
-        <Pane>
-          <div style={{ height: '100%', margin: '10px 10px 10px 10px' }}>
-            <WorkflowFlow
-              isBridgeAppLoading={isBridgeAppLoading}
-              clickedStepId={clickedStepId}
-              setClickedStepId={setClickedStepId}
-            />
+        <Pane preferredSize={'70%'}>
+          <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }}>
+            <CodeEditor code={code} setCode={setCode} />
           </div>
         </Pane>
-      </Allotment>
-    </div>
+        <Pane preferredSize={'30%'}>
+          <div style={{ height: editorSizes?.[1], margin: '0 10px 10px 10px' }}>
+            <TerminalComponent ref={terminalRef} />
+          </div>
+        </Pane>
+      </EditorView>
+      <Pane>
+        <div
+          style={{
+            // height: 'calc(100vh - 10px) !important',
+            height: '100%',
+            margin: '0 10px 10px 10px',
+            borderRadius: '8px 8px 8px 8px',
+          }}
+        >
+          <WorkflowFlow
+            isBridgeAppLoading={isBridgeAppLoading}
+            clickedStepId={clickedStepId}
+            setClickedStepId={setClickedStepId}
+          />
+        </div>
+      </Pane>
+    </RootView>
+    // </div>
   );
 }
 
@@ -175,9 +189,13 @@ const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promis
 
   return (
     <>
-      <OutlineButton Icon={IconPlayArrow} onClick={handleOnRunTestClick}>
+      <Button
+        // variant="outline"
+        Icon={IconPlayArrow}
+        onClick={handleOnRunTestClick}
+      >
         Run a test
-      </OutlineButton>
+      </Button>
       <ExecutionDetailsModalWrapper
         transactionId={transactionId}
         isOpen={executionModalOpened}

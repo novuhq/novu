@@ -33,7 +33,12 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
 }) => {
   if (onlyPreviewView) {
     return (
-      <VStack className={css({ width: '100%' })}>
+      <VStack
+        className={css({
+          height: '100%',
+          margin: '0 12px 8px 12px',
+        })}
+      >
         {error && <ErrorPrettyRender error={error} />}
         <PreviewStep
           channel={step?.template?.type || step?.type}

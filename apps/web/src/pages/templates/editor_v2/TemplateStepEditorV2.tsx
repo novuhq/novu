@@ -1,18 +1,21 @@
 import { IconPlayArrow } from '@novu/novui/icons';
 import type { DiscoverWorkflowOutput } from '@novu/framework';
+import { css, cx } from '@novu/novui/css';
+import { HStack } from '@novu/novui/jsx';
 
-import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../../../studio/components/workflows/layout';
+import { WorkflowsPageHeader, WorkflowsPanelLayout } from '../../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from '../../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useWorkflowStepEditor } from './useWorkflowStepEditor';
 import { When } from '../../../components/utils/When';
+import { BackButton } from '../../../components/layout/components/LocalStudioHeader/BackButton';
 
 export const WorkflowsStepEditorPageV2 = (props: {
-  // workflowId?: string;
   stepId?: string;
   workflow?: DiscoverWorkflowOutput;
+  handleGoBack?: () => void;
 }) => {
   const {
     step,
@@ -27,21 +30,46 @@ export const WorkflowsStepEditorPageV2 = (props: {
     isStateless,
   } = useWorkflowStepEditor(props.stepId);
   const title = step?.stepId;
+  const controlsPanelClass = css({
+    marginTop: '12px',
+  });
+  const titleClass = css({
+    // font: '16px',
+  });
+  const workflowsPageTemplate = css({
+    paddingBlock: '0px 0px',
+    bg: 'transparent',
+  });
 
   return (
     <>
-      <WorkflowsPageTemplate
-        title={title}
-        icon={<Icon size="32" stepType={step?.type} />}
-        actions={
-          <When truthy={!isStateless}>
-            <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
-              Test workflow
-            </OutlineButton>
-          </When>
-        }
-      >
-        <WorkflowsPanelLayout>
+      <WorkflowsPanelLayout>
+        <div className={cx(css({ backgroundColor: '#23232b' }))}>
+          <HStack
+            className={cx(
+              css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })
+            )}
+          >
+            <When truthy={isStateless}>
+              <BackButton
+                onClick={() => {
+                  props.handleGoBack?.();
+                }}
+              />
+            </When>
+            <WorkflowsPageHeader
+              className={cx(workflowsPageTemplate, isStateless && titleClass)}
+              title={title}
+              icon={<Icon size={isStateless ? '19' : '32'} stepType={step?.type} />}
+              actions={
+                <When truthy={!isStateless}>
+                  <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+                    Test workflow
+                  </OutlineButton>
+                </When>
+              }
+            />
+          </HStack>
           <WorkflowStepEditorContentPanel
             error={error}
             step={step}
@@ -49,15 +77,16 @@ export const WorkflowsStepEditorPageV2 = (props: {
             isLoadingPreview={loadingPreview}
             onlyPreviewView={isStateless}
           />
-          <WorkflowStepEditorControlsPanel
-            isLoadingSave={isSavingControls}
-            step={step?.template}
-            workflow={workflow}
-            defaultControls={controls || step?.controls || {}}
-            onChange={onControlsChange}
-          />
-        </WorkflowsPanelLayout>
-      </WorkflowsPageTemplate>
+        </div>
+        <WorkflowStepEditorControlsPanel
+          isLoadingSave={isSavingControls}
+          step={step?.template}
+          workflow={workflow}
+          defaultControls={controls || step?.controls || {}}
+          onChange={onControlsChange}
+          className={cx(isStateless && controlsPanelClass)}
+        />
+      </WorkflowsPanelLayout>
     </>
   );
 };
