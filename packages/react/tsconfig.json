@@ -1,13 +1,18 @@
 {
   "include": ["src"],
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "module": "ESNext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ES6",
+    "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node"
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
 }

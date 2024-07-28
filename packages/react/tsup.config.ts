@@ -10,5 +10,6 @@ export default defineConfig({
   splitting: false,
   format: ['cjs', 'esm'],
   external: ['react'],
+  target: 'esnext',
   injectStyle: false,
 });

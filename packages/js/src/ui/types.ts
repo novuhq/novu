@@ -3,6 +3,7 @@ import { InboxNotification } from '../types';
 import { Appearance, Localization } from './context';
 
 export type NotificationMounter = (el: HTMLDivElement, options: { notification: InboxNotification }) => () => void;
+export type BellMounter = (el: HTMLDivElement, options: { unreadCount: number }) => () => void;
 
 export type BaseNovuProviderProps = {
   appearance?: Appearance;

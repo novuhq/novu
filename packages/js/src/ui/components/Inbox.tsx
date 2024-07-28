@@ -1,6 +1,6 @@
 import { Accessor, createSignal, JSX, Match, Show, Switch } from 'solid-js';
 import { useStyle } from '../helpers';
-import { NotificationMounter } from '../types';
+import { BellMounter, NotificationMounter } from '../types';
 import { Bell, Footer, Header, Preferences, PreferencesHeader } from './elements';
 import { InboxTabs } from './InboxTabs';
 import { NotificationList } from './Notification';
@@ -10,7 +10,7 @@ export type InboxProps = {
   open?: boolean;
   tabs?: Array<{ label: string; value: Array<string> }>;
   mountNotification?: NotificationMounter;
-  renderBell?: ({ unreadCount }: { unreadCount: Accessor<number> }) => JSX.Element;
+  mountBell?: BellMounter;
 };
 
 enum Screen {
@@ -56,7 +56,7 @@ export const Inbox = (props: InboxProps) => {
       <Popover.Trigger
         asChild={(triggerProps) => (
           <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>
-            <Bell>{props.renderBell}</Bell>
+            <Bell mountBell={props.mountBell} />
           </Button>
         )}
       />
