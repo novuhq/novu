@@ -1,9 +1,11 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { IconTerminal } from '@novu/novui/icons';
 import 'xterm/css/xterm.css';
 
 import { TerminalHandle } from './useContainer';
+import { css } from '@novu/novui/css';
 
 interface TerminalComponentProps {
   onChange?: (data: string) => void;
@@ -55,6 +57,25 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
       };
     }, []);
 
-    return <div style={{ height: '100%' }} ref={terminalRef} />;
+    return (
+      <div className={css({ height: '100%' })}>
+        <div
+          className={css({
+            color: 'typography.text.secondary',
+            bg: '#292933',
+            lineHeight: '20px',
+            fontSize: '14px',
+            p: '4',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+          })}
+        >
+          <IconTerminal className={css({ mr: '4' })} />
+          Terminal
+        </div>
+        <div style={{ height: '100%' }} ref={terminalRef} />
+      </div>
+    );
   }
 );
