@@ -5,8 +5,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
 import { captureException } from '@sentry/react';
 
-import { FeatureFlagsKeysEnum, ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
-import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  ICreateOrganizationDto,
+  IResponseError,
+  JobTitleEnum,
+  jobTitleToLabelMapper,
+  ProductUseCases,
+  ProductUseCasesEnum,
+} from '@novu/shared';
 import { Button, Input, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
@@ -23,6 +30,8 @@ export function QuestionnaireForm() {
   const queryClient = useQueryClient();
 
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
+
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -99,14 +108,20 @@ export function QuestionnaireForm() {
       return;
     }
 
+    if (isPlaygroundOnboardingEnabled) {
+      const isTechnicalJobTitle = isJobTitleIsTech(data.jobTitle);
+
+      if (isTechnicalJobTitle) {
+        navigate(ROUTES.DASHBOARD_WELCOME);
+      } else {
+        navigate(ROUTES.WORKFLOWS);
+      }
+
+      return;
+    }
+
     if (isV2Enabled) {
-      const isTechnicalJobTitle = [
-        JobTitleEnum.ENGINEER,
-        JobTitleEnum.ENGINEERING_MANAGER,
-        JobTitleEnum.ARCHITECT,
-        JobTitleEnum.FOUNDER,
-        JobTitleEnum.STUDENT,
-      ].includes(data.jobTitle);
+      const isTechnicalJobTitle = isJobTitleIsTech(data.jobTitle);
 
       if (isTechnicalJobTitle) {
         navigate(ROUTES.DASHBOARD_ONBOARDING);
@@ -264,4 +279,14 @@ function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCase
   }
 
   return undefined;
+}
+
+function isJobTitleIsTech(jobTitle: JobTitleEnum) {
+  return [
+    JobTitleEnum.ENGINEER,
+    JobTitleEnum.ENGINEERING_MANAGER,
+    JobTitleEnum.ARCHITECT,
+    JobTitleEnum.FOUNDER,
+    JobTitleEnum.STUDENT,
+  ].includes(jobTitle);
 }

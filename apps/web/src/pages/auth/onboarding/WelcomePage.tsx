@@ -116,7 +116,7 @@ export const Welcome = () => {
                 })}
                 onClick={() => {
                   track('Start playing Clicked [Welcome]');
-                  navigate(ROUTES.DASHBOARD_ONBOARDING);
+                  navigate(ROUTES.DASHBOARD_PLAYGROUND);
                 }}
                 size="sm"
                 Icon={IconArrowForward}

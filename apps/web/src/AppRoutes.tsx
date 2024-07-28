@@ -67,6 +67,7 @@ import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePri
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
 import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
 import { WelcomePage } from './pages/auth/onboarding/WelcomePage';
+import { PlaygroundPage } from './pages/auth/onboarding/PlaygroundPage';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -91,6 +92,7 @@ export const AppRoutes = () => {
       {AuthRoutes()}
       <Route path={ROUTES.DASHBOARD_WELCOME} element={<WelcomePage />} />
       <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
+      <Route path={ROUTES.DASHBOARD_PLAYGROUND} element={<PlaygroundPage />} />
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
