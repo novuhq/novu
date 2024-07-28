@@ -41,12 +41,21 @@ export function WorkflowFlow({
             fontSize: '14px !important',
           })}
         >
-          https://dashboard.novu.co
+          http://localhost:2022/studio
         </div>
       }
     >
-      <div className={cx(css({ borderRadius: '0 0 8px 8px', height: 'inherit', padding: '12px 0px 12px 12px' }))}>
-        <When truthy={workflowTab === 'workflow'}>
+      <div
+        className={cx(
+          css({
+            borderRadius: '0 0 8px 8px',
+            height: 'inherit',
+            padding: '12px 0px 12px 12px',
+            backgroundColor: '#1e1e27',
+          })
+        )}
+      >
+        <When truthy={!clickedStepId}>
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
               steps={steps}
@@ -59,11 +68,13 @@ export function WorkflowFlow({
           </WorkflowBackgroundWrapper>
         </When>
 
-        <When truthy={workflowTab === 'stepEdit'}>
+        <When truthy={!!clickedStepId}>
           <WorkflowsStepEditorPageV2
             stepId={clickedStepId ?? ''}
             workflow={workflow as DiscoverWorkflowOutput}
-            handleGoBack={() => setWorkflowTab('workflow')}
+            handleGoBack={() => {
+              setClickedStepId('');
+            }}
           />
         </When>
       </div>

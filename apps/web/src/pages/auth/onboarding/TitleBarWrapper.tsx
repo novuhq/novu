@@ -16,7 +16,7 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
   },
   bar: {
     borderRadius: '8px 8px 0 0',
-    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,
+    backgroundColor: theme.colorScheme === 'dark' ? '#23232b' : colors.B85,
     width: '100%',
     height: '32px',
     display: 'flex',
@@ -27,7 +27,7 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
     height: '8px',
     width: '8px',
     borderRadius: '50%',
-    backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+    backgroundColor: theme.colorScheme === 'dark' ? '#3D3D4D' : colors.B98,
   },
   header: {
     width: '100%',
