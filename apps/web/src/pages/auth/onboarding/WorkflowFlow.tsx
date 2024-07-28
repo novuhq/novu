@@ -45,7 +45,16 @@ export function WorkflowFlow({
         </div>
       }
     >
-      <div className={cx(css({ borderRadius: '0 0 8px 8px', height: 'inherit', padding: '12px 0px 12px 12px' }))}>
+      <div
+        className={cx(
+          css({
+            borderRadius: '0 0 8px 8px',
+            height: 'inherit',
+            padding: '12px 0px 12px 12px',
+            backgroundColor: '#1e1e27',
+          })
+        )}
+      >
         <When truthy={workflowTab === 'workflow'}>
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
