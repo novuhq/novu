@@ -2,6 +2,8 @@ import React from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
 
+type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
+
 const BellDefault = () => {
   const { novuUI } = useRenderer();
 
@@ -16,7 +18,7 @@ const BellDefault = () => {
 };
 
 type BellProps = {
-  children?: never | (({ unreadCount }: { unreadCount: number }) => React.ReactNode);
+  children?: never | BellRenderProps;
 };
 
 export const Bell = (props: BellProps) => {
@@ -27,7 +29,8 @@ export const Bell = (props: BellProps) => {
   return <BellDefault />;
 };
 
-const BellWithRenderProps = (props: { children: ({ unreadCount }: { unreadCount: number }) => React.ReactNode }) => {
+const BellWithRenderProps = (props: { children: BellRenderProps }) => {
+  // TODO: Replace this with actual unread count hook
   const unreadCount = 3;
 
   return <div>{props.children({ unreadCount })}</div>;
