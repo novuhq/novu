@@ -12,7 +12,7 @@
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^5.0.9",
+    "@clerk/clerk-sdk-node": "^5.0.19",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "mongoose": "^7.5.0",

@@ -13,21 +13,23 @@ import Document from '@tiptap/extension-document';
 import Mention from '@tiptap/extension-mention';
 
 import { css, cx } from '../../../styled-system/css';
-import { input } from '../../../styled-system/recipes';
+import { input, inputEditorWidget } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { inputEditorWidget } from '../../../styled-system/recipes';
 
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
-// TODO: use @mantine/tiptap/styles.layer.css instead
-import '@mantine/tiptap/styles.css';
+const inputEditorClassNames = inputEditorWidget();
+
+const AUTOCOMPLETE_OPEN_TAG = '{{';
+const AUTOCOMPLETE_CLOSE_TAG = '}}';
+
+const AUTOCOMPLETE_REGEX = new RegExp(`${AUTOCOMPLETE_OPEN_TAG}(.*?(.*?))${AUTOCOMPLETE_CLOSE_TAG}`, 'gm');
 
 export const InputEditorWidget = (props: WidgetProps) => {
   const { value, label, formContext, onChange, required, readonly, rawErrors, options, schema } = props;
   const [variantProps, inputProps] = input.splitVariantProps({});
   const [cssProps] = splitCssProps(inputProps);
   const classNames = input(variantProps);
-  const inputEditorClassNames = inputEditorWidget({});
 
   const { variables = [] } = formContext;
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
@@ -47,23 +49,20 @@ export const InputEditorWidget = (props: WidgetProps) => {
           class: 'suggestion',
         },
         renderHTML: ({ options, node }) => {
-          const closeTag = '}}';
           return [
             'span',
             options.HTMLAttributes,
-            `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}${closeTag}`,
+            `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}${AUTOCOMPLETE_CLOSE_TAG}`,
           ];
         },
         renderText: ({ options, node }) => {
-          const closeTag = '}}';
-
-          return `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}${closeTag}`;
+          return `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}${AUTOCOMPLETE_CLOSE_TAG}`;
         },
         suggestion: {
           items: ({ query }) => {
             return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
           },
-          char: '{{',
+          char: AUTOCOMPLETE_OPEN_TAG,
           render() {
             return {
               onStart: (props) => {
@@ -107,12 +106,12 @@ export const InputEditorWidget = (props: WidgetProps) => {
 
   useEffect(() => {
     if (editor) {
-      const regexpString = `{{(.*?(.*?))}}`;
-      const regexp = new RegExp(regexpString, 'gm');
-
       const newValue = value
         ?.toString()
-        .replace(regexp, '<span data-id="$1" contenteditable="false" class="suggestion" data-type="mention">$1</span>');
+        .replace(
+          AUTOCOMPLETE_REGEX,
+          '<span data-id="$1" contenteditable="false" class="suggestion" data-type="mention">$1</span>'
+        );
 
       editor.commands.setContent(newValue);
     }

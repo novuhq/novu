@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import '../src/config';
-import { UserRepository, MemberRepository } from '@novu/dal';
+import { CommunityUserRepository, CommunityMemberRepository } from '@novu/dal';
 
 import { connect } from './connect-to-dal';
 import { normalizeEmail } from '@novu/shared';
@@ -11,8 +11,8 @@ const EMAIL = args[0];
 const folder = 'remove-user-account';
 
 connect(async () => {
-  const userRepository = new UserRepository();
-  const memberRepository = new MemberRepository();
+  const userRepository = new CommunityUserRepository();
+  const memberRepository = new CommunityMemberRepository();
 
   const email = normalizeEmail(EMAIL);
   const user = await userRepository.findByEmail(email);

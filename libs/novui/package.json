@@ -51,10 +51,10 @@
       "require": "./styled-system/jsx/index.js",
       "import": "./styled-system/jsx/index.js"
     },
-    "./styles.css": "./styled-system/styles.css",
-    "./components.css": "./node_modules/@mantine/core/styles.layer.css"
+    "./styles.css": "./src/index.css"
   },
   "scripts": {
+    "dev": "pnpm build && pnpm storybook",
     "start": "npm run build:watch",
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
