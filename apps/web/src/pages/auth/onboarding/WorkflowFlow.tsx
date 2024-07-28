@@ -41,7 +41,7 @@ export function WorkflowFlow({
             fontSize: '14px !important',
           })}
         >
-          https://dashboard.novu.co
+          http://localhost:2022/studio
         </div>
       }
     >
@@ -55,7 +55,7 @@ export function WorkflowFlow({
           })
         )}
       >
-        <When truthy={workflowTab === 'workflow'}>
+        <When truthy={!clickedStepId}>
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
               steps={steps}
@@ -68,11 +68,13 @@ export function WorkflowFlow({
           </WorkflowBackgroundWrapper>
         </When>
 
-        <When truthy={workflowTab === 'stepEdit'}>
+        <When truthy={!!clickedStepId}>
           <WorkflowsStepEditorPageV2
             stepId={clickedStepId ?? ''}
             workflow={workflow as DiscoverWorkflowOutput}
-            handleGoBack={() => setWorkflowTab('workflow')}
+            handleGoBack={() => {
+              setClickedStepId('');
+            }}
           />
         </When>
       </div>
