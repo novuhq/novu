@@ -41,9 +41,11 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
         fitAddon.current.fit();
       };
 
-      // const observer = new MutationObserver(() => {
-      //   handleResize();
-      // });
+      /*
+       * const observer = new MutationObserver(() => {
+       *   handleResize();
+       * });
+       */
 
       window.addEventListener('resize', handleResize);
       // observer.observe(terminalRef.current, { attributes: true, childList: true, subtree: true });
@@ -56,7 +58,7 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
     }, []);
 
     return (
-      <div style={{ display: 'flex' }}>
+      <div>
         <div ref={terminalRef} />
       </div>
     );

@@ -33,9 +33,7 @@ export const WorkflowsStepEditorPageV2 = (props: {
   const controlsPanelClass = css({
     marginTop: '12px',
   });
-  const titleClass = css({
-    // font: '16px',
-  });
+  const titleClass = css({});
   const workflowsPageTemplate = css({
     paddingBlock: '0px 0px',
     bg: 'transparent',
@@ -44,7 +42,7 @@ export const WorkflowsStepEditorPageV2 = (props: {
   return (
     <>
       <WorkflowsPanelLayout>
-        <div className={cx(css({ backgroundColor: '#23232b' }))}>
+        <div>
           <HStack
             className={cx(
               css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })
@@ -52,23 +50,31 @@ export const WorkflowsStepEditorPageV2 = (props: {
           >
             <When truthy={isStateless}>
               <BackButton
+                styles={{
+                  paddingLeft: '0',
+                  paddingRight: '0',
+                  _hover: { '& p, & svg': { color: 'typography.text.main !important' } },
+                }}
                 onClick={() => {
                   props.handleGoBack?.();
                 }}
               />
             </When>
-            <WorkflowsPageHeader
-              className={cx(workflowsPageTemplate, isStateless && titleClass)}
-              title={title}
-              icon={<Icon size={isStateless ? '19' : '32'} stepType={step?.type} />}
-              actions={
-                <When truthy={!isStateless}>
-                  <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
-                    Test workflow
-                  </OutlineButton>
-                </When>
-              }
-            />
+
+            <When truthy={!isStateless}>
+              <WorkflowsPageHeader
+                className={cx(workflowsPageTemplate, isStateless && titleClass)}
+                title={title}
+                icon={<Icon size={isStateless ? '19' : '32'} stepType={step?.type} />}
+                actions={
+                  <When truthy={!isStateless}>
+                    <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+                      Test workflow
+                    </OutlineButton>
+                  </When>
+                }
+              />
+            </When>
           </HStack>
           <WorkflowStepEditorContentPanel
             error={error}

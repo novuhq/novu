@@ -82,12 +82,14 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
             padding: '8px',
           })}
         >
-          NOVU Playground
+          Playground
         </span>
       </HStack>
       <div>
+        <Button size="sm" onClick={handleContinue}>
+          Skip Playground
+        </Button>
         <TriggerActionModal handleTestClick={handleTestClick} />
-        <Button onClick={handleContinue}>Skip</Button>
       </div>
     </HStack>
   );
@@ -105,19 +107,14 @@ function Playground({
   // const [playgroundSizes, setPlaygroundSizes] = useState<number[]>([479, 479]);
 
   return (
-    // <div
-    //   className={css({
-    //     height: '100vh',
-    //   })}
-    // >
+    /*
+     * <div
+     *   className={css({
+     *     height: '100vh',
+     *   })}
+     * >
+     */
     <RootView
-      // proportionalLayout
-      onChange={(value) => {
-        // eslint-disable-next-line no-console
-        // console.log('playgroundSizes ', value);
-        // setPlaygroundSizes(value);
-      }}
-      // defaultSizes={playgroundSizes}
       className={css({
         height: 'calc(100vh - 54px) !important',
         '--separator-border': 'transparent',
@@ -130,17 +127,10 @@ function Playground({
           (visible) => console.log('visible ', visible)
         }
         onChange={(value) => {
-          // todo create memo
-          // eslint-disable-next-line no-console
-          console.log('editorSizes ', value);
           setEditorSizes(value);
-          // console.log((terminalRef?.current as any)?.proposeDimensions.?());
-          console.log((terminalRef?.current as any)?.proposeDimensions());
-          // terminalRef?.current?.fit();
         }}
         defaultSizes={editorSizes}
         className={css({
-          // height: 'calc(100vh - 44px)',
           borderRadius: '8px 8px 8px 8px',
         })}
       >
@@ -158,7 +148,6 @@ function Playground({
       <Pane>
         <div
           style={{
-            // height: 'calc(100vh - 10px) !important',
             height: '100%',
             margin: '0 10px 10px 10px',
             borderRadius: '8px 8px 8px 8px',
@@ -179,20 +168,30 @@ function Playground({
 const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promise<any> }) => {
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleOnRunTestClick = async () => {
-    const res = await handleTestClick();
-    successMessage('Workflow triggered successfully');
-    setTransactionId(res.data.transactionId);
-    openExecutionModal();
+    setIsLoading(true);
+    try {
+      const res = await handleTestClick();
+      successMessage('Workflow triggered successfully');
+      setTransactionId(res.data.transactionId);
+      openExecutionModal();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
       <Button
-        // variant="outline"
+        className={css({
+          background: '#292933 !important',
+        })}
+        size="sm"
         Icon={IconPlayArrow}
         onClick={handleOnRunTestClick}
+        loading={isLoading}
       >
         Run a test
       </Button>

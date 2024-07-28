@@ -37,7 +37,7 @@ export function CodeEditor({
   }, [colorScheme]);
 
   return (
-    <TitleBarWrapper>
+    <TitleBarWrapper title="Your IDE">
       <Editor
         defaultLanguage={language}
         theme={isDark ? 'vs-dark' : 'vs'}
@@ -60,8 +60,10 @@ export function CodeEditor({
           setErrorLineNumbers(Array.from(new Set(errorLines)));
           decoratorsRef.current?.set(decorators);
           if (markers.length === 0) {
-            // setIsValidJsonFile(true);
-            // setKeys(Object.keys(JSON.parse(fileText ?? '{}')).length);
+            /*
+             * setIsValidJsonFile(true);
+             * setKeys(Object.keys(JSON.parse(fileText ?? '{}')).length);
+             */
           } else {
             // setIsValidJsonFile(false);
           }
@@ -107,8 +109,10 @@ export function CodeEditor({
 
           decoratorsRef.current = decorators;
 
-          // setKeys(Object.keys(JSON.parse(code ?? '{}')).length);
-          // setFileText(code);
+          /*
+           * setKeys(Object.keys(JSON.parse(code ?? '{}')).length);
+           * setFileText(code);
+           */
         }}
         options={{
           minimap: {

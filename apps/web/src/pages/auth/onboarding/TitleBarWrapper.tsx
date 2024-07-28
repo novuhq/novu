@@ -2,7 +2,7 @@ import React from 'react';
 import { createStyles, Group } from '@mantine/core';
 
 import { colors } from '@novu/design-system';
-import { cx } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 
 const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isBlur?: boolean }) => ({
   browser: {
@@ -18,7 +18,7 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
     borderRadius: '8px 8px 0 0',
     backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,
     width: '100%',
-    height: '28px',
+    height: '32px',
     display: 'flex',
     alignItems: 'center',
     padding: '12px',
@@ -81,17 +81,28 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
   },
 }));
 
-export const TitleBarWrapper = ({ children }) => {
+export const TitleBarWrapper = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title?: React.ReactNode | string;
+}) => {
   const { classes } = useStyles({});
 
   return (
     <div className={cx(classes.browser)}>
       <div className={classes.bar}>
-        <Group spacing={6}>
+        <Group spacing={6} className={css({ position: 'absolute', left: '20px' })}>
           <div className={classes.barAction}></div>
           <div className={classes.barAction}></div>
           <div className={classes.barAction}></div>
         </Group>
+        <div
+          className={css({ color: 'typography.text.secondary', fontSize: '14px', textAlign: 'center', width: '100%' })}
+        >
+          {title}
+        </div>
       </div>
       <div className={classes.body}>{children}</div>
     </div>

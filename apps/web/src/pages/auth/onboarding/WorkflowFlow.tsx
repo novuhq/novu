@@ -31,8 +31,23 @@ export function WorkflowFlow({
   }
 
   return (
-    <TitleBarWrapper>
-      <div className={cx(css({ borderRadius: '0 0 8px 8px', height: 'inherit' }))}>
+    <TitleBarWrapper
+      title={
+        <div
+          className={css({
+            backgroundColor: '#1E1E26',
+            borderRadius: '6px',
+            maxWidth: '392px',
+            margin: '0 auto',
+            lineHeight: '20px',
+            fontSize: '14px !important',
+          })}
+        >
+          https://dashboard.novu.co
+        </div>
+      }
+    >
+      <div className={cx(css({ borderRadius: '0 0 8px 8px', height: 'inherit', padding: '12px 0px 12px 12px' }))}>
         <When truthy={workflowTab === 'workflow'}>
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
