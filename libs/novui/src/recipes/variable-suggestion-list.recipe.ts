@@ -25,4 +25,5 @@ export const VARIABLE_SUGGESTION_LIST_RECIPE = defineSlotRecipe({
       whiteSpace: 'nowrap',
     },
   },
+  staticCss: ['*'],
 });

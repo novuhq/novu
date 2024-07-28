@@ -21,7 +21,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^5.0.9",
+    "@clerk/clerk-sdk-node": "^5.0.19",
     "@clerk/types": "^4.6.1",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",

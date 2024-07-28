@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 type MounterProps = {
-  mount: (node: HTMLDivElement) => ((node: HTMLDivElement) => void) | void;
+  mount: (node: HTMLElement) => ((node: HTMLElement) => void) | void;
 };
 
 export function Mounter({ mount }: MounterProps) {
