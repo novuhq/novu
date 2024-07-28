@@ -39,8 +39,8 @@ export enum ROUTES {
   BRAND = '/brand',
   TRANSLATIONS = '/translations',
   LAYOUT = '/layouts',
-  API_KEYS = '/api-keys/:env',
-  WEBHOOK = '/webhook/:env',
+  API_KEYS = '/api-keys',
+  WEBHOOK = '/webhook',
 
   /** Settings nested routes */
   SETTINGS = '/settings',

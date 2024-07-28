@@ -24,7 +24,7 @@ import { EnvironmentSelect } from './EnvironmentSelect';
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
-import { OrganizationSelect } from './OrganizationSelect/v2/OrganizationSelect';
+import { OrganizationSelect } from './OrganizationSelect/OrganizationSelect';
 import { RootNavMenuFooter } from './RootNavMenuFooter';
 import { VisibilityButton } from './VisibilityButton';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
@@ -62,7 +62,7 @@ export const RootNavMenu: React.FC = () => {
         {IS_EE_AUTH_ENABLED ? <OrganizationSwitcher /> : <OrganizationSelect />}
         <NavMenuLinkButton
           label="Get started"
-          isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding && !isV2Enabled}
+          isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding}
           icon={<IconTaskAlt />}
           link={ROUTES.GET_STARTED}
           testId="side-nav-quickstart-link"
@@ -143,10 +143,7 @@ export const RootNavMenu: React.FC = () => {
           label="API keys"
           isVisible
           icon={<IconKey />}
-          link={getEnvPageRoute(
-            ROUTES.API_KEYS,
-            (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
-          )}
+          link={ROUTES.API_KEYS}
           testId="side-nav-settings-api-keys"
         ></NavMenuLinkButton>
         <When truthy={!isV2Enabled}>

@@ -36,11 +36,14 @@ export const appearanceKeys = [
   'dropdownItemLeftIcon',
   'dropdownItemRightIcon',
   'back__button',
+  'skeletonText',
+  'skeletonAvatar',
 
   //General
   'root',
   'bellIcon',
   'bellContainer',
+  'bellDot',
   'settings__button',
   'settingsContainer',
   'inboxHeader',
@@ -49,6 +52,16 @@ export const appearanceKeys = [
   //Inbox
   'inbox__popoverTrigger',
   'inbox__popoverContent',
+
+  //Notifications
+  'notificationList',
+  'notificationListEmptyNoticeContainer',
+  'notificationListEmptyNotice',
+  'notificationListEmptyNoticeIcon',
+  'notificationContainer',
+  'notificationDot',
+  'notificationSubject',
+  'notificationSubjectContainer',
 
   //Inbox status
   'inboxStatus__title',
@@ -91,8 +104,6 @@ export const appearanceKeys = [
 
   //Settings Loading
   'settingsLoadingContainer',
-  'settingsLoadingSkeleton',
-  'settingsLoadingSkeletonContainer',
 ] as const;
 
 export type Variables = {

@@ -7,6 +7,7 @@ import { StudioState } from './types';
 import { useLocation } from 'react-router-dom';
 import { novuOnboardedCookie } from '../utils/cookies';
 import { LocalStudioPageLayout } from '../components/layout/components/LocalStudioPageLayout';
+import { getToken } from '../components/providers/AuthProvider';
 
 function buildBridgeURL(origin: string | null, tunnelPath: string) {
   if (!origin) {
@@ -24,9 +25,12 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 }
 
 export function LocalStudioAuthenticator() {
-  const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
+  const { currentUser, isUserLoaded, redirectToLogin, redirectToSignUp, currentOrganization, isOrganizationLoaded } =
+    useAuth();
+  const isLoading = !isUserLoaded && !isOrganizationLoaded;
   const location = useLocation();
   const { environments } = useEnvironment();
+  const hasToken = !!getToken();
 
   // TODO: Refactor this to a smaller size function
   useEffect(() => {
@@ -51,8 +55,14 @@ export function LocalStudioAuthenticator() {
 
     // If the user is not logged in, redirect to the login or signup page
     if (!currentUser) {
-      // If user is loading, wait for user to be loaded
-      if (!isLoading) {
+      /*
+       * If user is loading, wait for user to be loaded
+       * We check for token here because on login we have a race condition
+       * that is done with the loading and is missing a user but the auth token
+       * is already present, the data just needs to refresh. Whe should investigate
+       * why this race condition exists
+       */
+      if (!isLoading && !hasToken) {
         /*
          * If the user has logged in before, redirect to the login page.
          * After authentication, redirect back to the this /local-studio/auth path.
@@ -66,9 +76,7 @@ export function LocalStudioAuthenticator() {
          * After authentication, redirect back to the this /local-studio/auth path and
          * remember that studio needs to be in onboarding mode.
          */
-        // currentURL.searchParams.append('studio_path_hint', ROUTES.STUDIO_ONBOARDING);
-
-        return redirectToSignUp({ redirectURL: currentURL.href, origin: 'cli', anonymousId });
+        return redirectToSignUp({ redirectURL: currentURL.href, origin: 'cli', anonymousId: anonymousId || undefined });
       }
 
       return;
@@ -141,7 +149,7 @@ export function LocalStudioAuthenticator() {
     // Redirect to Local Studio server
     window.location.href = finalRedirectURL.href;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, environments]);
+  }, [currentUser, environments, isLoading]);
 
   return <LocalStudioPageLayout.LoadingDisplay />;
 }

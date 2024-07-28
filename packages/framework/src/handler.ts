@@ -34,6 +34,7 @@ export type ServeHandlerOptions = {
   workflows: Array<Workflow>;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
   frameworkName: string;
   client?: Client;
@@ -41,9 +42,12 @@ export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any
   handler: Handler<Input, Output>;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Handler<Input extends any[] = any[], Output = any> = (...args: Input) => HandlerResponse<Output>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HandlerResponse<Output = any> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: () => Awaitable<any>;
   headers: (key: string) => Awaitable<string | null | undefined>;
   method: () => Awaitable<string>;
@@ -58,6 +62,7 @@ export type IActionResponse<TBody extends string = string> = {
   body: TBody;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
 
@@ -103,7 +108,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  private createResponse<TBody extends string = string>(status: number, body: any): IActionResponse<TBody> {
+  private createResponse<TBody extends string = string>(status: number, body: unknown): IActionResponse<TBody> {
     return {
       status,
       body: JSON.stringify(body) as TBody,
@@ -172,6 +177,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private getPostActionMap(
+    // TODO: add validation for body per action.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body: any,
     workflowId: string,
     stepId: string,

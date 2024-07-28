@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { useAuth } from '../../../hooks/useAuth';
+import { useOrganizations } from '../../../hooks/useOrganizations';
 
 import {
   completeVercelIntegration,
@@ -25,7 +25,7 @@ export type ProjectLinkFormValues = {
 };
 
 export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
-  const { organizations } = useAuth();
+  const { data: organizations } = useOrganizations();
   const { configurationId, next } = useVercelParams();
   const {
     data: vercelProjects,

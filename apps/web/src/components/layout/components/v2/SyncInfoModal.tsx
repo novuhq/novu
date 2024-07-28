@@ -1,25 +1,28 @@
+import { FC, useEffect, useState } from 'react';
+import { QueryObserverResult } from '@tanstack/react-query';
+import { showNotification } from '@mantine/notifications';
 // TODO: replace with Novui Code Block when available
 import { Prism } from '@mantine/prism';
+
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
 import { Button, Input, Tabs, Text, Title } from '@novu/novui';
-import { FC, useEffect, useState } from 'react';
+import { css } from '@novu/novui/css';
+
 import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
 import { API_ROOT, ENV } from '../../../../config';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { buildApiHttpClient } from '../../../../api';
-import { showNotification } from '@mantine/notifications';
-import { css } from '@novu/novui/css';
-import { Divider } from '@novu/novui/jsx';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
   toggleOpen: () => void;
+  refetchOriginWorkflows: () => Promise<QueryObserverResult<any, unknown>>;
 };
 
 const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_DEPLOYED_BRIDGE_URL>';
 
-export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
+export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen, refetchOriginWorkflows }) => {
   const { devSecretKey } = useStudioState();
   const [manualUrl, setTunnelManualURl] = useState('');
 
@@ -42,7 +45,9 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
 
     try {
       setLoadingSync(true);
-      const result = await api.syncBridge(manualUrl);
+      await api.syncBridge(manualUrl);
+
+      refetchOriginWorkflows();
 
       toggleOpen();
 

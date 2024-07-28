@@ -1,55 +1,44 @@
-import { Select, When } from '@novu/design-system';
+import { Select, IconConstruction, IconRocketLaunch } from '@novu/design-system';
+
 import { css } from '@novu/novui/css';
 import { navSelectStyles } from '../NavSelect.styles';
-import { EnvironmentPopover } from './EnvironmentPopover';
-import { useEnvironmentSelect } from './useEnvironmentSelect';
+import { useEnvironment } from '../../../components/providers/EnvironmentProvider';
+import { BaseEnvironmentEnum } from '../../../constants/BaseEnvironmentEnum';
 
-export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmentSelect>> = ({
-  icon,
-  isPopoverOpened,
-  setIsPopoverOpened,
-  handlePopoverLinkClick,
-  readonly,
-  ...selectProps
-}) => {
+export function EnvironmentSelect() {
+  const { environment, environments, isLoaded, switchEnvironment } = useEnvironment();
+
+  const onChange = async (environmentId) => await switchEnvironment({ environmentId });
+
   return (
-    <EnvironmentPopover
-      isPopoverOpened={isPopoverOpened}
-      setIsPopoverOpened={setIsPopoverOpened}
-      handlePopoverLinkClick={handlePopoverLinkClick}
-    >
-      <Select
-        className={navSelectStyles}
-        data-test-id="environment-switch"
-        allowDeselect={false}
-        icon={
-          <When truthy={!selectProps.loading}>
-            <span
-              className={css({
-                p: '50',
-                // TODO: use design system values when available
-                borderRadius: '8px',
-                bg: 'surface.page',
-                '& svg': {
-                  fill: 'typography.text.main',
-                },
-                _after: {
-                  width: '100',
-                },
-              })}
-            >
-              {icon}
-            </span>
-          </When>
-        }
-        {...selectProps}
-      />
-    </EnvironmentPopover>
+    <Select
+      className={navSelectStyles}
+      data-test-id="environment-switch"
+      allowDeselect={false}
+      loading={!isLoaded}
+      value={environment?._id}
+      data={(environments || []).map(({ _id: value, name: label }) => ({ label, value }))}
+      onChange={onChange}
+      icon={
+        isLoaded && (
+          <span
+            className={css({
+              p: '50',
+              // TODO: use design system values when available
+              borderRadius: '8px',
+              bg: 'surface.page',
+              '& svg': {
+                fill: 'typography.text.main',
+              },
+              _after: {
+                width: '100',
+              },
+            })}
+          >
+            {environment?.name === BaseEnvironmentEnum.DEVELOPMENT ? <IconConstruction /> : <IconRocketLaunch />}
+          </span>
+        )
+      }
+    />
   );
-};
-
-export const EnvironmentSelect = () => {
-  const props = useEnvironmentSelect();
-
-  return <EnvironmentSelectRenderer {...props} />;
-};
+}

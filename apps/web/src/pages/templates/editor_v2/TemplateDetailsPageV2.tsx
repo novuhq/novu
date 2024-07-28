@@ -9,9 +9,12 @@ import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { useEffect } from 'react';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
+  const track = useTelemetry();
 
   const { template: workflow } = useTemplateController(templateId);
 
@@ -25,6 +28,14 @@ export const TemplateDetailsPageV2 = () => {
   const handleTestClick = () => {
     navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
+
+  useEffect(() => {
+    track('Workflow open - [Studio]', {
+      workflowId: workflow?.name,
+      env: 'cloud',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <WorkflowsPageTemplate

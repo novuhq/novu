@@ -14,6 +14,7 @@ export const Wrapper = ({ children, className }: { children: ReactNode; classNam
           minHeight: '100dvh',
           colorPalette: 'mode.cloud',
           paddingBottom: '4rem',
+          bg: 'surface.panel',
         }),
         className
       )}

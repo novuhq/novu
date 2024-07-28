@@ -10,7 +10,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
   slots: SLOTS,
   base: {
     root: {
-      height: 'max-content !important',
+      height: 'max-content',
       _disabled: {
         opacity: 'disabled',
       },
@@ -36,10 +36,11 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       xs: {
         root: {
           '&:not([data-variant="transparent"])': {
-            px: '50 !important',
+            px: '50',
+            pt: '25',
+            pb: '25',
+            fontSize: 'button.small',
           },
-          py: '25 !important',
-          fontSize: 'button.small',
         },
         label: {
           lineHeight: 'sm',
@@ -48,50 +49,53 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       sm: {
         root: {
           '&:not([data-variant="transparent"])': {
-            px: '75 !important',
+            px: '75',
+            pt: '25',
+            pb: '25',
           },
-          py: '25 !important',
         },
 
         label: {
-          fontSize: 'button.small !important',
+          fontSize: 'button.small',
           lineHeight: 'md',
         },
       },
       md: {
         root: {
           '&:not([data-variant="transparent"])': {
-            px: '100 !important',
+            px: '100',
+            pt: '50',
+            pb: '50',
+            borderRadius: '100',
           },
-          py: '50 !important',
-          borderRadius: '100 !important',
         },
         label: {
           fontSize: 'button',
         },
         section: {
-          marginRight: '50 !important',
+          marginRight: '50',
         },
       },
       lg: {
         root: {
           '&:not([data-variant="transparent"])': {
-            px: '150 !important',
+            px: '150',
+            pt: '75',
+            pb: '75',
+            borderRadius: '150',
           },
-          py: '75 !important',
-          borderRadius: '150 !important',
         },
         label: {
           fontSize: 'button',
         },
         section: {
-          marginRight: '75 !important',
+          marginRight: '75',
         },
       },
     },
     variant: {
       filled: {
-        root: { ...colorPaletteGradientHorizontal, border: '[none !important]' },
+        root: { ...colorPaletteGradientHorizontal, border: '[none]' },
         label: {
           color: 'button.text.filled',
         },
@@ -103,13 +107,13 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       },
       outline: {
         root: {
-          border: 'solid !important',
-          borderColor: 'colorPalette.middle !important',
+          border: 'solid',
+          borderColor: 'colorPalette.middle',
           bg: 'button.secondary.background',
 
           boxShadow: 'medium',
           _disabled: {
-            bg: '[transparent !important]',
+            bg: '[transparent]',
           },
           _loading: {},
 
@@ -122,33 +126,34 @@ export const BUTTON_RECIPE = defineSlotRecipe({
           ...colorPaletteGradientText,
         },
         section: {
-          color: 'colorPalette.middle !important',
+          color: 'colorPalette.middle',
           '& svg': {
             color: 'colorPalette.middle !important',
           },
         },
         loader: {
           color: 'colorPalette.start',
-          borderColor: 'legacy.white !important',
+          borderColor: 'legacy.white',
         },
       },
       transparent: {
         root: {
-          border: 'none !important',
-          bg: '[transparent !important]',
-          px: '0 !important',
+          border: 'none',
+          borderRadius: '0',
+          bg: '[transparent]',
+          px: '0',
         },
         label: {
           ...colorPaletteGradientText,
         },
         section: {
           ...colorPaletteGradientHorizontal,
-          borderRadius: '50 !important',
+          borderRadius: '50',
           // required to create adequate space around an icon
-          padding: '[2px !important]',
-          marginRight: '50 !important',
+          padding: '[2px]',
+          marginRight: '50',
           '& svg': {
-            fill: 'button.icon.filled !important',
+            fill: 'button.icon.filled',
           },
         },
       },
@@ -156,12 +161,12 @@ export const BUTTON_RECIPE = defineSlotRecipe({
     fullWidth: {
       false: {
         root: {
-          width: 'fit-content !important',
+          width: 'fit-content',
         },
       },
       true: {
         root: {
-          width: 'full !important',
+          width: 'full',
         },
       },
     },

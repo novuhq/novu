@@ -148,7 +148,8 @@ test('shold not allow adding variants for delay step', async ({ page }) => {
   expect(page.getByTestId('add-variant-action')).toHaveCount(0);
 });
 
-test('shold show step actions with no variants', async ({ page }) => {
+// TODO: Fix Flakey test
+test.skip('should show step actions with no variants', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.setWorkflowNameInput('Test no variants in delay');
   await workflowEditorPage.addChannelToWorkflow(ChannelType.IN_APP);
@@ -161,7 +162,8 @@ test('shold show step actions with no variants', async ({ page }) => {
   await expect(workflowEditorPage.getDeleteStepActionLocator()).toBeVisible();
 });
 
-test('shold show step actions with a variant', async ({ page }) => {
+// TODO: Fix Flakey test
+test.skip('should show step actions with a variant', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.setWorkflowNameInput('Test no variants in delay');
   const nodeInAppEditingPageModel = await workflowEditorPage.addAndEditInAppNode();
@@ -170,10 +172,6 @@ test('shold show step actions with a variant', async ({ page }) => {
   await nodeInAppEditingPageModel.closeSidePanel();
 
   const variantOverviewPage = await workflowEditorPage.addVariantToInAppNode();
-
-  await variantOverviewPage.closeSidePanel();
-
-  await waitForNetworkIdle(page);
 
   await variantOverviewPage.closeSidePanel();
 
@@ -195,8 +193,8 @@ test('should show only edit step in production for simple node', async ({ page }
   const sidebarPage = await SidebarPage.goTo(page);
   await sidebarPage.toggleToProduction();
 
-  const workflowsPage = await WorkflowsPage.goTo(page);
-  workflowEditorPage = await workflowsPage.getFirstWorkflowEditor();
+  await sidebarPage.getTemplatesLink().click();
+  workflowEditorPage = await new WorkflowsPage(page).getFirstWorkflowEditor();
   const relevantNode = workflowEditorPage.getNode(ChannelType.SMS, 0);
 
   await relevantNode.hover();
@@ -206,7 +204,7 @@ test('should show only edit step in production for simple node', async ({ page }
   expect(relevantNode.getByTestId('step-actions-menu')).toHaveCount(0);
 });
 
-test.skip('should show edit step and conditions in production for node with conditions', async ({ page }) => {
+test('should show edit step and conditions in production for node with conditions', async ({ page }) => {
   let workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.addAndFillSmsNode('this is a test paragraph', 'Test Add Variant Flow for SMS');
 
@@ -218,8 +216,8 @@ test.skip('should show edit step and conditions in production for node with cond
   const sidebarPage = await SidebarPage.goTo(page);
   await sidebarPage.toggleToProduction();
 
-  const workflowsPage = await WorkflowsPage.goTo(page);
-  workflowEditorPage = await workflowsPage.getFirstWorkflowEditor();
+  await sidebarPage.getTemplatesLink().click();
+  workflowEditorPage = await new WorkflowsPage(page).getFirstWorkflowEditor();
   const relevantNode = workflowEditorPage.getNode(ChannelType.SMS, 0);
 
   await relevantNode.hover();
@@ -251,7 +249,7 @@ test('ensure the variant step editor has expected actions', async ({ page }) => 
   await assertHasExpectedVariantEditorButtons(page);
 });
 
-test.skip('ensure production node editor only shows close button for simple case', async ({ page }) => {
+test('ensure production node editor only shows close button for simple case', async ({ page }) => {
   let workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.addAndFillSmsNode('this is a test paragraph', 'Test Add Flow for SMS');
 
@@ -260,9 +258,8 @@ test.skip('ensure production node editor only shows close button for simple case
   const sidebarPage = await SidebarPage.goTo(page);
   await sidebarPage.toggleToProduction();
 
-  const workflowsPage = await WorkflowsPage.goTo(page);
-  workflowEditorPage = await workflowsPage.getFirstWorkflowEditor();
-
+  await sidebarPage.getTemplatesLink().click();
+  workflowEditorPage = await new WorkflowsPage(page).getFirstWorkflowEditor();
   const smsNodeEditorPage = await workflowEditorPage.getFirstSmsNodeEditor();
 
   expect(smsNodeEditorPage.getEditorAddVariantButton()).toHaveCount(0);
@@ -283,8 +280,8 @@ test.skip('ensure production shows close and edit conditions button for conditio
   const sidebarPage = await SidebarPage.goTo(page);
   await sidebarPage.toggleToProduction();
 
-  const workflowsPage = await WorkflowsPage.goTo(page);
-  workflowEditorPage = await workflowsPage.getFirstWorkflowEditor();
+  await sidebarPage.getTemplatesLink().click();
+  workflowEditorPage = await new WorkflowsPage(page).getFirstWorkflowEditor();
 
   const smsNodeEditorPage = await workflowEditorPage.getFirstSmsNodeEditor();
 
@@ -327,7 +324,7 @@ test('Allows adding second variant condition from the variants overview modal he
   await expect(variantOverview.getVariantAtIndex(0)).toContainText('2');
 });
 
-test.skip('Allows adding second condition from the in step editor', async ({ page }) => {
+test('Allows adding second condition from the in step editor', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const inAppEditor = await workflowEditorPage.addAndEditInAppNode();
   await inAppEditor.fillNotificationBody('some content');

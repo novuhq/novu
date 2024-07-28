@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
-
 import { useAPIKeys, useEnvironment } from '../../../hooks';
 import { useRegenerateSecretKeyModal } from './useRegenerateApiKeyModal';
 import { useApiKeys } from '../../../hooks/useNovuAPI';
@@ -22,7 +22,6 @@ export const useApiKeysPage = () => {
   const { environment } = useEnvironment();
 
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
-  const environmentId = environment?._id ? environment._id : '';
 
   const [isSecretKeyMasked, setIsSecretKeyMasked] = useState<boolean>(true);
 
@@ -33,13 +32,12 @@ export const useApiKeysPage = () => {
   return {
     secretKey,
     environmentIdentifier,
-    environmentId,
+    environmentId: environment?._id,
     isSecretKeyMasked,
     toggleSecretKeyVisibility,
     clipboardSecretKey,
     clipboardEnvironmentIdentifier,
     clipboardEnvironmentId,
-    pageEnv: environment?.name ?? '',
     regenerationModalProps,
   };
 };

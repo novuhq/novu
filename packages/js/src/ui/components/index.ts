@@ -1,4 +1,3 @@
-export * from './Bell';
+export * from './elements';
 export * from './Inbox';
-export * from './Popover';
-export * from './Settings';
+export * from './primitives';

@@ -10,7 +10,7 @@ import {
   ButtonTypeEnum,
 } from '@novu/shared';
 
-describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,archived,read-archived} (POST)', async () => {
+describe('Update All Notifications - /inbox/notifications/{read,archive,read-archive} (POST)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
@@ -21,11 +21,11 @@ describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,arch
     action,
     tags,
   }: {
-    action: 'read' | 'archived' | 'read-archived';
+    action: 'read' | 'archive' | 'read-archive';
     tags?: string[];
   }) => {
     return await session.testAgent
-      .post(`/v1/inbox/notifications/mark-all-as-${action}`)
+      .post(`/v1/inbox/notifications/${action}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`)
       .send({ tags });
   };
@@ -165,7 +165,7 @@ describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,arch
     expect(allMessages.length).to.equal(3);
     expect(allMessages.every((el) => !el.read)).to.be.true;
 
-    const { status } = await updateAllNotifications({ action: 'archived' });
+    const { status } = await updateAllNotifications({ action: 'archive' });
 
     const allUpdatedMessages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -203,7 +203,7 @@ describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,arch
     expect(allMessages.length).to.equal(7);
     expect(allMessages.every((el) => !el.read)).to.be.true;
 
-    const { status } = await updateAllNotifications({ action: 'archived', tags });
+    const { status } = await updateAllNotifications({ action: 'archive', tags });
 
     const allUpdatedMessages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -236,7 +236,7 @@ describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,arch
       { $set: { read: true } }
     );
 
-    const { status } = await updateAllNotifications({ action: 'read-archived' });
+    const { status } = await updateAllNotifications({ action: 'read-archive' });
 
     const allUpdatedMessages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -281,7 +281,7 @@ describe('Update All Notifications - /inbox/notifications/mark-all-as-{read,arch
     });
     expect(allMessages.length).to.equal(7);
 
-    const { status } = await updateAllNotifications({ action: 'read-archived', tags });
+    const { status } = await updateAllNotifications({ action: 'read-archive', tags });
 
     const allUpdatedMessages = await messageRepository.find({
       _environmentId: session.environment._id,
