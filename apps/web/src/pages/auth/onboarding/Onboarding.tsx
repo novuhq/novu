@@ -22,10 +22,40 @@ import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 
 export function OnboardingPage() {
   const [clickedStepId, setClickedStepId] = useState<string>('');
   const { handleTestClick } = useWorkflowStepEditor(clickedStepId);
+  const [runJoyride, setRunJoyride] = useState(true);
+
+  const joyrideSteps: Step[] = [
+    {
+      target: '.code-editor',
+      content: 'This is the Code Editor where you can write and edit your workflow code.',
+      disableBeacon: true,
+      placement: 'bottom',
+    },
+    {
+      target: '.terminal-component',
+      content: 'This is the Terminal where you can see the output of your workflow execution.',
+      placement: 'bottom',
+      disableBeacon: true,
+    },
+    {
+      target: '.workflow-flow',
+      content: 'This is the Workflow view where you can visualize and manage your workflow steps.',
+      placement: 'left',
+      disableBeacon: true,
+    },
+  ];
+
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      setRunJoyride(false);
+    }
+  };
 
   return (
     <div
@@ -34,6 +64,23 @@ export function OnboardingPage() {
         height: '100vh',
       })}
     >
+      <Joyride
+        steps={joyrideSteps}
+        run={runJoyride}
+        continuous
+        showSkipButton
+        showProgress={false}
+        callback={handleJoyrideCallback}
+        styles={{
+          options: {
+            arrowColor: '#ffffff',
+            backgroundColor: '#ffffff',
+            primaryColor: '#007bff',
+            textColor: '#333333',
+            zIndex: 1000,
+          },
+        }}
+      />
       <Header handleTestClick={handleTestClick} />
       <Playground clickedStepId={clickedStepId} setClickedStepId={setClickedStepId} />
     </div>
@@ -85,7 +132,11 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
         </span>
       </HStack>
       <div>
-        <Button size="sm" onClick={handleContinue}>
+        <Button
+          size="sm"
+          onClick={handleContinue}
+          className={css({ color: '#828299 !important', '& span': { color: '#828299 !important' } })}
+        >
           Skip Playground
         </Button>
         <TriggerActionModal handleTestClick={handleTestClick} />
@@ -134,12 +185,12 @@ function Playground({
         })}
       >
         <Pane preferredSize={'70%'}>
-          <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }}>
+          <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
             <CodeEditor code={code} setCode={setCode} />
           </div>
         </Pane>
         <Pane preferredSize={'30%'}>
-          <div style={{ margin: '0 10px 10px 10px', height: '100%' }}>
+          <div style={{ margin: '0 10px 10px 10px', height: '100%' }} className="terminal-component">
             <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} />
           </div>
         </Pane>
@@ -151,6 +202,7 @@ function Playground({
             margin: '0 10px 10px 10px',
             borderRadius: '8px 8px 8px 8px',
           }}
+          className="workflow-flow"
         >
           <WorkflowFlow
             isBridgeAppLoading={isBridgeAppLoading}
@@ -160,7 +212,6 @@ function Playground({
         </div>
       </Pane>
     </RootView>
-    // </div>
   );
 }
 
