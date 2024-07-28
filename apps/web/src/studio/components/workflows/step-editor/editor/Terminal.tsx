@@ -37,30 +37,24 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
       fitAddon.current.fit();
       terminalInstance.current = terminal;
 
+      setTimeout(() => {
+        fitAddon.current.fit();
+      }, 500);
+
       const handleResize = () => {
         fitAddon.current.fit();
       };
 
-      /*
-       * const observer = new MutationObserver(() => {
-       *   handleResize();
-       * });
-       */
-
+      window.addEventListener('nv-terminal-layout-resize', handleResize);
       window.addEventListener('resize', handleResize);
-      // observer.observe(terminalRef.current, { attributes: true, childList: true, subtree: true });
 
       return () => {
         window.removeEventListener('resize', handleResize);
-        // observer.disconnect();
+        window.removeEventListener('nv-terminal-layout-resize', handleResize);
         terminal.dispose();
       };
     }, []);
 
-    return (
-      <div>
-        <div ref={terminalRef} />
-      </div>
-    );
+    return <div style={{ height: '100%' }} ref={terminalRef} />;
   }
 );

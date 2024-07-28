@@ -103,17 +103,16 @@ function Playground({
 }) {
   const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
   const [editorSizes, setEditorSizes] = useState<number[]>([300, 200]);
-  // const [playgroundSizes, setPlaygroundSizes] = useState<number[]>([479, 479]);
+
+  function handleEditorSizeChange() {
+    window.dispatchEvent(new Event('nv-terminal-layout-resize'));
+  }
 
   return (
-    /*
-     * <div
-     *   className={css({
-     *     height: '100vh',
-     *   })}
-     * >
-     */
     <RootView
+      onChange={() => {
+        handleEditorSizeChange();
+      }}
       className={css({
         height: 'calc(100vh - 54px) !important',
         '--separator-border': 'transparent',
@@ -127,6 +126,7 @@ function Playground({
         }
         onChange={(value) => {
           setEditorSizes(value);
+          handleEditorSizeChange();
         }}
         defaultSizes={editorSizes}
         className={css({
@@ -139,8 +139,8 @@ function Playground({
           </div>
         </Pane>
         <Pane preferredSize={'30%'}>
-          <div style={{ height: editorSizes?.[1], margin: '0 10px 10px 10px' }}>
-            <TerminalComponent ref={terminalRef} />
+          <div style={{ margin: '0 10px 10px 10px', height: '100%' }}>
+            <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} />
           </div>
         </Pane>
       </EditorView>

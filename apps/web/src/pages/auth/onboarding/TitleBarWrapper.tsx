@@ -78,6 +78,7 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
   body: {
     height: 'inherit',
     flex: 1,
+    overflow: 'hidden',
   },
 }));
 

@@ -9,6 +9,8 @@ import { WorkflowNodes } from '../../../studio/components/workflows/node-view/Wo
 import { WorkflowsStepEditorPageV2 } from '../../templates/editor_v2/TemplateStepEditorV2';
 import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { When } from '../../../components/utils/When';
+import { Flex, Stack, VStack } from '@novu/novui/jsx';
+import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
 
 export function WorkflowFlow({
   isBridgeAppLoading,
@@ -23,11 +25,7 @@ export function WorkflowFlow({
   const { workflow, isDiscoverLoading, steps } = useWorkflowStepEditor(clickedStepId || '');
 
   if (isDiscoverLoading || isBridgeAppLoading) {
-    return <div> Loading...</div>;
-  }
-
-  if (!workflow) {
-    return <div> Workflow not exist...</div>;
+    return <StepNodeSkeleton />;
   }
 
   return (
@@ -70,5 +68,17 @@ export function WorkflowFlow({
         </When>
       </div>
     </TitleBarWrapper>
+  );
+}
+
+function StepNodeSkeleton() {
+  return (
+    <WorkflowBackgroundWrapper>
+      <VStack gap="0" p="75">
+        <StepNode.LoadingDisplay />
+        <StepNode.LoadingDisplay />
+        <StepNode.LoadingDisplay />
+      </VStack>
+    </WorkflowBackgroundWrapper>
   );
 }
