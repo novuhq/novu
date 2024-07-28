@@ -21,6 +21,7 @@ export enum ROUTES {
   TENANTS_CREATE = '/tenants/create',
   QUICKSTART = '/quickstart',
   GET_STARTED = '/get-started',
+  DASHBOARD_WELCOME = '/welcome',
   DASHBOARD_ONBOARDING = '/playground',
   GET_STARTED_PREVIEW = '/get-started/preview',
   QUICK_START_NOTIFICATION_CENTER = '/quickstart/notification-center',

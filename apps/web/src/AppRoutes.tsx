@@ -66,6 +66,7 @@ import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
 import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
+import { WelcomePage } from './pages/auth/onboarding/WelcomePage';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -88,6 +89,7 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {AuthRoutes()}
+      <Route path={ROUTES.DASHBOARD_WELCOME} element={<WelcomePage />} />
       <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
         <Route
