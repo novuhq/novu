@@ -14,14 +14,14 @@ type TabsProps = ParentProps & {
   onChange?: (value: string) => void;
 };
 
-type TabsContextProps = {
+type TabsContextValue = {
   activeTab: Accessor<string>;
   setActiveTab: Setter<string>;
   visibleTabs: Accessor<string[]>;
   setVisibleTabs: Setter<string[]>;
 };
 
-const TabsContext = createContext<TabsContextProps>(undefined);
+const TabsContext = createContext<TabsContextValue>(undefined);
 
 export const useTabsContext = () => {
   const context = useContext(TabsContext);

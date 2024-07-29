@@ -1,12 +1,9 @@
 import { JSX, For } from 'solid-js';
 import { cn, useStyle } from '../../../helpers';
 import { DotsMenu } from '../../../icons';
-import { Button, Dropdown } from '../../primitives';
+import { Button, Dropdown, dropdownTriggerButtonVariants } from '../../primitives';
 
 export type Option = { label: string; leftIcon?: JSX.Element; rightIcon?: JSX.Element };
-
-const dropdownTriggerButtonVariants = () =>
-  `nt-relative nt-transition nt-outline-none focus-visible:nt-outline-none focus-visible:nt-ring-2 focus-visible:nt-ring-primary focus-visible:nt-ring-offset-2`;
 
 export const OptionsDropdown = (props: {
   buttonClass?: string;
