@@ -1,5 +1,6 @@
 import { OrganizationSwitcher as ClerkOrganizationSwitcher } from '@clerk/clerk-react';
 import { token } from '@novu/novui/tokens';
+import { ROUTES } from '../../../constants/routes';
 
 // TODO: this is tmp. styling
 const OrganizationSwitcherAppearance = {
@@ -17,5 +18,13 @@ const OrganizationSwitcherAppearance = {
 };
 
 export function OrganizationSwitcher() {
-  return <ClerkOrganizationSwitcher hidePersonal appearance={OrganizationSwitcherAppearance} />;
+  const redirectUrl = location.pathname.includes('workflows/edit') ? ROUTES.WORKFLOWS : undefined;
+
+  return (
+    <ClerkOrganizationSwitcher
+      hidePersonal
+      appearance={OrganizationSwitcherAppearance}
+      afterSelectOrganizationUrl={redirectUrl}
+    />
+  );
 }
