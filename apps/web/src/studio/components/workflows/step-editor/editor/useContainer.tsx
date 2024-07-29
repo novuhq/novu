@@ -1,12 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ITerminalDimensions } from 'xterm-addon-fit';
 
 import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
 import { useDiscover, useStudioState } from '../../../../hooks';
 import { BRIDGE_CODE, REACT_EMAIL_CODE } from './bridge-code.const';
-import { ITerminalDimensions } from 'xterm-addon-fit';
+import { FCWithChildren } from '../../../../../types';
 
 const { WebContainer } = require('@webcontainer/api');
+
+type ContainerState = {
+  terminalRef: React.RefObject<TerminalHandle>;
+  code: Record<string, string>;
+  setCode: (code: Record<string, string>) => void;
+  isBridgeAppLoading: boolean;
+  initializeWebContainer: () => Promise<void>;
+};
+
+const ContainerContext = React.createContext<ContainerState | undefined>(undefined);
 
 export type TerminalHandle = {
   write: (data: string) => void;
@@ -14,7 +25,7 @@ export type TerminalHandle = {
   proposeDimensions: () => ITerminalDimensions | undefined;
 };
 
-export const useContainer = () => {
+export const ContainerProvider: FCWithChildren = ({ children }) => {
   const [code, setCode] = useState<Record<string, string>>({
     'workflow.ts': BRIDGE_CODE,
     'react-email.tsx': REACT_EMAIL_CODE,
@@ -22,6 +33,7 @@ export const useContainer = () => {
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
   const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
+  const [initStarted, setInitStarted] = useState<boolean>(false);
   const terminalRef = useRef<TerminalHandle>(null);
   const studioState = useStudioState() || {};
   const { setBridgeURL } = studioState;
@@ -33,17 +45,17 @@ export const useContainer = () => {
     }
   };
 
-  // Responsible to bootstrap and run express app
-  useEffectOnce(() => {
-    (async () => {
-      try {
+  async function initializeWebContainer() {
+    try {
+      if (!webContainer && !initStarted) {
+        setInitStarted(true);
         setWebContainer(await WebContainer.boot());
-      } catch (error: any) {
-        writeOutput('\nError booting web container: ' + error.message);
-        writeOutput(error);
       }
-    })();
-  }, !webContainer);
+    } catch (error: any) {
+      writeOutput('\nError booting web container: ' + error.message);
+      writeOutput(error);
+    }
+  }
 
   // Responsible to bootstrap and run bridge app
   useEffectOnce(() => {
@@ -54,6 +66,9 @@ export const useContainer = () => {
         });
 
         async function installDependencies() {
+          // eslint-disable-next-line no-console
+          console.log('start installDependencies');
+
           const installProcess = await webContainer.spawn('npm', ['install']);
 
           installProcess.output.pipeTo(
@@ -139,5 +154,16 @@ export const useContainer = () => {
     return () => clearTimeout(debounceTimeout);
   }, [code, refetch]);
 
-  return { terminalRef, code, setCode, isBridgeAppLoading };
+  const value = { terminalRef, code, setCode, isBridgeAppLoading, initializeWebContainer };
+
+  return <ContainerContext.Provider value={value}>{children}</ContainerContext.Provider>;
+};
+
+export const useContainer = () => {
+  const value = React.useContext(ContainerContext);
+  if (!value) {
+    throw new Error("The useContainer can't be used outside the <ContainerProvider/>.");
+  }
+
+  return value;
 };
