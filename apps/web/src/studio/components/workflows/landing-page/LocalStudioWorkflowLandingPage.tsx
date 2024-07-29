@@ -12,6 +12,7 @@ export const LocalStudioWorkflowLandingPage = () => {
 
   useEffect(() => {
     setColorScheme('dark');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasWorkflows = data?.workflows && data?.workflows?.length > 0;

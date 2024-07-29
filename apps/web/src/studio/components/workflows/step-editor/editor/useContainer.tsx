@@ -149,6 +149,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     }
 
     return () => clearTimeout(debounceTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, refetch]);
 
   const value = { terminalRef, code, setCode, isBridgeAppLoading, initializeWebContainer };
