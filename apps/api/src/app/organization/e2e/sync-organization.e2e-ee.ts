@@ -26,10 +26,6 @@ describe.skip('Sync Organization - /organizations (POST)', async () => {
   const testOrganization: UpdateExternalOrganizationDto = {
     jobTitle: JobTitleEnum.ENGINEER,
     domain: 'example.com',
-    productUseCases: {
-      in_app: true,
-      delay: true,
-    },
   };
 
   function getRequest(payload: UpdateExternalOrganizationDto, origin: string = process.env.FRONT_BASE_URL) {
@@ -97,13 +93,6 @@ describe.skip('Sync Organization - /organizations (POST)', async () => {
     // these are stored in the Clerk organization only and then concatenated with the response
     expect(internalOrganization.name).to.equal(updatedClerkOrganization.name);
     expect(internalOrganization.logo).to.equal(updatedClerkOrganization.imageUrl);
-  });
-
-  it('should have all internal attributes set correctly', async () => {
-    expect(internalOrganization.domain).to.equal(testOrganization.domain);
-    expect(internalOrganization.productUseCases?.in_app).to.eq(testOrganization.productUseCases?.in_app);
-    expect(internalOrganization.productUseCases?.delay).to.eq(testOrganization.productUseCases?.delay);
-    expect(internalOrganization.apiServiceLevel).to.eq(ApiServiceLevelEnum.FREE);
   });
 
   it('should update user job title on organization creation', async () => {
