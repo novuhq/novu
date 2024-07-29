@@ -26,7 +26,6 @@ import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 import { Loader } from '@mantine/core';
-
 const CustomTooltip = ({
   index,
   step,
@@ -34,6 +33,9 @@ const CustomTooltip = ({
   tooltipProps,
   isLastStep,
   isBridgeAppLoading,
+  backProps,
+  skipProps,
+  size,
 }: TooltipRenderProps & { isBridgeAppLoading: boolean }) => (
   <div
     {...tooltipProps}
@@ -47,35 +49,77 @@ const CustomTooltip = ({
       fontSize: '14px',
     })}
   >
-    {step.title && <h4 className={css({ margin: '0 0 10px', fontSize: '18px', color: 'white' })}>{step.title}</h4>}
+    {step.title && (
+      <h4 className={css({ margin: '0 0 10px', fontSize: '18px', color: 'white', position: 'relative' })}>
+        {step.title}{' '}
+        <span
+          className={css({
+            color: 'typography.text.secondary',
+            fontSize: '12px',
+            position: 'absolute',
+            right: '10px',
+            top: '3px',
+          })}
+        >
+          ({index + 1}/{size})
+        </span>
+      </h4>
+    )}
     <div className={css({ marginBottom: '15px' })}>{step.content}</div>
-    <div className={css({ marginTop: '15px', textAlign: 'right' })}>
-      {index === 2 ? (
-        <Button
-          onClick={primaryProps.onClick}
-          disabled={isBridgeAppLoading}
-          size="sm"
-          className={css({
-            backgroundColor: '#dd2476',
-          })}
-        >
-          {isBridgeAppLoading ? (
-            <div className={css({ display: 'flex', alignItems: 'center' })}>Waiting for server load...</div>
-          ) : (
-            'Next'
-          )}
-        </Button>
-      ) : (
+    <div className={css({ marginTop: '15px', display: 'flex', justifyContent: 'space-between' })}>
+      <div>
         <Button
           size="sm"
-          {...primaryProps}
+          {...skipProps}
           className={css({
-            backgroundColor: '#dd2476',
+            backgroundColor: 'transparent',
+            color: '#dd2476',
           })}
         >
-          {isLastStep ? 'Finish' : 'Next'}
+          Skip
         </Button>
-      )}
+      </div>
+      <div>
+        {index > 0 && (
+          <Button
+            size="sm"
+            {...backProps}
+            className={css({
+              backgroundColor: 'transparent',
+              color: '#dd2476',
+              marginRight: '10px',
+            })}
+          >
+            Back
+          </Button>
+        )}
+        {index === 2 ? (
+          <Button
+            onClick={primaryProps.onClick}
+            disabled={isBridgeAppLoading}
+            size="sm"
+            className={css({
+              backgroundColor: '#dd2476',
+            })}
+          >
+            {isBridgeAppLoading ? (
+              <div className={css({ display: 'flex', alignItems: 'center' })}>Waiting for server load...</div>
+            ) : (
+              `Next`
+            )}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            {...primaryProps}
+            className={css({
+              backgroundColor: '#dd2476',
+            })}
+          >
+            {isLastStep ? 'Finish' : `Next`}
+          </Button>
+        )}
+      </div>
     </div>
   </div>
 );
