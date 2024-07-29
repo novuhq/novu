@@ -32,8 +32,8 @@ const devServerConfig = () => (config) => {
     },
   };
 };
-// eslint-disable-next-line react-hooks/rules-of-hooks
 module.exports = {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   webpack: override(useBabelRc(), overrideConfig),
   devServer: overrideDevServer(devServerConfig()),
 };

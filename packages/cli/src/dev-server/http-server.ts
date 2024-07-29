@@ -92,7 +92,7 @@ export class DevServer {
             };
             
             const iframe = window.document.createElement('iframe');
-            iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin allow-popups'
+            iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin allow-popups allow-popups-to-escape-sandbox'
             iframe.allow = 'clipboard-read; clipboard-write'
             iframe.style = 'width: 100%; height: 100vh; border: none;';
             
