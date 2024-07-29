@@ -3,7 +3,7 @@ import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
-import { StepTypeEnum } from '@novu/shared';
+import { ButtonTypeEnum, StepTypeEnum } from '@novu/shared';
 import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../../hooks';
 import {
@@ -105,7 +105,34 @@ export const PreviewStep = ({
       return <SmsBasePreview content={preview?.outputs?.body} {...props} />;
 
     case StepTypeEnum.IN_APP:
-      return <InAppBasePreview content={{ content: preview?.outputs?.body, ctaButtons: [] }} {...props} />;
+      return (
+        <InAppBasePreview
+          content={{
+            subject: preview?.outputs?.subject,
+            content: preview?.outputs?.body,
+            avatar: preview?.outputs?.avatar,
+            ctaButtons: [
+              ...(preview?.outputs?.primaryAction
+                ? [
+                    {
+                      type: ButtonTypeEnum.PRIMARY,
+                      content: preview?.outputs?.primaryAction.label,
+                    },
+                  ]
+                : []),
+              ...(preview?.outputs?.secondaryAction
+                ? [
+                    {
+                      type: ButtonTypeEnum.SECONDARY,
+                      content: preview?.outputs?.secondaryAction.label,
+                    },
+                  ]
+                : []),
+            ],
+          }}
+          {...props}
+        />
+      );
 
     case StepTypeEnum.CHAT:
       return <ChatBasePreview content={preview?.outputs?.body} {...props} />;

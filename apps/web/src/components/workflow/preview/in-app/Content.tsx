@@ -13,6 +13,7 @@ import {
   NotificationTextStyled,
   SkeletonStyled,
   TimeTextStyled,
+  SubjectTextStyled,
 } from './Content.styles';
 
 export default function Content({
@@ -21,12 +22,14 @@ export default function Content({
   templateError,
   showOverlay = true,
   enableAvatar,
+  avatar,
 }: {
   isPreviewLoading: boolean;
   parsedPreviewState: ParsedPreviewStateType;
   templateError: string;
   showOverlay?: boolean;
   enableAvatar?: boolean;
+  avatar?: string;
 }) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
 
@@ -47,8 +50,11 @@ export default function Content({
             ) : (
               <div>
                 <Group spacing={10} align="flex-start">
-                  {enableAvatar && <AvatarContainer opened={false} setOpened={() => {}} readonly={true} />}
+                  {enableAvatar && (
+                    <AvatarContainer opened={false} setOpened={() => {}} readonly={true} defaultValue={avatar} />
+                  )}
                   <Stack spacing={24}>
+                    {parsedPreviewState.subject && <SubjectTextStyled>{parsedPreviewState.subject}</SubjectTextStyled>}
                     <NotificationTextStyled
                       isExampleNotification={false}
                       dangerouslySetInnerHTML={{
@@ -81,7 +87,7 @@ export default function Content({
       </div>
 
       <ContentStyled isBlur={false} isExampleNotification>
-        <NotificationTextStyled isExampleNotification>Notification Example</NotificationTextStyled>
+        <NotificationTextStyled isExampleNotification>Notification Examples</NotificationTextStyled>
         <TimeTextStyled isExampleNotification>10 minutes ago</TimeTextStyled>
       </ContentStyled>
     </Stack>

@@ -13,6 +13,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { InAppBasePreview } from './InAppBasePreview';
+import { ButtonTypeEnum, IMessageButton } from '@novu/shared';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
@@ -28,7 +29,15 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const processedVariables = useProcessVariables(variables);
 
   const stepId = watch(`${path}.uuid`);
-  const [bridgeContent, setBridgeContent] = useState({ content: '', ctaButtons: [] });
+  const [bridgeContent, setBridgeContent] = useState<{
+    content: string;
+    ctaButtons: Array<IMessageButton>;
+    subject: string;
+  }>({
+    content: '',
+    ctaButtons: [],
+    subject: '',
+  });
 
   const {
     mutateAsync,
@@ -39,8 +48,26 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     {
       onSuccess(data) {
         setBridgeContent({
+          subject: data.outputs.subject,
           content: data.outputs.body,
-          ctaButtons: [],
+          ctaButtons: [
+            ...(data.outputs.primaryAction
+              ? [
+                  {
+                    type: ButtonTypeEnum.PRIMARY,
+                    content: data.outputs.primaryAction.label,
+                  },
+                ]
+              : []),
+            ...(data.outputs.secondaryAction
+              ? [
+                  {
+                    type: ButtonTypeEnum.SECONDARY,
+                    content: data.outputs.secondaryAction.label,
+                  },
+                ]
+              : []),
+          ],
         });
       },
     }

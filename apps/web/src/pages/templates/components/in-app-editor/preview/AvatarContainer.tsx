@@ -66,17 +66,24 @@ const AvatarContainer = ({
   opened,
   setOpened,
   readonly,
+  defaultValue,
 }: {
   opened: boolean;
   setOpened: Dispatch<SetStateAction<boolean>>;
   readonly: boolean;
+  defaultValue?: string;
 }) => {
   const path = useStepFormPath();
   const {
     field: { value, onChange },
   } = useController({
     name: `${path}.template.actor` as any,
+    rules: {
+      required: false,
+    },
+    defaultValue,
   });
+  console.log({ defaultValue });
 
   const [tooltipOpened, setTooltipOpened] = useState(() => {
     return value.type === ActorTypeEnum.NONE;
