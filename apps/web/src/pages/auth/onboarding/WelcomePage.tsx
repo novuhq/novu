@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, Link as ReactLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 import { Button, Text, Title } from '@novu/novui';
 import { useColorScheme, Tooltip } from '@novu/design-system';
@@ -74,30 +75,40 @@ export const Welcome = () => {
         })}
       >
         <div className={css({ width: '960px' })}>
-          <Title
-            className={css({
-              marginBottom: '250',
-            })}
-            textAlign="center"
-          >
-            Welcome to Novu playground
-          </Title>
-          <div
-            className={css({
-              width: '540px',
-              margin: '0 auto',
-            })}
-          >
-            <Text
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <Title
               className={css({
-                color: 'typography.text.secondary',
-                marginBottom: '24px',
+                marginBottom: '8px',
+              })}
+              textAlign="center"
+            >
+              Welcome to Novu
+            </Title>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div
+              className={css({
+                width: '540px',
+                margin: '0 auto',
               })}
             >
-              This is a simplified version of the flow, designed to help you get acquainted with the key steps involved
-              in building notifications
-            </Text>
-          </div>
+              <Text
+                className={css({
+                  color: 'typography.text.secondary',
+                  marginBottom: '24px',
+                  textAlign: 'center',
+                })}
+              >
+                Novu is a code-first notification platform, providing the flexibility of run time code, and the power of
+                a full-fledged notification platform. <br /> <br /> In the next screen, you can see our interactive
+                playground, where you can learn on the main building blocks of Novu.
+              </Text>
+            </div>
+          </motion.div>
           <HStack
             className={css({
               marginBottom: '60px',
@@ -110,19 +121,24 @@ export const Welcome = () => {
                 justifyContent: 'center',
               })}
             >
-              <Button
-                className={css({
-                  background: '#292933 !important',
-                })}
-                onClick={() => {
-                  track('Start playing Clicked [Welcome]');
-                  navigate(ROUTES.DASHBOARD_PLAYGROUND);
-                }}
-                size="sm"
-                Icon={IconArrowForward}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
               >
-                Start playing
-              </Button>
+                <Button
+                  className={css({
+                    background: '#292933 !important',
+                    marginTop: '15px !important',
+                  })}
+                  onClick={() => {
+                    track('Start playing Clicked [Welcome]');
+                    navigate(ROUTES.DASHBOARD_PLAYGROUND);
+                  }}
+                >
+                  Visit Playground
+                </Button>
+              </motion.div>
             </HStack>
           </HStack>
         </div>

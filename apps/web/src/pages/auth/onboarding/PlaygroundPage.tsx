@@ -43,6 +43,7 @@ export function PlaygroundPage() {
           width: '550px',
         },
       },
+      title: 'Workflow Definition',
       content: (
         <div>
           <p className={css({ marginBottom: '15px !important' })}>
@@ -50,7 +51,6 @@ export function PlaygroundPage() {
             some common step types:
           </p>
           <Accordion
-            defaultValue="email"
             classNames={{
               item: css({
                 marginBottom: '0 !important',
@@ -159,12 +159,12 @@ export function PlaygroundPage() {
       }, 300);
     }
 
-    if (action === 'next' && data.step.target === '[data-test-id="trigger-test-button"]' && lifecycle === 'complete') {
-      handleTestClick();
-    }
-
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRunJoyride(false);
+    }
+
+    if (status === STATUS.FINISHED && lifecycle === 'complete') {
+      handleTestClick();
     }
   };
 
@@ -186,6 +186,10 @@ export function PlaygroundPage() {
         disableOverlayClose
         disableCloseOnEsc
         spotlightClicks
+        hideCloseButton
+        locale={{
+          last: 'Trigger Workflow',
+        }}
         styles={{
           tooltipContent: {
             textAlign: 'left',
@@ -193,9 +197,12 @@ export function PlaygroundPage() {
           options: {
             arrowColor: '#23232b',
             backgroundColor: '#23232b',
-            primaryColor: '#23232b',
+            primaryColor: '#dd2476',
             textColor: '#ffffff',
             zIndex: 1000,
+          },
+          buttonBack: {
+            color: '#ffffff',
           },
         }}
       />
@@ -212,8 +219,8 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
 
   const handleContinue = () => {
     navigate(ROUTES.WORKFLOWS);
-    segment.track(OnBoardingAnalyticsEnum.BRIDGE_PLAYGROUND_CONTINUE_CLICK, {
-      // todo implement type [skip | get started]
+
+    segment.track('Playground Skip Clicked', {
       type: 'skip',
     });
   };
