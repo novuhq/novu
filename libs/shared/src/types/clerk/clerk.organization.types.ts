@@ -25,6 +25,7 @@ export type OrganizationPublicMetadata = {
   apiServiceLevel?: ApiServiceLevelEnum;
   domain?: string;
   productUseCases?: ProductUseCases;
+  language?: string[];
   defaultLocale?: string;
 };
 
