@@ -26,7 +26,7 @@ export class Preference {
     this.workflow = preference.workflow;
   }
 
-  updatePreference({ channelPreferences }: { channelPreferences: ChannelPreference }): Promise<Preference> {
+  update({ channelPreferences }: { channelPreferences: ChannelPreference }): Promise<Preference> {
     return updatePreference({
       emitter: this.#emitter,
       apiService: this.#apiService,
