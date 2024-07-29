@@ -9,6 +9,7 @@ import { createContextAndHook } from './createContextAndHook';
 import { IS_DOCKER_HOSTED } from '../../config/index';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useAuth } from './AuthProvider';
+import { ROUTES } from '../../constants/routes';
 
 export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
 
@@ -117,6 +118,11 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
       if (redirectUrl) {
         navigate(redirectUrl);
+      }
+
+      // if we are in a specific workflow detail when switching the env, redirect to workflows
+      if (location.pathname.includes('workflows/edit')) {
+        navigate(ROUTES.WORKFLOWS);
       }
     },
     [queryClient, navigate, setCurrentEnvironment, currentEnvironment, environments]
