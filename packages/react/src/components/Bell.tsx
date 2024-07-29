@@ -4,34 +4,24 @@ import { Mounter } from './Mounter';
 
 type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
 
-const BellDefault = () => {
-  const { novuUI } = useRenderer();
-
-  const mount = React.useCallback((element: HTMLElement) => {
-    return novuUI.mountComponent({
-      name: 'Bell',
-      element,
-    });
-  }, []);
-
-  return <Mounter mount={mount} />;
-};
-
 type BellProps = {
   children?: never | BellRenderProps;
 };
 
 export const Bell = (props: BellProps) => {
-  if (props.children) {
-    return <BellWithRenderProps>{props.children}</BellWithRenderProps>;
-  }
+  const { novuUI, mountElement } = useRenderer();
 
-  return <BellDefault />;
-};
+  const mount = React.useCallback((element: HTMLElement) => {
+    return novuUI.mountComponent({
+      name: 'Bell',
+      element,
+      props: props.children
+        ? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          { mountBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
+        : undefined,
+    });
+  }, []);
 
-const BellWithRenderProps = (props: { children: BellRenderProps }) => {
-  // TODO: Replace this with actual unread count hook
-  const unreadCount = 3;
-
-  return <div>{props.children({ unreadCount })}</div>;
+  return <Mounter mount={mount} />;
 };
