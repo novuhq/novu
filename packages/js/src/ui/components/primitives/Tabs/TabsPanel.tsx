@@ -23,6 +23,7 @@ export const TabsPanel = (props: TabsPanelProps) => {
         id={`tabpanel-${props.value}`}
         role="tabpanel"
         aria-labelledby={props.value}
+        data-state={activeTab() === props.value ? 'active' : 'inactive'}
       >
         {props.children}
       </div>
