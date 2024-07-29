@@ -19,7 +19,10 @@ const helloWorld = workflow('hello-world', async ({ step, payload }) => {
         subject: z.string().default('Welcome to Novu'),
         title: z.string().default('Welcome to Novu'),
         text: z.string()
-          .default('This email is generated using Tailwind and React Email. You can change any of the content here using the Step Controls panel'),
+          .default(
+            'This email is generated using Tailwind and React Email. ' +
+            'You can change any of the content here using the Step Controls panel'
+          ),
         buttonText: z.string().default('Hello World'),
 
       }),
@@ -67,7 +70,7 @@ export const ReactEmail = ({
           <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
             <Section className="mt-[32px]">
               <Img
-                src={'/static/images/novu-gray.svg'}
+                src={'/static/images/novu.svg'}
                 width="40"
                 height="40"
                 alt="Novu"
