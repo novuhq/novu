@@ -6,6 +6,7 @@ import { useEffectOnce } from '../../../../../hooks';
 import { useDiscover, useStudioState } from '../../../../hooks';
 import { BRIDGE_CODE, REACT_EMAIL_CODE } from './sandbox-code-snippets';
 import { FCWithChildren } from '../../../../../types';
+import { TUNNEL_CODE } from './tunnel.service.const';
 
 const { WebContainer } = require('@webcontainer/api');
 
@@ -25,14 +26,17 @@ export type TerminalHandle = {
   proposeDimensions: () => ITerminalDimensions | undefined;
 };
 
+type FileNames = 'workflow.ts' | 'tunnel.ts' | 'react-email.tsx';
+
 export const ContainerProvider: FCWithChildren = ({ children }) => {
-  const [code, setCode] = useState<Record<string, string>>({
+  const [code, setCode] = useState<Record<FileNames, string>>({
     'workflow.ts': BRIDGE_CODE,
     'react-email.tsx': REACT_EMAIL_CODE,
+    'tunnel.ts': TUNNEL_CODE,
   });
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
-  const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
+  const [sandboxBridgeAddress, setSandboxBridgeAddress] = useState<string | null>(null);
   const [initStarted, setInitStarted] = useState<boolean>(false);
   const terminalRef = useRef<TerminalHandle>(null);
   const studioState = useStudioState() || {};
@@ -62,7 +66,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     (async () => {
       try {
         webContainer.on('server-ready', (port, url) => {
-          setSandboxBridge({ url, port });
+          setSandboxBridgeAddress(url + ':' + port);
         });
 
         async function installDependencies() {
@@ -93,7 +97,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           return startOutput;
         }
 
-        await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE));
+        await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE, TUNNEL_CODE));
 
         await installDependencies();
         await startDevServer();
@@ -103,24 +107,20 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     })();
   }, !!webContainer);
 
-  // Responsible to run dev cli in order to create novu.sh tunnel
+  // Responsible to create notifire tunnel and connect it with the sandbox bridge app
   useEffectOnce(async () => {
     async function runDevScript() {
-      if (sandboxBridge === null) {
+      if (sandboxBridgeAddress === null) {
         return;
       }
 
-      const { url, port } = sandboxBridge;
-
-      const devOutput = await webContainer.spawn('npm', ['run', 'dev', '--', '--origin', url, '--port', port]);
+      const devOutput = await webContainer.spawn('npm', ['run', 'create:tunnel', '--', sandboxBridgeAddress]);
 
       devOutput.output.pipeTo(
         new WritableStream({
           write(data) {
             if (data.includes('novu.sh')) {
-              const split = data.split('https');
-              const newBridgeTunnelURL = 'https'.trim() + split[1].trim();
-              setBridgeURL(newBridgeTunnelURL.trim());
+              setBridgeURL(data.trim());
               setIsBridgeAppLoading(false);
             }
             writeOutput(data);
@@ -130,7 +130,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     }
 
     await runDevScript();
-  }, !!webContainer && !!sandboxBridge?.url);
+  }, !!webContainer && !!sandboxBridgeAddress);
 
   const DEBOUNCE_DELAY = 1000; // 1 second
 
@@ -140,7 +140,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
 
     if (BRIDGE_CODE !== code['workflow.ts'] || REACT_EMAIL_CODE !== code['react-email.tsx']) {
       debounceTimeout = setTimeout(() => {
-        webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx']));
+        webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx'], code['tunnel.ts']));
 
         webContainer.on('server-ready', (port, url) => {
           refetch();
