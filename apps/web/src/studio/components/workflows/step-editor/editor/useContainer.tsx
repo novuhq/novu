@@ -14,6 +14,7 @@ type ContainerState = {
   code: Record<string, string>;
   setCode: (code: Record<string, string>) => void;
   isBridgeAppLoading: boolean;
+  initializeWebContainer: () => Promise<void>;
 };
 
 const ContainerContext = React.createContext<ContainerState | undefined>(undefined);
@@ -32,6 +33,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
   const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
+  const [initStarted, setInitStarted] = useState<boolean>(false);
   const terminalRef = useRef<TerminalHandle>(null);
   const studioState = useStudioState() || {};
   const { setBridgeURL } = studioState;
@@ -43,17 +45,17 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     }
   };
 
-  // Responsible to bootstrap and run express app
-  useEffectOnce(() => {
-    (async () => {
-      try {
+  async function initializeWebContainer() {
+    try {
+      if (!webContainer && !initStarted) {
+        setInitStarted(true);
         setWebContainer(await WebContainer.boot());
-      } catch (error: any) {
-        writeOutput('\nError booting web container: ' + error.message);
-        writeOutput(error);
       }
-    })();
-  }, !webContainer);
+    } catch (error: any) {
+      writeOutput('\nError booting web container: ' + error.message);
+      writeOutput(error);
+    }
+  }
 
   // Responsible to bootstrap and run bridge app
   useEffectOnce(() => {
@@ -152,7 +154,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     return () => clearTimeout(debounceTimeout);
   }, [code, refetch]);
 
-  const value = { terminalRef, code, setCode, isBridgeAppLoading };
+  const value = { terminalRef, code, setCode, isBridgeAppLoading, initializeWebContainer };
 
   return <ContainerContext.Provider value={value}>{children}</ContainerContext.Provider>;
 };

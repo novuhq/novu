@@ -25,6 +25,7 @@ import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
+import { useEffectOnce } from '../../../hooks/useEffectOnce';
 
 export function PlaygroundPage() {
   return <PlaygroundPage2></PlaygroundPage2>;
@@ -37,10 +38,12 @@ export function PlaygroundPage2() {
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
   const { setColorScheme } = useColorScheme();
+  const { initializeWebContainer } = useContainer();
 
-  useEffect(() => {
+  useEffectOnce(() => {
     setColorScheme('dark');
-  }, []);
+    initializeWebContainer();
+  }, true);
 
   const joyrideSteps: Step[] = [
     {
