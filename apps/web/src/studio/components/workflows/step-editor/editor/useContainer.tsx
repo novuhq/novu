@@ -70,7 +70,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         });
 
         async function installDependencies() {
-          const installProcess = await webContainer.spawn('pnpm', ['install', '--no-frozen-lockfile']);
+          const installProcess = await webContainer.spawn('pnpm', ['install', '--frozen-lockfile']);
 
           installProcess.output.pipeTo(
             new WritableStream({
