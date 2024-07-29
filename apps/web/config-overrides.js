@@ -27,9 +27,15 @@ const devServerConfig = () => (config) => {
   return {
     ...config,
     headers: {
+      'X-XSS-Protection': '1; mode=block',
+      'X-Content-Type-Options': 'nosniff',
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cross-Origin-Resource-Policy': 'cross-origin',
+      'Permissions-Policy':
+        'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
+      'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+      'Referrer-Policy': 'no-referrer-when-downgrade',
     },
   };
 };
