@@ -657,7 +657,8 @@
     "xcodebuild",
     "xkeysib",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "Embedder"
   ],
   "flagWords": [],
   "patterns": [
