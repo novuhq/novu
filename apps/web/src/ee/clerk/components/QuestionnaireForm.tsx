@@ -28,7 +28,7 @@ export function QuestionnaireForm() {
     handleSubmit,
     formState: { errors },
     control,
-  } = useForm<IOrganizationUpdateForm>({});
+  } = useForm<OrganizationUpdateForm>({});
   const navigate = useNavigate();
   const { reloadOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
@@ -60,7 +60,7 @@ export function QuestionnaireForm() {
     await reloadOrganization();
   }
 
-  const onUpdateOrganization = async (data: IOrganizationUpdateForm) => {
+  const onUpdateOrganization = async (data: OrganizationUpdateForm) => {
     setLoading(true);
     await updateOrganization({ ...data });
     setLoading(false);
@@ -210,7 +210,7 @@ const frontendFrameworks = [
   { label: 'Other' },
 ];
 
-interface IOrganizationUpdateForm {
+interface OrganizationUpdateForm {
   jobTitle: JobTitleEnum;
   domain?: string;
   language?: string[];
