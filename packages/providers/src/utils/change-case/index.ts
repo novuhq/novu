@@ -39,7 +39,10 @@ function changeKeysFactory<Options extends IOptions = IOptions>(
 
     Object.keys(object as object).forEach((key) => {
       const value = (object as Record<string, unknown>)[key];
-      const changedKey = changeCase(key, options);
+      let changedKey = changeCase(key, options);
+      if (options && options.keyCaseTransformer) {
+        changedKey = options.keyCaseTransformer(changedKey);
+      }
       const changedValue = changeKeys(value, depth - 1, options);
       result[changedKey] = changedValue;
     });

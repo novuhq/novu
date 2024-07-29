@@ -23,7 +23,7 @@ test('should trigger Twilio correctly', async () => {
       content: 'SMS Content',
     },
     {
-      applicationSid: 'test',
+      ApplicationSid: 'test',
     }
   );
 
@@ -32,6 +32,6 @@ test('should trigger Twilio correctly', async () => {
     from: '+112345',
     body: 'SMS Content',
     to: '+176543',
-    applicationSid: 'test',
+    ApplicationSid: 'test',
   });
 });

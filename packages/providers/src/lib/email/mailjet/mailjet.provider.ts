@@ -23,6 +23,14 @@ export class MailjetEmailProvider
   id = EmailProviderIdEnum.Mailjet;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
+  protected keyCaseObject: Record<string, string> = {
+    contentId: 'ContentID',
+    htmlPart: 'HTMLPart',
+    templateId: 'TemplateID',
+    customId: 'CustomID',
+    urlTags: 'URLTags',
+  };
+
   private mailjetClient: Client;
   constructor(
     private config: {

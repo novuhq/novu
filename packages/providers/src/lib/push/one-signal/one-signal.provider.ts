@@ -76,4 +76,19 @@ export class OneSignalPushProvider
       date: new Date().toISOString(),
     };
   }
+
+  protected keyCaseObject: Record<string, string> = {
+    is_ios: 'isIos',
+    is_android: 'isAndroid',
+    is_huawei: 'isHuawei',
+    is_any_web: 'isAnyWeb',
+    is_chrome_web: 'isChromeWeb',
+    is_firefox: 'isFirefox',
+    is_safari: 'isSafari',
+    isWpWns: 'isWP_WNS',
+    is_adm: 'isAdm',
+    is_chrome: 'isChrome',
+    ios_badge_type: 'ios_badgeType',
+    ios_badge_count: 'ios_badgeCount',
+  };
 }

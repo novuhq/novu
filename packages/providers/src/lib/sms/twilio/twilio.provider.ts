@@ -10,10 +10,11 @@ import {
 
 import { Twilio } from 'twilio';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 
 export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Twilio;
+  protected casing = CasingEnum.CAPITAL_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private twilioClient: Twilio;
 

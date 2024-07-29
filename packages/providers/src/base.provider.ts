@@ -6,6 +6,7 @@ import {
   pascalCase,
   snakeCase,
 } from './utils/change-case';
+import { IOptions } from './utils/change-case/functions';
 import { deepmerge } from './utils/deepmerge.utils';
 import { WithPassthrough } from './utils/types';
 
@@ -25,7 +26,9 @@ type TransformOutput<T> = {
 };
 
 export abstract class BaseProvider {
-  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+  protected casing: CasingEnum | undefined;
+
+  protected keyCaseObject: Record<string, string> = {};
 
   protected transform<
     Output = Record<string, unknown>,
@@ -47,6 +50,10 @@ export abstract class BaseProvider {
     } as TransformOutput<Output>;
   }
 
+  private keyCaseTransformer(key: string) {
+    return this.keyCaseObject[key] ? this.keyCaseObject[key] : key;
+  }
+
   private casingTransform<Input = Record<string, unknown>, Output = unknown>(
     bridgeProvderData: WithPassthrough<Input>
   ): TransformOutput<Output> {
@@ -58,7 +65,8 @@ export abstract class BaseProvider {
       },
       ...data
     } = bridgeProvderData;
-    let casing = camelCase;
+    let casing = (object: unknown, depth?: number, options?: IOptions) =>
+      object;
 
     switch (this.casing) {
       case CasingEnum.PASCAL_CASE:
@@ -76,9 +84,14 @@ export abstract class BaseProvider {
       case CasingEnum.CONSTANT_CASE:
         casing = constantCase;
         break;
+      case CasingEnum.CAMEL_CASE:
+        casing = camelCase;
+        break;
     }
 
-    const body = casing(data) as Record<string, unknown>;
+    const body = casing(data, 10000, {
+      keyCaseTransformer: this.keyCaseTransformer.bind(this),
+    }) as Record<string, unknown>;
 
     return {
       body: deepmerge(body, _passthrough.body) as Output,

@@ -59,7 +59,8 @@ describe('test onesignal notification api', () => {
       subtitle: {},
       data: { sound: 'test_sound' },
       ios_badge_type: 'Increase',
-      ios_badge_count: 2,
+      ios_badgeCount: 2,
+      ios_badge_count: 1,
       include_external_user_ids: ['test'],
     });
 

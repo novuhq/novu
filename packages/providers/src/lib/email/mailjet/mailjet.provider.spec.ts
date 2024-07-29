@@ -64,6 +64,11 @@ test('should trigger mailjet library correctly and return proper response', asyn
 
   const messageResponse = await provider.sendMessage(mockMessageConfig, {
     textPart: 'test',
+    _passthrough: {
+      body: {
+        HiHello: 'test',
+      },
+    },
   });
 
   expect(requestFn).toBeCalledTimes(1);
@@ -74,6 +79,7 @@ test('should trigger mailjet library correctly and return proper response', asyn
         HTMLPart: mockMessageConfig.html,
         Subject: mockMessageConfig.subject,
         TextPart: 'test',
+        HiHello: 'test',
         To: [{ Email: mockMessageConfig.to[0] }],
       },
     ],

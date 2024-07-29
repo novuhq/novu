@@ -38,6 +38,7 @@ export interface IOptions {
   delimiter?: string;
   prefixCharacters?: string;
   suffixCharacters?: string;
+  keyCaseTransformer?: (key: string) => string;
 }
 
 /**
