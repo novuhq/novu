@@ -7,6 +7,10 @@ import { OptionsDropdown } from '../elements/OptionsDropdown';
 import { Check } from '../../icons';
 import { cn } from '../../helpers';
 
+const optionsVariants = () =>
+  `after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +
+  `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`;
+
 type InboxTabsProps = {
   tabs: Array<{ label: string; value: Array<string> }>;
 };
@@ -73,7 +77,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             <OptionsDropdown
               options={options()}
               buttonClass={cn(
-                `after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`,
+                optionsVariants(),
                 dropdownTabs()
                   .map((tab) => tab.label)
                   .includes(activeTab())
