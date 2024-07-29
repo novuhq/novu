@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
 import { useDiscover, useStudioState } from '../../../../hooks';
-import { BRIDGE_CODE } from './bridge-code.const';
+import { BRIDGE_CODE, REACT_EMAIL_CODE } from './bridge-code.const';
 import { ITerminalDimensions } from 'xterm-addon-fit';
 
 const { WebContainer } = require('@webcontainer/api');
@@ -15,7 +15,10 @@ export type TerminalHandle = {
 };
 
 export const useContainer = () => {
-  const [code, setCode] = useState(BRIDGE_CODE);
+  const [code, setCode] = useState<Record<string, string>>({
+    'workflow.ts': BRIDGE_CODE,
+    'react-email.tsx': REACT_EMAIL_CODE,
+  });
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
   const [sandboxBridge, setSandboxBridge] = useState<{ url: string; port: string } | null>(null);
@@ -51,7 +54,7 @@ export const useContainer = () => {
         });
 
         async function installDependencies() {
-          const installProcess = await webContainer.spawn('pnpm', ['install']);
+          const installProcess = await webContainer.spawn('npm', ['install']);
 
           installProcess.output.pipeTo(
             new WritableStream({
@@ -78,7 +81,7 @@ export const useContainer = () => {
           return startOutput;
         }
 
-        await webContainer.mount(dynamicFiles(BRIDGE_CODE));
+        await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE));
 
         await installDependencies();
         await startDevServer();
@@ -123,9 +126,9 @@ export const useContainer = () => {
   useEffect(() => {
     let debounceTimeout;
 
-    if (BRIDGE_CODE !== code) {
+    if (BRIDGE_CODE !== code['workflow.ts']) {
       debounceTimeout = setTimeout(() => {
-        webContainer?.mount(dynamicFiles(code));
+        webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx']));
 
         webContainer.on('server-ready', (port, url) => {
           refetch();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDisclosure } from '@mantine/hooks';
 import { Allotment } from 'allotment';
@@ -6,7 +6,7 @@ import 'allotment/dist/style.css';
 const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
-import { Tooltip } from '@novu/design-system';
+import { Tooltip, useColorScheme } from '@novu/design-system';
 
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
@@ -27,6 +27,7 @@ import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { Accordion, Code, List } from '@mantine/core';
 import { Tabs } from '@mantine/core';
+import useThemeChange from '../../../hooks/useThemeChange';
 
 export function PlaygroundPage() {
   const [clickedStepId, setClickedStepId] = useState<string>('');
@@ -34,6 +35,11 @@ export function PlaygroundPage() {
   const [runJoyride, setRunJoyride] = useState(true);
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
+  const { setColorScheme } = useColorScheme();
+
+  useEffect(() => {
+    setColorScheme('dark');
+  }, []);
 
   const joyrideSteps: Step[] = [
     {
@@ -308,7 +314,7 @@ function Playground({
       >
         <Pane preferredSize={'70%'}>
           <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
-            <CodeEditor code={code} setCode={setCode} />
+            <CodeEditor files={code} setFiles={setCode} />
           </div>
         </Pane>
         <Pane preferredSize={'30%'}>
