@@ -8,7 +8,7 @@ type BellProps = {
   mountBell?: BellMounter;
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
-export function Bell(props: BellProps) {
+export const Bell = (props: BellProps) => {
   const { unreadCount } = useUnreadCount();
 
   return (
@@ -16,4 +16,4 @@ export function Bell(props: BellProps) {
       <ExternalElementMounter mount={(el) => props.mountBell!(el, { unreadCount: unreadCount() })} />
     </Show>
   );
-}
+};
