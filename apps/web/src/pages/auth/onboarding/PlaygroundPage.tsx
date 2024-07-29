@@ -115,7 +115,7 @@ export function PlaygroundPage() {
         </div>
       ),
       placement: 'right',
-      disableBeacon: true,
+      disableBeacon: false,
     },
     {
       title: 'Studio',

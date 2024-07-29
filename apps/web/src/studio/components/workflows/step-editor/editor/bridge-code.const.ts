@@ -5,6 +5,9 @@ import { serve } from '@novu/framework/express';
 const newWorkflow = workflow(
   'hello-world',
   async ({ step, payload }) => {
+    // Add more steps below this line
+    
+    // Email Step
     await step.email(
       'send-email',
       async (controls) => {
