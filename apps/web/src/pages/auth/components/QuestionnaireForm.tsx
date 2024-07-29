@@ -36,7 +36,7 @@ export function QuestionnaireForm() {
 
   useEffectOnce(() => {
     initializeWebContainer();
-  }, true);
+  }, isPlaygroundOnboardingEnabled);
 
   const [loading, setLoading] = useState<boolean>();
   const {
