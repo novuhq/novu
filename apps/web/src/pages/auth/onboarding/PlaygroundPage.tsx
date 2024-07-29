@@ -25,7 +25,7 @@ import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
-import { Accordion, List } from '@mantine/core';
+import { Accordion, Code, List } from '@mantine/core';
 import { Tabs } from '@mantine/core';
 
 export function PlaygroundPage() {
@@ -38,9 +38,14 @@ export function PlaygroundPage() {
   const joyrideSteps: Step[] = [
     {
       target: '.code-editor',
+      styles: {
+        options: {
+          width: '550px',
+        },
+      },
       content: (
         <div>
-          <p>
+          <p className={css({ marginBottom: '15px !important' })}>
             This is your IDE where you can define your notification workflows. You can write various types, here are
             some common step types:
           </p>
@@ -53,24 +58,58 @@ export function PlaygroundPage() {
             }}
           >
             <Accordion.Item value="email">
-              <Accordion.Control>Email</Accordion.Control>
-              <Accordion.Panel>Email tab content</Accordion.Panel>
+              <Accordion.Control>SMS</Accordion.Control>
+              <Accordion.Panel>
+                An SMS Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`await step.sms('sms-step', () => {
+  return {
+    body: 'Hello, world!',
+  }
+})`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
             <Accordion.Item value="inbox">
               <Accordion.Control>Inbox</Accordion.Control>
-              <Accordion.Panel>Inbox tab content</Accordion.Panel>
+              <Accordion.Panel>
+                An Inbox Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`await step.inApp('inApp-step', () => {
+  return {
+    body: 'Hello, world!',
+  }
+})`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
             <Accordion.Item value="digest">
               <Accordion.Control>Digest</Accordion.Control>
-              <Accordion.Panel>Digest tab content</Accordion.Panel>
+              <Accordion.Panel>
+                A Digest Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`const { events } = await step.digest('digest-step', async () => {
+    return {
+        amount: 1,
+        unit: 'hours'
+    }
+});`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
             <Accordion.Item value="delay">
               <Accordion.Control>Delay</Accordion.Control>
-              <Accordion.Panel>Delay tab content</Accordion.Panel>
-            </Accordion.Item>
-            <Accordion.Item value="custom">
-              <Accordion.Control>Custom</Accordion.Control>
-              <Accordion.Panel>Custom tab content</Accordion.Panel>
+              <Accordion.Panel>
+                A Delay Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`await step.delay('delay-step', () => {
+  return {
+    amount: 1,
+    unit: 'hours'
+  }
+})`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
         </div>
@@ -144,6 +183,9 @@ export function PlaygroundPage() {
         showSkipButton
         showProgress={false}
         callback={handleJoyrideCallback}
+        disableOverlayClose
+        disableCloseOnEsc
+        spotlightClicks
         styles={{
           tooltipContent: {
             textAlign: 'left',

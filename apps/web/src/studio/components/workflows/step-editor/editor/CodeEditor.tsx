@@ -6,7 +6,7 @@ import { useMantineTheme } from '@mantine/core';
 import { Editor, Monaco } from '@monaco-editor/react';
 import { editor as NEditor, Range } from 'monaco-editor';
 
-import { colors, Text } from '@novu/design-system';
+import { colors } from '@novu/design-system';
 
 import { TitleBarWrapper } from '../../../../../pages/auth/onboarding/TitleBarWrapper';
 
