@@ -18,8 +18,10 @@ const helloWorld = workflow('hello-world', async ({ step, payload }) => {
       controlSchema: z.object({
         subject: z.string().default('Welcome to Novu'),
         title: z.string().default('Welcome to Novu'),
+        text: z.string()
+          .default('This email is generated using Tailwind and React Email. You can change any of the content here using the Step Controls panel'),
         buttonText: z.string().default('Hello World'),
-        footerText: z.string().default('This email is generated using Tailwind and React Email. You can change any of the content here using the Step Controls panel'),
+
       }),
     });
   },
@@ -55,7 +57,7 @@ import * as React from "react";
 export const ReactEmail = ({
   title,
   buttonText,
-  footerText,
+  text,
 }) => {
   return (
     <Html>
@@ -72,10 +74,12 @@ export const ReactEmail = ({
                 className="my-0 mx-auto"
               />
             </Section>  
-            <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
+            <Heading className="text-black text-[24px] font-normal text-center p-0 my-[15px] mx-0">
               {title}
             </Heading>
-           
+            <Text className="text-[#666666] text-[12px] text-center leading-[24px]">
+              {text}
+            </Text>
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
                 className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
@@ -84,10 +88,7 @@ export const ReactEmail = ({
                 {buttonText}
               </Button>
             </Section>
-            <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
-            <Text className="text-[#666666] text-[12px] leading-[24px]">
-              {footerText}
-            </Text>
+          
           </Container>
         </Body>
       </Tailwind>

@@ -299,10 +299,6 @@ function Playground({
     >
       <EditorView
         vertical
-        onVisibleChange={
-          // eslint-disable-next-line no-console
-          (visible) => console.log('visible ', visible)
-        }
         onChange={(value) => {
           setEditorSizes(value);
           handleEditorSizeChange();
@@ -323,7 +319,7 @@ function Playground({
           </div>
         </Pane>
       </EditorView>
-      <Pane>
+      <Pane preferredSize={'60%'}>
         <div
           style={{
             height: '100%',
