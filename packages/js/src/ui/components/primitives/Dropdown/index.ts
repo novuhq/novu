@@ -5,6 +5,7 @@ import { DropdownRoot } from './DropdownRoot';
 import { DropdownTrigger } from './DropdownTrigger';
 
 export { dropdownContentVariants } from './DropdownContent';
+export { dropdownTriggerButtonVariants } from './DropdownTrigger';
 
 export const Dropdown = {
   Root: DropdownRoot,
