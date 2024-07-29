@@ -49,7 +49,11 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     try {
       if (!webContainer && !initStarted) {
         setInitStarted(true);
-        setWebContainer(await WebContainer.boot());
+        setWebContainer(
+          await WebContainer.boot({
+            coep: 'credentialless',
+          })
+        );
       }
     } catch (error: any) {
       writeOutput('\nError booting web container: ' + error.message);
@@ -66,7 +70,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         });
 
         async function installDependencies() {
-          const installProcess = await webContainer.spawn('pnpm', ['install']);
+          const installProcess = await webContainer.spawn('pnpm', ['install', '--no-frozen-lockfile']);
 
           installProcess.output.pipeTo(
             new WritableStream({
@@ -96,6 +100,10 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE));
 
         await installDependencies();
+        writeOutput('Installed dependencies');
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        writeOutput('Starting Server');
+
         await startDevServer();
       } catch (error: any) {
         writeOutput(error);
