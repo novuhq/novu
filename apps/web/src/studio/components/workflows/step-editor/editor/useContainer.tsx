@@ -13,6 +13,7 @@ export type TerminalHandle = {
   fit: () => void;
   proposeDimensions: () => ITerminalDimensions | undefined;
 };
+
 export const useContainer = () => {
   const [code, setCode] = useState(BRIDGE_CODE);
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
@@ -50,7 +51,7 @@ export const useContainer = () => {
         });
 
         async function installDependencies() {
-          const installProcess = await webContainer.spawn('npm', ['install']);
+          const installProcess = await webContainer.spawn('pnpm', ['install']);
 
           installProcess.output.pipeTo(
             new WritableStream({
