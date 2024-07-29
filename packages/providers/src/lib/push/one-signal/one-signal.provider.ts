@@ -85,7 +85,7 @@ export class OneSignalPushProvider
     is_chrome_web: 'isChromeWeb',
     is_firefox: 'isFirefox',
     is_safari: 'isSafari',
-    isWpWns: 'isWP_WNS',
+    is_wp_wns: 'isWP_WNS',
     is_adm: 'isAdm',
     is_chrome: 'isChrome',
     ios_badge_type: 'ios_badgeType',
