@@ -30,13 +30,8 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IProviderOverride,
-  IProvidersOverride,
-  ExecuteOutput,
-  IBridgeChannelResponse,
-  IBlock,
-  SelectIntegrationCommand,
 } from '@novu/application-generic';
+import { ExecuteOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -278,9 +273,9 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private getBridgeOverride(
-    providersOverrides: IProvidersOverride | undefined,
+    providersOverrides: ExecuteOutput['providers'],
     integration: IntegrationEntity
-  ): IProviderOverride | null {
+  ): Record<string, unknown> | null {
     if (!providersOverrides) {
       return null;
     }
@@ -408,7 +403,7 @@ export class SendMessageChat extends SendMessageBase {
         customData: overrides,
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        ...(bridgeContent?.content ? (bridgeContent as DefinedContent) : { content }),
+        ...(bridgeContent?.content ? bridgeContent : { content }),
       });
 
       await this.executionLogRoute.execute(
@@ -450,20 +445,19 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private getOverrideContent(
-    bridgeData: ExecuteOutput<IBridgeChannelResponse> | undefined | null,
+    bridgeData: ExecuteOutput | undefined | null,
     integration: IntegrationEntity
-  ): { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined } {
+  ): Record<string, unknown> & { content: string } {
     const bridgeProviderOverride = this.getBridgeOverride(bridgeData?.providers, integration);
 
-    let bridgeContent: { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined };
+    // TODO: make this generic to handle all providers.
+    let bridgeContent: Record<string, unknown> & { content: string };
     if (bridgeProviderOverride) {
-      bridgeContent = { content: bridgeProviderOverride.text, blocks: bridgeProviderOverride.blocks };
+      bridgeContent = { content: bridgeProviderOverride.text as string, blocks: bridgeProviderOverride.blocks };
     } else {
-      bridgeContent = { content: bridgeData?.outputs.body };
+      bridgeContent = { content: bridgeData?.outputs.body as string };
     }
 
     return bridgeContent;
   }
 }
-
-type DefinedContent = { content: string; blocks: IBlock[] | undefined } | { content: string };

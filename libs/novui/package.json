@@ -55,6 +55,7 @@
     "./components.css": "./node_modules/@mantine/core/styles.layer.css"
   },
   "scripts": {
+    "dev": "pnpm build && pnpm storybook",
     "start": "npm run build:watch",
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
