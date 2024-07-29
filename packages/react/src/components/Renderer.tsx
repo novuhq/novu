@@ -1,7 +1,7 @@
 import React from 'react';
 import type { NovuUI, NovuUIOptions } from '@novu/js/ui';
 import ReactDOM from 'react-dom';
-import { MountedElement, RendererProvider } from './context/RenderContext';
+import { MountedElement, RendererProvider } from '../context/RenderContext';
 
 type RendererProps = React.PropsWithChildren<{
   options: NovuUIOptions;

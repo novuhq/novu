@@ -2,8 +2,9 @@ import type { InboxNotification } from '@novu/js';
 import type { BaseNovuUIOptions } from '@novu/js/ui';
 import React from 'react';
 import { useRenderer } from '../context/RenderContext';
-import { Renderer } from '../Renderer';
+
 import { Mounter } from './Mounter';
+import { Renderer } from './Renderer';
 
 type InboxDefaultProps = {
   renderNotification?: (notification: InboxNotification) => React.ReactNode;
