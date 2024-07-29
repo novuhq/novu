@@ -12,20 +12,37 @@ export const useStyle = () => {
 
   const styleFuncMemo = createMemo(() => (appearanceKey: AppearanceKey, className?: string) => {
     const appearanceKeyParts = appearanceKey.split('__');
-    const finalAppearanceKeys: (keyof Elements)[] = [];
+    let finalAppearanceKeys: (keyof Elements)[] = [];
     for (let i = 0; i < appearanceKeyParts.length; i++) {
       const accumulated = appearanceKeyParts.slice(i).join('__');
       if (appearanceKeys.includes(accumulated as keyof Elements)) {
         finalAppearanceKeys.push(accumulated as keyof Elements);
       }
     }
-    //Have keys with least amount of `__` first, i.e. have  `bar foo__bar` in the DOM.
+
+    // Find appearance keys in the className and utilize them as well.
+    const classes = className?.split(/\s+/).map((className) => className.replace(/^nv-/, '')) || [];
+    const appearanceKeysInClasses = classes.filter((className) =>
+      (appearanceKeys as unknown as string[]).includes(className)
+    );
+
+    // Remove duplicates
+    finalAppearanceKeys = Array.from(
+      new Set([...finalAppearanceKeys, ...appearanceKeysInClasses])
+    ) as (keyof Elements)[];
+
+    // Sort appearance keys by the number of `__` occurrences
     finalAppearanceKeys.sort((a, b) => {
       const countA = (a.match(/__/g) || []).length;
       const countB = (b.match(/__/g) || []).length;
 
-      return countA - countB;
+      return countB - countA;
     });
+
+    // Remove appearance keys from the className
+    const finalClassName = classes
+      .filter((className) => !(finalAppearanceKeys as string[]).includes(className))
+      .join(' ');
 
     const appearanceClassnames = [];
     for (let i = 0; i < finalAppearanceKeys.length; i++) {
@@ -41,7 +58,7 @@ export const useStyle = () => {
 
     return cn(
       ...finalAppearanceKeys.map((key) => `nv-${key}`),
-      className, // default styles
+      finalClassName, // default styles
       appearanceClassnames, // overrides via appearance prop classes
       ...cssInJsClasses
     );
