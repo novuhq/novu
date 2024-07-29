@@ -21,7 +21,7 @@ export type ValidateResult<T> =
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface Validator<T_Schema extends Schema> {
-  validate: <T_Data>(data: T_Data, schema: T_Schema) => Promise<ValidateResult<T_Data>>;
+  validate: <T_Data extends Record<string, unknown>>(data: T_Data, schema: T_Schema) => Promise<ValidateResult<T_Data>>;
   isSchema: (schema: Schema) => schema is T_Schema;
   transformToJsonSchema: (schema: T_Schema) => JsonSchema;
 }

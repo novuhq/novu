@@ -58,6 +58,10 @@ export const appearanceKeys = [
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',
   'notificationListEmptyNoticeIcon',
+  'notificationContainer',
+  'notificationDot',
+  'notificationSubject',
+  'notificationSubjectContainer',
 
   //Inbox status
   'inboxStatus__title',

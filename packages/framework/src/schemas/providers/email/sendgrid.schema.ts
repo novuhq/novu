@@ -111,21 +111,21 @@ const sendgridOutputSchema = {
           substitutions: {
             type: 'object',
             description:
-              'Substitutions allow you to insert data without using Dynamic Transactional Templates. This field should **not** be used in combination with a Dynamic Transactional Template, which can be identified by a `template_id` starting with `d-`. This field is a collection of key/value pairs following the pattern "substitution_tag":"value to substitute". The key/value pairs must be strings. These substitutions will apply to the text and html content of the body of your email, in addition to the `subject` and `reply-to` parameters. The total collective size of your substitutions may not exceed 10,000 bytes per personalization object.',
+              'Substitutions allow you to insert data without using Dynamic Transactional Templates. This field should **not** be used in combination with a Dynamic Transactional Template, which can be identified by a `templateId` starting with `d-`. This field is a collection of key/value pairs following the pattern "substitutionTag":"value to substitute". The key/value pairs must be strings. These substitutions will apply to the text and html content of the body of your email, in addition to the `subject` and `reply-to` parameters. The total collective size of your substitutions may not exceed 10,000 bytes per personalization object.',
             maxProperties: 10000,
           },
-          dynamic_template_data: {
+          dynamicTemplateData: {
             type: 'object',
             description:
-              'Dynamic template data is available using Handlebars syntax in Dynamic Transactional Templates. This field should be used in combination with a Dynamic Transactional Template, which can be identified by a `template_id` starting with `d-`. This field is a collection of key/value pairs following the pattern "variable_name":"value to insert".',
+              'Dynamic template data is available using Handlebars syntax in Dynamic Transactional Templates. This field should be used in combination with a Dynamic Transactional Template, which can be identified by a `templateId` starting with `d-`. This field is a collection of key/value pairs following the pattern "variable_name":"value to insert".',
           },
-          custom_args: {
+          customArgs: {
             type: 'object',
             description:
               'Values that are specific to this personalization that will be carried along with the email and its activity data. Substitutions will not be made on custom arguments, so any string that is entered into this parameter will be assumed to be the custom argument that you would like to be used. This field may not exceed 10,000 bytes.',
             maxProperties: 10000,
           },
-          send_at: {
+          sendAt: {
             type: 'integer',
             description:
               'A unix timestamp allowing you to specify when your email should be delivered. Scheduling delivery more than 72 hours in advance is forbidden.',
@@ -151,7 +151,7 @@ const sendgridOutputSchema = {
       },
       required: ['email'],
     },
-    reply_to: {
+    replyTo: {
       title: 'Reply_to Email Object',
       type: 'object',
       properties: {
@@ -162,15 +162,15 @@ const sendgridOutputSchema = {
         },
         name: {
           type: 'string',
-          description: 'A name or title associated with the `reply_to` email address.',
+          description: 'A name or title associated with the `replyTo` email address.',
         },
       },
       required: ['email'],
     },
-    reply_to_list: {
+    replyToList: {
       type: 'array',
       description:
-        "An array of recipients who will receive replies and/or bounces. Each object in this array must contain the recipient's email address. Each object in the array may optionally contain the recipient's name. You can either choose to use “reply_to” field or “reply_to_list” but not both.",
+        "An array of recipients who will receive replies and/or bounces. Each object in this array must contain the recipient's email address. Each object in the array may optionally contain the recipient's name. You can either choose to use “replyTo” field or “replyToList” but not both.",
       uniqueItems: true,
       maxItems: 1000,
       items: {
@@ -183,7 +183,7 @@ const sendgridOutputSchema = {
           },
           name: {
             type: 'string',
-            description: 'A name or title associated with the `reply_to_list` email address.',
+            description: 'A name or title associated with the `replyToList` email address.',
           },
         },
         required: ['email'],
@@ -244,7 +244,7 @@ const sendgridOutputSchema = {
               "The attachment's content-disposition, specifying how you would like the attachment to be displayed. For example, `“inline”` results in the attached file are displayed automatically within the message while `“attachment”` results in the attached file require some action to be taken before it is displayed, such as opening or downloading the file.",
             enum: ['inline', 'attachment'],
           },
-          content_id: {
+          contentId: {
             type: 'string',
             description:
               "The attachment's content ID. This is used when the disposition is set to `“inline”` and the attachment is an image, allowing the file to be displayed within the body of your email.",
@@ -253,7 +253,7 @@ const sendgridOutputSchema = {
         required: ['content', 'filename'],
       },
     },
-    template_id: {
+    templateId: {
       type: 'string',
       description:
         'An email template ID. A template that contains a subject and content — either text or html — will override any subject and content values specified at the personalizations or message level.',
@@ -273,30 +273,30 @@ const sendgridOutputSchema = {
         maxLength: 255,
       },
     },
-    custom_args: {
+    customArgs: {
       description:
-        'Values that are specific to the entire send that will be carried along with the email and its activity data.  Key/value pairs must be strings. Substitutions will not be made on custom arguments, so any string that is entered into this parameter will be assumed to be the custom argument that you would like to be used. This parameter is overridden by `custom_args` set at the personalizations level. Total `custom_args` size may not exceed 10,000 bytes.',
+        'Values that are specific to the entire send that will be carried along with the email and its activity data.  Key/value pairs must be strings. Substitutions will not be made on custom arguments, so any string that is entered into this parameter will be assumed to be the custom argument that you would like to be used. This parameter is overridden by `customArgs` set at the personalizations level. Total `customArgs` size may not exceed 10,000 bytes.',
       type: 'string',
     },
-    send_at: {
+    sendAt: {
       type: 'integer',
       description:
-        "A unix timestamp allowing you to specify when you want your email to be delivered. This may be overridden by the `send_at` parameter set at the personalizations level. Delivery cannot be scheduled more than 72 hours in advance. If you have the flexibility, it's better to schedule mail for off-peak times. Most emails are scheduled and sent at the top of the hour or half hour. Scheduling email to avoid peak times — for example, scheduling at 10:53 — can result in lower deferral rates due to the reduced traffic during off-peak times.",
+        "A unix timestamp allowing you to specify when you want your email to be delivered. This may be overridden by the `sendAt` parameter set at the personalizations level. Delivery cannot be scheduled more than 72 hours in advance. If you have the flexibility, it's better to schedule mail for off-peak times. Most emails are scheduled and sent at the top of the hour or half hour. Scheduling email to avoid peak times — for example, scheduling at 10:53 — can result in lower deferral rates due to the reduced traffic during off-peak times.",
     },
-    batch_id: {
+    batchId: {
       type: 'string',
       description:
-        'An ID representing a batch of emails to be sent at the same time. Including a `batch_id` in your request allows you include this email in that batch. It also enables you to cancel or pause the delivery of that batch. For more information, see the [Cancel Scheduled Sends API](https://sendgrid.com/docs/api-reference/).',
+        'An ID representing a batch of emails to be sent at the same time. Including a `batchId` in your request allows you include this email in that batch. It also enables you to cancel or pause the delivery of that batch. For more information, see the [Cancel Scheduled Sends API](https://sendgrid.com/docs/api-reference/).',
     },
     asm: {
       type: 'object',
       description: 'An object allowing you to specify how to handle unsubscribes.',
       properties: {
-        group_id: {
+        groupId: {
           type: 'integer',
           description: 'The unsubscribe group to associate with this email.',
         },
-        groups_to_display: {
+        groupsToDisplay: {
           type: 'array',
           description:
             'An array containing the unsubscribe groups that you would like to be displayed on the unsubscribe preferences page.',
@@ -306,20 +306,20 @@ const sendgridOutputSchema = {
           },
         },
       },
-      required: ['group_id'],
+      required: ['groupId'],
     },
-    ip_pool_name: {
+    ipPoolName: {
       type: 'string',
       description: 'The IP Pool that you would like to send this email from.',
       minLength: 2,
       maxLength: 64,
     },
-    mail_settings: {
+    mailSettings: {
       type: 'object',
       description:
         'A collection of different mail settings that you can use to specify how you would like this email to be handled.',
       properties: {
-        bypass_list_management: {
+        bypassListManagement: {
           type: 'object',
           description:
             'Allows you to bypass all unsubscribe groups and suppressions to ensure that the email is delivered to every single recipient. This should only be used in emergencies when it is absolutely necessary that every recipient receives your email. This filter cannot be combined with any other bypass filters. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
@@ -330,10 +330,10 @@ const sendgridOutputSchema = {
             },
           },
         },
-        bypass_spam_management: {
+        bypassSpamManagement: {
           type: 'object',
           description:
-            'Allows you to bypass the spam report list to ensure that the email is delivered to recipients. Bounce and unsubscribe lists will still be checked; addresses on these other lists will not receive the message. This filter cannot be combined with the `bypass_list_management` filter. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
+            'Allows you to bypass the spam report list to ensure that the email is delivered to recipients. Bounce and unsubscribe lists will still be checked; addresses on these other lists will not receive the message. This filter cannot be combined with the `bypassListManagement` filter. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
           properties: {
             enable: {
               type: 'boolean',
@@ -341,10 +341,10 @@ const sendgridOutputSchema = {
             },
           },
         },
-        bypass_bounce_management: {
+        bypassBounceManagement: {
           type: 'object',
           description:
-            'Allows you to bypass the bounce list to ensure that the email is delivered to recipients. Spam report and unsubscribe lists will still be checked; addresses on these other lists will not receive the message. This filter cannot be combined with the `bypass_list_management` filter. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
+            'Allows you to bypass the bounce list to ensure that the email is delivered to recipients. Spam report and unsubscribe lists will still be checked; addresses on these other lists will not receive the message. This filter cannot be combined with the `bypassListManagement` filter. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
           properties: {
             enable: {
               type: 'boolean',
@@ -352,10 +352,10 @@ const sendgridOutputSchema = {
             },
           },
         },
-        bypass_unsubscribe_management: {
+        bypassUnsubscribeManagement: {
           type: 'object',
           description:
-            'Allows you to bypass the global unsubscribe list to ensure that the email is delivered to recipients. Bounce and spam report lists will still be checked; addresses on these other lists will not receive the message. This filter applies only to global unsubscribes and will not bypass group unsubscribes. This filter cannot be combined with the `bypass_list_management` filter. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
+            'Allows you to bypass the global unsubscribe list to ensure that the email is delivered to recipients. Bounce and spam report lists will still be checked; addresses on these other lists will not receive the message. This filter applies only to global unsubscribes and will not bypass group unsubscribes. This filter cannot be combined with the `bypassListManagement` filter. See our [documentation](https://sendgrid.com/docs/ui/sending-email/index-suppressions/#bypass-suppressions) for more about bypass filters.',
           properties: {
             enable: {
               type: 'boolean',
@@ -381,7 +381,7 @@ const sendgridOutputSchema = {
             },
           },
         },
-        sandbox_mode: {
+        sandboxMode: {
           type: 'object',
           description:
             'Sandbox Mode allows you to send a test email to ensure that your request body is valid and formatted correctly.',
@@ -394,12 +394,12 @@ const sendgridOutputSchema = {
         },
       },
     },
-    tracking_settings: {
+    trackingSettings: {
       type: 'object',
       description:
         'Settings to determine how you would like to track the metrics of how your recipients interact with your email.',
       properties: {
-        click_tracking: {
+        clickTracking: {
           type: 'object',
           description: 'Allows you to track if a recipient clicked a link in your email.',
           properties: {
@@ -407,13 +407,13 @@ const sendgridOutputSchema = {
               type: 'boolean',
               description: 'Indicates if this setting is enabled.',
             },
-            enable_text: {
+            enableText: {
               type: 'boolean',
               description: 'Indicates if this setting should be included in the `text/plain` portion of your email.',
             },
           },
         },
-        open_tracking: {
+        openTracking: {
           type: 'object',
           description:
             'Allows you to track if the email was opened by including a single pixel image in the body of the content. When the pixel is loaded, Twilio SendGrid can log that the email was opened.',
@@ -422,17 +422,17 @@ const sendgridOutputSchema = {
               type: 'boolean',
               description: 'Indicates if this setting is enabled.',
             },
-            substitution_tag: {
+            substitutionTag: {
               type: 'string',
               description:
                 'Allows you to specify a substitution tag that you can insert in the body of your email at a location that you desire. This tag will be replaced by the open tracking pixel.',
             },
           },
         },
-        subscription_tracking: {
+        subscriptionTracking: {
           type: 'object',
           description:
-            'Allows you to insert a subscription management link at the bottom of the text and HTML bodies of your email. If you would like to specify the location of the link within your email, you may use the `substitution_tag`.',
+            'Allows you to insert a subscription management link at the bottom of the text and HTML bodies of your email. If you would like to specify the location of the link within your email, you may use the `substitutionTag`.',
           properties: {
             enable: {
               type: 'boolean',
@@ -448,7 +448,7 @@ const sendgridOutputSchema = {
               description:
                 'HTML to be appended to the email with the subscription tracking link. You may control where the link is by using the tag <% %>',
             },
-            substitution_tag: {
+            substitutionTag: {
               type: 'string',
               description:
                 'A tag that will be replaced with the unsubscribe URL. for example: `[unsubscribe_url]`. If this parameter is used, it will override both the `text` and `html` parameters. The URL of the link will be placed at the substitution tag’s location with no additional formatting.',
@@ -463,23 +463,23 @@ const sendgridOutputSchema = {
               type: 'boolean',
               description: 'Indicates if this setting is enabled.',
             },
-            utm_source: {
+            utmSource: {
               type: 'string',
               description: 'Name of the referrer source. (e.g. Google, SomeDomain.com, or Marketing Email)',
             },
-            utm_medium: {
+            utmMedium: {
               type: 'string',
               description: 'Name of the marketing medium. (e.g. Email)',
             },
-            utm_term: {
+            utmTerm: {
               type: 'string',
               description: 'Used to identify any paid keywords.',
             },
-            utm_content: {
+            utmContent: {
               type: 'string',
               description: 'Used to differentiate your campaign from advertisements.',
             },
-            utm_campaign: {
+            utmCampaign: {
               type: 'string',
               description: 'The name of the campaign.',
             },
@@ -489,7 +489,7 @@ const sendgridOutputSchema = {
     },
   },
   required: [],
-  additionalProperties: true,
+  additionalProperties: false,
 } as const satisfies Schema;
 
 export const sendgridProviderSchemas = {

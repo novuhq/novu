@@ -13,10 +13,10 @@ describe('validators', () => {
         zod: ZodSchema;
         json: JsonSchema;
       };
-      payload: Record<string, any>;
+      payload: Record<string, unknown>;
       result: {
         success: boolean;
-        data?: Record<string, any>;
+        data?: Record<string, unknown>;
         errors?: {
           zod: { message: string; path: string }[];
           json: { message: string; path: string }[];

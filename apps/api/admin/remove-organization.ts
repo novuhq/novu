@@ -1,26 +1,23 @@
 /* eslint-disable no-console */
 import '../src/config';
 import {
-  OrganizationRepository,
+  CommunityOrganizationRepository,
   EnvironmentRepository,
-  MemberRepository,
+  CommunityMemberRepository,
   SubscriberRepository,
   IntegrationRepository,
   NotificationTemplateRepository,
   ChangeRepository,
-  ExecutionDetailsRepository,
   BaseRepository,
   EnvironmentId,
   OrganizationId,
   EnforceEnvOrOrgIds,
   FeedRepository,
-  JobRepository,
   LayoutRepository,
   LogRepository,
   MessageRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
-  NotificationRepository,
   SubscriberPreferenceRepository,
   TenantRepository,
   TopicRepository,
@@ -60,9 +57,9 @@ async function removeData<T extends BaseRepository<object, E, EnforceEnvOrOrgIds
 }
 
 connect(async () => {
-  const organizationRepository = new OrganizationRepository();
+  const organizationRepository = new CommunityOrganizationRepository();
   const environmentRepository = new EnvironmentRepository();
-  const memberRepository = new MemberRepository();
+  const memberRepository = new CommunityMemberRepository();
 
   const organization = await organizationRepository.findById(ORG_ID);
   if (!organization) {
