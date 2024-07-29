@@ -7,6 +7,7 @@ const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
 import { Tooltip, useColorScheme } from '@novu/design-system';
+import { Accordion, Code } from '@mantine/core';
 
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
@@ -19,17 +20,17 @@ import { TerminalComponent } from '../../../studio/components/workflows/step-edi
 import { CodeEditor } from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
 import { WorkflowFlow } from './WorkflowFlow';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
-import { Accordion, Code, List } from '@mantine/core';
-import { Tabs } from '@mantine/core';
-import useThemeChange from '../../../hooks/useThemeChange';
 
 export function PlaygroundPage() {
+  return <PlaygroundPage2></PlaygroundPage2>;
+}
+
+export function PlaygroundPage2() {
   const [clickedStepId, setClickedStepId] = useState<string>('');
   const { handleTestClick } = useWorkflowStepEditor(clickedStepId);
   const [runJoyride, setRunJoyride] = useState(true);
