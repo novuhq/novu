@@ -8,10 +8,9 @@ const RootView = Allotment;
 const EditorView = Allotment;
 import { Tooltip, useColorScheme } from '@novu/design-system';
 import { Accordion, Code } from '@mantine/core';
-
+import { Button } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
-import { Button } from '@novu/novui';
 import { IconPlayArrow } from '@novu/novui/icons';
 
 import { ROUTES } from '../../../constants/routes';
@@ -23,9 +22,63 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
+import { Loader } from '@mantine/core';
+
+const CustomTooltip = ({
+  index,
+  step,
+  primaryProps,
+  tooltipProps,
+  isLastStep,
+  isBridgeAppLoading,
+}: TooltipRenderProps & { isBridgeAppLoading: boolean }) => (
+  <div
+    {...tooltipProps}
+    className={css({
+      backgroundColor: '#23232b',
+      borderRadius: '8px',
+      boxShadow: '0 1px 10px rgba(0, 0, 0, 0.15)',
+      color: 'typography.text.secondary',
+      padding: '15px',
+      maxWidth: '450px',
+      fontSize: '14px',
+    })}
+  >
+    {step.title && <h4 className={css({ margin: '0 0 10px', fontSize: '18px', color: 'white' })}>{step.title}</h4>}
+    <div className={css({ marginBottom: '15px' })}>{step.content}</div>
+    <div className={css({ marginTop: '15px', textAlign: 'right' })}>
+      {index === 2 ? (
+        <Button
+          onClick={primaryProps.onClick}
+          disabled={isBridgeAppLoading}
+          size="sm"
+          className={css({
+            backgroundColor: '#dd2476',
+          })}
+        >
+          {isBridgeAppLoading ? (
+            <div className={css({ display: 'flex', alignItems: 'center' })}>Waiting for server load...</div>
+          ) : (
+            'Next'
+          )}
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          {...primaryProps}
+          className={css({
+            backgroundColor: '#dd2476',
+          })}
+        >
+          {isLastStep ? 'Finish' : 'Next'}
+        </Button>
+      )}
+    </div>
+  </div>
+);
 
 export function PlaygroundPage() {
   const [clickedStepId, setClickedStepId] = useState<string>('');
@@ -34,7 +87,7 @@ export function PlaygroundPage() {
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
   const { setColorScheme } = useColorScheme();
-  const { initializeWebContainer } = useContainer();
+  const { initializeWebContainer, isBridgeAppLoading } = useContainer();
 
   useEffectOnce(() => {
     setColorScheme('dark');
@@ -198,6 +251,7 @@ export function PlaygroundPage() {
         disableCloseOnEsc
         spotlightClicks
         hideCloseButton
+        tooltipComponent={(props) => <CustomTooltip {...props} isBridgeAppLoading={isBridgeAppLoading} />}
         locale={{
           last: 'Finish Tour',
         }}
