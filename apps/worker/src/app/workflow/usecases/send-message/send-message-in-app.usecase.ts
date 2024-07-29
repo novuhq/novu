@@ -16,6 +16,7 @@ import {
   ExecutionDetailsStatusEnum,
   ActorTypeEnum,
   WebSocketEventEnum,
+  ButtonTypeEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -32,6 +33,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
+import { InAppOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -180,7 +182,34 @@ export class SendMessageInApp extends SendMessageBase {
       }),
     });
 
-    const bridgeBody = command.bridgeData?.outputs.body;
+    // V2 data
+    const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
+    const bridgeSubject = bridgeOutputs.subject;
+    const bridgeBody = bridgeOutputs.body;
+    const bridgeCta = {
+      action: {
+        buttons: [
+          ...(bridgeOutputs.primaryAction
+            ? [
+                {
+                  type: ButtonTypeEnum.PRIMARY,
+                  content: bridgeOutputs.primaryAction.label,
+                  url: bridgeOutputs.primaryAction.url,
+                },
+              ]
+            : []),
+          ...(bridgeOutputs.secondaryAction
+            ? [
+                {
+                  type: ButtonTypeEnum.SECONDARY,
+                  content: bridgeOutputs.secondaryAction.label,
+                  url: bridgeOutputs.secondaryAction.url,
+                },
+              ]
+            : []),
+        ],
+      },
+    };
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -191,10 +220,11 @@ export class SendMessageInApp extends SendMessageBase {
         _templateId: command._templateId,
         _messageTemplateId: step.template._id,
         channel: ChannelTypeEnum.IN_APP,
-        cta: step.template.cta,
+        cta: bridgeOutputs ? bridgeCta : step.template.cta,
         _feedId: step.template._feedId,
         transactionId: command.transactionId,
         content: this.storeContent() ? bridgeBody || content : null,
+        subject: bridgeSubject,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,
