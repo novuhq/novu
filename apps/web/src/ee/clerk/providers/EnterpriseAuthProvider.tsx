@@ -200,5 +200,6 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
     defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,
+    language: clerkOrganization.publicMetadata.language,
   };
 };

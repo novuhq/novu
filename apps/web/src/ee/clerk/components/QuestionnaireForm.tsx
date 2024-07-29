@@ -1,36 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
-import {
-  JobTitleEnum,
-  jobTitleToLabelMapper,
-  ProductUseCasesEnum,
-  FeatureFlagsKeysEnum,
-  UpdateExternalOrganizationDto,
-  IResponseError,
-  ProductUseCases,
-} from '@novu/shared';
-import {
-  Button,
-  Digest,
-  HalfClock,
-  Input,
-  inputStyles,
-  MultiChannel,
-  RingingBell,
-  Select,
-  Translation,
-} from '@novu/design-system';
+import { captureException } from '@sentry/react';
+import { FeatureFlagsKeysEnum, IResponseError, UpdateExternalOrganizationDto } from '@novu/shared';
+import { JobTitleEnum, jobTitleToLabelMapper } from '@novu/shared';
+import { Button, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
-import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
-import { useDomainParser } from '../../../pages/auth/components/useDomainHook';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
+import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
@@ -43,42 +28,53 @@ export function QuestionnaireForm() {
     handleSubmit,
     formState: { errors },
     control,
-  } = useForm<UpdateExternalOrganizationDto>({});
+  } = useForm<IOrganizationUpdateForm>({});
   const navigate = useNavigate();
-  const { currentOrganization, reloadOrganization } = useAuth();
+  const { reloadOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
-  const { parse } = useDomainParser();
+  const segment = useSegment();
+  const location = useLocation();
 
   const { mutateAsync: updateOrganizationMutation } = useMutation<{ _id: string }, IResponseError, any>(
     (data: UpdateExternalOrganizationDto) => updateClerkOrgMetadata(data)
   );
 
-  useEffect(() => {
-    if (currentOrganization) {
-      if (isFromVercel) {
-        startVercelSetup();
-
-        return;
-      }
-    }
-  }, [isFromVercel, startVercelSetup, currentOrganization]);
-
   async function updateOrganization(data: UpdateExternalOrganizationDto) {
+    const selectedLanguages = Object.keys(data.language || {}).filter((key) => data.language && data.language[key]);
+
     const updateClerkOrgDto: UpdateExternalOrganizationDto = {
       jobTitle: data.jobTitle,
       domain: data.domain,
-      productUseCases: data.productUseCases,
+      language: selectedLanguages,
     };
     await updateOrganizationMutation(updateClerkOrgDto);
+
+    segment.track('Create Organization Form Submitted', {
+      location: (location.state as any)?.origin || 'web',
+      language: selectedLanguages,
+      jobTitle: data.jobTitle,
+    });
+
     // get updated organization data in session
     await reloadOrganization();
   }
 
-  const onUpdateOrganization = async (data: UpdateExternalOrganizationDto) => {
+  const onUpdateOrganization = async (data: IOrganizationUpdateForm) => {
     setLoading(true);
     await updateOrganization({ ...data });
     setLoading(false);
+
+    try {
+      await api.post(`/v1/bridge/sync?source=sample-workspace`, {
+        bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+
+      captureException(e);
+    }
 
     if (isFromVercel) {
       startVercelSetup();
@@ -87,7 +83,19 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      navigate(ROUTES.WORKFLOWS + '?onboarding=true');
+      const isTechnicalJobTitle = [
+        JobTitleEnum.ENGINEER,
+        JobTitleEnum.ENGINEERING_MANAGER,
+        JobTitleEnum.ARCHITECT,
+        JobTitleEnum.FOUNDER,
+        JobTitleEnum.STUDENT,
+      ].includes(data.jobTitle);
+
+      if (isTechnicalJobTitle) {
+        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      } else {
+        navigate(ROUTES.WORKFLOWS);
+      }
 
       return;
     }
@@ -134,49 +142,24 @@ export function QuestionnaireForm() {
       />
 
       <Controller
-        name="domain"
+        name="language"
         control={control}
         rules={{
-          validate: {
-            isValiDomain: (value) => {
-              const val = parse(value as string);
-
-              if (value && !val.isIcann) {
-                return 'Please provide a valid domain';
-              }
-            },
-          },
-        }}
-        render={({ field }) => {
-          return (
-            <Input
-              label="Company domain"
-              {...field}
-              error={errors.domain?.message}
-              placeholder="my-company.com"
-              data-test-id="questionnaire-company-domain"
-              mt={32}
-            />
-          );
-        }}
-      />
-
-      <Controller
-        name="productUseCases"
-        control={control}
-        rules={{
-          required: 'Please specify your use case',
+          required: 'Please specify your back-end languages',
         }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
-            const newUseCases: ProductUseCases = field.value || {};
-            newUseCases[channelType] = e.currentTarget.checked;
-            field.onChange(newUseCases);
+            const languages = field.value || {};
+
+            languages[channelType] = e.currentTarget.checked;
+
+            field.onChange(languages);
           }
 
           return (
             <MantineInput.Wrapper
-              label="What do you plan to use Novu for?"
+              data-test-id="language-checkbox"
+              label="Choose your back-end stack"
               styles={inputStyles}
               error={fieldState.error?.message}
               mt={32}
@@ -185,14 +168,14 @@ export function QuestionnaireForm() {
               <Group
                 mt={8}
                 mx={'8px'}
-                style={{ marginLeft: '-12px', marginRight: '-12px', gap: '0', justifyContent: 'space-between' }}
+                style={{ marginLeft: '-1px', marginRight: '-3px', gap: '0', justifyContent: 'space-between' }}
               >
                 <>
-                  {checkBoxData.map((item) => (
+                  {backendLanguages.map((item) => (
                     <DynamicCheckBox
                       label={item.label}
-                      onChange={(e) => handleCheckboxChange(e, item.type)}
-                      key={item.type}
+                      onChange={(e) => handleCheckboxChange(e, item.label)}
+                      key={item.label}
                     />
                   ))}
                 </>
@@ -208,10 +191,28 @@ export function QuestionnaireForm() {
   );
 }
 
-const checkBoxData = [
-  { type: ProductUseCasesEnum.IN_APP, icon: RingingBell, label: 'In-app' },
-  { type: ProductUseCasesEnum.MULTI_CHANNEL, icon: MultiChannel, label: 'Multi-channel' },
-  { type: ProductUseCasesEnum.DIGEST, icon: Digest, label: 'Digest' },
-  { type: ProductUseCasesEnum.DELAY, icon: HalfClock, label: 'Delay' },
-  { type: ProductUseCasesEnum.TRANSLATION, icon: Translation, label: 'Translate' },
+const backendLanguages = [
+  { label: 'Node.js' },
+  { label: 'Python' },
+  { label: 'Go' },
+  { label: 'PHP' },
+  { label: 'Rust' },
+  { label: 'Java' },
+  { label: 'Other' },
 ];
+
+const frontendFrameworks = [
+  { label: 'React' },
+  { label: 'Vue' },
+  { label: 'Angular' },
+  { label: 'Flutter' },
+  { label: 'React Native' },
+  { label: 'Other' },
+];
+
+interface IOrganizationUpdateForm {
+  jobTitle: JobTitleEnum;
+  domain?: string;
+  language?: string[];
+  frontendStack?: string[];
+}
