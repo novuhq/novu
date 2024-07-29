@@ -1,8 +1,8 @@
 import { OrganizationSwitcher as ClerkOrganizationSwitcher } from '@clerk/clerk-react';
+import { ArrowDown } from '@novu/design-system';
 import { token } from '@novu/novui/tokens';
 import { ROUTES } from '../../../constants/routes';
 
-// TODO: this is tmp. styling
 const OrganizationSwitcherAppearance = {
   elements: {
     organizationSwitcherTrigger: {
@@ -10,9 +10,18 @@ const OrganizationSwitcherAppearance = {
       width: '240px',
       height: '52px',
       justifyContent: 'space-between',
+      color: 'var(--nv-colors-typography-text-secondary) !important',
+      '&:hover, &:focus, &:active': {
+        color: 'var(--nv-colors-typography-text-main) !important',
+      },
     },
     organizationSwitcherPopoverActionButton__manageOrganization: {
       display: 'none',
+    },
+    organizationPreviewMainIdentifier: {
+      fontFamily: 'var(--nv-fonts-system)',
+      fontWeight: 'var(--nv-font-weights-strong)',
+      fontSize: 'var(--nv-font-sizes-88)',
     },
   },
 };
