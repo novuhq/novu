@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Button, colors } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
-import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 
 export const StepText = styled.p`
   display: inline;

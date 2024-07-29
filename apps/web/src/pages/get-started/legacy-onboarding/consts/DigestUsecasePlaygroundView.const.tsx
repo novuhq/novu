@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { Flex } from '@mantine/core';
 import { Bolt, Button, colors, Text } from '@novu/design-system';
 import { useState } from 'react';
-import { TimerControl } from '../../../components/TimerControl';
+import { TimerControl } from '../../../../components/TimerControl';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { StepButton, StepDescription, StepText, StyledLink } from './shared';
 import { OnboardingUseCase } from './types';

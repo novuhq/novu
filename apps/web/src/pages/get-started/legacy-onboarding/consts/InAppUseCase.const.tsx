@@ -1,7 +1,7 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { ROUTES } from '../../../constants/routes';
+import { ROUTES } from '../../../../constants/routes';
 
-import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
+import { useGetIntegrationsByChannel } from '../../../integrations/useGetIntegrationsByChannel';
 import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingWorkflowRouteEnum, OnboardingUseCase } from './types';

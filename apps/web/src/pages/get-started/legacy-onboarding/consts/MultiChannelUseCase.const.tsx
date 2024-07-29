@@ -1,19 +1,21 @@
-import { ROUTES } from '../../../constants/routes';
+import { ROUTES } from '../../../../constants/routes';
 
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingWorkflowRouteEnum, OnboardingUseCase } from './types';
-import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
-import { StepTypeEnum } from '@novu/shared';
 
-const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-delay';
+const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-multi-channel';
 
-export const DelayUseCaseConst: OnboardingUseCase = {
-  useCaseLink: 'https://docs.novu.co/workflows/delay-action?utm_campaign=inapp-usecase-delay',
-  type: OnboardingUseCasesTabsEnum.DELAY,
-  title: 'Delay step execution',
-  description: 'Introduces a specified time delay between workflow steps, ensuring a well-paced progression of events.',
+export const MultiChannelUseCaseConst: OnboardingUseCase = {
+  title: 'Multi-channel notifications',
+  type: OnboardingUseCasesTabsEnum.MULTI_CHANNEL,
+  description:
+    'Notifies subscribers using a wide range of channels: In-App, Email, Chat, Push, and SMS.\n' +
+    '\n' +
+    'Configure as many providers as you like to Customize notification experience.',
+  useCaseLink: 'https://docs.novu.co/channels-and-providers/introduction?utm_campaign=inapp-usecase-multichannel',
   steps: [
     {
       title: 'Configure providers',
@@ -24,13 +26,13 @@ export const DelayUseCaseConst: OnboardingUseCase = {
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
             <GetStartedLink
-              children={' Integration store'}
               href={ROUTES.INTEGRATIONS_CREATE}
+              event="Integration store (multi-channel)"
               target="_blank"
               rel="noopener noreferrer"
-              event="Integration store"
-              channel={StepTypeEnum.DELAY}
-            />
+            >
+              {' Integration store'}
+            </GetStartedLink>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -41,26 +43,9 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built workflow with a delay node. </StepText>
+            <StepText>Novu has prepared workflow templates. </StepText>
             <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
-            <StepText> the workflow or create a new one on the Workflows page.</StepText>
-          </StepDescription>
-        );
-      },
-    },
-    {
-      title: 'Set-up delay preferences',
-      Description: function () {
-        return (
-          <StepDescription>
-            <StepText>Novu has predefined a time interval of 5 minutes. </StepText>
-            <OpenWorkflowButton
-              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
-              node={OnboardingWorkflowRouteEnum.DELAY}
-            >
-              Customize delay
-            </OpenWorkflowButton>
-            <StepText>.</StepText>
+            <StepText> a Multi-Channel template or start with a blank workflow.</StepText>
           </StepDescription>
         );
       },
@@ -94,8 +79,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
-              event='Discover "activity feed"'
-              channel={StepTypeEnum.DELAY}
+              event='Discover "activity feed" (multi-channel)'
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
@@ -105,5 +89,5 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.DELAY} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.MULTI_CHANNEL} />,
 };

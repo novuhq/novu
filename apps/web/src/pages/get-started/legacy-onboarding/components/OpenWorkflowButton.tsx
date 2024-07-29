@@ -1,11 +1,11 @@
 import { errorMessage } from '@novu/design-system';
 
-import { TemplateCreationSourceEnum } from '../../templates/shared';
-import { useSegment } from '../../../components/providers/SegmentProvider';
+import { TemplateCreationSourceEnum } from '../../../templates/shared/index';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { OnboardingWorkflowRouteEnum } from '../consts/types';
 import { LinkButton } from '../consts/shared';
-import { useCreateWorkflowFromBlueprint } from '../../../hooks';
-import { openInNewTab } from '../../../utils';
+import { useCreateWorkflowFromBlueprint } from '../../../../hooks/index';
+import { openInNewTab } from '../../../../utils/index';
 import { buildWorkflowEditorUrl } from '../utils/workflowEditorUrl';
 
 export function OpenWorkflowButton({
