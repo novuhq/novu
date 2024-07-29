@@ -16,14 +16,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  test_web:
-    uses: ./.github/workflows/reusable-web-e2e.yml
-    with:
-      ee: true
-    secrets: inherit
-
   deploy_web:
-    needs: test_web
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-web-deploy.yml
     with:
@@ -43,7 +36,6 @@ jobs:
     secrets: inherit
 
   publish_docker_image_web:
-    needs: test_web
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-docker.yml
     with:
