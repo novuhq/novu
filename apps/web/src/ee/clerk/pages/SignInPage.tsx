@@ -4,7 +4,7 @@ import { ROUTES } from '../../../constants/routes';
 
 export default function SignInPage() {
   return (
-    <AuthLayout title="Sign In" description="Welcome back!">
+    <AuthLayout>
       <SignIn path={ROUTES.AUTH_LOGIN} signUpUrl={ROUTES.AUTH_SIGNUP} />
     </AuthLayout>
   );

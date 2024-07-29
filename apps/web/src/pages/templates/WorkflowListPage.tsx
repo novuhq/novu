@@ -44,8 +44,6 @@ import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
 import { GetStartedPageV2 } from '../../studio/components/GetStartedPageV2/index';
-import { HStack } from '@novu/novui/jsx';
-import { Title } from '@novu/novui';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {

@@ -9,8 +9,18 @@ export function useMonitoring() {
   const ldClient = useLDClient();
   const segment = useSegment();
 
+  const isNovuUser = currentUser && currentUser._id && !currentUser._id.startsWith('user_');
+  const isNovuOrganization =
+    currentOrganization && currentOrganization._id && !currentOrganization._id.startsWith('org_');
+
+  /*
+   * if the identifier present isn't a novu identifier, we don't want to pollute our data with
+   * clerk identifiers, so we will skip monitoring.
+   */
+  const shouldMonitor = isNovuUser && isNovuOrganization;
+
   useEffect(() => {
-    if (currentUser && currentOrganization) {
+    if (currentUser && currentOrganization && shouldMonitor) {
       segment.identify(currentUser);
 
       sentrySetUser({
@@ -23,14 +33,14 @@ export function useMonitoring() {
     } else {
       sentryConfigureScope((scope) => scope.setUser(null));
     }
-  }, [currentUser, currentOrganization, segment]);
+  }, [currentUser, currentOrganization, segment, shouldMonitor]);
 
   useEffect(() => {
     if (!ldClient) {
       return;
     }
 
-    if (currentOrganization) {
+    if (currentOrganization && shouldMonitor) {
       ldClient.identify({
         kind: 'organization',
         key: currentOrganization._id,
@@ -43,5 +53,5 @@ export function useMonitoring() {
         anonymous: true,
       });
     }
-  }, [ldClient, currentOrganization]);
+  }, [ldClient, currentOrganization, shouldMonitor]);
 }

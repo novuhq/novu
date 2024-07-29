@@ -34,7 +34,7 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   function isOnboardingComplete() {
     if (IS_EE_AUTH_ENABLED) {
       // TODO: replace with actual check property (e.g. isOnboardingCompleted)
-      return currentOrganization?.productUseCases !== undefined;
+      return currentOrganization?.productUseCases !== undefined || currentOrganization?.language !== undefined;
     }
 
     return currentOrganization;

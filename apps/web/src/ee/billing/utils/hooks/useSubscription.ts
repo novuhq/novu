@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { useEnvironment } from '../../../../hooks/useEnvironment';
 
 export const useSubscription = () => {
   // TODO: Fix with a useMemo
