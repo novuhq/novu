@@ -126,7 +126,7 @@ export const useContainer = () => {
   useEffect(() => {
     let debounceTimeout;
 
-    if (BRIDGE_CODE !== code['workflow.ts']) {
+    if (BRIDGE_CODE !== code['workflow.ts'] || REACT_EMAIL_CODE !== code['react-email.tsx']) {
       debounceTimeout = setTimeout(() => {
         webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx']));
 

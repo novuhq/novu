@@ -4,9 +4,7 @@ import { serve } from '@novu/framework/express';
 import { renderEmail } from './react-email';
 import { z } from 'zod';
 
-const newWorkflow = workflow(
-  'hello-world',
-  async ({ step, payload }) => {
+const helloWorld = workflow('hello-world', async ({ step, payload }) => {
     // Add more steps below this line
 
     // Email Step
@@ -33,7 +31,7 @@ const newWorkflow = workflow(
 );
 const server = express();
 server.use(express.json());
-server.use(serve({ workflows: [newWorkflow] }));
+server.use(serve({ workflows: [helloWorld] }));
 server.listen(9999);
 `;
 
@@ -49,7 +47,8 @@ import {
   Section,
   Text,
   Tailwind,
-  render
+  render,
+  Img
 } from "@react-email/components";
 import * as React from "react";
 
@@ -64,6 +63,15 @@ export const ReactEmail = ({
       <Tailwind>
         <Body className="bg-white my-auto mx-auto font-sans px-2">
           <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
+            <Section className="mt-[32px]">
+              <Img
+                src={'/static/images/novu-gray.svg'}
+                width="40"
+                height="40"
+                alt="Novu"
+                className="my-0 mx-auto"
+              />
+            </Section>  
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
               {title}
             </Heading>
