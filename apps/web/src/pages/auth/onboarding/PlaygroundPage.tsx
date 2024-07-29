@@ -43,6 +43,15 @@ export function PlaygroundPage() {
 
   const joyrideSteps: Step[] = [
     {
+      target: '[data-test-id="playground-header-title"]',
+      title: 'Welcome to the Playground',
+      content:
+        // eslint-disable-next-line max-len
+        'This is an interactive playground, where you will learn about the main Novu concepts, and send your first test notification.',
+      placement: 'bottom',
+      disableBeacon: true,
+    },
+    {
       target: '.code-editor',
       styles: {
         options: {
@@ -121,7 +130,7 @@ export function PlaygroundPage() {
         </div>
       ),
       placement: 'right',
-      disableBeacon: false,
+      disableBeacon: true,
     },
     {
       title: 'Studio',
@@ -157,7 +166,7 @@ export function PlaygroundPage() {
 
     if (action === 'next' && data.step.target === '.workflow-flow' && steps?.length && lifecycle === 'complete') {
       setRunJoyride(false);
-      setJoyStepIndex(2);
+      setJoyStepIndex(3);
       setClickedStepId(steps[0].stepId);
 
       setTimeout(() => {
@@ -242,7 +251,7 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
         padding: '8px',
       })}
     >
-      <HStack justify={'start'} gap={0}>
+      <HStack justify={'start'} gap={0} data-test-id="playground-header-title">
         <img
           src={`/static/images/novu-gray.svg`}
           className={css({

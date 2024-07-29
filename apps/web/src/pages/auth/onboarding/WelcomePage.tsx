@@ -104,8 +104,8 @@ export const Welcome = () => {
                 })}
               >
                 Novu is a code-first notification platform, providing the flexibility of run time code, and the power of
-                a full-fledged notification platform. <br /> <br /> In the next screen, you can see our interactive
-                playground, where you can learn on the main building blocks of Novu.
+                a full-fledged notification platform. <br /> <br /> Next, visit our playground, where you can learn on
+                the main building blocks of Novu.
               </Text>
             </div>
           </motion.div>
