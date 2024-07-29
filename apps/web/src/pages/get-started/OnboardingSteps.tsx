@@ -63,6 +63,7 @@ function useStaggeredAnimation(dependencies: any[] = []) {
     }, 50);
 
     return () => clearTimeout(animationTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animate, ...dependencies]);
 
   return { scope, itemRefs };
