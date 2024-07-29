@@ -162,10 +162,6 @@ export function PlaygroundPage() {
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setRunJoyride(false);
     }
-
-    if (status === STATUS.FINISHED && lifecycle === 'complete') {
-      handleTestClick();
-    }
   };
 
   return (
@@ -188,7 +184,7 @@ export function PlaygroundPage() {
         spotlightClicks
         hideCloseButton
         locale={{
-          last: 'Trigger Workflow',
+          last: 'Finish Tour',
         }}
         styles={{
           tooltipContent: {
