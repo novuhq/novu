@@ -1,5 +1,6 @@
-import { Header, Tooltip } from '@mantine/core';
+import { Header } from '@mantine/core';
 import { IconButton } from '@novu/novui';
+import { Tooltip } from '@novu/design-system';
 import { css } from '@novu/novui/css';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
