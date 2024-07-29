@@ -14,11 +14,13 @@ import {
 import { UnreadCountProvider } from '../context/UnreadCountContext';
 import { Bell, Root, Settings } from './elements';
 import { Inbox } from './Inbox';
+import { NotificationList } from './Notification';
 
 export const novuComponents = {
   Inbox,
   Bell,
   Settings,
+  NotificationList,
 };
 
 export type NovuComponent = { name: NovuComponentName; props?: any };

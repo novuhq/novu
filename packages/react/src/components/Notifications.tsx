@@ -1,22 +1,23 @@
 import React from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
+import type { InboxNotification } from '@novu/js';
 
-type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
+type NotificationsRenderProps = (notification: InboxNotification) => React.ReactNode;
 
 type BellProps = {
-  children?: never | BellRenderProps;
+  children?: never | NotificationsRenderProps;
 };
 
-export const Bell = (props: BellProps) => {
+export const Notifications = (props: BellProps) => {
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback((element: HTMLElement) => {
     return novuUI.mountComponent({
-      name: 'Bell',
+      name: 'NotificationList',
       element,
       props: props.children
-        ? { mountBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
+        ? { mountNotification: (el, { notification }) => mountElement(el, props.children?.(notification)) }
         : undefined,
     });
   }, []);
