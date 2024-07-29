@@ -66,7 +66,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         });
 
         async function installDependencies() {
-          const installProcess = await webContainer.spawn('npm', ['install']);
+          const installProcess = await webContainer.spawn('pnpm', ['install']);
 
           installProcess.output.pipeTo(
             new WritableStream({
@@ -80,7 +80,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         }
 
         async function startDevServer() {
-          const startOutput = await webContainer.spawn('npm', ['run', 'start']);
+          const startOutput = await webContainer.spawn('pnpm', ['run', 'start']);
 
           startOutput.output.pipeTo(
             new WritableStream({
