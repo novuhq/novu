@@ -4,11 +4,11 @@ import { Grid } from '@mantine/core';
 import { ArrowLeft, Button, colors, Text } from '@novu/design-system';
 import { useMemo } from 'react';
 
-import Card from '../../../components/layout/components/Card';
+import Card from '../../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
 import { AdditionInformationLink } from '../components/AdditionInformationLink';
 import { IOnboardingUseCaseViewContext, OnboardingUseCase } from '../consts/types';
-import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 
 export interface IGetStartedTabProps extends OnboardingUseCase, IOnboardingUseCaseViewContext {}
 

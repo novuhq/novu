@@ -124,7 +124,7 @@ export const AppRoutes = () => {
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
         {isV2Enabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 location="get-started" />} />
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
         )}
