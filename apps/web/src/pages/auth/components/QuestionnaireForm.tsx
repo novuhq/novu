@@ -112,7 +112,7 @@ export function QuestionnaireForm() {
       const isTechnicalJobTitle = isJobTitleIsTech(data.jobTitle);
 
       if (isTechnicalJobTitle) {
-        navigate(ROUTES.DASHBOARD_WELCOME);
+        navigate(ROUTES.DASHBOARD_PLAYGROUND);
       } else {
         navigate(ROUTES.WORKFLOWS);
       }
