@@ -90,7 +90,6 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {AuthRoutes()}
-      <Route path={ROUTES.DASHBOARD_WELCOME} element={<WelcomePage />} />
       <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
       <Route path={ROUTES.DASHBOARD_PLAYGROUND} element={<PlaygroundPage />} />
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>

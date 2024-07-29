@@ -5,21 +5,20 @@ import styled from '@emotion/styled';
 import { useMantineTheme } from '@mantine/core';
 import { Editor, Monaco } from '@monaco-editor/react';
 import { editor as NEditor, Range } from 'monaco-editor';
+import { Tabs } from '@mantine/core';
 
-import { colors, Text } from '@novu/design-system';
+import { colors } from '@novu/design-system';
 
 import { TitleBarWrapper } from '../../../../../pages/auth/onboarding/TitleBarWrapper';
 
 export function CodeEditor({
-  height,
-  code,
-  setCode,
+  files,
+  setFiles,
   readonly,
   language = 'javascript',
 }: {
-  height?: string;
-  code: string;
-  setCode: (code: string) => void;
+  files: { [key: string]: string };
+  setFiles: (files: { [key: string]: string }) => void;
   readonly?: boolean;
   language?: string;
 }) {
@@ -28,108 +27,119 @@ export function CodeEditor({
   const monacoRef = useRef<Monaco | null>(null);
   const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
   const [errorLineNumbers, setErrorLineNumbers] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState(Object.keys(files)[0]);
 
   useEffect(() => {
     if (monacoRef.current === null) {
       return;
     }
-    monacoRef.current.editor.setTheme(colorScheme === 'dark' ? 'novu-dark' : 'novu');
+
+    monacoRef.current.editor.setTheme('novu-dark');
   }, [colorScheme]);
 
   return (
     <TitleBarWrapper title="Your IDE">
-      <Editor
-        defaultLanguage={language}
-        theme={isDark ? 'vs-dark' : 'vs'}
-        language={language}
-        defaultValue={code}
-        onValidate={(markers) => {
-          const decorators: NEditor.IModelDeltaDecoration[] = [];
-          const errorLines: number[] = [];
-          markers.forEach((marker) => {
-            const range = new Range(marker.startLineNumber, marker.startColumn, marker.endLineNumber, marker.endColumn);
-            errorLines.push(marker.startLineNumber, marker.endLineNumber);
-            decorators.push({
-              range,
-              options: {
-                className: cx(errorLineClass),
-              },
-            });
-          });
-
-          setErrorLineNumbers(Array.from(new Set(errorLines)));
-          decoratorsRef.current?.set(decorators);
-          if (markers.length === 0) {
-            /*
-             * setIsValidJsonFile(true);
-             * setKeys(Object.keys(JSON.parse(fileText ?? '{}')).length);
-             */
-          } else {
-            // setIsValidJsonFile(false);
-          }
-        }}
-        onChange={(value) => {
-          if (readonly) return;
-
-          setCode(value || '');
-        }}
-        onMount={(editor, monaco) => {
-          const themeName = colorScheme === 'dark' ? 'novu-dark' : 'novu';
-          monaco.editor.defineTheme('novu-dark', {
-            base: 'vs-dark',
-            inherit: true,
-            rules: [],
-            colors: {
-              'editor.background': colors.B20,
-              'editor.lineHighlightBackground': colors.B30,
-              'editorSuggestWidget.background': colors.B30,
-              'editorSuggestWidget.foreground': colors.B60,
-              'editorSuggestWidget.selectedBackground': colors.B60,
-              'editorSuggestWidget.highlightForeground': colors.B60,
+      <Tabs
+        value={activeTab}
+        onTabChange={(value) => setActiveTab(value as string)}
+        classNames={{
+          root: css({
+            height: '100% !important',
+          }),
+          panel: css({
+            height: '100% !important',
+          }),
+          tab: css({
+            height: '32px !important',
+            borderRadius: '0 !important',
+            borderTop: '2px solid transparent',
+            '&[data-active]': {
+              borderTop: '2px solid #3CB179',
             },
-          });
-
-          monaco.editor.defineTheme('novu', {
-            base: 'vs',
-            inherit: true,
-            rules: [],
-            colors: {
-              'editor.background': colors.BGLight,
-              'editor.lineHighlightBackground': colors.B98,
-              'editorSuggestWidget.background': colors.white,
-              'editorSuggestWidget.foreground': colors.B98,
-              'editorSuggestWidget.selectedBackground': colors.B98,
-              'editorSuggestWidget.highlightForeground': colors.B98,
-            },
-          });
-
-          monaco.editor.setTheme(themeName);
-          monacoRef.current = monaco;
-          const decorators = editor.createDecorationsCollection([]);
-
-          decoratorsRef.current = decorators;
-
-          /*
-           * setKeys(Object.keys(JSON.parse(code ?? '{}')).length);
-           * setFileText(code);
-           */
+          }),
         }}
-        options={{
-          minimap: {
-            enabled: false,
-          },
-          // workaround from: https://github.com/microsoft/monaco-editor/issues/2093
-          accessibilitySupport: 'off',
-          renderLineHighlight: 'all',
-          scrollBeyondLastLine: false,
-          fontSize: 14,
-          lineHeight: 20,
-          lineNumbers: (number) => {
-            return errorLineNumbers.includes(number) ? ERROR_ICON : `${number}`;
-          },
-          readOnly: readonly,
-        }}
-      />
+      >
+        <Tabs.List>
+          {Object.keys(files).map((fileName) => (
+            <Tabs.Tab key={fileName} value={fileName}>
+              {fileName}
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+
+        {Object.entries(files).map(([fileName, code]) => (
+          <Tabs.Panel key={fileName} value={fileName}>
+            <Editor
+              defaultLanguage={language}
+              theme={'vs-dark'}
+              language={language}
+              defaultValue={code}
+              onChange={(value) => {
+                if (readonly) return;
+
+                setFiles({ ...files, [fileName]: value || '' });
+              }}
+              onMount={(editor, monaco) => {
+                const themeName = colorScheme === 'dark' ? 'novu-dark' : 'novu';
+
+                monaco.editor.defineTheme('novu-dark', {
+                  base: 'vs-dark',
+                  inherit: true,
+                  rules: [],
+                  colors: {
+                    'editor.background': colors.B20,
+                    'editor.lineHighlightBackground': colors.B30,
+                    'editorSuggestWidget.background': colors.B30,
+                    'editorSuggestWidget.foreground': colors.B60,
+                    'editorSuggestWidget.selectedBackground': colors.B60,
+                    'editorSuggestWidget.highlightForeground': colors.B60,
+                  },
+                });
+
+                monaco.editor.defineTheme('novu', {
+                  base: 'vs',
+                  inherit: true,
+                  rules: [],
+                  colors: {
+                    'editor.background': colors.BGLight,
+                    'editor.lineHighlightBackground': colors.B98,
+                    'editorSuggestWidget.background': colors.white,
+                    'editorSuggestWidget.foreground': colors.B98,
+                    'editorSuggestWidget.selectedBackground': colors.B98,
+                    'editorSuggestWidget.highlightForeground': colors.B98,
+                  },
+                });
+
+                monaco.editor.setTheme(themeName);
+                monacoRef.current = monaco;
+                const decorators = editor.createDecorationsCollection([]);
+
+                decoratorsRef.current = decorators;
+
+                /*
+                 * setKeys(Object.keys(JSON.parse(code ?? '{}')).length);
+                 * setFileText(code);
+                 */
+              }}
+              options={{
+                minimap: {
+                  enabled: false,
+                },
+                // workaround from: https://github.com/microsoft/monaco-editor/issues/2093
+                accessibilitySupport: 'off',
+                renderLineHighlight: 'all',
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                lineHeight: 20,
+                lineNumbers: (number) => {
+                  return errorLineNumbers.includes(number) ? ERROR_ICON : `${number}`;
+                },
+                readOnly: readonly,
+              }}
+            />
+          </Tabs.Panel>
+        ))}
+      </Tabs>
     </TitleBarWrapper>
   );
 }

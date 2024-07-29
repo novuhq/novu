@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDisclosure } from '@mantine/hooks';
 import { Allotment } from 'allotment';
@@ -6,7 +6,7 @@ import 'allotment/dist/style.css';
 const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
-import { Tooltip } from '@novu/design-system';
+import { Tooltip, useColorScheme } from '@novu/design-system';
 
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
@@ -25,8 +25,9 @@ import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
-import { Accordion, List } from '@mantine/core';
+import { Accordion, Code, List } from '@mantine/core';
 import { Tabs } from '@mantine/core';
+import useThemeChange from '../../../hooks/useThemeChange';
 
 export function PlaygroundPage() {
   const [clickedStepId, setClickedStepId] = useState<string>('');
@@ -34,18 +35,37 @@ export function PlaygroundPage() {
   const [runJoyride, setRunJoyride] = useState(true);
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
+  const { setColorScheme } = useColorScheme();
+
+  useEffect(() => {
+    setColorScheme('dark');
+  }, []);
 
   const joyrideSteps: Step[] = [
     {
+      target: '[data-test-id="playground-header-title"]',
+      title: 'Welcome to the Playground',
+      content:
+        // eslint-disable-next-line max-len
+        'This is an interactive playground, where you will learn about the main Novu concepts, and send your first test notification.',
+      placement: 'bottom',
+      disableBeacon: true,
+    },
+    {
       target: '.code-editor',
+      styles: {
+        options: {
+          width: '550px',
+        },
+      },
+      title: 'Workflow Definition',
       content: (
         <div>
-          <p>
+          <p className={css({ marginBottom: '15px !important' })}>
             This is your IDE where you can define your notification workflows. You can write various types, here are
             some common step types:
           </p>
           <Accordion
-            defaultValue="email"
             classNames={{
               item: css({
                 marginBottom: '0 !important',
@@ -53,24 +73,58 @@ export function PlaygroundPage() {
             }}
           >
             <Accordion.Item value="email">
-              <Accordion.Control>Email</Accordion.Control>
-              <Accordion.Panel>Email tab content</Accordion.Panel>
+              <Accordion.Control>SMS</Accordion.Control>
+              <Accordion.Panel>
+                An SMS Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`await step.sms('sms-step', () => {
+  return {
+    body: 'Hello, world!',
+  }
+})`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
             <Accordion.Item value="inbox">
               <Accordion.Control>Inbox</Accordion.Control>
-              <Accordion.Panel>Inbox tab content</Accordion.Panel>
+              <Accordion.Panel>
+                An Inbox Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`await step.inApp('inApp-step', () => {
+  return {
+    body: 'Hello, world!',
+  }
+})`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
             <Accordion.Item value="digest">
               <Accordion.Control>Digest</Accordion.Control>
-              <Accordion.Panel>Digest tab content</Accordion.Panel>
+              <Accordion.Panel>
+                A Digest Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`const { events } = await step.digest('digest-step', async () => {
+    return {
+        amount: 1,
+        unit: 'hours'
+    }
+});`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
             <Accordion.Item value="delay">
               <Accordion.Control>Delay</Accordion.Control>
-              <Accordion.Panel>Delay tab content</Accordion.Panel>
-            </Accordion.Item>
-            <Accordion.Item value="custom">
-              <Accordion.Control>Custom</Accordion.Control>
-              <Accordion.Panel>Custom tab content</Accordion.Panel>
+              <Accordion.Panel>
+                A Delay Step can be added to your workflow by using the following snippet:
+                <Code block style={{ marginTop: '10px' }}>
+                  {`await step.delay('delay-step', () => {
+  return {
+    amount: 1,
+    unit: 'hours'
+  }
+})`}
+                </Code>
+              </Accordion.Panel>
             </Accordion.Item>
           </Accordion>
         </div>
@@ -112,16 +166,12 @@ export function PlaygroundPage() {
 
     if (action === 'next' && data.step.target === '.workflow-flow' && steps?.length && lifecycle === 'complete') {
       setRunJoyride(false);
-      setJoyStepIndex(2);
+      setJoyStepIndex(3);
       setClickedStepId(steps[0].stepId);
 
       setTimeout(() => {
         setRunJoyride(true);
       }, 300);
-    }
-
-    if (action === 'next' && data.step.target === '[data-test-id="trigger-test-button"]' && lifecycle === 'complete') {
-      handleTestClick();
     }
 
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
@@ -144,6 +194,13 @@ export function PlaygroundPage() {
         showSkipButton
         showProgress={false}
         callback={handleJoyrideCallback}
+        disableOverlayClose
+        disableCloseOnEsc
+        spotlightClicks
+        hideCloseButton
+        locale={{
+          last: 'Finish Tour',
+        }}
         styles={{
           tooltipContent: {
             textAlign: 'left',
@@ -151,9 +208,12 @@ export function PlaygroundPage() {
           options: {
             arrowColor: '#23232b',
             backgroundColor: '#23232b',
-            primaryColor: '#23232b',
+            primaryColor: '#dd2476',
             textColor: '#ffffff',
             zIndex: 1000,
+          },
+          buttonBack: {
+            color: '#ffffff',
           },
         }}
       />
@@ -167,13 +227,19 @@ export function PlaygroundPage() {
 function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
   const navigate = useNavigate();
   const segment = useSegment();
-
+  const [isTestRan, setTestTestRan] = useState(false);
   const handleContinue = () => {
     navigate(ROUTES.WORKFLOWS);
-    segment.track(OnBoardingAnalyticsEnum.BRIDGE_PLAYGROUND_CONTINUE_CLICK, {
-      // todo implement type [skip | get started]
-      type: 'skip',
-    });
+
+    if (isTestRan) {
+      segment.track('Playground Continue Clicked', {
+        type: 'continue',
+      });
+    } else {
+      segment.track('Playground Skip Clicked', {
+        type: 'skip',
+      });
+    }
   };
 
   return (
@@ -185,7 +251,7 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
         padding: '8px',
       })}
     >
-      <HStack justify={'start'} gap={0}>
+      <HStack justify={'start'} gap={0} data-test-id="playground-header-title">
         <img
           src={`/static/images/novu-gray.svg`}
           className={css({
@@ -209,14 +275,25 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
         </span>
       </HStack>
       <div>
-        <Button
-          size="sm"
-          onClick={handleContinue}
-          className={css({ color: '#828299 !important', '& span': { color: '#828299 !important' } })}
-        >
-          Skip Playground
-        </Button>
-        <TriggerActionModal handleTestClick={handleTestClick} />
+        {isTestRan ? (
+          <Button
+            size="sm"
+            onClick={handleContinue}
+            className={css({ background: '#3CB179 !important', marginRight: '10px' })}
+          >
+            Continue
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={handleContinue}
+            className={css({ color: '#828299 !important', '& span': { color: '#828299 !important' } })}
+          >
+            Skip Playground
+          </Button>
+        )}
+
+        <TriggerActionModal handleTestClick={handleTestClick} onTestRun={() => setTestTestRan(true)} />
       </div>
     </HStack>
   );
@@ -248,10 +325,6 @@ function Playground({
     >
       <EditorView
         vertical
-        onVisibleChange={
-          // eslint-disable-next-line no-console
-          (visible) => console.log('visible ', visible)
-        }
         onChange={(value) => {
           setEditorSizes(value);
           handleEditorSizeChange();
@@ -263,7 +336,7 @@ function Playground({
       >
         <Pane preferredSize={'70%'}>
           <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
-            <CodeEditor code={code} setCode={setCode} />
+            <CodeEditor files={code} setFiles={setCode} />
           </div>
         </Pane>
         <Pane preferredSize={'30%'}>
@@ -272,7 +345,7 @@ function Playground({
           </div>
         </Pane>
       </EditorView>
-      <Pane>
+      <Pane preferredSize={'60%'}>
         <div
           style={{
             height: '100%',
@@ -292,7 +365,13 @@ function Playground({
   );
 }
 
-const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promise<any> }) => {
+const TriggerActionModal = ({
+  handleTestClick,
+  onTestRun,
+}: {
+  handleTestClick: () => Promise<any>;
+  onTestRun: () => void;
+}) => {
   const studioState = useStudioState() || {};
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
@@ -305,6 +384,7 @@ const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promis
       successMessage('Workflow triggered successfully');
       setTransactionId(res.data.transactionId);
       openExecutionModal();
+      onTestRun();
     } finally {
       setIsLoading(false);
     }
