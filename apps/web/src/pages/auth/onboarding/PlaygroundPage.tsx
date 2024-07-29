@@ -28,10 +28,6 @@ import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 
 export function PlaygroundPage() {
-  return <PlaygroundPage2></PlaygroundPage2>;
-}
-
-export function PlaygroundPage2() {
   const [clickedStepId, setClickedStepId] = useState<string>('');
   const { handleTestClick } = useWorkflowStepEditor(clickedStepId);
   const [runJoyride, setRunJoyride] = useState(true);

@@ -4,7 +4,7 @@ import { ITerminalDimensions } from 'xterm-addon-fit';
 import { dynamicFiles } from './files';
 import { useEffectOnce } from '../../../../../hooks';
 import { useDiscover, useStudioState } from '../../../../hooks';
-import { BRIDGE_CODE, REACT_EMAIL_CODE } from './bridge-code.const';
+import { BRIDGE_CODE, REACT_EMAIL_CODE } from './sandbox-code-snippets';
 import { FCWithChildren } from '../../../../../types';
 
 const { WebContainer } = require('@webcontainer/api');
