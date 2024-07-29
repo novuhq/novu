@@ -66,9 +66,6 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         });
 
         async function installDependencies() {
-          // eslint-disable-next-line no-console
-          console.log('start installDependencies');
-
           const installProcess = await webContainer.spawn('npm', ['install']);
 
           installProcess.output.pipeTo(

@@ -36,6 +36,7 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
       const terminal = new Terminal();
       terminal.loadAddon(fitAddon.current);
       terminal.open(terminalRef.current);
+
       fitAddon.current.fit();
       terminalInstance.current = terminal;
 
