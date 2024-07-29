@@ -218,13 +218,19 @@ export function PlaygroundPage() {
 function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
   const navigate = useNavigate();
   const segment = useSegment();
-
+  const [isTestRan, setTestTestRan] = useState(false);
   const handleContinue = () => {
     navigate(ROUTES.WORKFLOWS);
 
-    segment.track('Playground Skip Clicked', {
-      type: 'skip',
-    });
+    if (isTestRan) {
+      segment.track('Playground Continue Clicked', {
+        type: 'continue',
+      });
+    } else {
+      segment.track('Playground Skip Clicked', {
+        type: 'skip',
+      });
+    }
   };
 
   return (
@@ -260,14 +266,25 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
         </span>
       </HStack>
       <div>
-        <Button
-          size="sm"
-          onClick={handleContinue}
-          className={css({ color: '#828299 !important', '& span': { color: '#828299 !important' } })}
-        >
-          Skip Playground
-        </Button>
-        <TriggerActionModal handleTestClick={handleTestClick} />
+        {isTestRan ? (
+          <Button
+            size="sm"
+            onClick={handleContinue}
+            className={css({ background: '#3CB179 !important', marginRight: '10px' })}
+          >
+            Continue
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={handleContinue}
+            className={css({ color: '#828299 !important', '& span': { color: '#828299 !important' } })}
+          >
+            Skip Playground
+          </Button>
+        )}
+
+        <TriggerActionModal handleTestClick={handleTestClick} onTestRun={() => setTestTestRan(true)} />
       </div>
     </HStack>
   );
@@ -339,7 +356,13 @@ function Playground({
   );
 }
 
-const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promise<any> }) => {
+const TriggerActionModal = ({
+  handleTestClick,
+  onTestRun,
+}: {
+  handleTestClick: () => Promise<any>;
+  onTestRun: () => void;
+}) => {
   const studioState = useStudioState() || {};
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
@@ -352,6 +375,7 @@ const TriggerActionModal = ({ handleTestClick }: { handleTestClick: () => Promis
       successMessage('Workflow triggered successfully');
       setTransactionId(res.data.transactionId);
       openExecutionModal();
+      onTestRun();
     } finally {
       setIsLoading(false);
     }
