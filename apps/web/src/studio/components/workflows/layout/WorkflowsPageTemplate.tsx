@@ -16,7 +16,13 @@ export const WorkflowsPageTemplate: FC<PropsWithChildren<IWorkflowsPageTemplateP
   return (
     <PageContainer className={className}>
       <PageMeta title={title} />
-      <WorkflowsPageHeader title={title} icon={icon} actions={actions} description={description} />
+      <WorkflowsPageHeader
+        className={className}
+        title={title}
+        icon={icon}
+        actions={actions}
+        description={description}
+      />
       {children}
     </PageContainer>
   );

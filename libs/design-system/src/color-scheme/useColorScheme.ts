@@ -50,5 +50,6 @@ export const useColorScheme = () => {
   return {
     colorScheme,
     toggleColorScheme,
+    setColorScheme,
   };
 };

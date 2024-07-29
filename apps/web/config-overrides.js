@@ -1,4 +1,4 @@
-const { useBabelRc, override } = require('customize-cra');
+const { useBabelRc, override, overrideDevServer } = require('customize-cra');
 const { DefinePlugin } = require('webpack');
 const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
@@ -23,5 +23,17 @@ function overrideConfig(config, env) {
   };
 }
 
-// eslint-disable-next-line react-hooks/rules-of-hooks
-module.exports = override(useBabelRc(), overrideConfig);
+const devServerConfig = () => (config) => {
+  return {
+    ...config,
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
+  };
+};
+module.exports = {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  webpack: override(useBabelRc(), overrideConfig),
+  devServer: overrideDevServer(devServerConfig()),
+};

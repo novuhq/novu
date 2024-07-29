@@ -14,7 +14,8 @@ export class PreviewStep {
 
   async execute(command: PreviewStepCommand) {
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
-    if (!environment?.echo.url) {
+    const bridgeUrl = command.bridgeUrl || environment?.echo.url;
+    if (!bridgeUrl) {
       throw new BadRequestException('Bridge URL not found');
     }
 
@@ -22,7 +23,7 @@ export class PreviewStep {
     try {
       const payload = this.mapPayload(command);
       const novuSignatureHeader = this.buildNovuSignature(environment, payload);
-      const url = `${environment.echo.url}?action=preview&workflowId=${command.workflowId}&stepId=${command.stepId}`;
+      const url = `${bridgeUrl}?action=preview&workflowId=${command.workflowId}&stepId=${command.stepId}`;
 
       const response = await axiosInstance.post(url, payload, {
         headers: {
@@ -44,14 +45,14 @@ export class PreviewStep {
       if (e?.response?.status === 404) {
         throw new BadRequestException({
           code: BridgeErrorCodeEnum.BRIDGE_ENDPOINT_NOT_FOUND,
-          message: 'Bridge Endpoint Was not found or not accessible. Endpoint: ' + environment.echo.url,
+          message: 'Bridge Endpoint Was not found or not accessible. Endpoint: ' + bridgeUrl,
         });
       }
 
       if (e?.response?.status === 405) {
         throw new BadRequestException({
           code: BridgeErrorCodeEnum.BRIDGE_ENDPOINT_NOT_FOUND,
-          message: 'Bridge Endpoint is not properly configured. : ' + environment.echo.url,
+          message: 'Bridge Endpoint is not properly configured. : ' + bridgeUrl,
         });
       }
 

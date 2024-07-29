@@ -18,7 +18,7 @@ export class GetBridgeStatus {
 
       return response.data;
     } catch (err: any) {
-      throw new BadRequestException('Bridge URL is not accessible. ' + err.message);
+      throw new BadRequestException('Bridge is not accessible. ' + err.message);
     }
   }
 }
