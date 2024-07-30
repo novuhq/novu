@@ -93,8 +93,6 @@ export const useWorkflowPreview = (
 ) => {
   const api = useBridgeAPI();
 
-  console.log(['workflow-preview', workflowId, stepId, controls, payload]);
-
   return useQuery(
     ['workflow-preview', workflowId, stepId, controls, payload],
     async () => {
