@@ -1,25 +1,35 @@
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React from 'react';
+
+const LINKS = [
+  { href: '/', label: 'Default Inbox' },
+  { href: '/render-bell', label: 'Render Bell' },
+  { href: '/render-notification', label: 'Render Notification' },
+  { href: '/preferences', label: 'Preferences' },
+  { href: '/notifications', label: 'Notifications' },
+];
+
+const NavLink = ({ href, label }: { href: string; label: string }) => {
+  const router = useRouter();
+
+  const pathname = router.pathname;
+
+  const isActive = pathname === href;
+  return (
+    <li className={`p-2 rounded hover:bg-slate-200 ${isActive ? 'underline text-cyan-800' : ''}`}>
+      <Link href={href}>{label}</Link>
+    </li>
+  );
+};
 
 export default function Header() {
   return (
     <div className="flex items-center justify-center p-6">
       <ul className="flex space-x-5 list-none">
-        <li className="p-2 rounded hover:bg-slate-200">
-          <Link href="/">Default Inbox</Link>
-        </li>
-        <li className="p-2 rounded hover:bg-slate-200">
-          <Link href="/render-bell">Render Bell</Link>
-        </li>
-        <li className="p-2 rounded hover:bg-slate-200">
-          <Link href="/render-notification">Render Notifcation</Link>
-        </li>
-        <li className="p-2 rounded hover:bg-slate-200">
-          <Link href="/preferences">Preferences</Link>
-        </li>
-        <li className="p-2 rounded hover:bg-slate-200">
-          <Link href="/notifications">Notifications</Link>
-        </li>
+        {LINKS.map((link) => (
+          <NavLink key={link.href} {...link} />
+        ))}
       </ul>
     </div>
   );
