@@ -12,5 +12,8 @@ export class UpdateExternalOrganizationDto {
   domain?: string;
 
   @IsOptional()
-  productUseCases?: ProductUseCases;
+  language?: string[];
+
+  @IsOptional()
+  frontendStack?: string[];
 }

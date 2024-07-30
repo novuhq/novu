@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
+import { getOrganization } from '../../../api/organization';
 
 const asyncNoop = async () => {};
 
@@ -17,6 +18,7 @@ export const EnterpriseAuthContext = createContext<AuthContextValue>(DEFAULT_AUT
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [internalOrganizationData, setInternalOrganizationData] = useState<IOrganizationEntity | undefined>(undefined);
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
@@ -110,15 +112,28 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 
   const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
   const currentOrganization = useMemo(
-    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization) : undefined),
-    [clerkOrganization]
+    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization, internalOrganizationData) : undefined),
+    [clerkOrganization, internalOrganizationData]
   );
+
+  useEffect(() => {
+    async function getInternalOrgData() {
+      const result = await getOrganization();
+
+      setInternalOrganizationData(result);
+    }
+
+    if (clerkOrganization) {
+      getInternalOrgData();
+    }
+  }, [clerkOrganization]);
 
   // refetch queries on organization switch
   useEffect(() => {
     // if linked, externalOrgId = internal org ObjectID, which is required on backend
     const isInternalOrgLinked = !!clerkOrganization?.publicMetadata.externalOrgId;
-    const isOrgChanged = currentOrganization && currentOrganization._id !== clerkOrganization?.id;
+    const isOrgChanged =
+      currentOrganization && currentOrganization._id !== clerkOrganization?.publicMetadata.externalOrgId;
 
     if (isInternalOrgLinked && isOrgChanged) {
       switchOrgCallback();
@@ -176,7 +191,10 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
   };
 };
 
-const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
+const toOrganizationEntity = (
+  clerkOrganization: OrganizationResource,
+  internalOrganizationData: IOrganizationEntity | undefined
+): IOrganizationEntity => {
   /*
    * When mapping to IOrganizationEntity, we have 2 cases:
    *  - user exists and has signed in
@@ -192,13 +210,16 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
    */
 
   return {
-    _id: clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id,
+    _id: internalOrganizationData
+      ? clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id
+      : clerkOrganization.id,
     name: clerkOrganization.name,
-    createdAt: clerkOrganization.createdAt.toString(),
+    createdAt: internalOrganizationData ? internalOrganizationData.createdAt : clerkOrganization.createdAt.toString(),
     updatedAt: clerkOrganization.updatedAt.toString(),
     apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
     defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,
+    language: clerkOrganization.publicMetadata.language,
   };
 };
