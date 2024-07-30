@@ -26,18 +26,29 @@ function overrideConfig(config, env) {
 const devServerConfig = () => (config) => {
   return {
     ...config,
-    headers: {
-      'X-XSS-Protection': '1; mode=block',
-      'X-Content-Type-Options': 'nosniff',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
-      'Cross-Origin-Resource-Policy': 'cross-origin',
-      'Permissions-Policy':
-        'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
-      'Referrer-Policy': 'no-referrer-when-downgrade',
+    headers: (req, res, context) => {
+      const secureHeaders = {
+        'X-XSS-Protection': '1; mode=block',
+        'X-Content-Type-Options': 'nosniff',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
+        'Permissions-Policy':
+          'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
+        'Referrer-Policy': 'no-referrer-when-downgrade',
+      };
+
+      if (req.url === '/auth/application' || req.url === '/playground') {
+        Object.entries(secureHeaders).forEach(([key, value]) => {
+          res.setHeader(key, value);
+        });
+      }
+
+      return res;
     },
   };
 };
+
 module.exports = {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   webpack: override(useBabelRc(), overrideConfig),
