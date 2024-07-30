@@ -66,22 +66,16 @@ const AvatarContainer = ({
   opened,
   setOpened,
   readonly,
-  defaultValue,
 }: {
   opened: boolean;
   setOpened: Dispatch<SetStateAction<boolean>>;
   readonly: boolean;
-  defaultValue?: string;
 }) => {
   const path = useStepFormPath();
   const {
     field: { value, onChange },
   } = useController({
     name: `${path}.template.actor` as any,
-    rules: {
-      required: false,
-    },
-    defaultValue,
   });
 
   const [tooltipOpened, setTooltipOpened] = useState(() => {
@@ -203,7 +197,7 @@ const AvatarContainer = ({
   );
 };
 
-export function RenderAvatar({ actor }: { actor: IActor }) {
+function RenderAvatar({ actor }: { actor: IActor }) {
   if (!actor.type || actor.type === ActorTypeEnum.NONE) {
     return <Camera />;
   }
