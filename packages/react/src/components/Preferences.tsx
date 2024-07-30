@@ -2,7 +2,7 @@ import React from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
 
-const SettingsDefault = () => {
+const PreferencesDefault = () => {
   const { novuUI } = useRenderer();
 
   const mount = React.useCallback((element: HTMLElement) => {
@@ -15,6 +15,6 @@ const SettingsDefault = () => {
   return <Mounter mount={mount} />;
 };
 
-export const Settings = () => {
-  return <SettingsDefault />;
+export const Preferences = () => {
+  return <PreferencesDefault />;
 };

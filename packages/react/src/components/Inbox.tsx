@@ -21,12 +21,12 @@ const InboxDefault = (props: InboxDefaultProps) => {
         name: 'Inbox',
         props: {
           ...rest,
-          mountNotification: renderNotification
+          renderNotification: renderNotification
             ? (el, { notification }) => {
                 return mountElement(el, renderNotification(notification));
               }
             : undefined,
-          mountBell: renderBell
+          renderBell: renderBell
             ? (el, { unreadCount }) => {
                 return mountElement(el, renderBell({ unreadCount }));
               }
@@ -56,11 +56,11 @@ export const Inbox = (props: InboxProps) => {
     return <Renderer options={props}>{props.children}</Renderer>;
   }
 
-  const { renderNotification, ...options } = props as BaseNovuUIOptions & InboxDefaultProps;
+  const { renderNotification, renderBell, ...options } = props as BaseNovuUIOptions & InboxDefaultProps;
 
   return (
     <Renderer options={options}>
-      <InboxDefault renderNotification={renderNotification} renderBell={options.renderBell} />
+      <InboxDefault renderNotification={renderNotification} renderBell={renderBell} />
     </Renderer>
   );
 };

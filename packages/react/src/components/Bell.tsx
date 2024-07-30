@@ -16,7 +16,7 @@ export const Bell = (props: BellProps) => {
       name: 'Bell',
       element,
       props: props.children
-        ? { mountBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
+        ? { renderBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
         : undefined,
     });
   }, []);

@@ -12,7 +12,8 @@ export type BaseNovuProviderProps = {
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {
-  mountNotification?: NotificationMounter;
+  renderNotification?: NotificationMounter;
+  renderBell?: BellMounter;
 };
 
 export enum NotificationStatus {
