@@ -12,18 +12,33 @@ export type FetchFeedArgs = {
 
 export type FetchFeedResponse = { data: Notification[]; hasMore: boolean; filter: NotificationFilter };
 
-export type FetchCountArgs = {
+export type FetchFilterCountArgs = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
 };
 
-export type FetchCountResponse = {
+export type FetchFiltersCountArgs = {
+  filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }>;
+};
+
+export type FetchCountArgs = undefined | FetchFilterCountArgs | FetchFiltersCountArgs;
+
+export type FetchFilterCountResponse = {
   data: {
     count: number;
+    filter: NotificationFilter;
   };
-  filter: NotificationFilter;
 };
+
+export type FetchFiltersCountResponse = {
+  data: Array<{
+    count: number;
+    filter: NotificationFilter;
+  }>;
+};
+
+export type FetchCountResponse = FetchFilterCountResponse | FetchFiltersCountResponse;
 
 export type BaseArgs = {
   notificationId: string;

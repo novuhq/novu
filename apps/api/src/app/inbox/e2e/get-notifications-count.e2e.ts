@@ -51,28 +51,9 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
     });
   });
 
-  const getNotificationsCount = async ({
-    tags,
-    read,
-    archived,
-  }: {
-    tags?: string[];
-    read?: boolean;
-    archived?: boolean;
-  } = {}) => {
-    let query = '';
-    if (tags) {
-      query += tags.map((tag, index) => `${index > 0 ? '&' : ''}tags[]=${tag}`).join('');
-    }
-    if (typeof read !== 'undefined') {
-      query += `${query.length ? '&' : ''}read=${read}`;
-    }
-    if (typeof archived !== 'undefined') {
-      query += `${query.length ? '&' : ''}archived=${archived}`;
-    }
-
+  const getNotificationsCount = async (filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }>) => {
     return await session.testAgent
-      .get(`/v1/inbox/notifications/count?${query}`)
+      .get(`/v1/inbox/notifications/count?filters=${JSON.stringify(filters)}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`);
   };
 
@@ -89,7 +70,7 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
   it('should throw exception when filtering for unread and archived notifications', async function () {
     await triggerEvent(template);
 
-    const { body, status } = await getNotificationsCount({ read: false, archived: true });
+    const { body, status } = await getNotificationsCount([{ read: false, archived: true }]);
 
     expect(status).to.equal(400);
     expect(body.message).to.equal('Filtering for unread and archived notifications is not supported.');
@@ -98,12 +79,13 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
   it('should return all notifications count', async function () {
     const count = 4;
     await triggerEvent(template, count);
-    const { body, status } = await getNotificationsCount();
+    const { body, status } = await getNotificationsCount([{}]);
 
     expect(status).to.equal(200);
     expect(body.data).to.be.ok;
-    expect(body.data.count).to.eq(count);
-    expect(body.filter).to.deep.equal({});
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({});
   });
 
   it('should return notifications count for specified tags', async function () {
@@ -126,12 +108,13 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
     await triggerEvent(template, 2);
     await triggerEvent(templateWithTags, count);
 
-    const { body, status } = await getNotificationsCount({ tags });
+    const { body, status } = await getNotificationsCount([{ tags }]);
 
     expect(status).to.equal(200);
     expect(body.data).to.be.ok;
-    expect(body.data.count).to.eq(count);
-    expect(body.filter).to.deep.equal({
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
       tags,
     });
   });
@@ -148,12 +131,13 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
       { $set: { read: true } }
     );
 
-    const { body, status } = await getNotificationsCount({ read: true });
+    const { body, status } = await getNotificationsCount([{ read: true }]);
 
     expect(status).to.equal(200);
     expect(body.data).to.be.ok;
-    expect(body.data.count).to.eq(count);
-    expect(body.filter).to.deep.equal({
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
       read: true,
     });
   });
@@ -170,12 +154,13 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
       { $set: { archived: true } }
     );
 
-    const { body, status } = await getNotificationsCount({ archived: true });
+    const { body, status } = await getNotificationsCount([{ archived: true }]);
 
     expect(status).to.equal(200);
     expect(body.data).to.be.ok;
-    expect(body.data.count).to.eq(count);
-    expect(body.filter).to.deep.equal({
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
       archived: true,
     });
   });
@@ -192,12 +177,13 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
       { $set: { read: true, archived: true } }
     );
 
-    const { body, status } = await getNotificationsCount({ read: true, archived: true });
+    const { body, status } = await getNotificationsCount([{ read: true, archived: true }]);
 
     expect(status).to.equal(200);
     expect(body.data).to.be.ok;
-    expect(body.data.count).to.eq(count);
-    expect(body.filter).to.deep.equal({
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
       read: true,
       archived: true,
     });
@@ -233,14 +219,48 @@ describe('Get Notifications Count - /inbox/notifications/count (GET)', async () 
       { $set: { read: true } }
     );
 
-    const { body, status } = await getNotificationsCount({ tags, read: true });
+    const { body, status } = await getNotificationsCount([{ tags, read: true }]);
 
     expect(status).to.equal(200);
     expect(body.data).to.be.ok;
-    expect(body.data.count).to.eq(count);
-    expect(body.filter).to.deep.equal({
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
       tags,
       read: true,
     });
+  });
+
+  it('should return notification counts for multiple filters', async function () {
+    const count = 4;
+    const tags = ['hello'];
+    const templateWithTags = await session.createTemplate({
+      noFeedId: true,
+      tags,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test content for newsletter',
+          actor: {
+            type: ActorTypeEnum.SYSTEM_ICON,
+            data: SystemAvatarIconEnum.WARNING,
+          },
+        },
+      ],
+    });
+    await triggerEvent(template, 2);
+    await triggerEvent(templateWithTags, count);
+
+    const { body, status } = await getNotificationsCount([{ tags }, { read: false }]);
+
+    expect(status).to.equal(200);
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.eq(2);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
+      tags,
+    });
+    expect(body.data[1].count).to.eq(6);
+    expect(body.data[1].filter).to.deep.equal({ read: false });
   });
 });

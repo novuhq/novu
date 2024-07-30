@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react';
+import { FC, useEffect, useMemo } from 'react';
 
 import { Button, JsonSchemaForm, Tabs, Title } from '@novu/novui';
 import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/novui/icons';
@@ -21,6 +21,7 @@ interface IWorkflowStepEditorControlsPanelProps {
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
   className?: string;
+  source?: 'studio' | 'playground' | 'dashboard';
 }
 
 const TYPING_DEBOUNCE_TIME_MS = 500;
@@ -32,7 +33,6 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   onSave,
   defaultControls,
   isLoadingSave,
-  className,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
@@ -59,7 +59,6 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     <>
       <Tabs
         defaultValue="step-controls"
-        className={cx(className)}
         tabConfigs={[
           {
             icon: <IconOutlineEditNote />,

@@ -5,9 +5,9 @@ import { useNovu } from '../../context';
 export const usePreferences = (options?: FetchPreferencesArgs) => {
   const novu = useNovu();
 
-  const [preferences, { mutate, refetch }] = createResource(options || {}, async (payload?: FetchPreferencesArgs) => {
+  const [preferences, { mutate, refetch }] = createResource(options || {}, async () => {
     try {
-      const response = await novu.preferences.fetch(payload);
+      const response = await novu.preferences.fetch();
 
       return response;
     } catch (error) {

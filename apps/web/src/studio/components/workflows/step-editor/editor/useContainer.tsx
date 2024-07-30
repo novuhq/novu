@@ -7,6 +7,8 @@ import { useDiscover, useStudioState } from '../../../../hooks';
 import { BRIDGE_CODE, REACT_EMAIL_CODE } from './sandbox-code-snippets';
 import { FCWithChildren } from '../../../../../types';
 import { TUNNEL_CODE } from './tunnel.service.const';
+import { useSegment } from '../../../../../components/providers/SegmentProvider';
+import { captureException } from '@sentry/react';
 
 const { WebContainer } = require('@webcontainer/api');
 
@@ -42,6 +44,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
   const studioState = useStudioState() || {};
   const { setBridgeURL } = studioState;
   const { refetch } = useDiscover();
+  const segment = useSegment();
 
   const writeOutput = (data: string) => {
     if (terminalRef.current) {
@@ -52,6 +55,8 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
   async function initializeWebContainer() {
     try {
       if (!webContainer && !initStarted) {
+        segment.track('Starting Playground');
+
         setInitStarted(true);
         setWebContainer(
           await WebContainer.boot({
@@ -60,6 +65,13 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         );
       }
     } catch (error: any) {
+      segment.track('Error booting web container', {
+        section: 'boot',
+        message: error.message,
+        error: error,
+      });
+
+      captureException(error);
       writeOutput('\nError booting web container: ' + error.message);
       writeOutput(error);
     }
@@ -84,7 +96,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
             })
           );
 
-          return installProcess.exit;
+          return await installProcess.exit;
         }
 
         async function startDevServer() {
@@ -98,18 +110,33 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
             })
           );
 
-          return startOutput;
+          return await startOutput.exit;
         }
 
         await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE, TUNNEL_CODE));
 
-        await installDependencies();
+        const installResult = await installDependencies();
+        if (installResult !== 0) {
+          throw new Error('Failed to install dependencies');
+        }
+
         writeOutput('Installed dependencies');
         await new Promise((resolve) => setTimeout(resolve, 1000));
         writeOutput('Starting Server');
 
-        await startDevServer();
+        const startServerResponse = await startDevServer();
+        if (startServerResponse !== 0) {
+          throw new Error('Failed to start server');
+        }
+
+        segment.track('Playground succesfully Started');
       } catch (error: any) {
+        segment.track('Error booting web container', {
+          section: 'install',
+          message: error.message,
+          error: error,
+        });
+        captureException(error);
         writeOutput(error);
       }
     })();

@@ -102,10 +102,12 @@ export function buildApiHttpClient({
   baseURL = API_ROOT || 'https://api.novu.co',
   secretKey,
   jwt,
+  environmentId,
 }: {
   baseURL?: string;
   secretKey?: string;
   jwt?: string;
+  environmentId?: string;
 }) {
   if (!secretKey && !jwt) {
     throw new Error('A secretKey or jwt is required to create a Novu API client.');
@@ -118,6 +120,7 @@ export function buildApiHttpClient({
     headers: {
       Authorization: authHeader,
       'Content-Type': 'application/json',
+      'Novu-Environment-Id': environmentId,
     },
   });
 

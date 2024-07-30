@@ -21,8 +21,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
     try {
       await novu.preferences.update({
         workflowId: props.workflowId,
-        channel: props.channel,
-        enabled,
+        channelPreferences: { [props.channel]: enabled },
       });
 
       props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });

@@ -131,5 +131,24 @@ export type PaginatedResponse<T = unknown> = {
   page: number;
 };
 
+export type PreferencesResponse = {
+  level: PreferenceLevel;
+  enabled: boolean;
+  channels: ChannelPreference;
+  overrides?: IPreferenceOverride[];
+  workflow?: Workflow;
+};
+
+export enum PreferenceOverrideSourceEnum {
+  SUBSCRIBER = 'subscriber',
+  TEMPLATE = 'template',
+  WORKFLOW_OVERRIDE = 'workflowOverride',
+}
+
+export type IPreferenceOverride = {
+  channel: ChannelType;
+  source: PreferenceOverrideSourceEnum;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TODO = any;

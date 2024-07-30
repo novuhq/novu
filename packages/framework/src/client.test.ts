@@ -729,6 +729,60 @@ describe('Novu Client', () => {
       });
     });
 
+    it('should support providers with polymorphic properties', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.chat('send-slack', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          providers: {
+            slack: async () => ({
+              text: 'Test Body',
+              blocks: [
+                {
+                  type: 'image',
+                  image_url: 'https://example.com/image.png',
+                  alt_text: 'An image',
+                },
+                {
+                  type: 'divider',
+                },
+              ],
+            }),
+          },
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-slack',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({
+        slack: {
+          text: 'Test Body',
+          blocks: [
+            {
+              type: 'image',
+              image_url: 'https://example.com/image.png',
+              alt_text: 'An image',
+            },
+            {
+              type: 'divider',
+            },
+          ],
+        },
+      });
+    });
+
     it('should preview with mocked payload during preview', async () => {
       const workflowMock = workflow(
         'mock-workflow',

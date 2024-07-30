@@ -151,6 +151,7 @@ export const StudioOnboardingPreview = () => {
 
             <WorkflowsPanelLayout>
               <WorkflowStepEditorContentPanel
+                source="studio"
                 error={null}
                 step={step}
                 preview={preview}

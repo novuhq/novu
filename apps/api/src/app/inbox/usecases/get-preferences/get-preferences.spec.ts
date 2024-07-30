@@ -13,43 +13,40 @@ import { GetPreferences } from './get-preferences.usecase';
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
 const mockedWorkflowPreference: any = {
   template: {},
-  preference: {
-    enabled: true,
-    channels: {
-      email: true,
-      in_app: true,
-      sms: false,
-      push: false,
-      chat: true,
-    },
-    overrides: {
-      email: false,
-      in_app: false,
-      sms: true,
-      push: true,
-      chat: false,
-    },
+
+  enabled: true,
+  channels: {
+    email: true,
+    in_app: true,
+    sms: false,
+    push: false,
+    chat: true,
+  },
+  overrides: {
+    email: false,
+    in_app: false,
+    sms: true,
+    push: true,
+    chat: false,
   },
 };
 
 const mockedGlobalPreferences: any = {
-  preference: {
-    enabled: true,
-    channels: {
-      email: true,
-      in_app: true,
-      sms: false,
-      push: false,
-      chat: true,
-    },
+  enabled: true,
+  channels: {
+    email: true,
+    in_app: true,
+    sms: false,
+    push: false,
+    chat: true,
   },
 };
 const mockedPreferencesResponse: any = [
-  { level: PreferenceLevelEnum.GLOBAL, preferences: mockedGlobalPreferences.preference },
+  { level: PreferenceLevelEnum.GLOBAL, ...mockedGlobalPreferences.preference },
   {
     level: PreferenceLevelEnum.TEMPLATE,
-    preferences: mockedWorkflowPreference.preference,
     workflow: mockedWorkflowPreference.template,
+    ...mockedWorkflowPreference.preference,
   },
 ];
 
