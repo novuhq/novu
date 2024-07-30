@@ -2,7 +2,7 @@ import { ParentProps, Show } from 'solid-js';
 import { InboxNotification } from '../../../types';
 import { useLocalization } from '../../context';
 import { formatToRelativeTime, useStyle } from '../../helpers';
-import { Archive, ReadAll, Unarchive } from '../../icons';
+import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import { Button } from '../primitives';
 
 type NotificationBodyProps = ParentProps;
@@ -28,12 +28,14 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2'
       )}
     >
-      <span
-        class={style(
-          'notificationDot',
-          'nt-absolute -nt-translate-x-[150%] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
-        )}
-      />
+      <Show when={!props.notification.isRead}>
+        <span
+          class={style(
+            'notificationDot',
+            'nt-absolute -nt-translate-x-[150%] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
+          )}
+        />
+      </Show>
       <Show when={props.notification.avatar}>
         <img class={style('notificationImage', 'nt-size-8 nt-rounded-lg')} src={props.notification.avatar} />
       </Show>
@@ -56,29 +58,32 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           <Show
             when={props.notification.isRead}
             fallback={
-              <Button size="icon" variant="icon">
+              <Button appearanceKey="notificationRead__button" size="icon" variant="icon">
                 <ReadAll />
               </Button>
             }
           >
-            <Button size="icon" variant="icon">
-              <Archive />
+            <Button appearanceKey="notificationUnread__button" size="icon" variant="icon">
+              <Unread />
             </Button>
           </Show>
           <Show
             when={props.notification.isArchived}
             fallback={
-              <Button size="icon" variant="icon">
+              <Button appearanceKey="notificationArchive__button" size="icon" variant="icon">
                 <Archive />
               </Button>
             }
           >
-            <Button size="icon" variant="icon">
+            <Button appearanceKey="notificationUnarchive__button" size="icon" variant="icon">
               <Unarchive />
             </Button>
           </Show>
         </div>
-        <Show when={props.notification.subject} fallback={<NotificationBody>test</NotificationBody>}>
+        <Show
+          when={props.notification.subject}
+          fallback={<NotificationBody>{props.notification.body}</NotificationBody>}
+        >
           <p
             class={style(
               'notificationSubject',
@@ -100,7 +105,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               </Button>
             )}
           </Show>
-          <Show when={props.notification.primaryAction} keyed>
+          <Show when={props.notification.secondaryAction} keyed>
             {(secondaryAction) => (
               <Button appearanceKey="notificationSecondaryAction__button" variant="secondary">
                 {secondaryAction.label}

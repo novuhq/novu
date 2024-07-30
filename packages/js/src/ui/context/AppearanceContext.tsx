@@ -69,6 +69,10 @@ export const appearanceKeys = [
   'notificationCustomActions',
   'notificationPrimaryAction__button',
   'notificationSecondaryAction__button',
+  'notificationRead__button',
+  'notificationUnread__button',
+  'notificationArchive__button',
+  'notificationUnarchive__button',
 
   //Inbox status
   'inboxStatus__title',
