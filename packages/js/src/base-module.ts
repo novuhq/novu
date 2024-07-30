@@ -3,7 +3,6 @@ import { InboxService } from './api';
 
 import { NovuEventEmitter } from './event-emitter';
 import { Session } from './types';
-import { ApiServiceSingleton } from './utils/api-service-singleton';
 import { InboxServiceSingleton } from './utils/inbox-service-singleton';
 
 interface CallQueueItem {
@@ -22,7 +21,6 @@ export class BaseModule {
 
   constructor() {
     this._emitter = NovuEventEmitter.getInstance();
-    this._apiService = ApiServiceSingleton.getInstance();
     this._inboxService = InboxServiceSingleton.getInstance();
     this._emitter.on('session.initialize.resolved', ({ error, data }) => {
       if (data) {
@@ -30,14 +28,15 @@ export class BaseModule {
         this.#callsQueue.forEach(async ({ fn, resolve }) => {
           resolve(await fn());
         });
+        this.#callsQueue = [];
       } else if (error) {
         this.onSessionError(error);
         this.#sessionError = error;
         this.#callsQueue.forEach(({ reject }) => {
           reject(error);
         });
+        this.#callsQueue = [];
       }
-      this.#callsQueue = [];
     });
   }
 
@@ -46,7 +45,7 @@ export class BaseModule {
   protected onSessionError(_: unknown): void {}
 
   async callWithSession<T>(fn: () => Promise<T>): Promise<T> {
-    if (this._apiService.isAuthenticated) {
+    if (this._inboxService.isSessionInitialized) {
       return fn();
     }
 
