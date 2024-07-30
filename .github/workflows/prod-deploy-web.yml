@@ -11,6 +11,7 @@ on:
 jobs:
   deploy_web_eu:
     uses: ./.github/workflows/reusable-web-deploy.yml
+    environment: Development
     with:
       environment: Production
       react_app_api_url: https://eu.api.novu.co
@@ -31,6 +32,7 @@ jobs:
 
   deploy_web_us:
     uses: ./.github/workflows/reusable-web-deploy.yml
+    environment: Development
     with:
       environment: Production
       react_app_api_url: https://api.novu.co

@@ -26,6 +26,7 @@ jobs:
     needs: test_web
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-web-deploy.yml
+    environment: Development
     with:
       environment: Development
       react_app_api_url: https://dev.api.novu.co
