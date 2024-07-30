@@ -19,7 +19,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node"
+    "moduleResolution": "NodeNext"
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
 }
