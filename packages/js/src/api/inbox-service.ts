@@ -78,25 +78,13 @@ export class InboxService {
     return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}?${queryParams.toString()}`);
   }
 
-  count({ tags, read, archived }: { tags?: string[]; read?: boolean; archived?: boolean }): Promise<{
-    data: {
+  count({ filters }: { filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }> }): Promise<{
+    data: Array<{
       count: number;
-    };
-    filter: NotificationFilter;
+      filter: NotificationFilter;
+    }>;
   }> {
-    const queryParams = new URLSearchParams();
-
-    if (tags) {
-      tags.forEach((tag) => queryParams.append('tags[]', tag));
-    }
-    if (read !== undefined) {
-      queryParams.append('read', `${read}`);
-    }
-    if (archived !== undefined) {
-      queryParams.append('archived', `${archived}`);
-    }
-
-    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}/count?${queryParams.toString()}`);
+    return this.#httpClient.getFullResponse(`${INBOX_NOTIFICATIONS_ROUTE}/count?filters=${JSON.stringify(filters)}`);
   }
 
   read(notificationId: string): Promise<InboxNotification> {

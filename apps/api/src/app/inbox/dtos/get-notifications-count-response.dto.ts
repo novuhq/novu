@@ -1,8 +1,8 @@
 import type { NotificationFilter } from '../utils/types';
 
 export class GetNotificationsCountResponseDto {
-  data: {
+  data: Array<{
     count: number;
-  };
-  filter: NotificationFilter;
+    filter: NotificationFilter;
+  }>;
 }
