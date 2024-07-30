@@ -21,6 +21,30 @@
   force = true
 
 [[redirects]]
+  from = "https://web.novu.co/*"
+  to = "https://dashboard.novu.co/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://web.novu.co/*"
+  to = "http://dashboard.novu.co/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://eu.web.novu.co/*"
+  to = "https://eu.dashboard.novu.co/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://eu.web.novu.co/*"
+  to = "http://eu.dashboard.novu.co/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
