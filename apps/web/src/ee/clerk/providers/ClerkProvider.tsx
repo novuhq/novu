@@ -11,6 +11,9 @@ const ClerkModalElement = {
     width: '80rem',
     display: 'block',
   },
+  modalBackdrop: {
+    zIndex: 200,
+  },
   cardBox: {
     width: '100%',
   },
