@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@novu/js": "workspace:*",
     "@novu/react": "workspace:*",
     "next": "14.2.4",
     "react": "^18",

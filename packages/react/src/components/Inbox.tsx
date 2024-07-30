@@ -1,8 +1,7 @@
+import React from 'react';
 import type { InboxNotification } from '@novu/js';
 import type { BaseNovuUIOptions } from '@novu/js/ui';
-import React from 'react';
 import { useRenderer } from '../context/RenderContext';
-
 import { Mounter } from './Mounter';
 import { Renderer } from './Renderer';
 
@@ -12,7 +11,7 @@ type InboxDefaultProps = {
 };
 
 const InboxDefault = (props: InboxDefaultProps) => {
-  const { renderNotification, renderBell, ...rest } = props;
+  const { renderNotification, renderBell } = props;
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback(
@@ -20,43 +19,41 @@ const InboxDefault = (props: InboxDefaultProps) => {
       return novuUI.mountComponent({
         name: 'Inbox',
         props: {
-          ...rest,
           renderNotification: renderNotification
-            ? (el, { notification }) => {
-                return mountElement(el, renderNotification(notification));
-              }
+            ? (el, { notification }) => mountElement(el, renderNotification(notification))
             : undefined,
-          renderBell: renderBell
-            ? (el, { unreadCount }) => {
-                return mountElement(el, renderBell({ unreadCount }));
-              }
-            : undefined,
+          renderBell: renderBell ? (el, { unreadCount }) => mountElement(el, renderBell({ unreadCount })) : undefined,
         },
         element,
       });
     },
-    [renderNotification]
+    [renderNotification, renderBell]
   );
 
   return <Mounter mount={mount} />;
 };
 
-type InboxProps = BaseNovuUIOptions &
-  (
-    | ({
-        children?: never;
-      } & InboxDefaultProps)
-    | {
-        children: React.ReactNode;
-      }
-  );
+type BaseProps = BaseNovuUIOptions;
+
+type DefaultProps = BaseProps &
+  InboxDefaultProps & {
+    children?: never;
+  };
+
+type WithChildrenProps = BaseProps & {
+  children: React.ReactNode;
+};
+
+type InboxProps = DefaultProps | WithChildrenProps;
 
 export const Inbox = (props: InboxProps) => {
   if (props.children) {
-    return <Renderer options={props}>{props.children}</Renderer>;
+    const { children, ...options } = props;
+
+    return <Renderer options={options}>{children}</Renderer>;
   }
 
-  const { renderNotification, renderBell, ...options } = props as BaseNovuUIOptions & InboxDefaultProps;
+  const { renderNotification, renderBell, ...options } = props as DefaultProps;
 
   return (
     <Renderer options={options}>

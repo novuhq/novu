@@ -1,5 +1,5 @@
 import { Component, Show } from 'solid-js';
-import { BellMounter } from 'src/ui/types';
+import { BellMounter } from '../../../types';
 import { useUnreadCount } from '../../../context/UnreadCountContext';
 import { ExternalElementMounter } from '../../ExternalElementMounter';
 import { BellContainer } from './DefaultBellContainer';

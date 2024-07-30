@@ -1,4 +1,4 @@
-import { Bell, Inbox, Settings } from '@novu/react';
+import { Bell, Inbox, Preferences } from '@novu/react';
 
 export default function Home() {
   return (
@@ -16,7 +16,7 @@ export default function Home() {
             return <button className="p-10 bg-red-700 w-full">{unreadCount}</button>;
           }}
         </Bell>
-        <Settings />
+        <Preferences />
       </Inbox>
     </div>
   );

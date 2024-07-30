@@ -36,7 +36,7 @@ export const Renderer = (props: RendererProps) => {
   React.useEffect(() => {
     const loadNovuUI = async () => {
       const { NovuUI } = await import('@novu/js/ui');
-      const ui = new (NovuUI as new (novuOptions: NovuUIOptions) => NovuUI)(options);
+      const ui = new NovuUI(options);
       setNovuUI(ui);
     };
 
