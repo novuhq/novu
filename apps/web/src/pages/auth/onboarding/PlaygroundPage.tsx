@@ -142,7 +142,7 @@ export function PlaygroundPage() {
 
     initializeWebContainer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorScheme]);
+  }, [themeLabel]);
 
   const joyrideSteps: Step[] = [
     {
