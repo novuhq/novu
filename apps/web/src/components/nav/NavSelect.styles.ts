@@ -3,9 +3,9 @@ import { css } from '@novu/novui/css';
 // TODO: these are ugly, but necessary for overriding Mantine + our design-system overrides
 export const navSelectStyles = css({
   fontWeight: 'strong !important',
-  marginLeft: '12px !important',
+  marginLeft: '75 !important',
 
-  '& input': { bg: 'transparent', border: 'none !important', pl: '2.50rem !important' },
+  '& input': { bg: 'transparent', border: 'none !important', pl: '250 !important' },
   '& .mantine-Select-icon': { width: 'inherit !important' },
   '& .mantine-Select-dropdown': { top: '50px !important' },
 });

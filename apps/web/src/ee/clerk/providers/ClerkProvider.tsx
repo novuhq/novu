@@ -21,15 +21,16 @@ const ClerkModalElement = {
     fontFamily: 'var(--nv-fonts-system)',
     fontWeight: 'var(--nv-font-weights-strong)',
     fontSize: 'var(--nv-font-sizes-88)',
-    margin: '10px 10px 10px 10px important!',
+    paddingTop: 'var(--nv-spacing-50) !important',
+    paddingBottom: 'var(--nv-spacing-50) !important',
     color: 'var(--nv-colors-typography-text-secondary) !important',
     '&:hover, &:focus, &:active': {
       color: 'var(--nv-colors-typography-text-main) !important',
     },
   },
   navbarButtonIcon: {
-    height: '20px',
-    width: '20px',
+    height: 'var(--nv-sizes-125)',
+    width: 'var(--nv-sizes-125)',
   },
 };
 

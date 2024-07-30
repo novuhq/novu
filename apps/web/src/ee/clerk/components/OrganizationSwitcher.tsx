@@ -1,5 +1,4 @@
 import { OrganizationSwitcher as ClerkOrganizationSwitcher } from '@clerk/clerk-react';
-import { ArrowDown } from '@novu/design-system';
 import { token } from '@novu/novui/tokens';
 import { ROUTES } from '../../../constants/routes';
 
