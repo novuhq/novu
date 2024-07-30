@@ -25,6 +25,8 @@ jobs:
       netlify_alias: prod
       netlify_gh_env: Production
       netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a
+      clerk_publishable_key: {{ secrets.CLERK_PUBLISHABLE_KEY_EU }}
+      clerk_is_ee_auth_enabled: {{ secrets.IS_EE_AUTH_ENABLED_EU }}
     secrets: inherit
 
   deploy_web_us:
@@ -43,4 +45,6 @@ jobs:
       netlify_alias: prod
       netlify_gh_env: Production
       netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff
+      clerk_publishable_key: {{ secrets.CLERK_PUBLISHABLE_KEY_US }}
+      clerk_is_ee_auth_enabled: {{ secrets.IS_EE_AUTH_ENABLED_US }}
     secrets: inherit
