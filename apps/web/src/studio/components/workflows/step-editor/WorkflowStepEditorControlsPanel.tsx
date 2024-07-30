@@ -21,6 +21,7 @@ interface IWorkflowStepEditorControlsPanelProps {
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
   className?: string;
+  source?: 'studio' | 'playground';
 }
 
 const TYPING_DEBOUNCE_TIME_MS = 500;
@@ -33,6 +34,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   defaultControls,
   isLoadingSave,
   className,
+  source,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();

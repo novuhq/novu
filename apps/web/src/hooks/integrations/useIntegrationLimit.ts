@@ -5,6 +5,7 @@ import { getIntegrationLimit } from '../../api/integration';
 import { IS_DOCKER_HOSTED } from '../../config/index';
 
 const isLimitFetchingEnabled = !IS_DOCKER_HOSTED;
+
 export function useIntegrationLimit(type: ChannelTypeEnum) {
   const {
     data = { limit: 0, count: 0 },

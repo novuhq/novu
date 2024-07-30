@@ -11,6 +11,7 @@ import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStep
 import { When } from '../../../components/utils/When';
 import { Flex, Stack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
+import { WorkflowsStepEditorPage } from '../../../studio/components/workflows/index';
 
 export function WorkflowFlow({
   isBridgeAppLoading,
@@ -70,10 +71,12 @@ export function WorkflowFlow({
         </When>
 
         <When truthy={!!clickedStepId}>
-          <WorkflowsStepEditorPageV2
-            stepId={clickedStepId ?? ''}
-            workflow={workflow as DiscoverWorkflowOutput}
-            handleGoBack={() => {
+          <WorkflowsStepEditorPage
+            source="playground"
+            workflowId={(workflow as DiscoverWorkflowOutput)?.workflowId}
+            parentStepId={clickedStepId}
+            onGoBack={() => {
+              setWorkflowTab('workflow');
               setClickedStepId('');
             }}
           />

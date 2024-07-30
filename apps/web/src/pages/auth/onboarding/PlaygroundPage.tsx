@@ -25,8 +25,8 @@ import { ExecutionDetailsModalWrapper } from '../../templates/components/Executi
 import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-joyride';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
-import { Loader } from '@mantine/core';
 import useThemeChange from '../../../hooks/useThemeChange';
+
 const CustomTooltip = ({
   index,
   step,
@@ -131,7 +131,6 @@ export function PlaygroundPage() {
   const [runJoyride, setRunJoyride] = useState(true);
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
-  const { colorScheme, setColorScheme } = useColorScheme();
   const { initializeWebContainer, isBridgeAppLoading } = useContainer();
   const { toggleColorScheme, themeLabel } = useThemeChange();
 

@@ -77,6 +77,7 @@ export const WorkflowsStepEditorPageV2 = (props: {
             </When>
           </HStack>
           <WorkflowStepEditorContentPanel
+            source={'dashboard'}
             error={error}
             step={step}
             preview={preview}
