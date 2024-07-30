@@ -43,11 +43,12 @@ const mapSingleItem = ({
     avatar,
     primaryAction: primaryCta && {
       label: primaryCta.content,
-      url: cta?.data.url,
+      url: primaryCta.url,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
+      url: secondaryCta.url,
       isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     channelType: channel,

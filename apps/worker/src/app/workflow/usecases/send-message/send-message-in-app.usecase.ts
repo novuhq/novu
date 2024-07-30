@@ -225,6 +225,7 @@ export class SendMessageInApp extends SendMessageBase {
         transactionId: command.transactionId,
         content: this.storeContent() ? bridgeBody || content : null,
         subject: bridgeSubject,
+        avatar: bridgeOutputs?.avatar,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,

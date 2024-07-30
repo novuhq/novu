@@ -47,6 +47,7 @@ export interface IMessageButton {
   type: ButtonTypeEnum;
   content: string;
   resultContent?: string;
+  url?: string;
 }
 
 export enum MessageActionStatusEnum {

@@ -116,6 +116,7 @@ export const PreviewStep = ({
                 ? [
                     {
                       type: ButtonTypeEnum.PRIMARY,
+                      url: preview?.outputs?.primaryAction.url,
                       content: preview?.outputs?.primaryAction.label,
                     },
                   ]
@@ -124,6 +125,7 @@ export const PreviewStep = ({
                 ? [
                     {
                       type: ButtonTypeEnum.SECONDARY,
+                      url: preview?.outputs?.secondaryAction.url,
                       content: preview?.outputs?.secondaryAction.label,
                     },
                   ]

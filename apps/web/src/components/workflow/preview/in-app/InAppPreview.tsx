@@ -56,6 +56,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
                   {
                     type: ButtonTypeEnum.PRIMARY,
                     content: data.outputs.primaryAction.label,
+                    url: data.outputs.primaryAction.url,
                   },
                 ]
               : []),
@@ -64,6 +65,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
                   {
                     type: ButtonTypeEnum.SECONDARY,
                     content: data.outputs.secondaryAction.label,
+                    url: data.outputs.secondaryAction.url,
                   },
                 ]
               : []),
