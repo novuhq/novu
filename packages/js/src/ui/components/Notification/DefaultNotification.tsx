@@ -1,5 +1,6 @@
 import { ParentProps, Show } from 'solid-js';
 import { InboxNotification } from '../../../types';
+import { useLocalization } from '../../context';
 import { formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive } from '../../icons';
 import { Button } from '../primitives';
@@ -18,6 +19,7 @@ type DefaultNotificationProps = {
 //TODO: Complete the implementation
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
+  const { locale } = useLocalization();
 
   return (
     <div
@@ -43,7 +45,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           )}
         >
           {/* TODO: pass locale here */}
-          {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt) })}
+          {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale })}
         </p>
         <div
           class={style(

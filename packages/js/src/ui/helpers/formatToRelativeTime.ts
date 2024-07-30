@@ -13,16 +13,16 @@ const UNITS = {
   second: SECOND,
 };
 
-const DEFAULT_LOCALE = 'en';
+const DEFAULT_LOCALE = 'en-US';
 
 export function formatToRelativeTime({
   fromDate,
+  locale,
   toDate = new Date(),
-  locale = DEFAULT_LOCALE,
 }: {
   fromDate: Date;
+  locale: string;
   toDate?: Date;
-  locale?: string;
 }) {
   const elapsed = fromDate.getTime() - toDate.getTime();
 
