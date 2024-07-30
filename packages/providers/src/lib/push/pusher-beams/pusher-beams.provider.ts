@@ -6,8 +6,12 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class PusherBeamsPushProvider implements IPushProvider {
+export class PusherBeamsPushProvider
+  extends BaseProvider
+  implements IPushProvider
+{
   id = PushProviderIdEnum.PusherBeams;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
@@ -19,6 +23,7 @@ export class PusherBeamsPushProvider implements IPushProvider {
       secretKey: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: `https://${this.config.instanceId}.pushnotifications.pusher.com/publish_api/v1/instances/${this.config.instanceId}`,
       headers: {
@@ -33,7 +38,7 @@ export class PusherBeamsPushProvider implements IPushProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
-    const payload = {
+    const payload = this.transform(bridgeProviderData, {
       users: options.target,
       apns: {
         aps: {
@@ -69,8 +74,7 @@ export class PusherBeamsPushProvider implements IPushProvider {
         data: options.payload,
         time_to_live: overrides.ttl,
       },
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const response = await this.axiosInstance.post(`/publishes/users`, payload);
 

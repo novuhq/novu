@@ -9,6 +9,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
+import { BaseProvider } from '../../../base.provider';
 import { ISparkPostErrorResponse, SparkPostError } from './sparkpost.error';
 
 interface ISparkPostResponse {
@@ -19,7 +20,10 @@ interface ISparkPostResponse {
   };
 }
 
-export class SparkPostEmailProvider implements IEmailProvider {
+export class SparkPostEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   readonly id = EmailProviderIdEnum.SparkPost;
   readonly channelType = ChannelTypeEnum.EMAIL;
   private readonly endpoint: string;
@@ -32,6 +36,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
+    super();
     this.endpoint = this.getEndpoint(config.region);
   }
 
@@ -53,27 +58,26 @@ export class SparkPostEmailProvider implements IEmailProvider {
       });
     });
 
-    const data = {
+    const data = this.transform(bridgeProviderData, {
       recipients,
-      ...bridgeProviderData,
       content: {
         from: from || this.config.from,
         subject,
         text,
         html,
         attachments: files,
-        ...((bridgeProviderData.content as object) || {}),
       },
-    };
+    });
 
     try {
       const sent = await axios.post<ISparkPostResponse>(
         '/transmissions',
-        data,
+        data.body,
         {
           headers: {
             'Content-Type': 'application/json',
             Authorization: this.config.apiKey,
+            ...data.headers,
           },
           baseURL: this.endpoint,
         }

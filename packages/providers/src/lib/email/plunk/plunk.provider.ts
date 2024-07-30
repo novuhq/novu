@@ -10,9 +10,11 @@ import {
 } from '@novu/stateless';
 
 import Plunk from '@plunk/node';
+import { SendParams } from '@plunk/node/dist/types/emails';
+import { BaseProvider } from '../../../base.provider';
 import { IPlunkResponse } from './plunk.interface';
 
-export class PlunkEmailProvider implements IEmailProvider {
+export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Plunk;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
@@ -24,6 +26,7 @@ export class PlunkEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
+    super();
     this.plunk = new Plunk(this.config.apiKey);
   }
   async checkIntegration(
@@ -53,15 +56,18 @@ export class PlunkEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const response: IPlunkResponse = await this.plunk.emails.send({
-      from: options.from,
-      name: options.senderName || this.config.senderName,
-      to: options.to,
-      subject: options.subject,
-      body: options.html || options.text,
-    });
+    const response: IPlunkResponse = await this.plunk.emails.send(
+      this.transform<SendParams>(bridgeProviderData, {
+        from: options.from,
+        name: options.senderName || this.config.senderName,
+        to: options.to,
+        subject: options.subject,
+        body: options.html || options.text,
+      }).body
+    );
 
     return {
       id: response.emails[0].contact.id,

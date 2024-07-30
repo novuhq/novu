@@ -6,6 +6,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
 export interface ISendSmsData {
   user_id: number;
@@ -31,7 +32,7 @@ export interface ISendSmsResponse {
   data?: ISendSmsData;
 }
 
-export class ISendSmsProvider implements ISmsProvider {
+export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.ISendSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
@@ -44,6 +45,7 @@ export class ISendSmsProvider implements ISmsProvider {
       contentType?: ISendSmsData['sms_type'];
     }
   ) {
+    super();
     this.Instance = axios.create({
       baseURL: 'https://send.com.ly',
       headers: {
@@ -58,13 +60,12 @@ export class ISendSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = {
+    const payload = this.transform(bridgeProviderData, {
       sender_id: options.from ?? this.config.from,
       recipient: options.to.replace(/^\+|^00/, ''),
       type: this.config.contentType ?? 'unicode',
       message: options.content,
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const response = await this.Instance.post<ISendSmsResponse>(
       '/api/v3/sms/send',

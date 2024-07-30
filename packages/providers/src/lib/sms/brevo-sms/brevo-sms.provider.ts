@@ -7,6 +7,7 @@ import {
 import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -15,7 +16,7 @@ declare global {
   }
 }
 
-export class BrevoSmsProvider implements ISmsProvider {
+export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BrevoSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://api.brevo.com/v3';
@@ -25,18 +26,19 @@ export class BrevoSmsProvider implements ISmsProvider {
       apiKey: string;
       from: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const sms = {
+    const sms = this.transform(bridgeProviderData, {
       sender: options.from || this.config.from,
       recipient: options.to,
       content: options.content,
-      ...bridgeProviderData,
-    };
+    });
 
     const response = await fetch(`${this.BASE_URL}/transactionalSMS/sms`, {
       method: 'POST',
@@ -44,9 +46,10 @@ export class BrevoSmsProvider implements ISmsProvider {
         'api-key': this.config.apiKey,
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...sms.headers,
       },
       agent: new ProxyAgent(),
-      body: JSON.stringify(sms),
+      body: JSON.stringify(sms.body),
     });
 
     const body: { messageId: string } = await response.json();

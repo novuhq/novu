@@ -9,13 +9,15 @@ import {
 import { IEmailJsConfig } from './emailjs.config';
 import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class EmailJsProvider implements IEmailProvider {
+export class EmailJsProvider extends BaseProvider implements IEmailProvider {
   readonly id = EmailProviderIdEnum.EmailJS;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly client: SMTPClient;
 
   constructor(private readonly config: IEmailJsConfig) {
+    super();
     const { host, port, secure: ssl, user, password } = this.config;
     this.client = new (require('emailjs').SMTPClient)({
       host,
@@ -45,7 +47,9 @@ export class EmailJsProvider implements IEmailProvider {
     }
 
     const sent = await this.client.sendAsync(
-      new (require('emailjs').Message({ ...headers, ...bridgeProviderData }))()
+      new (require('emailjs').Message(
+        this.transform(bridgeProviderData, headers).body
+      ))()
     );
 
     return {

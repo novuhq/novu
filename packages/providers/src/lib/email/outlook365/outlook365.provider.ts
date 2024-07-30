@@ -8,8 +8,9 @@ import {
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
+import { BaseProvider } from '../../../base.provider';
 
-export class Outlook365Provider implements IEmailProvider {
+export class Outlook365Provider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Outlook365;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private transports: Transporter;
@@ -21,6 +22,7 @@ export class Outlook365Provider implements IEmailProvider {
       password: string;
     }
   ) {
+    super();
     this.transports = nodemailer.createTransport({
       host: 'smtp.office365.com',
       port: 587,
@@ -41,10 +43,9 @@ export class Outlook365Provider implements IEmailProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const info = await this.transports.sendMail({
-      ...mailData,
-      ...bridgeProviderData,
-    });
+    const info = await this.transports.sendMail(
+      this.transform(bridgeProviderData, mailData).body
+    );
 
     return {
       id: info?.messageId,

@@ -12,13 +12,15 @@ import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';
 import nodemailer from 'nodemailer';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class SESEmailProvider implements IEmailProvider {
+export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.SES;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly ses: SESClient;
 
   constructor(private readonly config: SESConfig) {
+    super();
     this.ses = new SESClient({
       region: this.config.region,
       credentials: {
@@ -47,21 +49,22 @@ export class SESEmailProvider implements IEmailProvider {
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
 
-    return await transporter.sendMail({
-      to,
-      html,
-      text,
-      subject,
-      attachments,
-      from: {
-        address: from,
-        name: senderName,
-      },
-      cc,
-      bcc,
-      replyTo,
-      ...bridgeProviderData,
-    });
+    return await transporter.sendMail(
+      this.transform(bridgeProviderData, {
+        to,
+        html,
+        text,
+        subject,
+        attachments,
+        from: {
+          address: from,
+          name: senderName,
+        },
+        cc,
+        bcc,
+        replyTo,
+      }).body
+    );
   }
 
   async sendMessage({

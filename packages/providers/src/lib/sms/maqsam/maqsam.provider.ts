@@ -8,8 +8,9 @@ import {
 
 import axios, { AxiosInstance } from 'axios';
 import { fromUnixTime } from 'date-fns';
+import { BaseProvider } from '../../../base.provider';
 
-export class MaqsamSmsProvider implements ISmsProvider {
+export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Maqsam;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axiosInstance: AxiosInstance;
@@ -21,6 +22,7 @@ export class MaqsamSmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: 'https://api.maqsam.com/v2/sms',
       auth: {
@@ -36,12 +38,11 @@ export class MaqsamSmsProvider implements ISmsProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const maqsamResponse = await this.axiosInstance.request({
       method: 'POST',
-      data: {
+      data: this.transform(bridgeProviderData, {
         to: options.to,
         message: options.content,
         sender: options.from || this.config.from,
-        ...bridgeProviderData,
-      },
+      }).body,
     });
 
     return {

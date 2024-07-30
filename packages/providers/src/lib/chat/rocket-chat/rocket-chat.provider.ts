@@ -6,8 +6,9 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class RocketChatProvider implements IChatProvider {
+export class RocketChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.RocketChat;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
@@ -17,7 +18,9 @@ export class RocketChatProvider implements IChatProvider {
       token: string;
       user: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: IChatOptions,
@@ -28,18 +31,23 @@ export class RocketChatProvider implements IChatProvider {
       message: {
         rid: roomId,
         msg: options.content,
-        ...bridgeProviderData,
       },
     };
+    const transformedData = this.transform(bridgeProviderData, payload);
     const headers = {
       'x-auth-token': this.config.token,
       'x-user-id': this.config.user,
       'Content-Type': 'application/json',
+      ...transformedData.headers,
     };
     const baseURL = `${options.webhookUrl.toString()}/api/v1/chat.sendMessage`;
-    const { data } = await this.axiosInstance.post(baseURL, payload, {
-      headers: headers,
-    });
+    const { data } = await this.axiosInstance.post(
+      baseURL,
+      transformedData.body,
+      {
+        headers: headers,
+      }
+    );
 
     return {
       id: data.message._id,

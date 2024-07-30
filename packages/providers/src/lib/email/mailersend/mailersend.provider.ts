@@ -9,8 +9,12 @@ import {
 } from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
+import { BaseProvider } from '../../../base.provider';
 
-export class MailersendEmailProvider implements IEmailProvider {
+export class MailersendEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   readonly id = EmailProviderIdEnum.MailerSend;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private mailerSend: MailerSend;
@@ -22,6 +26,7 @@ export class MailersendEmailProvider implements IEmailProvider {
       senderName?: string;
     }
   ) {
+    super();
     this.mailerSend = new MailerSend({ api_key: this.config.apiKey });
   }
 
@@ -74,10 +79,10 @@ export class MailersendEmailProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const emailParams = {
-      ...this.createMailData(options),
-      ...bridgeProviderData,
-    };
+    const emailParams = this.transform(
+      bridgeProviderData,
+      this.createMailData(options)
+    ).body;
     const response = await this.mailerSend.send(emailParams);
 
     return {

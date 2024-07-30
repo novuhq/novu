@@ -6,8 +6,9 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class RyverChatProvider implements IChatProvider {
+export class RyverChatProvider extends BaseProvider implements IChatProvider {
   public id = ChatProviderIdEnum.Ryver;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
@@ -17,10 +18,12 @@ export class RyverChatProvider implements IChatProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
-    const response = await this.axiosInstance.post(url.toString(), {
-      content: options.content,
-      ...bridgeProviderData,
-    });
+    const response = await this.axiosInstance.post(
+      url.toString(),
+      this.transform(bridgeProviderData, {
+        content: options.content,
+      }).body
+    );
 
     return {
       id: `${response.status}`,

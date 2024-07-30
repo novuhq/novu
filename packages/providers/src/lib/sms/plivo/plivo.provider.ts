@@ -9,8 +9,9 @@ import {
 } from '@novu/stateless';
 
 import plivo from 'plivo';
+import { BaseProvider } from '../../../base.provider';
 
-export class PlivoSmsProvider implements ISmsProvider {
+export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Plivo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private plivoClient: plivo.Client;
@@ -22,6 +23,7 @@ export class PlivoSmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
+    super();
     this.plivoClient = new plivo.Client(config.accountSid, config.authToken);
   }
 

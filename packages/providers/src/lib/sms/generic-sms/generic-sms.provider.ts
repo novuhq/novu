@@ -7,8 +7,9 @@ import {
 } from '@novu/stateless';
 
 import axios, { AxiosInstance } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class GenericSmsProvider implements ISmsProvider {
+export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.GenericSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   axiosInstance: AxiosInstance;
@@ -29,6 +30,7 @@ export class GenericSmsProvider implements ISmsProvider {
       authenticationTokenKey?: string;
     }
   ) {
+    super();
     this.headers = {
       [this.config?.apiKeyRequestHeader]: config.apiKey,
     };
@@ -49,6 +51,10 @@ export class GenericSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const data = this.transform(bridgeProviderData, {
+      ...options,
+      sender: options.from || this.config.from,
+    });
     if (this.config?.authenticateByToken) {
       const tokenAxiosInstance = await axios.request({
         method: 'POST',
@@ -63,17 +69,14 @@ export class GenericSmsProvider implements ISmsProvider {
         baseURL: this.config.baseUrl,
         headers: {
           [this.config.authenticationTokenKey]: token,
+          ...data.headers,
         },
       });
     }
 
     const response = await this.axiosInstance.request({
       method: 'POST',
-      data: {
-        ...options,
-        sender: options.from || this.config.from,
-        ...bridgeProviderData,
-      },
+      data: data.body,
     });
 
     const responseData = response.data;

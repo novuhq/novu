@@ -7,8 +7,9 @@ import {
 import { v4 as uuid } from 'uuid';
 import axios, { AxiosInstance } from 'axios';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class MobishastraProvider implements ISmsProvider {
+export class MobishastraProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Mobishastra;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   axiosInstance: AxiosInstance;
@@ -23,6 +24,7 @@ export class MobishastraProvider implements ISmsProvider {
       from: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: config.baseUrl,
       headers: {
@@ -38,14 +40,13 @@ export class MobishastraProvider implements ISmsProvider {
     const response = await this.axiosInstance.request({
       method: 'POST',
       data: JSON.stringify([
-        {
+        this.transform(bridgeProviderData, {
           Sender: options.from || this.config.from,
           number: options.to,
           msg: options.content,
           user: this.config.username,
           pwd: this.config.password,
-          ...bridgeProviderData,
-        },
+        }).body,
       ]),
     });
 

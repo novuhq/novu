@@ -6,8 +6,9 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class KannelSmsProvider implements ISmsProvider {
+export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Kannel;
   apiBaseUrl: string;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -21,6 +22,7 @@ export class KannelSmsProvider implements ISmsProvider {
       password?: string;
     }
   ) {
+    super();
     this.apiBaseUrl = `http://${config.host}:${config.port}/cgi-bin`;
   }
 
@@ -29,14 +31,13 @@ export class KannelSmsProvider implements ISmsProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = this.apiBaseUrl + '/sendsms';
-    const queryParameters = {
+    const queryParameters = this.transform(bridgeProviderData, {
       username: this.config.username,
       password: this.config.password,
       from: options.from || this.config.from,
       to: options.to,
       text: options.content,
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const result = await axios.get(url, {
       params: queryParameters,

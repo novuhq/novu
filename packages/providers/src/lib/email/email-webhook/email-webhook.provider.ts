@@ -11,8 +11,12 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { setTimeout } from 'timers/promises';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class EmailWebhookProvider implements IEmailProvider {
+export class EmailWebhookProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   readonly id = EmailProviderIdEnum.EmailWebhook;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
@@ -24,6 +28,7 @@ export class EmailWebhookProvider implements IEmailProvider {
       retryDelay?: number;
     }
   ) {
+    super();
     this.config.retryDelay ??= 30 * 1000;
     this.config.retryCount ??= 3;
   }
@@ -42,7 +47,8 @@ export class EmailWebhookProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const bodyData = this.createBody({ ...options, ...bridgeProviderData });
+    const transformedData = this.transform(bridgeProviderData, options);
+    const bodyData = this.createBody(transformedData.body);
     const hmacValue = this.computeHmac(bodyData);
     let sent = false;
 
@@ -56,6 +62,7 @@ export class EmailWebhookProvider implements IEmailProvider {
           headers: {
             'content-type': 'application/json',
             'X-Novu-Signature': hmacValue,
+            ...transformedData.headers,
           },
         });
         sent = true;
@@ -73,7 +80,7 @@ export class EmailWebhookProvider implements IEmailProvider {
     };
   }
 
-  createBody(options: IEmailOptions): string {
+  createBody(options: Record<string, unknown>): string {
     return JSON.stringify(options);
   }
 

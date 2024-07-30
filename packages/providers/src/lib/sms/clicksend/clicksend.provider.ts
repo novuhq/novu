@@ -6,8 +6,9 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class ClicksendSmsProvider implements ISmsProvider {
+export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Clicksend;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
@@ -16,28 +17,29 @@ export class ClicksendSmsProvider implements ISmsProvider {
       username: string;
       apiKey: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const data = this.transform(bridgeProviderData, {
+      to: options.to,
+      body: options.content,
+    });
     const response = await axios.post(
       'https://rest.clicksend.com/v3/sms/send',
       {
-        messages: [
-          {
-            to: options.to,
-            body: options.content,
-            ...bridgeProviderData,
-          },
-        ],
+        messages: [data.body],
       },
       {
         headers: {
           Authorization: `Basic ${Buffer.from(
             `${this.config.username}:${this.config.apiKey}`
           ).toString('base64')}`,
+          ...data.headers,
         },
       }
     );

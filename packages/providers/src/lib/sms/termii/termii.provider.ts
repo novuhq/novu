@@ -7,13 +7,14 @@ import {
   SmsEventStatusEnum,
   ISMSEventBody,
 } from '@novu/stateless';
+import { BaseProvider } from '../../../base.provider';
 import { SmsParams, MessageChannel, SmsJsonResponse } from './sms';
 
 if (!globalThis.fetch) {
   globalThis.fetch = require('node-fetch');
 }
 
-export class TermiiSmsProvider implements ISmsProvider {
+export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
   public static readonly BASE_URL = 'https://api.ng.termii.com/api/sms/send';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   id = SmsProviderIdEnum.Termii;
@@ -23,24 +24,26 @@ export class TermiiSmsProvider implements ISmsProvider {
       apiKey?: string;
       from?: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const params: SmsParams = {
+    const params = this.transform<SmsParams>(bridgeProviderData, {
       to: options.to,
       from: options.from || this.config.from,
       sms: options.content,
       type: 'plain',
       channel: MessageChannel.GENERIC,
       api_key: this.config.apiKey,
-      ...bridgeProviderData,
-    };
+    });
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      ...params.headers,
     };
     const opts: RequestInit = {
       agent: undefined,
@@ -52,7 +55,7 @@ export class TermiiSmsProvider implements ISmsProvider {
       signal: undefined,
       method: 'POST',
       headers: headers,
-      body: JSON.stringify(params),
+      body: JSON.stringify(params.body),
     };
 
     const response = await fetch(TermiiSmsProvider.BASE_URL, opts);

@@ -6,8 +6,9 @@ import {
   IPushProvider,
 } from '@novu/stateless';
 import Pushpad from 'pushpad';
+import { BaseProvider } from '../../../base.provider';
 
-export class PushpadPushProvider implements IPushProvider {
+export class PushpadPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.Pushpad;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
@@ -19,6 +20,7 @@ export class PushpadPushProvider implements IPushProvider {
       appId: string;
     }
   ) {
+    super();
     this.pushpad = new Pushpad.Pushpad({
       authToken: this.config.apiKey,
       projectId: this.config.appId,
@@ -51,11 +53,12 @@ export class PushpadPushProvider implements IPushProvider {
     options: IPushOptions,
     bridgeProviderData: Record<string, unknown>
   ): Pushpad.Notification {
-    return new Pushpad.Notification({
-      project: this.pushpad,
-      body: options.content,
-      title: options.title,
-      ...bridgeProviderData,
-    });
+    return new Pushpad.Notification(
+      this.transform(bridgeProviderData, {
+        project: this.pushpad,
+        body: options.content,
+        title: options.title,
+      }).body
+    );
   }
 }

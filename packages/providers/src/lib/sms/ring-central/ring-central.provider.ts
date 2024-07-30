@@ -9,8 +9,12 @@ import {
 } from '@novu/stateless';
 import { SDK } from '@ringcentral/sdk';
 import Platform from '@ringcentral/sdk/lib/platform/Platform';
+import { BaseProvider } from '../../../base.provider';
 
-export class RingCentralSmsProvider implements ISmsProvider {
+export class RingCentralSmsProvider
+  extends BaseProvider
+  implements ISmsProvider
+{
   id = SmsProviderIdEnum.RingCentral;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   sendSMSEndpoint = '/restapi/v1.0/account/~/extension/~/sms';
@@ -25,6 +29,7 @@ export class RingCentralSmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
+    super();
     const rcSdk = new SDK({
       server: config.isSandBox ? SDK.server.sandbox : SDK.server.production,
       clientId: config.clientId,
@@ -37,12 +42,11 @@ export class RingCentralSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const bodyParams = {
+    const bodyParams = this.transform(bridgeProviderData, {
       from: { phoneNumber: options.from || this.config.from },
       to: [{ phoneNumber: options.to }],
       text: options.content,
-      ...bridgeProviderData,
-    };
+    }).body;
 
     if (!(await this.rcClient.loggedIn())) {
       await this.rcClient.login({ jwt: this.config.jwtToken });

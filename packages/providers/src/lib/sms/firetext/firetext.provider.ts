@@ -5,13 +5,14 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
+import { BaseProvider } from '../../../base.provider';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
   globalThis.fetch = require('node-fetch');
 }
 
-export class FiretextSmsProvider implements ISmsProvider {
+export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Firetext;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private BASE_URL = 'https://www.firetext.co.uk/api/sendsms';
@@ -21,7 +22,9 @@ export class FiretextSmsProvider implements ISmsProvider {
       apiKey?: string;
       from?: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   private parseResponse(body: string) {
     const re = /^(\d+):(\d+)\s(.*)$/i;
@@ -46,15 +49,17 @@ export class FiretextSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const baseMessage = {
-      apiKey: this.config.apiKey,
-      to: options.to,
-      from: options.from || this.config.from,
-      message: options.content,
-      ...bridgeProviderData,
-    };
+    const baseMessage = this.transform<Record<string, string>>(
+      bridgeProviderData,
+      {
+        apiKey: this.config.apiKey,
+        to: options.to,
+        from: options.from || this.config.from,
+        message: options.content,
+      }
+    );
 
-    const urlSearchParams = new URLSearchParams(baseMessage);
+    const urlSearchParams = new URLSearchParams(baseMessage.body);
     const url = new URL(this.BASE_URL);
     url.search = urlSearchParams.toString();
 

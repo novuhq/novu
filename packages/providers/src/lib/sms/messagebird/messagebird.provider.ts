@@ -5,11 +5,15 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 
-import { Message } from 'messagebird/types/messages';
+import { Message, MessageParameters } from 'messagebird/types/messages';
 import { initClient } from 'messagebird';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class MessageBirdSmsProvider implements ISmsProvider {
+export class MessageBirdSmsProvider
+  extends BaseProvider
+  implements ISmsProvider
+{
   id = SmsProviderIdEnum.MessageBird;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private messageBirdClient: ReturnType<typeof initClient>;
@@ -18,6 +22,7 @@ export class MessageBirdSmsProvider implements ISmsProvider {
       access_key?: string;
     }
   ) {
+    super();
     this.messageBirdClient = initClient(config.access_key);
   }
 
@@ -25,12 +30,11 @@ export class MessageBirdSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const params = {
+    const params = this.transform<MessageParameters>(bridgeProviderData, {
       originator: options.from,
       recipients: [options.to],
       body: options.content,
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const response = await new Promise<Message>((resolve, reject) => {
       this.messageBirdClient.messages.create(params, (err, res) => {

@@ -7,7 +7,11 @@ import {
 } from '@novu/stateless';
 
 import axios from 'axios';
-export class SimpletextingSmsProvider implements ISmsProvider {
+import { BaseProvider } from '../../../base.provider';
+export class SimpletextingSmsProvider
+  extends BaseProvider
+  implements ISmsProvider
+{
   id = SmsProviderIdEnum.Simpletexting;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
@@ -16,25 +20,28 @@ export class SimpletextingSmsProvider implements ISmsProvider {
       apiKey: string;
       accountPhone: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const data = this.transform(bridgeProviderData, {
+      contactPhone: options.to,
+      accountPhone: this.config.accountPhone,
+      mode: 'SINGLE_SMS_STRICTLY',
+      text: options.content,
+    });
     const response = await axios.post(
       'https://api-app2.simpletexting.com/v2/api/messages',
-      {
-        contactPhone: options.to,
-        accountPhone: this.config.accountPhone,
-        mode: 'SINGLE_SMS_STRICTLY',
-        text: options.content,
-        ...bridgeProviderData,
-      },
+      data.body,
       {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.config.apiKey}`,
+          ...data.headers,
         },
       }
     );

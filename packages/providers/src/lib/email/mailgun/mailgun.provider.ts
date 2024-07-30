@@ -46,27 +46,29 @@ export class MailgunEmailProvider
     emailOptions: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const mailgunMessageData: Partial<MailgunMessageData> = this.transform(
-      bridgeProviderData,
-      {
-        from: emailOptions.from || this.config.from,
-        to: emailOptions.to,
-        subject: emailOptions.subject,
-        html: emailOptions.html,
-        cc: emailOptions.cc?.join(','),
-        bcc: emailOptions.bcc?.join(','),
-        attachment: emailOptions.attachments?.map((attachment) => {
-          return {
-            data: attachment.file,
-            filename: attachment.name,
-          };
-        }),
-      }
-    ).body;
+    const data = {
+      from: emailOptions.from || this.config.from,
+      to: emailOptions.to,
+      subject: emailOptions.subject,
+      html: emailOptions.html,
+      cc: emailOptions.cc?.join(','),
+      bcc: emailOptions.bcc?.join(','),
+      attachment: emailOptions.attachments?.map((attachment) => {
+        return {
+          data: attachment.file,
+          filename: attachment.name,
+        };
+      }),
+    };
 
     if (emailOptions.replyTo) {
-      mailgunMessageData['h:Reply-To'] = emailOptions.replyTo;
+      data['h:Reply-To'] = emailOptions.replyTo;
     }
+
+    const mailgunMessageData: Partial<MailgunMessageData> = this.transform(
+      bridgeProviderData,
+      data
+    ).body;
 
     const response = await this.mailgunClient.messages.create(
       this.config.domain,

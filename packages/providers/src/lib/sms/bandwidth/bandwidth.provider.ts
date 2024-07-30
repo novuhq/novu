@@ -5,9 +5,10 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 
-import { Client, ApiController } from '@bandwidth/messaging';
+import { Client, ApiController, MessageRequest } from '@bandwidth/messaging';
 import { SmsProviderIdEnum } from '@novu/shared';
-export class BandwidthSmsProvider implements ISmsProvider {
+import { BaseProvider } from '../../../base.provider';
+export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Bandwidth;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public controller: ApiController;
@@ -19,6 +20,7 @@ export class BandwidthSmsProvider implements ISmsProvider {
       accountId: string;
     }
   ) {
+    super();
     const client = new Client({
       basicAuthUserName: config.username,
       basicAuthPassword: config.password,
@@ -30,17 +32,16 @@ export class BandwidthSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const body = {
+    const body = this.transform<MessageRequest>(bridgeProviderData, {
       applicationId: this.config.accountId,
       to: [options.to],
       from: options.from,
       text: options.content,
-      ...bridgeProviderData,
-    };
+    });
 
     const createMessageResponse = await this.controller.createMessage(
       this.config.accountId,
-      body
+      body.body
     );
 
     return {

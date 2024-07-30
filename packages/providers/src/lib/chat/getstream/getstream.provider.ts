@@ -6,8 +6,12 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class GetstreamChatProvider implements IChatProvider {
+export class GetstreamChatProvider
+  extends BaseProvider
+  implements IChatProvider
+{
   id = ChatProviderIdEnum.GetStream;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
@@ -17,6 +21,7 @@ export class GetstreamChatProvider implements IChatProvider {
       apiKey: string;
     }
   ) {
+    super();
     this.config = config;
   }
 
@@ -24,12 +29,14 @@ export class GetstreamChatProvider implements IChatProvider {
     data: IChatOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await this.axiosInstance.post(data.webhookUrl, {
+    const transformedData = this.transform(bridgeProviderData, {
       text: data.content,
-      ...bridgeProviderData,
+    });
+    const response = await this.axiosInstance.post(data.webhookUrl, {
+      ...transformedData.body,
       headers: {
         'X-API-KEY': this.config.apiKey,
-        ...((bridgeProviderData.headers as object) || {}),
+        ...transformedData.headers,
       },
     });
 

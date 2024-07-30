@@ -8,8 +8,9 @@ import {
 import { Vonage } from '@vonage/server-sdk';
 import { Auth } from '@vonage/auth';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class NexmoSmsProvider implements ISmsProvider {
+export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Nexmo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private vonageClient: Vonage;
@@ -21,6 +22,7 @@ export class NexmoSmsProvider implements ISmsProvider {
       from: string;
     }
   ) {
+    super();
     this.vonageClient = new Vonage(
       new Auth({
         apiKey: config.apiKey,
@@ -33,12 +35,13 @@ export class NexmoSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await this.vonageClient.sms.send({
-      to: options.to,
-      from: this.config.from,
-      text: options.content,
-      ...bridgeProviderData,
-    });
+    const response = await this.vonageClient.sms.send(
+      this.transform<any>(bridgeProviderData, {
+        to: options.to,
+        from: this.config.from,
+        text: options.content,
+      }).body
+    );
 
     return {
       id: response.messages[0]['message-id'],

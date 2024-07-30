@@ -8,8 +8,12 @@ import {
   IEmailProvider,
 } from '@novu/stateless';
 import { Resend } from 'resend';
+import { BaseProvider } from '../../../base.provider';
 
-export class ResendEmailProvider implements IEmailProvider {
+export class ResendEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   id = EmailProviderIdEnum.Resend;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private resendClient: Resend;
@@ -21,6 +25,7 @@ export class ResendEmailProvider implements IEmailProvider {
       senderName?: string;
     }
   ) {
+    super();
     this.resendClient = new Resend(this.config.apiKey);
   }
 
@@ -31,22 +36,23 @@ export class ResendEmailProvider implements IEmailProvider {
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
 
-    const response = await this.resendClient.emails.send({
-      from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
-      to: options.to,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-      cc: options.cc,
-      reply_to: options.replyTo || null,
-      attachments: options.attachments?.map((attachment) => ({
-        filename: attachment?.name,
-        content: attachment.file,
-      })),
-      bcc: options.bcc,
-      headers: options.headers,
-      ...bridgeProviderData,
-    });
+    const response = await this.resendClient.emails.send(
+      this.transform<any>(bridgeProviderData, {
+        from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+        cc: options.cc,
+        reply_to: options.replyTo || null,
+        attachments: options.attachments?.map((attachment) => ({
+          filename: attachment?.name,
+          content: attachment.file,
+        })),
+        bcc: options.bcc,
+        headers: options.headers,
+      }).body
+    );
 
     if (response.error) {
       throw new Error(response.error.message);

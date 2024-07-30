@@ -10,8 +10,12 @@ import {
   EmailEventStatusEnum,
 } from '@novu/stateless';
 import { Errors, ServerClient, Message, Models } from 'postmark';
+import { BaseProvider } from '../../../base.provider';
 
-export class PostmarkEmailProvider implements IEmailProvider {
+export class PostmarkEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   id = EmailProviderIdEnum.Postmark;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private client: ServerClient;
@@ -22,6 +26,7 @@ export class PostmarkEmailProvider implements IEmailProvider {
       from: string;
     }
   ) {
+    super();
     this.client = new ServerClient(this.config.apiKey);
   }
 
@@ -30,10 +35,12 @@ export class PostmarkEmailProvider implements IEmailProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
-    const response = await this.client.sendEmail({
-      ...mailData,
-      ...bridgeProviderData,
-    });
+    const response = await this.client.sendEmail(
+      this.transform<Message>(
+        bridgeProviderData,
+        mailData as unknown as Record<string, unknown>
+      ).body
+    );
 
     return {
       id: response.MessageID,

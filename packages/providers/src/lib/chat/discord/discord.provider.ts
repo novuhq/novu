@@ -6,13 +6,16 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class DiscordProvider implements IChatProvider {
+export class DiscordProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.Discord;
   private axiosInstance = axios.create();
 
-  constructor(private config) {}
+  constructor(private config) {
+    super();
+  }
 
   async sendMessage(
     data: IChatOptions,
@@ -21,11 +24,13 @@ export class DiscordProvider implements IChatProvider {
     // Setting the wait parameter with the URL API to respect user parameters
     const url = new URL(data.webhookUrl);
     url.searchParams.set('wait', 'true');
-    const response = await this.axiosInstance.post(url.toString(), {
-      content: data.content,
-      ...(data.customData || {}),
-      ...bridgeProviderData,
-    });
+    const response = await this.axiosInstance.post(
+      url.toString(),
+      this.transform(bridgeProviderData, {
+        content: data.content,
+        ...(data.customData || {}),
+      }).body
+    );
 
     return {
       id: response.data.id,

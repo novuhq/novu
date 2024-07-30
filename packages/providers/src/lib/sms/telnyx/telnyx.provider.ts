@@ -9,10 +9,12 @@ import {
 } from '@novu/stateless';
 
 import Telnyx from 'telnyx';
+import { BaseProvider } from '../../../base.provider';
 
 import { ITelnyxCLient } from './telnyx.interface';
+import { ITelnyxSmsOptions } from '../../../../../../providers/telnyx/build/module/lib/telnyx.interface';
 
-export class TelnyxSmsProvider implements ISmsProvider {
+export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Telnyx;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private telnyxClient: ITelnyxCLient;
@@ -24,6 +26,7 @@ export class TelnyxSmsProvider implements ISmsProvider {
       messageProfileId?: string;
     }
   ) {
+    super();
     this.telnyxClient = Telnyx(config.apiKey);
   }
 
@@ -31,13 +34,14 @@ export class TelnyxSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const telynxResponse = await this.telnyxClient.messages.create({
-      to: options.to,
-      text: options.content,
-      from: options.from || this.config.from,
-      messaging_profile_id: this.config.messageProfileId,
-      ...bridgeProviderData,
-    });
+    const telynxResponse = await this.telnyxClient.messages.create(
+      this.transform<ITelnyxSmsOptions>(bridgeProviderData, {
+        to: options.to,
+        text: options.content,
+        from: options.from || this.config.from,
+        messaging_profile_id: this.config.messageProfileId,
+      }).body
+    );
 
     return {
       id: telynxResponse.data.id,

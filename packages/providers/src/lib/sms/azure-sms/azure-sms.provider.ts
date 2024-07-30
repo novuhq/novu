@@ -4,10 +4,11 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import { SmsClient } from '@azure/communication-sms';
+import { SmsClient, SmsSendRequest } from '@azure/communication-sms';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class AzureSmsProvider implements ISmsProvider {
+export class AzureSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.AzureSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
@@ -17,6 +18,7 @@ export class AzureSmsProvider implements ISmsProvider {
       connectionString: string;
     }
   ) {
+    super();
     this.smsClient = new SmsClient(this.config.connectionString);
   }
 
@@ -24,12 +26,13 @@ export class AzureSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const sendResults = await this.smsClient.send({
-      from: options.from,
-      to: [options.to],
-      message: options.content,
-      ...bridgeProviderData,
-    });
+    const sendResults = await this.smsClient.send(
+      this.transform<SmsSendRequest>(bridgeProviderData, {
+        from: options.from,
+        to: [options.to],
+        message: options.content,
+      }).body
+    );
 
     const sendResult = sendResults[0];
 

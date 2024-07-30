@@ -6,8 +6,12 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class SmsCentralSmsProvider implements ISmsProvider {
+export class SmsCentralSmsProvider
+  extends BaseProvider
+  implements ISmsProvider
+{
   public readonly DEFAULT_BASE_URL = 'https://my.smscentral.com.au/api/v3.2';
   id = SmsProviderIdEnum.SmsCentral;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -19,21 +23,22 @@ export class SmsCentralSmsProvider implements ISmsProvider {
       from: string;
       baseUrl?: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const data = {
+    const data = this.transform(bridgeProviderData, {
       ACTION: 'send',
       ORIGINATOR: options.from || this.config.from,
       USERNAME: this.config.username,
       PASSWORD: this.config.password,
       RECIPIENT: options.to,
       MESSAGE_TEXT: options.content,
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const url = this.config.baseUrl || this.DEFAULT_BASE_URL;
     await axios.post(url, data);

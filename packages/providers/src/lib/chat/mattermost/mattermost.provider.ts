@@ -6,13 +6,14 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
 interface IMattermostPayload {
   channel?: string;
   text: string;
 }
 
-export class MattermostProvider implements IChatProvider {
+export class MattermostProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.Mattermost;
   private axiosInstance = axios.create();
@@ -26,10 +27,10 @@ export class MattermostProvider implements IChatProvider {
     if (data.channel) {
       payload.channel = data.channel;
     }
-    const response = await this.axiosInstance.post(data.webhookUrl, {
-      ...payload,
-      ...bridgeProviderData,
-    });
+    const response = await this.axiosInstance.post(
+      data.webhookUrl,
+      this.transform(bridgeProviderData, payload).body
+    );
 
     return {
       id: response.headers['x-request-id'],

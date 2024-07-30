@@ -10,6 +10,7 @@ import {
   EmailEventStatusEnum,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 import { IEmailBody, IEmailResponse } from './netcore-types';
 
 export enum NetCoreStatusEnum {
@@ -23,7 +24,7 @@ export enum NetCoreStatusEnum {
   UNSUBSCRIBED = 'unsub',
 }
 
-export class NetCoreProvider implements IEmailProvider {
+export class NetCoreProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.NetCore;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   public readonly BASE_URL = 'https://emailapi.netcorecloud.net/v5.1';
@@ -36,6 +37,7 @@ export class NetCoreProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: this.BASE_URL,
     });
@@ -45,7 +47,7 @@ export class NetCoreProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const data: IEmailBody = {
+    const data: IEmailBody = this.transform<IEmailBody>(bridgeProviderData, {
       from: {
         email: options.from || this.config.from,
         name: options.senderName || this.config.senderName,
@@ -62,8 +64,7 @@ export class NetCoreProvider implements IEmailProvider {
           to: options.to.map((email) => ({ email })),
         },
       ],
-      ...bridgeProviderData,
-    };
+    }).body;
 
     if (options.replyTo) {
       data.reply_to = options.replyTo;

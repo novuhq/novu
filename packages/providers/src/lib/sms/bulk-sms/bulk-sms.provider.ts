@@ -6,8 +6,9 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class BulkSmsProvider implements ISmsProvider {
+export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BulkSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.bulksms.com/v1/messages';
@@ -16,24 +17,26 @@ export class BulkSmsProvider implements ISmsProvider {
     private config: {
       apiToken: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = {
+    const payload = this.transform(bridgeProviderData, {
       to: options.to,
       body: options.content,
       from: options.from || null,
-      ...bridgeProviderData,
-    };
+    });
     const url = this.DEFAULT_BASE_URL;
     const encodedToken = Buffer.from(this.config.apiToken).toString('base64');
-    const response = await axios.post(url, JSON.stringify(payload), {
+    const response = await axios.post(url, JSON.stringify(payload.body), {
       headers: {
         Authorization: `Basic ${encodedToken}`,
         'Content-Type': 'application/json',
+        ...payload.headers,
       },
     });
 

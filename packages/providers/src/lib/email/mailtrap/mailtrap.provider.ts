@@ -7,9 +7,13 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import { MailtrapClient, Address } from 'mailtrap';
+import { MailtrapClient, Address, Mail } from 'mailtrap';
+import { BaseProvider } from '../../../base.provider';
 
-export class MailtrapEmailProvider implements IEmailProvider {
+export class MailtrapEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   id = EmailProviderIdEnum.Mailtrap;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly mailtrapClient: MailtrapClient;
@@ -20,6 +24,7 @@ export class MailtrapEmailProvider implements IEmailProvider {
       from: string;
     }
   ) {
+    super();
     this.mailtrapClient = new MailtrapClient({
       token: config.apiKey,
     });
@@ -61,21 +66,22 @@ export class MailtrapEmailProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ) {
-    return this.mailtrapClient.send({
-      to: options.to.map(this.mapAddress),
-      from: this.mapAddress(options.from || this.config.from),
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-      bcc: options.bcc?.map(this.mapAddress),
-      cc: options.cc?.map(this.mapAddress),
-      attachments: options.attachments?.map((attachment) => ({
-        filename: attachment.name,
-        content: attachment.file,
-        type: attachment.mime,
-      })),
-      ...bridgeProviderData,
-    });
+    return this.mailtrapClient.send(
+      this.transform<Mail>(bridgeProviderData, {
+        to: options.to.map(this.mapAddress),
+        from: this.mapAddress(options.from || this.config.from),
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+        bcc: options.bcc?.map(this.mapAddress),
+        cc: options.cc?.map(this.mapAddress),
+        attachments: options.attachments?.map((attachment) => ({
+          filename: attachment.name,
+          content: attachment.file,
+          type: attachment.mime,
+        })),
+      }).body
+    );
   }
 
   private mapAddress(email: string): Address {

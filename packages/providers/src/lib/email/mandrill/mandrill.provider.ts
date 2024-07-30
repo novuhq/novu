@@ -10,8 +10,9 @@ import {
 } from '@novu/stateless';
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
-import { IMandrilInterface } from './mandril.interface';
+import { IMandrilInterface, IMandrillSendOptions } from './mandril.interface';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -26,7 +27,7 @@ export enum MandrillStatusEnum {
   DELIVERED = 'delivered',
 }
 
-export class MandrillProvider implements IEmailProvider {
+export class MandrillProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Mandrill;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
@@ -39,6 +40,7 @@ export class MandrillProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
+    super();
     this.transporter = mailchimp(this.config.apiKey);
   }
 
@@ -46,21 +48,23 @@ export class MandrillProvider implements IEmailProvider {
     emailOptions: IEmailOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const mandrillSendOption = {
-      message: {
-        from_email: emailOptions.from || this.config.from,
-        from_name: emailOptions.senderName || this.config.senderName,
-        subject: emailOptions.subject,
-        html: emailOptions.html,
-        to: this.mapTo(emailOptions),
-        attachments: emailOptions.attachments?.map((attachment) => ({
-          content: attachment.file.toString('base64'),
-          type: attachment.mime,
-          name: attachment?.name,
-        })),
-        ...bridgeProviderData,
-      },
-    };
+    const mandrillSendOption = this.transform<IMandrillSendOptions>(
+      bridgeProviderData,
+      {
+        message: {
+          from_email: emailOptions.from || this.config.from,
+          from_name: emailOptions.senderName || this.config.senderName,
+          subject: emailOptions.subject,
+          html: emailOptions.html,
+          to: this.mapTo(emailOptions),
+          attachments: emailOptions.attachments?.map((attachment) => ({
+            content: attachment.file.toString('base64'),
+            type: attachment.mime,
+            name: attachment?.name,
+          })),
+        },
+      }
+    ).body;
 
     const response = await this.transporter.messages.send(mandrillSendOption);
 

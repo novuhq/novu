@@ -6,8 +6,9 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class EazySmsProvider implements ISmsProvider {
+export class EazySmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.EazySms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.eazy.im/v3';
@@ -17,28 +18,29 @@ export class EazySmsProvider implements ISmsProvider {
       apiKey: string;
       channelId: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = {
-      ...bridgeProviderData,
+    const payload = this.transform(bridgeProviderData, {
       message: {
         text: options.content,
         type: 'text',
-        ...((bridgeProviderData.message as object) || {}),
       },
-    };
+    });
 
     const response = await axios.post(
       `${this.DEFAULT_BASE_URL}/channels/${this.config.channelId}/messages/${options.to}${this.EAZY_SMS_CHANNEL}`,
-      payload,
+      payload.body,
       {
         headers: {
           Authorization: `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json',
+          ...payload.headers,
         },
       }
     );

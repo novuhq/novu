@@ -11,8 +11,9 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class BrevoEmailProvider implements IEmailProvider {
+export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Sendinblue; // brevo changed name from sendinblue.
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private axiosInstance: AxiosInstance;
@@ -25,6 +26,7 @@ export class BrevoEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: this.BASE_URL,
     });
@@ -68,6 +70,8 @@ export class BrevoEmailProvider implements IEmailProvider {
       };
     }
 
+    const transformedData = this.transform(bridgeProviderData, email);
+
     const emailOptions: AxiosRequestConfig = {
       url: '/smtp/email',
       method: 'POST',
@@ -75,8 +79,9 @@ export class BrevoEmailProvider implements IEmailProvider {
         'api-key': this.config.apiKey,
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...transformedData.headers,
       },
-      data: JSON.stringify({ ...email, ...bridgeProviderData }),
+      data: JSON.stringify(transformedData.body),
     };
 
     const response = await this.axiosInstance.request<{ messageId: string }>(

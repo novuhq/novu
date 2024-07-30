@@ -7,8 +7,12 @@ import {
 import crypto from 'crypto';
 import axios from 'axios';
 import { PushProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class PushWebhookPushProvider implements IPushProvider {
+export class PushWebhookPushProvider
+  extends BaseProvider
+  implements IPushProvider
+{
   readonly id = PushProviderIdEnum.PushWebhook;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
@@ -17,29 +21,32 @@ export class PushWebhookPushProvider implements IPushProvider {
       hmacSecretKey?: string;
       webhookUrl: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: IPushOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { subscriber, step, payload, ...rest } = options;
-    const bodyData = this.createBody({
+    const data = this.transform(bridgeProviderData, {
       ...rest,
-      ...bridgeProviderData,
       payload: {
         ...payload,
         subscriber,
         step,
-        ...((bridgeProviderData.payload as object) || {}),
       },
     });
-    const hmacValue = this.computeHmac(bodyData);
+    const body = this.createBody(data.body);
 
-    const response = await axios.post(this.config.webhookUrl, bodyData, {
+    const hmacValue = this.computeHmac(body);
+
+    const response = await axios.post(this.config.webhookUrl, body, {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,
+        ...data.headers,
       },
     });
 

@@ -6,10 +6,14 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
 
-export class WhatsappBusinessChatProvider implements IChatProvider {
+export class WhatsappBusinessChatProvider
+  extends BaseProvider
+  implements IChatProvider
+{
   id = ChatProviderIdEnum.WhatsAppBusiness;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
@@ -22,6 +26,7 @@ export class WhatsappBusinessChatProvider implements IChatProvider {
       phoneNumberIdentification: string;
     }
   ) {
+    super();
     this.axiosClient = Axios.create({
       headers: {
         Authorization: `Bearer ${this.config.accessToken}`,
@@ -34,10 +39,10 @@ export class WhatsappBusinessChatProvider implements IChatProvider {
     options: IChatOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = {
-      ...this.defineMessagePayload(options),
-      ...bridgeProviderData,
-    };
+    const payload = this.transform(
+      bridgeProviderData,
+      this.defineMessagePayload(options)
+    ).body;
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       this.baseUrl + this.config.phoneNumberIdentification + '/messages',

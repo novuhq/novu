@@ -6,13 +6,14 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
   globalThis.fetch = require('node-fetch');
 }
 
-export class GupshupSmsProvider implements ISmsProvider {
+export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Gupshup;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
@@ -22,13 +23,15 @@ export class GupshupSmsProvider implements ISmsProvider {
       userId?: string;
       password?: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const params = {
+    const params = this.transform(bridgeProviderData, {
       send_to: options.to,
       msg: options.content,
       msg_type: 'text',
@@ -44,8 +47,7 @@ export class GupshupSmsProvider implements ISmsProvider {
       ...(options.customData?.dltTemplateId && {
         dltTemplateId: options.customData?.dltTemplateId,
       }),
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const response = await axios.post(GupshupSmsProvider.BASE_URL, params);
 

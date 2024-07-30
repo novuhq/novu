@@ -2,15 +2,17 @@ import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
-  ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
-  SmsEventStatusEnum,
 } from '@novu/stateless';
 
 import axios, { Axios } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class ClickatellSmsProvider implements ISmsProvider {
+export class ClickatellSmsProvider
+  extends BaseProvider
+  implements ISmsProvider
+{
   id = SmsProviderIdEnum.Clickatell;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axios: Axios;
@@ -20,7 +22,9 @@ export class ClickatellSmsProvider implements ISmsProvider {
       apiKey?: string;
       isTwoWayIntegration?: boolean;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
@@ -28,19 +32,19 @@ export class ClickatellSmsProvider implements ISmsProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const url = 'https://platform.clickatell.com/messages';
 
-    const data = {
+    const data = this.transform(bridgeProviderData, {
       to: [options.to],
       ...(this.config.isTwoWayIntegration && { from: options.from }),
       content: options.content,
       binary: true,
-      ...bridgeProviderData,
-    };
+    });
 
     const response = await axios({
       headers: {
         Authorization: this.config.apiKey,
+        ...data.headers,
       },
-      data,
+      data: data.body,
       method: 'post',
       url,
     });

@@ -6,13 +6,16 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class MsTeamsProvider implements IChatProvider {
+export class MsTeamsProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.MsTeams;
   private axiosInstance = axios.create();
 
-  constructor(private config) {}
+  constructor(private config) {
+    super();
+  }
 
   async sendMessage(
     data: IChatOptions,
@@ -26,7 +29,7 @@ export class MsTeamsProvider implements IChatProvider {
       payload = { text: data.content };
     }
 
-    payload = { ...payload, ...bridgeProviderData };
+    payload = this.transform(bridgeProviderData, payload).body;
 
     const response = await this.axiosInstance.post(data.webhookUrl, payload);
 

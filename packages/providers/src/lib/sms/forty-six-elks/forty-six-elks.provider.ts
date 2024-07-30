@@ -6,6 +6,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
 interface IFortySixElksSuccessObject {
   status: string;
@@ -23,7 +24,10 @@ interface IFortySixElksRequestResponse {
   data: IFortySixElksSuccessObject;
 }
 
-export class FortySixElksSmsProvider implements ISmsProvider {
+export class FortySixElksSmsProvider
+  extends BaseProvider
+  implements ISmsProvider
+{
   id = SmsProviderIdEnum.FortySixElks;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
@@ -33,7 +37,9 @@ export class FortySixElksSmsProvider implements ISmsProvider {
       password?: string;
       from?: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: ISmsOptions,
@@ -43,12 +49,16 @@ export class FortySixElksSmsProvider implements ISmsProvider {
       this.config.user + ':' + this.config.password
     ).toString('base64');
 
-    const data = new URLSearchParams({
-      from: options.from || this.config.from,
-      to: options.to,
-      message: options.content,
-      ...bridgeProviderData,
-    }).toString();
+    const transformedData = this.transform<Record<string, string>>(
+      bridgeProviderData,
+      {
+        from: options.from || this.config.from,
+        to: options.to,
+        message: options.content,
+      }
+    );
+
+    const data = new URLSearchParams(transformedData.body).toString();
 
     const res: IFortySixElksRequestResponse = await axios.post(
       'https://api.46elks.com/a1/sms',
@@ -56,6 +66,7 @@ export class FortySixElksSmsProvider implements ISmsProvider {
       {
         headers: {
           Authorization: 'Basic ' + authKey,
+          ...transformedData.headers,
         },
       }
     );

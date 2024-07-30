@@ -7,8 +7,12 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { v4 as uuid } from 'uuid';
+import { BaseProvider } from '../../../base.provider';
 
-export class GrafanaOnCallChatProvider implements IChatProvider {
+export class GrafanaOnCallChatProvider
+  extends BaseProvider
+  implements IChatProvider
+{
   id = ChatProviderIdEnum.GrafanaOnCall;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
@@ -20,22 +24,23 @@ export class GrafanaOnCallChatProvider implements IChatProvider {
       state?: string;
       externalLink?: string;
     }
-  ) {}
+  ) {
+    super();
+  }
 
   async sendMessage(
     options: IChatOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
-    const body = {
+    const body = this.transform(bridgeProviderData, {
       alert_uid: this.config.alertUid,
       title: this.config.title,
       image_url: this.config.imageUrl,
       state: this.config.state,
       link_to_upstream_details: this.config.externalLink,
       message: options.content,
-      ...bridgeProviderData,
-    };
+    }).body;
     //response is just string "Ok."
     const { headers } = await this.axiosInstance.post(url.toString(), body);
 

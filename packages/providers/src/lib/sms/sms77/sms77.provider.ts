@@ -7,13 +7,14 @@ import {
 } from '@novu/stateless';
 
 import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
+import { BaseProvider } from '../../../base.provider';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
   globalThis.fetch = require('node-fetch');
 }
 
-export class Sms77SmsProvider implements ISmsProvider {
+export class Sms77SmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sms77;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private sms77Client: Sms77Client;
@@ -24,6 +25,7 @@ export class Sms77SmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
+    super();
     this.sms77Client = new Sms77Client(config.apiKey, 'Novu');
   }
 
@@ -31,13 +33,12 @@ export class Sms77SmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const params: SmsParams = {
+    const params: SmsParams = this.transform<SmsParams>(bridgeProviderData, {
       from: options.from || this.config.from,
       json: true,
       text: options.content,
       to: options.to,
-      ...bridgeProviderData,
-    };
+    }).body;
 
     const sms77Response = <SmsJsonResponse>await this.sms77Client.sms(params);
 

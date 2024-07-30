@@ -13,8 +13,9 @@ import {
   UsersExportIdsObject,
   UsersExportIdsResponse,
 } from 'braze-api';
+import { BaseProvider } from '../../../base.provider';
 
-export class BrazeEmailProvider implements IEmailProvider {
+export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Braze;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private braze: Braze;
@@ -26,6 +27,7 @@ export class BrazeEmailProvider implements IEmailProvider {
       appID: string;
     }
   ) {
+    super();
     this.braze = new Braze(this.config.apiURL, this.config.apiKey);
   }
 
@@ -34,10 +36,9 @@ export class BrazeEmailProvider implements IEmailProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const maildata = await this.createMailData(options);
-    const response = await this.braze.messages.send({
-      ...maildata,
-      ...bridgeProviderData,
-    });
+    const response = await this.braze.messages.send(
+      this.transform(bridgeProviderData, maildata).body
+    );
 
     return {
       id: response.dispatch_id,

@@ -8,8 +8,12 @@ import {
 } from '@novu/stateless';
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { BaseProvider } from '../../../base.provider';
 
-export class InfobipEmailProvider implements IEmailProvider {
+export class InfobipEmailProvider
+  extends BaseProvider
+  implements IEmailProvider
+{
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   id = EmailProviderIdEnum.Infobip;
 
@@ -22,6 +26,7 @@ export class InfobipEmailProvider implements IEmailProvider {
       from?: string;
     }
   ) {
+    super();
     this.infobipClient = new Infobip({
       baseUrl: this.config.baseUrl,
       apiKey: this.config.apiKey,
@@ -56,15 +61,18 @@ export class InfobipEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const infobipResponse = await this.infobipClient.channels.email.send({
-      to: options.to,
-      from: options.from || this.config.from,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-    });
+    const infobipResponse = await this.infobipClient.channels.email.send(
+      this.transform(bridgeProviderData, {
+        to: options.to,
+        from: options.from || this.config.from,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+      }).body
+    );
     const { messageId } = infobipResponse.data.messages.pop();
 
     return {

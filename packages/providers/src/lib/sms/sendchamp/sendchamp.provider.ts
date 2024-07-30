@@ -6,8 +6,9 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
+import { BaseProvider } from '../../../base.provider';
 
-export class SendchampSmsProvider implements ISmsProvider {
+export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sendchamp;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://api.sendchamp.com/v1';
@@ -19,6 +20,7 @@ export class SendchampSmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
+    super();
     this.axiosInstance = axios.create({
       baseURL: this.BASE_URL,
       headers: {
@@ -32,13 +34,12 @@ export class SendchampSmsProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const payload = {
+    const payload = this.transform(bridgeProviderData, {
       sender_name: options.from || this.config.from,
       to: options.to,
       message: options.content,
       route: 'international',
-      ...bridgeProviderData,
-    };
+    });
 
     const response = await this.axiosInstance.post(`/sms/send`, payload);
 
