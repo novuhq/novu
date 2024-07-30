@@ -44,6 +44,12 @@ on:
       netlify_site_id:
         required: true
         type: string
+      clerk_publishable_key:
+        required: true
+        type: string
+      clerk_is_ee_auth_enabled:
+        required: true
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -87,8 +93,8 @@ jobs:
           echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
           echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
           echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
-          echo REACT_APP_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }} >> .env
-          echo REACT_APP_IS_EE_AUTH_ENABLED=${{ secrets.IS_EE_AUTH_ENABLED }} >> .env
+          echo REACT_APP_CLERK_PUBLISHABLE_KEY=${{ inputs.clerk_publishable_key }} >> .env
+          echo REACT_APP_IS_EE_AUTH_ENABLED=${{ inputs.clerk_is_ee_auth_enabled }} >> .env
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup

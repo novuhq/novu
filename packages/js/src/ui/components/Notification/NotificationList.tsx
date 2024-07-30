@@ -4,6 +4,8 @@ import { useFeedInfiniteScroll } from '../../api';
 import { useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
+import { NotificationMounter } from '../../types';
+import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
 
 export const NotificationListContainer = (props: ParentProps) => {
@@ -11,7 +13,10 @@ export const NotificationListContainer = (props: ParentProps) => {
 
   return (
     <div
-      class={style('notificationList', 'nt-flex nt-flex-col nt-min-h-full nt-w-full nt-h-[37.5rem] nt-overflow-auto')}
+      class={style(
+        'notificationList',
+        'nt-flex nt-flex-col nt-min-h-full nt-min-w-full nt-w-96 nt-h-[37.5rem] nt-overflow-auto'
+      )}
     >
       {props.children}
     </div>
@@ -27,7 +32,7 @@ const EmptyNotificationList = () => {
       <div
         class={style(
           'notificationListEmptyNoticeContainer',
-          'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-fit nt-text-foreground-alpha-100'
+          'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-full nt-text-foreground-alpha-100'
         )}
       >
         <EmptyIcon />
@@ -38,8 +43,10 @@ const EmptyNotificationList = () => {
 };
 
 type NotificationListProps = {
+  mountNotification?: NotificationMounter;
   options?: FetchFeedArgs;
 };
+/* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
   const [data, { initialLoading, setEl, end }] = useFeedInfiniteScroll({ options: props.options });
 
@@ -47,8 +54,9 @@ export const NotificationList = (props: NotificationListProps) => {
     <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
       <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
         <NotificationListContainer>
-          {/* eslint-disable-next-line local-rules/no-class-without-style */}
-          <For each={data()}>{(notification) => <p class="nt-my-10">{notification.body}</p>}</For>
+          <For each={data()}>
+            {(notification) => <Notification notification={notification} mountNotification={props.mountNotification} />}
+          </For>
           <Show when={!end()}>
             <div ref={setEl}>
               <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>

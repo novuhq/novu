@@ -9,6 +9,7 @@ type LocalizationPath = Path<Localization>;
 
 type LocalizationContextType = {
   t: (key: LocalizationPath) => string;
+  locale: string;
 };
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export const LocalizationProvider = (props: LocalizationProviderProps) => {
     <LocalizationContext.Provider
       value={{
         t,
+        locale: localization().locale,
       }}
     >
       {props.children}

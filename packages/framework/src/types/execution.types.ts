@@ -1,4 +1,5 @@
 import { PostActionEnum } from '../constants';
+import { WithPassthrough } from './provider.types';
 import type { Subscriber } from './subscriber.types';
 
 export type Event = {
@@ -36,7 +37,7 @@ export type ExecuteOutputOptions = {
 
 export type ExecuteOutput = {
   outputs: Record<string, unknown>;
-  providers?: Record<string, Record<string, unknown>>;
+  providers?: Record<string, WithPassthrough<Record<string, unknown>>>;
   options: ExecuteOutputOptions;
   metadata: ExecuteOutputMetadata;
 };
