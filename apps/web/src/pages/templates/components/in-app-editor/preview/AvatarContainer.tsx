@@ -84,8 +84,6 @@ const AvatarContainer = ({
     defaultValue,
   });
 
-  console.log({ defaultValue });
-
   const [tooltipOpened, setTooltipOpened] = useState(() => {
     return value.type === ActorTypeEnum.NONE;
   });
