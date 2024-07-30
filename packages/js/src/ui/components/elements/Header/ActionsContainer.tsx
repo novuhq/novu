@@ -21,7 +21,7 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
       <OptionsDropdown placement="bottom-end" options={options} />
       <button
         class={style(
-          'settings__button',
+          'preferences__button',
           `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md
           nt-relative hover:nt-bg-foreground-alpha-50 nt-text-foreground-alpha-600`
         )}

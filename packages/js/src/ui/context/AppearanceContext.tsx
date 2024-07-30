@@ -56,8 +56,8 @@ export const appearanceKeys = [
   'bellIcon',
   'bellContainer',
   'bellDot',
-  'settings__button',
-  'settingsContainer',
+  'preferences__button',
+  'preferencesContainer',
   'inboxHeader',
   'loading',
 
@@ -136,13 +136,13 @@ export const appearanceKeys = [
   'channelSwitch',
   'channelSwitchThumb',
 
-  //Settings Header
-  'settingsHeader',
-  'settingsHeader__back__button',
-  'settingsHeader__title',
+  //Preferences Header
+  'preferencesHeader',
+  'preferencesHeader__back__button',
+  'preferencesHeader__title',
 
-  //Settings Loading
-  'settingsLoadingContainer',
+  //Preferences Loading
+  'preferencesLoadingContainer',
 ] as const;
 
 export type Variables = {

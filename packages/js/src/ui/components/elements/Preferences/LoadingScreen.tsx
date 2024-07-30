@@ -13,7 +13,7 @@ const LoadingSkeleton = () => {
   return (
     <div
       class={style(
-        'settingsLoadingContainer',
+        'preferencesLoadingContainer',
         'nt-p-4 nt-flex nt-gap-1 nt-items-center nt-self-stretch nt-animate-pulse'
       )}
     >

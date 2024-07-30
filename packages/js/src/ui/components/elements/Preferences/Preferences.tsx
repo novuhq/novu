@@ -40,20 +40,22 @@ export const Preferences = () => {
   };
 
   return (
-    <div class={style('settingsContainer', 'nt-p-2 nt-flex nt-flex-col nt-gap-1 nt-bg-background nt-overflow-y-auto')}>
+    <div
+      class={style('preferencesContainer', 'nt-p-2 nt-flex nt-flex-col nt-gap-1 nt-bg-background nt-overflow-y-auto')}
+    >
       <Show when={preferences.loading}>
         <LoadingScreen />
       </Show>
       <Show when={!preferences.loading && preferences()}>
-        <SettingsRow
-          label="Global Settings"
+        <PreferencesRow
+          label="Global Preferences"
           channels={allPreferences().globalPreference?.channels || {}}
           onChange={optimisticUpdate}
         />
 
         <For each={allPreferences().workflowPreferences}>
           {(preference) => (
-            <SettingsRow
+            <PreferencesRow
               label={preference.workflow?.name as string}
               channels={preference.channels}
               workflowId={preference.workflow?.id}
@@ -81,7 +83,7 @@ const ChannelsLabel = (props: { channels: ChannelPreference }) => {
   );
 };
 
-const SettingsRow = (props: {
+const PreferencesRow = (props: {
   label: string;
   channels: ChannelPreference;
   workflowId?: string;
