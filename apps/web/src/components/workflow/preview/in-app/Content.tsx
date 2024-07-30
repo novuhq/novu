@@ -12,8 +12,8 @@ import {
   ContentStyled,
   NotificationTextStyled,
   SkeletonStyled,
-  TimeTextStyled,
   SubjectTextStyled,
+  TimeTextStyled,
 } from './Content.styles';
 
 export default function Content({
@@ -22,16 +22,15 @@ export default function Content({
   templateError,
   showOverlay = true,
   enableAvatar,
-  avatar,
 }: {
   isPreviewLoading: boolean;
   parsedPreviewState: ParsedPreviewStateType;
   templateError: string;
   showOverlay?: boolean;
   enableAvatar?: boolean;
-  avatar?: string;
 }) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
+  console.log({ parsedPreviewState });
 
   const isBlur = isHovered && showOverlay;
 
@@ -50,9 +49,7 @@ export default function Content({
             ) : (
               <div>
                 <Group spacing={10} align="flex-start">
-                  {enableAvatar && (
-                    <AvatarContainer opened={false} setOpened={() => {}} readonly={true} defaultValue={avatar} />
-                  )}
+                  {enableAvatar && <AvatarContainer opened={false} setOpened={() => {}} readonly={true} />}
                   <Stack spacing={24}>
                     {parsedPreviewState.subject && <SubjectTextStyled>{parsedPreviewState.subject}</SubjectTextStyled>}
                     <NotificationTextStyled

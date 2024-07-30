@@ -33,10 +33,12 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     content: string;
     ctaButtons: Array<IMessageButton>;
     subject: string;
+    avatar: string;
   }>({
     content: '',
     ctaButtons: [],
     subject: '',
+    avatar: '',
   });
 
   const {
@@ -50,6 +52,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
         setBridgeContent({
           subject: data.outputs.subject,
           content: data.outputs.body,
+          avatar: data.outputs.avatar,
           ctaButtons: [
             ...(data.outputs.primaryAction
               ? [

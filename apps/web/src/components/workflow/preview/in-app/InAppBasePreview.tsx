@@ -21,7 +21,6 @@ export const InAppBasePreview = ({
   selectedLocale,
   locales = [],
   enableAvatar = false,
-  avatar,
 }: {
   content: ParsedPreviewStateType;
   loading?: boolean;
@@ -31,7 +30,6 @@ export const InAppBasePreview = ({
   selectedLocale?: string;
   locales: any[];
   enableAvatar?: boolean;
-  avatar?: string;
 }) => {
   return (
     <ContainerStyled removePadding={!showEditOverlay}>
@@ -47,7 +45,6 @@ export const InAppBasePreview = ({
         templateError={error || ''}
         showOverlay={showEditOverlay}
         enableAvatar={enableAvatar}
-        avatar={avatar}
       />
     </ContainerStyled>
   );
