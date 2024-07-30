@@ -19,16 +19,17 @@ export interface ISubscriberPreferenceResponse {
   preference: IPreferenceResponse;
 }
 
-export interface ISubscriberWorkflowPreferenceResponse {
+export interface ISubscriberWorkflowPreferenceResponse extends IPreferenceResponse {
   workflow: ITemplateConfiguration;
-  preferences: IPreferenceResponse;
   level: PreferenceLevelEnum.TEMPLATE;
 }
 
 export interface ISubscriberPreferences {
   level: PreferenceLevelEnum;
   workflow?: ITemplateConfiguration;
-  preferences: { enabled: boolean; channels: IPreferenceChannels; overrides?: IPreferenceOverride[] };
+  enabled: boolean;
+  channels: IPreferenceChannels;
+  overrides?: IPreferenceOverride[];
 }
 
 export interface IPreferenceResponse {

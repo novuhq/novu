@@ -1,5 +1,12 @@
 import { ApiOptions, HttpClient } from '@novu/client';
-import type { ActionTypeEnum, InboxNotification, NotificationFilter, Session } from '../types';
+import type {
+  ActionTypeEnum,
+  ChannelPreference,
+  InboxNotification,
+  NotificationFilter,
+  PreferencesResponse,
+  Session,
+} from '../types';
 
 export type InboxServiceOptions = ApiOptions;
 
@@ -142,5 +149,23 @@ export class InboxService {
     return this.#httpClient.patch(`${INBOX_NOTIFICATIONS_ROUTE}/${notificationId}/revert`, {
       actionType,
     });
+  }
+
+  fetchPreferences(): Promise<PreferencesResponse[]> {
+    return this.#httpClient.get(`${INBOX_ROUTE}/preferences`);
+  }
+
+  updateGlobalPreferences(channelPreferences: ChannelPreference): Promise<PreferencesResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences`, channelPreferences);
+  }
+
+  updateWorkflowPreferences({
+    workflowId,
+    channelPreferences,
+  }: {
+    workflowId: string;
+    channelPreferences: ChannelPreference;
+  }): Promise<PreferencesResponse> {
+    return this.#httpClient.patch(`${INBOX_ROUTE}/preferences/${workflowId}`, channelPreferences);
   }
 }
