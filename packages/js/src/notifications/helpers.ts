@@ -1,8 +1,9 @@
-import { Action, ActionTypeEnum } from '../types';
+import { Action, ActionTypeEnum, Result } from '../types';
 import { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
 import { Notification } from './notification';
 import { ArchivedArgs, CompleteArgs, ReadArgs, RevertArgs, UnarchivedArgs, UnreadArgs } from './types';
+import { NovuError } from '../utils/errors';
 
 export const read = async ({
   emitter,
@@ -12,7 +13,7 @@ export const read = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   args: ReadArgs;
-}): Promise<Notification> => {
+}): Result<Notification> => {
   const { notificationId, optimisticValue } = getNotificationDetails(args, {
     isRead: true,
     readAt: new Date().toISOString(),
@@ -23,18 +24,19 @@ export const read = async ({
   try {
     emitter.emit('notification.read.pending', {
       args,
-      optimistic: optimisticValue,
+      data: optimisticValue,
     });
 
     const response = await apiService.read(notificationId);
 
     const updatedNotification = new Notification(response);
-    emitter.emit('notification.read.success', { args, result: updatedNotification });
+    emitter.emit('notification.read.resolved', { args, data: updatedNotification });
 
-    return updatedNotification;
+    return { data: updatedNotification };
   } catch (error) {
-    emitter.emit('notification.read.error', { args, error });
-    throw error;
+    emitter.emit('notification.read.resolved', { args, error });
+
+    return { error: new NovuError('Failed to read notification', error) };
   }
 };
 
@@ -46,7 +48,7 @@ export const unread = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   args: UnreadArgs;
-}): Promise<Notification> => {
+}): Result<Notification> => {
   const { notificationId, optimisticValue } = getNotificationDetails(args, {
     isRead: false,
     readAt: null,
@@ -56,18 +58,19 @@ export const unread = async ({
   try {
     emitter.emit('notification.unread.pending', {
       args,
-      optimistic: optimisticValue,
+      data: optimisticValue,
     });
 
     const response = await apiService.unread(notificationId);
 
     const updatedNotification = new Notification(response);
-    emitter.emit('notification.unread.success', { args, result: updatedNotification });
+    emitter.emit('notification.unread.resolved', { args, data: updatedNotification });
 
-    return updatedNotification;
+    return { data: updatedNotification };
   } catch (error) {
-    emitter.emit('notification.unread.error', { args, error });
-    throw error;
+    emitter.emit('notification.unread.resolved', { args, error });
+
+    return { error: new NovuError('Failed to unread notification', error) };
   }
 };
 
@@ -79,7 +82,7 @@ export const archive = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   args: ArchivedArgs;
-}): Promise<Notification> => {
+}): Result<Notification> => {
   const { notificationId, optimisticValue } = getNotificationDetails(args, {
     isArchived: true,
     archivedAt: new Date().toISOString(),
@@ -90,18 +93,19 @@ export const archive = async ({
   try {
     emitter.emit('notification.archive.pending', {
       args,
-      optimistic: optimisticValue,
+      data: optimisticValue,
     });
 
     const response = await apiService.archive(notificationId);
 
     const updatedNotification = new Notification(response);
-    emitter.emit('notification.archive.success', { args, result: updatedNotification });
+    emitter.emit('notification.archive.resolved', { args, data: updatedNotification });
 
-    return updatedNotification;
+    return { data: updatedNotification };
   } catch (error) {
-    emitter.emit('notification.archive.error', { args, error });
-    throw error;
+    emitter.emit('notification.archive.resolved', { args, error });
+
+    return { error: new NovuError('Failed to archive notification', error) };
   }
 };
 
@@ -113,7 +117,7 @@ export const unarchive = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   args: UnarchivedArgs;
-}): Promise<Notification> => {
+}): Result<Notification> => {
   const { notificationId, optimisticValue } = getNotificationDetails(args, {
     isArchived: false,
     archivedAt: null,
@@ -124,18 +128,19 @@ export const unarchive = async ({
   try {
     emitter.emit('notification.unarchive.pending', {
       args,
-      optimistic: optimisticValue,
+      data: optimisticValue,
     });
 
     const response = await apiService.unarchive(notificationId);
 
     const updatedNotification = new Notification(response);
-    emitter.emit('notification.unarchive.success', { args, result: updatedNotification });
+    emitter.emit('notification.unarchive.resolved', { args, data: updatedNotification });
 
-    return updatedNotification;
+    return { data: updatedNotification };
   } catch (error) {
-    emitter.emit('notification.unarchive.error', { args, error });
-    throw error;
+    emitter.emit('notification.unarchive.resolved', { args, error });
+
+    return { error: new NovuError('Failed to unarchive notification', error) };
   }
 };
 
@@ -149,7 +154,7 @@ export const completeAction = async ({
   apiService: InboxService;
   args: CompleteArgs;
   actionType: ActionTypeEnum;
-}): Promise<Notification> => {
+}): Result<Notification> => {
   const optimisticAction: Action =
     'notification' in args
       ? {
@@ -174,18 +179,19 @@ export const completeAction = async ({
   try {
     emitter.emit('notification.complete_action.pending', {
       args,
-      optimistic: optimisticValue,
+      data: optimisticValue,
     });
 
     const response = await apiService.completeAction({ actionType, notificationId });
 
     const updatedNotification = new Notification(response);
-    emitter.emit('notification.complete_action.success', { args, result: updatedNotification });
+    emitter.emit('notification.complete_action.resolved', { args, data: updatedNotification });
 
-    return updatedNotification;
+    return { data: updatedNotification };
   } catch (error) {
-    emitter.emit('notification.complete_action.error', { args, error });
-    throw error;
+    emitter.emit('notification.complete_action.resolved', { args, error });
+
+    return { error: new NovuError(`Failed to complete ${actionType} action on the notification`, error) };
   }
 };
 
@@ -199,7 +205,7 @@ export const revertAction = async ({
   apiService: InboxService;
   args: RevertArgs;
   actionType: ActionTypeEnum;
-}): Promise<Notification> => {
+}): Result<Notification> => {
   const optimisticAction: Action =
     'notification' in args
       ? {
@@ -224,18 +230,19 @@ export const revertAction = async ({
   try {
     emitter.emit('notification.revert_action.pending', {
       args,
-      optimistic: optimisticValue,
+      data: optimisticValue,
     });
 
     const response = await apiService.revertAction({ actionType, notificationId });
 
     const updatedNotification = new Notification(response);
-    emitter.emit('notification.revert_action.success', { args, result: updatedNotification });
+    emitter.emit('notification.revert_action.resolved', { args, data: updatedNotification });
 
-    return updatedNotification;
+    return { data: updatedNotification };
   } catch (error) {
-    emitter.emit('notification.revert_action.error', { args, error });
-    throw error;
+    emitter.emit('notification.revert_action.resolved', { args, error });
+
+    return { error: new NovuError('Failed to fetch notifications', error) };
   }
 };
 

@@ -152,3 +152,8 @@ export type IPreferenceOverride = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TODO = any;
+
+export type Result<D = undefined, E = unknown> = Promise<{
+  data?: D;
+  error?: E;
+}>;

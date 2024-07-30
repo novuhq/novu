@@ -2,7 +2,7 @@ import { InboxService } from '../api';
 import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 
 import { NovuEventEmitter } from '../event-emitter';
-import { ChannelPreference, PreferenceLevel, Workflow } from '../types';
+import { ChannelPreference, PreferenceLevel, Result, Workflow } from '../types';
 import { updatePreference } from './helpers';
 
 type PreferenceLike = Pick<Preference, 'level' | 'enabled' | 'channels' | 'workflow'>;
@@ -26,7 +26,7 @@ export class Preference {
     this.workflow = preference.workflow;
   }
 
-  update({ channelPreferences }: { channelPreferences: ChannelPreference }): Promise<Preference> {
+  update({ channelPreferences }: { channelPreferences: ChannelPreference }): Result<Preference> {
     return updatePreference({
       emitter: this.#emitter,
       apiService: this.#apiService,

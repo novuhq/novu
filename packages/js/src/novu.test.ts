@@ -1,15 +1,15 @@
-import { FetchFeedArgs } from './feeds';
+import { ListNotificationsArgs } from './notifications';
 import { Novu } from './novu';
 
-const mockFeedResponse = {
+const mockNotificationsResponse = {
   data: [],
   hasMore: true,
   filter: { tags: [], read: false, archived: false },
 };
 
 const initializeSession = jest.fn().mockResolvedValue({ token: 'token', profile: 'profile' });
-const getNotificationsList = jest.fn(() => mockFeedResponse);
-const fetchNotifications = jest.fn(() => mockFeedResponse);
+const getNotificationsList = jest.fn(() => mockNotificationsResponse);
+const fetchNotifications = jest.fn(() => mockNotificationsResponse);
 
 jest.mock('@novu/client', () => ({
   ...jest.requireActual('@novu/client'),
@@ -44,21 +44,21 @@ describe('Novu', () => {
   });
 
   describe('lazy session initialization', () => {
-    test('should call the queued feeds.fetch after the session is initialized', async () => {
+    test('should call the queued notifications.list after the session is initialized', async () => {
       const options = {
         limit: 10,
         offset: 0,
       };
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
-      const res = await novu.feeds.fetch(options);
+      const res = await novu.notifications.list(options);
 
       expect(initializeSession).toHaveBeenCalledTimes(1);
       expect(fetchNotifications).toHaveBeenCalledWith(options);
-      expect(res).toEqual(mockFeedResponse);
+      expect(res).toEqual(mockNotificationsResponse);
     });
 
-    test('should call the feeds.fetch right away when session is already initialized', async () => {
-      const options: FetchFeedArgs = {
+    test('should call the notifications.list right away when session is already initialized', async () => {
+      const options: ListNotificationsArgs = {
         limit: 10,
         offset: 0,
       };
@@ -66,14 +66,14 @@ describe('Novu', () => {
       // await for session initialization
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const res = await novu.feeds.fetch({ limit: 10, offset: 0 });
+      const res = await novu.notifications.list({ limit: 10, offset: 0 });
 
       expect(initializeSession).toHaveBeenCalledTimes(1);
       expect(fetchNotifications).toHaveBeenCalledWith(options);
-      expect(res).toEqual(mockFeedResponse);
+      expect(res).toEqual(mockNotificationsResponse);
     });
 
-    test('should reject the queued feeds.fetch if session initialization fails', async () => {
+    test('should reject the queued notifications.list if session initialization fails', async () => {
       const options = {
         limit: 10,
         offset: 0,
@@ -82,12 +82,12 @@ describe('Novu', () => {
       initializeSession.mockRejectedValueOnce(error);
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
 
-      const fetchPromise = novu.feeds.fetch(options);
+      const fetchPromise = novu.notifications.list(options);
 
       await expect(fetchPromise).rejects.toEqual(error);
     });
 
-    test('should reject the feeds.fetch right away when session initialization has failed', async () => {
+    test('should reject the notifications.list right away when session initialization has failed', async () => {
       const options = {
         limit: 10,
         offset: 0,
@@ -98,7 +98,7 @@ describe('Novu', () => {
       // await for session initialization
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const fetchPromise = novu.feeds.fetch(options);
+      const fetchPromise = novu.notifications.list(options);
 
       await expect(fetchPromise).rejects.toEqual(error);
     });

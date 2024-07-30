@@ -24,19 +24,19 @@ export class BaseModule {
     this._emitter = NovuEventEmitter.getInstance();
     this._apiService = ApiServiceSingleton.getInstance();
     this._inboxService = InboxServiceSingleton.getInstance();
-    this._emitter.on('session.initialize.success', ({ result }) => {
-      this.onSessionSuccess(result);
-      this.#callsQueue.forEach(async ({ fn, resolve }) => {
-        resolve(await fn());
-      });
-      this.#callsQueue = [];
-    });
-    this._emitter.on('session.initialize.error', ({ error }) => {
-      this.onSessionError(error);
-      this.#sessionError = error;
-      this.#callsQueue.forEach(({ reject }) => {
-        reject(error);
-      });
+    this._emitter.on('session.initialize.resolved', ({ error, data }) => {
+      if (data) {
+        this.onSessionSuccess(data);
+        this.#callsQueue.forEach(async ({ fn, resolve }) => {
+          resolve(await fn());
+        });
+      } else if (error) {
+        this.onSessionError(error);
+        this.#sessionError = error;
+        this.#callsQueue.forEach(({ reject }) => {
+          reject(error);
+        });
+      }
       this.#callsQueue = [];
     });
   }

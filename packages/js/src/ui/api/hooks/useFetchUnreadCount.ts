@@ -15,8 +15,12 @@ export const useFetchUnreadCount = ({ filters, onSuccess, onError }: UseUnreadCo
     { ...filters, read: false },
     async (payload: UseUnreadCountFilter & { read: false }) => {
       try {
-        const response = await novu.feeds.fetchCount({ filters: [payload] });
-        const count = response.data[0].count;
+        const { data } = await novu.notifications.count({ filters: [payload] });
+        if (!data) {
+          return;
+        }
+
+        const count = data.counts[0].count;
         onSuccess?.(count);
 
         return count;

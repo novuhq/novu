@@ -1,6 +1,6 @@
 import { NovuEventEmitter } from './event-emitter';
 import type { EventHandler, EventNames, Events } from './event-emitter';
-import { Feeds } from './feeds';
+import { Notifications } from './notifications';
 import { Session } from './session';
 import { Preferences } from './preferences';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
@@ -21,7 +21,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #session: Session;
   #socket: Socket;
 
-  public readonly feeds: Feeds;
+  public readonly notifications: Notifications;
   public readonly preferences: Preferences;
 
   constructor(options: NovuOptions) {
@@ -34,7 +34,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
       subscriberHash: options.subscriberHash,
     });
     this.#session.initialize();
-    this.feeds = new Feeds();
+    this.notifications = new Notifications();
     this.preferences = new Preferences();
     this.#socket = new Socket({ socketUrl: options.socketUrl });
   }
