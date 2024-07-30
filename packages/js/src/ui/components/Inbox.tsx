@@ -1,7 +1,7 @@
 import { Accessor, createSignal, JSX, Match, Show, Switch } from 'solid-js';
 import { useStyle } from '../helpers';
 import { NotificationMounter } from '../types';
-import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
+import { Bell, Footer, Header, Preferences, PreferencesHeader } from './elements';
 import { InboxTabs } from './InboxTabs';
 import { NotificationList } from './Notification';
 import { Button, Popover } from './primitives';
@@ -15,7 +15,7 @@ export type InboxProps = {
 
 enum Screen {
   Inbox = 'inbox',
-  Settings = 'settings',
+  Preferences = 'preferences',
 }
 
 type InboxContentProps = {
@@ -38,9 +38,9 @@ const InboxContent = (props: InboxContentProps) => {
             <InboxTabs tabs={props.tabs ?? []} />
           </Show>
         </Match>
-        <Match when={currentScreen() === Screen.Settings}>
-          <SettingsHeader backAction={() => setCurrentScreen(Screen.Inbox)} />
-          <Settings />
+        <Match when={currentScreen() === Screen.Preferences}>
+          <PreferencesHeader backAction={() => setCurrentScreen(Screen.Inbox)} />
+          <Preferences />
         </Match>
       </Switch>
       <Footer />

@@ -3,7 +3,7 @@ import { StatusDropdown } from '../InboxStatus/InboxStatusDropdown';
 import { ActionsContainer } from './ActionsContainer';
 
 type HeaderProps = {
-  updateScreen: (screen: 'inbox' | 'settings') => void;
+  updateScreen: (screen: 'inbox' | 'preferences') => void;
 };
 
 export const Header = (props: HeaderProps) => {
@@ -12,7 +12,7 @@ export const Header = (props: HeaderProps) => {
   return (
     <div class={style('inboxHeader', cn('nt-flex nt-justify-between nt-items-center nt-w-full nt-py-5 nt-px-6'))}>
       <StatusDropdown />
-      <ActionsContainer showSettings={() => props.updateScreen('settings')} />
+      <ActionsContainer showPreferences={() => props.updateScreen('preferences')} />
     </div>
   );
 };

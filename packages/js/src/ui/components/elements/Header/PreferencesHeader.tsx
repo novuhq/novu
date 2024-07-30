@@ -5,7 +5,7 @@ type SettingsHeaderProps = {
   backAction: () => void;
 };
 
-export const SettingsHeader = (props: SettingsHeaderProps) => {
+export const PreferencesHeader = (props: SettingsHeaderProps) => {
   const style = useStyle();
 
   return (

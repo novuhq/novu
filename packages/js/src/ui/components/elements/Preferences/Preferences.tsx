@@ -7,7 +7,7 @@ import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
-export const Settings = () => {
+export const Preferences = () => {
   const style = useStyle();
 
   const { preferences, mutate } = usePreferences();
