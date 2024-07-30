@@ -3,7 +3,7 @@ import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPanel';
 import { useWorkflow, useWorkflowPreview } from '../../../hooks/useBridgeAPI';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { HStack } from '@novu/novui/jsx';
@@ -13,36 +13,38 @@ import { BackButton } from '../../../../components/layout/components/LocalStudio
 export const WorkflowsStepEditorPage = ({
   workflowId,
   parentStepId,
-  source = 'studio',
+  source,
   onGoBack,
 }: {
   workflowId?: string;
   parentStepId?: string;
-  source?: 'studio' | 'playground';
+  source?: 'studio' | 'playground' | 'dashboard';
   onGoBack?: () => void;
 }) => {
   const track = useTelemetry();
   const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
-  const { templateId = workflowId || '', stepId = parentStepId || '' } = useParams<{
+  const { templateId = '', stepId = '' } = useParams<{
     templateId: string;
     stepId: string;
   }>();
 
-  const { data: workflow } = useWorkflow(templateId, { refetchOnWindowFocus: 'always' });
+  const { data: workflow } = useWorkflow(workflowId || templateId, {
+    ...(source === 'playground' ? {} : { refetchOnWindowFocus: 'always' }),
+  });
   const {
     data: preview,
     isLoading: loadingPreview,
     refetch,
     error,
   } = useWorkflowPreview(
-    { workflowId: templateId, stepId, controls, payload },
+    { workflowId: workflowId || templateId, stepId: parentStepId || stepId, controls, payload },
     {
       ...(source === 'playground' ? {} : { refetchOnWindowFocus: 'always' }),
     }
   );
 
-  const step = workflow?.steps.find((item) => item.stepId === stepId);
+  const step = workflow?.steps.find((item) => item.stepId === parentStepId || item.stepId === stepId);
   const title = step?.stepId;
 
   function onControlsChange(type: string, form: any, id?: string) {
@@ -62,53 +64,8 @@ export const WorkflowsStepEditorPage = ({
     refetch();
   }
 
-  function Icon({ size }) {
-    const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
-    if (!IconElement) {
-      return null;
-    }
-
-    return (
-      <>
-        <IconElement size={size} />
-      </>
-    );
-  }
-
-  function PageWrapper({ children }) {
-    if (source === 'playground') {
-      return (
-        <div>
-          <HStack
-            className={css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })}
-          >
-            <BackButton
-              styles={{
-                paddingLeft: '0',
-                paddingRight: '0',
-                _hover: { '& p, & svg': { color: 'typography.text.main !important' } },
-              }}
-              onClick={() => {
-                if (onGoBack) {
-                  onGoBack();
-                }
-              }}
-            />
-          </HStack>
-          {children}
-        </div>
-      );
-    }
-
-    return (
-      <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
-        {children}
-      </WorkflowsPageTemplate>
-    );
-  }
-
   return (
-    <PageWrapper>
+    <PageWrapper source={source} onGoBack={onGoBack} title={title} step={step}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel
           source={source}
@@ -118,8 +75,59 @@ export const WorkflowsStepEditorPage = ({
           preview={preview}
           isLoadingPreview={loadingPreview}
         />
-        <WorkflowStepEditorControlsPanel source={source} step={step} workflow={workflow} onChange={onControlsChange} />
+        <WorkflowStepEditorControlsPanel
+          source={source}
+          step={step}
+          workflow={workflow}
+          onChange={onControlsChange}
+          defaultControls={controls}
+        />
       </WorkflowsPanelLayout>
     </PageWrapper>
   );
 };
+
+function Icon({ size, step }) {
+  const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
+  if (!IconElement) {
+    return null;
+  }
+
+  return (
+    <>
+      <IconElement size={size} />
+    </>
+  );
+}
+
+function PageWrapper({ children, source, onGoBack, title, step }) {
+  if (source === 'playground') {
+    return (
+      <div>
+        <HStack
+          className={css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })}
+        >
+          <BackButton
+            styles={{
+              paddingLeft: '0',
+              paddingRight: '0',
+              _hover: { '& p, & svg': { color: 'typography.text.main !important' } },
+            }}
+            onClick={() => {
+              if (onGoBack) {
+                onGoBack();
+              }
+            }}
+          />
+        </HStack>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <WorkflowsPageTemplate title={title} icon={<Icon step={step} size="32" />}>
+      {children}
+    </WorkflowsPageTemplate>
+  );
+}

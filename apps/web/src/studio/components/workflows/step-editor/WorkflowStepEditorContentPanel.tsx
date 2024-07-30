@@ -22,7 +22,7 @@ interface IWorkflowStepEditorContentPanelProps {
   error?: any;
   step: any;
   onlyPreviewView?: boolean;
-  source: 'studio' | 'playground' | 'dashboard';
+  source?: 'studio' | 'playground' | 'dashboard';
 }
 
 export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({
@@ -96,7 +96,7 @@ export const PreviewStep = ({
   channel: StepTypeEnum;
   preview: any;
   loadingPreview: boolean;
-  source: 'studio' | 'playground' | 'dashboard';
+  source?: 'studio' | 'playground' | 'dashboard';
 }) => {
   const { integrations = [] } = useActiveIntegrations({ enabled: source !== 'playground' });
   const integration = useMemo(() => {
