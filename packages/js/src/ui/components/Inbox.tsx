@@ -11,6 +11,8 @@ export type InboxProps = {
   tabs?: Array<{ label: string; value: Array<string> }>;
   mountNotification?: NotificationMounter;
   mountBell?: BellMounter;
+  renderNotification?: NotificationMounter;
+  renderBell?: BellMounter;
 };
 
 enum Screen {
@@ -56,7 +58,7 @@ export const Inbox = (props: InboxProps) => {
       <Popover.Trigger
         asChild={(triggerProps) => (
           <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>
-            <Bell mountBell={props.mountBell} />
+            <Bell renderBell={props.renderBell} />
           </Button>
         )}
       />
