@@ -152,3 +152,14 @@ export class BulkTriggerEventDto {
   @ArrayMaxSize(100)
   events: TriggerEventRequestDto[];
 }
+
+export class BulkCancelEventDto {
+  @ApiProperty({
+    isArray: true,
+    type: 'string',
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  transactionIds: string[];
+}
