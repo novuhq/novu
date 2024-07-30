@@ -120,6 +120,7 @@ export function QuestionnaireForm() {
         if (isPlaygroundOnboardingEnabled && isSupported) {
           navigate(ROUTES.DASHBOARD_PLAYGROUND);
         } else {
+          trackRedirectionToOnboarding();
           navigate(ROUTES.DASHBOARD_ONBOARDING);
         }
       } else {
@@ -142,6 +143,14 @@ export function QuestionnaireForm() {
       border-color: #e03131;
     }
   `;
+
+  const trackRedirectionToOnboarding = () => {
+    if (isPlaygroundOnboardingEnabled && !isSupported) {
+      segment.track(
+        'Redirected to onboarding page because the playground was not supported on the browser - [Sign-Up]'
+      );
+    }
+  };
 
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>

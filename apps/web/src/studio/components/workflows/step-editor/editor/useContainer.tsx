@@ -55,7 +55,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
   async function initializeWebContainer() {
     try {
       if (!webContainer && !initStarted) {
-        segment.track('Starting Playground');
+        segment.track('Starting Playground - [Playground]');
 
         setInitStarted(true);
         setWebContainer(
@@ -65,7 +65,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         );
       }
     } catch (error: any) {
-      segment.track('Error booting web container', {
+      segment.track('Error booting web container - [Playground]', {
         section: 'boot',
         message: error.message,
         error: error,
@@ -82,10 +82,12 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     (async () => {
       try {
         webContainer.on('server-ready', (port, url) => {
+          segment.track('Sandbox bridge app is ready - [Playground]');
           setSandboxBridgeAddress(url + ':' + port);
         });
 
         async function installDependencies() {
+          segment.track('Installing dependencies - [Playground]');
           const installProcess = await webContainer.spawn('pnpm', ['install', '--frozen-lockfile']);
 
           installProcess.output.pipeTo(
@@ -100,6 +102,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         }
 
         async function startDevServer() {
+          segment.track('Starting sandbox bridge app - [Playground]');
           const startOutput = await webContainer.spawn('pnpm', ['run', 'start']);
 
           startOutput.output.pipeTo(
@@ -129,9 +132,9 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           throw new Error('Failed to start server');
         }
 
-        segment.track('Playground succesfully Started');
+        segment.track('Playground succesfully Started - [Playground]');
       } catch (error: any) {
-        segment.track('Error booting web container', {
+        segment.track('Error booting web container - [Playground]', {
           section: 'install',
           message: error.message,
           error: error,
@@ -149,6 +152,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         return;
       }
 
+      segment.track('Create tunnel - [Playground]');
       const devOutput = await webContainer.spawn('npm', ['run', 'create:tunnel', '--', sandboxBridgeAddress]);
 
       devOutput.output.pipeTo(
@@ -175,6 +179,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
 
     if (BRIDGE_CODE !== code['workflow.ts'] || REACT_EMAIL_CODE !== code['react-email.tsx']) {
       debounceTimeout = setTimeout(() => {
+        segment.track('Sandbox bridge app code was updated - [Playground]');
         webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx'], code['tunnel.ts']));
 
         webContainer.on('server-ready', (port, url) => {

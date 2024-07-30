@@ -133,8 +133,10 @@ export function PlaygroundPage() {
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
   const { initializeWebContainer, isBridgeAppLoading } = useContainer();
   const { toggleColorScheme, themeLabel } = useThemeChange();
+  const segment = useSegment();
 
   useEffectOnce(() => {
+    segment.track('Visit Playground page - [Playground]');
     initializeWebContainer();
   }, true);
 
@@ -338,11 +340,11 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
     navigate(ROUTES.WORKFLOWS);
 
     if (isTestRan) {
-      segment.track('Playground Continue Clicked', {
+      segment.track('Playground Continue Clicked - [Playground]', {
         type: 'continue',
       });
     } else {
-      segment.track('Playground Skip Clicked', {
+      segment.track('Playground Skip Clicked - [Playground]', {
         type: 'skip',
       });
     }
@@ -484,12 +486,14 @@ const TriggerActionModal = ({
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
   const [isLoading, setIsLoading] = useState(false);
+  const segment = useSegment();
 
   const handleOnRunTestClick = async () => {
     setIsLoading(true);
     try {
       const res = await handleTestClick();
       successMessage('Workflow triggered successfully');
+      segment.track('Workflow triggered successfully - [Playground]');
       setTransactionId(res.data.transactionId);
       openExecutionModal();
       onTestRun();

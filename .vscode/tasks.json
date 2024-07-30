@@ -209,7 +209,7 @@
     },
     {
       "type": "npm",
-      "script": "build",
+      "script": "setup",
       "label": "NOVUI",
       "path": "/libs/novui",
       "problemMatcher": "$tsc"
