@@ -43,7 +43,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <p
           class={style(
             'notificationDate',
-            'nt-text-foreground-alpha-400 nt-shrink-0 nt-float-right group-hover:nt-hidden'
+            'nt-text-foreground-alpha-400 nt-ml-6 nt-shrink-0 nt-float-right group-hover:nt-hidden'
           )}
         >
           {/* TODO: pass locale here */}
@@ -52,7 +52,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <div
           class={style(
             'notificationDefaultActions',
-            'nt-gap-3 nt-shrink-0 nt-float-right nt-hidden group-hover:nt-flex'
+            'nt-gap-3 nt-shrink-0 nt-ml-6 nt-float-right nt-hidden group-hover:nt-flex'
           )}
         >
           <Show
@@ -80,11 +80,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             </Button>
           </Show>
         </div>
-        <Show
-          when={props.notification.subject}
-          fallback={<NotificationBody>{props.notification.body}</NotificationBody>}
-        >
+        <Show when={props.notification.subject}>
           <p
+            title={props.notification.subject}
             class={style(
               'notificationSubject',
               'nt-font-semibold nt-overflow-ellipsis nt-whitespace-nowrap nt-overflow-hidden'
@@ -93,9 +91,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             {props.notification.subject}
           </p>
         </Show>
-        <Show when={props.notification.subject}>
-          <NotificationBody>{props.notification.body}</NotificationBody>
-        </Show>
+        <NotificationBody>{props.notification.body}</NotificationBody>
 
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
