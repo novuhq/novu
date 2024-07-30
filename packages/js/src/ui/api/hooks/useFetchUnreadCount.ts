@@ -21,7 +21,6 @@ export const useFetchUnreadCount = ({ filters, onSuccess, onError }: UseUnreadCo
 
         return count;
       } catch (error) {
-        console.warn('Error fetching unread count:', error);
         onError?.(error);
       }
     }
