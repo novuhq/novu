@@ -24,7 +24,8 @@ export function WorkflowFlow({
   const [workflowTab, setWorkflowTab] = useState<'workflow' | 'stepEdit'>('workflow');
   const { workflow, isDiscoverLoading, steps } = useWorkflowStepEditor(clickedStepId || '');
 
-  if (isDiscoverLoading || isBridgeAppLoading) {
+  const isDemoWorkflow = (workflow as DiscoverWorkflowOutput)?.workflowId.includes('demo');
+  if (isDiscoverLoading || isBridgeAppLoading || isDemoWorkflow) {
     return <StepNodeSkeleton />;
   }
 

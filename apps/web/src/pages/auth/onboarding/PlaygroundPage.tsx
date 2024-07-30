@@ -411,6 +411,8 @@ function Playground({
   setClickedStepId: (stepId: string) => void;
 }) {
   const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
+  const filteredCode = Object.fromEntries(Object.entries(code).filter(([key]) => key !== 'tunnel.ts'));
+
   const [editorSizes, setEditorSizes] = useState<number[]>([300, 200]);
 
   function handleEditorSizeChange() {
@@ -440,7 +442,7 @@ function Playground({
       >
         <Pane preferredSize={'70%'}>
           <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
-            <CodeEditor files={code} setFiles={setCode} />
+            <CodeEditor files={filteredCode} setFiles={setCode} />
           </div>
         </Pane>
         <Pane preferredSize={'30%'}>
