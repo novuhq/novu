@@ -26,6 +26,7 @@ import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 import { Loader } from '@mantine/core';
+import useThemeChange from '../../../hooks/useThemeChange';
 const CustomTooltip = ({
   index,
   step,
@@ -130,13 +131,18 @@ export function PlaygroundPage() {
   const [runJoyride, setRunJoyride] = useState(true);
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
-  const { setColorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
   const { initializeWebContainer, isBridgeAppLoading } = useContainer();
+  const { toggleColorScheme, themeLabel } = useThemeChange();
 
-  useEffectOnce(() => {
-    setColorScheme('dark');
+  useEffect(() => {
+    if (themeLabel === 'Light Theme' || themeLabel === 'Match System Appearance') {
+      toggleColorScheme();
+    }
+
     initializeWebContainer();
-  }, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colorScheme]);
 
   const joyrideSteps: Step[] = [
     {

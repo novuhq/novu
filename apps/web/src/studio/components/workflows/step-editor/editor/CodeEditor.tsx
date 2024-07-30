@@ -23,7 +23,6 @@ export function CodeEditor({
   language?: string;
 }) {
   const { colorScheme } = useMantineTheme();
-  const isDark = colorScheme === 'dark';
   const monacoRef = useRef<Monaco | null>(null);
   const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
   const [errorLineNumbers, setErrorLineNumbers] = useState<number[]>([]);
@@ -80,7 +79,7 @@ export function CodeEditor({
                 setFiles({ ...files, [fileName]: value || '' });
               }}
               onMount={(editor, monaco) => {
-                const themeName = colorScheme === 'dark' ? 'novu-dark' : 'novu';
+                const themeName = 'novu-dark';
 
                 monaco.editor.defineTheme('novu-dark', {
                   base: 'vs-dark',
@@ -93,20 +92,6 @@ export function CodeEditor({
                     'editorSuggestWidget.foreground': colors.B60,
                     'editorSuggestWidget.selectedBackground': colors.B60,
                     'editorSuggestWidget.highlightForeground': colors.B60,
-                  },
-                });
-
-                monaco.editor.defineTheme('novu', {
-                  base: 'vs',
-                  inherit: true,
-                  rules: [],
-                  colors: {
-                    'editor.background': colors.BGLight,
-                    'editor.lineHighlightBackground': colors.B98,
-                    'editorSuggestWidget.background': colors.white,
-                    'editorSuggestWidget.foreground': colors.B98,
-                    'editorSuggestWidget.selectedBackground': colors.B98,
-                    'editorSuggestWidget.highlightForeground': colors.B98,
                   },
                 });
 
