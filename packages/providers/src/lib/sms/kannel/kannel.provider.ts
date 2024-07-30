@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Kannel;
@@ -28,7 +29,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = this.apiBaseUrl + '/sendsms';
     const queryParameters = this.transform(bridgeProviderData, {

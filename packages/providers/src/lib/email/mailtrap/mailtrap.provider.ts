@@ -9,6 +9,7 @@ import {
 } from '@novu/stateless';
 import { MailtrapClient, Address, Mail } from 'mailtrap';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class MailtrapEmailProvider
   extends BaseProvider
@@ -52,7 +53,7 @@ export class MailtrapEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.sendWithMailtrap(options, bridgeProviderData);
 
@@ -64,7 +65,7 @@ export class MailtrapEmailProvider
 
   private sendWithMailtrap(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     return this.mailtrapClient.send(
       this.transform<Mail>(bridgeProviderData, {

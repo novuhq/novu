@@ -8,6 +8,7 @@ import { v4 as uuid } from 'uuid';
 import axios, { AxiosInstance } from 'axios';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class MobishastraProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Mobishastra;
@@ -35,7 +36,7 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.request({
       method: 'POST',

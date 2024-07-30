@@ -12,6 +12,7 @@ import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class MailgunEmailProvider
   extends BaseProvider
@@ -44,7 +45,7 @@ export class MailgunEmailProvider
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = {
       from: emailOptions.from || this.config.from,

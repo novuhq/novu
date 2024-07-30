@@ -11,6 +11,7 @@ import {
 import { Twilio } from 'twilio';
 import { MessageListInstanceCreateOptions } from 'twilio/lib/rest/api/v2010/account/message';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Twilio;
@@ -31,7 +32,7 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const twilioResponse = await this.twilioClient.messages.create(
       this.transform<MessageListInstanceCreateOptions>(bridgeProviderData, {

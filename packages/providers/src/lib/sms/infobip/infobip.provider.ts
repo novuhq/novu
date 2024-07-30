@@ -7,6 +7,7 @@ import {
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -31,7 +32,7 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.sms.send({
       messages: [

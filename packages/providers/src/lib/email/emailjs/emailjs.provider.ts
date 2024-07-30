@@ -10,6 +10,7 @@ import { IEmailJsConfig } from './emailjs.config';
 import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class EmailJsProvider extends BaseProvider implements IEmailProvider {
   readonly id = EmailProviderIdEnum.EmailJS;
@@ -30,7 +31,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const headers: Message['header'] = {
       from: emailOptions.from || this.config.from,

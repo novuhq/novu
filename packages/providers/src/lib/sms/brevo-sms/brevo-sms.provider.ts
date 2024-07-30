@@ -8,6 +8,7 @@ import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -32,7 +33,7 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const sms = this.transform(bridgeProviderData, {
       sender: options.from || this.config.from,

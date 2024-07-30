@@ -8,6 +8,7 @@ import {
 
 import axios, { Axios } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class ClickatellSmsProvider
   extends BaseProvider
@@ -28,7 +29,7 @@ export class ClickatellSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = 'https://platform.clickatell.com/messages';
 

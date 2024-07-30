@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class PushWebhookPushProvider
   extends BaseProvider
@@ -27,7 +28,7 @@ export class PushWebhookPushProvider
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { subscriber, step, payload, ...rest } = options;
     const data = this.transform(bridgeProviderData, {

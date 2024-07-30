@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class ZulipProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.Zulip;
@@ -20,7 +21,7 @@ export class ZulipProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     await this.axiosInstance.post(
       data.webhookUrl,

@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 interface IFortySixElksSuccessObject {
   status: string;
@@ -43,7 +44,7 @@ export class FortySixElksSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const authKey = Buffer.from(
       this.config.user + ':' + this.config.password

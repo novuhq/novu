@@ -13,6 +13,7 @@ import mailchimp from '@mailchimp/mailchimp_transactional';
 import { IMandrilInterface, IMandrillSendOptions } from './mandril.interface';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -46,7 +47,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mandrillSendOption = this.transform<IMandrillSendOptions>(
       bridgeProviderData,

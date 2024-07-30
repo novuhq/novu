@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import { v4 as uuid } from 'uuid';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class GrafanaOnCallChatProvider
   extends BaseProvider
@@ -30,7 +31,7 @@ export class GrafanaOnCallChatProvider
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
     const body = this.transform(bridgeProviderData, {

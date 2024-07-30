@@ -13,6 +13,7 @@ import { SESConfig } from './ses.config';
 import nodemailer from 'nodemailer';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.SES;
@@ -43,7 +44,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       bcc,
       replyTo,
     },
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },

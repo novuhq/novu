@@ -36,7 +36,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: Record<string, unknown>
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.notificationIdentifiers;
     const notification = new apn.Notification(

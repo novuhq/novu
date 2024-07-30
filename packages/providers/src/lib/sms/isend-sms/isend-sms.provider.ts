@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export interface ISendSmsData {
   user_id: number;
@@ -58,7 +59,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       sender_id: options.from ?? this.config.from,

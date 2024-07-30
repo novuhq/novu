@@ -10,6 +10,7 @@ import {
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 import { ISparkPostErrorResponse, SparkPostError } from './sparkpost.error';
 
 interface ISparkPostResponse {
@@ -42,7 +43,7 @@ export class SparkPostEmailProvider
 
   async sendMessage(
     { from, to, subject, text, html, attachments }: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const recipients: { address: string }[] = to.map((recipient) => {
       return { address: recipient };

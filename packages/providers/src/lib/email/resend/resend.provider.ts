@@ -9,6 +9,7 @@ import {
 } from '@novu/stateless';
 import { Resend } from 'resend';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class ResendEmailProvider
   extends BaseProvider
@@ -31,7 +32,7 @@ export class ResendEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;

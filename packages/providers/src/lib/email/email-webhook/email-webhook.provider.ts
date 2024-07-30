@@ -12,6 +12,7 @@ import axios from 'axios';
 import { setTimeout } from 'timers/promises';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class EmailWebhookProvider
   extends BaseProvider
@@ -45,7 +46,7 @@ export class EmailWebhookProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, options);
     const bodyData = this.createBody(transformedData.body);
@@ -80,7 +81,7 @@ export class EmailWebhookProvider
     };
   }
 
-  createBody(options: Record<string, unknown>): string {
+  createBody(options: WithPassthrough<Record<string, unknown>>): string {
     return JSON.stringify(options);
   }
 

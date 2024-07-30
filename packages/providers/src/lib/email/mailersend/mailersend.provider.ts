@@ -10,6 +10,7 @@ import {
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class MailersendEmailProvider
   extends BaseProvider
@@ -77,7 +78,7 @@ export class MailersendEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const emailParams = this.transform(
       bridgeProviderData,

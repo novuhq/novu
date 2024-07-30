@@ -9,6 +9,7 @@ import {
 } from '@novu/stateless';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class Outlook365Provider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Outlook365;
@@ -40,7 +41,7 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const info = await this.transports.sendMail(

@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sendchamp;
@@ -32,7 +33,7 @@ export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       sender_name: options.from || this.config.from,

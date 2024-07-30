@@ -11,6 +11,7 @@ import {
 } from '@novu/stateless';
 import { Errors, ServerClient, Message, Models } from 'postmark';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class PostmarkEmailProvider
   extends BaseProvider
@@ -32,7 +33,7 @@ export class PostmarkEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.client.sendEmail(

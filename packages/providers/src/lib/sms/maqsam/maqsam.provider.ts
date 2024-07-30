@@ -9,6 +9,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 import { fromUnixTime } from 'date-fns';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Maqsam;
@@ -34,7 +35,7 @@ export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const maqsamResponse = await this.axiosInstance.request({
       method: 'POST',

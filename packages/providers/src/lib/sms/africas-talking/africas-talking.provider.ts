@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import AfricasTalking from 'africastalking';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class AfricasTalkingSmsProvider
   extends BaseProvider
@@ -32,7 +33,7 @@ export class AfricasTalkingSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.africasTalkingClient.send(
       this.transform(bridgeProviderData, {

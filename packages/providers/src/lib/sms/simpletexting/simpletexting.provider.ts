@@ -8,6 +8,7 @@ import {
 
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 export class SimpletextingSmsProvider
   extends BaseProvider
   implements ISmsProvider
@@ -26,7 +27,7 @@ export class SimpletextingSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       contactPhone: options.to,

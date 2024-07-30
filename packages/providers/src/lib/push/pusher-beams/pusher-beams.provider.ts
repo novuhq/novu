@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class PusherBeamsPushProvider
   extends BaseProvider
@@ -35,7 +36,7 @@ export class PusherBeamsPushProvider
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
     const payload = this.transform(bridgeProviderData, {

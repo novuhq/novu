@@ -12,6 +12,7 @@ import {
 } from '@novu/stateless';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Sendinblue; // brevo changed name from sendinblue.
@@ -34,7 +35,7 @@ export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const email: any = {};
     email.sender = {

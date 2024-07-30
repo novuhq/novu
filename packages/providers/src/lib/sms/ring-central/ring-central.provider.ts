@@ -10,6 +10,7 @@ import {
 import { SDK } from '@ringcentral/sdk';
 import Platform from '@ringcentral/sdk/lib/platform/Platform';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class RingCentralSmsProvider
   extends BaseProvider
@@ -40,7 +41,7 @@ export class RingCentralSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const bodyParams = this.transform(bridgeProviderData, {
       from: { phoneNumber: options.from || this.config.from },

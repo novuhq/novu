@@ -8,6 +8,7 @@ import {
 
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.GenericSms;
@@ -49,7 +50,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       ...options,

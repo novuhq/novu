@@ -9,6 +9,7 @@ import {
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class InfobipEmailProvider
   extends BaseProvider
@@ -62,7 +63,7 @@ export class InfobipEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.email.send(
       this.transform(bridgeProviderData, {

@@ -20,14 +20,23 @@ test('should trigger Telnyx correctly', async () => {
         },
       } as any;
     });
-  await provider.sendMessage({
-    content: 'We are testing',
-    to: '+2347069652019',
-  });
+  await provider.sendMessage(
+    {
+      content: 'We are testing',
+      to: '+2347069652019',
+    },
+    {
+      _passthrough: {
+        body: {
+          from: 'TelynxTest1',
+        },
+      },
+    }
+  );
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    from: 'TelynxTest',
+    from: 'TelynxTest1',
     text: 'We are testing',
     to: '+2347069652019',
     messaging_profile_id: 'jap-ops-pkd-pn-pair',

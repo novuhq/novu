@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class RyverChatProvider extends BaseProvider implements IChatProvider {
   public id = ChatProviderIdEnum.Ryver;
@@ -15,7 +16,7 @@ export class RyverChatProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
     const response = await this.axiosInstance.post(

@@ -8,6 +8,7 @@ import {
 } from '@novu/stateless';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class OneSignalPushProvider
   extends BaseProvider
@@ -33,7 +34,7 @@ export class OneSignalPushProvider
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 

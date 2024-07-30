@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class ExpoPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
@@ -24,7 +25,7 @@ export class ExpoPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 

@@ -14,6 +14,7 @@ import {
   UsersExportIdsResponse,
 } from 'braze-api';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Braze;
@@ -33,7 +34,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const maildata = await this.createMailData(options);
     const response = await this.braze.messages.send(

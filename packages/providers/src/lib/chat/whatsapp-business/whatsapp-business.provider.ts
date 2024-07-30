@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
 
@@ -37,7 +38,7 @@ export class WhatsappBusinessChatProvider
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(
       bridgeProviderData,

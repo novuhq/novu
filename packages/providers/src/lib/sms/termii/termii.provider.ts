@@ -8,6 +8,7 @@ import {
   ISMSEventBody,
 } from '@novu/stateless';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 import { SmsParams, MessageChannel, SmsJsonResponse } from './sms';
 
 if (!globalThis.fetch) {
@@ -30,7 +31,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform<SmsParams>(bridgeProviderData, {
       to: options.to,

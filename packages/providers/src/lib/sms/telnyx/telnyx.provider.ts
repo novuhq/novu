@@ -12,6 +12,7 @@ import Telnyx from 'telnyx';
 import { BaseProvider } from '../../../base.provider';
 
 import { ITelnyxCLient } from './telnyx.interface';
+import { WithPassthrough } from '../../../utils/types';
 
 export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Telnyx;
@@ -31,7 +32,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const telynxResponse = await this.telnyxClient.messages.create(
       this.transform<any>(bridgeProviderData, {

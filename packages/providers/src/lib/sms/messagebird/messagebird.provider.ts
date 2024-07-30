@@ -9,6 +9,7 @@ import { Message, MessageParameters } from 'messagebird/types/messages';
 import { initClient } from 'messagebird';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class MessageBirdSmsProvider
   extends BaseProvider
@@ -28,7 +29,7 @@ export class MessageBirdSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform<MessageParameters>(bridgeProviderData, {
       originator: options.from,

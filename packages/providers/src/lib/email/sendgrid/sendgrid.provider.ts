@@ -12,6 +12,7 @@ import {
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
 
@@ -38,7 +39,7 @@ export class SendgridEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send(

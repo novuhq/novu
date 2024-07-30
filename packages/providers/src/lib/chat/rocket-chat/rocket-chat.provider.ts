@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class RocketChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.RocketChat;
@@ -24,7 +25,7 @@ export class RocketChatProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const roomId = options.channel;
     const payload = {

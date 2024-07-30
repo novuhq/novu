@@ -11,6 +11,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 import { IEmailBody, IEmailResponse } from './netcore-types';
 
 export enum NetCoreStatusEnum {
@@ -45,7 +46,7 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data: IEmailBody = this.transform<IEmailBody>(bridgeProviderData, {
       from: {

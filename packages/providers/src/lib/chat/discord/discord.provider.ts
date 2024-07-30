@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class DiscordProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -19,7 +20,7 @@ export class DiscordProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     // Setting the wait parameter with the URL API to respect user parameters
     const url = new URL(data.webhookUrl);

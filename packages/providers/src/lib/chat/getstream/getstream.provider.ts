@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class GetstreamChatProvider
   extends BaseProvider
@@ -27,7 +28,7 @@ export class GetstreamChatProvider
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, {
       text: data.content,

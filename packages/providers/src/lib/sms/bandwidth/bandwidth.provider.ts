@@ -8,6 +8,7 @@ import {
 import { Client, ApiController, MessageRequest } from '@bandwidth/messaging';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Bandwidth;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -30,7 +31,7 @@ export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const body = this.transform<MessageRequest>(bridgeProviderData, {
       applicationId: this.config.accountId,

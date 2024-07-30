@@ -7,6 +7,7 @@ import {
 import { SmsClient, SmsSendRequest } from '@azure/communication-sms';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class AzureSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.AzureSms;
@@ -24,7 +25,7 @@ export class AzureSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const sendResults = await this.smsClient.send(
       this.transform<SmsSendRequest>(bridgeProviderData, {

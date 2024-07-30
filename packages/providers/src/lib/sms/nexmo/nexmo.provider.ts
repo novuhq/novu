@@ -9,6 +9,7 @@ import { Vonage } from '@vonage/server-sdk';
 import { Auth } from '@vonage/auth';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Nexmo;
@@ -33,7 +34,7 @@ export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.vonageClient.sms.send(
       this.transform<any>(bridgeProviderData, {

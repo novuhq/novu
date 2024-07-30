@@ -13,6 +13,7 @@ import {
 import { SNSConfig } from './sns.config';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.SNS;
@@ -32,7 +33,7 @@ export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { to, content } = options;
 

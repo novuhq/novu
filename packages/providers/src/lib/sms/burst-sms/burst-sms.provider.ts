@@ -8,6 +8,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 import qs from 'qs';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BurstSms;
@@ -31,7 +32,7 @@ export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const data = qs.stringify(
       this.transform(bridgeProviderData, {

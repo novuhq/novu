@@ -12,6 +12,7 @@ import {
 import Plunk from '@plunk/node';
 import { SendParams } from '@plunk/node/dist/types/emails';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 import { IPlunkResponse } from './plunk.interface';
 
 export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
@@ -31,7 +32,7 @@ export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
   }
   async checkIntegration(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ICheckIntegrationResponse> {
     try {
       const response: IPlunkResponse = await this.plunk.emails.send({
@@ -57,7 +58,7 @@ export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const response: IPlunkResponse = await this.plunk.emails.send(
       this.transform<SendParams>(bridgeProviderData, {

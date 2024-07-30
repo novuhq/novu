@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 interface IMattermostPayload {
   channel?: string;
@@ -20,7 +21,7 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: Record<string, unknown> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const payload: IMattermostPayload = { text: data.content };
 
