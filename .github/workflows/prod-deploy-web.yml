@@ -11,7 +11,6 @@ on:
 jobs:
   deploy_web_eu:
     uses: ./.github/workflows/reusable-web-deploy.yml
-    environment: Development
     with:
       environment: Production
       react_app_api_url: https://eu.api.novu.co
@@ -26,13 +25,12 @@ jobs:
       netlify_alias: prod
       netlify_gh_env: Production
       netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a
-      clerk_publishable_key: {{ secrets.CLERK_PUBLISHABLE_KEY_EU }}
-      clerk_is_ee_auth_enabled: {{ secrets.IS_EE_AUTH_ENABLED_EU }}
+      clerk_publishable_key: pk_live_Y2xlcmsuZXUuZGFzaGJvYXJkLm5vdnUuY28k
+      clerk_is_ee_auth_enabled: false
     secrets: inherit
 
   deploy_web_us:
     uses: ./.github/workflows/reusable-web-deploy.yml
-    environment: Development
     with:
       environment: Production
       react_app_api_url: https://api.novu.co
@@ -47,6 +45,6 @@ jobs:
       netlify_alias: prod
       netlify_gh_env: Production
       netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff
-      clerk_publishable_key: {{ secrets.CLERK_PUBLISHABLE_KEY_US }}
-      clerk_is_ee_auth_enabled: {{ secrets.IS_EE_AUTH_ENABLED_US }}
+      clerk_publishable_key: pk_live_Y2xlcmsuZGFzaGJvYXJkLm5vdnUuY28k
+      clerk_is_ee_auth_enabled: false
     secrets: inherit
