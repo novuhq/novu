@@ -87,7 +87,7 @@ export default function Content({
       </div>
 
       <ContentStyled isBlur={false} isExampleNotification>
-        <NotificationTextStyled isExampleNotification>Notification Examples</NotificationTextStyled>
+        <NotificationTextStyled isExampleNotification>Notification Example</NotificationTextStyled>
         <TimeTextStyled isExampleNotification>10 minutes ago</TimeTextStyled>
       </ContentStyled>
     </Stack>
