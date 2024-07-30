@@ -13,7 +13,10 @@ export const NotificationListContainer = (props: ParentProps) => {
 
   return (
     <div
-      class={style('notificationList', 'nt-flex nt-flex-col nt-min-h-full nt-w-full nt-h-[37.5rem] nt-overflow-auto')}
+      class={style(
+        'notificationList',
+        'nt-flex nt-flex-col nt-min-h-full nt-min-w-full nt-w-96 nt-h-[37.5rem] nt-overflow-auto'
+      )}
     >
       {props.children}
     </div>
@@ -29,7 +32,7 @@ const EmptyNotificationList = () => {
       <div
         class={style(
           'notificationListEmptyNoticeContainer',
-          'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-fit nt-text-foreground-alpha-100'
+          'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-full nt-text-foreground-alpha-100'
         )}
       >
         <EmptyIcon />

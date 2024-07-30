@@ -1,4 +1,5 @@
 export const defaultLocalization = {
+  locale: 'en-US',
   'inbox.title': 'Inbox',
   'notifications.emptyNotice': 'No notifications',
   'inbox.status.options.unread': 'Unread only',

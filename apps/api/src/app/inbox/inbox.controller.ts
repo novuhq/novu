@@ -93,9 +93,7 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
-        tags: query.tags,
-        read: query.read,
-        archived: query.archived,
+        filters: query.filters,
       })
     );
 

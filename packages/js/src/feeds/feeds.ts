@@ -5,8 +5,7 @@ import { Notification } from './notification';
 import type {
   ArchivedArgs,
   CompleteArgs,
-  FetchCountArgs,
-  FetchCountResponse,
+  FetchFiltersCountResponse,
   FetchFeedArgs,
   FetchFeedResponse,
   InstanceArgs,
@@ -14,6 +13,12 @@ import type {
   UnarchivedArgs,
   UnreadArgs,
   RevertArgs,
+  FetchFilterCountArgs,
+  FetchCountArgs,
+  FetchFilterCountResponse,
+  FetchFiltersCountArgs,
+  FetchCountResponse,
+  BaseArgs,
 } from './types';
 
 export class Feeds extends BaseModule {
@@ -43,21 +48,22 @@ export class Feeds extends BaseModule {
     });
   }
 
-  async fetchCount(countArgs: FetchCountArgs = {}): Promise<FetchCountResponse> {
+  async fetchCount(args?: FetchFilterCountArgs): Promise<FetchFilterCountResponse>;
+  async fetchCount(args?: FetchFiltersCountArgs): Promise<FetchFiltersCountResponse>;
+  async fetchCount(args: FetchCountArgs): Promise<FetchCountResponse> {
     return this.callWithSession(async () => {
-      const args = { archived: countArgs.archived, read: countArgs.read, tags: countArgs.tags };
+      const filters: NotificationFilter[] = args && 'filters' in args ? args.filters : [{ ...args }];
+
       try {
         this._emitter.emit('feeds.fetch_count.pending', { args });
 
         const response = await this._inboxService.count({
-          archived: countArgs.archived,
-          read: countArgs.read,
-          tags: countArgs.tags,
+          filters,
         });
 
         this._emitter.emit('feeds.fetch_count.success', { args, result: response });
 
-        return response;
+        return args && 'filters' in args ? response : { data: response.data[0] };
       } catch (error) {
         this._emitter.emit('feeds.fetch_count.error', { args, error });
         throw error;
@@ -65,6 +71,7 @@ export class Feeds extends BaseModule {
     });
   }
 
+  async read(args: BaseArgs): Promise<Notification>;
   async read(args: InstanceArgs): Promise<Notification>;
   async read(args: ReadArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -76,6 +83,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async unread(args: BaseArgs): Promise<Notification>;
   async unread(args: InstanceArgs): Promise<Notification>;
   async unread(args: UnreadArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -87,6 +95,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async archive(args: BaseArgs): Promise<Notification>;
   async archive(args: InstanceArgs): Promise<Notification>;
   async archive(args: ArchivedArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -98,6 +107,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async unarchive(args: BaseArgs): Promise<Notification>;
   async unarchive(args: InstanceArgs): Promise<Notification>;
   async unarchive(args: UnarchivedArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -109,6 +119,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async completePrimary(args: BaseArgs): Promise<Notification>;
   async completePrimary(args: InstanceArgs): Promise<Notification>;
   async completePrimary(args: CompleteArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -121,6 +132,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async completeSecondary(args: BaseArgs): Promise<Notification>;
   async completeSecondary(args: InstanceArgs): Promise<Notification>;
   async completeSecondary(args: CompleteArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -133,6 +145,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async revertPrimary(args: BaseArgs): Promise<Notification>;
   async revertPrimary(args: InstanceArgs): Promise<Notification>;
   async revertPrimary(args: RevertArgs): Promise<Notification> {
     return this.callWithSession(async () =>
@@ -145,6 +158,7 @@ export class Feeds extends BaseModule {
     );
   }
 
+  async revertSecondary(args: BaseArgs): Promise<Notification>;
   async revertSecondary(args: InstanceArgs): Promise<Notification>;
   async revertSecondary(args: RevertArgs): Promise<Notification> {
     return this.callWithSession(async () =>

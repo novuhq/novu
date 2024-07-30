@@ -10,9 +10,9 @@ export default function Home() {
           backendUrl: process.env.NEXT_PUBLIC_NOVU_BACKEND_URL ?? 'http://localhost:3000',
           socketUrl: process.env.NEXT_PUBLIC_NOVU_SOCKET_URL ?? 'http://localhost:3002',
         }}
-        renderNotification={(notification) => {
-          return <button className="p-10 bg-red-300 w-full">{notification.body}</button>;
-        }}
+        // renderNotification={(notification) => {
+        //   return <button className="p-10 bg-red-300 w-full">{notification.body}</button>;
+        // }}
       />
     </div>
   );
