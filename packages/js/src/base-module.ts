@@ -2,7 +2,8 @@ import type { ApiService } from '@novu/client';
 import { InboxService } from './api';
 
 import { NovuEventEmitter } from './event-emitter';
-import { Session } from './types';
+import { Result, Session } from './types';
+import { NovuError } from './utils/errors';
 import { InboxServiceSingleton } from './utils/inbox-service-singleton';
 
 interface CallQueueItem {
@@ -32,8 +33,8 @@ export class BaseModule {
       } else if (error) {
         this.onSessionError(error);
         this.#sessionError = error;
-        this.#callsQueue.forEach(({ reject }) => {
-          reject(error);
+        this.#callsQueue.forEach(({ resolve }) => {
+          resolve({ error: new NovuError('Failed to initialize session', error) });
         });
         this.#callsQueue = [];
       }
@@ -44,13 +45,13 @@ export class BaseModule {
 
   protected onSessionError(_: unknown): void {}
 
-  async callWithSession<T>(fn: () => Promise<T>): Promise<T> {
+  async callWithSession<T>(fn: () => Result<T>): Result<T> {
     if (this._inboxService.isSessionInitialized) {
       return fn();
     }
 
     if (this.#sessionError) {
-      return Promise.reject(this.#sessionError);
+      return Promise.resolve({ error: new NovuError('Failed to initialize session', this.#sessionError) });
     }
 
     return new Promise(async (resolve, reject) => {

@@ -98,6 +98,8 @@ export class Socket extends BaseModule {
       this.#initializeSocket().catch((error) => {
         console.error(error);
       });
+
+      return {};
     });
   }
 }
