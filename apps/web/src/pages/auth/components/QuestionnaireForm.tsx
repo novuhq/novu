@@ -26,11 +26,12 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { QueryKeys } from '../../../api/query.keys';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
+import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
 
 export function QuestionnaireForm() {
   const queryClient = useQueryClient();
   const { initializeWebContainer } = useContainer();
-
+  const { isSupported } = useWebContainerSupported();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
 
@@ -114,23 +115,13 @@ export function QuestionnaireForm() {
       return;
     }
 
-    if (isPlaygroundOnboardingEnabled) {
-      const isTechnicalJobTitle = isJobTitleIsTech(data.jobTitle);
-
-      if (isTechnicalJobTitle) {
-        navigate(ROUTES.DASHBOARD_PLAYGROUND);
-      } else {
-        navigate(ROUTES.WORKFLOWS);
-      }
-
-      return;
-    }
-
     if (isV2Enabled) {
-      const isTechnicalJobTitle = isJobTitleIsTech(data.jobTitle);
-
-      if (isTechnicalJobTitle) {
-        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      if (isJobTitleIsTech(data.jobTitle)) {
+        if (isPlaygroundOnboardingEnabled && isSupported) {
+          navigate(ROUTES.DASHBOARD_PLAYGROUND);
+        } else {
+          navigate(ROUTES.DASHBOARD_ONBOARDING);
+        }
       } else {
         navigate(ROUTES.WORKFLOWS);
       }

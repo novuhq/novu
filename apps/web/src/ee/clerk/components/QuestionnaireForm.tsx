@@ -17,12 +17,14 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
+import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
 }
 
 export function QuestionnaireForm() {
+  const { isSupported } = useWebContainerSupported();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
   const [loading, setLoading] = useState<boolean>();
@@ -91,7 +93,7 @@ export function QuestionnaireForm() {
 
     if (isV2Enabled) {
       if (isJobTitleIsTech(data.jobTitle)) {
-        if (isPlaygroundOnboardingEnabled) {
+        if (isPlaygroundOnboardingEnabled && isSupported) {
           navigate(ROUTES.DASHBOARD_PLAYGROUND);
         } else {
           navigate(ROUTES.DASHBOARD_ONBOARDING);
