@@ -50,16 +50,16 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     {
       onSuccess(data) {
         setBridgeContent({
-          subject: data.outputs.subject,
           content: data.outputs.body,
-          avatar: data.outputs.avatar,
+          ...(data.outputs.subject && { subject: data.outputs.subject }),
+          ...(data.outputs.avatar && { avatar: data.outputs.avatar }),
           ctaButtons: [
             ...(data.outputs.primaryAction
               ? [
                   {
                     type: ButtonTypeEnum.PRIMARY,
                     content: data.outputs.primaryAction.label,
-                    url: data.outputs.primaryAction.url,
+                    ...(data.outputs.primaryAction.url && { url: data.outputs.primaryAction.url }),
                   },
                 ]
               : []),
@@ -68,7 +68,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
                   {
                     type: ButtonTypeEnum.SECONDARY,
                     content: data.outputs.secondaryAction.label,
-                    url: data.outputs.secondaryAction.url,
+                    ...(data.outputs.secondaryAction.url && { url: data.outputs.secondaryAction.url }),
                   },
                 ]
               : []),
