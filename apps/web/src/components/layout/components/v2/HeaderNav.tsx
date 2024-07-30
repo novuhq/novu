@@ -37,7 +37,7 @@ export function HeaderNav() {
         position: 'sticky',
         top: 0,
         borderBottom: 'none !important',
-        zIndex: 'sticky',
+        zIndex: '200 !important',
         padding: '50',
       })}
     >
