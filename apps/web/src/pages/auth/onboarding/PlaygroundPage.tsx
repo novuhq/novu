@@ -135,12 +135,15 @@ export function PlaygroundPage() {
   const { initializeWebContainer, isBridgeAppLoading } = useContainer();
   const { toggleColorScheme, themeLabel } = useThemeChange();
 
+  useEffectOnce(() => {
+    initializeWebContainer();
+  }, true);
+
   useEffect(() => {
     if (themeLabel === 'Light Theme' || themeLabel === 'Match System Appearance') {
       toggleColorScheme();
     }
 
-    initializeWebContainer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [themeLabel]);
 

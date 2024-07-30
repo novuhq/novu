@@ -1,6 +1,5 @@
 export const TUNNEL_CODE = `import ws from 'ws';
 import { NtfrTunnel } from '@novu/ntfr-client';
-import fetch from 'node-fetch'; // Ensure to install \`@types/node-fetch\`
 
 const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 
