@@ -35,10 +35,10 @@ export abstract class BaseProvider {
     Input = Record<string, unknown>,
     Data = Record<string, unknown>
   >(
-    bridgeProvderData: WithPassthrough<Input>,
+    bridgeProviderData: WithPassthrough<Input>,
     data: Data
   ): TransformOutput<Output> {
-    const result = this.casingTransform<Input, Output>(bridgeProvderData);
+    const result = this.casingTransform<Input, Output>(bridgeProviderData);
 
     return {
       body: deepmerge(
@@ -55,7 +55,7 @@ export abstract class BaseProvider {
   }
 
   private casingTransform<Input = Record<string, unknown>, Output = unknown>(
-    bridgeProvderData: WithPassthrough<Input>
+    bridgeProviderData: WithPassthrough<Input>
   ): TransformOutput<Output> {
     const {
       _passthrough = {
@@ -64,7 +64,7 @@ export abstract class BaseProvider {
         query: {},
       },
       ...data
-    } = bridgeProvderData;
+    } = bridgeProviderData;
     let casing = (object: unknown, depth?: number, options?: IOptions) =>
       object;
 

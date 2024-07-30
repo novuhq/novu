@@ -697,7 +697,11 @@
     "htmlonly",
     "apidevtools",
     "contenteditable",
-    "powerpack"
+    "powerpack",
+    "deepmerge",
+    "kebabcase",
+    "nonenumerable",
+    "Deepmerge"
   ],
   "flagWords": [],
   "patterns": [
