@@ -17,13 +17,28 @@ const ClerkModalElement = {
   rootBox: {
     width: 'auto',
   },
+  navbarButton: {
+    fontFamily: 'var(--nv-fonts-system)',
+    fontWeight: 'var(--nv-font-weights-strong)',
+    fontSize: 'var(--nv-font-sizes-88)',
+    paddingTop: 'var(--nv-spacing-50) !important',
+    paddingBottom: 'var(--nv-spacing-50) !important',
+    color: 'var(--nv-colors-typography-text-secondary) !important',
+    '&:hover, &:focus, &:active': {
+      color: 'var(--nv-colors-typography-text-main) !important',
+    },
+  },
+  navbarButtonIcon: {
+    height: 'var(--nv-sizes-125)',
+    width: 'var(--nv-sizes-125)',
+  },
 };
 
 const localization = {
   userProfile: {
     navbar: {
       title: 'Settings',
-      description: 'Manage your account settings',
+      description: '',
     },
   },
 };
