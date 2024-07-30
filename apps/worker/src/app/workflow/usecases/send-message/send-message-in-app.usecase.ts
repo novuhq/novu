@@ -210,6 +210,7 @@ export class SendMessageInApp extends SendMessageBase {
         ],
       },
     };
+    const bridgeAvatar = bridgeOutputs?.avatar;
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -225,7 +226,7 @@ export class SendMessageInApp extends SendMessageBase {
         transactionId: command.transactionId,
         content: this.storeContent() ? bridgeBody || content : null,
         subject: bridgeSubject,
-        avatar: bridgeOutputs?.avatar,
+        avatar: bridgeAvatar,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,
