@@ -1,5 +1,3 @@
-import { useColorScheme } from '@novu/design-system';
-import { useEffect } from 'react';
 import { useBridgeConnectionStatus, useDiscover, useStudioWorkflowsNavigation } from '../../../hooks';
 import { WorkflowsDetailPage } from '../node-view/WorkflowsDetailPage';
 import { WorkflowPlaceholderPage } from './WorkflowPlaceholderPage';
@@ -8,12 +6,6 @@ export const LocalStudioWorkflowLandingPage = () => {
   const { data, isLoading } = useDiscover();
   const { goToWorkflow } = useStudioWorkflowsNavigation();
   const { status } = useBridgeConnectionStatus();
-  const { setColorScheme } = useColorScheme();
-
-  useEffect(() => {
-    setColorScheme('dark');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const hasWorkflows = data?.workflows && data?.workflows?.length > 0;
 
