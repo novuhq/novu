@@ -84,6 +84,8 @@ const AvatarContainer = ({
     defaultValue,
   });
 
+  console.log({ defaultValue });
+
   const [tooltipOpened, setTooltipOpened] = useState(() => {
     return value.type === ActorTypeEnum.NONE;
   });
@@ -203,7 +205,7 @@ const AvatarContainer = ({
   );
 };
 
-function RenderAvatar({ actor }: { actor: IActor }) {
+export function RenderAvatar({ actor }: { actor: IActor }) {
   if (!actor.type || actor.type === ActorTypeEnum.NONE) {
     return <Camera />;
   }
