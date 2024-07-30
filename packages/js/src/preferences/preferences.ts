@@ -1,5 +1,5 @@
 import { BaseModule } from '../base-module';
-import { mapPreference, updatePreference } from './helpers';
+import { updatePreference } from './helpers';
 import { Preference } from './preference';
 import type { UpdatePreferencesArgs } from './types';
 
@@ -10,7 +10,7 @@ export class Preferences extends BaseModule {
         this._emitter.emit('preferences.fetch.pending');
 
         const response = await this._inboxService.fetchPreferences();
-        const modifiedResponse: Preference[] = response.map((el) => new Preference(mapPreference(el)));
+        const modifiedResponse: Preference[] = response.map((el) => new Preference(el));
 
         this._emitter.emit('preferences.fetch.success', { args: undefined, result: modifiedResponse });
 

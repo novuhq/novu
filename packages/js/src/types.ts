@@ -133,7 +133,10 @@ export type PaginatedResponse<T = unknown> = {
 
 export type PreferencesResponse = {
   level: PreferenceLevel;
-  preferences: { enabled: boolean; channels: ChannelPreference; overrides?: IPreferenceOverride[] };
+  enabled: boolean;
+  channels: ChannelPreference;
+  overrides?: IPreferenceOverride[];
+  workflow?: Workflow;
 };
 
 export enum PreferenceOverrideSourceEnum {

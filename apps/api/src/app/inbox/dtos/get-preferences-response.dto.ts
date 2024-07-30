@@ -12,5 +12,11 @@ export class GetPreferencesResponseDto {
   workflow?: ITemplateConfiguration;
 
   @IsDefined()
-  preferences: { enabled: boolean; channels: IPreferenceChannels; overrides?: IPreferenceOverride[] };
+  enabled: boolean;
+
+  @IsDefined()
+  channels: IPreferenceChannels;
+
+  @IsOptional()
+  overrides?: IPreferenceOverride[];
 }
