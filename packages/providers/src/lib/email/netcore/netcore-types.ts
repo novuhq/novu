@@ -21,7 +21,7 @@ export interface IPersonalizations {
   token_to?: string;
   token_cc?: string;
   attachments?: IAttachment[];
-  headers?: WithPassthrough<Record<string, unknown>>;
+  headers?: Record<string, unknown>;
 }
 
 export interface ISettings {

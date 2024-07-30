@@ -7,6 +7,7 @@ import {
 } from '@novu/stateless';
 import apn from '@parse/node-apn';
 import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
 export class APNSPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.APNS;
@@ -36,7 +37,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.notificationIdentifiers;
     const notification = new apn.Notification(
