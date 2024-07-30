@@ -109,15 +109,15 @@ export const PreviewStep = ({
         <InAppBasePreview
           content={{
             content: preview?.outputs?.body,
-            ...(preview?.outputs?.subject && { subject: preview?.outputs?.subject }),
-            ...(preview?.outputs?.avatar && { avatar: preview?.outputs?.avatar }),
+            subject: preview?.outputs?.subject,
+            avatar: preview?.outputs?.avatar,
             ctaButtons: [
               ...(preview?.outputs?.primaryAction
                 ? [
                     {
                       type: ButtonTypeEnum.PRIMARY,
+                      url: preview?.outputs?.primaryAction.url,
                       content: preview?.outputs?.primaryAction.label,
-                      ...(preview?.outputs?.primaryAction.url && { url: preview?.outputs?.primaryAction.url }),
                     },
                   ]
                 : []),
@@ -125,8 +125,8 @@ export const PreviewStep = ({
                 ? [
                     {
                       type: ButtonTypeEnum.SECONDARY,
+                      url: preview?.outputs?.secondaryAction.url,
                       content: preview?.outputs?.secondaryAction.label,
-                      ...(preview?.outputs?.secondaryAction.url && { url: preview?.outputs?.secondaryAction.url }),
                     },
                   ]
                 : []),
