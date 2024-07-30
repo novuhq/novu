@@ -1,4 +1,5 @@
 import { UserButton } from '@clerk/clerk-react';
+import { Title } from '@novu/novui';
 import { IconCreditCard, IconGroup, IconRoomPreferences, IconWorkspacePremium } from '@novu/novui/icons';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ROUTES } from '../../../constants/routes';
@@ -29,6 +30,9 @@ export function UserProfileButton() {
       )}
 
       <UserButton.UserProfilePage label="Billing plans" url={ROUTES.BILLING} labelIcon={<IconCreditCard />}>
+        <Title marginBottom="150" variant="section">
+          Billing
+        </Title>
         <BillingPage />
       </UserButton.UserProfilePage>
     </UserButton>
