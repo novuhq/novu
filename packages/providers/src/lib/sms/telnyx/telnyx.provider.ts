@@ -12,7 +12,6 @@ import Telnyx from 'telnyx';
 import { BaseProvider } from '../../../base.provider';
 
 import { ITelnyxCLient } from './telnyx.interface';
-import { ITelnyxSmsOptions } from '../../../../../../providers/telnyx/build/module/lib/telnyx.interface';
 
 export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Telnyx;
@@ -35,7 +34,7 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
     bridgeProviderData: Record<string, unknown> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const telynxResponse = await this.telnyxClient.messages.create(
-      this.transform<ITelnyxSmsOptions>(bridgeProviderData, {
+      this.transform<any>(bridgeProviderData, {
         to: options.to,
         text: options.content,
         from: options.from || this.config.from,
