@@ -34,7 +34,6 @@ const devServerConfig = () => (config) => {
       'Cross-Origin-Resource-Policy': 'cross-origin',
       'Permissions-Policy':
         'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
-      'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
       'Referrer-Policy': 'no-referrer-when-downgrade',
     },
   };
