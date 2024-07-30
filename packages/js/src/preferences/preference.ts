@@ -30,7 +30,16 @@ export class Preference {
     return updatePreference({
       emitter: this.#emitter,
       apiService: this.#apiService,
-      args: { workflowId: this.workflow?.id, channelPreferences },
+      args: {
+        workflowId: this.workflow?.id,
+        channelPreferences,
+        preference: {
+          level: this.level,
+          enabled: this.enabled,
+          channels: this.channels,
+          workflow: this.workflow,
+        },
+      },
     });
   }
 }

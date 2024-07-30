@@ -14,7 +14,18 @@ export const updatePreference = async ({
 }): Promise<Preference> => {
   const { workflowId, channelPreferences } = args;
   try {
-    emitter.emit('preferences.update.pending', { args });
+    emitter.emit('preferences.update.pending', {
+      args,
+      optimistic: args.preference
+        ? new Preference({
+            ...args.preference,
+            channels: {
+              ...args.preference.channels,
+              ...channelPreferences,
+            },
+          })
+        : undefined,
+    });
 
     let response;
     if (workflowId) {
