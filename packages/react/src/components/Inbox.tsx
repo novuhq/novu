@@ -47,13 +47,13 @@ type WithChildrenProps = BaseProps & {
 type InboxProps = DefaultProps | WithChildrenProps;
 
 export const Inbox = (props: InboxProps) => {
-  if (props.children) {
-    const { children, ...options } = props;
+  if ('children' in props) {
+    const { children, ...options } = props as WithChildrenProps;
 
     return <Renderer options={options}>{children}</Renderer>;
   }
 
-  const { renderNotification, renderBell, ...options } = props as DefaultProps;
+  const { renderNotification, renderBell, ...options } = props;
 
   return (
     <Renderer options={options}>
