@@ -73,6 +73,7 @@ export type DiscoverWorkflowOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  tags: string[];
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
