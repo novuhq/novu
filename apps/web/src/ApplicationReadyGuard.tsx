@@ -33,11 +33,11 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
 
   function isOnboardingComplete() {
     if (IS_EE_AUTH_ENABLED) {
-      // TODO: replace with actual check property (e.g. isOnboardingCompleted)
-      return currentOrganization?.productUseCases !== undefined || currentOrganization?.language !== undefined;
+      // Prompt organizations to complete onboarding if created on or after 2024-07-31
+      return currentOrganization?.createdAt && new Date(currentOrganization.createdAt) < new Date('2024-07-31');
     }
 
-    return currentOrganization;
+    return !!currentOrganization;
   }
 
   if (inPublicRoute || inStudioRoute) {
