@@ -26,6 +26,7 @@ import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 import useThemeChange from '../../../hooks/useThemeChange';
+import { navigateToWorkflows } from '../../../utils';
 
 const CustomTooltip = ({
   index,
@@ -337,8 +338,7 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
   const segment = useSegment();
   const [isTestRan, setTestTestRan] = useState(false);
   const handleContinue = () => {
-    // Note: Do not use client navigation(react-router-dom), we need to make sure to create new headers
-    window.location.replace(window.location.origin + ROUTES.WORKFLOWS);
+    navigateToWorkflows();
 
     if (isTestRan) {
       segment.track('Playground Continue Clicked - [Playground]', {
