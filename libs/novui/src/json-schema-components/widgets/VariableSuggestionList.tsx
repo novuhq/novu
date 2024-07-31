@@ -68,6 +68,7 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
           <div
             style={{
               position: 'absolute',
+              // inline styles must be used here (instead of Panda) for dynamic / conditional behavior
               top: clientRect?.()?.bottom,
               left: clientRect?.()?.left,
             }}
