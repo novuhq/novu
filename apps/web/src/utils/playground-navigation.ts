@@ -11,7 +11,7 @@ export const navigateToAuthApplication = (params = '') => {
 
 /**
  * Note: Do not use client navigation(react-router-dom), we need to make sure to create new headers
- * This is because of the need to create defualt headers for the dashboard
+ * This is because of the need to create default headers for the dashboard
  */
 export const navigateToWorkflows = () => {
   window.location.replace(window.location.origin + ROUTES.WORKFLOWS);
