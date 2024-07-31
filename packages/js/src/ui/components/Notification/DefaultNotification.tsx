@@ -96,7 +96,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <Tooltip.Root>
                 <Tooltip.Trigger
                   asChild={(props) => (
-                    <Button appearanceKey="notificationRead__button" size="icon" variant="icon" {...props}>
+                    <Button
+                      appearanceKey="notificationRead__button"
+                      size="icon"
+                      variant="icon"
+                      {...props}
+                      onClick={() => {
+                        props.notification.read();
+                      }}
+                    >
                       <ReadAll />
                     </Button>
                   )}
@@ -108,7 +116,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             <Tooltip.Root>
               <Tooltip.Trigger
                 asChild={(props) => (
-                  <Button appearanceKey="notificationUnread__button" size="icon" variant="icon" {...props}>
+                  <Button
+                    appearanceKey="notificationUnread__button"
+                    size="icon"
+                    variant="icon"
+                    {...props}
+                    onClick={() => {
+                      props.notification.unread();
+                    }}
+                  >
                     <Unread />
                   </Button>
                 )}
@@ -122,7 +138,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               <Tooltip.Root>
                 <Tooltip.Trigger
                   asChild={(props) => (
-                    <Button appearanceKey="notificationArchive__button" size="icon" variant="icon" {...props}>
+                    <Button
+                      appearanceKey="notificationArchive__button"
+                      size="icon"
+                      variant="icon"
+                      {...props}
+                      onClick={() => {
+                        props.notification.archive();
+                      }}
+                    >
                       <Archive />
                     </Button>
                   )}
@@ -134,7 +158,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             <Tooltip.Root>
               <Tooltip.Trigger
                 asChild={(props) => (
-                  <Button appearanceKey="notificationUnarchive__button" size="icon" variant="icon" {...props}>
+                  <Button
+                    appearanceKey="notificationUnarchive__button"
+                    size="icon"
+                    variant="icon"
+                    {...props}
+                    onClick={() => {
+                      props.notification.unarchive();
+                    }}
+                  >
                     <Unarchive />
                   </Button>
                 )}
