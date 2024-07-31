@@ -9,8 +9,8 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { CommunityOrganizationRepository } from '@novu/dal';
 
 @Module({
-  imports: [SharedModule, SubscribersModule, AuthModule, IntegrationModule, CommunityOrganizationRepository],
-  providers: [...USE_CASES],
+  imports: [SharedModule, SubscribersModule, AuthModule, IntegrationModule],
+  providers: [...USE_CASES, CommunityOrganizationRepository],
   exports: [...USE_CASES],
   controllers: [WidgetsController],
 })
