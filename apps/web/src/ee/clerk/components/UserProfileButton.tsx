@@ -1,4 +1,5 @@
 import { UserButton } from '@clerk/clerk-react';
+import { useColorScheme } from '@novu/design-system';
 import { Title } from '@novu/novui';
 import { IconCreditCard, IconGroup, IconRoomPreferences, IconWorkspacePremium } from '@novu/novui/icons';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -10,6 +11,8 @@ import { CustomOrganizationProfile } from './CustomOrganizationProfile';
 
 export function UserProfileButton() {
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+  const { colorScheme } = useColorScheme();
+  const headerColor = colorScheme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(33, 33, 38)';
 
   return (
     <UserButton afterSignOutUrl={ROUTES.AUTH_LOGIN}>
@@ -30,7 +33,7 @@ export function UserProfileButton() {
       )}
 
       <UserButton.UserProfilePage label="Billing plans" url={ROUTES.BILLING} labelIcon={<IconCreditCard />}>
-        <Title marginBottom="150" variant="section">
+        <Title marginBottom="150" variant="section" color={headerColor}>
           Billing
         </Title>
         <BillingPage />
