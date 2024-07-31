@@ -79,6 +79,16 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
       appearance={{
         baseTheme: colorScheme === 'dark' ? dark : undefined,
         elements: ClerkModalElement,
+        createOrganization: {
+          elements: {
+            modalContent: {
+              width: 'auto',
+            },
+            rootBox: {
+              width: '420px',
+            },
+          },
+        },
       }}
       localization={localization}
       allowedRedirectOrigins={ALLOWED_REDIRECT_ORIGINS}
