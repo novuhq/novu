@@ -36,13 +36,30 @@ export function GetStartedPage() {
 }
 
 function StepperForm() {
+  const segment = useSegment();
+
   const [active, setActive] = useLocalStorage({
     key: 'nv-get-started-active-step',
     defaultValue: 0,
   });
 
-  const nextStep = () => setActive((current) => (current < 2 ? current + 1 : current));
-  const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
+  const nextStep = () => {
+    setActive((current) => {
+      const newStep = current < 2 ? current + 1 : current;
+      segment.track('Get Started - Page Tab Navigate', { from: current, to: newStep });
+
+      return newStep;
+    });
+  };
+
+  const prevStep = () => {
+    setActive((current) => {
+      const newStep = current > 0 ? current - 1 : current;
+      segment.track('Get Started - Page Tab Navigate', { from: current, to: newStep });
+
+      return newStep;
+    });
+  };
 
   return (
     <>

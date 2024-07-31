@@ -9,6 +9,7 @@ import { useEnvironment } from '../../../hooks/useEnvironment';
 import { CodeEditor } from '../CodeBlock';
 import { TextElement } from '../TextElement';
 import { CardButton, CardButtonGroupWrapper } from './CardsButtonGroup';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export const deployGuides = [
   {
@@ -202,8 +203,12 @@ jobs:
 
 export function DeployTab() {
   const [activeGuide, setActiveGuide] = useState('github');
+  const segment = useSegment();
+
   const handleGuideClick = (guideId) => {
     setActiveGuide(guideId);
+
+    segment.track('Get Started - Deploy Guide Select', { guide: guideId });
   };
 
   const activeGuideData = deployGuides.find((guide) => guide.id === activeGuide);

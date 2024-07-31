@@ -11,6 +11,7 @@ import { CardButton, CardButtonGroupWrapper } from './CardsButtonGroup';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
 import { IconOutlineMenuBook } from '@novu/design-system';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export const buildGuides = [
   {
@@ -339,8 +340,11 @@ export const testWorkflow = workflow('test-workflow', async ({ step, payload }) 
 
 export function SetupTab() {
   const [activeGuide, setActiveGuide] = useState('nextjs');
+  const segment = useSegment();
   const handleGuideClick = (guideId) => {
     setActiveGuide(guideId);
+
+    segment.track('Get Started - Framework Select', { framework: guideId });
   };
 
   const activeGuideData = buildGuides.find((guide) => guide.id === activeGuide);
