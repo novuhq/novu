@@ -9,7 +9,7 @@ import { css } from '@novu/novui/css';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
 import { TerminalComponent } from '../../../studio/components/workflows/step-editor/editor/Terminal';
 import { CodeEditor } from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
-import { WorkflowFlow } from './WorkflowFlow';
+import { PlaygroundWorkflowComponent } from './PlaygroundWorkflowComponent';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
@@ -169,7 +169,7 @@ function Playground({
           }}
           className="workflow-flow"
         >
-          <WorkflowFlow
+          <PlaygroundWorkflowComponent
             workflow={workflow}
             steps={steps}
             onStateChange={onStateChange}

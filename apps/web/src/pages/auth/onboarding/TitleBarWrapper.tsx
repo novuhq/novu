@@ -82,7 +82,7 @@ const useStyles = createStyles((theme, { error, isBlur }: { error?: boolean; isB
   },
 }));
 
-export const TitleBarWrapper = ({
+export const BrowserScreenWrapper = ({
   children,
   title,
 }: {

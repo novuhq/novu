@@ -8,8 +8,7 @@ import { editor as NEditor, Range } from 'monaco-editor';
 import { Tabs } from '@mantine/core';
 
 import { colors } from '@novu/design-system';
-
-import { TitleBarWrapper } from '../../../../../pages/auth/onboarding/TitleBarWrapper';
+import { BrowserScreenWrapper } from '../../../../../pages/auth/onboarding/TitleBarWrapper';
 
 export function CodeEditor({
   files,
@@ -37,7 +36,7 @@ export function CodeEditor({
   }, [colorScheme]);
 
   return (
-    <TitleBarWrapper title="Your IDE">
+    <BrowserScreenWrapper title="Your IDE">
       <Tabs
         value={activeTab}
         onTabChange={(value) => setActiveTab(value as string)}
@@ -125,7 +124,7 @@ export function CodeEditor({
           </Tabs.Panel>
         ))}
       </Tabs>
-    </TitleBarWrapper>
+    </BrowserScreenWrapper>
   );
 }
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { css, cx } from '@novu/novui/css';
 
-import { TitleBarWrapper } from './TitleBarWrapper';
+import { BrowserScreenWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { When } from '../../../components/utils/When';
@@ -14,7 +14,7 @@ import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 import { BackButton } from '../../../components/layout/components/LocalStudioHeader/BackButton';
 
-export function WorkflowFlow({
+export function PlaygroundWorkflowComponent({
   isBridgeAppLoading,
   clickedStepId,
   setClickedStepId,
@@ -69,7 +69,7 @@ export function WorkflowFlow({
   }
 
   return (
-    <TitleBarWrapper
+    <BrowserScreenWrapper
       title={
         <div
           className={css({
@@ -138,7 +138,7 @@ export function WorkflowFlow({
           </div>
         </When>
       </div>
-    </TitleBarWrapper>
+    </BrowserScreenWrapper>
   );
 }
 
