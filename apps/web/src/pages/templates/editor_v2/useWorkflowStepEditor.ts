@@ -31,6 +31,7 @@ export function useWorkflowStepEditor(stepId?: string) {
   const currentWorkflow = workflow || template;
   const currentStepId = stepId || paramStepId;
   const workflowName = workflow?.workflowId || template?.name;
+
   const { testUser, bridgeURL } = studioState;
   let step = (currentWorkflow?.steps as any)?.find((item) => item.stepId === currentStepId);
   step = step?.template ? step : { ...step, template: step };
