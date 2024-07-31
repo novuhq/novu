@@ -2,7 +2,7 @@ import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
-import { Archived, Check, Inbox, Unread } from '../../../icons';
+import { Archive, Check, Inbox, Unread } from '../../../icons';
 import { NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
 import { notificationStatusOptionsLocalizationKeys } from './constants';
@@ -18,7 +18,7 @@ const cases = [
   },
   {
     status: NotificationStatus.ARCHIVED,
-    icon: Archived,
+    icon: Archive,
   },
 ] satisfies { status: NotificationStatus; icon: () => JSX.Element }[];
 

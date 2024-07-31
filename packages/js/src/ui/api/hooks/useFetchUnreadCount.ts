@@ -1,9 +1,9 @@
 import { createResource } from 'solid-js';
-import type { FetchCountArgs } from '../../../feeds';
 import { useNovu } from '../../context';
 
+type UseUnreadCountFilter = { tags?: string[]; archived?: boolean };
 type UseUnreadCountOptions = {
-  filters?: Pick<FetchCountArgs, 'archived' | 'tags'>;
+  filters?: UseUnreadCountFilter;
   onSuccess?: (count: number) => void;
   onError?: (error: unknown) => void;
 };
@@ -11,18 +11,20 @@ type UseUnreadCountOptions = {
 export const useFetchUnreadCount = ({ filters, onSuccess, onError }: UseUnreadCountOptions = { filters: {} }) => {
   const novu = useNovu();
 
-  const [unreadCount, { refetch }] = createResource({ ...filters, read: false }, async (payload?: FetchCountArgs) => {
-    try {
-      const response = await novu.feeds.fetchCount(payload);
-      const count = response.data.count;
-      onSuccess?.(count);
+  const [unreadCount, { refetch }] = createResource(
+    { ...filters, read: false },
+    async (payload: UseUnreadCountFilter & { read: false }) => {
+      try {
+        const response = await novu.feeds.fetchCount({ filters: [payload] });
+        const count = response.data[0].count;
+        onSuccess?.(count);
 
-      return count;
-    } catch (error) {
-      console.warn('Error fetching unread count:', error);
-      onError?.(error);
+        return count;
+      } catch (error) {
+        onError?.(error);
+      }
     }
-  });
+  );
 
   return { unreadCount, refetch };
 };

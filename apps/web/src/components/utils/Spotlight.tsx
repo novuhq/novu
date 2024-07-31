@@ -12,7 +12,7 @@ import useStyles from './Spotlight.styles';
 export const SpotLight = ({ children }) => {
   const navigate = useNavigate();
   const { items, addItem } = useSpotlightContext();
-  const { themeIcon, toggleColorScheme } = useThemeChange();
+  const { toggleColorScheme, Icon } = useThemeChange();
   const { classes } = useStyles();
 
   useEffect(() => {
@@ -84,13 +84,13 @@ export const SpotLight = ({ children }) => {
       {
         id: 'toggle-theme',
         title: 'Toggle Theme',
-        icon: themeIcon,
+        icon: <Icon title="color-scheme-preference-icon" />,
         onTrigger: () => {
           toggleColorScheme();
         },
       },
     ]);
-  }, [navigate, addItem, themeIcon, toggleColorScheme]);
+  }, [navigate, addItem, Icon, toggleColorScheme]);
 
   return (
     <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items} classNames={classes}>

@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
-import { getApiKeys } from '../../../api/environment';
-import { useEnvironment } from '../../../hooks';
+import { useEnvironment, useApiKeys } from '../../../hooks';
 import { useRegenerateSecretKeyModal } from './useRegenerateApiKeyModal';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
@@ -21,8 +19,7 @@ export const useApiKeysPage = () => {
   const { environment } = useEnvironment();
 
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
-
-  const { data: secretKeys } = useQuery<{ key: string }[]>(['getApiKeys', environment?._id], getApiKeys);
+  const { data: secretKeys } = useApiKeys();
 
   const secretKey = secretKeys?.length ? secretKeys[0].key : '';
 

@@ -74,16 +74,15 @@ export class Session {
       _subscriber: subscriber._id,
     });
 
-    const {
-      data: { count: totalUnreadCount },
-    } = await this.notificationsCount.execute(
+    const { data } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
         environmentId: environment._id,
         subscriberId: command.subscriberId,
-        read: false,
+        filters: [{ read: false }],
       })
     );
+    const [{ count: totalUnreadCount }] = data;
 
     const token = await this.authService.getSubscriberWidgetToken(subscriber);
 

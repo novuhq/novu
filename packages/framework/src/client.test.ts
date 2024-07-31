@@ -325,7 +325,7 @@ describe('Novu Client', () => {
               controlSchema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string', default: '{{name}}' },
+                  name: { type: 'string', default: '{{payload.name}}' },
                 },
                 required: [],
                 additionalProperties: false,
@@ -520,7 +520,7 @@ describe('Novu Client', () => {
 
     it('should compile default control variable', async () => {
       const bodyTemplate = `
-{% for element in elements %}
+{% for element in payload.elements %}
   {{ element }}
 {% endfor %}`;
 
@@ -539,9 +539,9 @@ describe('Novu Client', () => {
               controlSchema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string', default: '{{name}}' },
+                  name: { type: 'string', default: '{{payload.name}}' },
                   lastName: { type: 'string', default: '{{subscriber.lastName}}' },
-                  role: { type: 'string', default: '{{role}}' },
+                  role: { type: 'string', default: '{{payload.role}}' },
                   body: { type: 'string', default: bodyTemplate },
                 },
                 required: [],
@@ -725,6 +725,60 @@ describe('Novu Client', () => {
               fooQuery: 'barQuery',
             },
           },
+        },
+      });
+    });
+
+    it('should support providers with polymorphic properties', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.chat('send-slack', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          providers: {
+            slack: async () => ({
+              text: 'Test Body',
+              blocks: [
+                {
+                  type: 'image',
+                  image_url: 'https://example.com/image.png',
+                  alt_text: 'An image',
+                },
+                {
+                  type: 'divider',
+                },
+              ],
+            }),
+          },
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-slack',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({
+        slack: {
+          text: 'Test Body',
+          blocks: [
+            {
+              type: 'image',
+              image_url: 'https://example.com/image.png',
+              alt_text: 'An image',
+            },
+            {
+              type: 'divider',
+            },
+          ],
         },
       });
     });

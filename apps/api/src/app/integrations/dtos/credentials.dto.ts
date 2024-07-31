@@ -211,4 +211,9 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   phoneNumberIdentification?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  accessKey?: string;
 }

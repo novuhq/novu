@@ -52,10 +52,8 @@ export class UpdatePreferences {
 
     return {
       level: updatedPreference.level,
-      preferences: {
-        enabled: updatedPreference.enabled,
-        channels: updatedPreference.channels,
-      },
+      enabled: updatedPreference.enabled,
+      channels: updatedPreference.channels,
       ...(workflow && updatedPreference.level === PreferenceLevelEnum.TEMPLATE && { workflow }),
     };
   }
