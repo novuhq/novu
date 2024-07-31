@@ -8,6 +8,7 @@ import { css } from '@novu/novui/css';
 import { Container, Flex } from '@novu/novui/jsx';
 import { useDebouncedCallback } from '@novu/novui';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
+import { getSuggestionVariables, subscriberVariables } from '../../../utils';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -41,6 +42,16 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
           {}
       ).length > 0
     );
+  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
+
+  const payloadProperties = useMemo(() => {
+    const payloadObject =
+      workflow?.payload?.schema?.properties ||
+      workflow?.options?.payloadSchema?.properties ||
+      workflow?.payloadSchema?.properties ||
+      {};
+
+    return getSuggestionVariables(payloadObject, 'payload');
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
   const haveControlProperties = useMemo(() => {
@@ -87,6 +98,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
+                    variables={[...(subscriberVariables || []), ...(payloadProperties || [])]}
                   />
                 </When>
                 <When truthy={!haveControlProperties}>

@@ -46,6 +46,7 @@ let standardWorker: StandardWorker;
 
 describe('Standard Worker', () => {
   let jobRepository: JobRepository;
+  let notificationRepository: NotificationRepository;
   let organization: OrganizationEntity;
   let environment: EnvironmentEntity;
   let user: UserEntity;
@@ -62,6 +63,7 @@ describe('Standard Worker', () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
     jobRepository = new JobRepository();
+    notificationRepository = new NotificationRepository();
 
     jobsService = new JobsService();
 
@@ -159,7 +161,15 @@ describe('Standard Worker', () => {
 
     const transactionId = uuid();
     const _environmentId = environment._id;
-    const _notificationId = NotificationRepository.createObjectId();
+    const notification = await notificationRepository.create({
+      _environmentId,
+      _organizationId: organization._id,
+      _subscriberId: subscriber._id,
+      _templateId: template._id,
+      _userId: user._id,
+      tags: [],
+    });
+    const _notificationId = notification._id;
     const _organizationId = organization._id;
     const _subscriberId = subscriber._id;
     const _templateId = template._id;
@@ -213,7 +223,7 @@ describe('Standard Worker', () => {
       delay: false,
     });
 
-    const jobs = await jobRepository.find({ _environmentId, _organizationId });
+    const jobs = await jobRepository.find({ _environmentId, _organizationId, _notificationId });
     expect(jobs.length).to.equal(1);
 
     expect(jobs[0].status).to.eql(JobStatusEnum.COMPLETED);
@@ -287,13 +297,14 @@ describe('Standard Worker', () => {
       failedTrigger = await jobRepository.findOne({
         _environmentId,
         _organizationId,
+        _notificationId,
         status: JobStatusEnum.FAILED,
         type: StepTypeEnum.TRIGGER,
       });
     } while (!failedTrigger || !failedTrigger.error);
 
     expect(failedTrigger.error).to.deep.include({
-      message: `Notification template ${_templateId} is not found`,
+      message: `Notification with id ${_notificationId} not found`,
     });
   });
 

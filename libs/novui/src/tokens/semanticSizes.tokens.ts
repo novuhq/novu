@@ -14,6 +14,16 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
         type: 'sizes',
       },
     },
+    menu: {
+      height: {
+        value: `25rem`,
+        type: 'sizes',
+      },
+      width: {
+        value: `18.75rem`,
+        type: 'sizes',
+      },
+    },
   },
   icon: {
     '16': {
