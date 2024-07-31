@@ -43,7 +43,7 @@ const mapSingleItem = ({
     avatar,
     primaryAction: primaryCta && {
       label: primaryCta.content,
-      url: cta?.data.url,
+      url: cta?.data?.url,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     secondaryAction: secondaryCta && {
