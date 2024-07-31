@@ -4,6 +4,9 @@ type MounterProps = {
   mount: (node: HTMLElement) => ((node: HTMLElement) => void) | void;
 };
 
+/**
+ * Mounter allows you to mount a component to a DOM node.
+ */
 export function Mounter({ mount }: MounterProps) {
   const ref = React.useRef<HTMLDivElement>(null);
 
