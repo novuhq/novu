@@ -1,11 +1,11 @@
 import { useStyle } from '../../../helpers';
-import { Archived, ArchiveRead, ReadAll, Settings } from '../../../icons';
+import { Archive, ArchiveRead, ReadAll, Settings } from '../../../icons';
 import { OptionsDropdown } from '../OptionsDropdown';
 import type { Option } from '../OptionsDropdown';
 
 const options: Array<Option> = [
   { label: 'Mark all as read', leftIcon: <ReadAll /> },
-  { label: 'Archive all', leftIcon: <Archived /> },
+  { label: 'Archive all', leftIcon: <Archive /> },
   { label: 'Archive read', leftIcon: <ArchiveRead /> },
 ];
 
