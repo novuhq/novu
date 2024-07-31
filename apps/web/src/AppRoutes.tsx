@@ -65,9 +65,8 @@ import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
-import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
-import { WelcomePage } from './pages/auth/onboarding/WelcomePage';
 import { PlaygroundPage } from './pages/auth/onboarding/PlaygroundPage';
+import { BillingRoutes } from './pages/BillingPages';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -151,7 +150,9 @@ export const AppRoutes = () => {
             <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
             <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.SETTINGS} replace />} />
           </Route>
-        ) : null}
+        ) : (
+          <Route path="/billing" element={<BillingRoutes />} />
+        )}
         <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
           <Route path="create" element={<SelectProviderPage />} />
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />

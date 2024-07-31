@@ -659,7 +659,8 @@
     "zulip",
     "zwnj",
     "Embedder",
-    "credentialless"
+    "credentialless",
+    "coep"
   ],
   "flagWords": [],
   "patterns": [

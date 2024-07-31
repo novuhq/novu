@@ -10,22 +10,14 @@ export interface IWorkflowsPageHeaderProps extends CoreProps {
   className?: string;
 }
 
-export const WorkflowsPageHeader: FC<IWorkflowsPageHeaderProps> = ({
-  icon,
-  title,
-  actions,
-  description,
-  className,
-}) => {
+export const WorkflowsPageHeader: FC<IWorkflowsPageHeaderProps> = ({ icon, title, actions, description }) => {
   return (
-    <Flex justify={'space-between'}>
-      <HStack>
+    <Flex justify={'space-between'} mb="margins.layout.page.titleBottom" minHeight={'300'}>
+      <HStack gap="50">
         {icon}
         <Box>
-          <Title className={className} variant="section">
-            {title}
-          </Title>
-          {description && <Text color="typography.text.secondary">{description} </Text>}
+          <Title variant="section">{title}</Title>
+          {description && <Text color="typography.text.secondary">{description}</Text>}
         </Box>
       </HStack>
       {actions && <HStack gap="100">{actions}</HStack>}

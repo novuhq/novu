@@ -81,6 +81,7 @@ export const WorkflowsStepEditorPage = ({
           workflow={workflow}
           onChange={onControlsChange}
           defaultControls={controls}
+          className={css({ marginTop: source === 'playground' ? '-40px' : '0' })}
         />
       </WorkflowsPanelLayout>
     </PageWrapper>
