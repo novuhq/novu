@@ -62,8 +62,8 @@ export class CreateNotificationJobs {
       payload: command.payload,
       expireAt: this.calculateExpireAt(command),
       channels,
-      bridge: command.bridge,
       controls: command.controls,
+      tags: command.template.tags,
     });
 
     if (!notification) {
@@ -94,9 +94,7 @@ export class CreateNotificationJobs {
         tenant: command.tenant,
         step: {
           ...step,
-          ...(command.bridge?.workflow
-            ? { bridgeUrl: command.bridge?.url }
-            : {}),
+          ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
         },
         transactionId: command.transactionId,
         _notificationId: notification._id,
@@ -145,7 +143,7 @@ export class CreateNotificationJobs {
       overrides: command.overrides,
       tenant: command.tenant,
       step: {
-        bridgeUrl: command.bridge?.url,
+        bridgeUrl: command.bridgeUrl,
         template: {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
