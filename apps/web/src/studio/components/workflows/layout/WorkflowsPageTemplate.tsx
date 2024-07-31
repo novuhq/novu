@@ -1,9 +1,23 @@
 import { FC, PropsWithChildren } from 'react';
 import { PageContainer } from '../../../layout/PageContainer';
 import { PageMeta } from '../../../layout/PageMeta';
+import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
 import { WorkflowsPageHeader, type IWorkflowsPageHeaderProps } from './WorkflowsPageHeader';
 
 export type IWorkflowsPageTemplateProps = IWorkflowsPageHeaderProps;
+
+export function StepIcon({ size, step }) {
+  const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
+  if (!IconElement) {
+    return null;
+  }
+
+  return (
+    <>
+      <IconElement size={size} />
+    </>
+  );
+}
 
 export const WorkflowsPageTemplate: FC<PropsWithChildren<IWorkflowsPageTemplateProps>> = ({
   title,

@@ -7,11 +7,12 @@ import { TitleBarWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { When } from '../../../components/utils/When';
-import { VStack } from '@novu/novui/jsx';
+import { HStack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
 import { useBridgeAPI } from '../../../studio/hooks/useBridgeAPI';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
+import { BackButton } from '../../../components/layout/components/LocalStudioHeader/BackButton';
 
 export function WorkflowFlow({
   isBridgeAppLoading,
@@ -103,20 +104,33 @@ export function WorkflowFlow({
         </When>
 
         <When truthy={!!clickedStepId && step}>
-          <WorkflowsStepEditor
-            step={step}
-            preview={preview}
-            error={error}
-            loadingPreview={loadingPreview}
-            workflow={workflow}
-            defaultControls={controls}
-            onControlsChange={onControlsChange}
-            source="playground"
-            onGoBack={() => {
-              setWorkflowTab('workflow');
-              setClickedStepId('');
-            }}
-          />
+          <div>
+            <HStack
+              className={css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })}
+            >
+              <BackButton
+                styles={{
+                  paddingLeft: '0',
+                  paddingRight: '0',
+                  _hover: { '& p, & svg': { color: 'typography.text.main !important' } },
+                }}
+                onClick={() => {
+                  setWorkflowTab('workflow');
+                  setClickedStepId('');
+                }}
+              />
+            </HStack>
+            <WorkflowsStepEditor
+              step={step}
+              preview={preview}
+              error={error}
+              loadingPreview={loadingPreview}
+              workflow={workflow}
+              defaultControls={controls}
+              onControlsChange={onControlsChange}
+              source="playground"
+            />
+          </div>
         </When>
       </div>
     </TitleBarWrapper>

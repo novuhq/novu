@@ -5,9 +5,12 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/api.client';
 import { ROUTES } from '../../../constants/routes';
-import { errorMessage, successMessage } from '@novu/design-system';
+import { errorMessage, IconPlayArrow, successMessage } from '@novu/design-system';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
+import { StepIcon, WorkflowsPageTemplate } from '../../../studio/components/workflows/layout/WorkflowsPageTemplate';
+import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const navigate = useNavigate();
@@ -75,17 +78,26 @@ export const WorkflowsStepEditorPageV2 = () => {
   if (isInitialLoading || !template) return null;
 
   return (
-    <WorkflowsStepEditor
-      workflow={template}
-      step={{ stepId: step.stepId, ...step.template }}
-      preview={preview}
-      loadingPreview={loadingPreview}
-      isSavingControls={isSavingControls}
-      error={error}
-      defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
-      onControlsChange={onControlsChange}
-      onTestClick={handleTestClick}
-      onControlsSave={onControlsSave}
-    />
+    <WorkflowsPageTemplate
+      title={step.stepId}
+      icon={<StepIcon step={step} size="32" />}
+      actions={
+        <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+          Test workflow
+        </OutlineButton>
+      }
+    >
+      <WorkflowsStepEditor
+        workflow={template}
+        step={{ stepId: step.stepId, ...step.template }}
+        preview={preview}
+        loadingPreview={loadingPreview}
+        isSavingControls={isSavingControls}
+        error={error}
+        defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
+        onControlsChange={onControlsChange}
+        onControlsSave={onControlsSave}
+      />
+    </WorkflowsPageTemplate>
   );
 };
