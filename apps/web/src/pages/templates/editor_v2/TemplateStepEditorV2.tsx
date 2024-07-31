@@ -36,7 +36,17 @@ export const WorkflowsStepEditorPageV2 = (props: {
 
   return (
     <>
-      <WorkflowsPageTemplate title={title} icon={<Icon stepType={step?.type} size="32" />}>
+      <WorkflowsPageTemplate
+        title={title}
+        icon={<Icon stepType={step?.type} size="32" />}
+        actions={
+          <>
+            <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+              Test workflow
+            </OutlineButton>
+          </>
+        }
+      >
         <WorkflowsPanelLayout>
           <WorkflowStepEditorContentPanel
             source={'dashboard'}

@@ -33,6 +33,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   onSave,
   defaultControls,
   isLoadingSave,
+  className,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
@@ -58,6 +59,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   return (
     <>
       <Tabs
+        className={className}
         defaultValue="step-controls"
         tabConfigs={[
           {
