@@ -34,7 +34,7 @@ export function UserProfileButton() {
 
       <UserButton.UserProfilePage label="Billing plans" url={ROUTES.BILLING} labelIcon={<IconCreditCard />}>
         <Title marginBottom="150" variant="section" color={headerColor}>
-          Billing
+          Billing plans
         </Title>
         <BillingPage />
       </UserButton.UserProfilePage>
