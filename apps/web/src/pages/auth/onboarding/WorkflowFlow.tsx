@@ -1,32 +1,86 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import type { DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { css, cx } from '@novu/novui/css';
 
 import { TitleBarWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
-import { WorkflowsStepEditorPageV2 } from '../../templates/editor_v2/TemplateStepEditorV2';
-import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { When } from '../../../components/utils/When';
 import { Flex, Stack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
-import { WorkflowsStepEditorPage } from '../../../studio/components/workflows/index';
+import { WorkflowsStepEditor, WorkflowsStepEditorPage } from '../../../studio/components/workflows/index';
+import { useWorkflowPreview } from '../../../studio/hooks/useBridgeAPI';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function WorkflowFlow({
   isBridgeAppLoading,
   clickedStepId,
   setClickedStepId,
+  onStateChange,
+  workflow,
+  steps,
 }: {
   isBridgeAppLoading: boolean;
   clickedStepId: string;
   setClickedStepId: (stepId: string) => void;
+  onStateChange: (state: { workflowId: string; stepId: string; controls: any; payload: any }) => void;
+  workflow: DiscoverWorkflowOutput;
+  steps: DiscoverStepOutput[];
+  loading?: boolean;
 }) {
+  const segment = useSegment();
+  const [controls, setStepControls] = useState({});
+  const [payload, setPayload] = useState({});
+
+  const {
+    data: preview,
+    isLoading: loadingPreview,
+    refetch,
+    error,
+  } = useWorkflowPreview(
+    { workflowId: workflow?.workflowId, stepId: clickedStepId, controls, payload },
+    {
+      refetchOnWindowFocus: 'always',
+    }
+  );
+
+  function onControlsChange(type: string, form: any, id?: string) {
+    switch (type) {
+      case 'step':
+        segment.track('Step Controls Changes', {
+          key: id,
+          origin: 'playground',
+        });
+        setStepControls(form.formData);
+        break;
+      case 'payload':
+        setPayload(form.formData);
+        break;
+    }
+
+    refetch();
+  }
+
+  const step = workflow?.steps.find((item) => item.stepId === clickedStepId);
+
   const [workflowTab, setWorkflowTab] = useState<'workflow' | 'stepEdit'>('workflow');
-  const { workflow, isDiscoverLoading, steps } = useWorkflowStepEditor(clickedStepId || '');
 
   const isDemoWorkflow = (workflow as DiscoverWorkflowOutput)?.workflowId.includes('demo');
-  if (isDiscoverLoading || isBridgeAppLoading || isDemoWorkflow) {
+
+  useEffect(() => {
+    if (!onStateChange) return;
+
+    onStateChange({
+      workflowId: workflow?.workflowId,
+      stepId: clickedStepId,
+      controls,
+      payload,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workflow, controls, payload, clickedStepId]);
+
+  if (isBridgeAppLoading || isDemoWorkflow) {
     return <StepNodeSkeleton />;
   }
 
@@ -61,20 +115,25 @@ export function WorkflowFlow({
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
               steps={steps}
-              onStepClick={(step) => {
+              onStepClick={(stepClicked) => {
                 setWorkflowTab('stepEdit');
-                setClickedStepId(step.stepId);
+                setClickedStepId(stepClicked.stepId);
               }}
               onTriggerClick={() => {}}
             />
           </WorkflowBackgroundWrapper>
         </When>
 
-        <When truthy={!!clickedStepId}>
-          <WorkflowsStepEditorPage
+        <When truthy={!!clickedStepId && step}>
+          <WorkflowsStepEditor
+            step={step}
+            preview={preview}
+            error={error}
+            loadingPreview={loadingPreview}
+            workflow={workflow}
+            controls={controls}
+            onControlsChange={onControlsChange}
             source="playground"
-            workflowId={(workflow as DiscoverWorkflowOutput)?.workflowId}
-            parentStepId={clickedStepId}
             onGoBack={() => {
               setWorkflowTab('workflow');
               setClickedStepId('');

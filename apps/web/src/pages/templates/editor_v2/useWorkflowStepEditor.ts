@@ -4,12 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { api } from '../../../api';
-import { API_ROOT } from '../../../config';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { ROUTES } from '../../../constants/routes';
 import { parseUrl } from '../../../utils/routeUtils';
 import { useStudioState } from '../../../studio/StudioStateProvider';
-import { useAPIKeys } from '../../../hooks';
 import { useTemplateController } from '../components/useTemplateController';
 import type { DiscoverWorkflowOutput } from '@novu/framework';
 import { useDiscover } from '../../../studio/hooks';
@@ -20,7 +18,6 @@ export function useWorkflowStepEditor(stepId?: string) {
   const { data: discoverData, isLoading: isDiscoverLoading } = useDiscover();
   const track = useTelemetry();
   const studioState = useStudioState() || {};
-  const { apiKey } = useAPIKeys();
   const navigate = useNavigate();
   const { templateId = '', stepId: paramStepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
@@ -49,31 +46,7 @@ export function useWorkflowStepEditor(stepId?: string) {
   );
 
   const handleTestClick = async () => {
-    if (isStateless) {
-      const res = await fetch(`${API_ROOT}/v1/events/trigger`, {
-        method: 'POST',
-        body: JSON.stringify({
-          bridgeUrl: bridgeURL,
-          name: 'hello-world',
-          to: { subscriberId: testUser.id, email: testUser.emailAddress },
-          payload: { ...payload, __source: 'studio-onboarding-test-workflow' },
-          controls: {
-            steps: {
-              [step?.stepId]: controls,
-            },
-          },
-        }),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: `ApiKey ${apiKey}`,
-        },
-      });
-
-      return await res.json();
-    } else {
-      navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { workflowId: workflowIdentifier }));
-    }
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { workflowId: workflowIdentifier }));
   };
 
   const {
@@ -84,8 +57,11 @@ export function useWorkflowStepEditor(stepId?: string) {
   } = useMutation<any, any, any>((data) => api.post('/v1/bridge/preview/' + workflowName + '/' + currentStepId, data));
 
   useEffect(() => {
-    if (!currentWorkflow || isInitialLoading) return;
-    setStepControls(controlVariables?.controls || controlVariables?.inputs);
+    if (!(currentWorkflow || isInitialLoading) && controlVariables) return;
+
+    const controlsFromDb = controlVariables?.controls || controlVariables?.inputs;
+
+    setStepControls(controlsFromDb);
   }, [currentWorkflow, isInitialLoading, controlVariables]);
 
   useEffect(() => {

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDisclosure } from '@mantine/hooks';
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
@@ -13,13 +12,11 @@ import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
 import { IconPlayArrow } from '@novu/novui/icons';
 
-import { ROUTES } from '../../../constants/routes';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
 import { TerminalComponent } from '../../../studio/components/workflows/step-editor/editor/Terminal';
 import { CodeEditor } from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
 import { WorkflowFlow } from './WorkflowFlow';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useWorkflowStepEditor } from '../../templates/editor_v2/useWorkflowStepEditor';
 import { successMessage } from '../../../utils/notifications';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-joyride';
@@ -27,114 +24,60 @@ import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 import useThemeChange from '../../../hooks/useThemeChange';
 import { navigateToWorkflows } from '../../../utils';
-
-const CustomTooltip = ({
-  index,
-  step,
-  primaryProps,
-  tooltipProps,
-  isLastStep,
-  isBridgeAppLoading,
-  backProps,
-  skipProps,
-  size,
-}: TooltipRenderProps & { isBridgeAppLoading: boolean }) => (
-  <div
-    {...tooltipProps}
-    className={css({
-      backgroundColor: '#23232b',
-      borderRadius: '8px',
-      boxShadow: '0 1px 10px rgba(0, 0, 0, 0.15)',
-      color: 'typography.text.secondary',
-      padding: '15px',
-      maxWidth: '450px',
-      fontSize: '14px',
-    })}
-  >
-    {step.title && (
-      <h4 className={css({ margin: '0 0 10px', fontSize: '18px', color: 'white', position: 'relative' })}>
-        {step.title}{' '}
-        <span
-          className={css({
-            color: 'typography.text.secondary',
-            fontSize: '12px',
-            position: 'absolute',
-            right: '10px',
-            top: '3px',
-          })}
-        >
-          ({index + 1}/{size})
-        </span>
-      </h4>
-    )}
-    <div className={css({ marginBottom: '15px' })}>{step.content}</div>
-    <div className={css({ marginTop: '15px', display: 'flex', justifyContent: 'space-between' })}>
-      <div>
-        <Button
-          size="sm"
-          {...skipProps}
-          className={css({
-            backgroundColor: 'transparent',
-            color: '#dd2476',
-          })}
-        >
-          Skip
-        </Button>
-      </div>
-      <div>
-        {index > 0 && (
-          <Button
-            size="sm"
-            {...backProps}
-            className={css({
-              backgroundColor: 'transparent',
-              color: '#dd2476',
-              marginRight: '10px',
-            })}
-          >
-            Back
-          </Button>
-        )}
-        {index === 2 ? (
-          <Button
-            onClick={primaryProps.onClick}
-            disabled={isBridgeAppLoading}
-            size="sm"
-            className={css({
-              backgroundColor: '#dd2476',
-            })}
-          >
-            {isBridgeAppLoading ? (
-              <div className={css({ display: 'flex', alignItems: 'center' })}>Waiting for server load...</div>
-            ) : (
-              `Next`
-            )}
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            {...primaryProps}
-            className={css({
-              backgroundColor: '#dd2476',
-            })}
-          >
-            {isLastStep ? 'Finish' : `Next`}
-          </Button>
-        )}
-      </div>
-    </div>
-  </div>
-);
+import { useDiscover } from '../../../studio/hooks/useBridgeAPI';
+import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
+import { API_ROOT } from '../../../config/index';
+import { useAPIKeys } from '../../../hooks/useApiKey';
 
 export function PlaygroundPage() {
+  const { apiKey } = useAPIKeys();
+
+  const [triggerState, setTriggerState] = useState<{ workflowId: string; stepId: string; controls: any; payload: any }>(
+    {
+      workflowId: '',
+      stepId: '',
+      controls: {},
+      payload: {},
+    }
+  );
   const [clickedStepId, setClickedStepId] = useState<string>('');
-  const { handleTestClick } = useWorkflowStepEditor(clickedStepId);
+  const studioState = useStudioState();
+  const { testUser, bridgeURL } = studioState;
+
   const [runJoyride, setRunJoyride] = useState(true);
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
-  const { steps } = useWorkflowStepEditor(clickedStepId || '');
+  const { data: discover } = useDiscover();
+
+  const workflow = (discover?.workflows as DiscoverWorkflowOutput[])?.[0];
+  const steps = workflow?.steps;
+
   const { initializeWebContainer, isBridgeAppLoading } = useContainer();
   const { toggleColorScheme, colorScheme } = useThemeChange();
   const segment = useSegment();
+
+  async function handleTestClick() {
+    const res = await fetch(`${API_ROOT}/v1/events/trigger`, {
+      method: 'POST',
+      body: JSON.stringify({
+        bridgeUrl: bridgeURL,
+        name: 'hello-world',
+        to: { subscriberId: testUser.id, email: testUser.emailAddress },
+        payload: { ...triggerState.payload, __source: 'studio-onboarding-test-workflow' },
+        controls: {
+          steps: {
+            [triggerState.stepId]: triggerState.controls,
+          },
+        },
+      }),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `ApiKey ${apiKey}`,
+      },
+    });
+
+    return await res.json();
+  }
 
   useEffectOnce(() => {
     segment.track('Visit Playground page - [Playground]');
@@ -328,13 +271,19 @@ export function PlaygroundPage() {
       />
 
       <Header handleTestClick={handleTestClick} />
-      <Playground clickedStepId={clickedStepId} setClickedStepId={setClickedStepId} />
+
+      <Playground
+        clickedStepId={clickedStepId}
+        setClickedStepId={setClickedStepId}
+        onStateChange={setTriggerState}
+        workflow={workflow}
+        steps={steps}
+      />
     </div>
   );
 }
 
 function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
-  const navigate = useNavigate();
   const segment = useSegment();
   const [isTestRan, setTestTestRan] = useState(false);
   const handleContinue = () => {
@@ -411,9 +360,15 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
 function Playground({
   clickedStepId,
   setClickedStepId,
+  onStateChange,
+  workflow,
+  steps,
 }: {
   clickedStepId: string;
   setClickedStepId: (stepId: string) => void;
+  onStateChange: (state: { workflowId: string; stepId: string; controls: any; payload: any }) => void;
+  workflow: DiscoverWorkflowOutput;
+  steps: DiscoverStepOutput[];
 }) {
   const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
   const filteredCode = Object.fromEntries(Object.entries(code).filter(([key]) => key !== 'tunnel.ts'));
@@ -466,6 +421,9 @@ function Playground({
           className="workflow-flow"
         >
           <WorkflowFlow
+            workflow={workflow}
+            steps={steps}
+            onStateChange={onStateChange}
             isBridgeAppLoading={isBridgeAppLoading}
             clickedStepId={clickedStepId}
             setClickedStepId={setClickedStepId}
@@ -527,3 +485,103 @@ const TriggerActionModal = ({
     </>
   );
 };
+
+function CustomTooltip({
+  index,
+  step,
+  primaryProps,
+  tooltipProps,
+  isLastStep,
+  isBridgeAppLoading,
+  backProps,
+  skipProps,
+  size,
+}: TooltipRenderProps & { isBridgeAppLoading: boolean }) {
+  return (
+    <div
+      {...tooltipProps}
+      className={css({
+        backgroundColor: '#23232b',
+        borderRadius: '8px',
+        boxShadow: '0 1px 10px rgba(0, 0, 0, 0.15)',
+        color: 'typography.text.secondary',
+        padding: '15px',
+        maxWidth: '450px',
+        fontSize: '14px',
+      })}
+    >
+      {step.title && (
+        <h4 className={css({ margin: '0 0 10px', fontSize: '18px', color: 'white', position: 'relative' })}>
+          {step.title}{' '}
+          <span
+            className={css({
+              color: 'typography.text.secondary',
+              fontSize: '12px',
+              position: 'absolute',
+              right: '10px',
+              top: '3px',
+            })}
+          >
+            ({index + 1}/{size})
+          </span>
+        </h4>
+      )}
+      <div className={css({ marginBottom: '15px' })}>{step.content}</div>
+      <div className={css({ marginTop: '15px', display: 'flex', justifyContent: 'space-between' })}>
+        <div>
+          <Button
+            size="sm"
+            {...skipProps}
+            className={css({
+              backgroundColor: 'transparent',
+              color: '#dd2476',
+            })}
+          >
+            Skip
+          </Button>
+        </div>
+        <div>
+          {index > 0 && (
+            <Button
+              size="sm"
+              {...backProps}
+              className={css({
+                backgroundColor: 'transparent',
+                color: '#dd2476',
+                marginRight: '10px',
+              })}
+            >
+              Back
+            </Button>
+          )}
+          {index === 2 ? (
+            <Button
+              onClick={primaryProps.onClick}
+              disabled={isBridgeAppLoading}
+              size="sm"
+              className={css({
+                backgroundColor: '#dd2476',
+              })}
+            >
+              {isBridgeAppLoading ? (
+                <div className={css({ display: 'flex', alignItems: 'center' })}>Waiting for server load...</div>
+              ) : (
+                `Next`
+              )}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              {...primaryProps}
+              className={css({
+                backgroundColor: '#dd2476',
+              })}
+            >
+              {isLastStep ? 'Finish' : `Next`}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
