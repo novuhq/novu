@@ -9,14 +9,7 @@ export const MoreActionsOptions = () => {
 
   return (
     <>
-      <ActionsItem
-        label="Mark all as read"
-        /**
-         * TODO: Implement setFeedOptions and isSelected after Filter is implemented
-         */
-        onClick={markAllAsRead}
-        icon={ReadAll}
-      />
+      <ActionsItem label="Mark all as read" onClick={markAllAsRead} icon={ReadAll} />
       <ActionsItem
         label="Archive all"
         /**

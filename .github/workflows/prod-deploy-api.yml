@@ -106,7 +106,6 @@ jobs:
 
   deploy_prod_api_us:
     needs:
-      - deploy_prod_api_eu
       - build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit

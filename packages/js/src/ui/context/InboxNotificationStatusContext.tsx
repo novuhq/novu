@@ -27,7 +27,7 @@ export const useInboxStatusContext = () => {
   const context = useContext(InboxNotificationStatusContext);
 
   if (!context) {
-    throw new Error('useFeedContext must be used within a FeedsProvider');
+    throw new Error('useInboxStatusContext must be used within a InboxNotificationStatusProvider');
   }
 
   return context;
