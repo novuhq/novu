@@ -6,8 +6,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/api.client';
 import { ROUTES } from '../../../constants/routes';
 import { errorMessage, successMessage } from '@novu/design-system';
-import { WorkflowsStepEditor } from '../../../studio/components/workflows/index';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
+import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const navigate = useNavigate();

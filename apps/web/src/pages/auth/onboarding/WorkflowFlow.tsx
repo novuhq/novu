@@ -7,11 +7,11 @@ import { TitleBarWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { When } from '../../../components/utils/When';
-import { Flex, Stack, VStack } from '@novu/novui/jsx';
+import { VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
-import { WorkflowsStepEditor, WorkflowsStepEditorPage } from '../../../studio/components/workflows/index';
-import { useBridgeAPI, useWorkflowPreview } from '../../../studio/hooks/useBridgeAPI';
+import { useBridgeAPI } from '../../../studio/hooks/useBridgeAPI';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
+import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 
 export function WorkflowFlow({
   isBridgeAppLoading,
