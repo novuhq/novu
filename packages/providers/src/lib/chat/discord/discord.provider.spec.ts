@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { axiosSpy } from '../../../utils/test/spy-axios';
 import { DiscordProvider } from './discord.provider';
 
 test('should trigger Discord provider correctly', async () => {
@@ -20,5 +22,33 @@ test('should trigger Discord provider correctly', async () => {
   expect(spy).toHaveBeenCalledWith({
     webhookUrl: 'webhookUrl',
     content: 'chat message',
+  });
+});
+
+test('should trigger Discord provider correctly with _passthrough', async () => {
+  const { mockPost } = axiosSpy({
+    data: {
+      id: 'id',
+      timestamp: new Date().toISOString(),
+    },
+  });
+  const provider = new DiscordProvider({});
+
+  await provider.sendMessage(
+    {
+      webhookUrl: 'https://www.google.com/',
+      content: 'chat message',
+    },
+    {
+      _passthrough: {
+        body: {
+          content: 'passthrough content',
+        },
+      },
+    }
+  );
+
+  expect(mockPost).toHaveBeenCalledWith('https://www.google.com/?wait=true', {
+    content: 'passthrough content',
   });
 });

@@ -1,17 +1,25 @@
-import axios from 'axios';
 import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 import { nanoid } from 'nanoid';
 import { IChatOptions } from '@novu/stateless';
+import { axiosSpy } from '../../../utils/test/spy-axios';
 
 const mockProviderConfig = {
   accessToken: 'my-access-token',
   phoneNumberIdentification: '1234567890',
 };
 
+const buildData = (messageId: string) => {
+  return {
+    messaging_product: 'whatsapp',
+    contacts: [{ input: 'Any input', wa_id: nanoid() }],
+    messages: [{ id: messageId }],
+  };
+};
+
 test('should trigger whatsapp-business library correctly with simple text message', async () => {
   const messageId = nanoid();
 
-  const { mockPost, axiosMockSpy } = axiosSpy(messageId);
+  const { mockPost, axiosMockSpy } = axiosSpy(buildData(messageId));
 
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
@@ -47,7 +55,7 @@ test('should trigger whatsapp-business library correctly with simple text messag
 test('should trigger whatsapp-business library correctly with template message', async () => {
   const messageId = nanoid();
 
-  const { mockPost, axiosMockSpy } = axiosSpy(messageId);
+  const { mockPost, axiosMockSpy } = axiosSpy(buildData(messageId));
 
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
@@ -84,27 +92,6 @@ test('should trigger whatsapp-business library correctly with template message',
 
   expect(res.id).toBe(messageId);
 });
-
-function axiosSpy(messageId: string) {
-  const mockPost = jest.fn(() => {
-    return {
-      data: {
-        messaging_product: 'whatsapp',
-        contacts: [{ input: 'Any input', wa_id: nanoid() }],
-        messages: [{ id: messageId }],
-      },
-    };
-  });
-
-  const axiosMockSpy = jest.spyOn(axios, 'create').mockImplementation(() => {
-    return {
-      post: mockPost,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-  });
-
-  return { mockPost, axiosMockSpy };
-}
 
 function baseUrl(phoneNumberIdentification: string) {
   return `https://graph.facebook.com/v18.0/${phoneNumberIdentification}/messages`;

@@ -34,16 +34,27 @@ export class GrafanaOnCallChatProvider
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
-    const body = this.transform(bridgeProviderData, {
+    const data = this.transform(bridgeProviderData, {
       alert_uid: this.config.alertUid,
       title: this.config.title,
       image_url: this.config.imageUrl,
       state: this.config.state,
       link_to_upstream_details: this.config.externalLink,
       message: options.content,
-    }).body;
+    });
+
+    const hasHeaders = data.headers && Object.keys(data.headers).length > 0;
+
     //response is just string "Ok."
-    const { headers } = await this.axiosInstance.post(url.toString(), body);
+    const { headers } = await this.axiosInstance.post(
+      url.toString(),
+      data.body,
+      hasHeaders
+        ? {
+            headers: data.headers as Record<string, string>,
+          }
+        : undefined
+    );
 
     return {
       id: uuid(),
