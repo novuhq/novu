@@ -37,7 +37,7 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
       return currentOrganization?.createdAt && new Date(currentOrganization.createdAt) < new Date('2024-07-31');
     }
 
-    return !!currentOrganization;
+    return currentOrganization;
   }
 
   if (inPublicRoute || inStudioRoute) {
