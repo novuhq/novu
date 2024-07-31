@@ -8,7 +8,7 @@ export const useReadAll = (props?: { onSuccess?: () => void; onError?: (err: unk
 
   const markAllAsRead = async () => {
     try {
-      await novu.feeds.readAll();
+      await novu.notifications.readAll();
       props?.onSuccess?.();
     } catch (error) {
       props?.onError?.(error);

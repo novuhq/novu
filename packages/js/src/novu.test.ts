@@ -1,40 +1,29 @@
-import { FetchFeedArgs } from './feeds';
+import { ListNotificationsArgs } from './notifications';
 import { Novu } from './novu';
+import { NovuError } from './utils/errors';
 
-const mockFeedResponse = {
+const mockNotificationsResponse = {
   data: [],
   hasMore: true,
   filter: { tags: [], read: false, archived: false },
 };
 
-const initializeSession = jest.fn().mockResolvedValue({ token: 'token', profile: 'profile' });
-const getNotificationsList = jest.fn(() => mockFeedResponse);
-const fetchNotifications = jest.fn(() => mockFeedResponse);
+const post = jest.fn().mockResolvedValue({ token: 'token', profile: 'profile' });
+const getFullResponse = jest.fn(() => mockNotificationsResponse);
+const updateHeaders = jest.fn();
+const setAuthorizationToken = jest.fn();
 
 jest.mock('@novu/client', () => ({
   ...jest.requireActual('@novu/client'),
-  ApiService: jest.fn().mockImplementation(() => {
-    const apiService = {
-      isAuthenticated: false,
-      setAuthorizationToken: jest.fn(() => {
-        apiService.isAuthenticated = true;
-      }),
-      getNotificationsList,
+  HttpClient: jest.fn().mockImplementation(() => {
+    const httpClient = {
+      post,
+      getFullResponse,
+      updateHeaders,
+      setAuthorizationToken,
     };
 
-    return apiService;
-  }),
-}));
-
-jest.mock('./api/inbox-service', () => ({
-  ...jest.requireActual('./api/inbox-service'),
-  InboxService: jest.fn().mockImplementation(() => {
-    const inboxService = {
-      initializeSession,
-      fetchNotifications,
-    };
-
-    return inboxService;
+    return httpClient;
   }),
 }));
 
@@ -44,21 +33,25 @@ describe('Novu', () => {
   });
 
   describe('lazy session initialization', () => {
-    test('should call the queued feeds.fetch after the session is initialized', async () => {
+    test('should call the queued notifications.list after the session is initialized', async () => {
       const options = {
         limit: 10,
         offset: 0,
       };
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
-      const res = await novu.feeds.fetch(options);
+      const { data } = await novu.notifications.list(options);
 
-      expect(initializeSession).toHaveBeenCalledTimes(1);
-      expect(fetchNotifications).toHaveBeenCalledWith(options);
-      expect(res).toEqual(mockFeedResponse);
+      expect(post).toHaveBeenCalledTimes(1);
+      expect(getFullResponse).toHaveBeenCalledWith('/inbox/notifications?limit=10');
+      expect(data).toEqual({
+        notifications: mockNotificationsResponse.data,
+        hasMore: mockNotificationsResponse.hasMore,
+        filter: mockNotificationsResponse.filter,
+      });
     });
 
-    test('should call the feeds.fetch right away when session is already initialized', async () => {
-      const options: FetchFeedArgs = {
+    test('should call the notifications.list right away when session is already initialized', async () => {
+      const options: ListNotificationsArgs = {
         limit: 10,
         offset: 0,
       };
@@ -66,41 +59,45 @@ describe('Novu', () => {
       // await for session initialization
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const res = await novu.feeds.fetch({ limit: 10, offset: 0 });
+      const { data } = await novu.notifications.list({ limit: 10, offset: 0 });
 
-      expect(initializeSession).toHaveBeenCalledTimes(1);
-      expect(fetchNotifications).toHaveBeenCalledWith(options);
-      expect(res).toEqual(mockFeedResponse);
+      expect(post).toHaveBeenCalledTimes(1);
+      expect(getFullResponse).toHaveBeenCalledWith('/inbox/notifications?limit=10');
+      expect(data).toEqual({
+        notifications: mockNotificationsResponse.data,
+        hasMore: mockNotificationsResponse.hasMore,
+        filter: mockNotificationsResponse.filter,
+      });
     });
 
-    test('should reject the queued feeds.fetch if session initialization fails', async () => {
+    test('should reject the queued notifications.list if session initialization fails', async () => {
       const options = {
         limit: 10,
         offset: 0,
       };
-      const error = new Error('Failed to initialize session');
-      initializeSession.mockRejectedValueOnce(error);
+      const expectedError = 'reason';
+      post.mockRejectedValueOnce(expectedError);
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
 
-      const fetchPromise = novu.feeds.fetch(options);
+      const { error } = await novu.notifications.list(options);
 
-      await expect(fetchPromise).rejects.toEqual(error);
+      expect(error).toEqual(new NovuError('Failed to initialize session, please contact the support', expectedError));
     });
 
-    test('should reject the feeds.fetch right away when session initialization has failed', async () => {
+    test('should reject the notifications.list right away when session initialization has failed', async () => {
       const options = {
         limit: 10,
         offset: 0,
       };
-      const error = new Error('Failed to initialize session');
-      initializeSession.mockRejectedValueOnce(error);
+      const expectedError = 'reason';
+      post.mockRejectedValueOnce(expectedError);
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
       // await for session initialization
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const fetchPromise = novu.feeds.fetch(options);
+      const { error } = await novu.notifications.list(options);
 
-      await expect(fetchPromise).rejects.toEqual(error);
+      expect(error).toEqual(new NovuError('Failed to initialize session, please contact the support', expectedError));
     });
   });
 });
