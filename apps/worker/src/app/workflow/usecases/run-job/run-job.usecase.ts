@@ -84,6 +84,10 @@ export class RunJob {
         _environmentId: job._environmentId,
       });
 
+      if (!notification) {
+        throw new PlatformException(`Notification with id ${job._notificationId} not found`);
+      }
+
       const sendMessageResult = await this.sendMessage.execute(
         SendMessageCommand.create({
           identifier: job.identifier,
@@ -102,7 +106,7 @@ export class RunJob {
           jobId: job._id,
           events: job.digest?.events,
           job,
-          tags: notification?.tags || [],
+          tags: notification.tags || [],
         })
       );
 
@@ -137,13 +141,6 @@ export class RunJob {
     }
   }
 
-  @CachedEntity({
-    builder: (command: { _id: string; environmentId: string }) =>
-      buildNotificationTemplateKey({
-        _environmentId: command.environmentId,
-        _id: command._id,
-      }),
-  })
   private assignLogger(job) {
     try {
       this.logger?.assign({
