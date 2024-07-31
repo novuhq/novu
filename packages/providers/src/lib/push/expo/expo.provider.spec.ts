@@ -164,4 +164,61 @@ describe('Expo', () => {
       },
     ]);
   });
+
+  test('should trigger expo correctly with _passthrough', async () => {
+    const provider = new ExpoPushProvider({
+      accessToken: 'access-token',
+    });
+
+    const spy = jest
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
+      .spyOn(provider.expo, 'sendPushNotificationsAsync')
+      .mockImplementation(async () => {
+        return [{ status: 'ok', id: '501b1c08-292a-41d7-a36e-461c223e4744' }];
+      });
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {
+          sound: 'test_sound',
+        },
+        subscriber: {},
+        step: {
+          digest: false,
+          events: [{}],
+          total_count: 1,
+        },
+      },
+      {
+        _passthrough: {
+          body: {
+            badge: '_passthrough',
+          },
+        },
+      }
+    );
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    expect(provider.expo).toBeDefined();
+    expect(spy).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalledWith([
+      {
+        badge: '_passthrough',
+        body: 'Test push',
+        data: {
+          sound: 'test_sound',
+        },
+        sound: null,
+        title: 'Test',
+        to: ['tester'],
+      },
+    ]);
+
+    expect(result.id).toEqual('501b1c08-292a-41d7-a36e-461c223e4744');
+  });
 });

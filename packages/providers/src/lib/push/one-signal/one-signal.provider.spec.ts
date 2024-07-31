@@ -70,4 +70,59 @@ describe('test onesignal notification api', () => {
     });
     expect(res.id).toEqual(response.data.id);
   });
+
+  test('should trigger OneSignal library correctly with _passthrough', async () => {
+    const provider = new OneSignalPushProvider({
+      appId: 'test-app-id',
+      apiKey: 'test-key',
+    });
+
+    const response = {
+      data: {
+        id: 'result',
+      },
+    };
+
+    mockedAxios.request.mockResolvedValue(response);
+
+    const spy = jest.spyOn(provider, 'sendMessage');
+
+    const res = await provider.sendMessage(mockNotificationOptions, {
+      iosBadgeCount: 2,
+      includeExternalUserIds: ['test'],
+      _passthrough: {
+        body: {
+          include_external_user_ids: ['test1'],
+        },
+      },
+    });
+    expect(mockedAxios.request).toHaveBeenCalled();
+    const data = JSON.parse(
+      (mockedAxios.request.mock.calls[1][0].data as string) || '{}'
+    );
+
+    expect(data).toEqual({
+      include_player_ids: ['tester'],
+      app_id: 'test-app-id',
+      headings: { en: 'Test' },
+      contents: { en: 'Test push' },
+      subtitle: {},
+      data: { sound: 'test_sound' },
+      ios_badge_type: 'Increase',
+      ios_badgeCount: 2,
+      ios_badge_count: 1,
+      include_external_user_ids: ['test', 'test1'],
+    });
+
+    expect(spy).toHaveBeenCalledWith(mockNotificationOptions, {
+      iosBadgeCount: 2,
+      includeExternalUserIds: ['test'],
+      _passthrough: {
+        body: {
+          include_external_user_ids: ['test1'],
+        },
+      },
+    });
+    expect(res.id).toEqual(response.data.id);
+  });
 });

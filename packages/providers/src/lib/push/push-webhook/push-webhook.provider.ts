@@ -43,7 +43,7 @@ export class PushWebhookPushProvider
 
     const hmacValue = this.computeHmac(body);
 
-    const response = await axios.post(this.config.webhookUrl, body, {
+    const response = await axios.create().post(this.config.webhookUrl, body, {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,

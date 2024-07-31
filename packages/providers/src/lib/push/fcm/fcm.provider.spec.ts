@@ -423,3 +423,40 @@ test('should trigger fcm multiple times with the same overrides', async () => {
     });
   });
 });
+
+test('should trigger fcm correctly with _passthrough', async () => {
+  await provider.sendMessage(
+    {
+      title: 'Test',
+      content: 'Test push',
+      target: ['tester'],
+      payload: {
+        sound: 'test_sound',
+      },
+      subscriber,
+      step,
+    },
+    {
+      registrationIds: ['test'],
+      notification: {
+        title: 'Test 1',
+      },
+      _passthrough: {
+        body: {
+          tokens: ['tokens'],
+        },
+      },
+    }
+  );
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    notification: {
+      title: 'Test 1',
+      body: 'Test push',
+    },
+    tokens: ['tester', 'tokens'],
+    registration_ids: ['test'],
+  });
+});
