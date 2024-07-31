@@ -1,13 +1,14 @@
 /* eslint-disable local-rules/no-class-without-style */
-import { createMemo, createSignal, For, onMount, Show } from 'solid-js';
+import { createMemo, createSignal, For, Show } from 'solid-js';
 import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
 import { NotificationList } from '../Notification';
 import { InboxTab } from './InboxTab';
 import { Check, DotsMenu } from '../../icons';
 import { cn, useStyle } from '../../helpers';
 import { tabsRootVariants } from '../primitives/Tabs/TabsRoot';
+import { useTabsDropdown } from './useTabsDropdown';
 
-const optionsVariants = () =>
+const tabsDropdownTriggerVariants = () =>
   `nt-relative after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +
   `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`;
 
@@ -18,41 +19,7 @@ type InboxTabsProps = {
 export const InboxTabs = (props: InboxTabsProps) => {
   const style = useStyle();
   const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
-  const [tabsList, setTabsList] = createSignal<HTMLDivElement>();
-  const [visibleTabs, setVisibleTabs] = createSignal<InboxTabsProps['tabs']>([]);
-  const [dropdownTabs, setDropdownTabs] = createSignal<InboxTabsProps['tabs']>([]);
-
-  onMount(() => {
-    const tabsListEl = tabsList();
-    if (!tabsListEl) return;
-
-    const tabs = [...tabsListEl.querySelectorAll('[role="tab"]')];
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let visibleTabIds = entries
-          .filter((entry) => entry.isIntersecting && entry.intersectionRatio === 1)
-          .map((entry) => entry.target.id);
-
-        if (tabs.length === visibleTabIds.length) {
-          setVisibleTabs(props.tabs.filter((tab) => visibleTabIds.includes(tab.label)));
-          observer.disconnect();
-
-          return;
-        }
-
-        visibleTabIds = visibleTabIds.slice(0, -1);
-        setVisibleTabs(props.tabs.filter((tab) => visibleTabIds.includes(tab.label)));
-        setDropdownTabs(props.tabs.filter((tab) => !visibleTabIds.includes(tab.label)));
-        observer.disconnect();
-      },
-      { root: tabsListEl }
-    );
-
-    for (const tabElement of tabs) {
-      observer.observe(tabElement);
-    }
-  });
+  const { dropdownTabs, setTabsList, visibleTabs } = useTabsDropdown({ tabs: props.tabs });
 
   const options = createMemo(() =>
     dropdownTabs().map((tab) => ({
@@ -61,7 +28,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
     }))
   );
 
-  const isDropdownActive = createMemo(() =>
+  const isTabsDropdownActive = createMemo(() =>
     dropdownTabs()
       .map((tab) => tab.label)
       .includes(activeTab())
@@ -98,8 +65,8 @@ export const InboxTabs = (props: InboxTabsProps) => {
                     appearanceKey="moreTabs__button"
                     {...triggerProps}
                     class={cn(
-                      optionsVariants(),
-                      isDropdownActive()
+                      tabsDropdownTriggerVariants(),
+                      isTabsDropdownActive()
                         ? 'after:nt-border-b-primary'
                         : 'after:nt-border-b-transparent nt-text-foreground-alpha-600'
                     )}
