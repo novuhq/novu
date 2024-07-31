@@ -94,7 +94,8 @@ export function QuestionnaireForm() {
     if (isV2Enabled) {
       if (isJobTitleIsTech(data.jobTitle)) {
         if (isPlaygroundOnboardingEnabled && isSupported) {
-          navigate(ROUTES.DASHBOARD_PLAYGROUND);
+          // Note: Do not use client navigation(react-router-dom), we need to make sure to create new headers
+          window.location.replace(window.location.origin + ROUTES.DASHBOARD_PLAYGROUND);
         } else {
           trackRedirectionToOnboarding();
           navigate(ROUTES.DASHBOARD_ONBOARDING);

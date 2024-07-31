@@ -337,7 +337,8 @@ function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
   const segment = useSegment();
   const [isTestRan, setTestTestRan] = useState(false);
   const handleContinue = () => {
-    navigate(ROUTES.WORKFLOWS);
+    // Note: Do not use client navigation(react-router-dom), we need to make sure to create new headers
+    window.location.replace(window.location.origin + ROUTES.WORKFLOWS);
 
     if (isTestRan) {
       segment.track('Playground Continue Clicked - [Playground]', {

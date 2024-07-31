@@ -27,24 +27,25 @@ const devServerConfig = () => (config) => {
   return {
     ...config,
     headers: (req, res, context) => {
-      const secureHeaders = {
+      const defaultHeaders = {
+        'Referrer-Policy': 'no-referrer',
         'X-XSS-Protection': '1; mode=block',
         'X-Content-Type-Options': 'nosniff',
+        'Permissions-Policy':
+          'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
+      };
+
+      const playgroundHeaders = {
+        ...defaultHeaders,
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'credentialless',
         'Cross-Origin-Resource-Policy': 'cross-origin',
-        'Permissions-Policy':
-          'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
         'Referrer-Policy': 'no-referrer-when-downgrade',
       };
 
-      if (req.url === '/auth/application' || req.url === '/playground') {
-        Object.entries(secureHeaders).forEach(([key, value]) => {
-          res.setHeader(key, value);
-        });
-      }
+      const secureRoutes = ['/auth/application', '/playground'];
 
-      return res;
+      return secureRoutes.includes(req.baseUrl) ? playgroundHeaders : defaultHeaders;
     },
   };
 };
