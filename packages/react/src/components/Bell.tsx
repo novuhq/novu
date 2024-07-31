@@ -11,15 +11,18 @@ export type BellProps = {
 export const Bell = React.memo((props: BellProps) => {
   const { novuUI, mountElement } = useRenderer();
 
-  const mount = React.useCallback((element: HTMLElement) => {
-    return novuUI.mountComponent({
-      name: 'Bell',
-      element,
-      props: props.children
-        ? { renderBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
-        : undefined,
-    });
-  }, []);
+  const mount = React.useCallback(
+    (element: HTMLElement) => {
+      return novuUI.mountComponent({
+        name: 'Bell',
+        element,
+        props: props.children
+          ? { renderBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
+          : undefined,
+      });
+    },
+    [props.children]
+  );
 
   return <Mounter mount={mount} />;
 });
