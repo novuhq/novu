@@ -8,7 +8,7 @@ import {
   NovuEventEmitter,
   SocketEventNames,
 } from '../event-emitter';
-import { Notification } from '../feeds';
+import { Notification } from '../notifications';
 import { Session, TODO, WebSocketEvent } from '../types';
 
 const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
@@ -67,11 +67,11 @@ export class Socket extends BaseModule {
     });
 
     this.#socketIo.on('connect', () => {
-      this.#emitter.emit('socket.connect.success', { args, result: undefined });
+      this.#emitter.emit('socket.connect.resolved', { args });
     });
 
     this.#socketIo.on('connect_error', (error) => {
-      this.#emitter.emit('socket.connect.error', { args, error });
+      this.#emitter.emit('socket.connect.resolved', { args, error });
     });
 
     this.#socketIo?.on(WebSocketEvent.RECEIVED, this.#notificationReceived);
@@ -98,6 +98,8 @@ export class Socket extends BaseModule {
       this.#initializeSocket().catch((error) => {
         console.error(error);
       });
+
+      return {};
     });
   }
 }

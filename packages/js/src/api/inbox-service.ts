@@ -15,6 +15,7 @@ const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 
 export class InboxService {
+  isSessionInitialized = false;
   #httpClient: HttpClient;
 
   constructor(options: InboxServiceOptions = {}) {
@@ -39,6 +40,7 @@ export class InboxService {
       subscriberHash,
     })) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
+    this.isSessionInitialized = true;
 
     return response;
   }

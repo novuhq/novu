@@ -7,11 +7,11 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
 
   const [preferences, { mutate, refetch }] = createResource(options || {}, async () => {
     try {
-      const response = await novu.preferences.fetch();
+      const response = await novu.preferences.list();
 
-      return response;
+      return response.data;
     } catch (error) {
-      console.error('Error fetching feeds:', error);
+      console.error('Error fetching preferences:', error);
       throw error;
     }
   });

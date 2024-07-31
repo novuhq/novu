@@ -1,7 +1,9 @@
 import { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
+import type { Result } from '../types';
 import { Preference } from './preference';
 import type { UpdatePreferencesArgs } from './types';
+import { NovuError } from '../utils/errors';
 
 export const updatePreference = async ({
   emitter,
@@ -11,12 +13,12 @@ export const updatePreference = async ({
   emitter: NovuEventEmitter;
   apiService: InboxService;
   args: UpdatePreferencesArgs;
-}): Promise<Preference> => {
+}): Result<Preference> => {
   const { workflowId, channelPreferences } = args;
   try {
     emitter.emit('preferences.update.pending', {
       args,
-      optimistic: args.preference
+      data: args.preference
         ? new Preference({
             ...args.preference,
             channels: {
@@ -35,11 +37,12 @@ export const updatePreference = async ({
     }
 
     const preference = new Preference(response);
-    emitter.emit('preferences.update.success', { args, result: preference });
+    emitter.emit('preferences.update.resolved', { args, data: preference });
 
-    return preference;
+    return { data: preference };
   } catch (error) {
-    emitter.emit('preferences.update.error', { args, error });
-    throw error;
+    emitter.emit('preferences.update.resolved', { args, error });
+
+    return { error: new NovuError('Failed to fetch notifications', error) };
   }
 };
