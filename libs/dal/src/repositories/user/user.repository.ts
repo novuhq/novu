@@ -81,6 +81,10 @@ export class UserRepository implements IUserRepository {
     return this.userRepository.upsertMany(data);
   }
 
+  upsert(query: any, data: any): Promise<any> {
+    return this.userRepository.upsert(query, data);
+  }
+
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
     return this.userRepository.bulkWrite(bulkOperations, ordered);
   }
