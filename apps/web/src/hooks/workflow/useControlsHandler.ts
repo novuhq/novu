@@ -17,13 +17,18 @@ export function useControlsHandler(
     isLoading,
     refetch: fetchPreview,
     error,
-  } = useQuery<any, any, any>(['preview', workflowId, stepId, payload, controls], () =>
-    getPreview({
-      workflowId,
-      stepId,
-      payload,
-      controls,
-    })
+  } = useQuery<any, any, any>(
+    ['preview', workflowId, stepId, payload, controls],
+    () =>
+      getPreview({
+        workflowId,
+        stepId,
+        payload,
+        controls,
+      }),
+    {
+      enabled: !!workflowId && !!stepId,
+    }
   );
 
   const onControlsChange = (type: string, form: any, id?: string) => {

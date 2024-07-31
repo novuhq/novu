@@ -1,51 +1,14 @@
-import { useParams } from 'react-router-dom';
-import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
-import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
-import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPanel';
-import { useBridgeAPI, useWorkflow } from '../../../hooks/useBridgeAPI';
-import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
-import { BackButton } from '../../../../components/layout/components/LocalStudioHeader/BackButton';
 import { DiscoverStepOutput } from '@novu/framework';
-import { OutlineButton } from '../../OutlineButton';
 import { IconPlayArrow } from '@novu/design-system';
-import { useControlsHandler } from '../../../../hooks/workflow/useControlsHandler';
-
-export const WorkflowsStepEditorPage = () => {
-  const bridgeApi = useBridgeAPI();
-
-  const { templateId = '', stepId = '' } = useParams<{
-    templateId: string;
-    stepId: string;
-  }>();
-
-  const { data: workflow } = useWorkflow(templateId, {
-    refetchOnWindowFocus: 'always',
-  });
-  const {
-    preview,
-    isLoading: loadingPreview,
-    error,
-    controls,
-    onControlsChange,
-  } = useControlsHandler((data) => bridgeApi.getStepPreview(data), templateId, stepId, 'studio');
-
-  const step = workflow?.steps.find((item) => item.stepId === stepId);
-
-  return (
-    <WorkflowsStepEditor
-      source="studio"
-      step={step}
-      onControlsChange={onControlsChange}
-      preview={preview}
-      error={error}
-      workflow={workflow}
-      loadingPreview={loadingPreview}
-      defaultControls={controls}
-    />
-  );
-};
+import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout/WorkflowsPanelLayout';
+import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
+import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
+import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../studio/components/workflows/node-view/WorkflowNodes';
+import { BackButton } from '../layout/components/LocalStudioHeader/BackButton';
+import { WorkflowsPageTemplate } from '../../studio/components/workflows/layout/WorkflowsPageTemplate';
+import { OutlineButton } from '../../studio/components/OutlineButton';
 
 export const WorkflowsStepEditor = ({
   source,
