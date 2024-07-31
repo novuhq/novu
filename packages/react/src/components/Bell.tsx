@@ -2,13 +2,13 @@ import React from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
 
-type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
+export type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
 
-type BellProps = {
+export type BellProps = {
   children?: never | BellRenderProps;
 };
 
-export const Bell = (props: BellProps) => {
+export const Bell = React.memo((props: BellProps) => {
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback((element: HTMLElement) => {
@@ -22,4 +22,4 @@ export const Bell = (props: BellProps) => {
   }, []);
 
   return <Mounter mount={mount} />;
-};
+});

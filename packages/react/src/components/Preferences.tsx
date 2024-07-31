@@ -7,6 +7,7 @@ const PreferencesDefault = () => {
 
   const mount = React.useCallback((element: HTMLElement) => {
     return novuUI.mountComponent({
+      // Todo update this to Preferences once the change PR is merged
       name: 'Settings',
       element,
     });

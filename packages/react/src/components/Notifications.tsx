@@ -1,15 +1,13 @@
 import React from 'react';
-import type { InboxNotification } from '@novu/js';
 import { useRenderer } from '../context/RenderContext';
+import { NotificationsRenderProps } from '../utils/types';
 import { Mounter } from './Mounter';
 
-type NotificationsRenderProps = (notification: InboxNotification) => React.ReactNode;
-
-type BellProps = {
+export type NotificationProps = {
   children?: never | NotificationsRenderProps;
 };
 
-export const Notifications = (props: BellProps) => {
+export const Notifications = React.memo((props: NotificationProps) => {
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback((element: HTMLElement) => {
@@ -23,4 +21,4 @@ export const Notifications = (props: BellProps) => {
   }, []);
 
   return <Mounter mount={mount} />;
-};
+});

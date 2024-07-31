@@ -1,14 +1,10 @@
 import React from 'react';
-import type { InboxNotification } from '@novu/js';
-import type { BaseNovuUIOptions } from '@novu/js/ui';
 import { useRenderer } from '../context/RenderContext';
+import { DefaultProps, InboxDefaultProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { Renderer } from './Renderer';
 
-type InboxDefaultProps = {
-  renderNotification?: (notification: InboxNotification) => React.ReactNode;
-  renderBell?: ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
-};
+export type InboxProps = DefaultProps | WithChildrenProps;
 
 const InboxDefault = (props: InboxDefaultProps) => {
   const { renderNotification, renderBell } = props;
@@ -33,22 +29,9 @@ const InboxDefault = (props: InboxDefaultProps) => {
   return <Mounter mount={mount} />;
 };
 
-type BaseProps = BaseNovuUIOptions;
-
-type DefaultProps = BaseProps &
-  InboxDefaultProps & {
-    children?: never;
-  };
-
-type WithChildrenProps = BaseProps & {
-  children: React.ReactNode;
-};
-
-type InboxProps = DefaultProps | WithChildrenProps;
-
-export const Inbox = (props: InboxProps) => {
-  if ('children' in props) {
-    const { children, ...options } = props as WithChildrenProps;
+export const Inbox = React.memo((props: InboxProps) => {
+  if (isWithChildrenProps(props)) {
+    const { children, ...options } = props;
 
     return <Renderer options={options}>{children}</Renderer>;
   }
@@ -60,4 +43,8 @@ export const Inbox = (props: InboxProps) => {
       <InboxDefault renderNotification={renderNotification} renderBell={renderBell} />
     </Renderer>
   );
-};
+});
+
+function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
+  return 'children' in props;
+}
