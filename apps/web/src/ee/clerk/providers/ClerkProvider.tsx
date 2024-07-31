@@ -27,6 +27,8 @@ const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', location.origin];
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const { colorScheme } = useColorScheme();
 
+  const panelBackgroundColor = colorScheme === 'dark' ? '#1E1E26' : '#FFFFFF';
+
   const CLERK_MODAL_ELEMENT = {
     modalContent: {
       width: '80rem',
@@ -37,6 +39,12 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
     },
     cardBox: {
       width: '100%',
+    },
+    scrollBox: {
+      backgroundColor: panelBackgroundColor,
+    },
+    userButtonPopoverMain: {
+      backgroundColor: panelBackgroundColor,
     },
     rootBox: {
       width: 'auto',
@@ -66,6 +74,7 @@ export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => 
       fontSize: 'var(--nv-font-sizes-88) !important',
       paddingTop: 'var(--nv-spacing-50) !important',
       paddingBottom: 'var(--nv-spacing-50) !important',
+      opacity: '1',
       color: 'var(--nv-colors-typography-text-secondary) !important',
       '&.cl-active': {
         color: 'var(--nv-colors-typography-text-main) !important',
