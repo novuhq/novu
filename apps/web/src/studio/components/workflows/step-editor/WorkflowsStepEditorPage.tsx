@@ -2,21 +2,18 @@ import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPanel';
-import { useWorkflow, useWorkflowPreview } from '../../../hooks/useBridgeAPI';
-import { useEffect, useState } from 'react';
+import { useBridgeAPI, useWorkflow } from '../../../hooks/useBridgeAPI';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
 import { HStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
 import { BackButton } from '../../../../components/layout/components/LocalStudioHeader/BackButton';
 import { DiscoverStepOutput } from '@novu/framework';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { OutlineButton } from '../../OutlineButton';
 import { IconPlayArrow } from '@novu/design-system';
+import { useControlsHandler } from '../../../../hooks/workflow/useControlsHandler';
 
 export const WorkflowsStepEditorPage = () => {
-  const segment = useSegment();
-  const [controls, setStepControls] = useState({});
-  const [payload, setPayload] = useState({});
+  const bridgeApi = useBridgeAPI();
 
   const { templateId = '', stepId = '' } = useParams<{
     templateId: string;
@@ -26,35 +23,13 @@ export const WorkflowsStepEditorPage = () => {
   const { data: workflow } = useWorkflow(templateId, {
     refetchOnWindowFocus: 'always',
   });
-
   const {
-    data: preview,
+    preview,
     isLoading: loadingPreview,
-    refetch,
     error,
-  } = useWorkflowPreview(
-    { workflowId: templateId, stepId: stepId, controls, payload },
-    {
-      refetchOnWindowFocus: 'always',
-    }
-  );
-
-  function onControlsChange(type: string, form: any, id?: string) {
-    switch (type) {
-      case 'step':
-        segment.track('Step Controls Changes', {
-          key: id,
-          origin: 'studio',
-        });
-        setStepControls(form.formData);
-        break;
-      case 'payload':
-        setPayload(form.formData);
-        break;
-    }
-
-    refetch();
-  }
+    controls,
+    onControlsChange,
+  } = useControlsHandler((data) => bridgeApi.getStepPreview(data), templateId, stepId, 'studio');
 
   const step = workflow?.steps.find((item) => item.stepId === stepId);
 
@@ -67,7 +42,7 @@ export const WorkflowsStepEditorPage = () => {
       error={error}
       workflow={workflow}
       loadingPreview={loadingPreview}
-      controls={controls}
+      defaultControls={controls}
     />
   );
 };
@@ -81,13 +56,13 @@ export const WorkflowsStepEditor = ({
   error,
   workflow,
   loadingPreview,
-  controls,
+  defaultControls,
   showTestButton,
   onTestClick,
   onControlsSave,
   isSavingControls,
 }: {
-  controls: any;
+  defaultControls: any;
   preview: any;
   error: any;
   workflow: any;
@@ -126,7 +101,7 @@ export const WorkflowsStepEditor = ({
           step={step}
           workflow={workflow}
           onChange={onControlsChange}
-          defaultControls={controls}
+          defaultControls={defaultControls}
           className={css({ marginTop: source === 'playground' ? '-40px' : '0' })}
           onSave={onControlsSave}
           isLoadingSave={isSavingControls}

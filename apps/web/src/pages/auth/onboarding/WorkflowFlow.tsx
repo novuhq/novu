@@ -10,8 +10,8 @@ import { When } from '../../../components/utils/When';
 import { Flex, Stack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
 import { WorkflowsStepEditor, WorkflowsStepEditorPage } from '../../../studio/components/workflows/index';
-import { useWorkflowPreview } from '../../../studio/hooks/useBridgeAPI';
-import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useBridgeAPI, useWorkflowPreview } from '../../../studio/hooks/useBridgeAPI';
+import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 
 export function WorkflowFlow({
   isBridgeAppLoading,
@@ -29,38 +29,16 @@ export function WorkflowFlow({
   steps: DiscoverStepOutput[];
   loading?: boolean;
 }) {
-  const segment = useSegment();
-  const [controls, setStepControls] = useState({});
-  const [payload, setPayload] = useState({});
+  const bridgeApi = useBridgeAPI();
 
   const {
-    data: preview,
+    preview,
     isLoading: loadingPreview,
-    refetch,
     error,
-  } = useWorkflowPreview(
-    { workflowId: workflow?.workflowId, stepId: clickedStepId, controls, payload },
-    {
-      refetchOnWindowFocus: 'always',
-    }
-  );
-
-  function onControlsChange(type: string, form: any, id?: string) {
-    switch (type) {
-      case 'step':
-        segment.track('Step Controls Changes', {
-          key: id,
-          origin: 'playground',
-        });
-        setStepControls(form.formData);
-        break;
-      case 'payload':
-        setPayload(form.formData);
-        break;
-    }
-
-    refetch();
-  }
+    controls,
+    onControlsChange,
+    payload,
+  } = useControlsHandler((data) => bridgeApi.getStepPreview(data), workflow?.workflowId, clickedStepId, 'playground');
 
   const step = workflow?.steps.find((item) => item.stepId === clickedStepId);
 
@@ -131,7 +109,7 @@ export function WorkflowFlow({
             error={error}
             loadingPreview={loadingPreview}
             workflow={workflow}
-            controls={controls}
+            defaultControls={controls}
             onControlsChange={onControlsChange}
             source="playground"
             onGoBack={() => {
