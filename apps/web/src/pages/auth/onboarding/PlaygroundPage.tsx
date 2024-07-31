@@ -132,7 +132,7 @@ export function PlaygroundPage() {
   const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
   const { steps } = useWorkflowStepEditor(clickedStepId || '');
   const { initializeWebContainer, isBridgeAppLoading } = useContainer();
-  const { toggleColorScheme, themeLabel } = useThemeChange();
+  const { toggleColorScheme, colorScheme } = useThemeChange();
   const segment = useSegment();
 
   useEffectOnce(() => {
@@ -141,12 +141,12 @@ export function PlaygroundPage() {
   }, true);
 
   useEffect(() => {
-    if (themeLabel === 'Light Theme' || themeLabel === 'Match System Appearance') {
+    if (colorScheme === 'light') {
       toggleColorScheme();
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [themeLabel]);
+  }, [colorScheme]);
 
   const joyrideSteps: Step[] = [
     {
