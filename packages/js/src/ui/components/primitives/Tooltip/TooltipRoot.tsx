@@ -3,37 +3,36 @@ import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
 import { useUncontrolledState } from '../../../helpers';
 
-type PopoverRootProps = {
+type TooltipRootProps = {
   open?: boolean;
   children?: JSX.Element;
-  fallbackPlacements?: Placement[];
   placement?: Placement;
+  fallbackPlacements?: Placement[];
 };
 
-type PopoverContextValue = {
+type TooltipContextValue = {
   open: Accessor<boolean>;
+  setOpen: Setter<boolean>;
   reference: Accessor<HTMLElement | null>;
   floating: Accessor<HTMLElement | null>;
   setReference: Setter<HTMLElement | null>;
   setFloating: Setter<HTMLElement | null>;
-  onToggle: () => void;
-  onClose: () => void;
   floatingStyles: () => Record<any, any>;
 };
 
-const PopoverContext = createContext<PopoverContextValue | undefined>(undefined);
+const TooltipContext = createContext<TooltipContextValue | undefined>(undefined);
 
-export function PopoverRoot(props: PopoverRootProps) {
+export function TooltipRoot(props: TooltipRootProps) {
   const [reference, setReference] = createSignal<HTMLElement | null>(null);
   const [floating, setFloating] = createSignal<HTMLElement | null>(null);
 
   const position = useFloating(reference, floating, {
-    placement: props.placement || 'bottom-start',
+    placement: props.placement || 'top',
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(10),
       flip({
-        fallbackPlacements: props.fallbackPlacements || ['top-start'],
+        fallbackPlacements: props.fallbackPlacements || ['bottom'],
       }),
       shift(),
     ],
@@ -44,24 +43,15 @@ export function PopoverRoot(props: PopoverRootProps) {
     fallbackValue: false,
   });
 
-  const onClose = () => {
-    setIsOpen(false);
-  };
-
-  const onToggle = () => {
-    setIsOpen((prev) => !prev);
-  };
-
   return (
-    <PopoverContext.Provider
+    <TooltipContext.Provider
       value={{
-        onToggle,
-        onClose,
         reference,
         setReference,
         floating,
         setFloating,
         open: isOpen,
+        setOpen: setIsOpen,
         floatingStyles: () => ({
           position: position.strategy,
           top: `${position.y ?? 0}px`,
@@ -70,14 +60,14 @@ export function PopoverRoot(props: PopoverRootProps) {
       }}
     >
       {props.children}
-    </PopoverContext.Provider>
+    </TooltipContext.Provider>
   );
 }
 
-export function usePopover() {
-  const context = useContext(PopoverContext);
+export function useTooltip() {
+  const context = useContext(TooltipContext);
   if (!context) {
-    throw new Error('usePopover must be used within Popover.Root component');
+    throw new Error('useTooltip must be used within Tooltip.Root component');
   }
 
   return context;

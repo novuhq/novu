@@ -26,8 +26,10 @@ export type ElementStyles = string | CSSProperties;
 export const appearanceKeys = [
   //Primitives
   'button',
+
   'popoverContent',
   'popoverTrigger',
+
   'dropdownContent',
   'dropdownTrigger',
   'dropdownItem',
@@ -35,7 +37,12 @@ export const appearanceKeys = [
   'dropdownItemLabelContainer',
   'dropdownItemLeftIcon',
   'dropdownItemRightIcon',
+
+  'tooltipContent',
+  'tooltipTrigger',
+
   'back__button',
+
   'skeletonText',
   'skeletonAvatar',
 
