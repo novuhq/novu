@@ -6,6 +6,12 @@ export enum ROUTES {
   AUTH_RESET_REQUEST = '/auth/reset/request',
   AUTH_RESET_TOKEN = '/auth/reset/:token',
   AUTH_INVITATION_TOKEN = '/auth/invitation/:token',
+  /**
+   **
+   * Note: Do not use client navigation(react-router-dom), on AUTH_APPLICATION we need to make sure to create new headers,
+   * please use navigateToAuthApplication() instead
+   *
+   */
   AUTH_APPLICATION = '/auth/application',
   PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS = '/partner-integrations/vercel/link-projects',
   PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT = '/partner-integrations/vercel/link-projects/edit',

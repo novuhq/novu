@@ -3,6 +3,7 @@ import { type PropsWithChildren, useLayoutEffect } from 'react';
 import { useAuth, useEnvironment, useMonitoring, useRouteScopes } from './hooks';
 import { ROUTES } from './constants/routes';
 import { IS_EE_AUTH_ENABLED } from './config/index';
+import { navigateToAuthApplication } from './utils';
 
 export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   useMonitoring();
@@ -53,7 +54,9 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   }
 
   if (!isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {
-    return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
+    navigateToAuthApplication();
+
+    return null;
   }
 
   return <>{children}</>;
