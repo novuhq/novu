@@ -1,6 +1,7 @@
 /* eslint-disable local-rules/no-class-without-style */
-import { useStyle } from '../../helpers';
+import { cn, useStyle } from '../../helpers';
 import { Tabs } from '../primitives';
+import { tabsTriggerVariants } from '../primitives/Tabs/TabsTrigger';
 
 export const InboxTab = (props: { label: string; class?: string }) => {
   const style = useStyle();
@@ -9,13 +10,22 @@ export const InboxTab = (props: { label: string; class?: string }) => {
   const count = Math.floor(Math.random() * 120 + 1);
 
   return (
-    <Tabs.Tab value={props.label} class={`nt-flex nt-gap-2 ${props.class ?? ''}`}>
-      <span class={style('tabsTabLabel', 'nt-text-sm nt-font-medium')}>{props.label}</span>
+    <Tabs.Trigger
+      value={props.label}
+      class={style(
+        'notificationsTabs__tabsTrigger',
+        cn(tabsTriggerVariants(), `nt-flex nt-gap-2 ${props.class ?? ''}`)
+      )}
+    >
+      <span class={style('notificationsTabsTriggerLabel', 'nt-text-sm nt-font-medium')}>{props.label}</span>
       <span
-        class={style('tabsTabCount', 'nt-rounded-full nt-bg-primary nt-px-[6px] nt-text-primary-foreground nt-text-sm')}
+        class={style(
+          'notificationsTabsTriggerCount',
+          'nt-rounded-full nt-bg-primary nt-px-[6px] nt-text-primary-foreground nt-text-sm'
+        )}
       >
         {count >= 100 ? '99+' : count}
       </span>
-    </Tabs.Tab>
+    </Tabs.Trigger>
   );
 };

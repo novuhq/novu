@@ -45,12 +45,10 @@ export const appearanceKeys = [
 
   'skeletonText',
   'skeletonAvatar',
-  'tabsContainer',
+  'tabsRoot',
   'tabsList',
-  'tabsPanel',
-  'tabsTab',
-  'tabsTabLabel',
-  'tabsTabCount',
+  'tabsContent',
+  'tabsTrigger',
   'dots',
 
   //General
@@ -88,6 +86,14 @@ export const appearanceKeys = [
   'notificationArchive__button',
   'notificationUnarchive__button',
 
+  // Notifications tabs
+  'notificationsTabs__tabsRoot',
+  'notificationsTabs__tabsList',
+  'notificationsTabs__tabsContent',
+  'notificationsTabs__tabsTrigger',
+  'notificationsTabsTriggerLabel',
+  'notificationsTabsTriggerCount',
+
   //Inbox status
   'inboxStatus__title',
   'inboxStatus__dropdownTrigger',
@@ -98,16 +104,22 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItemLeftIcon',
   'inboxStatus__dropdownItemRightIcon',
 
-  // Options dropdown
-  'optionsContainer',
-  'optionsDropdown__button',
-  'optionsDropdown__dots',
-  'optionsDropdown__dropdownTrigger',
-  'optionsDropdown__dropdownContent',
-  'optionsDropdown__dropdownItem',
-  'optionsDropdown__dropdownItemLabel',
-  'optionsDropdown__dropdownItemLeftIcon',
-  'optionsDropdown__dropdownItemRightIcon',
+  // More actions
+  'moreActionsContainer',
+  'moreActions__dropdownTrigger',
+  'moreActions__dropdownContent',
+  'moreActions__dropdownItem',
+  'moreActions__dropdownItemLabel',
+  'moreActions__dropdownItemLeftIcon',
+
+  // More tabs
+  'moreTabs__button',
+  'moreTabs__dots',
+  'moreTabs__dropdownTrigger',
+  'moreTabs__dropdownContent',
+  'moreTabs__dropdownItem',
+  'moreTabs__dropdownItemLabel',
+  'moreTabs__dropdownItemRightIcon',
 
   //workflow
   'workflowContainer',

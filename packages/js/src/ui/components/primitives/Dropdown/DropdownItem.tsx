@@ -4,7 +4,7 @@ import { AppearanceKey } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Popover, usePopover } from '../Popover';
 
-const dropdownItemVariants = () =>
+export const dropdownItemVariants = () =>
   'focus:nt-outline-none nt-items-center hover:nt-bg-neutral-alpha-50 focus-visible:nt-bg-neutral-alpha-50 nt-py-1 nt-px-3';
 
 type DropdownItemProps = JSX.IntrinsicElements['button'] & { appearanceKey?: AppearanceKey };
@@ -15,7 +15,7 @@ export const DropdownItem = (props: DropdownItemProps) => {
 
   return (
     <Popover.Close
-      class={style(local.appearanceKey || 'dropdownItem', cn(dropdownItemVariants(), local.class))}
+      class={local.class ? local.class : style(local.appearanceKey || 'dropdownItem', dropdownItemVariants())}
       onClick={(e) => {
         if (typeof local.onClick === 'function') {
           local.onClick(e);
