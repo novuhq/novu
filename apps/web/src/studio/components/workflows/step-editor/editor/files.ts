@@ -1,4 +1,6 @@
-export const dynamicFiles = (indexCode: string, reactEmail: string, tunnelService: string) => {
+import { TUNNEL_CODE } from './tunnel.service.const';
+
+export const dynamicFiles = (indexCode: string, reactEmail: string) => {
   return {
     'index.ts': {
       file: {
@@ -12,7 +14,7 @@ export const dynamicFiles = (indexCode: string, reactEmail: string, tunnelServic
     },
     'tunnel.ts': {
       file: {
-        contents: tunnelService,
+        contents: TUNNEL_CODE,
       },
     },
     'package.json': {

@@ -28,13 +28,12 @@ export type TerminalHandle = {
   proposeDimensions: () => ITerminalDimensions | undefined;
 };
 
-type FileNames = 'workflow.ts' | 'tunnel.ts' | 'react-email.tsx';
+type FileNames = 'workflow.ts' | 'react-email.tsx';
 
 export const ContainerProvider: FCWithChildren = ({ children }) => {
   const [code, setCode] = useState<Record<FileNames, string>>({
     'workflow.ts': BRIDGE_CODE,
     'react-email.tsx': REACT_EMAIL_CODE,
-    'tunnel.ts': TUNNEL_CODE,
   });
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
@@ -77,7 +76,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     }
   }
 
-  // Responsible to bootstrap and run bridge app
+  // Responsible to bootstrap and run sandbox bridge app
   useEffectOnce(() => {
     (async () => {
       try {
@@ -116,7 +115,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           return await startOutput.exit;
         }
 
-        await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE, TUNNEL_CODE));
+        await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE));
 
         const installResult = await installDependencies();
         if (installResult !== 0) {
@@ -180,8 +179,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     if (BRIDGE_CODE !== code['workflow.ts'] || REACT_EMAIL_CODE !== code['react-email.tsx']) {
       debounceTimeout = setTimeout(() => {
         segment.track('Sandbox bridge app code was updated - [Playground]');
-        webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx'], code['tunnel.ts']));
-
+        webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx']));
         webContainer.on('server-ready', (port, url) => {
           refetch();
         });
