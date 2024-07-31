@@ -127,7 +127,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
-      bridge: command.bridge,
+      bridgeUrl: command.bridge?.url,
     };
 
     if (actor) {
