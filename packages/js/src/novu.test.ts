@@ -81,7 +81,7 @@ describe('Novu', () => {
 
       const { error } = await novu.notifications.list(options);
 
-      expect(error).toEqual(new NovuError('Failed to initialize session', expectedError));
+      expect(error).toEqual(new NovuError('Failed to initialize session, please contact the support', expectedError));
     });
 
     test('should reject the notifications.list right away when session initialization has failed', async () => {
@@ -97,7 +97,7 @@ describe('Novu', () => {
 
       const { error } = await novu.notifications.list(options);
 
-      expect(error).toEqual(new NovuError('Failed to initialize session', expectedError));
+      expect(error).toEqual(new NovuError('Failed to initialize session, please contact the support', expectedError));
     });
   });
 });

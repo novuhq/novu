@@ -34,7 +34,7 @@ export class BaseModule {
         this.onSessionError(error);
         this.#sessionError = error;
         this.#callsQueue.forEach(({ resolve }) => {
-          resolve({ error: new NovuError('Failed to initialize session', error) });
+          resolve({ error: new NovuError('Failed to initialize session, please contact the support', error) });
         });
         this.#callsQueue = [];
       }
@@ -51,7 +51,9 @@ export class BaseModule {
     }
 
     if (this.#sessionError) {
-      return Promise.resolve({ error: new NovuError('Failed to initialize session', this.#sessionError) });
+      return Promise.resolve({
+        error: new NovuError('Failed to initialize session, please contact the support', this.#sessionError),
+      });
     }
 
     return new Promise(async (resolve, reject) => {
