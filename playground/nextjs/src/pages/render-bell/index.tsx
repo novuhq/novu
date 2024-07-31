@@ -1,10 +1,11 @@
+import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
-import { Bell, Inbox, Preferences } from '@novu/react';
+import { Inbox } from '@novu/react';
 
 export default function Home() {
   return (
-    <div className="text-center flex flex-col gap-4">
-      <p className="text-xl">Render Bell props</p>
+    <>
+      <Title title="Render Bell props" />
       <Inbox
         options={novuConfig}
         renderBell={({ unreadCount }) => {
@@ -32,6 +33,6 @@ export default function Home() {
           );
         }}
       />
-    </div>
+    </>
   );
 }

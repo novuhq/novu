@@ -1,10 +1,11 @@
+import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 import { Inbox } from '@novu/react';
 
 export default function Home() {
   return (
-    <div className="text-center flex flex-col gap-4">
-      <p className="text-xl">Render Notification Props</p>
+    <>
+      <Title title="Render Notification Props" />
       <Inbox
         options={novuConfig}
         renderNotification={(notification) => {
@@ -19,6 +20,6 @@ export default function Home() {
           );
         }}
       />
-    </div>
+    </>
   );
 }

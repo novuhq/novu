@@ -2,7 +2,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React from 'react';
 
-const LINKS = [
+type LinkType = {
+  href: string;
+  label: string;
+};
+
+const LINKS: LinkType[] = [
   { href: '/', label: 'Default Inbox' },
   { href: '/render-bell', label: 'Render Bell' },
   { href: '/render-notification', label: 'Render Notification' },
@@ -10,7 +15,7 @@ const LINKS = [
   { href: '/notifications', label: 'Notifications' },
 ];
 
-const NavLink = ({ href, label }: { href: string; label: string }) => {
+const NavLink = ({ href, label }: LinkType) => {
   const router = useRouter();
 
   const pathname = router.pathname;
