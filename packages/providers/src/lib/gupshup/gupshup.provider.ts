@@ -6,6 +6,8 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
+import { constants } from "crypto";
+import { Agent } from "https";
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
@@ -45,7 +47,12 @@ export class GupshupSmsProvider implements ISmsProvider {
       }),
     };
 
-    const response = await axios.post(GupshupSmsProvider.BASE_URL, params);
+    const response = await axios.post(GupshupSmsProvider.BASE_URL, params, {
+      httpsAgent: new Agent({
+        rejectUnauthorized: false,
+        secureOptions: constants.SSL_OP_LEGACY_SERVER_CONNECT,
+      }),
+    });
 
     const body = response.data;
     const result = body.split(' | ');
