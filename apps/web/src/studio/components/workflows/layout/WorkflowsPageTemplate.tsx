@@ -6,8 +6,8 @@ import { WorkflowsPageHeader, type IWorkflowsPageHeaderProps } from './Workflows
 
 export type IWorkflowsPageTemplateProps = IWorkflowsPageHeaderProps;
 
-export function StepIcon({ size, step }) {
-  const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
+export function StepIcon({ size, type }) {
+  const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[type];
   if (!IconElement) {
     return null;
   }

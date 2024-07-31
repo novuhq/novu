@@ -25,9 +25,9 @@ export function WorkflowFlow({
   isBridgeAppLoading: boolean;
   clickedStepId: string;
   setClickedStepId: (stepId: string) => void;
-  onStateChange: (state: { workflowId: string; stepId: string; controls: any; payload: any }) => void;
-  workflow: DiscoverWorkflowOutput;
-  steps: DiscoverStepOutput[];
+  onStateChange: (state: { workflowId?: string; stepId: string; controls: any; payload: any }) => void;
+  workflow?: DiscoverWorkflowOutput;
+  steps?: DiscoverStepOutput[];
   loading?: boolean;
 }) {
   const bridgeApi = useBridgeAPI();
@@ -39,7 +39,12 @@ export function WorkflowFlow({
     controls,
     onControlsChange,
     payload,
-  } = useControlsHandler((data) => bridgeApi.getStepPreview(data), workflow?.workflowId, clickedStepId, 'playground');
+  } = useControlsHandler(
+    (data) => bridgeApi.getStepPreview(data),
+    workflow?.workflowId as string,
+    clickedStepId,
+    'playground'
+  );
 
   const step = workflow?.steps.find((item) => item.stepId === clickedStepId);
 
@@ -93,7 +98,7 @@ export function WorkflowFlow({
         <When truthy={!clickedStepId}>
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
-              steps={steps}
+              steps={steps || []}
               onStepClick={(stepClicked) => {
                 setWorkflowTab('stepEdit');
                 setClickedStepId(stepClicked.stepId);

@@ -80,7 +80,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   return (
     <WorkflowsPageTemplate
       title={step.stepId}
-      icon={<StepIcon step={step} size="32" />}
+      icon={<StepIcon type={step?.template?.type} size="32" />}
       actions={
         <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
           Test workflow
