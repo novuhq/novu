@@ -91,6 +91,10 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.upsertMany(data);
   }
 
+  upsert(query: any, data: any): Promise<any> {
+    return this.organizationRepository.upsert(query, data);
+  }
+
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
     return this.organizationRepository.bulkWrite(bulkOperations, ordered);
   }

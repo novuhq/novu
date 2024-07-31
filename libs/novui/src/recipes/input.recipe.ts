@@ -27,9 +27,11 @@ export const INPUT_RECIPE = defineSlotRecipe({
       '& > p + div, & > label + div': {
         marginTop: 'margins.layout.Input.titleBottom',
       },
+      border: 'none',
     },
     input: {
       background: 'input.surface',
+      border: 'solid',
       borderColor: 'input.border',
       borderRadius: 'input',
       lineHeight: '125',
