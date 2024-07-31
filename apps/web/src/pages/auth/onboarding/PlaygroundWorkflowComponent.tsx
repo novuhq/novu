@@ -90,7 +90,7 @@ export function PlaygroundWorkflowComponent({
           css({
             borderRadius: '0 0 8px 8px',
             height: 'inherit',
-            padding: '12px 0px 12px 12px',
+            padding: '12px 12px 12px 0',
             backgroundColor: '#1e1e27',
           })
         )}
@@ -111,7 +111,13 @@ export function PlaygroundWorkflowComponent({
         <When truthy={!!clickedStepId && step}>
           <div>
             <HStack
-              className={css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })}
+              className={css({
+                marginTop: '8px',
+                marginBottom: '8px',
+                height: 'inherit',
+                borderRadius: '0 8px 8px 0',
+                paddingLeft: '12px',
+              })}
             >
               <BackButton
                 styles={{
