@@ -1,15 +1,14 @@
 import { IResponseError } from '@novu/shared';
-import { getApiKeys, regenerateApiKeys } from '../../../api';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { regenerateApiKeys } from '../../../api';
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useApiKeys } from '../../../hooks';
 
 import { showNotification } from '@mantine/notifications';
 
 export const useRegenerateSecretKeyModal = () => {
   const [isOpen, setModalIsOpen] = useState(false);
-
-  const { refetch: refetchSecretKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
-
+  const { refetch: refetchSecretKeys } = useApiKeys();
   const { mutateAsync: regenerateApiKeysMutation } = useMutation<{ key: string }[], IResponseError>(regenerateApiKeys);
 
   async function openModal() {

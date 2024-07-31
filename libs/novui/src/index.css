@@ -1,3 +1,5 @@
 @layer reset, base, mantine, tokens, recipes, utilities;
 
 @import '@mantine/core/styles.layer.css';
+@import '@mantine/tiptap/styles.layer.css';
+@import '../styled-system/styles.css';

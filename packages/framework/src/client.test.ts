@@ -325,7 +325,7 @@ describe('Novu Client', () => {
               controlSchema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string', default: '{{name}}' },
+                  name: { type: 'string', default: '{{payload.name}}' },
                 },
                 required: [],
                 additionalProperties: false,
@@ -520,7 +520,7 @@ describe('Novu Client', () => {
 
     it('should compile default control variable', async () => {
       const bodyTemplate = `
-{% for element in elements %}
+{% for element in payload.elements %}
   {{ element }}
 {% endfor %}`;
 
@@ -539,9 +539,9 @@ describe('Novu Client', () => {
               controlSchema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string', default: '{{name}}' },
+                  name: { type: 'string', default: '{{payload.name}}' },
                   lastName: { type: 'string', default: '{{subscriber.lastName}}' },
-                  role: { type: 'string', default: '{{role}}' },
+                  role: { type: 'string', default: '{{payload.role}}' },
                   body: { type: 'string', default: bodyTemplate },
                 },
                 required: [],

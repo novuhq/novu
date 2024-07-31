@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import { useSubscription } from '../utils/hooks/useSubscription';
 import { pluralizeDaysLeft, WARNING_LIMIT_DAYS, COLOR_WARNING } from '../utils/freeTrial.constants';
+import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 
 export const FreeTrialSidebarWidget = () => {
   const { isFreeTrialActive, daysLeft, daysTotal, hasPaymentMethod } = useSubscription();
@@ -44,7 +45,7 @@ export const FreeTrialSidebarWidget = () => {
       />
       <Button
         onClick={() => {
-          navigate('/settings/billing');
+          navigate(IS_EE_AUTH_ENABLED ? '/billing' : '/settings/billing');
         }}
         data-test-id="free-trial-widget-button"
         mt={12}
