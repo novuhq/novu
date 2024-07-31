@@ -1,24 +1,49 @@
+import { axiosSpy } from '../../../utils/test/spy-axios';
 import { RyverChatProvider } from './ryver.provider';
 
-test('Should trigger Slack correctly', async () => {
+test('Should trigger ryver correctly', async () => {
+  const { mockPost } = axiosSpy({
+    data: {
+      status: 'test',
+    },
+  });
+
   const provider = new RyverChatProvider();
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      return {
-        dateCreated: new Date(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
-    });
 
   await provider.sendMessage({
-    webhookUrl: 'webhookUrl',
+    webhookUrl: 'https://google.com',
     content: 'chat message',
   });
 
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    webhookUrl: 'webhookUrl',
+  expect(mockPost).toBeCalledWith('https://google.com/', {
     content: 'chat message',
+  });
+});
+
+test('Should trigger ryver correctly with _passthrough', async () => {
+  const { mockPost } = axiosSpy({
+    data: {
+      status: 'test',
+    },
+  });
+
+  const provider = new RyverChatProvider();
+
+  await provider.sendMessage(
+    {
+      webhookUrl: 'https://google.com',
+      content: 'chat message',
+    },
+    {
+      _passthrough: {
+        body: {
+          content: 'chat message _passthrough',
+        },
+      },
+    }
+  );
+
+  expect(mockPost).toBeCalledWith('https://google.com/', {
+    content: 'chat message _passthrough',
   });
 });
