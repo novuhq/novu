@@ -45,4 +45,5 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    */
   inputSchema?: T_ControlSchema;
   controlSchema?: T_ControlSchema;
+  tags?: string[];
 };
