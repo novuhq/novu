@@ -1,12 +1,12 @@
 import React from 'react';
 import { useRenderer } from '../context/RenderContext';
-import { DefaultProps, InboxDefaultProps, WithChildrenProps } from '../utils/types';
+import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { Renderer } from './Renderer';
 
 export type InboxProps = DefaultProps | WithChildrenProps;
 
-const InboxDefault = (props: InboxDefaultProps) => {
+const DefaultInbox = (props: DefaultInboxProps) => {
   const { renderNotification, renderBell } = props;
   const { novuUI, mountElement } = useRenderer();
 
@@ -40,7 +40,7 @@ export const Inbox = React.memo((props: InboxProps) => {
 
   return (
     <Renderer options={options}>
-      <InboxDefault renderNotification={renderNotification} renderBell={renderBell} />
+      <DefaultInbox renderNotification={renderNotification} renderBell={renderBell} />
     </Renderer>
   );
 });

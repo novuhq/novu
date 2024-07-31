@@ -4,7 +4,7 @@ import type { BaseNovuUIOptions } from '@novu/js/ui';
 export type Notification = InboxNotification;
 export type NotificationsRenderProps = (notification: Notification) => React.ReactNode;
 
-export type InboxDefaultProps = {
+export type DefaultInboxProps = {
   renderNotification?: (notification: Notification) => React.ReactNode;
   renderBell?: ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
 };
@@ -12,7 +12,7 @@ export type InboxDefaultProps = {
 export type BaseProps = BaseNovuUIOptions;
 
 export type DefaultProps = BaseProps &
-  InboxDefaultProps & {
+  DefaultInboxProps & {
     children?: never;
   };
 
