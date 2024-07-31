@@ -316,6 +316,14 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return await Promise.all(promises);
   }
 
+  async upsert(query: FilterQuery<T_DBModel> & T_Enforcement, data: FilterQuery<T_DBModel> & T_Enforcement) {
+    return await this.MongooseModel.findOneAndUpdate(query, data, {
+      upsert: true,
+      new: true,
+      includeResultMetadata: true,
+    });
+  }
+
   async bulkWrite(bulkOperations: any, ordered = false): Promise<any> {
     return await this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }

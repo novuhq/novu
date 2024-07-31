@@ -31,5 +31,6 @@ export interface IUserRepositoryMongo {
   ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }>;
   updateOne(query: any, body: any): Promise<{ matched: number; modified: number }>;
   upsertMany(data: any): Promise<any>;
+  upsert(query: any, data: any): Promise<any>;
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any>;
 }
