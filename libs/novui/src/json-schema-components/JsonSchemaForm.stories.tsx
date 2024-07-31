@@ -27,7 +27,18 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => 
           Save
         </Button>
       </HStack>
-      <JsonSchemaForm {...args} />
+      <JsonSchemaForm
+        {...args}
+        variables={[
+          'fakeautocomplete.foo',
+          'fakeautocomplete.bar',
+          'fakeautocomplete.fizz',
+          'fakeautocomplete.buzz',
+          'fakeautocomplete.croissantia',
+          'fakeautocomplete.olympics',
+          'fakeautocomplete.reallylongstringthatshouldoverflow',
+        ]}
+      />
     </form>
   );
 };
