@@ -1,7 +1,7 @@
 import type { ActionTypeEnum, NotificationFilter } from '../types';
 import { Notification } from './notification';
 
-export type FetchFeedArgs = {
+export type ListNotificationsArgs = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
@@ -10,35 +10,33 @@ export type FetchFeedArgs = {
   offset?: number;
 };
 
-export type FetchFeedResponse = { data: Notification[]; hasMore: boolean; filter: NotificationFilter };
+export type ListNotificationsResponse = { notifications: Notification[]; hasMore: boolean; filter: NotificationFilter };
 
-export type FetchFilterCountArgs = {
+export type FilterCountArgs = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
 };
 
-export type FetchFiltersCountArgs = {
+export type FiltersCountArgs = {
   filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean }>;
 };
 
-export type FetchCountArgs = undefined | FetchFilterCountArgs | FetchFiltersCountArgs;
+export type CountArgs = undefined | FilterCountArgs | FiltersCountArgs;
 
-export type FetchFilterCountResponse = {
-  data: {
-    count: number;
-    filter: NotificationFilter;
-  };
+export type FilterCountResponse = {
+  count: number;
+  filter: NotificationFilter;
 };
 
-export type FetchFiltersCountResponse = {
-  data: Array<{
+export type FiltersCountResponse = {
+  counts: Array<{
     count: number;
     filter: NotificationFilter;
   }>;
 };
 
-export type FetchCountResponse = FetchFilterCountResponse | FetchFiltersCountResponse;
+export type CountResponse = FilterCountResponse | FiltersCountResponse;
 
 export type BaseArgs = {
   notificationId: string;

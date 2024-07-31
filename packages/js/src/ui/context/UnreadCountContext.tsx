@@ -15,8 +15,14 @@ export const UnreadCountProvider = (props: ParentProps) => {
     eventHandler: (data) => setUnreadCount(data.result),
   });
   useNovuEvent({
-    event: 'session.initialize.success',
-    eventHandler: (data) => setUnreadCount(data.result.totalUnreadCount),
+    event: 'session.initialize.resolved',
+    eventHandler: ({ data }) => {
+      if (!data) {
+        return;
+      }
+
+      setUnreadCount(data.totalUnreadCount);
+    },
   });
 
   return <UnreadCountContext.Provider value={{ unreadCount }}>{props.children}</UnreadCountContext.Provider>;

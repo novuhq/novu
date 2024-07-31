@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom';
 import { WorkflowsStepEditor } from '../../components/workflow_v2/StepEditorComponent';
 import { useControlsHandler } from '../../hooks/workflow/useControlsHandler';
 import { StepIcon, WorkflowsPageTemplate } from '../components/workflows/layout/WorkflowsPageTemplate';
-import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../components/workflows/node-view/WorkflowNodes';
 import { useBridgeAPI, useWorkflow } from '../hooks/useBridgeAPI';
 
 export const StudioStepEditorPage = () => {
@@ -27,7 +26,7 @@ export const StudioStepEditorPage = () => {
   const step = workflow?.steps.find((item) => item.stepId === stepId);
 
   return (
-    <WorkflowsPageTemplate title={step?.stepId} icon={<StepIcon step={step} size="32" />}>
+    <WorkflowsPageTemplate title={step?.stepId} icon={<StepIcon type={step?.type} size="32" />}>
       <WorkflowsStepEditor
         source="studio"
         step={step}

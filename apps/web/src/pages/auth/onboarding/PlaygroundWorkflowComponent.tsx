@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { css, cx } from '@novu/novui/css';
 
-import { TitleBarWrapper } from './TitleBarWrapper';
+import { BrowserScreenWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { When } from '../../../components/utils/When';
@@ -14,7 +14,7 @@ import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 import { BackButton } from '../../../components/layout/components/LocalStudioHeader/BackButton';
 
-export function WorkflowFlow({
+export function PlaygroundWorkflowComponent({
   isBridgeAppLoading,
   clickedStepId,
   setClickedStepId,
@@ -25,9 +25,9 @@ export function WorkflowFlow({
   isBridgeAppLoading: boolean;
   clickedStepId: string;
   setClickedStepId: (stepId: string) => void;
-  onStateChange: (state: { workflowId: string; stepId: string; controls: any; payload: any }) => void;
-  workflow: DiscoverWorkflowOutput;
-  steps: DiscoverStepOutput[];
+  onStateChange: (state: { workflowId?: string; stepId: string; controls: any; payload: any }) => void;
+  workflow?: DiscoverWorkflowOutput;
+  steps?: DiscoverStepOutput[];
   loading?: boolean;
 }) {
   const bridgeApi = useBridgeAPI();
@@ -39,7 +39,12 @@ export function WorkflowFlow({
     controls,
     onControlsChange,
     payload,
-  } = useControlsHandler((data) => bridgeApi.getStepPreview(data), workflow?.workflowId, clickedStepId, 'playground');
+  } = useControlsHandler(
+    (data) => bridgeApi.getStepPreview(data),
+    workflow?.workflowId as string,
+    clickedStepId,
+    'playground'
+  );
 
   const step = workflow?.steps.find((item) => item.stepId === clickedStepId);
 
@@ -64,7 +69,7 @@ export function WorkflowFlow({
   }
 
   return (
-    <TitleBarWrapper
+    <BrowserScreenWrapper
       title={
         <div
           className={css({
@@ -85,7 +90,7 @@ export function WorkflowFlow({
           css({
             borderRadius: '0 0 8px 8px',
             height: 'inherit',
-            padding: '12px 0px 12px 12px',
+            padding: '12px 12px 12px 0',
             backgroundColor: '#1e1e27',
           })
         )}
@@ -93,7 +98,7 @@ export function WorkflowFlow({
         <When truthy={!clickedStepId}>
           <WorkflowBackgroundWrapper>
             <WorkflowNodes
-              steps={steps}
+              steps={steps || []}
               onStepClick={(stepClicked) => {
                 setWorkflowTab('stepEdit');
                 setClickedStepId(stepClicked.stepId);
@@ -106,7 +111,13 @@ export function WorkflowFlow({
         <When truthy={!!clickedStepId && step}>
           <div>
             <HStack
-              className={css({ marginTop: '8px', marginBottom: '8px', height: 'inherit', borderRadius: '0 8px 8px 0' })}
+              className={css({
+                marginTop: '8px',
+                marginBottom: '8px',
+                height: 'inherit',
+                borderRadius: '0 8px 8px 0',
+                paddingLeft: '12px',
+              })}
             >
               <BackButton
                 styles={{
@@ -133,7 +144,7 @@ export function WorkflowFlow({
           </div>
         </When>
       </div>
-    </TitleBarWrapper>
+    </BrowserScreenWrapper>
   );
 }
 

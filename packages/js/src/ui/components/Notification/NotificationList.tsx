@@ -1,6 +1,6 @@
 import { For, ParentProps, Show } from 'solid-js';
-import { FetchFeedArgs } from '../../../feeds';
-import { useFeedInfiniteScroll } from '../../api';
+import { ListNotificationsArgs } from '../../../notifications';
+import { useNotificationsInfiniteScroll } from '../../api';
 import { useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
@@ -41,11 +41,11 @@ const EmptyNotificationList = () => {
 
 type NotificationListProps = {
   mountNotification?: NotificationMounter;
-  options?: FetchFeedArgs;
+  options?: ListNotificationsArgs;
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
-  const [data, { initialLoading, setEl, end }] = useFeedInfiniteScroll({ options: props.options });
+  const [data, { initialLoading, setEl, end }] = useNotificationsInfiniteScroll({ options: props.options });
 
   return (
     <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>

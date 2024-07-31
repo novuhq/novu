@@ -1,7 +1,7 @@
 import { InboxService } from '../api';
 import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
-import { ActionTypeEnum, InboxNotification } from '../types';
+import { ActionTypeEnum, InboxNotification, Result } from '../types';
 import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
 
 export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, InboxNotification {
@@ -43,7 +43,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     this.tags = notification.tags;
   }
 
-  read(): Promise<Notification> {
+  read(): Result<Notification> {
     return read({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -53,7 +53,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  unread(): Promise<Notification> {
+  unread(): Result<Notification> {
     return unread({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -63,7 +63,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  archive(): Promise<Notification> {
+  archive(): Result<Notification> {
     return archive({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -73,7 +73,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  unarchive(): Promise<Notification> {
+  unarchive(): Result<Notification> {
     return unarchive({
       emitter: this.#emitter,
       apiService: this.#inboxService,
@@ -83,7 +83,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  completePrimary(): Promise<Notification> {
+  completePrimary(): Result<Notification> {
     if (!this.primaryAction) {
       throw new Error('Primary action is not available');
     }
@@ -98,7 +98,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  completeSecondary(): Promise<Notification> {
+  completeSecondary(): Result<Notification> {
     if (!this.primaryAction) {
       throw new Error('Secondary action is not available');
     }
@@ -113,7 +113,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  revertPrimary(): Promise<Notification> {
+  revertPrimary(): Result<Notification> {
     if (!this.primaryAction) {
       throw new Error('Primary action is not available');
     }
@@ -128,7 +128,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  revertSecondary(): Promise<Notification> {
+  revertSecondary(): Result<Notification> {
     if (!this.primaryAction) {
       throw new Error('Secondary action is not available');
     }

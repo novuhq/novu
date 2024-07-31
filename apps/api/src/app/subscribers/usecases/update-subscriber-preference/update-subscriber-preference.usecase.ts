@@ -40,16 +40,13 @@ export class UpdateSubscriberPreference {
       _templateId: command.templateId,
     });
 
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    if (admin) {
-      this.analyticsService.mixpanelTrack('Update User Preference - [Notification Center]', '', {
-        _organization: command.organizationId,
-        _subscriber: subscriber._id,
-        _template: command.templateId,
-        channel: command.channel?.type,
-        enabled: command.channel?.enabled,
-      });
-    }
+    this.analyticsService.mixpanelTrack('Update User Preference - [Notification Center]', '', {
+      _organization: command.organizationId,
+      _subscriber: subscriber._id,
+      _template: command.templateId,
+      channel: command.channel?.type,
+      enabled: command.channel?.enabled,
+    });
 
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);

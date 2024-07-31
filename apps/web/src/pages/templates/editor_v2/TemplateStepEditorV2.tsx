@@ -9,7 +9,6 @@ import { errorMessage, IconPlayArrow, successMessage } from '@novu/design-system
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 import { StepIcon, WorkflowsPageTemplate } from '../../../studio/components/workflows/layout/WorkflowsPageTemplate';
-import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 
 export const WorkflowsStepEditorPageV2 = () => {
@@ -22,13 +21,14 @@ export const WorkflowsStepEditorPageV2 = () => {
   let step = (currentWorkflow?.steps as any)?.find((item) => item.stepId === currentStepId);
   step = step?.template ? step : { ...step, template: step };
 
+  const workflowId = (currentWorkflow?.triggers as any)?.[0]?.identifier;
   const {
     data: controlVariables,
     isInitialLoading,
     refetch,
   } = useQuery(
-    ['controls', currentWorkflow?.name, currentStepId],
-    () => api.get(`/v1/bridge/controls/${currentWorkflow?.name}/${currentStepId}`),
+    ['controls', workflowId, currentStepId],
+    () => api.get(`/v1/bridge/controls/${workflowId}/${currentStepId}`),
     {
       enabled: !!currentWorkflow,
     }
@@ -42,14 +42,14 @@ export const WorkflowsStepEditorPageV2 = () => {
     setControls,
     onControlsChange,
   } = useControlsHandler(
-    (data) => api.post('/v1/bridge/preview/' + template?.name + '/' + currentStepId, data),
-    currentWorkflow?.name as string,
+    (data) => api.post('/v1/bridge/preview/' + workflowId + '/' + currentStepId, data),
+    workflowId as string,
     currentStepId,
     'dashboard'
   );
 
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
-    api.put('/v1/bridge/controls/' + template?.name + '/' + currentStepId, { variables: data })
+    api.put('/v1/bridge/controls/' + workflowId + '/' + currentStepId, { variables: data })
   );
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   return (
     <WorkflowsPageTemplate
       title={step.stepId}
-      icon={<StepIcon step={step} size="32" />}
+      icon={<StepIcon type={step?.template?.type} size="32" />}
       actions={
         <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
           Test workflow
