@@ -247,7 +247,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: bandwidthConfig,
     betaVersion: true,
-    docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
+    docReference: `https://dev.bandwidth.com/docs/messaging/createMessage${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
   },
   {
