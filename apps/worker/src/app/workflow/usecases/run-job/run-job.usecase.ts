@@ -1,18 +1,10 @@
 const nr = require('newrelic');
 
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  JobEntity,
-  JobRepository,
-  JobStatusEnum,
-  NotificationRepository,
-  NotificationTemplateRepository,
-} from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { setUser } from '@sentry/node';
 import {
-  buildNotificationTemplateKey,
-  CachedEntity,
   getJobDigest,
   Instrument,
   InstrumentUsecase,
