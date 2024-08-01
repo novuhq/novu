@@ -5,17 +5,31 @@
   "description": "Novu's React SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "main": "dist/server/server.js",
+  "module": "dist/client/index.mjs",
+  "types": "dist/client/index.d.ts",
+  "browser": {
+    "./dist/server/server.js": "./dist/client/index.js",
+    "./dist/server/server.mjs": "./dist/client/index.mjs"
+  },
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
+      "import": "./dist/server/server.mjs",
+      "require": "./dist/server/server.js"
+    },
+    "./server": {
+      "import": "./dist/server/server.mjs",
+      "require": "./dist/server/server.js"
+    },
+    "./client": {
+      "import": "./dist/client/index.mjs",
+      "require": "./dist/client/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "dist/client/**/*",
+    "dist/server/**/*"
   ],
   "sideEffects": false,
   "private": true,

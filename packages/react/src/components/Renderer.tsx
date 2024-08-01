@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import type { NovuUI, NovuUIOptions } from '@novu/js/ui';
+import { NovuUI } from '@novu/js/ui';
+import type { NovuUIOptions } from '@novu/js/ui';
 import { MountedElement, RendererProvider } from '../context/RenderContext';
 
 type RendererProps = React.PropsWithChildren<{
@@ -38,9 +39,7 @@ export const Renderer = (props: RendererProps) => {
   );
 
   React.useEffect(() => {
-    // Need to use require here to not break the build during SSR
-    const { NovuUI } = require('@novu/js/ui');
-    const ui = new (NovuUI as new (novuOptions: NovuUIOptions) => NovuUI)(options) as NovuUI;
+    const ui: NovuUI = new NovuUI(options);
     setNovuUI(ui);
   }, [options]);
 
