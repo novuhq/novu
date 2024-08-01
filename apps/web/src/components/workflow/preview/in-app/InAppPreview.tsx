@@ -13,7 +13,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { InAppBasePreview } from './InAppBasePreview';
-import { ButtonTypeEnum, IMessageButton } from '@novu/shared';
+import { IMessageButton, inAppMessageFromBridgeOutputs } from '@novu/shared';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
@@ -32,8 +32,8 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const [bridgeContent, setBridgeContent] = useState<{
     content: string;
     ctaButtons: Array<IMessageButton>;
-    subject: string;
-    avatar: string;
+    subject?: string;
+    avatar?: string;
   }>({
     content: '',
     ctaButtons: [],
@@ -41,38 +41,16 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     avatar: '',
   });
 
-  const {
-    mutateAsync,
-    isLoading: isBridgeLoading,
-    error: previewError,
-  } = useMutation(
+  const { mutateAsync, isLoading: isBridgeLoading } = useMutation(
     (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
     {
       onSuccess(data) {
+        const inAppMessage = inAppMessageFromBridgeOutputs(data.outputs);
         setBridgeContent({
-          subject: data.outputs.subject,
-          content: data.outputs.body,
-          avatar: data.outputs.avatar,
-          ctaButtons: [
-            ...(data.outputs.primaryAction
-              ? [
-                  {
-                    type: ButtonTypeEnum.PRIMARY,
-                    content: data.outputs.primaryAction.label,
-                    url: data.outputs.primaryAction.url,
-                  },
-                ]
-              : []),
-            ...(data.outputs.secondaryAction
-              ? [
-                  {
-                    type: ButtonTypeEnum.SECONDARY,
-                    content: data.outputs.secondaryAction.label,
-                    url: data.outputs.secondaryAction.url,
-                  },
-                ]
-              : []),
-          ],
+          subject: inAppMessage.subject,
+          content: inAppMessage.content,
+          avatar: inAppMessage.avatar,
+          ctaButtons: inAppMessage.cta.action.buttons,
         });
       },
     }

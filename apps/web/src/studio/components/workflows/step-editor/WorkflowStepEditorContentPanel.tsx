@@ -3,7 +3,7 @@ import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
-import { ButtonTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ButtonTypeEnum, inAppMessageFromBridgeOutputs, StepTypeEnum } from '@novu/shared';
 import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../../hooks';
 import {
@@ -105,32 +105,15 @@ export const PreviewStep = ({
       return <SmsBasePreview content={preview?.outputs?.body} {...props} />;
 
     case StepTypeEnum.IN_APP:
+      const inAppMessage = inAppMessageFromBridgeOutputs(preview?.outputs);
+
       return (
         <InAppBasePreview
           content={{
-            content: preview?.outputs?.body,
-            subject: preview?.outputs?.subject,
-            avatar: preview?.outputs?.avatar,
-            ctaButtons: [
-              ...(preview?.outputs?.primaryAction
-                ? [
-                    {
-                      type: ButtonTypeEnum.PRIMARY,
-                      url: preview?.outputs?.primaryAction.url,
-                      content: preview?.outputs?.primaryAction.label,
-                    },
-                  ]
-                : []),
-              ...(preview?.outputs?.secondaryAction
-                ? [
-                    {
-                      type: ButtonTypeEnum.SECONDARY,
-                      url: preview?.outputs?.secondaryAction.url,
-                      content: preview?.outputs?.secondaryAction.label,
-                    },
-                  ]
-                : []),
-            ],
+            subject: inAppMessage.subject,
+            content: inAppMessage.content,
+            avatar: inAppMessage.avatar,
+            ctaButtons: inAppMessage.cta.action.buttons,
           }}
           {...props}
         />

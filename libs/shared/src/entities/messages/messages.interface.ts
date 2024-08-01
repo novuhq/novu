@@ -24,6 +24,8 @@ export interface IMessage {
   _layoutId?: string;
   payload: Record<string, unknown>;
   actor?: IActor;
+  avatar?: string;
+  subject?: string;
 }
 
 export interface IMessageCTA {

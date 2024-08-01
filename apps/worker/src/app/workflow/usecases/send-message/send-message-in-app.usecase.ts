@@ -1,22 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  OrganizationEntity,
-  OrganizationRepository,
-} from '@novu/dal';
+import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ActorTypeEnum,
   WebSocketEventEnum,
-  ButtonTypeEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -39,6 +31,7 @@ import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { inAppMessageFromBridgeOutputs } from '@novu/shared';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -183,34 +176,8 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     // V2 data
-    const bridgeOutputs = command.bridgeData?.outputs as InAppOutput | undefined;
-    const bridgeSubject = bridgeOutputs?.subject;
-    const bridgeBody = bridgeOutputs?.body;
-    const bridgeCta = {
-      action: {
-        buttons: [
-          ...(bridgeOutputs?.primaryAction
-            ? [
-                {
-                  type: ButtonTypeEnum.PRIMARY,
-                  content: bridgeOutputs.primaryAction.label,
-                  url: bridgeOutputs.primaryAction.url,
-                },
-              ]
-            : []),
-          ...(bridgeOutputs?.secondaryAction
-            ? [
-                {
-                  type: ButtonTypeEnum.SECONDARY,
-                  content: bridgeOutputs.secondaryAction.label,
-                  url: bridgeOutputs.secondaryAction.url,
-                },
-              ]
-            : []),
-        ],
-      },
-    };
-    const bridgeAvatar = bridgeOutputs?.avatar;
+    const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
+    const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -221,12 +188,12 @@ export class SendMessageInApp extends SendMessageBase {
         _templateId: command._templateId,
         _messageTemplateId: step.template._id,
         channel: ChannelTypeEnum.IN_APP,
-        cta: bridgeOutputs ? bridgeCta : step.template.cta,
+        cta: bridgeOutputs ? inAppMessage.cta : step.template.cta,
         _feedId: step.template._feedId,
         transactionId: command.transactionId,
-        content: this.storeContent() ? bridgeBody || content : null,
-        subject: bridgeSubject,
-        avatar: bridgeAvatar,
+        content: this.storeContent() ? inAppMessage.content || content : null,
+        subject: inAppMessage.subject,
+        avatar: inAppMessage.avatar,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,
