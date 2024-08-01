@@ -1,4 +1,4 @@
-import { createContext, useContext, createSignal, Accessor, ParentProps } from 'solid-js';
+import { Accessor, createContext, createSignal, ParentProps, useContext } from 'solid-js';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
 
