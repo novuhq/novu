@@ -1,13 +1,19 @@
 import { Code } from '@mantine/core';
 import { css } from '@novu/novui/css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-joyride';
 import { Button } from '@novu/novui';
 import { Accordion } from '@mantine/core';
 
-export function TourGuideComponent({ setClickedStepId, steps, isBridgeAppLoading }) {
-  const [runJoyride, setRunJoyride] = useState(true);
-  const [joyStepIndex, setJoyStepIndex] = useState<number | undefined>(undefined);
+export function TourGuideComponent({
+  setClickedStepId,
+  steps,
+  isBridgeAppLoading,
+  runJoyride,
+  setRunJoyride,
+  joyStepIndex,
+  setJoyStepIndex,
+}) {
   const joyrideSteps: Step[] = [
     {
       target: '[data-test-id="playground-header-title"]',
@@ -145,6 +151,12 @@ export function TourGuideComponent({ setClickedStepId, steps, isBridgeAppLoading
       setRunJoyride(false);
     }
   };
+
+  useEffect(() => {
+    if (joyStepIndex !== undefined) {
+      setRunJoyride(true);
+    }
+  }, [joyStepIndex, setRunJoyride]);
 
   return (
     <Joyride

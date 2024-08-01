@@ -128,21 +128,6 @@ export function CodeEditor({
   );
 }
 
-const errorLineClass = css`
-  background-color: rgba(229, 69, 69, 0.4) !important;
-`;
-
-const KeysContainer = styled.div<{ isDark: boolean }>`
-  display: flex;
-  height: 32px;
-  padding: 0px 12px;
-  padding-right: 30px;
-  justify-content: space-between;
-  align-items: center;
-  // todo update dark background
-  background-color: ${({ isDark }) => (isDark ? colors.BGDark : colors.B85)};
-`;
-
 const ERROR_ICON = `<div style="width: 48px !important; height: 20px !important; margin: 0; padding: 0;">
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
 <mask id="mask0_2586_81756" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">

@@ -47,6 +47,9 @@ export function PlaygroundPage() {
   const { toggleColorScheme, colorScheme } = useThemeChange();
   const segment = useSegment();
 
+  const [runJoyride, setRunJoyride] = useState<boolean>(false);
+  const [joyStepIndex, setJoyStepIndex] = useState<number>(0);
+
   async function handleTestClick() {
     const res = await fetch(`${API_ROOT}/v1/events/trigger`, {
       method: 'POST',
@@ -85,6 +88,11 @@ export function PlaygroundPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colorScheme]);
 
+  function onStepAddGuide() {
+    setRunJoyride(true);
+    setJoyStepIndex(1); // Set to index 1 (second step)
+  }
+
   return (
     <div
       className={css({
@@ -92,10 +100,19 @@ export function PlaygroundPage() {
         height: '100vh',
       })}
     >
-      <TourGuideComponent setClickedStepId={setClickedStepId} steps={steps} isBridgeAppLoading={isBridgeAppLoading} />
+      <TourGuideComponent
+        setClickedStepId={setClickedStepId}
+        steps={steps}
+        isBridgeAppLoading={isBridgeAppLoading}
+        runJoyride={runJoyride}
+        setRunJoyride={setRunJoyride}
+        joyStepIndex={joyStepIndex}
+        setJoyStepIndex={setJoyStepIndex}
+      />
       <Header handleTestClick={handleTestClick} />
 
       <Playground
+        onStepAddGuide={onStepAddGuide}
         clickedStepId={clickedStepId}
         setClickedStepId={setClickedStepId}
         onStateChange={setTriggerState}
@@ -112,12 +129,14 @@ function Playground({
   onStateChange,
   workflow,
   steps,
+  onStepAddGuide,
 }: {
   clickedStepId: string;
   setClickedStepId: (stepId: string) => void;
   onStateChange: (state: { workflowId?: string; stepId?: string; controls: any; payload: any }) => void;
   workflow?: DiscoverWorkflowOutput;
   steps?: DiscoverStepOutput[];
+  onStepAddGuide?: () => void;
 }) {
   const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
   const filteredCode = Object.fromEntries(Object.entries(code).filter(([key]) => key !== 'tunnel.ts'));
@@ -156,7 +175,7 @@ function Playground({
         </Pane>
         <Pane preferredSize={'30%'}>
           <div style={{ margin: '0 10px 10px 10px', height: '100%' }} className="terminal-component">
-            <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} />
+            <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} onStepAddGuide={onStepAddGuide} />
           </div>
         </Pane>
       </EditorView>

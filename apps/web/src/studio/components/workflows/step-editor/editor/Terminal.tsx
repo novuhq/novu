@@ -1,19 +1,21 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { IconTerminal } from '@novu/novui/icons';
+import { IconMenuBook, IconTerminal } from '@novu/novui/icons';
 import 'xterm/css/xterm.css';
 
 import { TerminalHandle } from './useContainer';
 import { css } from '@novu/novui/css';
+import { Button } from '@novu/novui';
 
 interface TerminalComponentProps {
   onChange?: (data: string) => void;
   height?: string;
+  onStepAddGuide?: () => void;
 }
 
 export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalComponentProps>(
-  ({ onChange, height = '100%' }, ref) => {
+  ({ onChange, height = '100%', onStepAddGuide }, ref) => {
     const terminalRef = useRef<HTMLDivElement>(null);
     const terminalInstance = useRef<Terminal | null>(null);
     const fitAddon = useRef(new FitAddon());
@@ -70,10 +72,17 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
             width: '100%',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
           })}
         >
-          <IconTerminal className={css({ mr: '4' })} />
-          Terminal
+          <span className={css({ display: 'flex', alignItems: 'center' })}>
+            <IconTerminal className={css({ mr: '4' })} />
+            Terminal
+          </span>
+
+          <Button size="xs" Icon={IconMenuBook} onClick={onStepAddGuide}>
+            How to add a Step?
+          </Button>
         </div>
         <div style={{ height: '100%' }} ref={terminalRef} />
       </div>
