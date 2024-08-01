@@ -11,7 +11,7 @@ export const StatusDropdown = () => {
   const { t } = useLocalization();
 
   return (
-    <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement="bottom">
+    <Dropdown.Root>
       <Dropdown.Trigger
         class={style('inboxStatus__dropdownTrigger', buttonVariants({ variant: 'unstyled', size: 'none' }))}
         asChild={(triggerProps) => (

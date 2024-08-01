@@ -1,9 +1,9 @@
 import { Accessor, createSignal, JSX, Match, Switch } from 'solid-js';
-import { cn, useStyle } from '../helpers';
+import { useStyle } from '../helpers';
 import { NotificationMounter } from '../types';
 import { Bell, Footer, Header, Settings, SettingsHeader } from './elements';
 import { NotificationList } from './Notification';
-import { Button, Popover, popoverContentVariants } from './primitives';
+import { Button, Popover } from './primitives';
 
 export type InboxProps = {
   open?: boolean;
@@ -51,10 +51,7 @@ export const Inbox = (props: InboxProps) => {
           </Button>
         )}
       />
-      <Popover.Content
-        appearanceKey="inbox__popoverContent"
-        class={cn(popoverContentVariants(), 'nt-max-w-96 nt-w-full')}
-      >
+      <Popover.Content appearanceKey="inbox__popoverContent">
         <InboxContent mountNotification={props.mountNotification} />
       </Popover.Content>
     </Popover.Root>
