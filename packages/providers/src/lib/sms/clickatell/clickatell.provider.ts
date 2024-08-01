@@ -6,7 +6,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 
-import axios, { Axios } from 'axios';
+import axios from 'axios';
 import { BaseProvider } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -16,7 +16,6 @@ export class ClickatellSmsProvider
 {
   id = SmsProviderIdEnum.Clickatell;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private axios: Axios;
 
   constructor(
     private config: {
@@ -40,14 +39,11 @@ export class ClickatellSmsProvider
       binary: true,
     });
 
-    const response = await axios({
+    const response = await axios.create().post(url, data.body, {
       headers: {
         Authorization: this.config.apiKey,
         ...data.headers,
       },
-      data: data.body,
-      method: 'post',
-      url,
     });
 
     return {

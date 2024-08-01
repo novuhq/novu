@@ -61,16 +61,14 @@ export class FortySixElksSmsProvider
 
     const data = new URLSearchParams(transformedData.body).toString();
 
-    const res: IFortySixElksRequestResponse = await axios.post(
-      'https://api.46elks.com/a1/sms',
-      data,
-      {
+    const res: IFortySixElksRequestResponse = await axios
+      .create()
+      .post('https://api.46elks.com/a1/sms', data, {
         headers: {
           Authorization: 'Basic ' + authKey,
           ...transformedData.headers,
         },
-      }
-    );
+      });
 
     return {
       id: res.data.id,

@@ -40,7 +40,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
       text: options.content,
     }).body;
 
-    const result = await axios.get(url, {
+    const result = await axios.create().get(url, {
       params: queryParameters,
     });
 

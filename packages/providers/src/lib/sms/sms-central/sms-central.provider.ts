@@ -42,7 +42,7 @@ export class SmsCentralSmsProvider
     }).body;
 
     const url = this.config.baseUrl || this.DEFAULT_BASE_URL;
-    await axios.post(url, data);
+    await axios.create().post(url, data);
 
     return {
       id: options.id,

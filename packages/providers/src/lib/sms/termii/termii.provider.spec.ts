@@ -1,5 +1,9 @@
+import fetchMock from 'fetch-mock';
 import { TermiiSmsProvider } from './termii.provider';
-import { SmsParams } from './sms';
+
+afterEach(() => {
+  fetchMock.reset();
+});
 
 test('should trigger termii library correctly', async () => {
   const provider = new TermiiSmsProvider({
@@ -7,14 +11,11 @@ test('should trigger termii library correctly', async () => {
     from: 'TermiiTest',
   });
 
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      return {
-        date: new Date().toISOString(),
-        id: Math.ceil(Math.random() * 100),
-      } as any;
-    });
+  fetchMock.mock('*', {
+    body: {
+      message_id: '1',
+    },
+  });
 
   await provider.sendMessage({
     content: 'Your otp code is 32901',
@@ -22,10 +23,39 @@ test('should trigger termii library correctly', async () => {
     to: '+2347063317344',
   });
 
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    to: '+2347063317344',
+  expect(fetchMock.calls()[0][1].body).toEqual(
+    '{"to":"+2347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}'
+  );
+});
+
+test('should trigger termii library correctly with _passthrough', async () => {
+  const provider = new TermiiSmsProvider({
+    apiKey: 'SG.',
     from: 'TermiiTest',
-    content: 'Your otp code is 32901',
-  } as Partial<SmsParams>);
+  });
+
+  fetchMock.mock('*', {
+    body: {
+      message_id: '1',
+    },
+  });
+
+  await provider.sendMessage(
+    {
+      content: 'Your otp code is 32901',
+      from: 'TermiiTest',
+      to: '+2347063317344',
+    },
+    {
+      _passthrough: {
+        body: {
+          to: '+3347063317344',
+        },
+      },
+    }
+  );
+
+  expect(fetchMock.calls()[0][1].body).toEqual(
+    '{"to":"+3347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}'
+  );
 });

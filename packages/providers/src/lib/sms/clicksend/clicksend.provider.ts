@@ -30,7 +30,7 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
       to: options.to,
       body: options.content,
     });
-    const response = await axios.post(
+    const response = await axios.create().post(
       'https://rest.clicksend.com/v3/sms/send',
       {
         messages: [data.body],

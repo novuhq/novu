@@ -33,11 +33,14 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const plivoResponse = await this.plivoClient.messages.create(
-      bridgeProviderData.src || options.from || this.config.from,
-      bridgeProviderData.dst || options.to,
-      (bridgeProviderData.text as string) || options.content,
-      bridgeProviderData.optionalParams as object,
-      bridgeProviderData.powerpackUUID as string
+      bridgeProviderData._passthrough?.body?.src ||
+        options.from ||
+        this.config.from,
+      bridgeProviderData._passthrough?.body?.dst || options.to,
+      (bridgeProviderData._passthrough?.body?.text as string) ||
+        options.content,
+      bridgeProviderData._passthrough?.body?.optionalParams as object,
+      bridgeProviderData._passthrough?.body?.powerpackUUID as string
     );
 
     return {

@@ -34,17 +34,19 @@ export class EazySmsProvider extends BaseProvider implements ISmsProvider {
       },
     });
 
-    const response = await axios.post(
-      `${this.DEFAULT_BASE_URL}/channels/${this.config.channelId}/messages/${options.to}${this.EAZY_SMS_CHANNEL}`,
-      payload.body,
-      {
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
-          'Content-Type': 'application/json',
-          ...payload.headers,
-        },
-      }
-    );
+    const response = await axios
+      .create()
+      .post(
+        `${this.DEFAULT_BASE_URL}/channels/${this.config.channelId}/messages/${options.to}${this.EAZY_SMS_CHANNEL}`,
+        payload.body,
+        {
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+            'Content-Type': 'application/json',
+            ...payload.headers,
+          },
+        }
+      );
 
     return {
       id: response.data.id,

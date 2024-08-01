@@ -35,17 +35,15 @@ export class SimpletextingSmsProvider
       mode: 'SINGLE_SMS_STRICTLY',
       text: options.content,
     });
-    const response = await axios.post(
-      'https://api-app2.simpletexting.com/v2/api/messages',
-      data.body,
-      {
+    const response = await axios
+      .create()
+      .post('https://api-app2.simpletexting.com/v2/api/messages', data.body, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.config.apiKey}`,
           ...data.headers,
         },
-      }
-    );
+      });
 
     return {
       id: response.data.id,

@@ -33,13 +33,15 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
     });
     const url = this.DEFAULT_BASE_URL;
     const encodedToken = Buffer.from(this.config.apiToken).toString('base64');
-    const response = await axios.post(url, JSON.stringify(payload.body), {
-      headers: {
-        Authorization: `Basic ${encodedToken}`,
-        'Content-Type': 'application/json',
-        ...payload.headers,
-      },
-    });
+    const response = await axios
+      .create()
+      .post(url, JSON.stringify(payload.body), {
+        headers: {
+          Authorization: `Basic ${encodedToken}`,
+          'Content-Type': 'application/json',
+          ...payload.headers,
+        },
+      });
 
     return {
       id: response.data[0].id,

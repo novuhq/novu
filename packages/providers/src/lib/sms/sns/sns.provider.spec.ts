@@ -32,3 +32,38 @@ test('should trigger sns library correctly', async () => {
   expect(spy).toHaveBeenCalledWith(expect.objectContaining(publishInput));
   expect(response.id).toBe(mockResponse.MessageId);
 });
+
+test('should trigger sns library correctly with _passthrough', async () => {
+  const mockResponse = { MessageId: 'mock-message-id' };
+  const spy = jest
+    .spyOn(SNSClient.prototype, 'send')
+    .mockImplementation(async () => mockResponse);
+
+  const mockConfig = {
+    accessKeyId: 'TEST',
+    secretAccessKey: 'TEST',
+    region: 'test-1',
+  };
+  const provider = new SNSSmsProvider(mockConfig);
+
+  const mockNovuMessage = {
+    to: '0123456789',
+    content: 'hello',
+  };
+  const response = await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        PhoneNumber: '1123456789',
+      },
+    },
+  });
+
+  const publishInput = {
+    PhoneNumber: '1123456789',
+    Message: mockNovuMessage.content,
+  };
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy.mock.calls[1][0]?.input).toEqual(publishInput);
+  expect(response.id).toBe(mockResponse.MessageId);
+});

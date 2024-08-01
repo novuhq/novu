@@ -50,7 +50,9 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
       }),
     }).body;
 
-    const response = await axios.post(GupshupSmsProvider.BASE_URL, params);
+    const response = await axios
+      .create()
+      .post(GupshupSmsProvider.BASE_URL, params);
 
     const body = response.data;
     const result = body.split(' | ');

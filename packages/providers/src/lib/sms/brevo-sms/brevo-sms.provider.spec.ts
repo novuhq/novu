@@ -150,6 +150,27 @@ describe('sendMessage method', () => {
       body: expect.objectToEqual('content', mockNovuMessage.content),
     });
   });
+
+  test('should send message with provided option content with _passthrough', async () => {
+    const provider = new BrevoSmsProvider(mockConfig);
+
+    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+      status: 201,
+    });
+
+    await provider.sendMessage(mockNovuMessage, {
+      _passthrough: {
+        body: {
+          content: '_passthrough content',
+        },
+      },
+    });
+
+    expect(fetch.mock.calls[0][1]).toMatchObject({
+      body: expect.objectToEqual('content', '_passthrough content'),
+    });
+  });
+
   test('should return id returned in request response', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 

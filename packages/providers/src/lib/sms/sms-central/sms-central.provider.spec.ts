@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { axiosSpy } from '../../../utils/test/spy-axios';
 import { SmsCentralSmsProvider } from './sms-central.provider';
 
 const mockConfig = {
@@ -14,11 +14,9 @@ const mockNovuMessage = {
 };
 
 test('should trigger sms-central library correctly', async () => {
-  const fakePost = jest.fn(() => {
-    return Promise.resolve('0');
+  const { mockPost: fakePost } = axiosSpy({
+    data: '0',
   });
-
-  jest.spyOn(axios, 'post').mockImplementation(fakePost);
 
   const provider = new SmsCentralSmsProvider(mockConfig);
 
@@ -30,6 +28,34 @@ test('should trigger sms-central library correctly', async () => {
     USERNAME: mockConfig.username,
     PASSWORD: mockConfig.password,
     RECIPIENT: mockNovuMessage.to,
+    MESSAGE_TEXT: mockNovuMessage.content,
+  };
+
+  expect(fakePost).toBeCalled();
+  expect(fakePost).toBeCalledWith(mockConfig.baseUrl, data);
+});
+
+test('should trigger sms-central library correctly', async () => {
+  const { mockPost: fakePost } = axiosSpy({
+    data: '0',
+  });
+
+  const provider = new SmsCentralSmsProvider(mockConfig);
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        RECIPIENT: '787654321',
+      },
+    },
+  });
+
+  const data = {
+    ACTION: 'send',
+    ORIGINATOR: mockConfig.from,
+    USERNAME: mockConfig.username,
+    PASSWORD: mockConfig.password,
+    RECIPIENT: '787654321',
     MESSAGE_TEXT: mockNovuMessage.content,
   };
 
