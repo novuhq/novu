@@ -72,7 +72,7 @@ export const NotificationTextStyled = styled.div<{ isExampleNotification: boolea
 export const SubjectTextStyled = styled.p`
   font-size: 16px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 20px;
   margin: 0;
 `;
