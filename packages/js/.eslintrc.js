@@ -1,6 +1,6 @@
 module.exports = {
   extends: ['../../.eslintrc.js'],
-  plugins: ['local-rules'],
+  plugins: ['import', 'promise', '@typescript-eslint', 'prettier', 'local-rules'],
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/naming-convention': [
@@ -20,5 +20,7 @@ module.exports = {
     project: './tsconfig.json',
     ecmaVersion: 2020,
     sourceType: 'module',
+    tsconfigRootDir: __dirname,
   },
+  ignorePatterns: '*.test.ts',
 };

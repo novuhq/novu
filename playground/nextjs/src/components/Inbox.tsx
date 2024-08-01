@@ -1,11 +1,12 @@
 import { Mounter } from '@/components/Mounter';
 import { useRenderer } from '@/context/RendererContext';
 import { InboxNotification } from '@novu/js/dist/types/types';
-import type { BaseNovuUIOptions } from '@novu/js/ui';
+import type { BaseNovuUIOptions, InboxProps as InternalInboxProps } from '@novu/js/ui';
 import { ReactNode, useCallback } from 'react';
 import { Renderer } from './Renderer';
 
 type AllInOneInboxProps = {
+  tabs?: InternalInboxProps['tabs'];
   renderNotification?: (notification: InboxNotification) => ReactNode;
 };
 const AllInOneInbox = (props: AllInOneInboxProps) => {
@@ -48,10 +49,10 @@ export const Inbox = (props: InboxProps) => {
     return <Renderer options={props} />;
   }
 
-  const { renderNotification, ...options } = props as BaseNovuUIOptions & AllInOneInboxProps;
+  const { renderNotification, tabs, ...options } = props as BaseNovuUIOptions & AllInOneInboxProps;
   return (
     <Renderer options={options}>
-      <AllInOneInbox renderNotification={renderNotification} />
+      <AllInOneInbox renderNotification={renderNotification} tabs={tabs} />
     </Renderer>
   );
 };
