@@ -35,11 +35,11 @@ export const ActionsItem = (props: { label: string; onClick: () => void; icon: (
 
   return (
     <Dropdown.Item
-      class={style('actions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
+      class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
       onClick={props.onClick}
     >
-      <span class={style('actions__dropdownItemLeftIcon')}>{props.icon()}</span>
-      <span class={style('actions__dropdownItemLabel')}>{props.label}</span>
+      <span class={style('moreActions__dropdownItemLeftIcon')}>{props.icon()}</span>
+      <span class={style('moreActions__dropdownItemLabel')}>{props.label}</span>
     </Dropdown.Item>
   );
 };
