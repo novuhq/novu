@@ -55,6 +55,7 @@ export function PlaygroundWorkflowComponent({
     return () => {
       window.removeEventListener('webcontainer:serverReady', () => {});
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const step = workflow?.steps.find((item) => item.stepId === clickedStepId);
