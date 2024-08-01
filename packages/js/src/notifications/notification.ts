@@ -11,7 +11,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   readonly id: InboxNotification['id'];
   readonly subject?: InboxNotification['subject'];
   readonly body: InboxNotification['body'];
-  readonly to: InboxNotification['to'];
+  readonly to?: InboxNotification['to'];
   readonly isRead: InboxNotification['isRead'];
   readonly isArchived: InboxNotification['isArchived'];
   readonly createdAt: InboxNotification['createdAt'];
@@ -22,6 +22,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   readonly secondaryAction?: InboxNotification['secondaryAction'];
   readonly channelType: InboxNotification['channelType'];
   readonly tags: InboxNotification['tags'];
+  readonly redirect: InboxNotification['redirect'];
 
   constructor(notification: InboxNotification) {
     this.#emitter = NovuEventEmitter.getInstance();
@@ -41,6 +42,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     this.secondaryAction = notification.secondaryAction;
     this.channelType = notification.channelType;
     this.tags = notification.tags;
+    this.redirect = notification.redirect;
   }
 
   read(): Result<Notification> {

@@ -1,10 +1,12 @@
-import { ParentProps, Show } from 'solid-js';
-import { InboxNotification } from '../../../types';
+import { JSX, ParentProps, Show } from 'solid-js';
 import { useLocalization } from '../../context';
 import { formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
+import type { Notification } from '../../../notifications';
+import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
+import { ActionTypeEnum } from '../../../types';
 
 type NotificationBodyProps = ParentProps;
 const NotificationBody = (props: NotificationBodyProps) => {
@@ -14,7 +16,9 @@ const NotificationBody = (props: NotificationBodyProps) => {
 };
 
 type DefaultNotificationProps = {
-  notification: InboxNotification;
+  notification: Notification;
+  onNotificationClick?: NotificationClickHandler;
+  onActionClick?: NotificationActionClickHandler;
 };
 
 //TODO: Complete the implementation
@@ -22,12 +26,39 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
 
+  const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!props.notification.isRead) {
+      props.notification.read();
+    }
+
+    props.onNotificationClick?.({ notification: props.notification });
+    if (props.notification.redirect?.url) {
+      window.open(props.notification.redirect?.url, '_blank', 'noreferrer noopener');
+    }
+  };
+
+  const handleActionButtonClick = (action: ActionTypeEnum, e: MouseEvent) => {
+    e.stopPropagation();
+
+    if (action === ActionTypeEnum.PRIMARY) {
+      props.notification.completePrimary();
+    } else {
+      props.notification.completeSecondary();
+    }
+
+    props.onActionClick?.({ notification: props.notification, action });
+  };
+
   return (
-    <div
+    <a
       class={style(
         'notification',
-        'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2'
+        'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2 nt-cursor-pointer'
       )}
+      onClick={handleNotificationClick}
     >
       <Show when={!props.notification.isRead}>
         <span
@@ -125,20 +156,28 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
-              <Button appearanceKey="notificationPrimaryAction__button" variant="default">
+              <Button
+                appearanceKey="notificationPrimaryAction__button"
+                variant="default"
+                onClick={(e) => handleActionButtonClick(ActionTypeEnum.PRIMARY, e)}
+              >
                 {primaryAction.label}
               </Button>
             )}
           </Show>
           <Show when={props.notification.secondaryAction} keyed>
             {(secondaryAction) => (
-              <Button appearanceKey="notificationSecondaryAction__button" variant="secondary">
+              <Button
+                appearanceKey="notificationSecondaryAction__button"
+                variant="secondary"
+                onClick={(e) => handleActionButtonClick(ActionTypeEnum.SECONDARY, e)}
+              >
                 {secondaryAction.label}
               </Button>
             )}
           </Show>
         </div>
       </div>
-    </div>
+    </a>
   );
 };

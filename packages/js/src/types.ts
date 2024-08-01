@@ -81,7 +81,6 @@ export type Subscriber = {
 
 export type Action = {
   label: string;
-  url?: string;
   isCompleted: boolean;
 };
 
@@ -89,7 +88,7 @@ export type InboxNotification = {
   id: string;
   subject?: string;
   body: string;
-  to: Subscriber;
+  to?: Subscriber;
   isRead: boolean;
   isArchived: boolean;
   createdAt: string;
@@ -100,6 +99,9 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelType;
   tags?: string[];
+  redirect?: {
+    url: string;
+  };
 };
 
 export type NotificationFilter = {

@@ -34,7 +34,7 @@ const mapSingleItem = ({
     id: _id,
     subject,
     body: content as string,
-    to,
+    to: subscriber ? to : undefined,
     isRead: read,
     isArchived: archived,
     createdAt,
@@ -43,7 +43,6 @@ const mapSingleItem = ({
     avatar,
     primaryAction: primaryCta && {
       label: primaryCta.content,
-      url: primaryCta.url,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     secondaryAction: secondaryCta && {
@@ -53,6 +52,11 @@ const mapSingleItem = ({
     },
     channelType: channel,
     tags,
+    redirect: cta.data.url
+      ? {
+          url: cta.data.url,
+        }
+      : undefined,
   };
 };
 

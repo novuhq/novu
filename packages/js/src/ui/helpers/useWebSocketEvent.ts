@@ -2,7 +2,6 @@ import { onCleanup, onMount } from 'solid-js';
 import type { SocketEventNames, EventHandler, Events } from '../../event-emitter';
 import { useNovu } from '../context';
 import { requestLock } from './browser';
-import { NV_INBOX_WEBSOCKET_LOCK } from './constants';
 import { useBrowserTabsChannel } from './useBrowserTabsChannel';
 
 export const useWebSocketEvent = <E extends SocketEventNames>({
@@ -13,7 +12,7 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   eventHandler: (args: Events[E]) => void;
 }) => {
   const novu = useNovu();
-  const { postMessage } = useBrowserTabsChannel({ onMessage });
+  const { postMessage } = useBrowserTabsChannel({ channelName: `nv.${webSocketEvent}`, onMessage });
 
   const updateReadCount: EventHandler<Events[E]> = (data) => {
     onMessage(data);
@@ -21,7 +20,7 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   };
 
   onMount(() => {
-    const resolveLock = requestLock(NV_INBOX_WEBSOCKET_LOCK, () => {
+    const resolveLock = requestLock(`nv.${webSocketEvent}`, () => {
       novu.on(webSocketEvent, updateReadCount);
     });
 
