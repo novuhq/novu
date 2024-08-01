@@ -1,11 +1,12 @@
 import { Popover } from '../Popover';
 import { DropdownContent } from './DropdownContent';
+export { dropdownItemVariants } from './DropdownItem';
 import { DropdownItem } from './DropdownItem';
 import { DropdownRoot } from './DropdownRoot';
 import { DropdownTrigger } from './DropdownTrigger';
 
 export { dropdownContentVariants } from './DropdownContent';
-export { dropdownItemVariants } from './DropdownItem';
+export { dropdownTriggerButtonVariants } from './DropdownTrigger';
 
 export const Dropdown = {
   Root: DropdownRoot,

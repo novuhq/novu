@@ -23,6 +23,7 @@ import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
+import { JSONSchema } from 'json-schema-to-ts';
 
 export class NotificationTemplateEntity implements INotificationTemplate {
   _id: string;
@@ -130,6 +131,10 @@ export class StepVariantEntity implements IStepVariant {
   bridgeUrl?: string;
 
   controlVariables?: ControlsDto;
+
+  controls?: {
+    schema: JSONSchema;
+  };
 }
 
 export class NotificationStepEntity extends StepVariantEntity implements INotificationTemplateStep {

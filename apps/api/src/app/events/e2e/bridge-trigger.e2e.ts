@@ -583,7 +583,7 @@ contexts.forEach((context: Context) => {
               controlSchema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string', default: 'Hello {{payload.name}}' },
+                  name: { type: 'string', default: 'Hello {{name}}' },
                 },
               } as const,
             }

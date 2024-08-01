@@ -10,19 +10,23 @@ import { Button, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useFeatureFlag, useVercelIntegration, useVercelParams, useEffectOnce } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import styled from '@emotion/styled/macro';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
+import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
+import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
 }
 
 export function QuestionnaireForm() {
+  const { isSupported } = useWebContainerSupported();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -35,6 +39,13 @@ export function QuestionnaireForm() {
   const { isFromVercel } = useVercelParams();
   const segment = useSegment();
   const location = useLocation();
+  const { initializeWebContainer } = useContainer();
+
+  useEffectOnce(() => {
+    if (isSupported) {
+      initializeWebContainer();
+    }
+  }, isPlaygroundOnboardingEnabled);
 
   const { mutateAsync: updateOrganizationMutation } = useMutation<{ _id: string }, IResponseError, any>(
     (data: UpdateExternalOrganizationDto) => updateClerkOrgMetadata(data)
@@ -83,16 +94,13 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      const isTechnicalJobTitle = [
-        JobTitleEnum.ENGINEER,
-        JobTitleEnum.ENGINEERING_MANAGER,
-        JobTitleEnum.ARCHITECT,
-        JobTitleEnum.FOUNDER,
-        JobTitleEnum.STUDENT,
-      ].includes(data.jobTitle);
-
-      if (isTechnicalJobTitle) {
-        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      if (isJobTitleIsTech(data.jobTitle)) {
+        if (isPlaygroundOnboardingEnabled && isSupported) {
+          navigate(ROUTES.DASHBOARD_PLAYGROUND);
+        } else {
+          trackRedirectionToOnboarding();
+          navigate(ROUTES.DASHBOARD_ONBOARDING);
+        }
       } else {
         navigate(ROUTES.WORKFLOWS);
       }
@@ -113,6 +121,14 @@ export function QuestionnaireForm() {
       border-color: #e03131;
     }
   `;
+
+  const trackRedirectionToOnboarding = () => {
+    if (isPlaygroundOnboardingEnabled && !isSupported) {
+      segment.track(
+        'Redirected to onboarding page because the playground was not supported on the browser - [Sign-Up]'
+      );
+    }
+  };
 
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onUpdateOrganization)}>
@@ -201,18 +217,19 @@ const backendLanguages = [
   { label: 'Other' },
 ];
 
-const frontendFrameworks = [
-  { label: 'React' },
-  { label: 'Vue' },
-  { label: 'Angular' },
-  { label: 'Flutter' },
-  { label: 'React Native' },
-  { label: 'Other' },
-];
-
 interface OrganizationUpdateForm {
   jobTitle: JobTitleEnum;
   domain?: string;
   language?: string[];
   frontendStack?: string[];
+}
+
+function isJobTitleIsTech(jobTitle: JobTitleEnum) {
+  return [
+    JobTitleEnum.ENGINEER,
+    JobTitleEnum.ENGINEERING_MANAGER,
+    JobTitleEnum.ARCHITECT,
+    JobTitleEnum.FOUNDER,
+    JobTitleEnum.STUDENT,
+  ].includes(jobTitle);
 }

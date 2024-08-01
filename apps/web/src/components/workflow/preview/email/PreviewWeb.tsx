@@ -95,6 +95,7 @@ export const PreviewWeb = ({
   selectedLocale,
   locales,
   bridge = false,
+  source = 'studio',
   classNames = {},
 }: {
   integration?: any;
@@ -114,6 +115,7 @@ export const PreviewWeb = ({
     skeleton?: string;
   };
   bridge?: boolean;
+  source?: 'studio' | 'playground' | 'dashboard';
 }) => {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
 
@@ -166,9 +168,11 @@ export const PreviewWeb = ({
                       <div data-test-id="preview-subject" className={classes.subject}>
                         {subject}
                       </div>
-                      <div data-test-id="preview-from" className={classes.from}>
-                        <EmailIntegrationInfo integration={integration} field={'from'} />
-                      </div>
+                      <When truthy={source !== 'playground'}>
+                        <div data-test-id="preview-from" className={classes.from}>
+                          <EmailIntegrationInfo integration={integration} field={'from'} />
+                        </div>
+                      </When>
                     </>
                   )}
                 </div>

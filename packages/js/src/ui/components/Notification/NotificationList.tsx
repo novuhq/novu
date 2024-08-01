@@ -12,9 +12,7 @@ export const NotificationListContainer = (props: ParentProps) => {
   const style = useStyle();
 
   return (
-    <div
-      class={style('notificationList', 'nt-flex nt-flex-col nt-min-h-full nt-w-full nt-h-[37.5rem] nt-overflow-auto')}
-    >
+    <div class={style('notificationList', 'nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')}>
       {props.children}
     </div>
   );

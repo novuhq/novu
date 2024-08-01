@@ -53,20 +53,16 @@ import { OrganizationPage } from './pages/settings/organization';
 import { LayoutsPage } from './pages/layouts/LayoutsPage';
 import { StudioPageLayout } from './studio/StudioPageLayout';
 import { LocalStudioAuthenticator } from './studio/LocalStudioAuthenticator';
-import {
-  LocalStudioWorkflowLandingPage,
-  WorkflowsDetailPage,
-  WorkflowsStepEditorPage,
-  WorkflowsTestPage,
-} from './studio/components/workflows';
+import { LocalStudioWorkflowLandingPage, WorkflowsDetailPage, WorkflowsTestPage } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 import { IS_EE_AUTH_ENABLED } from './config/index';
 import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
-import { GetStartedPageV2 } from './studio/components/GetStartedPageV2/index';
+import { PlaygroundPage } from './pages/auth/onboarding/PlaygroundPage';
 import { BillingRoutes } from './pages/BillingPages';
+import { StudioStepEditorPage } from './studio/pages/StudioStepEditorPage';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -90,6 +86,7 @@ export const AppRoutes = () => {
     <Routes>
       {AuthRoutes()}
       <Route path={ROUTES.DASHBOARD_ONBOARDING} element={<OnboardingPage />} />
+      <Route path={ROUTES.DASHBOARD_PLAYGROUND} element={<PlaygroundPage />} />
       <Route element={!IS_EE_AUTH_ENABLED ? <PrivatePageLayout /> : <EnterprisePrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
@@ -122,7 +119,7 @@ export const AppRoutes = () => {
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
         {isV2Enabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 location="get-started" />} />
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
         )}
@@ -178,7 +175,7 @@ export const AppRoutes = () => {
         />
         <Route path={ROUTES.STUDIO_FLOWS} element={<LocalStudioWorkflowLandingPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
-        <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
+        <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<StudioStepEditorPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
         <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
         <Route path={ROUTES.STUDIO_ONBOARDING_PREVIEW} element={<StudioOnboardingPreview />} />

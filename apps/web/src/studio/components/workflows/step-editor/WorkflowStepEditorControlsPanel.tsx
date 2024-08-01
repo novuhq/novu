@@ -1,14 +1,15 @@
+import { FC, useEffect, useMemo } from 'react';
+
 import { Button, JsonSchemaForm, Tabs, Title } from '@novu/novui';
 import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/novui/icons';
-import { FC, useMemo } from 'react';
+import { css, cx } from '@novu/novui/css';
+import { Container, Flex } from '@novu/novui/jsx';
+import { useDebouncedCallback } from '@novu/novui';
+
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
-import { css } from '@novu/novui/css';
-import { Container, Flex } from '@novu/novui/jsx';
-import { useDebouncedCallback } from '@novu/novui';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
-import { getSuggestionVariables, subscriberVariables } from '../../../utils';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -19,6 +20,8 @@ interface IWorkflowStepEditorControlsPanelProps {
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
+  className?: string;
+  source?: 'studio' | 'playground' | 'dashboard';
 }
 
 const TYPING_DEBOUNCE_TIME_MS = 500;
@@ -30,6 +33,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   onSave,
   defaultControls,
   isLoadingSave,
+  className,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
@@ -44,16 +48,6 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     );
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
-  const payloadProperties = useMemo(() => {
-    const payloadObject =
-      workflow?.payload?.schema?.properties ||
-      workflow?.options?.payloadSchema?.properties ||
-      workflow?.payloadSchema?.properties ||
-      {};
-
-    return getSuggestionVariables(payloadObject, 'payload');
-  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
-
   const haveControlProperties = useMemo(() => {
     return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
   }, [step?.controls?.schema, step?.inputs?.schema]);
@@ -65,6 +59,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   return (
     <>
       <Tabs
+        className={className}
         defaultValue="step-controls"
         tabConfigs={[
           {
@@ -98,7 +93,6 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
-                    variables={[...(subscriberVariables || []), ...(payloadProperties || [])]}
                   />
                 </When>
                 <When truthy={!haveControlProperties}>

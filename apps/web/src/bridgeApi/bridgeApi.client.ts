@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import type { DiscoverWorkflowOutput } from '@novu/framework';
+
 export type StepPreviewParams = {
   workflowId: string;
   stepId: string;
@@ -59,10 +61,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
   };
 
   return {
-    /**
-     * TODO: Use framework shared types
-     */
-    async discover(): Promise<{ workflows: any[] }> {
+    async discover(): Promise<{ workflows: DiscoverWorkflowOutput[] }> {
       return get('', {
         action: 'discover',
       });

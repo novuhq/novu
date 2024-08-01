@@ -83,6 +83,7 @@ export class BridgeController {
         inputs: data.controls || data.inputs,
         controls: data.controls || data.inputs,
         data: data.payload,
+        bridgeUrl: data.bridgeUrl,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

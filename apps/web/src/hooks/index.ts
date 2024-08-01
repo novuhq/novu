@@ -33,3 +33,4 @@ export * from './useThemeChange';
 export * from './useVariablesManager';
 export * from './useVercelIntegration';
 export * from './useVercelParams';
+export * from './useApiKey';

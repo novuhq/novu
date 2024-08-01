@@ -1,7 +1,7 @@
 import { ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
-import { NovuComponent, novuComponents, Renderer } from './components/Renderer';
+import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { Appearance } from './context';
 import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
@@ -87,7 +87,7 @@ export class NovuUI {
     });
   }
 
-  mountComponent<T extends keyof typeof novuComponents>({
+  mountComponent<T extends NovuComponentName>({
     name,
     element,
     props: componentProps,

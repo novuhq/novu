@@ -52,7 +52,6 @@
     "bcast",
     "behaviour",
     "bestguess",
-    "tiptap",
     "binipdisplay",
     "bitauth",
     "bitjson",
@@ -658,7 +657,10 @@
     "xcodebuild",
     "xkeysib",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "Embedder",
+    "credentialless",
+    "coep"
   ],
   "flagWords": [],
   "patterns": [
@@ -755,6 +757,7 @@
     "pnpm-lock.yaml",
     "apps/web/env.sh",
     "packages/js/src/ui/index.directcss",
-    "unreadRead"
+    "unreadRead",
+    "apps/web/src/studio/components/workflows/step-editor/editor/files.ts"
   ]
 }

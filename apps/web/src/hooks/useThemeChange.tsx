@@ -35,6 +35,7 @@ export default function useThemeChange() {
 
   return {
     Icon,
+    colorScheme,
     themeLabel,
     toggleColorScheme,
   };

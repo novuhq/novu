@@ -51,11 +51,13 @@
       "require": "./styled-system/jsx/index.js",
       "import": "./styled-system/jsx/index.js"
     },
-    "./styles.css": "./src/index.css"
+    "./styles.css": "./styled-system/styles.css",
+    "./components.css": "./node_modules/@mantine/core/styles.layer.css"
   },
   "scripts": {
     "dev": "pnpm build && pnpm storybook",
     "start": "npm run build:watch",
+    "setup": "pnpm prepare:panda && pnpm build",
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
     "prepare:audit": "pnpm audit-components",
@@ -129,21 +131,13 @@
     }
   },
   "dependencies": {
-    "@mantine/code-highlight": "^7.11.2",
-    "@mantine/core": "^7.11.2",
-    "@mantine/hooks": "^7.11.2",
-    "@mantine/tiptap": "^7.11.2",
+    "@mantine/code-highlight": "^7.10.2",
+    "@mantine/core": "^7.10.0",
+    "@mantine/hooks": "^7.10.0",
     "@rjsf/core": "^5.17.1",
     "@rjsf/utils": "^5.17.1",
     "@rjsf/validator-ajv8": "^5.17.1",
     "@tanstack/react-table": "^8.17.3",
-    "@tiptap/extension-document": "^2.5.0",
-    "@tiptap/extension-mention": "^2.5.0",
-    "@tiptap/extension-paragraph": "^2.5.0",
-    "@tiptap/extension-text": "^2.5.0",
-    "@tiptap/pm": "^3.0.0",
-    "@tiptap/react": "^3.0.0",
-    "@tiptap/suggestion": "^2.5.0",
     "react-icons": "^5.0.1"
   }
 }
