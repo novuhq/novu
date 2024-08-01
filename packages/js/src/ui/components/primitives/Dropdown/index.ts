@@ -1,13 +1,14 @@
 import { Popover } from '../Popover';
 import { DropdownContent } from './DropdownContent';
 import { DropdownItem } from './DropdownItem';
+import { DropdownRoot } from './DropdownRoot';
 import { DropdownTrigger } from './DropdownTrigger';
 
 export { dropdownContentVariants } from './DropdownContent';
 export { dropdownItemVariants } from './DropdownItem';
 
 export const Dropdown = {
-  Root: Popover.Root,
+  Root: DropdownRoot,
   /**
    * Dropdown.Trigger renders a `button` and has no default styling.
    */
