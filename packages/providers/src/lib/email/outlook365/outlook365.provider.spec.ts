@@ -56,7 +56,7 @@ test('should trigger outlook365 library correctly with _passthrough', async () =
   const response = await provider.sendMessage(mockNovuMessage, {
     _passthrough: {
       body: {
-        html: '<div> Mail Content _pasthrough </div>',
+        html: '<div> Mail Content _passthrough </div>',
       },
     },
   });
@@ -69,7 +69,7 @@ test('should trigger outlook365 library correctly with _passthrough', async () =
       address: 'test@test.com',
       name: 'test@test.com',
     },
-    html: '<div> Mail Content _pasthrough </div>',
+    html: '<div> Mail Content _passthrough </div>',
     subject: 'test subject',
     text: undefined,
     to: ['test@test2.com'],
