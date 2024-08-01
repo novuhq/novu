@@ -31,6 +31,7 @@ export function PlaygroundWorkflowComponent({
   loading?: boolean;
 }) {
   const bridgeApi = useBridgeAPI();
+
   const {
     preview,
     isLoading: loadingPreview,

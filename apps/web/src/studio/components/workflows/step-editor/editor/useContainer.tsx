@@ -89,6 +89,15 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
   useEffectOnce(() => {
     (async () => {
       try {
+        webContainer.on('server-ready', (port, url) => {
+          segment.track('Sandbox bridge app is ready - [Playground]');
+          setSandboxBridgeAddress(url + ':' + port);
+
+          window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
+
+          refetch();
+        });
+
         async function installDependencies() {
           segment.track('Installing dependencies - [Playground]');
           const installProcess = await webContainer.spawn('pnpm', ['install', '--frozen-lockfile']);

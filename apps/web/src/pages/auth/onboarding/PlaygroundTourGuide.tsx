@@ -133,6 +133,7 @@ export function TourGuideComponent({
       disableBeacon: true,
     },
   ];
+
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status, lifecycle, action, index } = data;
 

@@ -19,9 +19,10 @@ export async function buildClerk({ publishableKey }: BuildClerkOptions): Promise
   clerk.__unstable__onBeforeRequest(async (requestInit) => {
     const { path, method, body } = requestInit;
     const isSignIn = path === '/client/sign_ins' && method === 'POST';
-    const isRegularSignIn = isSignIn && !getParamFromQuery(body as string, 'strategy');
+    const isPasswordStrategy =
+      getParamFromQuery(body as string, 'strategy') === 'password' || !getParamFromQuery(body as string, 'strategy');
 
-    if (isRegularSignIn) {
+    if (isSignIn && isPasswordStrategy) {
       const email = getParamFromQuery(body as string, 'identifier');
       if (email && email !== normalizeEmail(email)) {
         await normalizeEmailData(email);
