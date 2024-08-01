@@ -1,4 +1,4 @@
-import { CodeSnippet } from '../../get-started/components/CodeSnippet';
+import { CodeSnippet } from '../../get-started/legacy-onboarding/components/CodeSnippet';
 import { Loader, Timeline as MantineTimeline } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IconCheck } from '@novu/novui/icons';

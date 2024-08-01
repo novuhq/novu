@@ -56,6 +56,7 @@
   "scripts": {
     "dev": "pnpm build && pnpm storybook",
     "start": "npm run build:watch",
+    "setup": "pnpm prepare:panda && pnpm build",
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
     "prepare:audit": "pnpm audit-components",

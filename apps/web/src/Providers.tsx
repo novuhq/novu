@@ -10,6 +10,7 @@ import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
 import { EnvironmentProvider } from './components/providers/EnvironmentProvider';
 import { SegmentProvider } from './components/providers/SegmentProvider';
 import { StudioStateProvider } from './studio/StudioStateProvider';
+import { ContainerProvider } from './studio/components/workflows/step-editor/editor/useContainer';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -37,7 +38,9 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
               <AuthProvider>
                 <EnvironmentProvider>
                   <HelmetProvider>
-                    <StudioStateProvider>{children}</StudioStateProvider>
+                    <StudioStateProvider>
+                      <ContainerProvider>{children}</ContainerProvider>
+                    </StudioStateProvider>
                   </HelmetProvider>
                 </EnvironmentProvider>
               </AuthProvider>

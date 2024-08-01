@@ -9,7 +9,7 @@ import {
 import { useStudioState } from '../StudioStateProvider';
 import { api as cloudApi } from '../../api';
 
-function useBridgeAPI() {
+export function useBridgeAPI() {
   const { bridgeURL } = useStudioState();
 
   return useMemo(() => buildBridgeHTTPClient(bridgeURL), [bridgeURL]);

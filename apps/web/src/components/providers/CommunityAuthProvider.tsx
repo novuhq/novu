@@ -13,6 +13,7 @@ import { DEFAULT_AUTH_CONTEXT_VALUE } from './constants';
 import { type AuthContextValue } from './AuthProvider';
 import { useRouteScopes } from '../../hooks/useRouteScopes';
 import { inIframe } from '../../utils/iframe';
+import { navigateToAuthApplication } from '../../utils';
 
 export const LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
 
@@ -94,7 +95,11 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
       saveToken(newToken);
       await reloadOrganization();
 
-      redirectUrl ? navigate(redirectUrl) : void 0;
+      if (redirectUrl === ROUTES.AUTH_APPLICATION) {
+        navigateToAuthApplication();
+      } else if (redirectUrl) {
+        navigate(redirectUrl);
+      }
     },
     [navigate, reloadOrganization]
   );

@@ -7,6 +7,7 @@ export interface IWorkflowsPageHeaderProps extends CoreProps {
   icon: React.ReactNode;
   description?: LocalizedMessage;
   actions?: ReactNode | ReactNode[];
+  className?: string;
 }
 
 export const WorkflowsPageHeader: FC<IWorkflowsPageHeaderProps> = ({ icon, title, actions, description }) => {
