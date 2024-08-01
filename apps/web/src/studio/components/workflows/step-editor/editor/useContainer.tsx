@@ -94,8 +94,6 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           setSandboxBridgeAddress(url + ':' + port);
 
           window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
-
-          refetch();
         });
 
         async function installDependencies() {
