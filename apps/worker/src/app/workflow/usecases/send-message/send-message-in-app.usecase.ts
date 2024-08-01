@@ -183,13 +183,13 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     // V2 data
-    const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
-    const bridgeSubject = bridgeOutputs.subject;
-    const bridgeBody = bridgeOutputs.body;
+    const bridgeOutputs = command.bridgeData?.outputs as InAppOutput | undefined;
+    const bridgeSubject = bridgeOutputs?.subject;
+    const bridgeBody = bridgeOutputs?.body;
     const bridgeCta = {
       action: {
         buttons: [
-          ...(bridgeOutputs.primaryAction
+          ...(bridgeOutputs?.primaryAction
             ? [
                 {
                   type: ButtonTypeEnum.PRIMARY,
@@ -198,7 +198,7 @@ export class SendMessageInApp extends SendMessageBase {
                 },
               ]
             : []),
-          ...(bridgeOutputs.secondaryAction
+          ...(bridgeOutputs?.secondaryAction
             ? [
                 {
                   type: ButtonTypeEnum.SECONDARY,
