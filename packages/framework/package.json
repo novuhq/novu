@@ -18,7 +18,6 @@
     "README.md"
   ],
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "lint": "eslint src --ext .ts --config .eslintrc.js",
