@@ -39,12 +39,23 @@ export function PlaygroundWorkflowComponent({
     controls,
     onControlsChange,
     payload,
+    fetchPreview,
   } = useControlsHandler(
     (data) => bridgeApi.getStepPreview(data),
     workflow?.workflowId as string,
     clickedStepId,
     'playground'
   );
+
+  useEffect(() => {
+    window.addEventListener('webcontainer:serverReady', () => {
+      fetchPreview();
+    });
+
+    return () => {
+      window.removeEventListener('webcontainer:serverReady', () => {});
+    };
+  }, []);
 
   const step = workflow?.steps.find((item) => item.stepId === clickedStepId);
 

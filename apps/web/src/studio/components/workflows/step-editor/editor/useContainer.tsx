@@ -83,6 +83,10 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         webContainer.on('server-ready', (port, url) => {
           segment.track('Sandbox bridge app is ready - [Playground]');
           setSandboxBridgeAddress(url + ':' + port);
+
+          window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
+
+          refetch();
         });
 
         async function installDependencies() {
@@ -180,9 +184,6 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
       debounceTimeout = setTimeout(() => {
         segment.track('Sandbox bridge app code was updated - [Playground]');
         webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx']));
-        webContainer.on('server-ready', (port, url) => {
-          refetch();
-        });
       }, DEBOUNCE_DELAY);
     }
 
