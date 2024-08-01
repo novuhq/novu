@@ -1,31 +1,24 @@
 import { useStyle } from '../../../helpers';
-import { Archived, ArchiveRead, ReadAll, Settings } from '../../../icons';
-import { OptionsDropdown } from '../OptionsDropdown';
-import type { Option } from '../OptionsDropdown';
-
-const options: Array<Option> = [
-  { label: 'Mark all as read', leftIcon: <ReadAll /> },
-  { label: 'Archive all', leftIcon: <Archived /> },
-  { label: 'Archive read', leftIcon: <ArchiveRead /> },
-];
+import { Settings } from '../../../icons';
+import { MoreActionsDropdown } from './MoreActionsDropdown';
 
 type ActionsContainerProps = {
-  showPreferences: () => void;
+  showSettings: () => void;
 };
 
 export const ActionsContainer = (props: ActionsContainerProps) => {
   const style = useStyle();
 
   return (
-    <div class={style('optionsContainer', 'nt-flex nt-gap-2')}>
-      <OptionsDropdown placement="bottom-end" options={options} />
+    <div class={style('moreActionsContainer', 'nt-flex nt-gap-2')}>
+      <MoreActionsDropdown />
       <button
         class={style(
           'preferences__button',
           `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md
           nt-relative hover:nt-bg-foreground-alpha-50 nt-text-foreground-alpha-600`
         )}
-        onClick={props.showPreferences}
+        onClick={props.showSettings}
       >
         <Settings />
       </button>
