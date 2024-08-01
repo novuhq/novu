@@ -1,3 +1,5 @@
+export type { Notification } from './notifications';
+
 export enum NotificationStatus {
   READ = 'read',
   SEEN = 'seen',

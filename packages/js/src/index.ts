@@ -1,2 +1,2 @@
 export { Novu } from './novu';
-export { InboxNotification } from './types';
+export * from './types';

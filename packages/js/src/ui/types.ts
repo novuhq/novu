@@ -1,8 +1,8 @@
 import { NovuOptions } from '../novu';
-import { InboxNotification } from '../types';
 import { Appearance, Localization } from './context';
+import type { Notification } from '../notifications';
 
-export type NotificationMounter = (el: HTMLDivElement, options: { notification: InboxNotification }) => () => void;
+export type NotificationMounter = (el: HTMLDivElement, options: { notification: Notification }) => () => void;
 export type BellMounter = (el: HTMLDivElement, options: { unreadCount: number }) => () => void;
 
 export type BaseNovuProviderProps = {
@@ -12,8 +12,8 @@ export type BaseNovuProviderProps = {
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {
-  renderNotification?: NotificationMounter;
-  renderBell?: BellMounter;
+  mountNotification?: NotificationMounter;
+  mountBell?: BellMounter;
 };
 
 export enum NotificationStatus {

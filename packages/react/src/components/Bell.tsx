@@ -17,7 +17,7 @@ export const Bell = React.memo((props: BellProps) => {
         name: 'Bell',
         element,
         props: props.children
-          ? { renderBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
+          ? { mountBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
           : undefined,
       });
     },

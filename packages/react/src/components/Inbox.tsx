@@ -15,10 +15,10 @@ const DefaultInbox = (props: DefaultInboxProps) => {
       return novuUI.mountComponent({
         name: 'Inbox',
         props: {
-          renderNotification: renderNotification
+          mountNotification: renderNotification
             ? (el, { notification }) => mountElement(el, renderNotification(notification))
             : undefined,
-          renderBell: renderBell ? (el, { unreadCount }) => mountElement(el, renderBell({ unreadCount })) : undefined,
+          mountBell: renderBell ? (el, { unreadCount }) => mountElement(el, renderBell({ unreadCount })) : undefined,
         },
         element,
       });
