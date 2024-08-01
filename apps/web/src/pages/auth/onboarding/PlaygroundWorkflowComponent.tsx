@@ -9,7 +9,7 @@ import { WorkflowNodes } from '../../../studio/components/workflows/node-view/Wo
 import { When } from '../../../components/utils/When';
 import { HStack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
-import { useBridgeAPI } from '../../../studio/hooks/useBridgeAPI';
+import { useBridgeAPI, useDiscover } from '../../../studio/hooks/useBridgeAPI';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 import { BackButton } from '../../../components/layout/components/LocalStudioHeader/BackButton';

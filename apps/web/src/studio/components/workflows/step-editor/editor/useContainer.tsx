@@ -18,6 +18,7 @@ type ContainerState = {
   setCode: (code: Record<string, string>) => void;
   isBridgeAppLoading: boolean;
   initializeWebContainer: () => Promise<void>;
+  containerBridgeUrl: string | null;
 };
 
 const ContainerContext = React.createContext<ContainerState | undefined>(undefined);
@@ -36,13 +37,14 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     'react-email.tsx': REACT_EMAIL_CODE,
   });
   const [isBridgeAppLoading, setIsBridgeAppLoading] = useState<boolean>(true);
+  const [containerBridgeUrl, setContainerBridgeUrl] = useState<string | null>(null);
   const [webContainer, setWebContainer] = useState<typeof WebContainer | null>(null);
   const [sandboxBridgeAddress, setSandboxBridgeAddress] = useState<string | null>(null);
   const [initStarted, setInitStarted] = useState<boolean>(false);
   const terminalRef = useRef<TerminalHandle>(null);
   const studioState = useStudioState() || {};
-  const { setBridgeURL } = studioState;
-  const { refetch } = useDiscover();
+  const { setBridgeURL, bridgeURL } = studioState;
+
   const segment = useSegment();
 
   const writeOutput = (data: string) => {
@@ -57,11 +59,18 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         segment.track('Starting Playground - [Playground]');
 
         setInitStarted(true);
-        setWebContainer(
-          await WebContainer.boot({
-            coep: 'credentialless',
-          })
-        );
+        const webContainerInstance = await WebContainer.boot({
+          coep: 'credentialless',
+        });
+
+        setWebContainer(webContainerInstance);
+
+        webContainerInstance.on('server-ready', (port, url) => {
+          segment.track('Sandbox bridge app is ready - [Playground]');
+          setSandboxBridgeAddress(url + ':' + port);
+
+          window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
+        });
       }
     } catch (error: any) {
       segment.track('Error booting web container - [Playground]', {
@@ -85,8 +94,6 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           setSandboxBridgeAddress(url + ':' + port);
 
           window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
-
-          refetch();
         });
 
         async function installDependencies() {
@@ -163,6 +170,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           write(data) {
             if (data.includes('novu.sh')) {
               setBridgeURL(data.trim());
+              setContainerBridgeUrl(data.trim());
               setIsBridgeAppLoading(false);
             }
             writeOutput(data);
@@ -189,9 +197,9 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
 
     return () => clearTimeout(debounceTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, refetch]);
+  }, [code]);
 
-  const value = { terminalRef, code, setCode, isBridgeAppLoading, initializeWebContainer };
+  const value = { terminalRef, code, setCode, isBridgeAppLoading, initializeWebContainer, containerBridgeUrl };
 
   return <ContainerContext.Provider value={value}>{children}</ContainerContext.Provider>;
 };

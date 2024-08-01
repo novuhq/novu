@@ -36,14 +36,14 @@ export function PlaygroundPage() {
     payload: {},
   });
   const [clickedStepId, setClickedStepId] = useState<string>('');
-  const { testUser, bridgeURL } = useStudioState();
+  const { testUser, bridgeURL, setBridgeURL } = useStudioState();
 
-  const { data: discover } = useDiscover();
+  const { data: discover, refetch } = useDiscover();
 
   const workflow = discover?.workflows?.[0];
   const steps = workflow?.steps;
 
-  const { initializeWebContainer, isBridgeAppLoading } = useContainer();
+  const { initializeWebContainer, isBridgeAppLoading, containerBridgeUrl } = useContainer();
   const { toggleColorScheme, colorScheme } = useThemeChange();
   const segment = useSegment();
 
@@ -77,8 +77,42 @@ export function PlaygroundPage() {
   useEffectOnce(() => {
     segment.track('Visit Playground page - [Playground]');
 
+    if (containerBridgeUrl) {
+      setBridgeURL(containerBridgeUrl);
+      setTimeout(() => {
+        refetch();
+      }, 500);
+    }
+
     initializeWebContainer();
   }, true);
+
+  useEffect(() => {
+    if (containerBridgeUrl) {
+      setBridgeURL(containerBridgeUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bridgeURL]);
+
+  useEffect(() => {
+    window.addEventListener('webcontainer:serverReady', () => {
+      if (bridgeURL !== containerBridgeUrl && containerBridgeUrl) {
+        setBridgeURL(containerBridgeUrl);
+      }
+
+      refetch();
+    });
+
+    return () => {
+      window.removeEventListener('webcontainer:serverReady', () => {});
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (colorScheme === 'light') {
