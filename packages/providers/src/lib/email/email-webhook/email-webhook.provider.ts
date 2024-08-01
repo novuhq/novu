@@ -59,7 +59,7 @@ export class EmailWebhookProvider
       retries++
     ) {
       try {
-        await axios.post(this.config.webhookUrl, bodyData, {
+        await axios.create().post(this.config.webhookUrl, bodyData, {
           headers: {
             'content-type': 'application/json',
             'X-Novu-Signature': hmacValue,

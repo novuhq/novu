@@ -103,6 +103,36 @@ test('should trigger ses library correctly', async () => {
   expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
 });
 
+test('should trigger ses library correctly with _passthrough', async () => {
+  const mockResponse = { MessageId: 'mock-message-id' };
+  const spy = jest
+    .spyOn(SESClient.prototype, 'send')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return mockResponse as any;
+    });
+
+  const provider = new SESEmailProvider(mockConfig);
+  const response = await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        subject: 'test subject _passthrough',
+      },
+    },
+  });
+
+  // eslint-disable-next-line
+  const bufferArray = spy.mock.calls[1][0].input['RawMessage']['Data'];
+  const buffer = Buffer.from(bufferArray);
+  const emailContent = buffer.toString();
+
+  expect(spy).toHaveBeenCalled();
+  expect(emailContent.includes('Subject: test subject _passthrough')).toBe(
+    true
+  );
+  expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
+});
+
 describe('getMessageId', () => {
   test('should return messageId when body is valid', async () => {
     const provider = new SESEmailProvider(mockConfig);

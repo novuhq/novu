@@ -144,6 +144,32 @@ describe('Config is set to secure=true and TLS options are provided', () => {
     });
   });
 
+  test('should trigger nodemailer correctly with _passthrough', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    await provider.sendMessage(mockNovuMessage, {
+      _passthrough: {
+        body: {
+          subject: 'test subject _passthrough',
+        },
+      },
+    });
+
+    expect(sendMailMock).toHaveBeenCalled();
+    expect(sendMailMock).toHaveBeenCalledWith({
+      from: { address: mockNovuMessage.from, name: mockConfig.senderName },
+      html: mockNovuMessage.html,
+      subject: 'test subject _passthrough',
+      to: mockNovuMessage.to,
+      attachments: [
+        {
+          contentType: 'text/plain',
+          content: buffer,
+          filename: 'test.txt',
+        },
+      ],
+    });
+  });
+
   test('should check provider integration correctly', async () => {
     const provider = new NodemailerProvider(mockConfig);
     const response = await provider.checkIntegration(mockNovuMessage);

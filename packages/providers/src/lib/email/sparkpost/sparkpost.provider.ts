@@ -71,18 +71,16 @@ export class SparkPostEmailProvider
     });
 
     try {
-      const sent = await axios.post<ISparkPostResponse>(
-        '/transmissions',
-        data.body,
-        {
+      const sent = await axios
+        .create()
+        .post<ISparkPostResponse>('/transmissions', data.body, {
           headers: {
             'Content-Type': 'application/json',
             Authorization: this.config.apiKey,
             ...data.headers,
           },
           baseURL: this.endpoint,
-        }
-      );
+        });
 
       return {
         id: sent.data.results.id,

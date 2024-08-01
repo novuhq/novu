@@ -74,4 +74,41 @@ describe('test netcore email send api', () => {
     expect(spy).toBeCalledWith(mockEmailOptions);
     expect(res.id).toEqual(response.data.data.message_id);
   });
+
+  test('should trigger email correctly with _passthrough', async () => {
+    const response = {
+      data: {
+        data: {
+          message_id: 'fa6cb2977cdfd457b3ac98be710ad763',
+        },
+        message: 'OK',
+        status: 'success',
+      },
+    };
+
+    mockedAxios.request.mockResolvedValue(response);
+
+    const netCoreProvider = new NetCoreProvider(mockConfig);
+
+    const res = await netCoreProvider.sendMessage(mockEmailOptions, {
+      _passthrough: {
+        body: {
+          subject: 'test subject _passthrough',
+        },
+      },
+    });
+
+    expect(mockedAxios.request).toHaveBeenCalled();
+    expect(mockedAxios.request).toBeCalledWith({
+      data: '{"from":{"email":"test@test1.com","name":"Novu\'s Team"},"subject":"test subject _passthrough","content":[{"type":"html","value":"<div> Mail Content </div>"}],"personalizations":[{"to":[{"email":"test@to.com"}],"cc":[{"email":"test@cc.com"}],"bcc":[{"email":"test@bcc.com"}],"attachments":[{"name":"test.txt","content":"ZEdWemRBPT0="}]}]}',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        api_key: 'test-key',
+      },
+      method: 'POST',
+      url: '/mail/send',
+    });
+    expect(res.id).toEqual(response.data.data.message_id);
+  });
 });

@@ -74,6 +74,68 @@ test('should trigger sendgrid correctly', async () => {
   });
 });
 
+test('should trigger sendgrid correctly with _passthrough', async () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const spy = jest
+    .spyOn(MailService.prototype, 'send')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return {} as any;
+    });
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        subject: 'test subject _passthrough',
+      },
+    },
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    to: [
+      {
+        email: mockNovuMessage.to[0],
+      },
+    ],
+    bcc: undefined,
+    category: undefined,
+    cc: undefined,
+    subject: 'test subject _passthrough',
+    html: mockNovuMessage.html,
+    ipPoolName: undefined,
+    from: { email: mockNovuMessage.from, name: mockConfig.senderName },
+    substitutions: {},
+    attachments: [
+      {
+        type: 'text/plain',
+        content: Buffer.from('ZEdWemRBPT0=').toString(),
+        filename: 'test.txt',
+      },
+    ],
+    customArgs: {
+      id: 'message_id',
+      novuMessageId: 'message_id',
+      novuSubscriberId: undefined,
+      novuTransactionId: undefined,
+      novuWorkflowIdentifier: undefined,
+    },
+    personalizations: [
+      {
+        to: [
+          {
+            email: mockNovuMessage.to[0],
+          },
+        ],
+        cc: undefined,
+        bcc: undefined,
+        dynamicTemplateData: undefined,
+      },
+    ],
+    templateId: undefined,
+  });
+});
+
 test('should check provider integration correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
   const spy = jest

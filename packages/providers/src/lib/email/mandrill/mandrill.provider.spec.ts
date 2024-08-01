@@ -54,6 +54,62 @@ test('should trigger mandrill correctly', async () => {
   });
 });
 
+test('should trigger mandrill correctly with _passthrough', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  const spy = jest
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    .spyOn(provider['transporter'].messages, 'send')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return [{}] as any;
+    });
+  const mockNovuMessage = {
+    to: ['test2@test.com'],
+    subject: 'test subject',
+    html: '<div> Mail Content </div>',
+    attachments: [
+      {
+        mime: 'text/plain',
+        file: Buffer.from('test'),
+        name: 'test.txt',
+      },
+    ],
+  };
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        message: {
+          from_email: 'hello@test.com',
+        },
+      },
+    },
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    message: {
+      from_email: 'hello@test.com',
+      from_name: mockConfig.senderName,
+      subject: mockNovuMessage.subject,
+      html: mockNovuMessage.html,
+      to: [
+        {
+          email: mockNovuMessage.to[0],
+          type: 'to',
+        },
+      ],
+      attachments: [
+        {
+          content: Buffer.from('test').toString('base64'),
+          type: 'text/plain',
+          name: 'test.txt',
+        },
+      ],
+    },
+  });
+});
+
 test('should check provider integration correctly', async () => {
   const provider = new MandrillProvider(mockConfig);
   const spy = jest

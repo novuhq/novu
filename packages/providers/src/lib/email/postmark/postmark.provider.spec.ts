@@ -67,6 +67,41 @@ test('should trigger postmark correctly', async () => {
   });
 });
 
+test('should trigger postmark correctly with _passthrough', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const spy = jest
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    .spyOn(provider['client'], 'sendEmail')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return {} as any;
+    });
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        From: 'hello@test.com',
+      },
+    },
+  });
+
+  expect(spy).toHaveBeenCalledWith({
+    From: 'hello@test.com',
+    To: mockNovuMessage.to[0],
+    HtmlBody: mockNovuMessage.html,
+    TextBody: mockNovuMessage.html,
+    Subject: mockNovuMessage.subject,
+    Attachments: [
+      {
+        Name: 'test.txt',
+        Content: Buffer.from('test').toString('base64'),
+        ContentID: null,
+        ContentType: 'text/plain',
+      },
+    ],
+  });
+});
+
 test('should get message ID', () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   expect(provider.getMessageId(mockMessage)).toEqual([

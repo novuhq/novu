@@ -1,9 +1,22 @@
 import {
   CheckIntegrationResponseEnum,
   ICheckIntegrationResponse,
-  ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { Outlook365Provider } from './outlook365.provider';
+import nodemailer from 'nodemailer';
+
+const sendMailMock = jest.fn().mockReturnValue(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return {
+    messageId: 'message-id',
+  } as any;
+});
+
+jest.spyOn(nodemailer, 'createTransport').mockImplementation(() => {
+  return {
+    sendMail: sendMailMock,
+  } as any;
+});
 
 const mockConfig = {
   from: 'test@test.com',
@@ -11,34 +24,56 @@ const mockConfig = {
   password: 'test123',
 };
 
-const buffer = Buffer.from('test');
-
 const mockNovuMessage = {
   to: ['test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
-  attachments: [{ mime: 'text/plain', file: buffer, name: 'test.txt' }],
 };
 
 test('should trigger outlook365 library correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      return {
-        id: 'message-id',
-        date: '11/28/2022',
-      } as ISendMessageSuccessResponse;
-    });
 
   const response = await provider.sendMessage(mockNovuMessage);
 
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith(mockNovuMessage);
+  expect(response).not.toBeNull();
+  expect(sendMailMock).toBeCalled();
+  expect(sendMailMock).toBeCalledWith({
+    attachments: undefined,
+    from: {
+      address: 'test@test.com',
+      name: 'test@test.com',
+    },
+    html: '<div> Mail Content </div>',
+    subject: 'test subject',
+    text: undefined,
+    to: ['test@test2.com'],
+  });
+});
+
+test('should trigger outlook365 library correctly with _passthrough', async () => {
+  const provider = new Outlook365Provider(mockConfig);
+
+  const response = await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        html: '<div> Mail Content _pasthrough </div>',
+      },
+    },
+  });
 
   expect(response).not.toBeNull();
-  expect(response.date).toBe('11/28/2022');
-  expect(response.id).toBe('message-id');
+  expect(sendMailMock).toBeCalled();
+  expect(sendMailMock).toBeCalledWith({
+    attachments: undefined,
+    from: {
+      address: 'test@test.com',
+      name: 'test@test.com',
+    },
+    html: '<div> Mail Content _pasthrough </div>',
+    subject: 'test subject',
+    text: undefined,
+    to: ['test@test2.com'],
+  });
 });
 
 test('should check provider integration correctly', async () => {

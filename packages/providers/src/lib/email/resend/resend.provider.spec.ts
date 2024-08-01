@@ -76,3 +76,41 @@ test('should trigger resend email with From Name', async () => {
     bcc: undefined,
   });
 });
+
+test('should trigger resend email correctly with _passthrough', async () => {
+  const mockConfigWithSenderName = {
+    ...mockConfig,
+    senderName: 'Test User',
+  };
+
+  const provider = new ResendEmailProvider(mockConfigWithSenderName);
+  const spy = jest
+    .spyOn((provider as any).resendClient.emails, 'send')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return {} as any;
+    });
+
+  await provider.sendMessage(mockNovuMessage, {
+    _passthrough: {
+      body: {
+        subject: 'Test subject with _passthrough',
+      },
+    },
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    from: `${mockConfigWithSenderName.senderName} <${mockNovuMessage.from}>`,
+    to: mockNovuMessage.to,
+    html: mockNovuMessage.html,
+    subject: 'Test subject with _passthrough',
+    attachments: mockNovuMessage.attachments.map((attachment) => ({
+      filename: attachment?.name,
+      content: attachment.file,
+    })),
+    reply_to: null,
+    cc: undefined,
+    bcc: undefined,
+  });
+});

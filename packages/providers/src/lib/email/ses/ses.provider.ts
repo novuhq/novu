@@ -68,34 +68,40 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     );
   }
 
-  async sendMessage({
-    html,
-    text,
-    to,
-    from,
-    subject,
-    attachments,
-    cc,
-    bcc,
-    replyTo,
-    senderName,
-  }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const info = await this.sendMail({
-      from: from || this.config.from,
-      senderName: senderName || this.config.senderName,
-      to: to,
-      subject: subject,
-      html: html,
-      text: text,
-      attachments: attachments?.map((attachment) => ({
-        filename: attachment?.name,
-        content: attachment.file,
-        contentType: attachment.mime,
-      })),
+  async sendMessage(
+    {
+      html,
+      text,
+      to,
+      from,
+      subject,
+      attachments,
       cc,
       bcc,
       replyTo,
-    });
+      senderName,
+    }: IEmailOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): Promise<ISendMessageSuccessResponse> {
+    const info = await this.sendMail(
+      {
+        from: from || this.config.from,
+        senderName: senderName || this.config.senderName,
+        to: to,
+        subject: subject,
+        html: html,
+        text: text,
+        attachments: attachments?.map((attachment) => ({
+          filename: attachment?.name,
+          content: attachment.file,
+          contentType: attachment.mime,
+        })),
+        cc,
+        bcc,
+        replyTo,
+      },
+      bridgeProviderData
+    );
 
     return {
       id: info?.messageId,

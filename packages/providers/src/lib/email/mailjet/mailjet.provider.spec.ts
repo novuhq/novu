@@ -64,6 +64,29 @@ test('should trigger mailjet library correctly and return proper response', asyn
 
   const messageResponse = await provider.sendMessage(mockMessageConfig, {
     textPart: 'test',
+  });
+
+  expect(requestFn).toBeCalledTimes(1);
+  expect(requestFn).toBeCalledWith({
+    Messages: [
+      {
+        From: { Email: mockConfig.from, Name: mockConfig.senderName },
+        HTMLPart: mockMessageConfig.html,
+        Subject: mockMessageConfig.subject,
+        TextPart: 'test',
+        To: [{ Email: mockMessageConfig.to[0] }],
+      },
+    ],
+  });
+  expect(messageResponse.id).toBe('a9e7-437c-84f8-e2c2d5958014');
+  expect(messageResponse.date).toBeDefined();
+});
+
+test('should trigger mailjet library correctly and return proper response with _passthrough', async () => {
+  const provider = new MailjetEmailProvider(mockConfig);
+
+  const messageResponse = await provider.sendMessage(mockMessageConfig, {
+    textPart: 'test',
     _passthrough: {
       body: {
         HiHello: 'test',
@@ -71,7 +94,6 @@ test('should trigger mailjet library correctly and return proper response', asyn
     },
   });
 
-  expect(requestFn).toBeCalledTimes(1);
   expect(requestFn).toBeCalledWith({
     Messages: [
       {

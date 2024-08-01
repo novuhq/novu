@@ -12,13 +12,6 @@ const mockNovuMessage = {
   to: ['test@test.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
-  attachments: [
-    {
-      mime: 'text/plain',
-      file: Buffer.from('test'),
-      name: 'test.txt',
-    },
-  ],
 };
 
 const mockMailtrapResponse: SendResponse = {
@@ -29,21 +22,17 @@ const mockMailtrapResponse: SendResponse = {
 test('should trigger mailtrap library correctly', async () => {
   const provider = new MailtrapEmailProvider(mockConfig);
   const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
-    });
+    .spyOn(MailtrapClient.prototype, 'send')
+    .mockImplementation(async () => mockMailtrapResponse);
 
   await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toBeCalled();
   expect(spy).toBeCalledWith({
-    from: mockNovuMessage.from,
-    to: mockNovuMessage.to,
+    from: { email: mockNovuMessage.from },
+    to: [{ email: mockNovuMessage.to[0] }],
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
-    attachments: mockNovuMessage.attachments,
   });
 });
 
