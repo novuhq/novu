@@ -1,7 +1,7 @@
 import { Code } from '@mantine/core';
 import { css } from '@novu/novui/css';
 import { useState, useEffect } from 'react';
-import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps } from 'react-joyride';
+import Joyride, { ACTIONS, CallBackProps, LIFECYCLE, STATUS, Step, TooltipRenderProps } from 'react-joyride';
 import { Button } from '@novu/novui';
 import { Accordion } from '@mantine/core';
 
@@ -133,11 +133,19 @@ export function TourGuideComponent({
       disableBeacon: true,
     },
   ];
-
   const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status, lifecycle, action } = data;
+    const { status, lifecycle, action, index } = data;
 
-    if (action === 'next' && data.step.target === '.workflow-flow' && steps?.length && lifecycle === 'complete') {
+    if (action === ACTIONS.NEXT && lifecycle === LIFECYCLE.COMPLETE) {
+      setJoyStepIndex(index + 1);
+    }
+
+    if (
+      action === ACTIONS.NEXT &&
+      data.step.target === '.workflow-flow' &&
+      steps?.length &&
+      lifecycle === LIFECYCLE.COMPLETE
+    ) {
       setRunJoyride(false);
       setJoyStepIndex(3);
       setClickedStepId(steps[0].stepId);
@@ -153,7 +161,7 @@ export function TourGuideComponent({
   };
 
   useEffect(() => {
-    if (joyStepIndex !== undefined) {
+    if (joyStepIndex !== undefined && joyStepIndex !== null) {
       setRunJoyride(true);
     }
   }, [joyStepIndex, setRunJoyride]);
