@@ -84,7 +84,7 @@ export const ReactEmail = ({
           <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
             <Section className="mt-[32px]">
               <Img
-                src={'/static/images/novu.svg'}
+                src={'https://dashboard.novu.co/static/images/novu.png'}
                 width="40"
                 height="40"
                 alt="Novu"
