@@ -130,6 +130,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
 
         const installResult = await installDependencies();
         if (installResult !== 0) {
+          writeOutput('Failed to install dependencies, please try again by refreshing the page.');
           throw new Error('Failed to install dependencies');
         }
 

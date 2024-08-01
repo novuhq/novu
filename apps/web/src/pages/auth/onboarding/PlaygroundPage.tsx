@@ -175,6 +175,17 @@ function Playground({
   const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
   const filteredCode = Object.fromEntries(Object.entries(code).filter(([key]) => key !== 'tunnel.ts'));
 
+  useEffectOnce(() => {
+    setTimeout(() => {
+      console.log('isBridgeAppLoading', isBridgeAppLoading);
+      if (terminalRef.current) {
+        terminalRef.current.write(
+          '\nWelcome to the Novu Playground! Feel free to edit the code above and see the results in the editor on the right side\n\n'
+        );
+      }
+    }, 1000);
+  }, !isBridgeAppLoading);
+
   const [editorSizes, setEditorSizes] = useState<number[]>([300, 200]);
 
   function handleEditorSizeChange() {
