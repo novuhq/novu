@@ -623,7 +623,7 @@ export class Client {
     const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
     const compiledString = await this.templateEngine.render(templateString, {
-      payload: event.payload || event.data,
+      ...(event.payload || event.data),
       subscriber: event.subscriber,
     });
 

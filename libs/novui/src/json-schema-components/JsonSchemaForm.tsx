@@ -8,15 +8,15 @@ import { CoreProps } from '../types';
 import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } from './templates/ArrayFieldTemplate';
 import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templates/IconButton';
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
-import { CheckboxWidget, SelectWidget, InputEditorWidget } from './widgets';
+import { CheckboxWidget, InputWidget, SelectWidget, TextareaWidget } from './widgets';
 import { JSON_SCHEMA_FORM_ID_DELIMITER } from './utils';
 
 const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,
   SelectWidget: SelectWidget,
-  TextWidget: InputEditorWidget,
-  URLWidget: InputEditorWidget,
-  EmailWidget: InputEditorWidget,
+  TextWidget: TextareaWidget,
+  URLWidget: InputWidget,
+  EmailWidget: InputWidget,
 };
 
 const UI_SCHEMA: UiSchema = {
@@ -31,15 +31,13 @@ const UI_SCHEMA: UiSchema = {
 
 export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
   CoreProps &
-  Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'> & {
-    variables?: string[];
-  };
+  Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'>;
 
 /**
  * Specialized form editor for data passed as JSON.
  */
 export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TFormData>) {
-  const [cssProps, { className, variables, ...formProps }] = splitCssProps(props);
+  const [cssProps, { className, ...formProps }] = splitCssProps(props);
 
   return (
     <Form
@@ -62,7 +60,6 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
       widgets={WIDGETS}
       validator={validator}
       autoComplete={'false'}
-      formContext={{ variables }}
       idSeparator={JSON_SCHEMA_FORM_ID_DELIMITER}
       liveValidate
       templates={{
