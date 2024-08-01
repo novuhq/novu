@@ -17,9 +17,14 @@
     "esModuleInterop": true,
     "module": "esnext",
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "NodeNext"
+
+    "moduleResolution": "NodeNext",
+
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
 }
