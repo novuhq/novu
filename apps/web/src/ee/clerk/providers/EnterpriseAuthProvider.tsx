@@ -197,6 +197,7 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
     name: clerkOrganization.name,
     createdAt: clerkOrganization.createdAt.toISOString(),
     updatedAt: clerkOrganization.updatedAt.toISOString(),
+    apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
     defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,
