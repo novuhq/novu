@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRenderer } from '../context/RenderContext';
+import { useRenderer } from '../context/RendererContext';
 import { Mounter } from './Mounter';
 
 export const Preferences = () => {

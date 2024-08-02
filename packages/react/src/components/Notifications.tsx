@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRenderer } from '../context/RenderContext';
+import { useRenderer } from '../context/RendererContext';
 import { NotificationsRenderProps } from '../utils/types';
 import { Mounter } from './Mounter';
 
