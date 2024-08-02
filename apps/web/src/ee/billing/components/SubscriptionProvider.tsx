@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { useSubscription } from '../utils/hooks/useSubscription';
+import { useSubscription } from '../hooks/useSubscription';
 
 const SubscriptionContext = React.createContext<{
   daysTotal: number;

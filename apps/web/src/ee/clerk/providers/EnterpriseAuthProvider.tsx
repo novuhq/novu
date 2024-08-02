@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
-import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import type { IOrganizationEntity, IUserEntity, ProductUseCases } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
@@ -197,7 +197,6 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
     name: clerkOrganization.name,
     createdAt: clerkOrganization.createdAt.toISOString(),
     updatedAt: clerkOrganization.updatedAt.toISOString(),
-    apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
     defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,

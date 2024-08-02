@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
 import { api } from '../../../api';
-import { useAuth } from '../../../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
@@ -22,8 +22,8 @@ const columnStyle = {
 export const PlanHeader = () => {
   const segment = useSegment();
 
-  const { currentOrganization, isOrganizationLoaded } = useAuth();
   const { hasPaymentMethod } = useSubscriptionContext();
+  const { isLoading: isLoadingSubscriptionData, apiServiceLevel: subscriptionApiServiceLevel } = useSubscription();
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
   const [intentSecret, setIntentSecret] = useState('');
@@ -31,14 +31,15 @@ export const PlanHeader = () => {
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
   const [intendedApiServiceLevel, setIntendedApiServiceLevel] = useState<ApiServiceLevelEnum | null>(null);
   const [apiServiceLevel, setApiServiceLevel] = useState(
-    isOrganizationLoaded ? currentOrganization.apiServiceLevel : ApiServiceLevelEnum.FREE
+    isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
+
   useEffect(() => {
-    if (isOrganizationLoaded) {
-      setApiServiceLevel(currentOrganization.apiServiceLevel || ApiServiceLevelEnum.FREE);
+    if (!isLoadingSubscriptionData) {
+      setApiServiceLevel(subscriptionApiServiceLevel);
     }
-  }, [currentOrganization, isOrganizationLoaded]);
+  }, [isLoadingSubscriptionData, setApiServiceLevel, subscriptionApiServiceLevel]);
 
   const { mutateAsync: checkout, isLoading: isCheckingOut } = useMutation<
     any,
