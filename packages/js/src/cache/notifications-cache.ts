@@ -5,8 +5,8 @@ import { NotificationEvents, NotificationsEvents, NovuEventEmitter } from '../ev
 import type { NotificationFilter } from '../types';
 import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
 
-const getCacheKey = (args: ListNotificationsArgs): string => {
-  return JSON.stringify(args);
+const getCacheKey = ({ tags, read, archived, limit, offset, after }: ListNotificationsArgs): string => {
+  return JSON.stringify({ tags, read, archived, limit, offset, after });
 };
 
 const getFilterKey = ({ tags, read, archived }: Pick<ListNotificationsArgs, 'tags' | 'read' | 'archived'>): string => {
