@@ -20,15 +20,19 @@ type CacheLockOptions = {
   retryCount: number;
 };
 
+type CachedEntityOptions<T_Output> = CachingConfig & {
+  skip?: (response: T_Output) => boolean;
+};
+
 const LOG_CONTEXT = 'CachedEntityInterceptor';
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function CachedEntity({
+export function CachedEntity<T_Output = any>({
   builder,
   options,
   lockOptions,
 }: {
   builder: (...args) => string;
-  options?: CachingConfig;
+  options?: CachedEntityOptions<T_Output>;
   lockOptions?: CacheLockOptions;
 }) {
   const injectCache = Inject(CacheService);
@@ -88,7 +92,7 @@ export function CachedEntity({
         }
       }
 
-      let response: unknown;
+      let response: T_Output;
       try {
         response = await originalMethod.apply(this, args);
       } catch (error) {
@@ -100,7 +104,10 @@ export function CachedEntity({
       }
 
       try {
-        await cacheService.set(cacheKey, JSON.stringify(response), options);
+        // Providing a capability to skip caching for certain method outputs.
+        if (!options?.skip?.(response)) {
+          await cacheService.set(cacheKey, JSON.stringify(response), options);
+        }
 
         return response;
       } catch (err) {
