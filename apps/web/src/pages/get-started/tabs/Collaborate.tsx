@@ -21,28 +21,6 @@ export const collaborateSteps = [
             Once your changes deployed to the Development or Production environments, invite your technical and
             non-technical peers to collaborate with you.
           </TextElement>
-          <Button
-            leftIcon={<IconGroupAdd />}
-            size="sm"
-            onClick={() => {
-              navigate(ROUTES.TEAM_SETTINGS);
-            }}
-            classNames={{
-              root: css({
-                marginTop: '12px !important',
-                backgroundColor: '#292933 !important',
-                borderRadius: '6px !important',
-              }),
-              label: css({
-                fontSize: '14px !important',
-              }),
-              leftIcon: css({
-                color: '#fff !important',
-              }),
-            }}
-          >
-            Invite team
-          </Button>
         </>
       );
     },
