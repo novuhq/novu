@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPanel';
-import { useWorkflow, useWorkflowPreview } from '../../../hooks/useBridgeAPI';
+import { useWorkflow, useWorkflowPreview } from '../../../hooks';
 import { useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
@@ -58,7 +58,12 @@ export const WorkflowsStepEditorPage = () => {
     <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel step={step} error={error} preview={preview} isLoadingPreview={loadingPreview} />
-        <WorkflowStepEditorControlsPanel step={step} workflow={workflow} onChange={onControlsChange} />
+        <WorkflowStepEditorControlsPanel
+          error={(error as any)?.response?.data?.data}
+          step={step}
+          workflow={workflow}
+          onChange={onControlsChange}
+        />
       </WorkflowsPanelLayout>
     </WorkflowsPageTemplate>
   );

@@ -1,8 +1,7 @@
 import { ZodSchema } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import type { JsonSchema, Schema } from '../types/schema.types';
-import type { ValidateResult, Validator } from '../types/validator.types';
+import type { JsonSchema, Schema, ValidateResult, Validator } from '../types';
 
 export class ZodValidator implements Validator<ZodSchema> {
   isSchema(schema: Schema): schema is ZodSchema {
@@ -16,10 +15,13 @@ export class ZodValidator implements Validator<ZodSchema> {
     } else {
       return {
         success: false,
-        errors: result.error.errors.map((err) => ({
-          path: `/${err.path.join('/')}`,
-          message: err.message,
-        })),
+        errors: result.error.errors.map((err) => {
+          return {
+            property: `.${err.path.join('.')}`,
+            path: `/${err.path.join('/')}`,
+            message: err.message,
+          };
+        }),
       };
     }
   }

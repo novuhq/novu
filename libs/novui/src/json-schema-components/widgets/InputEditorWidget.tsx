@@ -124,7 +124,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       required={required}
       label={label}
       description={props.schema.description}
-      error={rawErrors?.length > 0 && rawErrors}
+      error={rawErrors?.length > 0 && rawErrors.join(', ')}
     >
       <RichTextEditor classNames={inputEditorClassNames} editor={editor}>
         <RichTextEditor.Content />

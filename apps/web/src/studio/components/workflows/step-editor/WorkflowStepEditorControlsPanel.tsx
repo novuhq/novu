@@ -19,6 +19,7 @@ interface IWorkflowStepEditorControlsPanelProps {
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
+  error?: any;
 }
 
 const TYPING_DEBOUNCE_TIME_MS = 500;
@@ -30,6 +31,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   onSave,
   defaultControls,
   isLoadingSave,
+  error,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
@@ -93,11 +95,11 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                       </Button>
                     </Flex>
                   )}
-
                   <JsonSchemaForm
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
+                    errors={error}
                     variables={[...(subscriberVariables || []), ...(payloadProperties || [])]}
                   />
                 </When>

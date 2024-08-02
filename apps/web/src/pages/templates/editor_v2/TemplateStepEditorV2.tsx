@@ -125,6 +125,7 @@ export const WorkflowsStepEditorPageV2 = () => {
           isLoadingSave={isSavingControls}
           onSave={onControlsSave}
           step={step?.template}
+          error={error?.data}
           workflow={workflow}
           defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
           onChange={onControlsChange}
