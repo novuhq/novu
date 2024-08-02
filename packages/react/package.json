@@ -14,16 +14,14 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/server/server.mjs",
-      "require": "./dist/server/server.js"
-    },
-    "./server": {
-      "import": "./dist/server/server.mjs",
-      "require": "./dist/server/server.js"
-    },
-    "./client": {
-      "import": "./dist/client/index.mjs",
-      "require": "./dist/client/index.js"
+      "import": {
+        "types": "./dist/client/index.d.ts",
+        "default": "./dist/server/server.js"
+      },
+      "require": {
+        "types": "./dist/server/server.d.ts",
+        "default": "./dist/server/server.js"
+      }
     }
   },
   "files": [
