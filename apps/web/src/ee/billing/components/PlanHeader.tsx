@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
 import { api } from '../../../api';
-import { useAuth } from '../../../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ApiServiceLevelEnum } from '@novu/shared';
@@ -23,9 +22,8 @@ const columnStyle = {
 export const PlanHeader = () => {
   const segment = useSegment();
 
-  const { currentOrganization, isOrganizationLoaded } = useAuth();
   const { hasPaymentMethod } = useSubscriptionContext();
-  const subscription = useSubscription();
+  const { isLoading: isLoadingSubscriptionData, apiServiceLevel: subscriptionApiServiceLevel } = useSubscription();
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
   const [intentSecret, setIntentSecret] = useState('');
@@ -33,16 +31,9 @@ export const PlanHeader = () => {
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
   const [intendedApiServiceLevel, setIntendedApiServiceLevel] = useState<ApiServiceLevelEnum | null>(null);
   const [apiServiceLevel, setApiServiceLevel] = useState(
-    isOrganizationLoaded ? subscription?.apiServiceLevel : ApiServiceLevelEnum.FREE
+    isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
-  /*
-   * useEffect(() => {
-   *   if (isOrganizationLoaded) {
-   *     setApiServiceLevel(subscription?.apiServiceLevel);
-   *   }
-   * }, [currentOrganization, isOrganizationLoaded, subscription?.apiServiceLevel]);
-   */
 
   useEffect(() => {
     if (!isLoadingSubscriptionData) {
