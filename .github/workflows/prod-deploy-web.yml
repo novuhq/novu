@@ -26,7 +26,7 @@ jobs:
       netlify_gh_env: Production
       netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a
       clerk_publishable_key: pk_live_Y2xlcmsuZXUuZGFzaGJvYXJkLm5vdnUuY28k
-      clerk_is_ee_auth_enabled: false
+      clerk_is_ee_auth_enabled: true
     secrets: inherit
 
   deploy_web_us:
