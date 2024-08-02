@@ -16,18 +16,6 @@ const asyncNoop = async () => {};
 export const EnterpriseAuthContext = createContext<AuthContextValue>(DEFAULT_AUTH_CONTEXT_VALUE);
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
-declare global {
-  /**
-   * Provide strong custom types for the Clerk organization.publicMetadata object.
-   */
-  interface OrganizationPublicMetadata {
-    defaultLocale: string;
-    domain: string;
-    productUseCases: ProductUseCases;
-    language: string[];
-  }
-}
-
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
