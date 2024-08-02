@@ -347,14 +347,10 @@ export const archiveAllRead = async ({
   tags?: NotificationFilter['tags'];
 }): Result<void> => {
   try {
-    const notifications = notificationsCache.getUniqueNotifications({ tags });
-    const optimisticNotifications = notifications.map((notification) => {
-      if (notification.isRead) {
-        return new Notification({ ...notification, isArchived: true, archivedAt: new Date().toISOString() });
-      }
-
-      return notification;
-    });
+    const notifications = notificationsCache.getUniqueNotifications({ tags, read: true });
+    const optimisticNotifications = notifications.map(
+      (notification) => new Notification({ ...notification, isArchived: true, archivedAt: new Date().toISOString() })
+    );
     emitter.emit('notifications.archive_all_read.pending', { args: { tags }, data: optimisticNotifications });
 
     await inboxService.archiveAllRead({ tags });

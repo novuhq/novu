@@ -34,21 +34,21 @@ import { NovuError } from '../utils/errors';
 import { NotificationsCache } from '../cache';
 
 export class Notifications extends BaseModule {
+  #useCache: boolean;
+
   readonly #notificationsCache: NotificationsCache;
 
-  constructor() {
+  constructor({ useCache }: { useCache: boolean }) {
     super();
     this.#notificationsCache = new NotificationsCache();
+    this.#useCache = useCache;
   }
 
-  async list(
-    { limit = 10, ...restOptions }: ListNotificationsArgs = {},
-    options: { cache: boolean } = { cache: true }
-  ): Result<ListNotificationsResponse> {
+  async list({ limit = 10, ...restOptions }: ListNotificationsArgs = {}): Result<ListNotificationsResponse> {
     return this.callWithSession(async () => {
       const args = { limit, ...restOptions };
       try {
-        let data: ListNotificationsResponse | undefined = options.cache
+        let data: ListNotificationsResponse | undefined = this.#useCache
           ? this.#notificationsCache.getAll(args)
           : undefined;
 
@@ -64,7 +64,7 @@ export class Notifications extends BaseModule {
             notifications: response.data.map((el) => new Notification(el)),
           };
 
-          if (options.cache) {
+          if (this.#useCache) {
             this.#notificationsCache.set(args, data);
             data = this.#notificationsCache.getAll(args);
           }

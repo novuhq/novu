@@ -3,195 +3,234 @@ import type { Cache } from './types';
 import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
 import { NotificationEvents, NotificationsEvents, NovuEventEmitter } from '../event-emitter';
 import type { NotificationFilter } from '../types';
+import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
+
+const getCacheKey = (args: ListNotificationsArgs): string => {
+  return JSON.stringify(args);
+};
 
 const getFilterKey = ({ tags, read, archived }: Pick<ListNotificationsArgs, 'tags' | 'read' | 'archived'>): string => {
   return JSON.stringify({ tags, read, archived });
 };
 
-const getPageKey = ({ limit, offset, after }: Pick<ListNotificationsArgs, 'limit' | 'offset' | 'after'>): string => {
-  return JSON.stringify({ limit, offset, after });
+const getFilter = (key: string): NotificationFilter => {
+  return JSON.parse(key);
 };
 
-const singleNotificationEvents: NotificationEvents[] = [
+// these events should update the notification in the cache
+const notificationEvents: NotificationEvents[] = [
   'notification.read.pending',
   'notification.read.resolved',
   'notification.unread.pending',
   'notification.unread.resolved',
-  'notification.archive.pending',
-  'notification.archive.resolved',
-  'notification.unarchive.pending',
-  'notification.unarchive.resolved',
   'notification.complete_action.pending',
   'notification.complete_action.resolved',
   'notification.revert_action.pending',
   'notification.revert_action.resolved',
 ];
 
-const multipleNotificationEvents: NotificationsEvents[] = [
+// these events should remove the notification from the cache
+const notificationEventsThatRemove: NotificationEvents[] = [
+  'notification.archive.pending',
+  'notification.unarchive.pending',
+];
+
+// these events should update the notifications in the cache
+const notificationsEvents: NotificationsEvents[] = [
   'notifications.read_all.pending',
   'notifications.read_all.resolved',
+];
+
+// these events should remove the notifications from the cache
+const notificationsEventsThatRemove: NotificationsEvents[] = [
   'notifications.archive_all.pending',
-  'notifications.archive_all.resolved',
   'notifications.archive_all_read.pending',
-  'notifications.archive_all_read.resolved',
 ];
 
 export class NotificationsCache {
   #emitter: NovuEventEmitter;
   /**
-   * The key is the stringified notifications filter, the value is the pagination cache
-   * where the key is pagination arguments and the value is the list of notifications.
+   * The key is the stringified notifications filter, the values are the paginated notifications.
    */
-  #cache: Cache<Cache<ListNotificationsResponse>>;
-  /**
-   * The key is the stringified notifications filter, the value is the set of unique notification ids.
-   */
-  #idsCache: Cache<Set<string>>;
+  #cache: Cache<ListNotificationsResponse>;
 
   constructor() {
     this.#emitter = NovuEventEmitter.getInstance();
-    singleNotificationEvents.forEach((event) => {
-      this.#emitter.on(event, this.handleSingleNotificationEvent);
+    notificationEvents.forEach((event) => {
+      this.#emitter.on(event, this.handleNotificationEvent());
     });
-    multipleNotificationEvents.forEach((event) => {
-      this.#emitter.on(event, this.handleMultipleNotificationsEvent);
+    notificationEventsThatRemove.forEach((event) => {
+      this.#emitter.on(event, this.handleNotificationEvent({ remove: true }));
+    });
+    notificationsEvents.forEach((event) => {
+      this.#emitter.on(event, this.handleNotificationsEvent());
+    });
+    notificationsEventsThatRemove.forEach((event) => {
+      this.#emitter.on(event, this.handleNotificationsEvent({ remove: true }));
     });
     this.#cache = new InMemoryCache();
-    this.#idsCache = new InMemoryCache();
   }
 
-  private getFilterCache = (args: ListNotificationsArgs): Cache<ListNotificationsResponse> | undefined => {
-    return this.#cache.get(getFilterKey(args));
-  };
-
-  private updateNotificationInCache = (cache: Cache<ListNotificationsResponse>, data: Notification): void => {
-    const allCache = cache.pairs();
-
-    allCache.forEach(([key, el]) => {
-      const index = el.notifications.findIndex((notification) => notification.id === data.id);
-      if (index === -1) {
-        return;
-      }
-
-      const updatedNotifications = [...el.notifications];
-      updatedNotifications[index] = data;
-
-      cache.set(key, { ...el, notifications: updatedNotifications });
-    });
-  };
-
-  private handleSingleNotificationEvent = ({ data }: { data?: Notification }): void => {
-    if (!data) {
-      return;
+  private updateNotificationInCache = (key: string, data: Notification): boolean => {
+    const notificationsResponse = this.#cache.get(key);
+    if (!notificationsResponse) {
+      return false;
     }
 
-    const filterKeysToUpdate = this.#idsCache.keys().filter((key) => {
-      const cache = this.#idsCache.get(key);
-
-      return cache?.has(data.id);
-    });
-
-    filterKeysToUpdate.forEach((key) => {
-      const filterCache = this.#cache.get(key);
-      if (!filterCache) {
-        return;
-      }
-
-      this.updateNotificationInCache(filterCache, data);
-
-      const notificationsResponse = this.getReducedNotifications(filterCache);
-      this.#emitter.emit('notifications.list.updated', {
-        data: notificationsResponse,
-      });
-    });
-  };
-
-  private handleMultipleNotificationsEvent = ({ data }: { data?: Notification[] }): void => {
-    if (!data) {
-      return;
+    const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
+    if (index === -1) {
+      return false;
     }
 
-    const notificationIds = data.map((notification) => notification.id);
-    const filterKeysToUpdate = this.#idsCache.keys().filter((key) => {
-      const idsSet = this.#idsCache.get(key);
+    const updatedNotifications = [...notificationsResponse.notifications];
+    updatedNotifications[index] = data;
 
-      return notificationIds.some((id) => idsSet?.has(id));
+    this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
+
+    return true;
+  };
+
+  private removeNotificationInCache = (key: string, data: Notification): boolean => {
+    const notificationsResponse = this.#cache.get(key);
+    if (!notificationsResponse) {
+      return false;
+    }
+
+    const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
+    if (index === -1) {
+      return false;
+    }
+
+    const newNotifications = [...notificationsResponse.notifications];
+    newNotifications.splice(index, 1);
+
+    this.#cache.set(key, {
+      ...notificationsResponse,
+      notifications: newNotifications,
     });
 
-    filterKeysToUpdate.forEach((key) => {
-      const filterCache = this.#cache.get(key);
-      if (!filterCache) {
+    return true;
+  };
+
+  private handleNotificationEvent =
+    ({ remove }: { remove: boolean } = { remove: false }) =>
+    ({ data }: { data?: Notification }): void => {
+      if (!data) {
         return;
       }
 
-      data.forEach((notification) => this.updateNotificationInCache(filterCache, notification));
+      const uniqueFilterKeys = new Set<string>();
+      this.#cache.keys().forEach((key) => {
+        let isNotificationFound = false;
+        if (remove) {
+          isNotificationFound = this.removeNotificationInCache(key, data);
+        } else {
+          isNotificationFound = this.updateNotificationInCache(key, data);
+        }
 
-      const notificationsResponse = this.getReducedNotifications(filterCache);
-      this.#emitter.emit('notifications.list.updated', {
-        data: notificationsResponse,
+        if (isNotificationFound) {
+          uniqueFilterKeys.add(getFilterKey(getFilter(key)));
+        }
       });
-    });
-  };
+
+      uniqueFilterKeys.forEach((key) => {
+        const notificationsResponse = this.getAggregated(getFilter(key));
+        this.#emitter.emit('notifications.list.updated', {
+          data: notificationsResponse,
+        });
+      });
+    };
+
+  private handleNotificationsEvent =
+    ({ remove }: { remove: boolean } = { remove: false }) =>
+    ({ data }: { data?: Notification[] }): void => {
+      if (!data) {
+        return;
+      }
+
+      const uniqueFilterKeys = new Set<string>();
+      this.#cache.keys().forEach((key) => {
+        data.forEach((notification) => {
+          let isNotificationFound = false;
+          if (remove) {
+            isNotificationFound = this.removeNotificationInCache(key, notification);
+          } else {
+            isNotificationFound = this.updateNotificationInCache(key, notification);
+          }
+
+          if (isNotificationFound) {
+            uniqueFilterKeys.add(getFilterKey(getFilter(key)));
+          }
+        });
+      });
+
+      uniqueFilterKeys.forEach((key) => {
+        const notificationsResponse = this.getAggregated(getFilter(key));
+        this.#emitter.emit('notifications.list.updated', {
+          data: notificationsResponse,
+        });
+      });
+    };
 
   private has(args: ListNotificationsArgs): boolean {
-    const pageKey = getPageKey(args);
-    const filterCache = this.getFilterCache(args);
-
-    return filterCache?.get(pageKey) !== undefined;
+    return this.#cache.get(getCacheKey(args)) !== undefined;
   }
 
-  private getReducedNotifications(filterCache: Cache<ListNotificationsResponse>): ListNotificationsResponse {
-    const values = filterCache.getValues();
+  private getAggregated(filter: NotificationFilter): ListNotificationsResponse {
+    const cacheKeys = this.#cache.keys().filter((key) => {
+      const parsedFilter = getFilter(key);
 
-    return values.reduce<ListNotificationsResponse>(
-      (acc, el) => {
-        return {
-          hasMore: el.hasMore,
-          filter: el.filter,
-          notifications: [...acc.notifications, ...el.notifications],
-        };
-      },
-      { hasMore: false, filter: {}, notifications: [] }
-    );
+      return isSameFilter(parsedFilter, filter);
+    });
+
+    return cacheKeys
+      .map((key) => this.#cache.get(key))
+      .reduce<ListNotificationsResponse>(
+        (acc, el) => {
+          if (!el) {
+            return acc;
+          }
+
+          return {
+            hasMore: el.hasMore,
+            filter: el.filter,
+            notifications: [...acc.notifications, ...el.notifications],
+          };
+        },
+        { hasMore: false, filter: {}, notifications: [] }
+      );
   }
 
   set(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
-    const filterKey = getFilterKey(args);
-    const pageKey = getPageKey(args);
-    const filterCache = this.getFilterCache(args) ?? new InMemoryCache();
-    filterCache.set(pageKey, data);
-    this.#cache.set(filterKey, filterCache);
-
-    const uniqueIds = this.#idsCache.get(filterKey) ?? new Set();
-    data.notifications.forEach((el) => uniqueIds.add(el.id));
-    this.#idsCache.set(filterKey, uniqueIds);
+    this.#cache.set(getCacheKey(args), data);
   }
 
   getAll(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
-    const filterCache = this.getFilterCache(args);
-    if (this.has(args) && filterCache) {
-      return this.getReducedNotifications(filterCache);
+    if (this.has(args)) {
+      return this.getAggregated({ tags: args.tags, read: args.read, archived: args.archived });
     }
 
     return;
   }
 
-  getUniqueNotifications({ tags }: Pick<ListNotificationsArgs, 'tags'>): Array<Notification> {
+  /**
+   * Get unique notifications based on specified filter fields.
+   * The same tags can be applied to multiple filters which means that the same notification can be duplicated.
+   */
+  getUniqueNotifications({ tags, read }: Pick<ListNotificationsArgs, 'tags' | 'read'>): Array<Notification> {
     const keys = this.#cache.keys();
-
     const uniqueNotifications = new Map<string, Notification>();
+
     keys.forEach((key) => {
-      const filter: NotificationFilter = JSON.parse(key);
-      if (!tags || tags?.every((tag) => filter.tags?.includes(tag))) {
-        const filterCache = this.#cache.get(key);
-        if (!filterCache) {
+      const filter = getFilter(key);
+      if (areTagsEqual(tags, filter.tags)) {
+        const value = this.#cache.get(key);
+        if (!value) {
           return;
         }
 
-        filterCache
-          .getValues()
-          .map((el) => el.notifications)
-          .flat()
+        value.notifications
+          .filter((el) => typeof read === 'undefined' || read === el.isRead)
           .forEach((notification) => uniqueNotifications.set(notification.id, notification));
       }
     });
@@ -200,13 +239,15 @@ export class NotificationsCache {
   }
 
   clear(filter: NotificationFilter): void {
-    const filterKey = getFilterKey(filter);
-    this.#cache.remove(filterKey);
-    this.#idsCache.remove(filterKey);
+    const keys = this.#cache.keys();
+    keys.forEach((key) => {
+      if (isSameFilter(getFilter(key), filter)) {
+        this.#cache.remove(key);
+      }
+    });
   }
 
   clearAll(): void {
     this.#cache.clear();
-    this.#idsCache.clear();
   }
 }
