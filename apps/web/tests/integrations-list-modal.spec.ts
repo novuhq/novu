@@ -25,7 +25,6 @@ import { deleteProvider, SessionData } from './utils/plugins';
 
 let session: SessionData;
 test.beforeEach(async ({ page }) => {
-  await setFeatureFlag(page, FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED, false);
   ({ session } = await initializeSession(page));
 });
 

@@ -46,6 +46,7 @@ export const PlanFootnotes = () => {
     <>
       {Object.values(PLAN_FOOTNOTES).map((footnote) => (
         <div
+          key={footnote.id}
           id={footnote.id}
           style={{
             display: 'flex',

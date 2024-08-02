@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
-import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import type { IOrganizationEntity, IUserEntity, ProductUseCases } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
@@ -168,7 +168,7 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
     lastName: clerkUser.lastName,
     email: clerkUser.emailAddresses[0].emailAddress,
     profilePicture: clerkUser.imageUrl,
-    createdAt: clerkUser.createdAt?.toString() ?? '',
+    createdAt: clerkUser.createdAt?.toISOString() ?? '',
     showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
     showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
     servicesHashes: clerkUser.publicMetadata.servicesHashes,
@@ -195,9 +195,8 @@ const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganiz
   return {
     _id: clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id,
     name: clerkOrganization.name,
-    createdAt: clerkOrganization.createdAt.toString(),
-    updatedAt: clerkOrganization.updatedAt.toString(),
-    apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
+    createdAt: clerkOrganization.createdAt.toISOString(),
+    updatedAt: clerkOrganization.updatedAt.toISOString(),
     defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,
