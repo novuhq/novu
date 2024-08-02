@@ -18,6 +18,7 @@ import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
 import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
+import { showNotification } from '@mantine/notifications';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
@@ -72,43 +73,55 @@ export function QuestionnaireForm() {
   }
 
   const onUpdateOrganization = async (data: OrganizationUpdateForm) => {
-    setLoading(true);
-    await updateOrganization({ ...data });
-    setLoading(false);
-
     try {
-      await api.post(`/v1/bridge/sync?source=sample-workspace`, {
-        bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
+      setLoading(true);
+      await updateOrganization({ ...data });
+      setLoading(false);
 
-      captureException(e);
-    }
+      try {
+        await api.post(`/v1/bridge/sync?source=sample-workspace`, {
+          bridgeUrl: BRIDGE_SYNC_SAMPLE_ENDPOINT,
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
 
-    if (isFromVercel) {
-      startVercelSetup();
-
-      return;
-    }
-
-    if (isV2Enabled) {
-      if (isJobTitleIsTech(data.jobTitle)) {
-        if (isPlaygroundOnboardingEnabled && isSupported) {
-          navigate(ROUTES.DASHBOARD_PLAYGROUND);
-        } else {
-          trackRedirectionToOnboarding();
-          navigate(ROUTES.DASHBOARD_ONBOARDING);
-        }
-      } else {
-        navigate(ROUTES.WORKFLOWS);
+        captureException(e);
       }
 
-      return;
-    }
+      if (isFromVercel) {
+        startVercelSetup();
 
-    navigate(`${ROUTES.GET_STARTED}`);
+        return;
+      }
+
+      if (isV2Enabled) {
+        if (isJobTitleIsTech(data.jobTitle)) {
+          if (isPlaygroundOnboardingEnabled && isSupported) {
+            navigate(ROUTES.DASHBOARD_PLAYGROUND);
+          } else {
+            trackRedirectionToOnboarding();
+            navigate(ROUTES.DASHBOARD_ONBOARDING);
+          }
+        } else {
+          navigate(ROUTES.WORKFLOWS);
+        }
+
+        return;
+      }
+
+      navigate(`${ROUTES.GET_STARTED}`);
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+      showNotification({
+        message: e?.message || 'Error occurred in the organization update process',
+        color: 'red',
+      });
+      captureException(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   /**
