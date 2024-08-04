@@ -197,17 +197,16 @@ function Playground({
           setEditorSizes(value);
           handleEditorSizeChange();
         }}
-        defaultSizes={editorSizes}
         className={css({
           borderRadius: '8px 8px 8px 8px',
         })}
       >
-        <Pane preferredSize={'70%'}>
+        <Pane preferredSize={'80%'}>
           <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
             <CodeEditor files={filteredCode} setFiles={setCode} />
           </div>
         </Pane>
-        <Pane preferredSize={'30%'}>
+        <Pane preferredSize={'20%'}>
           <div style={{ margin: '0 10px 10px 10px', height: '100%' }} className="terminal-component">
             <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} onStepAddGuide={onStepAddGuide} />
           </div>
