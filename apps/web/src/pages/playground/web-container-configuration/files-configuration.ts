@@ -1,47 +1,62 @@
-import { TUNNEL_CODE } from './tunnel.service.snippet';
+import { TUNNEL } from './sandbox-vite';
 
-export const configureFiles = (indexCode: string, reactEmail: string) => {
+export const configureFiles = (workflowsCode: string, reactEmailCode: string) => {
   return {
-    'index.ts': {
+    'workflows.ts': {
       file: {
-        contents: indexCode,
+        contents: workflowsCode,
       },
     },
     'react-email.tsx': {
       file: {
-        contents: reactEmail,
+        contents: reactEmailCode,
       },
     },
     'tunnel.ts': {
       file: {
-        contents: TUNNEL_CODE,
+        contents: TUNNEL,
+      },
+    },
+    'vite.config.ts': {
+      file: {
+        contents: `import { defineConfig } from "vite";
+export default defineConfig({
+  optimizeDeps: {
+    entries: [],
+  },
+});`,
       },
     },
     'package.json': {
       file: {
-        contents: `
-{
+        contents: `{
   "name": "example-app",
   "type": "module",
-  "dependencies": {
-    "express": "latest",
-    "@novu/framework": "latest",    
-    "@novu/ntfr-client": "^0.0.4", 
-    "zod-to-json-schema": "^3.23.0",
-    "zod": "^3.23.0",
-    "react-email": "^2.1.6",
-    "@react-email/components": "^0.0.22",
-    "react": "^18.1.0",
-    "ws": "^8.11.0"
-  },
-  "devDependencies": {
-    "typescript": "^4.9.5",
-    "tsx": "^4.16.2"
-  },
   "scripts": {
     "create:tunnel": "tsx tunnel.ts",
-    "test": "curl  http://localhost:3111",
-    "start": "tsx watch index.ts"
+    "start": "PORT=4000 nodemon -w ./workflows.ts -x tsx ./workflows.ts"
+  },
+  "dependencies": {
+    "@novu/framework": "2.0.0-canary.4",
+    "@novu/ntfr-client": "^0.0.4",
+    "@react-email/components": "^0.0.22",
+    "h3": "^1.12.0",
+    "listhen": "^1.7.2",
+    "react": "^18.1.0",
+    "react-email": "^2.1.6",
+    "ws": "^8.11.0",
+    "zod": "^3.23.8",
+    "express": "^4.19.2",
+    "vite-express": "*",
+    "zod-to-json-schema": "^3.23.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.1.0",
+    "@types/react": "^18.3.3",
+    "tsx": "^4.16.2",
+    "@vitejs/plugin-react": "^4.2.0",
+    "nodemon": "^3.0.1",
+    "vite": "^5.0.2"
   }
 }`,
       },

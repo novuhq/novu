@@ -178,7 +178,6 @@ function Playground({
 
   useEffectOnce(() => {
     setTimeout(() => {
-      console.log('isBridgeAppLoading', isBridgeAppLoading);
       if (terminalRef.current) {
         terminalRef.current.write(
           '\nWelcome to the Novu Playground! Feel free to edit the code above and see the results in the editor on the right side\n\n'

@@ -1,8 +1,9 @@
-export const BRIDGE_CODE = `import express from 'express';
-import { workflow } from '@novu/framework';
-import { serve } from '@novu/framework/express';
+export const WORKFLOW = `import express from "express";
+import { workflow } from "@novu/framework";
+import { serve } from "@novu/framework/express";
+import ViteExpress from "vite-express";
 import { renderEmail } from './react-email';
-import { z } from 'zod';
+import { z } from "zod";
 
 const helloWorld = workflow('hello-world', async ({ step, payload }) => {
     // Add more steps below this line
@@ -43,13 +44,17 @@ const helloWorld = workflow('hello-world', async ({ step, payload }) => {
   }
 );
 
-const server = express();
-server.use(express.json());
+
+
+const app = express();
+app.use(express.json());
 
 /**
  * Novu Framework exposes a novu endpoint that can be used to serve the workflow definitions.
  * This endpoint should be available over the internet, and is secured by the SDK using your Secret Key.
  */
-server.use(serve({ workflows: [helloWorld] }));
-server.listen(9999);
-`;
+app.use(serve({ workflows: [helloWorld] }));
+
+ViteExpress.listen(app, 4000, () =>
+  console.log("Server is listening on port 4000...")
+);`;

@@ -1,7 +1,7 @@
-export const TUNNEL_CODE = `import ws from 'ws';
-import { NtfrTunnel } from '@novu/ntfr-client';
+export const TUNNEL = `import ws from "ws";
+import { NtfrTunnel } from "@novu/ntfr-client";
 
-const TUNNEL_URL = 'https://novu.sh/api/tunnels';
+const TUNNEL_URL = "https://novu.sh/api/tunnels";
 
 const tunnelService = () => {
   let tunnelClient: NtfrTunnel | null = null;
@@ -16,18 +16,21 @@ const tunnelService = () => {
 
   async function requestTunnel(originUrl: URL): Promise<string> {
     const response = await fetch(TUNNEL_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
-        authorization: 'Bearer 12345',
+        accept: "application/json",
+        "Content-Type": "application/json",
+        authorization: "Bearer 12345",
       },
     });
     const { url } = await response.json();
     return url;
   }
 
-  async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL): Promise<void> {
+  async function connectToTunnel(
+    parsedUrl: URL,
+    parsedOrigin: URL
+  ): Promise<void> {
     tunnelClient = new NtfrTunnel(
       parsedUrl.host,
       parsedOrigin.host,
@@ -48,7 +51,7 @@ const tunnelService = () => {
 
 const url = process.argv[2];
 if (!url) {
-  console.error('Please provide a URL as the first argument.');
+  console.error("Please provide a URL as the first argument.");
   process.exit(1);
 }
 
@@ -59,6 +62,5 @@ tunnelService()
     return responseUrl;
   })
   .catch((error) => {
-    console.error('Error connecting to tunnel:', error);
-  });
-`;
+    console.error("Error connecting to tunnel:", error);
+  });`;

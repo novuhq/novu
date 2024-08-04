@@ -6,7 +6,7 @@ import { navigateToWorkflows } from '../../../utils/playground-navigation';
 import { HStack } from '@novu/novui/jsx';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlayArrow, successMessage, Tooltip } from '@novu/design-system';
+import { IconPlayArrow, successMessage, errorMessage, Tooltip } from '@novu/design-system';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 
 export function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
@@ -101,9 +101,14 @@ const TriggerActionModal = ({
     setIsLoading(true);
     try {
       const res = await handleTestClick();
-      successMessage('Workflow triggered successfully');
 
-      segment.track('Workflow triggered successfully - [Playground]');
+      if (res?.data?.status === 'processed') {
+        successMessage('Workflow triggered successfully');
+        segment.track('Workflow triggered successfully - [Playground]');
+      } else {
+        errorMessage('Workflow triggered unsuccessfully');
+        segment.track('Workflow triggered unsuccessfully - [Playground]');
+      }
 
       setTransactionId(res.data.transactionId);
       openExecutionModal();
