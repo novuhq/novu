@@ -4,22 +4,23 @@ import 'allotment/dist/style.css';
 const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
-import { css } from '@novu/novui/css';
 
-import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
-import { TerminalComponent } from '../../../studio/components/workflows/step-editor/editor/Terminal';
-import { CodeEditor } from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
+import { css } from '@novu/novui/css';
+import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
+
+import { TerminalComponent } from './Terminal';
+import { CodeEditor } from './CodeEditor';
 import { PlaygroundWorkflowComponent } from './PlaygroundWorkflowComponent';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 import useThemeChange from '../../../hooks/useThemeChange';
 import { useDiscover } from '../../../studio/hooks/useBridgeAPI';
-import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { API_ROOT } from '../../../config/index';
 import { useAPIKeys } from '../../../hooks/useApiKey';
 import { TourGuideComponent } from './PlaygroundTourGuide';
 import { Header } from './PlaygroundHeader';
+import { useContainer } from '../../../hooks/useContainer';
 
 export function PlaygroundPage() {
   const { apiKey } = useAPIKeys();

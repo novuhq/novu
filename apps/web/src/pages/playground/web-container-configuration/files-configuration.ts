@@ -1,6 +1,6 @@
-import { TUNNEL_CODE } from './tunnel.service.const';
+import { TUNNEL_CODE } from './tunnel.service.snippet';
 
-export const dynamicFiles = (indexCode: string, reactEmail: string) => {
+export const configureFiles = (indexCode: string, reactEmail: string) => {
   return {
     'index.ts': {
       file: {

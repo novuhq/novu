@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ITerminalDimensions } from 'xterm-addon-fit';
-
-import { dynamicFiles } from './files';
-import { useEffectOnce } from '../../../../../hooks';
-import { useDiscover, useStudioState } from '../../../../hooks';
-import { BRIDGE_CODE, REACT_EMAIL_CODE } from './sandbox-code-snippets';
-import { FCWithChildren } from '../../../../../types';
-import { TUNNEL_CODE } from './tunnel.service.const';
-import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { captureException } from '@sentry/react';
+
+import { FCWithChildren } from '../types';
+import { BRIDGE_CODE, REACT_EMAIL_CODE } from '../pages/playground/web-container-configuration';
+import { useStudioState } from '../studio/hooks';
+import { useEffectOnce } from './useEffectOnce';
+import { configureFiles } from '../pages/playground/web-container-configuration/files-configuration';
+import { useSegment } from '../components/providers/SegmentProvider';
 
 const { WebContainer } = require('@webcontainer/api');
 
@@ -126,7 +125,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
           return await startOutput.exit;
         }
 
-        await webContainer.mount(dynamicFiles(BRIDGE_CODE, REACT_EMAIL_CODE));
+        await webContainer.mount(configureFiles(BRIDGE_CODE, REACT_EMAIL_CODE));
 
         const installResult = await installDependencies();
         if (installResult !== 0) {
@@ -192,7 +191,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     if (BRIDGE_CODE !== code['workflow.ts'] || REACT_EMAIL_CODE !== code['react-email.tsx']) {
       debounceTimeout = setTimeout(() => {
         segment.track('Sandbox bridge app code was updated - [Playground]');
-        webContainer?.mount(dynamicFiles(code['workflow.ts'], code['react-email.tsx']));
+        webContainer?.mount(configureFiles(code['workflow.ts'], code['react-email.tsx']));
       }, DEBOUNCE_DELAY);
     }
 
