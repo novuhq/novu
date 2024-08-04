@@ -62,7 +62,7 @@ export const RootNavMenu: React.FC = () => {
         {IS_EE_AUTH_ENABLED ? <OrganizationSwitcher /> : <OrganizationSelect />}
         <NavMenuLinkButton
           label="Get started"
-          isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding}
+          isVisible={!isLoadingOnboardingStatus && showOnboarding}
           icon={<IconTaskAlt />}
           link={ROUTES.GET_STARTED}
           testId="side-nav-quickstart-link"
