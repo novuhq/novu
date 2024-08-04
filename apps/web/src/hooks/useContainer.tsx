@@ -97,7 +97,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
 
         async function installDependencies() {
           segment.track('Installing dependencies - [Playground]');
-          const installProcess = await webContainer.spawn('pnpm', ['install']);
+          const installProcess = await webContainer.spawn('pnpm', ['install', '--frozen-lockfile']);
 
           installProcess.output.pipeTo(
             new WritableStream({
