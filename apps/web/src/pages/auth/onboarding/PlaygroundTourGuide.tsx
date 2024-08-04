@@ -141,6 +141,10 @@ export function TourGuideComponent({
       setJoyStepIndex(index + 1);
     }
 
+    if (action === ACTIONS.PREV && lifecycle === LIFECYCLE.COMPLETE) {
+      setJoyStepIndex(index - 1);
+    }
+
     if (
       action === ACTIONS.NEXT &&
       data.step.target === '.workflow-flow' &&
