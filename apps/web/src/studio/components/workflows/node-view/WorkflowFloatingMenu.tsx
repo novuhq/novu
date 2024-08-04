@@ -110,7 +110,8 @@ function WorkflowFloatingMenuButton({ Icon, tooltipLabel, onClick }: IWorkflowFl
           padding: '75 !important',
           borderRadius: '100',
           _hover: {
-            bg: 'select.option.surface.selected',
+            // TODO: this doesn't work due to all the !important in novui... need to fix layer styles
+            bg: 'legacy.B30 !important',
             '& svg': {
               color: 'typography.text.main !important',
             },

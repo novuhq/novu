@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
-import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import type { IOrganizationEntity, IUserEntity, ProductUseCases } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
-import { getOrganization } from '../../../api/organization';
 
 const asyncNoop = async () => {};
 
@@ -18,7 +17,6 @@ export const EnterpriseAuthContext = createContext<AuthContextValue>(DEFAULT_AUT
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [internalOrganizationData, setInternalOrganizationData] = useState<IOrganizationEntity | undefined>(undefined);
   const { signOut, orgId } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
@@ -112,21 +110,9 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 
   const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
   const currentOrganization = useMemo(
-    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization, internalOrganizationData) : undefined),
-    [clerkOrganization, internalOrganizationData]
+    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization) : undefined),
+    [clerkOrganization]
   );
-
-  useEffect(() => {
-    async function getInternalOrgData() {
-      const result = await getOrganization();
-
-      setInternalOrganizationData(result);
-    }
-
-    if (clerkOrganization) {
-      getInternalOrgData();
-    }
-  }, [clerkOrganization]);
 
   // refetch queries on organization switch
   useEffect(() => {
@@ -182,7 +168,7 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
     lastName: clerkUser.lastName,
     email: clerkUser.emailAddresses[0].emailAddress,
     profilePicture: clerkUser.imageUrl,
-    createdAt: clerkUser.createdAt?.toString() ?? '',
+    createdAt: clerkUser.createdAt?.toISOString() ?? '',
     showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
     showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
     servicesHashes: clerkUser.publicMetadata.servicesHashes,
@@ -191,10 +177,7 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
   };
 };
 
-const toOrganizationEntity = (
-  clerkOrganization: OrganizationResource,
-  internalOrganizationData: IOrganizationEntity | undefined
-): IOrganizationEntity => {
+const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
   /*
    * When mapping to IOrganizationEntity, we have 2 cases:
    *  - user exists and has signed in
@@ -210,13 +193,10 @@ const toOrganizationEntity = (
    */
 
   return {
-    _id: internalOrganizationData
-      ? clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id
-      : clerkOrganization.id,
+    _id: clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id,
     name: clerkOrganization.name,
-    createdAt: internalOrganizationData ? internalOrganizationData.createdAt : clerkOrganization.createdAt.toString(),
-    updatedAt: clerkOrganization.updatedAt.toString(),
-    apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
+    createdAt: clerkOrganization.createdAt.toISOString(),
+    updatedAt: clerkOrganization.updatedAt.toISOString(),
     defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,

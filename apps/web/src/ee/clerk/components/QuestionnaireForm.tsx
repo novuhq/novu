@@ -42,7 +42,9 @@ export function QuestionnaireForm() {
   const { initializeWebContainer } = useContainer();
 
   useEffectOnce(() => {
-    initializeWebContainer();
+    if (isSupported) {
+      initializeWebContainer();
+    }
   }, isPlaygroundOnboardingEnabled);
 
   const { mutateAsync: updateOrganizationMutation } = useMutation<{ _id: string }, IResponseError, any>(

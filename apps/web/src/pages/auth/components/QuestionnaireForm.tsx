@@ -36,7 +36,9 @@ export function QuestionnaireForm() {
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
 
   useEffectOnce(() => {
-    initializeWebContainer();
+    if (isSupported) {
+      initializeWebContainer();
+    }
   }, isPlaygroundOnboardingEnabled);
 
   const [loading, setLoading] = useState<boolean>();
