@@ -8,7 +8,8 @@ type NotificationProps = {
   notification: NotificationType;
   mountNotification?: NotificationMounter;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
 export const Notification = (props: NotificationProps) => {
@@ -19,7 +20,8 @@ export const Notification = (props: NotificationProps) => {
         <DefaultNotification
           notification={props.notification}
           onNotificationClick={props.onNotificationClick}
-          onActionClick={props.onActionClick}
+          onPrimaryActionClick={props.onPrimaryActionClick}
+          onSecondaryActionClick={props.onSecondaryActionClick}
         />
       }
     >

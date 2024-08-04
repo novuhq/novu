@@ -17,7 +17,8 @@ export type InboxProps = {
   mountNotification?: NotificationMounter;
   mountBell?: BellMounter;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
 enum Screen {
@@ -29,7 +30,8 @@ type InboxContentProps = {
   tabs?: InboxProps['tabs'];
   mountNotification?: NotificationMounter;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
 const InboxContent = (props: InboxContentProps) => {
@@ -46,7 +48,8 @@ const InboxContent = (props: InboxContentProps) => {
               <NotificationList
                 mountNotification={props.mountNotification}
                 onNotificationClick={props.onNotificationClick}
-                onActionClick={props.onActionClick}
+                onPrimaryActionClick={props.onPrimaryActionClick}
+                onSecondaryActionClick={props.onSecondaryActionClick}
               />
             }
           >
@@ -80,7 +83,8 @@ export const Inbox = (props: InboxProps) => {
           tabs={props.tabs}
           mountNotification={props.mountNotification}
           onNotificationClick={props.onNotificationClick}
-          onActionClick={props.onActionClick}
+          onPrimaryActionClick={props.onPrimaryActionClick}
+          onSecondaryActionClick={props.onSecondaryActionClick}
         />
       </Popover.Content>
     </Popover.Root>

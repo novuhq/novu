@@ -17,7 +17,7 @@ export type InboxNotification = {
   id: string;
   subject?: string;
   body: string;
-  to?: Subscriber;
+  to: Subscriber;
   isRead: boolean;
   isArchived: boolean;
   createdAt: string;

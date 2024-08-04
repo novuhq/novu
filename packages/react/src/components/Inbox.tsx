@@ -7,7 +7,7 @@ import { Renderer } from './Renderer';
 export type InboxProps = DefaultProps | WithChildrenProps;
 
 const DefaultInbox = (props: DefaultInboxProps) => {
-  const { renderNotification, renderBell, onNotificationClick, onActionClick } = props;
+  const { renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } = props;
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback(
@@ -20,12 +20,13 @@ const DefaultInbox = (props: DefaultInboxProps) => {
             : undefined,
           mountBell: renderBell ? (el, { unreadCount }) => mountElement(el, renderBell({ unreadCount })) : undefined,
           onNotificationClick,
-          onActionClick,
+          onPrimaryActionClick,
+          onSecondaryActionClick,
         },
         element,
       });
     },
-    [renderNotification, renderBell, onNotificationClick, onActionClick]
+    [renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
   );
 
   return <Mounter mount={mount} />;
@@ -46,7 +47,8 @@ export const Inbox = React.memo((props: InboxProps) => {
         renderNotification={renderNotification}
         renderBell={renderBell}
         onNotificationClick={props.onNotificationClick}
-        onActionClick={props.onActionClick}
+        onPrimaryActionClick={props.onPrimaryActionClick}
+        onSecondaryActionClick={props.onSecondaryActionClick}
       />
     </Renderer>
   );

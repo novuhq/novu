@@ -11,7 +11,8 @@ export type DefaultInboxProps = {
   renderNotification?: (args: { notification: Notification }) => React.ReactNode;
   renderBell?: ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
 export type BaseProps = BaseNovuUIOptions;

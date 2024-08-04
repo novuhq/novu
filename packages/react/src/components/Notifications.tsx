@@ -7,28 +7,32 @@ import type { NotificationClickHandler, NotificationActionClickHandler } from '@
 export type NotificationProps = {
   children?: never | NotificationsRenderProps;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-export const Notifications = React.memo(({ children, onNotificationClick, onActionClick }: NotificationProps) => {
-  const { novuUI, mountElement } = useRenderer();
+export const Notifications = React.memo(
+  ({ children, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick }: NotificationProps) => {
+    const { novuUI, mountElement } = useRenderer();
 
-  const mount = React.useCallback(
-    (element: HTMLElement) => {
-      return novuUI.mountComponent({
-        name: 'Notifications',
-        element,
-        props: children
-          ? {
-              mountNotification: (el, { notification }) => mountElement(el, children?.({ notification })),
-              onNotificationClick,
-              onActionClick,
-            }
-          : { onNotificationClick, onActionClick },
-      });
-    },
-    [children, onNotificationClick, onActionClick]
-  );
+    const mount = React.useCallback(
+      (element: HTMLElement) => {
+        return novuUI.mountComponent({
+          name: 'Notifications',
+          element,
+          props: children
+            ? {
+                mountNotification: (el, { notification }) => mountElement(el, children?.({ notification })),
+                onNotificationClick,
+                onPrimaryActionClick,
+                onSecondaryActionClick,
+              }
+            : { onNotificationClick, onPrimaryActionClick, onSecondaryActionClick },
+        });
+      },
+      [children, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
+    );
 
-  return <Mounter mount={mount} />;
-});
+    return <Mounter mount={mount} />;
+  }
+);

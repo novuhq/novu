@@ -4,7 +4,7 @@ import type { Notification } from '../notifications';
 import { ActionTypeEnum } from '../types';
 
 export type NotificationClickHandler = (args: { notification: Notification }) => void;
-export type NotificationActionClickHandler = (args: { notification: Notification; action: ActionTypeEnum }) => void;
+export type NotificationActionClickHandler = (args: { notification: Notification }) => void;
 
 export type NotificationMounter = (
   el: HTMLDivElement,

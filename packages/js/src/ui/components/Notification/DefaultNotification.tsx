@@ -7,6 +7,7 @@ import { Tooltip } from '../primitives/Tooltip';
 import type { Notification } from '../../../notifications';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { ActionTypeEnum } from '../../../types';
+import clsx from 'clsx';
 
 type NotificationBodyProps = ParentProps;
 const NotificationBody = (props: NotificationBodyProps) => {
@@ -18,7 +19,8 @@ const NotificationBody = (props: NotificationBodyProps) => {
 type DefaultNotificationProps = {
   notification: Notification;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
 //TODO: Complete the implementation
@@ -45,18 +47,20 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
 
     if (action === ActionTypeEnum.PRIMARY) {
       props.notification.completePrimary();
+      props.onPrimaryActionClick?.({ notification: props.notification });
     } else {
       props.notification.completeSecondary();
+      props.onSecondaryActionClick?.({ notification: props.notification });
     }
-
-    props.onActionClick?.({ notification: props.notification, action });
   };
 
   return (
     <a
       class={style(
         'notification',
-        'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2 nt-cursor-pointer'
+        clsx('nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2', {
+          'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
+        })
       )}
       onClick={handleNotificationClick}
     >

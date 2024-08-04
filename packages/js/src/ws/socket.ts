@@ -55,7 +55,7 @@ const mapToNotification = ({
     id: _id,
     subject,
     body: content as string,
-    to: subscriber ? to : undefined,
+    to,
     isRead: read,
     isArchived: archived,
     createdAt,

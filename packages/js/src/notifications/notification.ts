@@ -11,7 +11,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   readonly id: InboxNotification['id'];
   readonly subject?: InboxNotification['subject'];
   readonly body: InboxNotification['body'];
-  readonly to?: InboxNotification['to'];
+  readonly to: InboxNotification['to'];
   readonly isRead: InboxNotification['isRead'];
   readonly isArchived: InboxNotification['isArchived'];
   readonly createdAt: InboxNotification['createdAt'];

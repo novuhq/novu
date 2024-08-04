@@ -40,7 +40,8 @@ const EmptyNotificationList = () => {
 type NotificationListProps = {
   mountNotification?: NotificationMounter;
   onNotificationClick?: NotificationClickHandler;
-  onActionClick?: NotificationActionClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
   options?: ListNotificationsArgs;
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
@@ -57,7 +58,8 @@ export const NotificationList = (props: NotificationListProps) => {
                 notification={notification}
                 mountNotification={props.mountNotification}
                 onNotificationClick={props.onNotificationClick}
-                onActionClick={props.onActionClick}
+                onPrimaryActionClick={props.onPrimaryActionClick}
+                onSecondaryActionClick={props.onSecondaryActionClick}
               />
             )}
           </For>
