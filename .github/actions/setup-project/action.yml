@@ -43,11 +43,6 @@ runs:
       with:
         mongodb-version: 4.2.8
 
-    - name: Install Docker compose 
-      uses: docker/setup-buildx-action@v2
-      with:
-        version: '2.23.0'
-
     - name: 🛟 Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
