@@ -88,11 +88,11 @@ export function PlaygroundPage() {
   }, true);
 
   useEffect(() => {
-    if (containerBridgeUrl) {
+    if (containerBridgeUrl && containerBridgeUrl !== bridgeURL) {
       setBridgeURL(containerBridgeUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [bridgeURL, containerBridgeUrl]);
 
   useEffect(() => {
     refetch();

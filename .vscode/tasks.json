@@ -87,8 +87,7 @@
         "SHARED",
         "API",
         "DESIGN SYSTEM",
-        "NOVUI",
-        "NOTIFICATION CENTER"
+        "NOVUI"
       ]
     },
     {
@@ -109,8 +108,6 @@
       "dependsOn": [
         "SHARED",
         "TESTING",
-        "STATELESS",
-        "NODE",
         "PROVIDERS"
       ]
     },
@@ -141,8 +138,7 @@
       "path": "/packages/providers",
       "problemMatcher": "$tsc-watch",
       "dependsOn": [
-        "SHARED",
-        "STATELESS"
+        "SHARED"
       ]
     },
     {
