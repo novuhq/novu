@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 
 export function assertContextExists(contextVal: unknown, msgOrCtx: string | React.Context<any>): asserts contextVal {
@@ -27,12 +26,14 @@ export const createContextAndHook = <CtxVal>(
 
   const useCtx = () => {
     const ctx = React.useContext(Ctx);
-    assertCtxFn(ctx, `${displayName} not found`);
+    assertCtxFn(ctx, `Component must be wrapped with the <Inbox /> Component`);
+
     return (ctx as any).value as CtxVal;
   };
 
   const useCtxWithoutGuarantee = () => {
     const ctx = React.useContext(Ctx);
+
     return ctx ? ctx.value : {};
   };
 

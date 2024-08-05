@@ -1,9 +1,23 @@
 import { Schema } from '../../../types/schema.types';
 
+const actionSchema = {
+  type: 'object',
+  properties: {
+    label: { type: 'string' },
+    url: { type: 'string' },
+  },
+  required: ['label'],
+  additionalProperties: false,
+} as const satisfies Schema;
+
 const inAppOutputSchema = {
   type: 'object',
   properties: {
+    subject: { type: 'string' },
     body: { type: 'string' },
+    avatar: { type: 'string', format: 'uri' },
+    primaryAction: actionSchema,
+    secondaryAction: actionSchema,
   },
   required: ['body'],
   additionalProperties: false,

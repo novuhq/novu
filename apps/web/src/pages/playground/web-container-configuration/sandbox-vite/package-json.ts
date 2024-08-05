@@ -2,9 +2,8 @@ export const PACKAGE_JSON = `{
   "name": "example-app",
   "type": "module",
   "scripts": {
-    "dev": "nodemon -w src/server -x tsx src/server/main.ts",
     "create:tunnel": "tsx tunnel.ts",
-    "start": "PORT=4000 nodemon -w ./workflows.ts -x tsx ./workflows.ts",
+    "start": "PORT=4000 nodemon -w ./src -x tsx ./src/workflows.ts",
     "build": "vite build"
   },
   "dependencies": {

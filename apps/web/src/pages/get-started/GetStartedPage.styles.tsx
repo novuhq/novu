@@ -35,7 +35,7 @@ export const stepperClassNames = {
     marginTop: '5px !important',
     '&[data-progress] svg': {
       color: {
-        base: '#fff !important',
+        base: 'typography.text.main !important',
         _dark: '#fff !important',
       },
     },
@@ -62,9 +62,16 @@ export const stepperClassNames = {
   stepCompletedIcon: css({
     backgroundColor: 'transparent !important',
     borderRadius: '200',
+    color: {
+      _dark: 'typography.text.main !important',
+      base: 'typography.text.main !important',
+    },
     '&[data-progress]': {
       backgroundColor: 'table.header.border !important',
-      color: 'typography.text.main !important',
+      color: {
+        _dark: 'typography.text.main !important',
+        base: 'typography.text.main !important',
+      },
     },
   }),
   stepLabel: css({
@@ -86,7 +93,10 @@ export const stepperClassNames = {
       color: 'typography.text.main !important',
     },
     '&[data-progress]': {
-      bg: '#292933 !important',
+      bg: {
+        base: '#ededed !important',
+        _dark: '#292933 !important',
+      },
     },
     _hover: {
       cursor: 'pointer !important',
