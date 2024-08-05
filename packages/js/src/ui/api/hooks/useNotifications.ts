@@ -1,42 +1,8 @@
-import { createEffect, createSignal } from 'solid-js';
-import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../../../notifications';
+import { onCleanup, onMount } from 'solid-js';
+import { isSameFilter } from '../../../utils/notification-utils';
+import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notifications';
 import { useNovu } from '../../context';
 import { createInfiniteScroll } from '../../helpers';
-
-export const useNotifications = (props: {
-  options: ListNotificationsArgs;
-  onSuccess?: (data: ListNotificationsResponse) => void;
-  onError?: (err: unknown) => void;
-}) => {
-  const [notifications, setNotifications] = createSignal<Notification[]>([]);
-
-  const [hasMore, setHasMore] = createSignal(true);
-
-  const novu = useNovu();
-
-  const fetchNotifications = async ({ options }: { options: ListNotificationsArgs }) => {
-    if (!hasMore()) return;
-
-    try {
-      const { data } = await novu.notifications.list(options);
-      if (!data) {
-        return;
-      }
-
-      setNotifications((prev) => [...prev, ...data.notifications]);
-      setHasMore(data.hasMore);
-      props.onSuccess?.(data);
-    } catch (error) {
-      props.onError?.(error);
-    }
-  };
-
-  createEffect(() => {
-    fetchNotifications({ options: props.options });
-  });
-
-  return { notifications, fetchNotifications, hasMore };
-};
 
 type UseNotificationsInfiniteScrollProps = {
   options?: Exclude<ListNotificationsArgs, 'offset'>;
@@ -44,9 +10,27 @@ type UseNotificationsInfiniteScrollProps = {
 export const useNotificationsInfiniteScroll = (props?: UseNotificationsInfiniteScrollProps) => {
   const novu = useNovu();
 
-  return createInfiniteScroll(async (offset) => {
+  const [data, { initialLoading, setEl, end, mutate }] = createInfiniteScroll(async (offset) => {
     const { data } = await novu.notifications.list({ ...(props?.options || {}), offset });
 
     return { data: data?.notifications ?? [], hasMore: data?.hasMore ?? false };
   });
+
+  onMount(() => {
+    const listener = ({ data }: { data: ListNotificationsResponse }) => {
+      const filter = { tags: props?.options?.tags, read: props?.options?.read, archived: props?.options?.archived };
+
+      if (!data || !isSameFilter(filter, data.filter)) {
+        return;
+      }
+
+      mutate({ data: data.notifications, hasMore: data.hasMore });
+    };
+
+    novu.on('notifications.list.updated', listener);
+
+    onCleanup(() => novu.off('notifications.list.updated', listener));
+  });
+
+  return { data, initialLoading, setEl, end };
 };

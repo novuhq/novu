@@ -103,7 +103,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             cn(activeTab() === tab.label ? 'nt-block' : 'nt-hidden', 'nt-flex-1 nt-overflow-hidden')
           )}
         >
-          <NotificationList options={{ tags: tab.value }} />
+          <NotificationList options={{ tags: tab.value, archived: false }} />
         </Tabs.Content>
       ))}
     </Tabs.Root>
