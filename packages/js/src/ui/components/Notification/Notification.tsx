@@ -1,11 +1,11 @@
 import { Show } from 'solid-js';
-import { InboxNotification } from '../../../types';
+import type { Notification as NotificationType } from '../../../notifications/notification';
 import { NotificationMounter } from '../../types';
 import { ExternalElementMounter } from '../ExternalElementMounter';
 import { DefaultNotification } from './DefaultNotification';
 
 type NotificationProps = {
-  notification: InboxNotification;
+  notification: NotificationType;
   mountNotification?: NotificationMounter;
 };
 
