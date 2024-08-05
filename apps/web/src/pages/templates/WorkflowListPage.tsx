@@ -44,6 +44,8 @@ import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
 import { GetStartedPageV2 } from '../../studio/components/GetStartedPageV2/index';
+import { css } from '@novu/novui/css';
+import { Button } from '@novu/novui';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -316,9 +318,28 @@ function WorkflowListPage() {
             onAllTemplatesClick={openModal}
           />
         </When>
+
         <When truthy={shouldShowEmptyState && isV2Enabled}>
-          <GetStartedPageV2 location="get-started" />
+          <div
+            className={css({
+              color: colors.B40,
+              fontSize: '18px',
+              lineHeight: '22px',
+              textAlign: 'center',
+              maxWidth: '600px',
+              margin: '0 auto',
+              marginTop: '80px',
+            })}
+          >
+            To create a workflow in this environment, you need to create a workflow using the @novu/framework and sync
+            it using the {readonly ? 'production' : 'development'} secret key. Follow{' '}
+            <Link className={css({ textDecoration: 'underline' })} to={ROUTES.GET_STARTED}>
+              this guide
+            </Link>{' '}
+            to get started.
+          </div>
         </When>
+
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
     </ListPage>

@@ -25,8 +25,8 @@ import styled from '@emotion/styled/macro';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { QueryKeys } from '../../../api/query.keys';
-import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
 import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
+import { useContainer } from '../../../hooks/useContainer';
 
 export function QuestionnaireForm() {
   const queryClient = useQueryClient();

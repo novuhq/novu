@@ -4,7 +4,7 @@ import { useNotificationsInfiniteScroll } from '../../api';
 import { useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
-import { NotificationMounter } from '../../types';
+import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
 import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
 
@@ -39,6 +39,9 @@ const EmptyNotificationList = () => {
 
 type NotificationListProps = {
   mountNotification?: NotificationMounter;
+  onNotificationClick?: NotificationClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
   options?: ListNotificationsArgs;
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
@@ -50,7 +53,15 @@ export const NotificationList = (props: NotificationListProps) => {
       <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
         <NotificationListContainer>
           <For each={data()}>
-            {(notification) => <Notification notification={notification} mountNotification={props.mountNotification} />}
+            {(notification) => (
+              <Notification
+                notification={notification}
+                mountNotification={props.mountNotification}
+                onNotificationClick={props.onNotificationClick}
+                onPrimaryActionClick={props.onPrimaryActionClick}
+                onSecondaryActionClick={props.onSecondaryActionClick}
+              />
+            )}
           </For>
           <Show when={!end()}>
             <div ref={setEl}>

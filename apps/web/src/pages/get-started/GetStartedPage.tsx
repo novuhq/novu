@@ -1,5 +1,5 @@
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { css } from '@novu/novui/css';
 import { Stepper, Group } from '@mantine/core';
 
@@ -10,6 +10,8 @@ import { OnboardingStepsTimeline } from './OnboardingSteps';
 import { stepperClassNames } from './GetStartedPage.styles';
 import { onboardingTabs } from './form-tabs.config';
 import { motion } from 'framer-motion';
+import { navigatePlayground } from '../../utils';
+import { OutlineButton } from '../../studio/components/OutlineButton';
 const PAGE_TITLE = 'Get started with the Novu Flow';
 
 export function GetStartedPage() {
@@ -18,6 +20,11 @@ export function GetStartedPage() {
   useEffect(() => {
     segment.track('Page visit - [Get Started]');
   }, [segment]);
+
+  const handleClick = () => {
+    segment.track('Click visit playground - [Get Started]');
+    navigatePlayground();
+  };
 
   return (
     <PageContainer>
@@ -28,7 +35,17 @@ export function GetStartedPage() {
           width: '100%',
         })}
       >
-        <Title className={css({ fontWeight: 'bold', marginBottom: '34px' })}>{PAGE_TITLE}</Title>
+        <div
+          className={css({
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '34px',
+          })}
+        >
+          <Title className={css({ fontWeight: 'bold' })}>{PAGE_TITLE}</Title>
+          <OutlineButton onClick={handleClick}>Visit playground</OutlineButton>
+        </div>
         <StepperForm />
       </div>
     </PageContainer>
@@ -84,7 +101,7 @@ function StepperForm() {
                 Back
               </Button>
 
-              {active !== 2 && (
+              {active !== onboardingTabs.length - 1 && (
                 <Button onClick={nextStep} variant="filled" disabled={active === 2}>
                   Next step
                 </Button>
