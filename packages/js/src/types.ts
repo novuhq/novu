@@ -81,7 +81,6 @@ export type Subscriber = {
 
 export type Action = {
   label: string;
-  url?: string;
   isCompleted: boolean;
 };
 
@@ -100,6 +99,9 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelType;
   tags?: string[];
+  redirect?: {
+    url: string;
+  };
 };
 
 export type NotificationFilter = {

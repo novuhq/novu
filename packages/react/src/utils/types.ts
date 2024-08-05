@@ -1,11 +1,18 @@
-import type { BaseNovuUIOptions } from '@novu/js/ui';
-import type { Notification } from '@novu/js';
+import type {
+  Notification,
+  BaseNovuUIOptions,
+  NotificationClickHandler,
+  NotificationActionClickHandler,
+} from '@novu/js/ui';
 
-export type NotificationsRenderProps = (notification: Notification) => React.ReactNode;
+export type NotificationsRenderProps = (args: { notification: Notification }) => React.ReactNode;
 
 export type DefaultInboxProps = {
-  renderNotification?: (notification: Notification) => React.ReactNode;
+  renderNotification?: (args: { notification: Notification }) => React.ReactNode;
   renderBell?: ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
+  onNotificationClick?: NotificationClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
 export type BaseProps = BaseNovuUIOptions;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRenderer } from '../context/RendererContext';
+import { useRenderer } from '../context/RenderContext';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { Renderer } from './Renderer';
@@ -7,7 +7,7 @@ import { Renderer } from './Renderer';
 export type InboxProps = DefaultProps | WithChildrenProps;
 
 const DefaultInbox = (props: DefaultInboxProps) => {
-  const { renderNotification, renderBell } = props;
+  const { renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } = props;
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback(
@@ -16,14 +16,17 @@ const DefaultInbox = (props: DefaultInboxProps) => {
         name: 'Inbox',
         props: {
           mountNotification: renderNotification
-            ? (el, { notification }) => mountElement(el, renderNotification(notification))
+            ? (el, { notification }) => mountElement(el, renderNotification({ notification }))
             : undefined,
           mountBell: renderBell ? (el, { unreadCount }) => mountElement(el, renderBell({ unreadCount })) : undefined,
+          onNotificationClick,
+          onPrimaryActionClick,
+          onSecondaryActionClick,
         },
         element,
       });
     },
-    [renderNotification, renderBell]
+    [renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
   );
 
   return <Mounter mount={mount} />;
@@ -40,7 +43,13 @@ export const Inbox = React.memo((props: InboxProps) => {
 
   return (
     <Renderer options={options}>
-      <DefaultInbox renderNotification={renderNotification} renderBell={renderBell} />
+      <DefaultInbox
+        renderNotification={renderNotification}
+        renderBell={renderBell}
+        onNotificationClick={props.onNotificationClick}
+        onPrimaryActionClick={props.onPrimaryActionClick}
+        onSecondaryActionClick={props.onSecondaryActionClick}
+      />
     </Renderer>
   );
 });

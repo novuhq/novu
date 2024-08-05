@@ -160,7 +160,6 @@ export const completeAction = async ({
       ? {
           isCompleted: true,
           label: args.notification.primaryAction?.label ?? '',
-          url: args.notification.primaryAction?.url,
         }
       : {
           isCompleted: true,
@@ -211,7 +210,6 @@ export const revertAction = async ({
       ? {
           isCompleted: false,
           label: args.notification.primaryAction?.label ?? '',
-          url: args.notification.primaryAction?.url,
         }
       : {
           isCompleted: false,
