@@ -50,6 +50,7 @@ const InboxContent = (props: InboxContentProps) => {
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
+                options={{ archived: false }}
               />
             }
           >
