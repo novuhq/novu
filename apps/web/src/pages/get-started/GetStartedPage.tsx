@@ -21,9 +21,10 @@ export function GetStartedPage() {
     segment.track('Page visit - [Get Started]');
   }, [segment]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
+    segment.track('Click visit playground - [Get Started]');
     navigatePlayground();
-  }, []);
+  };
 
   return (
     <PageContainer>
@@ -43,7 +44,7 @@ export function GetStartedPage() {
           })}
         >
           <Title className={css({ fontWeight: 'bold' })}>{PAGE_TITLE}</Title>
-          <OutlineButton onClick={handleClick}>Go back to playground</OutlineButton>
+          <OutlineButton onClick={handleClick}>Visit playground</OutlineButton>
         </div>
         <StepperForm />
       </div>

@@ -2,14 +2,18 @@ import { PACKAGE_JSON, PNPM_LOCK_YAML, TS_CONFIG, TUNNEL, VITE_CONFIG } from './
 
 export const configureFiles = (workflowsCode: string, reactEmailCode: string) => {
   return {
-    'workflows.ts': {
-      file: {
-        contents: workflowsCode,
-      },
-    },
-    'react-email.tsx': {
-      file: {
-        contents: reactEmailCode,
+    src: {
+      directory: {
+        'workflows.ts': {
+          file: {
+            contents: workflowsCode,
+          },
+        },
+        'react-email.tsx': {
+          file: {
+            contents: reactEmailCode,
+          },
+        },
       },
     },
     'tunnel.ts': {
