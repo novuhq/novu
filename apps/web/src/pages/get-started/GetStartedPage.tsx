@@ -21,9 +21,10 @@ export function GetStartedPage() {
     segment.track('Page visit - [Get Started]');
   }, [segment]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
+    segment.track('Click go back to playground - [Get Started]');
     navigatePlayground();
-  }, []);
+  };
 
   return (
     <PageContainer>
