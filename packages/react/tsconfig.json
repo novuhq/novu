@@ -13,17 +13,6 @@
 
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "forceConsistentCasingInFileNames": true,
-
-    "moduleResolution": "NodeNext",
-
-    "skipLibCheck": true,
-    "strict": true,
     "noEmit": true
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]

@@ -47,7 +47,6 @@ const mapSingleItem = ({
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
-      url: secondaryCta.url,
       isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     channelType: channel,

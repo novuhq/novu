@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRenderer } from '../context/RendererContext';
+import { useRenderer } from '../context/RenderContext';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { Renderer } from './Renderer';

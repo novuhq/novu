@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRenderer } from '../context/RendererContext';
+import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
 
 export type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;

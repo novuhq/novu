@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRenderer } from '../context/RendererContext';
+import { useRenderer } from '../context/RenderContext';
 import { NotificationsRenderProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import type { NotificationClickHandler, NotificationActionClickHandler } from '@novu/js/ui';
