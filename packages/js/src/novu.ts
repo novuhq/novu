@@ -13,6 +13,7 @@ export type NovuOptions = {
   subscriberHash?: string;
   backendUrl?: string;
   socketUrl?: string;
+  useCache?: boolean;
 };
 
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
@@ -32,7 +33,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
       subscriberHash: options.subscriberHash,
     });
     this.#session.initialize();
-    this.notifications = new Notifications();
+    this.notifications = new Notifications({ useCache: options.useCache ?? true });
     this.preferences = new Preferences();
     this.#socket = new Socket({ socketUrl: options.socketUrl });
   }
