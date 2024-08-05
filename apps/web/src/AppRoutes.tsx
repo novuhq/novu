@@ -59,8 +59,8 @@ import { IS_EE_AUTH_ENABLED } from './config/index';
 import { EnterpriseAuthRoutes } from './ee/clerk/EnterpriseAuthRoutes';
 import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
-import { OnboardingPage } from './pages/auth/onboarding/Onboarding';
-import { PlaygroundPage } from './pages/auth/onboarding/PlaygroundPage';
+import { OnboardingPage } from './pages/playground/onboarding/Onboarding';
+import { PlaygroundPage } from './pages/playground/onboarding/PlaygroundPage';
 import { BillingRoutes } from './pages/BillingPages';
 import { StudioStepEditorPage } from './studio/pages/StudioStepEditorPage';
 

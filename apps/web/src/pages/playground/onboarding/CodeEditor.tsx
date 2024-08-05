@@ -1,14 +1,13 @@
 /* eslint-disable max-len */
-import React, { useEffect, useRef, useState } from 'react';
-import { css, cx } from '@emotion/css';
-import styled from '@emotion/styled';
+import { useEffect, useRef, useState } from 'react';
+import { css } from '@emotion/css';
 import { useMantineTheme } from '@mantine/core';
 import { Editor, Monaco } from '@monaco-editor/react';
-import { editor as NEditor, Range } from 'monaco-editor';
+import { editor as NEditor } from 'monaco-editor';
 import { Tabs } from '@mantine/core';
 
 import { colors } from '@novu/design-system';
-import { BrowserScreenWrapper } from '../../../../../pages/auth/onboarding/TitleBarWrapper';
+import { BrowserScreenWrapper } from './TitleBarWrapper';
 
 export function CodeEditor({
   files,

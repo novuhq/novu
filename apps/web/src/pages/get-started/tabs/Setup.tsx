@@ -1,7 +1,7 @@
 import { NextJSLogo, SvelteLogo, H3Logo, RemixLogo, ExpressLogo, NuxtLogo } from '../Logos';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { Button, Code } from '@mantine/core';
+import { Code } from '@mantine/core';
 import { OnboardingStepsTimeline } from '../OnboardingSteps';
 import { CodeSnippet } from '../legacy-onboarding/components/CodeSnippet';
 import { useEnvironment } from '../../../hooks/useEnvironment';

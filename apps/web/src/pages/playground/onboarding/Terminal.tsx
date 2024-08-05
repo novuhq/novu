@@ -1,12 +1,13 @@
 import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { IconMenuBook, IconTerminal } from '@novu/novui/icons';
 import 'xterm/css/xterm.css';
 
-import { TerminalHandle } from './useContainer';
+import { IconMenuBook, IconTerminal } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { Button } from '@novu/novui';
+
+import { TerminalHandle } from '../../../hooks/useContainer';
 
 interface TerminalComponentProps {
   onChange?: (data: string) => void;

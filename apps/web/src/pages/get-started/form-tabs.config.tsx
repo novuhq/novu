@@ -1,12 +1,5 @@
-import {
-  IconSettings,
-  IconLaptopMac,
-  IconOutlineCloudUpload,
-  IconOutlineRocketLaunch,
-  IconGroup,
-} from '@novu/novui/icons';
+import { IconLaptopMac, IconOutlineCloudUpload, IconGroup } from '@novu/novui/icons';
 import { SetupTab } from './tabs/Setup';
-import { CodeSnippet } from './legacy-onboarding/components/CodeSnippet';
 import { css } from '@novu/novui/css';
 import { DeployTab } from './tabs/Deploy';
 import { collaborateSteps } from './tabs/Collaborate';
@@ -18,24 +11,24 @@ const iconStyles = css({
 
 export const onboardingTabs = [
   {
+    title: 'Build your first workflow',
+    description: 'Build and test your first workflow in Novu Studio',
     icon: <IconLaptopMac className={iconStyles} />,
     stepperTitle: 'Build',
     content: <SetupTab />,
-    description: 'Build and test your first workflow in Novu Studio',
-    title: 'Build your first workflow',
   },
   {
+    title: 'Push your flow to the cloud',
+    description: 'Publish your changes to share with your team',
     icon: <IconOutlineCloudUpload className={iconStyles} />,
     stepperTitle: 'Deploy',
     content: <DeployTab />,
-    description: 'Publish your changes to share with your team',
-    title: 'Push your flow to the cloud',
   },
   {
+    title: 'Collaborate with your team',
+    description: 'Enable your team members to modify notification content',
     icon: <IconGroup className={iconStyles} />,
     stepperTitle: 'Collaborate',
     steps: collaborateSteps,
-    description: 'Enable your team members to modify notification content',
-    title: 'Collaborate with your team',
   },
 ];

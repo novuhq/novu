@@ -758,6 +758,7 @@
     "apps/web/env.sh",
     "packages/js/src/ui/index.directcss",
     "unreadRead",
-    "apps/web/src/studio/components/workflows/step-editor/editor/files.ts"
+    "apps/web/src/studio/components/workflows/step-editor/editor/files.ts",
+    "apps/web/src/pages/playground/web-container-configuration/sandbox-vite/*.ts"
   ]
 }
