@@ -17,7 +17,7 @@ const oneSignalOutputSchema = {
                 includedSegments: {
                   type: 'array',
                   description:
-                    'The segment names you want to target. Users in these segments will receive a notification. This targeting parameter is only compatible with excluded_segments.\nExample: ["Active Users", "Inactive Users"]\n',
+                    'The segment names you want to target. Users in these segments will receive a notification. This targeting parameter is only compatible with excludedSegments.\nExample: ["Active Users", "Inactive Users"]\n',
                   items: {
                     type: 'string',
                   },
@@ -25,7 +25,7 @@ const oneSignalOutputSchema = {
                 excludedSegments: {
                   type: 'array',
                   description:
-                    'Segment that will be excluded when sending. Users in these segments will not receive a notification, even if they were included in included_segments. This targeting parameter is only compatible with included_segments.\nExample: ["Active Users", "Inactive Users"]\n',
+                    'Segment that will be excluded when sending. Users in these segments will not receive a notification, even if they were included in includedSegments. This targeting parameter is only compatible with includedSegments.\nExample: ["Active Users", "Inactive Users"]\n',
                   items: {
                     type: 'string',
                   },
@@ -47,7 +47,7 @@ const oneSignalOutputSchema = {
                 includeExternalUserIds: {
                   type: 'array',
                   description:
-                    'Target specific devices by custom user IDs assigned via API.\nNot compatible with any other targeting parameters\nExample: ["custom-id-assigned-by-api"]\nREQUIRED: REST API Key Authentication\nLimit of 2,000 entries per REST API call.\nNote: If targeting push, email, or sms subscribers with same ids, use with channel_for_external_user_ids to indicate you are sending a push or email or sms.\n',
+                    'Target specific devices by custom user IDs assigned via API.\nNot compatible with any other targeting parameters\nExample: ["custom-id-assigned-by-api"]\nREQUIRED: REST API Key Authentication\nLimit of 2,000 entries per REST API call.\nNote: If targeting push, email, or sms subscribers with same ids, use with channelForExternalUserIds to indicate you are sending a push or email or sms.\n',
                   items: {
                     type: 'string',
                   },
@@ -72,7 +72,7 @@ const oneSignalOutputSchema = {
                 includeIosTokens: {
                   type: 'array',
                   description:
-                    'Not Recommended: Please consider using include_player_ids or include_external_user_ids instead.\nTarget using iOS device tokens.\nWarning: Only works with Production tokens.\nAll non-alphanumeric characters must be removed from each token. If a token does not correspond to an existing user, a new user will be created.\nExample: ce777617da7f548fe7a9ab6febb56cf39fba6d38203...\nLimit of 2,000 entries per REST API call\n',
+                    'Not Recommended: Please consider using includePlayerIds or includeExternalUserIds instead.\nTarget using iOS device tokens.\nWarning: Only works with Production tokens.\nAll non-alphanumeric characters must be removed from each token. If a token does not correspond to an existing user, a new user will be created.\nExample: ce777617da7f548fe7a9ab6febb56cf39fba6d38203...\nLimit of 2,000 entries per REST API call\n',
                   items: {
                     type: 'string',
                   },
@@ -80,7 +80,7 @@ const oneSignalOutputSchema = {
                 includeWpWnsUris: {
                   type: 'array',
                   description:
-                    'Not Recommended: Please consider using include_player_ids or include_external_user_ids instead.\nTarget using Windows URIs. If a token does not correspond to an existing user, a new user will be created.\nExample: http://s.notify.live.net/u/1/bn1/HmQAAACPaLDr-...\nLimit of 2,000 entries per REST API call\n',
+                    'Not Recommended: Please consider using includePlayerIds or includeExternalUserIds instead.\nTarget using Windows URIs. If a token does not correspond to an existing user, a new user will be created.\nExample: http://s.notify.live.net/u/1/bn1/HmQAAACPaLDr-...\nLimit of 2,000 entries per REST API call\n',
                   items: {
                     type: 'string',
                   },
@@ -88,7 +88,7 @@ const oneSignalOutputSchema = {
                 includeAmazonRegIds: {
                   type: 'array',
                   description:
-                    'Not Recommended: Please consider using include_player_ids or include_external_user_ids instead.\nTarget using Amazon ADM registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: amzn1.adm-registration.v1.XpvSSUk0Rc3hTVVV...\nLimit of 2,000 entries per REST API call\n',
+                    'Not Recommended: Please consider using includePlayerIds or includeExternalUserIds instead.\nTarget using Amazon ADM registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: amzn1.adm-registration.v1.XpvSSUk0Rc3hTVVV...\nLimit of 2,000 entries per REST API call\n',
                   items: {
                     type: 'string',
                   },
@@ -96,7 +96,7 @@ const oneSignalOutputSchema = {
                 includeChromeRegIds: {
                   type: 'array',
                   description:
-                    'Not Recommended: Please consider using include_player_ids or include_external_user_ids instead.\nTarget using Chrome App registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: APA91bEeiUeSukAAUdnw3O2RB45FWlSpgJ7Ji_...\nLimit of 2,000 entries per REST API call\n',
+                    'Not Recommended: Please consider using includePlayerIds or includeExternalUserIds instead.\nTarget using Chrome App registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: APA91bEeiUeSukAAUdnw3O2RB45FWlSpgJ7Ji_...\nLimit of 2,000 entries per REST API call\n',
                   items: {
                     type: 'string',
                   },
@@ -104,7 +104,7 @@ const oneSignalOutputSchema = {
                 includeChromeWebRegIds: {
                   type: 'array',
                   description:
-                    'Not Recommended: Please consider using include_player_ids or include_external_user_ids instead.\nTarget using Chrome Web Push registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: APA91bEeiUeSukAAUdnw3O2RB45FWlSpgJ7Ji_...\nLimit of 2,000 entries per REST API call\n',
+                    'Not Recommended: Please consider using includePlayerIds or includeExternalUserIds instead.\nTarget using Chrome Web Push registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: APA91bEeiUeSukAAUdnw3O2RB45FWlSpgJ7Ji_...\nLimit of 2,000 entries per REST API call\n',
                   items: {
                     type: 'string',
                   },
@@ -112,7 +112,7 @@ const oneSignalOutputSchema = {
                 includeAndroidRegIds: {
                   type: 'array',
                   description:
-                    'Not Recommended: Please consider using include_player_ids or include_external_user_ids instead.\nTarget using Android device registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: APA91bEeiUeSukAAUdnw3O2RB45FWlSpgJ7Ji_...\nLimit of 2,000 entries per REST API call\n',
+                    'Not Recommended: Please consider using includePlayerIds or includeExternalUserIds instead.\nTarget using Android device registration IDs. If a token does not correspond to an existing user, a new user will be created.\nExample: APA91bEeiUeSukAAUdnw3O2RB45FWlSpgJ7Ji_...\nLimit of 2,000 entries per REST API call\n',
                   items: {
                     type: 'string',
                   },
@@ -230,7 +230,7 @@ const oneSignalOutputSchema = {
               type: 'string',
               writeOnly: true,
               description:
-                'Indicates if the message type when targeting with include_external_user_ids for cases where an email, sms, and/or push subscribers have the same external user id.\nExample: Use the string "push" to indicate you are sending a push notification or the string "email"for sending emails or "sms"for sending SMS.\n',
+                'Indicates if the message type when targeting with includeExternalUserIds for cases where an email, sms, and/or push subscribers have the same external user id.\nExample: Use the string "push" to indicate you are sending a push notification or the string "email"for sending emails or "sms"for sending SMS.\n',
             },
             appId: {
               type: 'string',
@@ -241,7 +241,7 @@ const oneSignalOutputSchema = {
             externalId: {
               type: 'string',
               description:
-                "Correlation and idempotency key.\nA request received with this parameter will first look for another notification with the same external_id. If one exists, a notification will not be sent, and result of the previous operation will instead be returned. Therefore, if you plan on using this feature, it's important to use a good source of randomness to generate the UUID passed here.\nThis key is only idempotent for 30 days. After 30 days, the notification could be removed from our system and a notification with the same external_id will be sent again.\n  See Idempotent Notification Requests for more details\nwriteOnly: true\n",
+                "Correlation and idempotency key.\nA request received with this parameter will first look for another notification with the same externalId. If one exists, a notification will not be sent, and result of the previous operation will instead be returned. Therefore, if you plan on using this feature, it's important to use a good source of randomness to generate the UUID passed here.\nThis key is only idempotent for 30 days. After 30 days, the notification could be removed from our system and a notification with the same externalId will be sent again.\n  See Idempotent Notification Requests for more details\nwriteOnly: true\n",
               nullable: true,
             },
             contents: {
@@ -425,7 +425,7 @@ const oneSignalOutputSchema = {
                 },
                 {
                   description:
-                    'Required unless content_available=true or template_id is set.\nThe message\'s content (excluding the title), a map of language codes to text for each language.\nEach hash must have a language code string for a key, mapped to the localized text you would like users to receive for that language.\nThis field supports inline substitutions.\nEnglish must be included in the hash.\nExample: {"en": "English Message", "es": "Spanish Message"}\n',
+                    'Required unless contentAvailable=true or templateId is set.\nThe message\'s content (excluding the title), a map of language codes to text for each language.\nEach hash must have a language code string for a key, mapped to the localized text you would like users to receive for that language.\nThis field supports inline substitutions.\nEnglish must be included in the hash.\nExample: {"en": "English Message", "es": "Spanish Message"}\n',
                   writeOnly: true,
                 },
               ],
@@ -819,7 +819,7 @@ const oneSignalOutputSchema = {
             url: {
               type: 'string',
               description:
-                'Channel: Push Notifications\nPlatform: All\nThe URL to open in the browser when a user clicks on the notification.\nNote: iOS needs https or updated NSAppTransportSecurity in plist\nThis field supports inline substitutions.\nOmit if including web_url or app_url\nExample: https://onesignal.com\n',
+                'Channel: Push Notifications\nPlatform: All\nThe URL to open in the browser when a user clicks on the notification.\nNote: iOS needs https or updated NSAppTransportSecurity in plist\nThis field supports inline substitutions.\nOmit if including webUrl or appUrl\nExample: https://onesignal.com\n',
               writeOnly: true,
               nullable: true,
             },
@@ -840,14 +840,14 @@ const oneSignalOutputSchema = {
             iosAttachments: {
               type: 'object',
               description:
-                'Channel: Push Notifications\nPlatform: iOS 10+\nAdds media attachments to notifications. Set as JSON object, key as a media id of your choice and the value as a valid local filename or URL. User must press and hold on the notification to view.\nDo not set mutable_content to download attachments. The OneSignal SDK does this automatically\nExample: {"id1": "https://domain.com/image.jpg"}\n',
+                'Channel: Push Notifications\nPlatform: iOS 10+\nAdds media attachments to notifications. Set as JSON object, key as a media id of your choice and the value as a valid local filename or URL. User must press and hold on the notification to view.\nDo not set mutableContent to download attachments. The OneSignal SDK does this automatically\nExample: {"id1": "https://domain.com/image.jpg"}\n',
               writeOnly: true,
               nullable: true,
             },
             templateId: {
               type: 'string',
               description:
-                'Channel: Push Notifications\nPlatform: All\nUse a template you setup on our dashboard. The template_id is the UUID found in the URL when viewing a template on our dashboard.\nExample: be4a8044-bbd6-11e4-a581-000c2940e62c\n',
+                'Channel: Push Notifications\nPlatform: All\nUse a template you setup on our dashboard. The templateId is the UUID found in the URL when viewing a template on our dashboard.\nExample: be4a8044-bbd6-11e4-a581-000c2940e62c\n',
               writeOnly: true,
               nullable: true,
             },
@@ -1013,7 +1013,7 @@ const oneSignalOutputSchema = {
             huaweiSmallIcon: {
               type: 'string',
               description:
-                'Channel: Push Notifications\nPlatform: Huawei\nIcon shown in the status bar and on the top left of the notification.\nUse an Android resource path (E.g. /drawable/small_icon).\nDefaults to your app icon if not set.\n',
+                'Channel: Push Notifications\nPlatform: Huawei\nIcon shown in the status bar and on the top left of the notification.\nUse an Android resource path (E.g. /drawable/smallIcon).\nDefaults to your app icon if not set.\n',
               writeOnly: true,
               nullable: true,
             },
@@ -1041,14 +1041,14 @@ const oneSignalOutputSchema = {
             admLargeIcon: {
               type: 'string',
               description:
-                'Channel: Push Notifications\nPlatform: Amazon\nIf blank the small_icon is used. Can be a drawable resource name or a URL.\nSee: How to create large icons\n',
+                'Channel: Push Notifications\nPlatform: Amazon\nIf blank the smallIcon is used. Can be a drawable resource name or a URL.\nSee: How to create large icons\n',
               writeOnly: true,
               nullable: true,
             },
             chromeWebIcon: {
               type: 'string',
               description:
-                "Channel: Push Notifications\nPlatform: Chrome\nSets the web push notification's icon. An image URL linking to a valid image. Common image types are supported; GIF will not animate. We recommend 256x256 (at least 80x80) to display well on high DPI devices. Firefox will also use this icon, unless you specify firefox_icon.\n",
+                "Channel: Push Notifications\nPlatform: Chrome\nSets the web push notification's icon. An image URL linking to a valid image. Common image types are supported; GIF will not animate. We recommend 256x256 (at least 80x80) to display well on high DPI devices. Firefox will also use this icon, unless you specify firefoxIcon.\n",
               nullable: true,
             },
             chromeWebBadge: {
@@ -1061,14 +1061,14 @@ const oneSignalOutputSchema = {
             firefoxIcon: {
               type: 'string',
               description:
-                "Channel: Push Notifications\nPlatform: Firefox\nNot recommended Few people need to set Firefox-specific icons. We recommend setting chrome_web_icon instead, which Firefox will also use.\nSets the web push notification's icon for Firefox. An image URL linking to a valid image. Common image types are supported; GIF will not animate. We recommend 256x256 (at least 80x80) to display well on high DPI devices.\n",
+                "Channel: Push Notifications\nPlatform: Firefox\nNot recommended Few people need to set Firefox-specific icons. We recommend setting chromeWebIcon instead, which Firefox will also use.\nSets the web push notification's icon for Firefox. An image URL linking to a valid image. Common image types are supported; GIF will not animate. We recommend 256x256 (at least 80x80) to display well on high DPI devices.\n",
               writeOnly: true,
               nullable: true,
             },
             chromeIcon: {
               type: 'string',
               description:
-                'Channel: Push Notifications\nPlatform: ChromeApp\nThis flag is not used for web push For web push, please see chrome_web_icon instead.\nThe local URL to an icon to use. If blank, the app icon will be used.\n',
+                'Channel: Push Notifications\nPlatform: ChromeApp\nThis flag is not used for web push For web push, please see chromeWebIcon instead.\nThe local URL to an icon to use. If blank, the app icon will be used.\n',
               writeOnly: true,
               nullable: true,
             },
@@ -1152,7 +1152,7 @@ const oneSignalOutputSchema = {
             iosBadgeType: {
               type: 'string',
               description:
-                "Channel: Push Notifications\nPlatform: iOS\nDescribes whether to set or increase/decrease your app's iOS badge count by the ios_badgeCount specified count. Can specify None, SetTo, or Increase.\n`None` leaves the count unaffected.\n`SetTo` directly sets the badge count to the number specified in ios_badgeCount.\n`Increase` adds the number specified in ios_badgeCount to the total. Use a negative number to decrease the badge count.\n",
+                "Channel: Push Notifications\nPlatform: iOS\nDescribes whether to set or increase/decrease your app's iOS badge count by the iosBadgeCount specified count. Can specify None, SetTo, or Increase.\n`None` leaves the count unaffected.\n`SetTo` directly sets the badge count to the number specified in iosBadgeCount.\n`Increase` adds the number specified in iosBadgeCount to the total. Use a negative number to decrease the badge count.\n",
               writeOnly: true,
               nullable: true,
             },
@@ -1160,7 +1160,7 @@ const oneSignalOutputSchema = {
               type: 'integer',
               nullable: true,
               description:
-                "Channel: Push Notifications\nPlatform: iOS\nUsed with ios_badgeType, describes the value to set or amount to increase/decrease your app's iOS badge count by.\nYou can use a negative number to decrease the badge count when used with an ios_badgeType of Increase.\n",
+                "Channel: Push Notifications\nPlatform: iOS\nUsed with iosBadgeType, describes the value to set or amount to increase/decrease your app's iOS badge count by.\nYou can use a negative number to decrease the badge count when used with an iosBadgeType of Increase.\n",
               writeOnly: true,
             },
             collapseId: {
@@ -1178,20 +1178,20 @@ const oneSignalOutputSchema = {
             apnsAlert: {
               type: 'object',
               description:
-                "Channel: Push Notifications\nPlatform: iOS 10+\niOS can localize push notification messages on the client using special parameters such as loc-key. When using the Create Notification endpoint, you must include these parameters inside of a field called apns_alert. Please see Apple's guide on localizing push notifications to learn more.\n",
+                "Channel: Push Notifications\nPlatform: iOS 10+\niOS can localize push notification messages on the client using special parameters such as loc-key. When using the Create Notification endpoint, you must include these parameters inside of a field called apnsAlert. Please see Apple's guide on localizing push notifications to learn more.\n",
               writeOnly: true,
               nullable: true,
             },
             delayedOption: {
               type: 'string',
               description:
-                'Channel: All\nPossible values are:\ntimezone (Deliver at a specific time-of-day in each users own timezone)\nlast-active Same as Intelligent Delivery . (Deliver at the same time of day as each user last used your app).\nIf send_after is used, this takes effect after the send_after time has elapsed.\n',
+                'Channel: All\nPossible values are:\ntimezone (Deliver at a specific time-of-day in each users own timezone)\nlast-active Same as Intelligent Delivery . (Deliver at the same time of day as each user last used your app).\nIf sendAfter is used, this takes effect after the sendAfter time has elapsed.\n',
               writeOnly: true,
               nullable: true,
             },
             deliveryTimeOfDay: {
               type: 'string',
-              description: 'Channel: All\nUse with delayed_option=timezone.\nExamples: "9:00AM"\n"21:45"\n"9:45:30"\n',
+              description: 'Channel: All\nUse with delayedOption=timezone.\nExamples: "9:00AM"\n"21:45"\n"9:45:30"\n',
               writeOnly: true,
               nullable: true,
             },
@@ -1260,13 +1260,13 @@ const oneSignalOutputSchema = {
             summaryArg: {
               type: 'string',
               description:
-                'Channel: Push Notifications\nPlatform: iOS 12+\nWhen using thread_id to create grouped notifications in iOS 12+, you can also control the summary. For example, a grouped notification can say "12 more notifications from John Doe".\nThe summary_arg lets you set the name of the person/thing the notifications are coming from, and will show up as "X more notifications from summary_arg"\n',
+                'Channel: Push Notifications\nPlatform: iOS 12+\nWhen using threadId to create grouped notifications in iOS 12+, you can also control the summary. For example, a grouped notification can say "12 more notifications from John Doe".\nThe summaryArg lets you set the name of the person/thing the notifications are coming from, and will show up as "X more notifications from summaryArg"\n',
               writeOnly: true,
             },
             summaryArgCount: {
               type: 'integer',
               description:
-                'Channel: Push Notifications\nPlatform: iOS 12+\nWhen using thread_id, you can also control the count of the number of notifications in the group. For example, if the group already has 12 notifications, and you send a new notification with summary_arg_count = 2, the new total will be 14 and the summary will be "14 more notifications from summary_arg"\n',
+                'Channel: Push Notifications\nPlatform: iOS 12+\nWhen using threadId, you can also control the count of the number of notifications in the group. For example, if the group already has 12 notifications, and you send a new notification with summaryArgCount = 2, the new total will be 14 and the summary will be "14 more notifications from summaryArg"\n',
               writeOnly: true,
             },
             emailSubject: {
@@ -1278,7 +1278,7 @@ const oneSignalOutputSchema = {
             emailBody: {
               type: 'string',
               description:
-                'Channel: Email\nRequired unless template_id is set.\nHTML suported\nThe body of the email you wish to send. Typically, customers include their own HTML templates here. Must include [unsubscribe_url] in an <a> tag somewhere in the email.\nNote: any malformed HTML content will be sent to users. Please double-check your HTML is valid.\n',
+                'Channel: Email\nRequired unless templateId is set.\nHTML suported\nThe body of the email you wish to send. Typically, customers include their own HTML templates here. Must include [unsubscribe_url] in an <a> tag somewhere in the email.\nNote: any malformed HTML content will be sent to users. Please double-check your HTML is valid.\n',
               writeOnly: true,
             },
             emailFromName: {
@@ -1305,7 +1305,7 @@ const oneSignalOutputSchema = {
             includeUnsubscribed: {
               type: 'boolean',
               description:
-                "Channel: Email\nDefault is `false`. This field is used to send transactional notifications. If set to `true`, this notification will also be sent to unsubscribed emails. If a `template_id` is provided, the `include_unsubscribed` value from the template will be inherited. If you are using a third-party ESP, this field requires the ESP's list of unsubscribed emails to be cleared.",
+                "Channel: Email\nDefault is `false`. This field is used to send transactional notifications. If set to `true`, this notification will also be sent to unsubscribed emails. If a `templateId` is provided, the `includeUnsubscribed` value from the template will be inherited. If you are using a third-party ESP, this field requires the ESP's list of unsubscribed emails to be cleared.",
               writeOnly: true,
             },
             smsFrom: {
@@ -1363,7 +1363,7 @@ const oneSignalOutputSchema = {
           },
         },
         {
-          required: ['app_id'],
+          required: ['appId'],
         },
       ],
     },
@@ -1374,7 +1374,7 @@ const oneSignalOutputSchema = {
           type: 'string',
           format: 'date-time',
           description:
-            'Channel: All\nSchedule notification for future delivery. API defaults to UTC -1100\nExamples: All examples are the exact same date & time.\n"Thu Sep 24 2015 14:00:00 GMT-0700 (PDT)"\n"September 24th 2015, 2:00:00 pm UTC-07:00"\n"2015-09-24 14:00:00 GMT-0700"\n"Sept 24 2015 14:00:00 GMT-0700"\n"Thu Sep 24 2015 14:00:00 GMT-0700 (Pacific Daylight Time)"\nNote: SMS currently only supports send_after parameter.\n',
+            'Channel: All\nSchedule notification for future delivery. API defaults to UTC -1100\nExamples: All examples are the exact same date & time.\n"Thu Sep 24 2015 14:00:00 GMT-0700 (PDT)"\n"September 24th 2015, 2:00:00 pm UTC-07:00"\n"2015-09-24 14:00:00 GMT-0700"\n"Sept 24 2015 14:00:00 GMT-0700"\n"Thu Sep 24 2015 14:00:00 GMT-0700 (Pacific Daylight Time)"\nNote: SMS currently only supports sendAfter parameter.\n',
           writeOnly: true,
           nullable: true,
         },
