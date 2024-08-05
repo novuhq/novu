@@ -33,7 +33,7 @@ const fcmOutputSchema = {
     },
     collapseKey: {
       description:
-        'This parameter identifies a group of messages (e.g., with ```"collapse_key": "Updates Available"```) that can be collapsed, so that only the last message gets sent when delivery can be resumed. This is intended to avoid sending too many of the same messages when the device comes back online or becomes active (see **delay_while_idle**).\nNote that there is no guarantee of the order in which messages get sent.\nNote: A maximum of 4 different collapse keys is allowed at any given time. This means a FCM connection server can simultaneously store 4 different send-to-sync messages per client app. If you exceed this number, there is no guarantee which 4 collapse keys the FCM connection server will keep.\n',
+        'This parameter identifies a group of messages (e.g., with ```"collapseKey": "Updates Available"```) that can be collapsed, so that only the last message gets sent when delivery can be resumed. This is intended to avoid sending too many of the same messages when the device comes back online or becomes active (see **delay_while_idle**).\nNote that there is no guarantee of the order in which messages get sent.\nNote: A maximum of 4 different collapse keys is allowed at any given time. This means a FCM connection server can simultaneously store 4 different send-to-sync messages per client app. If you exceed this number, there is no guarantee which 4 collapse keys the FCM connection server will keep.\n',
       type: 'string',
     },
     priority: {
@@ -74,7 +74,7 @@ const fcmOutputSchema = {
     },
     data: {
       description:
-        'This parameter specifies the custom key-value pairs of the message\'s payload.\nFor example, with ```"data":{"score":"3x1"}```:\nOn iOS, if the message is sent via APNS, it represents the custom data fields. If it is sent via FCM connection server, it would be represented as key value dictionary in ```AppDelegate application:didReceiveRemoteNotification:```.\nOn Android, this would result in an intent extra named **score** with the string value **3x1**.\nThe key should not be a reserved word ("from" or any word starting with "google" or "gcm"). Do not use any of the words defined in this table (such as **collapse_key**).\n',
+        'This parameter specifies the custom key-value pairs of the message\'s payload.\nFor example, with ```"data":{"score":"3x1"}```:\nOn iOS, if the message is sent via APNS, it represents the custom data fields. If it is sent via FCM connection server, it would be represented as key value dictionary in ```AppDelegate application:didReceiveRemoteNotification:```.\nOn Android, this would result in an intent extra named **score** with the string value **3x1**.\nThe key should not be a reserved word ("from" or any word starting with "google" or "gcm"). Do not use any of the words defined in this table (such as **collapseKey**).\n',
       type: 'object',
       additionalProperties: {
         type: 'string',
