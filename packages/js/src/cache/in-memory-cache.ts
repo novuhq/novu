@@ -15,7 +15,7 @@ export class InMemoryCache<T> implements Cache<T> {
     return Array.from(this.#cache.values());
   }
 
-  pairs(): [string, T][] {
+  entries(): [string, T][] {
     return Array.from(this.#cache.entries());
   }
 

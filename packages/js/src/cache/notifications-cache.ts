@@ -1,16 +1,25 @@
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
-import { NotificationEvents, NotificationsEvents, NovuEventEmitter } from '../event-emitter';
+import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
 import type { NotificationFilter } from '../types';
 import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
 
+const excludeEmpty = ({ tags, read, archived, limit, offset, after }: ListNotificationsArgs) =>
+  Object.entries({ tags, read, archived, limit, offset, after })
+    .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
+    .reduce((acc, [key, value]) => {
+      acc[key] = value;
+
+      return acc;
+    }, {});
+
 const getCacheKey = ({ tags, read, archived, limit, offset, after }: ListNotificationsArgs): string => {
-  return JSON.stringify({ tags, read, archived, limit, offset, after });
+  return JSON.stringify(excludeEmpty({ tags, read, archived, limit, offset, after }));
 };
 
 const getFilterKey = ({ tags, read, archived }: Pick<ListNotificationsArgs, 'tags' | 'read' | 'archived'>): string => {
-  return JSON.stringify({ tags, read, archived });
+  return JSON.stringify(excludeEmpty({ tags, read, archived }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -18,7 +27,7 @@ const getFilter = (key: string): NotificationFilter => {
 };
 
 // these events should update the notification in the cache
-const notificationEvents: NotificationEvents[] = [
+const updateEvents: NotificationEvents[] = [
   'notification.read.pending',
   'notification.read.resolved',
   'notification.unread.pending',
@@ -27,22 +36,14 @@ const notificationEvents: NotificationEvents[] = [
   'notification.complete_action.resolved',
   'notification.revert_action.pending',
   'notification.revert_action.resolved',
-];
-
-// these events should remove the notification from the cache
-const notificationEventsThatRemove: NotificationEvents[] = [
-  'notification.archive.pending',
-  'notification.unarchive.pending',
-];
-
-// these events should update the notifications in the cache
-const notificationsEvents: NotificationsEvents[] = [
   'notifications.read_all.pending',
   'notifications.read_all.resolved',
 ];
 
-// these events should remove the notifications from the cache
-const notificationsEventsThatRemove: NotificationsEvents[] = [
+// these events should remove the notification from the cache
+const removeEvents: NotificationEvents[] = [
+  'notification.archive.pending',
+  'notification.unarchive.pending',
   'notifications.archive_all.pending',
   'notifications.archive_all_read.pending',
 ];
@@ -56,22 +57,16 @@ export class NotificationsCache {
 
   constructor() {
     this.#emitter = NovuEventEmitter.getInstance();
-    notificationEvents.forEach((event) => {
+    updateEvents.forEach((event) => {
       this.#emitter.on(event, this.handleNotificationEvent());
     });
-    notificationEventsThatRemove.forEach((event) => {
+    removeEvents.forEach((event) => {
       this.#emitter.on(event, this.handleNotificationEvent({ remove: true }));
-    });
-    notificationsEvents.forEach((event) => {
-      this.#emitter.on(event, this.handleNotificationsEvent());
-    });
-    notificationsEventsThatRemove.forEach((event) => {
-      this.#emitter.on(event, this.handleNotificationsEvent({ remove: true }));
     });
     this.#cache = new InMemoryCache();
   }
 
-  private updateNotificationInCache = (key: string, data: Notification): boolean => {
+  private updateNotification = (key: string, data: Notification): boolean => {
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
@@ -90,7 +85,7 @@ export class NotificationsCache {
     return true;
   };
 
-  private removeNotificationInCache = (key: string, data: Notification): boolean => {
+  private removeNotification = (key: string, data: Notification): boolean => {
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
@@ -114,48 +109,21 @@ export class NotificationsCache {
 
   private handleNotificationEvent =
     ({ remove }: { remove: boolean } = { remove: false }) =>
-    ({ data }: { data?: Notification }): void => {
+    ({ data }: { data?: Notification | Notification[] }): void => {
       if (!data) {
         return;
       }
 
-      const uniqueFilterKeys = new Set<string>();
-      this.#cache.keys().forEach((key) => {
-        let isNotificationFound = false;
-        if (remove) {
-          isNotificationFound = this.removeNotificationInCache(key, data);
-        } else {
-          isNotificationFound = this.updateNotificationInCache(key, data);
-        }
-
-        if (isNotificationFound) {
-          uniqueFilterKeys.add(getFilterKey(getFilter(key)));
-        }
-      });
-
-      uniqueFilterKeys.forEach((key) => {
-        const notificationsResponse = this.getAggregated(getFilter(key));
-        this.#emitter.emit('notifications.list.updated', {
-          data: notificationsResponse,
-        });
-      });
-    };
-
-  private handleNotificationsEvent =
-    ({ remove }: { remove: boolean } = { remove: false }) =>
-    ({ data }: { data?: Notification[] }): void => {
-      if (!data) {
-        return;
-      }
+      const notifications = Array.isArray(data) ? data : [data];
 
       const uniqueFilterKeys = new Set<string>();
       this.#cache.keys().forEach((key) => {
-        data.forEach((notification) => {
+        notifications.forEach((notification) => {
           let isNotificationFound = false;
           if (remove) {
-            isNotificationFound = this.removeNotificationInCache(key, notification);
+            isNotificationFound = this.removeNotification(key, notification);
           } else {
-            isNotificationFound = this.updateNotificationInCache(key, notification);
+            isNotificationFound = this.updateNotification(key, notification);
           }
 
           if (isNotificationFound) {

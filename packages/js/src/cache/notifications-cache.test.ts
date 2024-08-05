@@ -277,7 +277,7 @@ describe('NotificationsCache', () => {
     };
 
     notificationsCache.set(args, data);
-    (notificationsCache as any).handleNotificationsEvent()({
+    (notificationsCache as any).handleNotificationEvent()({
       data: [updatedNotification1, updatedNotification2],
     });
 
@@ -302,7 +302,7 @@ describe('NotificationsCache', () => {
     };
 
     notificationsCache.set(args, data);
-    (notificationsCache as any).handleNotificationsEvent({ remove: true })({
+    (notificationsCache as any).handleNotificationEvent({ remove: true })({
       data: [updatedNotification1, updatedNotification2],
     });
 
@@ -333,7 +333,7 @@ describe('NotificationsCache', () => {
       filter: filter2,
       notifications: [notification2],
     });
-    (notificationsCache as any).handleNotificationsEvent()({
+    (notificationsCache as any).handleNotificationEvent()({
       data: [updatedNotification1, updatedNotification2],
     });
 
@@ -373,7 +373,7 @@ describe('NotificationsCache', () => {
       filter: filter2,
       notifications: [notification2, notification3],
     });
-    (notificationsCache as any).handleNotificationsEvent({ remove: true })({
+    (notificationsCache as any).handleNotificationEvent({ remove: true })({
       data: [updatedNotification1, updatedNotification2],
     });
 

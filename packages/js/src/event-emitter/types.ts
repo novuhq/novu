@@ -103,8 +103,8 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
   NotificationCompleteActionEvents &
-  NotificationRevertActionEvents);
-export type NotificationsEvents = keyof (NotificationsReadAllEvents &
+  NotificationRevertActionEvents &
+  NotificationsReadAllEvents &
   NotificationsArchivedAllEvents &
   NotificationsReadArchivedAllEvents);
 
