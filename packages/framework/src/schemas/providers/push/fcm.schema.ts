@@ -33,7 +33,7 @@ const fcmOutputSchema = {
     },
     collapseKey: {
       description:
-        'This parameter identifies a group of messages (e.g., with ```"collapseKey": "Updates Available"```) that can be collapsed, so that only the last message gets sent when delivery can be resumed. This is intended to avoid sending too many of the same messages when the device comes back online or becomes active (see **delay_while_idle**).\nNote that there is no guarantee of the order in which messages get sent.\nNote: A maximum of 4 different collapse keys is allowed at any given time. This means a FCM connection server can simultaneously store 4 different send-to-sync messages per client app. If you exceed this number, there is no guarantee which 4 collapse keys the FCM connection server will keep.\n',
+        'This parameter identifies a group of messages (e.g., with ```"collapseKey": "Updates Available"```) that can be collapsed, so that only the last message gets sent when delivery can be resumed. This is intended to avoid sending too many of the same messages when the device comes back online or becomes active (see **delayWhileIdle**).\nNote that there is no guarantee of the order in which messages get sent.\nNote: A maximum of 4 different collapse keys is allowed at any given time. This means a FCM connection server can simultaneously store 4 different send-to-sync messages per client app. If you exceed this number, there is no guarantee which 4 collapse keys the FCM connection server will keep.\n',
       type: 'string',
     },
     priority: {
