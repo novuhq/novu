@@ -38,7 +38,14 @@ export abstract class BaseProvider {
     bridgeProviderData: WithPassthrough<T_Input>,
     providerdata: T_Data
   ): TransformOutput<T_Output> {
-    const { _passthrough, ...bridgeData } = bridgeProviderData;
+    const {
+      _passthrough = {
+        body: {},
+        headers: {},
+        query: {},
+      },
+      ...bridgeData
+    } = bridgeProviderData;
     const result = this.casingTransform(bridgeData);
 
     return {
