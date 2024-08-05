@@ -1,7 +1,5 @@
 /* eslint-disable local-rules/no-class-without-style */
-import { createMemo, createSignal, For, Show } from 'solid-js';
-import { NotificationFilter } from '../../../types';
-import { DEFAULT_FILTER } from '../../constants';
+import { createMemo, For, Show } from 'solid-js';
 import { cn, useStyle } from '../../helpers';
 import { Check, DotsMenu } from '../../icons';
 import { NotificationList } from '../Notification';
@@ -9,20 +7,20 @@ import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
 import { tabsRootVariants } from '../primitives/Tabs/TabsRoot';
 import { InboxTab as InboxTabComponent } from './InboxTab';
 import { useTabsDropdown } from './useTabsDropdown';
+import { useInboxContext } from '../../../ui/context';
+import type { Tab } from '../../types';
 
 const tabsDropdownTriggerVariants = () =>
   `nt-relative after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +
   `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`;
 
-export type InboxTab = { label: string; value: Array<string>; filter: NotificationFilter };
-
 type InboxTabsProps = {
-  tabs: InboxTab[];
+  tabs: Array<Tab>;
 };
 
 export const InboxTabs = (props: InboxTabsProps) => {
   const style = useStyle();
-  const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
+  const { activeTab, setActiveTab, filter } = useInboxContext();
   const { dropdownTabs, setTabsList, visibleTabs } = useTabsDropdown({ tabs: props.tabs });
 
   const options = createMemo(() =>
@@ -107,7 +105,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             cn(activeTab() === tab.label ? 'nt-block' : 'nt-hidden', 'nt-flex-1 nt-overflow-hidden')
           )}
         >
-          <NotificationList filter={{ tags: tab.value, ...DEFAULT_FILTER }} />
+          <NotificationList filter={{ ...filter(), tags: tab.value }} />
         </Tabs.Content>
       ))}
     </Tabs.Root>

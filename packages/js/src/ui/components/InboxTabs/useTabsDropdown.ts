@@ -1,6 +1,7 @@
 import { createSignal, onMount } from 'solid-js';
+import type { Tab } from '../../types';
 
-type TabsArray = Array<{ label: string; value: Array<string> }>;
+type TabsArray = Array<Tab>;
 
 export const useTabsDropdown = ({ tabs }: { tabs: TabsArray }) => {
   const [tabsList, setTabsList] = createSignal<HTMLDivElement>();

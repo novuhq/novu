@@ -2,10 +2,11 @@ import clsx from 'clsx';
 import { JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
-import { useLocalization } from '../../context';
+import { useInboxContext, useLocalization } from '../../context';
 import { formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
+import { NotificationStatus } from '../../types';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 
@@ -16,10 +17,10 @@ type DefaultNotificationProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-//TODO: Complete the implementation
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
+  const { status } = useInboxContext();
 
   const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = (e) => {
     e.stopPropagation();
@@ -88,47 +89,49 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                nt-z-50 nt-w-14`
             )}
           >
-            <Show
-              when={props.notification.isRead}
-              fallback={
+            <Show when={status() !== NotificationStatus.ARCHIVED}>
+              <Show
+                when={props.notification.isRead}
+                fallback={
+                  <Tooltip.Root>
+                    <Tooltip.Trigger
+                      asChild={(childProps) => (
+                        <Button
+                          appearanceKey="notificationRead__button"
+                          size="icon"
+                          variant="icon"
+                          {...childProps}
+                          onClick={() => {
+                            props.notification.read();
+                          }}
+                        >
+                          <ReadAll />
+                        </Button>
+                      )}
+                    />
+                    <Tooltip.Content>{t('notification.actions.read.toolTip')}</Tooltip.Content>
+                  </Tooltip.Root>
+                }
+              >
                 <Tooltip.Root>
                   <Tooltip.Trigger
                     asChild={(childProps) => (
                       <Button
-                        appearanceKey="notificationRead__button"
+                        appearanceKey="notificationUnread__button"
                         size="icon"
                         variant="icon"
                         {...childProps}
                         onClick={() => {
-                          props.notification.read();
+                          props.notification.unread();
                         }}
                       >
-                        <ReadAll />
+                        <Unread />
                       </Button>
                     )}
                   />
-                  <Tooltip.Content>{t('notification.actions.read.toolTip')}</Tooltip.Content>
+                  <Tooltip.Content>{t('notification.actions.unread.toolTip')}</Tooltip.Content>
                 </Tooltip.Root>
-              }
-            >
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(childProps) => (
-                    <Button
-                      appearanceKey="notificationUnread__button"
-                      size="icon"
-                      variant="icon"
-                      {...childProps}
-                      onClick={() => {
-                        props.notification.unread();
-                      }}
-                    >
-                      <Unread />
-                    </Button>
-                  )}
-                />
-                <Tooltip.Content>{t('notification.actions.unread.toolTip')}</Tooltip.Content>
-              </Tooltip.Root>
+              </Show>
             </Show>
             <Show
               when={props.notification.isArchived}

@@ -13,7 +13,7 @@ import type { AppearanceKey } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { useKeyboardNavigation } from './useKeyboardNavigation';
 
-type TabsRootProps = JSX.IntrinsicElements['div'] &
+type TabsRootProps = Omit<JSX.IntrinsicElements['div'], 'onChange'> &
   ParentProps & {
     defaultValue?: string;
     value?: string;

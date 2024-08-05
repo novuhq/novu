@@ -1,4 +1,5 @@
-import { createSignal, Match, Show, Switch } from 'solid-js';
+import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
+import { useInboxContext } from '../context';
 import { useStyle } from '../helpers';
 import type {
   BellMounter,
@@ -7,13 +8,12 @@ import type {
   NotificationMounter,
 } from '../types';
 import { Bell, Footer, Header, Preferences, PreferencesHeader } from './elements';
-import { InboxTab, InboxTabs } from './InboxTabs';
+import { InboxTabs } from './InboxTabs';
 import { NotificationList } from './Notification';
 import { Button, Popover } from './primitives';
 
 export type InboxProps = {
   open?: boolean;
-  tabs?: InboxTab[];
   mountNotification?: NotificationMounter;
   mountBell?: BellMounter;
   onNotificationClick?: NotificationClickHandler;
@@ -27,7 +27,6 @@ enum Screen {
 }
 
 type InboxContentProps = {
-  tabs?: InboxProps['tabs'];
   mountNotification?: NotificationMounter;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
@@ -36,6 +35,7 @@ type InboxContentProps = {
 
 const InboxContent = (props: InboxContentProps) => {
   const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
+  const { tabs, filter } = useInboxContext();
 
   return (
     <>
@@ -43,18 +43,19 @@ const InboxContent = (props: InboxContentProps) => {
         <Match when={currentScreen() === Screen.Inbox}>
           <Header updateScreen={setCurrentScreen} />
           <Show
-            when={props.tabs && props.tabs.length > 0}
+            keyed
+            when={tabs() && tabs().length > 0}
             fallback={
               <NotificationList
                 mountNotification={props.mountNotification}
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
-                filter={{ archived: false }}
+                filter={filter()}
               />
             }
           >
-            <InboxTabs tabs={props.tabs ?? []} />
+            <InboxTabs tabs={tabs()} />
           </Show>
         </Match>
         <Match when={currentScreen() === Screen.Preferences}>
@@ -81,7 +82,6 @@ export const Inbox = (props: InboxProps) => {
       />
       <Popover.Content appearanceKey="inbox__popoverContent">
         <InboxContent
-          tabs={props.tabs}
           mountNotification={props.mountNotification}
           onNotificationClick={props.onNotificationClick}
           onPrimaryActionClick={props.onPrimaryActionClick}
