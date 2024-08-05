@@ -10,7 +10,7 @@ import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
 import { EnvironmentProvider } from './components/providers/EnvironmentProvider';
 import { SegmentProvider } from './components/providers/SegmentProvider';
 import { StudioStateProvider } from './studio/StudioStateProvider';
-import { ContainerProvider } from './studio/components/workflows/step-editor/editor/useContainer';
+import { ContainerProvider } from './hooks/useContainer';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);

@@ -10,13 +10,12 @@ import { Button, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams, useEffectOnce } from '../../../hooks';
+import { useFeatureFlag, useVercelIntegration, useVercelParams, useEffectOnce, useContainer } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import styled from '@emotion/styled/macro';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
-import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
 import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {

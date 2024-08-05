@@ -4,22 +4,23 @@ import 'allotment/dist/style.css';
 const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
-import { css } from '@novu/novui/css';
 
-import { useContainer } from '../../../studio/components/workflows/step-editor/editor/useContainer';
-import { TerminalComponent } from '../../../studio/components/workflows/step-editor/editor/Terminal';
-import { CodeEditor } from '../../../studio/components/workflows/step-editor/editor/CodeEditor';
+import { css } from '@novu/novui/css';
+import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
+
+import { TerminalComponent } from './Terminal';
+import { CodeEditor } from './CodeEditor';
 import { PlaygroundWorkflowComponent } from './PlaygroundWorkflowComponent';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useEffectOnce } from '../../../hooks/useEffectOnce';
 import useThemeChange from '../../../hooks/useThemeChange';
 import { useDiscover } from '../../../studio/hooks/useBridgeAPI';
-import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { API_ROOT } from '../../../config/index';
 import { useAPIKeys } from '../../../hooks/useApiKey';
 import { TourGuideComponent } from './PlaygroundTourGuide';
 import { Header } from './PlaygroundHeader';
+import { useContainer } from '../../../hooks/useContainer';
 
 export function PlaygroundPage() {
   const { apiKey } = useAPIKeys();
@@ -88,11 +89,11 @@ export function PlaygroundPage() {
   }, true);
 
   useEffect(() => {
-    if (containerBridgeUrl) {
+    if (containerBridgeUrl && containerBridgeUrl !== bridgeURL) {
       setBridgeURL(containerBridgeUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [bridgeURL, containerBridgeUrl]);
 
   useEffect(() => {
     refetch();
@@ -175,6 +176,16 @@ function Playground({
   const { code, setCode, terminalRef, isBridgeAppLoading } = useContainer();
   const filteredCode = Object.fromEntries(Object.entries(code).filter(([key]) => key !== 'tunnel.ts'));
 
+  useEffectOnce(() => {
+    setTimeout(() => {
+      if (terminalRef.current) {
+        terminalRef.current.write(
+          '\nWelcome to the Novu Playground! Feel free to edit the code above and see the results in the editor on the right side\n\n'
+        );
+      }
+    }, 1000);
+  }, !isBridgeAppLoading);
+
   const [editorSizes, setEditorSizes] = useState<number[]>([300, 200]);
 
   function handleEditorSizeChange() {
@@ -197,17 +208,16 @@ function Playground({
           setEditorSizes(value);
           handleEditorSizeChange();
         }}
-        defaultSizes={editorSizes}
         className={css({
           borderRadius: '8px 8px 8px 8px',
         })}
       >
-        <Pane preferredSize={'70%'}>
+        <Pane preferredSize={'80%'}>
           <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
             <CodeEditor files={filteredCode} setFiles={setCode} />
           </div>
         </Pane>
-        <Pane preferredSize={'30%'}>
+        <Pane preferredSize={'20%'}>
           <div style={{ margin: '0 10px 10px 10px', height: '100%' }} className="terminal-component">
             <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} onStepAddGuide={onStepAddGuide} />
           </div>
