@@ -1,31 +1,21 @@
 import { JSX } from 'solid-js';
-import { useReadAll } from '../../../api';
+import { useInboxContext } from '../../../context';
+import { useReadAll, useArchiveAllRead, useArchiveAll } from '../../../api';
 import { cn, useStyle } from '../../../helpers';
 import { Archive, ArchiveRead, ReadAll } from '../../../icons';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 export const MoreActionsOptions = () => {
-  const { markAllAsRead } = useReadAll();
+  const { filter } = useInboxContext();
+  const { readAll } = useReadAll();
+  const { archiveAll } = useArchiveAll();
+  const { archiveAllRead } = useArchiveAllRead();
 
   return (
     <>
-      <ActionsItem label="Mark all as read" onClick={markAllAsRead} icon={ReadAll} />
-      <ActionsItem
-        label="Archive all"
-        /**
-         * TODO: Implement onClick after Filter is implemented
-         */
-        onClick={() => {}}
-        icon={Archive}
-      />
-      <ActionsItem
-        label="Archive read"
-        /**
-         * TODO: Implement onClick after Filter is implemented
-         */
-        onClick={() => {}}
-        icon={ArchiveRead}
-      />
+      <ActionsItem label="Mark all as read" onClick={() => readAll({ tags: filter().tags })} icon={ReadAll} />
+      <ActionsItem label="Archive all" onClick={() => archiveAll({ tags: filter().tags })} icon={Archive} />
+      <ActionsItem label="Archive read" onClick={() => archiveAllRead({ tags: filter().tags })} icon={ArchiveRead} />
     </>
   );
 };

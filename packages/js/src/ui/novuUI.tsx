@@ -1,11 +1,11 @@
-import { ComponentProps, createSignal } from 'solid-js';
+import { Accessor, ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { Appearance } from './context';
 import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
-import { BaseNovuProviderProps, NovuProviderProps } from './types';
+import type { BaseNovuProviderProps, NovuProviderProps, Tab } from './types';
 //@ts-expect-error inline import esbuild syntax
 import css from 'directcss:./index.directcss';
 import { InboxProps } from './components';
@@ -23,6 +23,8 @@ export class NovuUI {
   #setLocalization;
   #options;
   #setOptions;
+  #tabs: Accessor<Array<Tab>>;
+  #setTabs;
   id: string;
 
   constructor(props: NovuProviderProps) {
@@ -31,6 +33,7 @@ export class NovuUI {
     const [localization, setLocalization] = createSignal(props.localization);
     const [options, setOptions] = createSignal(props.options);
     const [mountedElements, setMountedElements] = createSignal(new Map<MountableElement, NovuComponent>());
+    const [tabs, setTabs] = createSignal(props.tabs ?? []);
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -39,6 +42,8 @@ export class NovuUI {
     this.#setLocalization = setLocalization;
     this.#options = options;
     this.#setOptions = setOptions;
+    this.#tabs = tabs;
+    this.#setTabs = setTabs;
 
     this.#mountComponentRenderer();
   }
@@ -61,6 +66,7 @@ export class NovuUI {
           options={this.#options()}
           appearance={this.#appearance()}
           localization={this.#localization()}
+          tabs={this.#tabs()}
         />
       ),
       this.#rootElement
@@ -132,5 +138,9 @@ export class NovuUI {
 
   updateOptions(options: NovuOptions) {
     this.#setOptions(options);
+  }
+
+  updateTabs(tabs: Array<Tab>) {
+    this.#setTabs(tabs);
   }
 }

@@ -1,4 +1,4 @@
-import { For, ParentProps, Show } from 'solid-js';
+import { createEffect, createMemo, For, ParentProps, Show } from 'solid-js';
 import { ListNotificationsArgs } from '../../../notifications';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { useLocalization } from '../../context';
@@ -46,7 +46,8 @@ type NotificationListProps = {
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
-  const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({ options: props.options });
+  const options = createMemo(() => props?.options ?? {});
+  const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({ options });
 
   return (
     <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>

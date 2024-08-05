@@ -6,12 +6,13 @@ import {
   Appearance,
   AppearanceProvider,
   FocusManagerProvider,
-  InboxNotificationStatusProvider,
+  InboxProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
 import { UnreadCountProvider } from '../context/UnreadCountContext';
+import type { Tab } from '../types';
 import { Bell, Root, Preferences } from './elements';
 import { Inbox } from './Inbox';
 import { NotificationList as Notifications } from './Notification';
@@ -42,6 +43,7 @@ type RendererProps = {
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
   options: NovuOptions;
+  tabs: Array<Tab>;
 };
 
 export const Renderer = (props: RendererProps) => {
@@ -69,7 +71,7 @@ export const Renderer = (props: RendererProps) => {
         <LocalizationProvider localization={props.localization}>
           <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
             <FocusManagerProvider>
-              <InboxNotificationStatusProvider>
+              <InboxProvider tabs={props.tabs}>
                 <For each={[...props.nodes]}>
                   {([node, component]) => {
                     const Component = novuComponents[component.name];
@@ -83,7 +85,7 @@ export const Renderer = (props: RendererProps) => {
                     );
                   }}
                 </For>
-              </InboxNotificationStatusProvider>
+              </InboxProvider>
             </FocusManagerProvider>
           </AppearanceProvider>
         </LocalizationProvider>
