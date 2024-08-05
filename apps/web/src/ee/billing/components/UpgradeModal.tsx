@@ -13,7 +13,7 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 import { BillingIntervalControl } from './BillingIntervalControl';
 import { StripeLogo } from './StripeLogo';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useSubscription } from '../utils/hooks/useSubscription';
+import { useSubscription } from '../hooks/useSubscription';
 import { formatCurrency } from '../utils/formatCurrency';
 import { ContactSalesButton } from './ContactSalesButton';
 

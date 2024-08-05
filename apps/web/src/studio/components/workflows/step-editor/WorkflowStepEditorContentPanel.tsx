@@ -3,7 +3,7 @@ import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
-import { StepTypeEnum } from '@novu/shared';
+import { ButtonTypeEnum, inAppMessageFromBridgeOutputs, StepTypeEnum } from '@novu/shared';
 import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../../hooks';
 import {
@@ -21,6 +21,8 @@ interface IWorkflowStepEditorContentPanelProps {
   isLoadingPreview: boolean;
   error?: any;
   step: any;
+  onlyPreviewView?: boolean;
+  source?: 'studio' | 'playground' | 'dashboard';
 }
 
 export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({
@@ -28,7 +30,28 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
   isLoadingPreview,
   error,
   step,
+  onlyPreviewView,
+  source,
 }) => {
+  if (onlyPreviewView) {
+    return (
+      <VStack
+        className={css({
+          height: '100%',
+          margin: '0 12px 8px 12px',
+        })}
+      >
+        {error && <ErrorPrettyRender error={error} />}
+        <PreviewStep
+          source={source}
+          channel={step?.template?.type || step?.type}
+          preview={preview}
+          loadingPreview={error || isLoadingPreview}
+        />
+      </VStack>
+    );
+  }
+
   const tabs = [
     {
       icon: <IconVisibility />,
@@ -38,6 +61,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
         <VStack className={css({ width: '100%' })}>
           {error && <ErrorPrettyRender error={error} />}
           <PreviewStep
+            source={source}
             channel={step?.template?.type || step?.type}
             preview={preview}
             loadingPreview={error || isLoadingPreview}
@@ -62,16 +86,19 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
 
   return <Tabs defaultValue="preview" tabConfigs={tabs} />;
 };
+
 export const PreviewStep = ({
   channel,
   preview,
   loadingPreview,
+  source,
 }: {
   channel: StepTypeEnum;
   preview: any;
   loadingPreview: boolean;
+  source?: 'studio' | 'playground' | 'dashboard';
 }) => {
-  const { integrations = [] } = useActiveIntegrations();
+  const { integrations = [] } = useActiveIntegrations({ enabled: source !== 'playground' });
   const integration = useMemo(() => {
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
   }, [integrations]);
@@ -82,6 +109,7 @@ export const PreviewStep = ({
     case StepTypeEnum.EMAIL:
       return (
         <PreviewWeb
+          source={source}
           integration={integration}
           content={preview?.outputs?.body}
           subject={preview?.outputs?.subject}
@@ -105,7 +133,19 @@ export const PreviewStep = ({
       return <SmsBasePreview content={preview?.outputs?.body} {...props} />;
 
     case StepTypeEnum.IN_APP:
-      return <InAppBasePreview content={{ content: preview?.outputs?.body, ctaButtons: [] }} {...props} />;
+      const inAppMessage = inAppMessageFromBridgeOutputs(preview?.outputs);
+
+      return (
+        <InAppBasePreview
+          content={{
+            subject: inAppMessage.subject,
+            content: inAppMessage.content,
+            avatar: inAppMessage.avatar,
+            ctaButtons: inAppMessage.cta.action.buttons,
+          }}
+          {...props}
+        />
+      );
 
     case StepTypeEnum.CHAT:
       return <ChatBasePreview content={preview?.outputs?.body} {...props} />;

@@ -7,7 +7,7 @@ export const MoreActionsDropdown = () => {
   const style = useStyle();
 
   return (
-    <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement="bottom">
+    <Dropdown.Root>
       <Dropdown.Trigger
         class={style('moreActions__dropdownTrigger')}
         asChild={(triggerProps) => (

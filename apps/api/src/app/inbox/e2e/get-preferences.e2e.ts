@@ -1,14 +1,11 @@
-import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Get all preferences - /inbox/preferences (GET)', function () {
   let session: UserSession;
-  let subscriberRepository: SubscriberRepository;
 
   beforeEach(async () => {
     session = new UserSession();
-    subscriberRepository = new SubscriberRepository();
     await session.initialize();
   });
 
@@ -19,8 +16,8 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
 
     const globalPreference = response.body.data[0];
 
-    expect(globalPreference.preferences.channels.email).to.equal(true);
-    expect(globalPreference.preferences.channels.in_app).to.equal(true);
+    expect(globalPreference.channels.email).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(true);
     expect(globalPreference.level).to.equal('global');
     expect(response.body.data.length).to.equal(1);
   });
@@ -36,14 +33,14 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
 
     const globalPreference = response.body.data[0];
 
-    expect(globalPreference.preferences.channels.email).to.equal(true);
-    expect(globalPreference.preferences.channels.in_app).to.equal(true);
+    expect(globalPreference.channels.email).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(true);
     expect(globalPreference.level).to.equal('global');
 
     const workflowPreference = response.body.data[1];
 
-    expect(workflowPreference.preferences.channels.email).to.equal(true);
-    expect(workflowPreference.preferences.channels.in_app).to.equal(true);
+    expect(workflowPreference.channels.email).to.equal(true);
+    expect(workflowPreference.channels.in_app).to.equal(true);
     expect(workflowPreference.level).to.equal('template');
   });
 

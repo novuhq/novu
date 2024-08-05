@@ -6,11 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test_webhook:
-    uses: ./.github/workflows/reusable-webhook-e2e.yml
-  
   publish_docker_image_webhook:
-    needs: test_webhook
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production

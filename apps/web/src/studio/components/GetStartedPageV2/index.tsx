@@ -15,7 +15,7 @@ import { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
-import { CodeSnippet } from '../../../pages/get-started/components/CodeSnippet';
+import { CodeSnippet } from '../../../pages/get-started/legacy-onboarding/components/CodeSnippet';
 import { PageContainer } from '../../layout/PageContainer';
 import { Development } from './Development';
 import { GithubAction } from './GithubAction';

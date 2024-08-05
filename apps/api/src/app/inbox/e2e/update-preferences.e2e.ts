@@ -38,11 +38,11 @@ describe('Update global preferences - /inbox/preferences (PATCH)', function () {
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.data.preferences.channels.email).to.equal(true);
-    expect(response.body.data.preferences.channels.in_app).to.equal(true);
-    expect(response.body.data.preferences.channels.sms).to.equal(false);
-    expect(response.body.data.preferences.channels.push).to.equal(false);
-    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.channels.email).to.equal(true);
+    expect(response.body.data.channels.in_app).to.equal(true);
+    expect(response.body.data.channels.sms).to.equal(false);
+    expect(response.body.data.channels.push).to.equal(false);
+    expect(response.body.data.channels.chat).to.equal(true);
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.GLOBAL);
   });
 
@@ -59,11 +59,11 @@ describe('Update global preferences - /inbox/preferences (PATCH)', function () {
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.data.preferences.channels.email).to.equal(true);
-    expect(response.body.data.preferences.channels.in_app).to.equal(true);
-    expect(response.body.data.preferences.channels.sms).to.equal(false);
-    expect(response.body.data.preferences.channels.push).to.equal(false);
-    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.channels.email).to.equal(true);
+    expect(response.body.data.channels.in_app).to.equal(true);
+    expect(response.body.data.channels.sms).to.equal(false);
+    expect(response.body.data.channels.push).to.equal(false);
+    expect(response.body.data.channels.chat).to.equal(true);
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.GLOBAL);
 
     const responseSecond = await session.testAgent
@@ -75,11 +75,11 @@ describe('Update global preferences - /inbox/preferences (PATCH)', function () {
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(responseSecond.status).to.equal(200);
-    expect(responseSecond.body.data.preferences.channels.email).to.equal(false);
-    expect(responseSecond.body.data.preferences.channels.in_app).to.equal(true);
-    expect(responseSecond.body.data.preferences.channels.sms).to.equal(false);
-    expect(responseSecond.body.data.preferences.channels.push).to.equal(false);
-    expect(responseSecond.body.data.preferences.channels.chat).to.equal(true);
+    expect(responseSecond.body.data.channels.email).to.equal(false);
+    expect(responseSecond.body.data.channels.in_app).to.equal(true);
+    expect(responseSecond.body.data.channels.sms).to.equal(false);
+    expect(responseSecond.body.data.channels.push).to.equal(false);
+    expect(responseSecond.body.data.channels.chat).to.equal(true);
     expect(responseSecond.body.data.level).to.equal(PreferenceLevelEnum.GLOBAL);
   });
 });
@@ -162,11 +162,11 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.data.preferences.channels.email).to.equal(true);
-    expect(response.body.data.preferences.channels.in_app).to.equal(true);
-    expect(response.body.data.preferences.channels.sms).to.equal(false);
-    expect(response.body.data.preferences.channels.push).to.equal(false);
-    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.channels.email).to.equal(true);
+    expect(response.body.data.channels.in_app).to.equal(true);
+    expect(response.body.data.channels.sms).to.equal(false);
+    expect(response.body.data.channels.push).to.equal(false);
+    expect(response.body.data.channels.chat).to.equal(true);
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
   });
 
@@ -187,11 +187,11 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    expect(response.body.data.preferences.channels.email).to.equal(true);
-    expect(response.body.data.preferences.channels.in_app).to.equal(true);
-    expect(response.body.data.preferences.channels.sms).to.equal(false);
-    expect(response.body.data.preferences.channels.push).to.equal(false);
-    expect(response.body.data.preferences.channels.chat).to.equal(true);
+    expect(response.body.data.channels.email).to.equal(true);
+    expect(response.body.data.channels.in_app).to.equal(true);
+    expect(response.body.data.channels.sms).to.equal(false);
+    expect(response.body.data.channels.push).to.equal(false);
+    expect(response.body.data.channels.chat).to.equal(true);
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
 
     const responseSecond = await session.testAgent
@@ -203,11 +203,11 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(responseSecond.status).to.equal(200);
-    expect(responseSecond.body.data.preferences.channels.email).to.equal(false);
-    expect(responseSecond.body.data.preferences.channels.in_app).to.equal(true);
-    expect(responseSecond.body.data.preferences.channels.sms).to.equal(false);
-    expect(responseSecond.body.data.preferences.channels.push).to.equal(false);
-    expect(responseSecond.body.data.preferences.channels.chat).to.equal(true);
+    expect(responseSecond.body.data.channels.email).to.equal(false);
+    expect(responseSecond.body.data.channels.in_app).to.equal(true);
+    expect(responseSecond.body.data.channels.sms).to.equal(false);
+    expect(responseSecond.body.data.channels.push).to.equal(false);
+    expect(responseSecond.body.data.channels.chat).to.equal(true);
     expect(responseSecond.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
   });
 });

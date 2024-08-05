@@ -26,8 +26,10 @@ export type ElementStyles = string | CSSProperties;
 export const appearanceKeys = [
   //Primitives
   'button',
+
   'popoverContent',
   'popoverTrigger',
+
   'dropdownContent',
   'dropdownTrigger',
   'dropdownItem',
@@ -35,17 +37,27 @@ export const appearanceKeys = [
   'dropdownItemLabelContainer',
   'dropdownItemLeftIcon',
   'dropdownItemRightIcon',
+
+  'tooltipContent',
+  'tooltipTrigger',
+
   'back__button',
+
   'skeletonText',
   'skeletonAvatar',
+  'tabsRoot',
+  'tabsList',
+  'tabsContent',
+  'tabsTrigger',
+  'dots',
 
   //General
   'root',
   'bellIcon',
   'bellContainer',
   'bellDot',
-  'settings__button',
-  'settingsContainer',
+  'preferences__button',
+  'preferencesContainer',
   'inboxHeader',
   'loading',
 
@@ -58,6 +70,29 @@ export const appearanceKeys = [
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',
   'notificationListEmptyNoticeIcon',
+  'notification',
+  'notificationDot',
+  'notificationSubject',
+  'notificationBody',
+  'notificationBodyContainer',
+  'notificationImage',
+  'notificationDate',
+  'notificationDefaultActions',
+  'notificationCustomActions',
+  'notificationPrimaryAction__button',
+  'notificationSecondaryAction__button',
+  'notificationRead__button',
+  'notificationUnread__button',
+  'notificationArchive__button',
+  'notificationUnarchive__button',
+
+  // Notifications tabs
+  'notificationsTabs__tabsRoot',
+  'notificationsTabs__tabsList',
+  'notificationsTabs__tabsContent',
+  'notificationsTabs__tabsTrigger',
+  'notificationsTabsTriggerLabel',
+  'notificationsTabsTriggerCount',
 
   //Inbox status
   'inboxStatus__title',
@@ -69,14 +104,22 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItemLeftIcon',
   'inboxStatus__dropdownItemRightIcon',
 
-  //More actions
+  // More actions
   'moreActionsContainer',
   'moreActions__dropdownTrigger',
   'moreActions__dropdownContent',
   'moreActions__dropdownItem',
   'moreActions__dropdownItemLabel',
-  'moreActions__dropdownItemLabelContainer',
   'moreActions__dropdownItemLeftIcon',
+
+  // More tabs
+  'moreTabs__button',
+  'moreTabs__dots',
+  'moreTabs__dropdownTrigger',
+  'moreTabs__dropdownContent',
+  'moreTabs__dropdownItem',
+  'moreTabs__dropdownItemLabel',
+  'moreTabs__dropdownItemRightIcon',
 
   //workflow
   'workflowContainer',
@@ -93,13 +136,13 @@ export const appearanceKeys = [
   'channelSwitch',
   'channelSwitchThumb',
 
-  //Settings Header
-  'settingsHeader',
-  'settingsHeader__back__button',
-  'settingsHeader__title',
+  //Preferences Header
+  'preferencesHeader',
+  'preferencesHeader__back__button',
+  'preferencesHeader__title',
 
-  //Settings Loading
-  'settingsLoadingContainer',
+  //Preferences Loading
+  'preferencesLoadingContainer',
 ] as const;
 
 export type Variables = {

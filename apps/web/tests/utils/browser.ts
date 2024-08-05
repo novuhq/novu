@@ -22,8 +22,8 @@ export async function initializeSession(page: Page, settings: ISessionOptions = 
    */
   await page.addInitScript((currentSession) => {
     window.addEventListener('DOMContentLoaded', () => {
-      localStorage.setItem('auth_token', currentSession.token);
-      localStorage.setItem('novu_last_environment_id', currentSession.environment._id);
+      localStorage.setItem('nv_auth_token', currentSession.token);
+      localStorage.setItem('nv_last_environment_id', currentSession.environment._id);
     });
   }, session);
 

@@ -1,3 +1,5 @@
+export type { Notification } from './notifications';
+
 export enum NotificationStatus {
   READ = 'read',
   SEEN = 'seen',
@@ -79,7 +81,6 @@ export type Subscriber = {
 
 export type Action = {
   label: string;
-  url?: string;
   isCompleted: boolean;
 };
 
@@ -98,6 +99,9 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelType;
   tags?: string[];
+  redirect?: {
+    url: string;
+  };
 };
 
 export type NotificationFilter = {
@@ -131,5 +135,29 @@ export type PaginatedResponse<T = unknown> = {
   page: number;
 };
 
+export type PreferencesResponse = {
+  level: PreferenceLevel;
+  enabled: boolean;
+  channels: ChannelPreference;
+  overrides?: IPreferenceOverride[];
+  workflow?: Workflow;
+};
+
+export enum PreferenceOverrideSourceEnum {
+  SUBSCRIBER = 'subscriber',
+  TEMPLATE = 'template',
+  WORKFLOW_OVERRIDE = 'workflowOverride',
+}
+
+export type IPreferenceOverride = {
+  channel: ChannelType;
+  source: PreferenceOverrideSourceEnum;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TODO = any;
+
+export type Result<D = undefined, E = unknown> = Promise<{
+  data?: D;
+  error?: E;
+}>;

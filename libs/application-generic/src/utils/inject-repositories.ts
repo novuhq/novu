@@ -163,7 +163,7 @@ export function injectRepositories(
   const eeAuthServiceProvider = {
     provide: 'AUTH_SERVICE',
     useFactory: (
-      userRepository: UserRepository,
+      userRepository: CommunityUserRepository,
       environmentRepository: EnvironmentRepository,
       subscriberRepository: SubscriberRepository,
       jwtService: JwtService
@@ -181,7 +181,7 @@ export function injectRepositories(
       );
     },
     inject: [
-      UserRepository,
+      CommunityUserRepository,
       EnvironmentRepository,
       SubscriberRepository,
       JwtService,

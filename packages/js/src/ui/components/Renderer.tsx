@@ -1,4 +1,4 @@
-import { onCleanup, onMount } from 'solid-js';
+import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import { NovuOptions } from '../../novu';
@@ -12,19 +12,22 @@ import {
   NovuProvider,
 } from '../context';
 import { UnreadCountProvider } from '../context/UnreadCountContext';
-import { Bell, Root } from './elements';
+import { Bell, Root, Preferences } from './elements';
 import { Inbox } from './Inbox';
+import { NotificationList as Notifications } from './Notification';
 
-const NovuComponents = {
+export const novuComponents = {
   Inbox,
   Bell,
+  Preferences,
+  Notifications,
 };
 
-export type NovuComponent = { name: NovuComponentName; props?: unknown };
+export type NovuComponent = { name: NovuComponentName; props?: any };
 
 export type NovuMounterProps = NovuComponent & { element: MountableElement };
 
-export type NovuComponentName = keyof typeof NovuComponents;
+export type NovuComponentName = keyof typeof novuComponents;
 
 export type NovuComponentControls = {
   mount: (params: NovuMounterProps) => void;
@@ -67,11 +70,19 @@ export const Renderer = (props: RendererProps) => {
           <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
             <FocusManagerProvider>
               <InboxNotificationStatusProvider>
-                {[...props.nodes].map(([node, component]) => (
-                  <Portal mount={node}>
-                    <Root>{NovuComponents[component.name](component.props || {})}</Root>
-                  </Portal>
-                ))}
+                <For each={[...props.nodes]}>
+                  {([node, component]) => {
+                    const Component = novuComponents[component.name];
+
+                    return (
+                      <Portal mount={node}>
+                        <Root>
+                          <Component {...component.props} />
+                        </Root>
+                      </Portal>
+                    );
+                  }}
+                </For>
               </InboxNotificationStatusProvider>
             </FocusManagerProvider>
           </AppearanceProvider>

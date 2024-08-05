@@ -44,7 +44,7 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   tenant?: ITenantDefine;
 
-  bridge?: any;
+  bridgeUrl?: string;
 
   controls?: ControlsDto;
 }

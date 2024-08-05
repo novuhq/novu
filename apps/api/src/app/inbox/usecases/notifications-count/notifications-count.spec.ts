@@ -1,7 +1,7 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 
 import { NotificationsCount } from './notifications-count.usecase';
@@ -31,7 +31,7 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId: 'environmentId',
         subscriberId: 'subscriber-id',
-        read: false,
+        filters: [{ read: false }],
       };
 
       try {
@@ -50,8 +50,7 @@ describe('NotificationsCount', () => {
         environmentId: 'env-1',
         organizationId: 'org-1',
         subscriberId: 'not-found',
-        read: false,
-        archived: true,
+        filters: [{ read: false, archived: true }],
       };
 
       subscriberRepository.findBySubscriberId.resolves(subscriber as any);
@@ -75,13 +74,13 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId: 'environmentId',
         subscriberId: 'subscriber-id',
-        read: false,
+        filters: [{ read: false }],
       };
 
       const result = await notificationsCount.execute(command);
-      const filter = { tags: undefined, read: false, archived: undefined };
+      const filter = { read: false };
 
-      expect(result).to.deep.equal({ data: { count }, filter });
+      expect(result).to.deep.equal({ data: [{ count, filter }] });
       expect(subscriberRepository.findBySubscriberId.calledOnce).to.be.true;
       expect(messageRepository.getCount.calledOnce).to.be.true;
       expect(
@@ -103,7 +102,7 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
-        read: true,
+        filters: [{ read: true }],
       });
 
       expect(
@@ -111,7 +110,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: true, archived: undefined },
+          { read: true },
           { limit: 99 }
         )
       ).to.be.true;
@@ -120,7 +119,7 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
-        read: false,
+        filters: [{ read: false }],
       });
 
       expect(
@@ -128,7 +127,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: false, archived: undefined },
+          { read: false },
           { limit: 99 }
         )
       ).to.be.true;
@@ -137,6 +136,18 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
+        filters: [{}],
+      });
+
+      expect(
+        messageRepository.getCount.calledWith(environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {}, { limit: 99 })
+      ).to.be.true;
+
+      await notificationsCount.execute({
+        organizationId: 'organizationId',
+        environmentId,
+        subscriberId: 'subscriber-id',
+        filters: [{ archived: true }],
       });
 
       expect(
@@ -144,7 +155,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: undefined, archived: undefined },
+          { archived: true },
           { limit: 99 }
         )
       ).to.be.true;
@@ -153,7 +164,7 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
-        archived: true,
+        filters: [{ archived: false }],
       });
 
       expect(
@@ -161,7 +172,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: undefined, archived: true },
+          { archived: false },
           { limit: 99 }
         )
       ).to.be.true;
@@ -170,23 +181,18 @@ describe('NotificationsCount', () => {
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
-        archived: false,
+        filters: [{}],
       });
 
       expect(
-        messageRepository.getCount.calledWith(
-          environmentId,
-          subscriber._id,
-          ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: undefined, archived: false },
-          { limit: 99 }
-        )
+        messageRepository.getCount.calledWith(environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {}, { limit: 99 })
       ).to.be.true;
 
       await notificationsCount.execute({
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
+        filters: [{ read: true, archived: true }],
       });
 
       expect(
@@ -194,25 +200,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: undefined, archived: undefined },
-          { limit: 99 }
-        )
-      ).to.be.true;
-
-      await notificationsCount.execute({
-        organizationId: 'organizationId',
-        environmentId,
-        subscriberId: 'subscriber-id',
-        read: true,
-        archived: true,
-      });
-
-      expect(
-        messageRepository.getCount.calledWith(
-          environmentId,
-          subscriber._id,
-          ChannelTypeEnum.IN_APP,
-          { tags: undefined, read: true, archived: true },
+          { read: true, archived: true },
           { limit: 99 }
         )
       ).to.be.true;

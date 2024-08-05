@@ -279,6 +279,7 @@ export enum OnBoardingAnalyticsEnum {
   IN_APP_SANDBOX_SUCCESS_VISIT = 'Success Page Visit - [In-App Sandbox - Success]',
   IN_APP_SANDBOX_RUN_TRIGGER_CLICK = 'Run Trigger Clicked - [In-App Sandbox]',
   CONFIGURE_LATER_CLICK = 'Configure Later Click',
+  BRIDGE_PLAYGROUND_CONTINUE_CLICK = 'Continue Click [Bridge Playground]',
 
   // Onboarding Experiment
   ONBOARDING_EXPERIMENT_TEST_NOTIFICATION = 'Button Clicked - [Onboarding]',

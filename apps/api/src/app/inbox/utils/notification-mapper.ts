@@ -43,7 +43,6 @@ const mapSingleItem = ({
     avatar,
     primaryAction: primaryCta && {
       label: primaryCta.content,
-      url: cta?.data.url,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
     },
     secondaryAction: secondaryCta && {
@@ -52,6 +51,11 @@ const mapSingleItem = ({
     },
     channelType: channel,
     tags,
+    redirect: cta.data?.url
+      ? {
+          url: cta.data.url,
+        }
+      : undefined,
   };
 };
 

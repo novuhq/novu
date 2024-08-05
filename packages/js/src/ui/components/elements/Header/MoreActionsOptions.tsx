@@ -1,7 +1,7 @@
 import { JSX } from 'solid-js';
 import { useReadAll } from '../../../api';
 import { cn, useStyle } from '../../../helpers';
-import { Archived, ArchiveRead, ReadAll } from '../../../icons';
+import { Archive, ArchiveRead, ReadAll } from '../../../icons';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 export const MoreActionsOptions = () => {
@@ -9,21 +9,14 @@ export const MoreActionsOptions = () => {
 
   return (
     <>
-      <ActionsItem
-        label="Mark all as read"
-        /**
-         * TODO: Implement setFeedOptions and isSelected after Filter is implemented
-         */
-        onClick={markAllAsRead}
-        icon={ReadAll}
-      />
+      <ActionsItem label="Mark all as read" onClick={markAllAsRead} icon={ReadAll} />
       <ActionsItem
         label="Archive all"
         /**
          * TODO: Implement onClick after Filter is implemented
          */
         onClick={() => {}}
-        icon={Archived}
+        icon={Archive}
       />
       <ActionsItem
         label="Archive read"

@@ -197,7 +197,7 @@ const AvatarContainer = ({
   );
 };
 
-function RenderAvatar({ actor }: { actor: IActor }) {
+export function RenderAvatar({ actor }: { actor: IActor }) {
   if (!actor.type || actor.type === ActorTypeEnum.NONE) {
     return <Camera />;
   }

@@ -1,15 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  OrganizationEntity,
-  OrganizationRepository,
-} from '@novu/dal';
+import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -32,11 +25,13 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
+import { InAppOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { inAppMessageFromBridgeOutputs } from '@novu/shared';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -45,7 +40,6 @@ export class SendMessageInApp extends SendMessageBase {
   constructor(
     private invalidateCache: InvalidateCacheService,
     protected messageRepository: MessageRepository,
-    protected organizationRepository: OrganizationRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
     protected executionLogRoute: ExecutionLogRoute,
@@ -108,6 +102,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
+    const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
 
     if (template) {
@@ -116,12 +111,10 @@ export class SendMessageInApp extends SendMessageBase {
 
     try {
       if (!command.bridgeData) {
-        const organization = await this.getOrganization(command.organizationId);
-
         const i18nInstance = await this.initiateTranslations(
           command.environmentId,
           command.organizationId,
-          command.payload.subscriber?.locale || organization?.defaultLocale
+          subscriber.locale
         );
 
         const compiled = await this.compileInAppTemplate.execute(
@@ -182,7 +175,9 @@ export class SendMessageInApp extends SendMessageBase {
       }),
     });
 
-    const bridgeBody = command.bridgeData?.outputs.body;
+    // V2 data
+    const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
+    const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -193,10 +188,12 @@ export class SendMessageInApp extends SendMessageBase {
         _templateId: command._templateId,
         _messageTemplateId: step.template._id,
         channel: ChannelTypeEnum.IN_APP,
-        cta: step.template.cta,
+        cta: bridgeOutputs ? inAppMessage.cta : step.template.cta,
         _feedId: step.template._feedId,
         transactionId: command.transactionId,
-        content: this.storeContent() ? bridgeBody || content : null,
+        content: this.storeContent() ? inAppMessage.content || content : null,
+        subject: inAppMessage.subject,
+        avatar: inAppMessage.avatar,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,
@@ -270,15 +267,5 @@ export class SendMessageInApp extends SendMessageBase {
         isRetry: false,
       })
     );
-  }
-
-  protected async getOrganization(organizationId: string): Promise<OrganizationEntity | undefined> {
-    const organization = await this.organizationRepository.findById(organizationId, 'branding defaultLocale');
-
-    if (!organization) {
-      throw new NotFoundException(`Organization ${organizationId} not found`);
-    }
-
-    return organization;
   }
 }

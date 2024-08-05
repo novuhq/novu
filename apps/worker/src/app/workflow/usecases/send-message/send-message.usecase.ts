@@ -27,10 +27,8 @@ import {
   IFilterVariables,
   Instrument,
   InstrumentUsecase,
-  IBridgeChannelResponse,
   NormalizeVariables,
   NormalizeVariablesCommand,
-  ExecuteOutput,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -41,6 +39,7 @@ import {
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
+import { ExecuteOutput } from '@novu/framework';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageDelay } from './send-message-delay.usecase';
@@ -96,12 +95,12 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    let bridgeResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
+    let bridgeResponse: ExecuteOutput | null = null;
     if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
-      bridgeResponse = (await this.executeBridgeJob.execute({
+      bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
-      })) as ExecuteOutput<IBridgeChannelResponse> | null;
+      });
     }
     const isBridgeSkipped = bridgeResponse?.options?.skip;
     const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(

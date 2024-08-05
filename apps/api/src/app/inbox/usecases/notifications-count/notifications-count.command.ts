@@ -1,9 +1,8 @@
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
-
+import { IsArray, IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { NotificationFilter } from '../../utils/types';
 
-export class NotificationsCountCommand extends EnvironmentWithSubscriber implements NotificationFilter {
+class NotificationsFilter implements NotificationFilter {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -16,4 +15,10 @@ export class NotificationsCountCommand extends EnvironmentWithSubscriber impleme
   @IsOptional()
   @IsBoolean()
   archived?: boolean;
+}
+
+export class NotificationsCountCommand extends EnvironmentWithSubscriber {
+  @IsDefined()
+  @IsArray()
+  filters: NotificationsFilter[];
 }

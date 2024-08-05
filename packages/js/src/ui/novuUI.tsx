@@ -1,15 +1,17 @@
-import { createSignal } from 'solid-js';
+import { ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
-import { NovuComponent, NovuComponentName, Renderer } from './components/Renderer';
+import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { Appearance } from './context';
 import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
-import { NovuProviderProps } from './types';
+import { BaseNovuProviderProps, NovuProviderProps } from './types';
 //@ts-expect-error inline import esbuild syntax
 import css from 'directcss:./index.directcss';
+import { InboxProps } from './components';
 
 export type NovuUIOptions = NovuProviderProps;
+export type BaseNovuUIOptions = BaseNovuProviderProps;
 export class NovuUI {
   #dispose: { (): void } | null = null;
   #rootElement: HTMLElement;
@@ -73,15 +75,31 @@ export class NovuUI {
     this.#rootElement?.remove();
   }
 
-  #mountComponent({
+  #updateComponentProps(element: MountableElement, props: unknown) {
+    this.#setMountedElements((oldMountedElements) => {
+      const newMountedElements = new Map(oldMountedElements);
+      const mountedElement = newMountedElements.get(element);
+      if (mountedElement) {
+        newMountedElements.set(element, { ...mountedElement, props });
+      }
+
+      return newMountedElements;
+    });
+  }
+
+  mountComponent<T extends NovuComponentName>({
     name,
     element,
     props: componentProps,
   }: {
-    name: NovuComponentName;
+    name: T;
     element: MountableElement;
-    props?: unknown;
+    props?: ComponentProps<(typeof novuComponents)[T]>;
   }) {
+    if (this.#mountedElements().has(element)) {
+      return this.#updateComponentProps(element, componentProps);
+    }
+
     this.#setMountedElements((oldNodes) => {
       const newNodes = new Map(oldNodes);
       newNodes.set(element, { name, props: componentProps });
@@ -91,28 +109,16 @@ export class NovuUI {
   }
 
   //All in one <Inbox />
-  mountInbox(element: MountableElement) {
-    this.#mountComponent({ name: 'Inbox', element });
+  mountInbox(element: MountableElement, props?: InboxProps) {
+    this.mountComponent({ name: 'Inbox', element, props });
   }
 
   unmountComponent(element: MountableElement) {
-    this.#setMountedElements((oldNodes) => {
-      const newNodes = new Map(oldNodes);
-      newNodes.delete(element);
+    this.#setMountedElements((oldMountedElements) => {
+      const newMountedElements = new Map(oldMountedElements);
+      newMountedElements.delete(element);
 
-      return newNodes;
-    });
-  }
-
-  updateComponentProps({ element, props }: { element: MountableElement; props: unknown }) {
-    this.#setMountedElements((oldNodes) => {
-      const newNodes = new Map(oldNodes);
-      const node = newNodes.get(element);
-      if (node) {
-        newNodes.set(element, { ...node, props });
-      }
-
-      return newNodes;
+      return newMountedElements;
     });
   }
 

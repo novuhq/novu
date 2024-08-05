@@ -17,7 +17,7 @@ import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 
 export interface WorkflowNodesProps {
   // TODO: add proper types
-  steps: any[];
+  steps: any[] | null;
   onStepClick: (step: any) => void;
   onTriggerClick: () => void;
 }

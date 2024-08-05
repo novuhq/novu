@@ -1,5 +1,4 @@
-import { Button } from '@novu/novui';
-import { css } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 import { IconCable, IconPlayArrow } from '@novu/novui/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
@@ -10,18 +9,33 @@ import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { useEffect } from 'react';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
+  const track = useTelemetry();
 
   const { template: workflow } = useTemplateController(templateId);
 
   const title = workflow?.name || '';
   const navigate = useNavigate();
 
+  const workflowBackgroundWrapperClass = css({
+    mx: '0',
+  });
+
   const handleTestClick = () => {
     navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
+
+  useEffect(() => {
+    track('Workflow open - [Studio]', {
+      workflowId: workflow?.name,
+      env: 'cloud',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <WorkflowsPageTemplate
@@ -35,7 +49,7 @@ export const TemplateDetailsPageV2 = () => {
         </>
       }
     >
-      <WorkflowBackgroundWrapper>
+      <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
         <WorkflowNodes
           steps={
             workflow?.steps?.map((item) => {

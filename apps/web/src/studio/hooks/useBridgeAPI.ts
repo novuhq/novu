@@ -9,7 +9,7 @@ import {
 import { useStudioState } from '../StudioStateProvider';
 import { api as cloudApi } from '../../api';
 
-function useBridgeAPI() {
+export function useBridgeAPI() {
   const { bridgeURL } = useStudioState();
 
   return useMemo(() => buildBridgeHTTPClient(bridgeURL), [bridgeURL]);
@@ -34,7 +34,9 @@ export const useDiscover = (options?: any) => {
   const { refetch } = discoverQuery;
 
   useEffect(() => {
-    refetch();
+    if (!bridgeURL) {
+      refetch();
+    }
   }, [bridgeURL, setBridgeURL, refetch]);
 
   return discoverQuery;

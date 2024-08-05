@@ -3,14 +3,14 @@ import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
 import { useUncontrolledState } from '../../../helpers';
 
-type PopoverProps = {
+type PopoverRootProps = {
   open?: boolean;
   children?: JSX.Element;
   fallbackPlacements?: Placement[];
   placement?: Placement;
 };
 
-type PopoverContextType = {
+type PopoverContextValue = {
   open: Accessor<boolean>;
   reference: Accessor<HTMLElement | null>;
   floating: Accessor<HTMLElement | null>;
@@ -21,9 +21,9 @@ type PopoverContextType = {
   floatingStyles: () => Record<any, any>;
 };
 
-const PopoverContext = createContext<PopoverContextType | undefined>(undefined);
+const PopoverContext = createContext<PopoverContextValue | undefined>(undefined);
 
-export function PopoverRoot(props: PopoverProps) {
+export function PopoverRoot(props: PopoverRootProps) {
   const [reference, setReference] = createSignal<HTMLElement | null>(null);
   const [floating, setFloating] = createSignal<HTMLElement | null>(null);
 
@@ -33,7 +33,7 @@ export function PopoverRoot(props: PopoverProps) {
     middleware: [
       offset(10),
       flip({
-        fallbackPlacements: props.fallbackPlacements,
+        fallbackPlacements: props.fallbackPlacements || ['top-start'],
       }),
       shift(),
     ],
@@ -77,7 +77,7 @@ export function PopoverRoot(props: PopoverProps) {
 export function usePopover() {
   const context = useContext(PopoverContext);
   if (!context) {
-    throw new Error('usePopover must be used within Popover component');
+    throw new Error('usePopover must be used within Popover.Root component');
   }
 
   return context;

@@ -1,18 +1,18 @@
 import { For, ParentProps, Show } from 'solid-js';
-import { FetchFeedArgs } from '../../../feeds';
-import { useFeedInfiniteScroll } from '../../api';
+import { ListNotificationsArgs } from '../../../notifications';
+import { useNotificationsInfiniteScroll } from '../../api';
 import { useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
+import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
+import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
 
 export const NotificationListContainer = (props: ParentProps) => {
   const style = useStyle();
 
   return (
-    <div
-      class={style('notificationList', 'nt-flex nt-flex-col nt-min-h-full nt-w-full nt-h-[37.5rem] nt-overflow-auto')}
-    >
+    <div class={style('notificationList', 'nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')}>
       {props.children}
     </div>
   );
@@ -27,7 +27,7 @@ const EmptyNotificationList = () => {
       <div
         class={style(
           'notificationListEmptyNoticeContainer',
-          'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-fit nt-text-foreground-alpha-100'
+          'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-full nt-text-foreground-alpha-100'
         )}
       >
         <EmptyIcon />
@@ -38,17 +38,31 @@ const EmptyNotificationList = () => {
 };
 
 type NotificationListProps = {
-  options?: FetchFeedArgs;
+  mountNotification?: NotificationMounter;
+  onNotificationClick?: NotificationClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
+  options?: ListNotificationsArgs;
 };
+/* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
-  const [data, { initialLoading, setEl, end }] = useFeedInfiniteScroll({ options: props.options });
+  const [data, { initialLoading, setEl, end }] = useNotificationsInfiniteScroll({ options: props.options });
 
   return (
     <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
       <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
         <NotificationListContainer>
-          {/* eslint-disable-next-line local-rules/no-class-without-style */}
-          <For each={data()}>{(notification) => <p class="nt-my-10">{notification.body}</p>}</For>
+          <For each={data()}>
+            {(notification) => (
+              <Notification
+                notification={notification}
+                mountNotification={props.mountNotification}
+                onNotificationClick={props.onNotificationClick}
+                onPrimaryActionClick={props.onPrimaryActionClick}
+                onSecondaryActionClick={props.onSecondaryActionClick}
+              />
+            )}
+          </For>
           <Show when={!end()}>
             <div ref={setEl}>
               <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
