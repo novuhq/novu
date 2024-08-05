@@ -72,7 +72,7 @@ const mapToNotification = ({
     },
     channelType: channel,
     tags,
-    redirect: cta.data.url
+    redirect: cta.data?.url
       ? {
           url: cta.data.url,
         }
