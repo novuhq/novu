@@ -3,8 +3,8 @@ import { Schema } from '../../../types/schema.types';
 const address = {
   type: 'object',
   properties: {
-    Name: { type: 'string' },
-    Email: { type: 'string' },
+    name: { type: 'string' },
+    email: { type: 'string' },
   },
   description: `JSON object, containing 2 properties: Name and Email address of a previously validated and active sender. Including the Name property in the JSON is optional. This property is not mandatory in case you use TemplateID and you specified a From address for the template. Format : { "Email":"value", "Name":"value" }.`,
   required: ['Email'],
@@ -14,9 +14,9 @@ const address = {
 const attachment = {
   type: 'object',
   properties: {
-    ContentType: { type: 'string' },
-    Filename: { type: 'string' },
-    Base64Content: { type: 'string' },
+    contentType: { type: 'string' },
+    filename: { type: 'string' },
+    base64Content: { type: 'string' },
   },
   required: ['ContentType', 'Filename', 'Base64Content'],
   additionalProperties: true,
@@ -25,10 +25,10 @@ const attachment = {
 const inlineAttatchment = {
   type: 'object',
   properties: {
-    Filename: { type: 'string' },
-    ContentType: { type: 'string' },
-    ContentID: { type: 'string' },
-    Base64Content: { type: 'string' },
+    filename: { type: 'string' },
+    contentType: { type: 'string' },
+    contentId: { type: 'string' },
+    base64Content: { type: 'string' },
   },
   required: ['ContentType', 'Filename', 'Base64Content'],
   additionalProperties: true,
@@ -42,61 +42,61 @@ const inlineAttatchment = {
 const mailjetOutputSchema = {
   type: 'object',
   properties: {
-    From: address,
-    Sender: address,
-    To: {
+    from: address,
+    sender: address,
+    to: {
       type: 'array',
       items: address,
     },
-    Cc: {
+    cc: {
       type: 'array',
       items: address,
     },
-    Bcc: {
+    bcc: {
       type: 'array',
       items: address,
     },
-    ReplyTo: address,
-    Subject: { type: 'string' },
-    TextPart: {
+    replyTo: address,
+    subject: { type: 'string' },
+    textPart: {
       type: 'string',
       description: `Content of the message, sent in Text and/or HTML format. At least one of these content types needs to be specified. When the HTML part is the only part provided, Mailjet will not generate a Text-part from the HTML version. The property can't be set when you use TemplateID`,
     },
-    HTMLPart: {
+    htmlPart: {
       type: 'string',
       description: `Content of the message, sent in Text and/or HTML format. At least one of these content types needs to be specified. When the HTML part is the only part provided, Mailjet will not generate a Text-part from the HTML version. The property can't be set when you use TemplateID`,
     },
-    TemplateID: {
+    templateId: {
       type: 'number',
       description: `an ID for a template that is previously created and stored in Mailjet's system. It is mandatory when From and TextPart and/or HtmlPart are not provided. `,
     },
-    TemplateLanguage: { type: 'boolean' },
-    TemplateErrorReporting: address,
-    TemplateErrorDeliver: { type: 'boolean' },
-    Attachments: {
+    templateLanguage: { type: 'boolean' },
+    templateErrorReporting: address,
+    templateErrorDeliver: { type: 'boolean' },
+    attachments: {
       type: 'array',
       items: attachment,
     },
-    InlineAttachments: {
+    inlineAttachments: {
       type: 'array',
       items: inlineAttatchment,
     },
-    Priority: { type: 'number' },
-    CustomCampaign: { type: 'string' },
-    DeduplicateCampaign: { type: 'boolean' },
-    TrackOpens: {
+    priority: { type: 'number' },
+    customCampaign: { type: 'string' },
+    deduplicateCampaign: { type: 'boolean' },
+    trackOpens: {
       type: 'string',
       enum: ['account_default', 'disabled', 'enabled'],
     },
-    TrackClicks: {
+    trackClicks: {
       type: 'string',
       enum: ['account_default', 'disabled', 'enabled'],
     },
-    CustomID: { type: 'string' },
-    EventPayload: { type: 'string' },
-    URLTags: { type: 'string' },
-    Headers: { type: 'object', additionalProperties: true },
-    Variables: { type: 'object', additionalProperties: true },
+    customId: { type: 'string' },
+    eventPayload: { type: 'string' },
+    urlTags: { type: 'string' },
+    headers: { type: 'object', additionalProperties: true },
+    variables: { type: 'object', additionalProperties: true },
   },
   required: [],
   additionalProperties: true,

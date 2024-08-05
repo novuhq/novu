@@ -1,6 +1,16 @@
 import { BaseModule } from '../base-module';
 import { ActionTypeEnum, NotificationFilter, Result } from '../types';
-import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
+import {
+  archive,
+  archiveAll,
+  archiveAllRead,
+  completeAction,
+  read,
+  readAll,
+  revertAction,
+  unarchive,
+  unread,
+} from './helpers';
 import { Notification } from './notification';
 import type {
   ArchivedArgs,
@@ -21,28 +31,48 @@ import type {
   BaseArgs,
 } from './types';
 import { NovuError } from '../utils/errors';
+import { NotificationsCache } from '../cache';
 
 export class Notifications extends BaseModule {
+  #useCache: boolean;
+
+  readonly #notificationsCache: NotificationsCache;
+
+  constructor({ useCache }: { useCache: boolean }) {
+    super();
+    this.#notificationsCache = new NotificationsCache();
+    this.#useCache = useCache;
+  }
+
   async list({ limit = 10, ...restOptions }: ListNotificationsArgs = {}): Result<ListNotificationsResponse> {
     return this.callWithSession(async () => {
       const args = { limit, ...restOptions };
       try {
-        this._emitter.emit('notifications.list.pending', { args });
+        let data: ListNotificationsResponse | undefined = this.#useCache
+          ? this.#notificationsCache.getAll(args)
+          : undefined;
 
-        const response = await this._inboxService.fetchNotifications({
-          limit,
-          ...restOptions,
-        });
+        if (!data) {
+          const response = await this._inboxService.fetchNotifications({
+            limit,
+            ...restOptions,
+          });
 
-        const modifiedResponse: ListNotificationsResponse = {
-          hasMore: response.hasMore,
-          filter: response.filter,
-          notifications: response.data.map((el) => new Notification(el)),
-        };
+          data = {
+            hasMore: response.hasMore,
+            filter: response.filter,
+            notifications: response.data.map((el) => new Notification(el)),
+          };
 
-        this._emitter.emit('notifications.list.resolved', { args, data: modifiedResponse });
+          if (this.#useCache) {
+            this.#notificationsCache.set(args, data);
+            data = this.#notificationsCache.getAll(args);
+          }
+        }
 
-        return { data: modifiedResponse };
+        this._emitter.emit('notifications.list.resolved', { args, data });
+
+        return { data };
       } catch (error) {
         this._emitter.emit('notifications.list.resolved', { args, error });
 
@@ -181,56 +211,35 @@ export class Notifications extends BaseModule {
   }
 
   async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
-    return this.callWithSession(async () => {
-      try {
-        this._emitter.emit('notifications.read_all.pending', { args: { tags } });
-
-        await this._inboxService.readAll({ tags });
-
-        this._emitter.emit('notifications.read_all.resolved', { args: { tags } });
-
-        return {};
-      } catch (error) {
-        this._emitter.emit('notifications.read_all.resolved', { args: { tags }, error });
-
-        return { error: new NovuError('Failed to read all notifications', error) };
-      }
-    });
+    return this.callWithSession(async () =>
+      readAll({
+        emitter: this._emitter,
+        inboxService: this._inboxService,
+        notificationsCache: this.#notificationsCache,
+        tags,
+      })
+    );
   }
 
   async archiveAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
-    return this.callWithSession(async () => {
-      try {
-        this._emitter.emit('notifications.archive_all.pending', { args: { tags } });
-
-        await this._inboxService.archiveAll({ tags });
-
-        this._emitter.emit('notifications.archive_all.resolved', { args: { tags } });
-
-        return {};
-      } catch (error) {
-        this._emitter.emit('notifications.archive_all.resolved', { args: { tags }, error });
-
-        return { error: new NovuError('Failed to archive all notifications', error) };
-      }
-    });
+    return this.callWithSession(async () =>
+      archiveAll({
+        emitter: this._emitter,
+        inboxService: this._inboxService,
+        notificationsCache: this.#notificationsCache,
+        tags,
+      })
+    );
   }
 
   async archiveAllRead({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
-    return this.callWithSession(async () => {
-      try {
-        this._emitter.emit('notifications.archive_all_read.pending', { args: { tags } });
-
-        await this._inboxService.archiveAllRead({ tags });
-
-        this._emitter.emit('notifications.archive_all_read.resolved', { args: { tags } });
-
-        return {};
-      } catch (error) {
-        this._emitter.emit('notifications.archive_all_read.resolved', { args: { tags }, error });
-
-        return { error: new NovuError('Failed to archive all read notifications', error) };
-      }
-    });
+    return this.callWithSession(async () =>
+      archiveAllRead({
+        emitter: this._emitter,
+        inboxService: this._inboxService,
+        notificationsCache: this.#notificationsCache,
+        tags,
+      })
+    );
   }
 }

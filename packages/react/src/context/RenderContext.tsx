@@ -1,8 +1,8 @@
-import { createContextAndHook } from '@/utils/createContextAndHook';
-import { ReactNode } from 'react';
+import React from 'react';
 import type { NovuUI } from '@novu/js/ui';
+import { createContextAndHook } from '../utils/createContextAndHook';
 
-export type MountedElement = ReactNode;
+export type MountedElement = React.ReactNode;
 export type MountedElements = Map<HTMLElement, MountedElement>;
 
 type RendererContextValue = {
