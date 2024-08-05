@@ -191,7 +191,8 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
     if (WORKFLOW !== code['workflow.ts'] || REACT_EMAIL_CODE !== code['react-email.tsx']) {
       debounceTimeout = setTimeout(() => {
         segment.track('Sandbox bridge app code was updated - [Playground]');
-        webContainer?.mount(configureFiles(code['workflow.ts'], code['react-email.tsx']));
+        webContainer.fs.writeFile('/src/workflows.ts', code['workflow.ts']);
+        webContainer.fs.writeFile('/src/react-email.tsx', code['react-email.tsx']);
       }, DEBOUNCE_DELAY);
     }
 
