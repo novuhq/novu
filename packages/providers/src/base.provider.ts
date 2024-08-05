@@ -36,7 +36,7 @@ export abstract class BaseProvider {
     T_Data = Record<string, unknown>
   >(
     bridgeProviderData: WithPassthrough<T_Input>,
-    providerdata: T_Data
+    triggerProviderData: T_Data
   ): TransformOutput<T_Output> {
     const {
       _passthrough = {
@@ -50,7 +50,7 @@ export abstract class BaseProvider {
 
     return {
       body: deepmerge(
-        providerdata as unknown as Record<string, unknown>,
+        triggerProviderData as unknown as Record<string, unknown>,
         deepmerge(result, _passthrough.body)
       ) as T_Output,
       headers: _passthrough.headers,
