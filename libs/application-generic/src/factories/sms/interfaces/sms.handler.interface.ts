@@ -10,10 +10,7 @@ export interface ISmsHandler {
 
   buildProvider(credentials: ICredentials);
 
-  send(
-    smsOptions: ISmsOptions,
-    bridgeProviderData: Record<string, unknown>
-  ): Promise<ISendMessageSuccessResponse>;
+  send(smsOptions: ISmsOptions): Promise<ISendMessageSuccessResponse>;
 
   getProvider(): ISmsProvider;
 }

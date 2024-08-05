@@ -11,10 +11,7 @@ export interface IMailHandler {
 
   buildProvider(credentials: ICredentials, from?: string);
 
-  send(
-    mailData: IEmailOptions,
-    bridgeProviderData: Record<string, unknown>
-  ): Promise<ISendMessageSuccessResponse>;
+  send(mailData: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
   getProvider(): IEmailProvider;
 

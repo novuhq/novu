@@ -21,16 +21,16 @@ const isObject = (object: unknown) =>
 
 function changeKeysFactory<Options extends IOptions = IOptions>(
   changeCase: (input: string, options?: IOptions) => string
-): (object: unknown, depth?: number, options?: Options) => unknown {
-  return function changeKeys(
-    object: unknown,
-    depth = 1,
-    options?: Options
-  ): unknown {
+): (object: unknown, options?: Options) => unknown {
+  return function changeKeys(object: unknown, options?: Options): unknown {
+    const depth = options.depth || 10000;
+
     if (depth === 0 || !isObject(object)) return object;
 
     if (Array.isArray(object)) {
-      return object.map((item) => changeKeys(item, depth - 1, options));
+      return object.map((item) =>
+        changeKeys(item, { ...options, depth: depth - 1 })
+      );
     }
 
     const result: Record<string, unknown> = Object.create(
@@ -43,7 +43,7 @@ function changeKeysFactory<Options extends IOptions = IOptions>(
       if (options && options.keyCaseTransformer) {
         changedKey = options.keyCaseTransformer(changedKey);
       }
-      const changedValue = changeKeys(value, depth - 1, options);
+      const changedValue = changeKeys(value, { ...options, depth: depth - 1 });
       result[changedKey] = changedValue;
     });
 

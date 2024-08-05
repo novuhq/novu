@@ -399,16 +399,14 @@ export class SendMessageChat extends SendMessageBase {
       };
       const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
-      const result = await chatHandler.send(
-        {
-          phoneNumber,
-          customData: overrides,
-          webhookUrl: chatWebhookUrl,
-          channel: channelSpecification,
-          ...(bridgeContent?.content ? bridgeContent : { content }),
-        },
-        bridgeProviderData
-      );
+      const result = await chatHandler.send({
+        bridgeProviderData,
+        phoneNumber,
+        customData: overrides,
+        webhookUrl: chatWebhookUrl,
+        channel: channelSpecification,
+        ...(bridgeContent?.content ? bridgeContent : { content }),
+      });
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({

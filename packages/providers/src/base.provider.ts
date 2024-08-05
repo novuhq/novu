@@ -31,42 +31,34 @@ export abstract class BaseProvider {
   protected keyCaseObject: Record<string, string> = {};
 
   protected transform<
-    Output = Record<string, unknown>,
-    Input = Record<string, unknown>,
-    Data = Record<string, unknown>
+    T_Output = Record<string, unknown>,
+    T_Input = Record<string, unknown>,
+    T_Data = Record<string, unknown>
   >(
-    bridgeProviderData: WithPassthrough<Input>,
-    data: Data
-  ): TransformOutput<Output> {
-    const result = this.casingTransform<Input, Output>(bridgeProviderData);
+    bridgeProviderData: WithPassthrough<T_Input>,
+    providerdata: T_Data
+  ): TransformOutput<T_Output> {
+    const { _passthrough, ...bridgeData } = bridgeProviderData;
+    const result = this.casingTransform(bridgeData);
 
     return {
       body: deepmerge(
-        data as unknown as Record<string, unknown>,
-        result.body as unknown as Record<string, unknown>
-      ) as Output,
-      headers: result.headers,
-      query: result.query,
-    } as TransformOutput<Output>;
+        providerdata as unknown as Record<string, unknown>,
+        deepmerge(result, _passthrough.body)
+      ) as T_Output,
+      headers: _passthrough.headers,
+      query: _passthrough.query,
+    } as TransformOutput<T_Output>;
   }
 
   private keyCaseTransformer(key: string) {
     return this.keyCaseObject[key] ? this.keyCaseObject[key] : key;
   }
 
-  private casingTransform<Input = Record<string, unknown>, Output = unknown>(
-    bridgeProviderData: WithPassthrough<Input>
-  ): TransformOutput<Output> {
-    const {
-      _passthrough = {
-        body: {},
-        headers: {},
-        query: {},
-      },
-      ...data
-    } = bridgeProviderData;
-    let casing = (object: unknown, depth?: number, options?: IOptions) =>
-      object;
+  private casingTransform(
+    bridgeData: Record<string, unknown>
+  ): Record<string, unknown> {
+    let casing = (object: unknown, options?: IOptions) => object;
 
     switch (this.casing) {
       case CasingEnum.PASCAL_CASE:
@@ -89,18 +81,8 @@ export abstract class BaseProvider {
         break;
     }
 
-    const body = casing(data, 10000, {
+    return casing(bridgeData, {
       keyCaseTransformer: this.keyCaseTransformer.bind(this),
     }) as Record<string, unknown>;
-
-    return {
-      body: deepmerge(body, _passthrough.body) as Output,
-      headers: {
-        ..._passthrough.headers,
-      },
-      query: {
-        ..._passthrough.query,
-      },
-    };
   }
 }

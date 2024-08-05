@@ -26,6 +26,7 @@ export interface IEmailOptions {
   customData?: Record<string, any>;
   headers?: Record<string, string>;
   senderName?: string;
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface ISmsOptions {
@@ -35,6 +36,7 @@ export interface ISmsOptions {
   attachments?: IAttachmentOptions[];
   id?: string;
   customData?: Record<string, any>;
+  bridgeProviderData?: Record<string, unknown>;
 }
 export interface IPushOptions {
   target: string[];
@@ -78,6 +80,7 @@ export interface IPushOptions {
     events: object[] | undefined;
     total_count: number | undefined;
   };
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface IChatOptions {
@@ -87,6 +90,7 @@ export interface IChatOptions {
   content: string;
   blocks?: IBlock[];
   customData?: Record<string, any>;
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface IBlock {

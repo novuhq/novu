@@ -143,7 +143,7 @@ export class SendTestEmail {
 
     try {
       const mailHandler = mailFactory.getHandler(integration, mailData.from);
-      await mailHandler.send(mailData, bridgeProviderData);
+      await mailHandler.send({ ...mailData, bridgeProviderData });
       this.analyticsService.track('Test Email Sent - [Events]', command.userId, {
         _organization: command.organizationId,
         _environment: command.environmentId,

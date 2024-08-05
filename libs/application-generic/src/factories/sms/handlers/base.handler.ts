@@ -18,17 +18,16 @@ export abstract class BaseSmsHandler implements ISmsHandler {
     return providerId === this.providerId && channelType === this.channelType;
   }
 
-  async send(
-    options: ISmsOptions,
-    bridgeProviderData: Record<string, unknown>
-  ) {
+  async send(options: ISmsOptions) {
     if (process.env.NODE_ENV === 'test') {
       throw new Error(
         'Currently 3rd-party packages test are not support on test env'
       );
     }
 
-    return await this.provider.sendMessage(options, bridgeProviderData);
+    const { bridgeProviderData, ...otherOptions } = options;
+
+    return await this.provider.sendMessage(otherOptions, bridgeProviderData);
   }
 
   abstract buildProvider(credentials: ICredentials);
