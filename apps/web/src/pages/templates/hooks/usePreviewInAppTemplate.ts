@@ -9,6 +9,8 @@ import { useStepFormPath } from './useStepFormPath';
 import { parsePayload } from '../../../utils';
 
 export type ParsedPreviewStateType = {
+  subject?: string;
+  avatar?: string;
   ctaButtons: IMessageButton[];
   content: string;
 };

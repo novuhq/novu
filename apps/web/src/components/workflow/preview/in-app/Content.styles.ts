@@ -69,6 +69,14 @@ export const NotificationTextStyled = styled.div<{ isExampleNotification: boolea
   }}
 `;
 
+export const SubjectTextStyled = styled.p`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 20px;
+  margin: 0;
+`;
+
 export const TimeTextStyled = styled(NotificationTextStyled)`
   color: ${colors.B40};
   ${({ isExampleNotification }) => {
