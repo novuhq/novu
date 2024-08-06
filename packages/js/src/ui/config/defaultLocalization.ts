@@ -1,4 +1,3 @@
-// TODO check all localization keys
 export const defaultLocalization = {
   locale: 'en-US',
   'inbox.status.options.unread': 'Unread only',
