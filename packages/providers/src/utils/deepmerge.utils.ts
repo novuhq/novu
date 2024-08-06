@@ -27,7 +27,7 @@ function cloneUnlessOtherwiseSpecified(
   options: IOptions
 ): Record<string, unknown> | Record<string, unknown>[] {
   return options.clone !== false && options.isMergeableObject(value)
-    ? deepmerge(emptyTarget(value), value, options)
+    ? deepMerge(emptyTarget(value), value, options)
     : value;
 }
 
@@ -46,11 +46,11 @@ function defaultArrayMerge(
 
 function getMergeFunction(key: string, options: IOptions) {
   if (!options.customMerge) {
-    return deepmerge;
+    return deepMerge;
   }
   const customMerge = options.customMerge(key);
 
-  return typeof customMerge === 'function' ? customMerge : deepmerge;
+  return typeof customMerge === 'function' ? customMerge : deepMerge;
 }
 
 function getKeys(target: Record<string, unknown>): unknown[] {
@@ -157,7 +157,7 @@ interface IDeepmergeOptions {
   clone?: boolean;
 }
 
-export function deepmerge<
+export function deepMerge<
   Output = Record<string, unknown> | Record<string, unknown>[]
 >(
   target: Record<string, unknown> | Record<string, unknown>[],
@@ -196,14 +196,4 @@ export function deepmerge<
     source,
     options as IOptions
   ) as Output;
-}
-
-export function deepmergeAll(array: unknown[], options?: IDeepmergeOptions) {
-  if (!Array.isArray(array)) {
-    throw new Error('first argument should be an array');
-  }
-
-  return array.reduce(function (prev, next) {
-    return deepmerge(prev, next, options);
-  }, {});
 }
