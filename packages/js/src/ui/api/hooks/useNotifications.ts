@@ -44,9 +44,9 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
     filter = newFilter;
   });
 
-  const refetch = ({ filter }: { filter?: NotificationFilter }) => {
+  const refetch = async ({ filter }: { filter?: NotificationFilter }) => {
     novu.notifications.clearCache({ filter });
-    reset();
+    await reset();
   };
 
   return { data, initialLoading, setEl, end, refetch };

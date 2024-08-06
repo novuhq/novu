@@ -1,6 +1,4 @@
 import { Accessor, createContext, createMemo, createSignal, ParentProps, useContext } from 'solid-js';
-import { NotificationFilter } from '../../types';
-import { areTagsEqual } from '../../utils/notification-utils';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
 import { useInboxContext } from './InboxContext';
@@ -10,6 +8,7 @@ type CountContextValue = {
   totalUnreadCount: Accessor<number>;
   unreadCounts: Accessor<Map<string, number>>;
   newNotificationCounts: Accessor<Map<string, number>>;
+  resetNewNotificationCounts: (key: string) => void;
 };
 
 const CountContext = createContext<CountContextValue>(undefined);
@@ -42,17 +41,27 @@ export const CountProvider = (props: ParentProps) => {
     eventHandler: async (data) => {
       const notification = data.result;
       const allTabs = tabs();
-      for (let i = 0; i < allTabs.length; i++) {
-        const tab = allTabs[i];
-        const tags = tab.value;
-        const allNotifications = tags.length === 0;
-        const includeTags = notification.tags?.every((tag) => tags.includes(tag));
-        if (!allNotifications && !includeTags) {
-          continue;
-        }
 
+      if (allTabs.length > 0) {
+        for (let i = 0; i < allTabs.length; i++) {
+          const tab = allTabs[i];
+          const tags = tab.value;
+          const allNotifications = tags.length === 0;
+          const includeTags = notification.tags?.every((tag) => tags.includes(tag));
+          if (!allNotifications && !includeTags) {
+            continue;
+          }
+          setNewNotificationCounts((oldMap) => {
+            const tagsKey = createKey(tags);
+            const newMap = new Map(oldMap);
+            newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
+
+            return newMap;
+          });
+        }
+      } else {
         setNewNotificationCounts((oldMap) => {
-          const tagsKey = createKey(tags);
+          const tagsKey = createKey([]);
           const newMap = new Map(oldMap);
           newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
 
@@ -82,8 +91,19 @@ export const CountProvider = (props: ParentProps) => {
     },
   });
 
+  const resetNewNotificationCounts = (key: string) => {
+    setNewNotificationCounts((oldMap) => {
+      const newMap = new Map(oldMap);
+      newMap.set(key, 0);
+
+      return newMap;
+    });
+  };
+
   return (
-    <CountContext.Provider value={{ totalUnreadCount, unreadCounts, newNotificationCounts }}>
+    <CountContext.Provider
+      value={{ totalUnreadCount, unreadCounts, newNotificationCounts, resetNewNotificationCounts }}
+    >
       {props.children}
     </CountContext.Provider>
   );
@@ -110,8 +130,9 @@ export const useNewMessagesCount = (props: { tags: string[] }) => {
 
   const key = createMemo(() => createKey(props.tags));
   const count = createMemo(() => context.newNotificationCounts().get(key()) || 0);
+  const reset = () => context.resetNewNotificationCounts(key());
 
-  return { count };
+  return { count, reset };
 };
 
 export const useUnreadCount = (props: { tags: string[] }) => {

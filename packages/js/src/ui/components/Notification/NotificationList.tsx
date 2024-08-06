@@ -60,74 +60,62 @@ type NotificationListProps = {
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
-  const { t } = useLocalization();
-  const style = useStyle();
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const { data, initialLoading, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
-  const { count } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
-
   const [notificationListContainerRef, setNotificationListContainerRef] = createSignal<HTMLElement | null>(null);
 
   return (
-    <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
-      <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-        <NewMessageCTA filter={props.filter} containerRef={notificationListContainerRef} refetch={refetch} />
-        <NotificationListContainer ref={setNotificationListContainerRef}>
-          <For each={data()}>
-            {(notification) => (
-              <Notification
-                notification={notification}
-                mountNotification={props.mountNotification}
-                onNotificationClick={props.onNotificationClick}
-                onPrimaryActionClick={props.onPrimaryActionClick}
-                onSecondaryActionClick={props.onSecondaryActionClick}
-              />
-            )}
-          </For>
-          <Show when={!end()}>
-            <div ref={setEl}>
-              <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
-            </div>
-          </Show>
-        </NotificationListContainer>
+    <>
+      <NewMessageCTA filter={props.filter} containerRef={notificationListContainerRef} refetch={refetch} />
+      <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
+        <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
+          <NotificationListContainer ref={setNotificationListContainerRef}>
+            <For each={data()}>
+              {(notification) => (
+                <Notification
+                  notification={notification}
+                  mountNotification={props.mountNotification}
+                  onNotificationClick={props.onNotificationClick}
+                  onPrimaryActionClick={props.onPrimaryActionClick}
+                  onSecondaryActionClick={props.onSecondaryActionClick}
+                />
+              )}
+            </For>
+            <Show when={!end()}>
+              <div ref={setEl}>
+                <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
+              </div>
+            </Show>
+          </NotificationListContainer>
+        </Show>
       </Show>
-    </Show>
+    </>
   );
 };
 
 const NewMessageCTA: Component<{
   filter?: NotificationListProps['filter'];
   containerRef: Accessor<HTMLElement | null>;
-  refetch?: ({ filter }: { filter?: NotificationFilter }) => void;
+  refetch?: ({ filter }: { filter?: NotificationFilter }) => Promise<void>;
 }> = (props) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const { count } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
+  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
 
-  const [shouldRender, setRender] = createSignal(true);
+  const [shouldRender, setRender] = createSignal(!!count());
   const onAnimationEnd = () => count() < 1 && setRender(false);
 
-  // createEffect(() => count() > 0 && setRender(true));
+  createEffect(() => count() > 0 && setRender(true));
 
-  onMount(() => {
-    alert('NewMessageCTA mounted');
-  });
-
-  const handleClick = () => {
-    setRender(false);
-    if (props.refetch) {
-      props.refetch({ filter: props.filter ?? undefined });
-    }
-
-    if (!props.containerRef()) {
-      return;
-    }
-
+  const handleClick = async () => {
+    await props.refetch!({ filter: props.filter ?? undefined });
     props.containerRef()!.scrollTo({ top: 0, behavior: 'smooth' });
+    resetNewMessagesCount();
   };
 
   return (
-    <Show when={shouldRender}>
+    <Show when={shouldRender()}>
+      hahahah
       <div
         class={style(
           'notificationListNewNotificationsNoticeContainer',
@@ -136,8 +124,8 @@ const NewMessageCTA: Component<{
       >
         <Button
           appearanceKey="notificationListNewNotificationsNotice__button"
-          class={`nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 nt-animate-fade-down ${
-            count() < 1 && 'nt-animate-out'
+          class={`nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 ${
+            count() < 1 ? 'nt-animate-fade-up nt-opacity-0' : 'nt-animate-fade-down'
           }`}
           onClick={handleClick}
           onAnimationEnd={onAnimationEnd}

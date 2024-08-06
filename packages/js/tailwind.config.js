@@ -48,6 +48,7 @@ module.exports = {
       },
       animation: {
         'fade-down': 'fade-down 0.5s ease-in-out',
+        'fade-up': 'fade-down 0.5s ease-in-out reverse',
       },
     },
   },
