@@ -1,9 +1,9 @@
-import { Accessor, Show } from 'solid-js';
+import { Show } from 'solid-js';
 import { useStyle } from '../../../helpers';
 import { BellIcon } from '../../../icons';
 
 type DefaultBellContainerProps = {
-  unreadCount: Accessor<number>;
+  unreadCount: number;
 };
 
 export const BellContainer = (props: DefaultBellContainerProps) => {
@@ -17,7 +17,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
       )}
     >
       <BellIcon />
-      <Show when={props.unreadCount() > 0}>
+      <Show when={props.unreadCount > 0}>
         <span
           class={style(
             'bellDot',

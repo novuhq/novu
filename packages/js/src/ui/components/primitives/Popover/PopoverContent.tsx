@@ -1,13 +1,15 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { AppearanceKey, useFocusManager } from '../../../context';
-import { useStyle } from '../../../helpers';
+import { cn, useStyle } from '../../../helpers';
 import { Root } from '../../elements';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
-  'nt-flex-col nt-gap-4 nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background ' +
-  'nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden';
+  cn(
+    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background ',
+    'nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
+  );
 
 const PopoverContentBody = (props: PopoverContentProps) => {
   const { open, setFloating, floating, floatingStyles } = usePopover();
