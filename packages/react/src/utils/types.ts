@@ -3,11 +3,14 @@ import type {
   BaseNovuUIOptions,
   NotificationClickHandler,
   NotificationActionClickHandler,
+  Tab,
 } from '@novu/js/ui';
 
 export type NotificationsRenderProps = (args: { notification: Notification }) => React.ReactNode;
 
 export type DefaultInboxProps = {
+  open?: boolean;
+  tabs?: Array<Tab>;
   renderNotification?: (args: { notification: Notification }) => React.ReactNode;
   renderBell?: ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
   onNotificationClick?: NotificationClickHandler;

@@ -1,8 +1,7 @@
 import { createMemo, For, ParentProps, Show } from 'solid-js';
 import { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
-import { DEFAULT_FILTER } from '../../constants';
-import { useCount, useLocalization } from '../../context';
+import { useNewMessagesCount, useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
@@ -49,29 +48,27 @@ type NotificationListProps = {
 };
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
-  const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({
-    options: { ...props.filter, limit: props.limit },
-  });
   const { t } = useLocalization();
   const style = useStyle();
-  const filter = createMemo(() => props.filter || DEFAULT_FILTER);
-  const { newNotificationCount } = useCount({ filter: filter() });
+  const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
+  const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({ options });
+  const { count } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
 
   return (
     <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
       <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-        <Show when={!!newNotificationCount()}>
+        <Show when={!!count()}>
           <div
             class={style(
               'notificationListNewNotificationsNoticeContainer',
-              'nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
+              'nt-relative nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
             )}
           >
             <Button
               appearanceKey="notificationListNewNotificationsNotice__button"
               class="nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 nt-animate-fade-down"
             >
-              {t('notifications.newNotifications', { notificationCount: newNotificationCount() })}
+              {t('notifications.newNotifications', { notificationCount: count() })}
             </Button>
           </div>
         </Show>

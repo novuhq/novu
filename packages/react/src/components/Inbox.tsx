@@ -15,6 +15,7 @@ const DefaultInbox = (props: DefaultInboxProps) => {
       return novuUI.mountComponent({
         name: 'Inbox',
         props: {
+          open: props.open,
           mountNotification: renderNotification
             ? (el, { notification }) => mountElement(el, renderNotification({ notification }))
             : undefined,
@@ -39,16 +40,25 @@ export const Inbox = React.memo((props: InboxProps) => {
     return <Renderer options={options}>{children}</Renderer>;
   }
 
-  const { renderNotification, renderBell, ...options } = props;
+  const {
+    open,
+    renderNotification,
+    renderBell,
+    onNotificationClick,
+    onPrimaryActionClick,
+    onSecondaryActionClick,
+    ...options
+  } = props;
 
   return (
     <Renderer options={options}>
       <DefaultInbox
+        open={props.open}
         renderNotification={renderNotification}
         renderBell={renderBell}
-        onNotificationClick={props.onNotificationClick}
-        onPrimaryActionClick={props.onPrimaryActionClick}
-        onSecondaryActionClick={props.onSecondaryActionClick}
+        onNotificationClick={onNotificationClick}
+        onPrimaryActionClick={onPrimaryActionClick}
+        onSecondaryActionClick={onSecondaryActionClick}
       />
     </Renderer>
   );
