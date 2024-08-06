@@ -169,6 +169,7 @@ export class SendMessageInApp extends SendMessageBase {
       oldMessage = await this.messageRepository.findOne({
         _notificationId: command.notificationId,
         _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
         _subscriberId: command._subscriberId,
         _templateId: command._templateId,
         _messageTemplateId: step.template._id,
@@ -212,6 +213,7 @@ export class SendMessageInApp extends SendMessageBase {
     if (!oldMessage) {
       message = await this.messageRepository.create({
         _notificationId: command.notificationId,
+        _organizationId: command.organizationId,
         _environmentId: command.environmentId,
         _subscriberId: command._subscriberId,
         _templateId: command._templateId,
