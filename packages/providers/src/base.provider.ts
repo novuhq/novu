@@ -68,7 +68,7 @@ export abstract class BaseProvider {
   private casingTransform(
     bridgeData: Record<string, unknown>
   ): Record<string, unknown> {
-    let casing = (object: unknown, options?: IOptions) => object;
+    let casing = camelCase;
 
     switch (this.casing) {
       case CasingEnum.PASCAL_CASE:
