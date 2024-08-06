@@ -1,39 +1,47 @@
-const SECOND = 1000;
-const MINUTE = SECOND * 60;
-const HOUR = MINUTE * 60;
-const DAY = HOUR * 24;
-const YEAR = DAY * 365;
-
-const UNITS = {
-  year: YEAR,
-  month: YEAR / 12,
-  day: DAY,
-  hour: HOUR,
-  minute: MINUTE,
-  second: SECOND,
-};
-
 const DEFAULT_LOCALE = 'en-US';
+
+const SECONDS = {
+  inMinute: 60,
+  inHour: 3600,
+  inDay: 86_400,
+  inWeek: 604_800,
+  inMonth: 2_592_000,
+};
 
 export function formatToRelativeTime({
   fromDate,
-  locale,
+  locale = DEFAULT_LOCALE,
   toDate = new Date(),
 }: {
   fromDate: Date;
-  locale: string;
+  locale?: string;
   toDate?: Date;
 }) {
-  const elapsed = fromDate.getTime() - toDate.getTime();
+  // time elapsed in milliseconds between the two dates
+  const elapsed = toDate.getTime() - fromDate.getTime();
 
-  // "Math.abs" accounts for both "past" & "future" scenarios
-  for (const unit in UNITS) {
-    if (Math.abs(elapsed) > UNITS[unit] || unit === 'second') {
-      const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const formatter = new Intl.RelativeTimeFormat(locale, { style: 'narrow' });
 
-      return rtf.format(Math.round(elapsed / UNITS[unit]), unit as Intl.RelativeTimeFormatUnit);
-    }
+  const diffInSeconds = Math.floor(elapsed / 1000);
+
+  // If the difference is less than a minute, return 'Just now'
+  if (diffInSeconds < SECONDS.inMinute) {
+    return 'Just now';
   }
-
-  return fromDate.toLocaleDateString(locale);
+  // If the difference is less than an hour, return the difference in minutes. i.e 3 minutes ago
+  else if (diffInSeconds < SECONDS.inHour) {
+    return formatter.format(Math.floor(-diffInSeconds / SECONDS.inMinute), 'minute');
+  }
+  // If the difference is less than a day, return the difference in hours. i.e 3 hours ago
+  else if (diffInSeconds < SECONDS.inDay) {
+    return formatter.format(Math.floor(-diffInSeconds / SECONDS.inHour), 'hour');
+  }
+  // If the difference is less than a month, return the difference in days. i.e 3 days ago
+  else if (diffInSeconds < SECONDS.inMonth) {
+    return formatter.format(Math.floor(-diffInSeconds / SECONDS.inDay), 'day');
+  }
+  // Otherwise, return the date formatted with month and day. i.e Dec 3
+  else {
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(toDate);
+  }
 }

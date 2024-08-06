@@ -48,10 +48,10 @@ const weeklyComments = workflow(
         body: `Weekly digest: ${weeklyDigest.events.map(({ payload }) => payload.comment).join(', ')}`,
       }),
       {
-        // Skip the notification if the user has already seen it
-        skip: () => inAppResponse.seen,
+        // Skip the notification if the weekly digest is empty
+        skip: () => weeklyDigest.events.length === 0,
         // Non-technical stakeholders can modify strongly-validated copy in Novu Cloud
-        inputSchema: z.object({ prefix: z.string().describe('The prefix of the subject.').default('Hi!') }),
+        controlSchema: z.object({ prefix: z.string().describe('The prefix of the subject.').default('Hi!') }),
       }
     );
   },
@@ -62,5 +62,5 @@ const weeklyComments = workflow(
 const { GET, POST, OPTIONS } = serve({ workflows: [weeklyComments] });
 
 // Trigger your notification workflow
-weeklyComments.trigger({ postId: '123', to: 'user:123' });
+weeklyComments.trigger({ to: 'user:123', comment: 'This is a comment on a post' });
 ```

@@ -70,6 +70,9 @@ export const appearanceKeys = [
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',
   'notificationListEmptyNoticeIcon',
+  'notificationListNewNotificationsNoticeContainer',
+  'notificationListNewNotificationsNotice__button',
+
   'notification',
   'notificationDot',
   'notificationSubject',

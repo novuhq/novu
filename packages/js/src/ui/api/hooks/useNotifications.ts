@@ -1,52 +1,47 @@
-import { createEffect, createSignal } from 'solid-js';
-import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../../../notifications';
+import { Accessor, createEffect, onCleanup, onMount } from 'solid-js';
+import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notifications';
+import { isSameFilter } from '../../../utils/notification-utils';
 import { useNovu } from '../../context';
 import { createInfiniteScroll } from '../../helpers';
 
-export const useNotifications = (props: {
-  options: ListNotificationsArgs;
-  onSuccess?: (data: ListNotificationsResponse) => void;
-  onError?: (err: unknown) => void;
-}) => {
-  const [notifications, setNotifications] = createSignal<Notification[]>([]);
-
-  const [hasMore, setHasMore] = createSignal(true);
-
-  const novu = useNovu();
-
-  const fetchNotifications = async ({ options }: { options: ListNotificationsArgs }) => {
-    if (!hasMore()) return;
-
-    try {
-      const { data } = await novu.notifications.list(options);
-      if (!data) {
-        return;
-      }
-
-      setNotifications((prev) => [...prev, ...data.notifications]);
-      setHasMore(data.hasMore);
-      props.onSuccess?.(data);
-    } catch (error) {
-      props.onError?.(error);
-    }
-  };
-
-  createEffect(() => {
-    fetchNotifications({ options: props.options });
-  });
-
-  return { notifications, fetchNotifications, hasMore };
-};
-
 type UseNotificationsInfiniteScrollProps = {
-  options?: Exclude<ListNotificationsArgs, 'offset'>;
+  options: Accessor<Exclude<ListNotificationsArgs, 'offset'>>;
 };
-export const useNotificationsInfiniteScroll = (props?: UseNotificationsInfiniteScrollProps) => {
-  const novu = useNovu();
 
-  return createInfiniteScroll(async (offset) => {
-    const { data } = await novu.notifications.list({ ...(props?.options || {}), offset });
+export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteScrollProps) => {
+  const novu = useNovu();
+  let filter = { ...props.options() };
+
+  const [data, { initialLoading, setEl, end, mutate, reset }] = createInfiniteScroll(async (offset) => {
+    const { data } = await novu.notifications.list({ ...(props.options() || {}), offset });
 
     return { data: data?.notifications ?? [], hasMore: data?.hasMore ?? false };
   });
+
+  onMount(() => {
+    const listener = ({ data }: { data: ListNotificationsResponse }) => {
+      if (!data || !isSameFilter(filter, data.filter)) {
+        return;
+      }
+
+      mutate({ data: data.notifications, hasMore: data.hasMore });
+    };
+
+    novu.on('notifications.list.updated', listener);
+
+    onCleanup(() => novu.off('notifications.list.updated', listener));
+  });
+
+  createEffect(() => {
+    const newFilter = { ...props.options() };
+    if (isSameFilter(filter, newFilter)) {
+      return;
+    }
+
+    novu.notifications.clearCache();
+    reset();
+    filter = newFilter;
+  });
+
+  return { data, initialLoading, setEl, end };
 };

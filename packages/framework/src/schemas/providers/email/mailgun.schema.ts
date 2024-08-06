@@ -28,56 +28,48 @@ const mailgunOutputSchema = {
       anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
       description: `Same as To but for blind carbon copy`,
     },
-    'amp-html': { type: 'string' },
-    't:version': { type: 'string' },
-    't:text': {
+    ampHtml: { type: 'string' },
+    tVersion: { type: 'string' },
+    tText: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
     },
-    'o:tag': {
+    oTag: {
       anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
       description: `Tag string. See Tagging for more information.`,
     },
-    'o:dkim': {
+    oDkim: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
       description: `Enables/disabled DKIM signatures on per-message basis. Pass yes or no`,
     },
-    'o:deliverytime': {
+    oDeliverytime: {
       type: 'string',
       description: `Desired time of delivery. See Date Format. Note: Messages can be scheduled for a maximum of 3 days in the future.`,
     },
-    'o:deliverytime-optimize-period': { type: 'string' },
-    'o:time-zone-localize': { type: 'string' },
-    'o:testmode': {
+    oDeliverytimeOptimizePeriod: { type: 'string' },
+    oTimeZoneLocalize: { type: 'string' },
+    oTestmode: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
       description: `Enables sending in test mode. Pass yes if needed. See Sending in Test Mode`,
     },
-    'o:tracking': {
+    oTracking: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
       description: `Toggles tracking on a per-message basis, see Tracking Messages for details. Pass yes or no.`,
     },
-    'o:tracking-clicks': {
+    oTrackingClicks: {
       anyOf: [{ type: 'string', enum: ['yes', 'no', 'htmlonly'] }, { type: 'boolean' }],
       description: `Toggles clicks tracking on a per-message basis. Has higher priority than domain-level setting. Pass yes, no or htmlonly.`,
     },
-    'o:tracking-opens': {
+    oTrackingOpens: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
       description: `Toggles opens tracking on a per-message basis. Has higher priority than domain-level setting. Pass yes or no.`,
     },
-    'o:require-tls': {
+    oRequireTls: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
     },
-    'o:skip-verification': {
+    oSkipVerification: {
       anyOf: [{ type: 'string', enum: ['yes', 'no'] }, { type: 'boolean' }],
     },
-    'recipient-variables': { type: 'string' },
-    'h:X-My-Header': {
-      type: 'string',
-      description: `h: prefix followed by an arbitrary value allows to append a custom MIME header to the message (X-My-Header in this case). For example, h:Reply-To to specify Reply-To address.`,
-    },
-    'v:my-var': {
-      type: 'string',
-      description: `v: prefix followed by an arbitrary name allows to attach a custom JSON data to the message. See Attaching Data to Messages for more information.`,
-    },
+    recipientVariables: { type: 'string' },
   },
   required: [],
   additionalProperties: true,

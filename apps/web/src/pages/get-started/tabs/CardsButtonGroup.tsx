@@ -36,21 +36,30 @@ export function CardButton({
           },
           '&[data-active="true"]': {
             backgroundColor: {
-              base: '#616161 !important',
+              base: '#ededed !important',
               _dark: '#292933 !important',
             },
           },
           '&[data-active="true"] .mantine-Button-label svg': {
-            fill: '#fff !important',
+            fill: {
+              _dark: '#fff !important',
+              base: 'typography.text.main !important',
+            },
             // cli is exclude because it's messes up it's svg
             ...(id !== 'cli' && {
               '& path': {
-                fill: '#fff !important',
+                fill: {
+                  _dark: '#fff !important',
+                  base: 'typography.text.main !important',
+                },
               },
             }),
           },
           '&[data-active="true"] .mantine-Button-label': {
-            color: '#fff !important',
+            color: {
+              _dark: '#fff !important',
+              base: 'typography.text.main !important',
+            },
           },
           '&:not([data-active="true"]):hover': {
             backgroundColor: {

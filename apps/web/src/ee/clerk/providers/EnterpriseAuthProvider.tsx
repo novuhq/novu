@@ -102,11 +102,11 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
       if (hasOrgs) {
         const firstOrg = clerkUser.organizationMemberships[0].organization;
         setActive({ organization: firstOrg });
-      } else {
-        navigate(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST);
+      } else if (!location.href.includes(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST)) {
+        redirectTo({ url: ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST });
       }
     }
-  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId]);
+  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId, redirectTo]);
 
   const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
   const currentOrganization = useMemo(

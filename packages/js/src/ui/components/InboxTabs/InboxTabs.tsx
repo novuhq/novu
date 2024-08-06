@@ -1,24 +1,26 @@
 /* eslint-disable local-rules/no-class-without-style */
-import { createMemo, createSignal, For, Show } from 'solid-js';
-import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
-import { NotificationList } from '../Notification';
-import { InboxTab } from './InboxTab';
-import { Check, DotsMenu } from '../../icons';
+import { createMemo, For, Show } from 'solid-js';
 import { cn, useStyle } from '../../helpers';
+import { Check, DotsMenu } from '../../icons';
+import { NotificationList } from '../Notification';
+import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
 import { tabsRootVariants } from '../primitives/Tabs/TabsRoot';
+import { InboxTab as InboxTabComponent } from './InboxTab';
 import { useTabsDropdown } from './useTabsDropdown';
+import { useInboxContext } from '../../../ui/context';
+import type { Tab } from '../../types';
 
 const tabsDropdownTriggerVariants = () =>
   `nt-relative after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +
   `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`;
 
 type InboxTabsProps = {
-  tabs: Array<{ label: string; value: Array<string> }>;
+  tabs: Array<Tab>;
 };
 
 export const InboxTabs = (props: InboxTabsProps) => {
   const style = useStyle();
-  const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
+  const { activeTab, setActiveTab, filter } = useInboxContext();
   const { dropdownTabs, setTabsList, visibleTabs } = useTabsDropdown({ tabs: props.tabs });
 
   const options = createMemo(() =>
@@ -45,14 +47,14 @@ export const InboxTabs = (props: InboxTabsProps) => {
         fallback={
           <Tabs.List ref={setTabsList} appearanceKey="notificationsTabs__tabsList">
             {props.tabs.map((tab) => (
-              <InboxTab label={tab.label} class="nt-invisible" />
+              <InboxTabComponent label={tab.label} class="nt-invisible" />
             ))}
           </Tabs.List>
         }
       >
         <Tabs.List appearanceKey="notificationsTabs__tabsList">
           {visibleTabs().map((tab) => (
-            <InboxTab label={tab.label} />
+            <InboxTabComponent label={tab.label} />
           ))}
           <Show when={dropdownTabs().length > 0}>
             <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement={'bottom-start'}>
@@ -103,7 +105,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             cn(activeTab() === tab.label ? 'nt-block' : 'nt-hidden', 'nt-flex-1 nt-overflow-hidden')
           )}
         >
-          <NotificationList options={{ tags: tab.value }} />
+          <NotificationList filter={{ ...filter(), tags: tab.value }} />
         </Tabs.Content>
       ))}
     </Tabs.Root>

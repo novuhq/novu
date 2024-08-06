@@ -4,7 +4,6 @@ import { genericProviderSchemas } from '../generic.schema';
 import { slackProviderSchemas } from './slack.schema';
 
 export const chatProviderSchemas = {
-  [ChatProviderIdEnum.Slack]: slackProviderSchemas,
   [ChatProviderIdEnum.Discord]: genericProviderSchemas,
   [ChatProviderIdEnum.GetStream]: genericProviderSchemas,
   [ChatProviderIdEnum.GrafanaOnCall]: genericProviderSchemas,
@@ -12,6 +11,7 @@ export const chatProviderSchemas = {
   [ChatProviderIdEnum.MsTeams]: genericProviderSchemas,
   [ChatProviderIdEnum.RocketChat]: genericProviderSchemas,
   [ChatProviderIdEnum.Ryver]: genericProviderSchemas,
+  [ChatProviderIdEnum.Slack]: slackProviderSchemas,
   [ChatProviderIdEnum.WhatsAppBusiness]: genericProviderSchemas,
   [ChatProviderIdEnum.Zulip]: genericProviderSchemas,
 } satisfies Record<ChatProviderIdEnum, { output: Schema }>;
