@@ -101,7 +101,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           size="icon"
                           variant="icon"
                           {...childProps}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             props.notification.read();
                           }}
                         >
@@ -121,7 +122,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         size="icon"
                         variant="icon"
                         {...childProps}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           props.notification.unread();
                         }}
                       >
@@ -144,7 +146,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         size="icon"
                         variant="icon"
                         {...childProps}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           props.notification.archive();
                         }}
                       >
@@ -164,7 +167,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       size="icon"
                       variant="icon"
                       {...childProps}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         props.notification.unarchive();
                       }}
                     >
