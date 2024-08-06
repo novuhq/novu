@@ -41,9 +41,9 @@ export abstract class BaseProvider {
     const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
     const result = this.casingTransform(bridgeData);
 
-    const fallbackPassthrough = { body: {}, headers: {}, query: {} };
+    const defaultPassthrough = { body: {}, headers: {}, query: {} };
     const mergedPassthrough = deepMerge<Passthrough>(
-      fallbackPassthrough,
+      defaultPassthrough,
       _passthrough
     );
 
