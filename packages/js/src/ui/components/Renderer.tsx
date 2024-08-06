@@ -5,13 +5,13 @@ import { NovuOptions } from '../../novu';
 import {
   Appearance,
   AppearanceProvider,
+  CountProvider,
   FocusManagerProvider,
   InboxProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { UnreadCountProvider } from '../context/UnreadCountContext';
 import type { Tab } from '../types';
 import { Bell, Root, Preferences } from './elements';
 import { Inbox } from './Inbox';
@@ -67,11 +67,11 @@ export const Renderer = (props: RendererProps) => {
 
   return (
     <NovuProvider options={props.options}>
-      <UnreadCountProvider>
-        <LocalizationProvider localization={props.localization}>
-          <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-            <FocusManagerProvider>
-              <InboxProvider tabs={props.tabs}>
+      <LocalizationProvider localization={props.localization}>
+        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
+          <FocusManagerProvider>
+            <InboxProvider tabs={props.tabs}>
+              <CountProvider>
                 <For each={[...props.nodes]}>
                   {([node, component]) => {
                     const Component = novuComponents[component.name];
@@ -85,11 +85,11 @@ export const Renderer = (props: RendererProps) => {
                     );
                   }}
                 </For>
-              </InboxProvider>
-            </FocusManagerProvider>
-          </AppearanceProvider>
-        </LocalizationProvider>
-      </UnreadCountProvider>
+              </CountProvider>
+            </InboxProvider>
+          </FocusManagerProvider>
+        </AppearanceProvider>
+      </LocalizationProvider>
     </NovuProvider>
   );
 };

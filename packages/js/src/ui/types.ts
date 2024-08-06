@@ -1,6 +1,6 @@
+import type { Notification } from '../notifications';
 import { NovuOptions } from '../novu';
 import { Appearance, Localization } from './context';
-import type { Notification } from '../notifications';
 
 export type NotificationClickHandler = (args: { notification: Notification }) => void;
 export type NotificationActionClickHandler = (args: { notification: Notification }) => void;

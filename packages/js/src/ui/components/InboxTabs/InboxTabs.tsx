@@ -1,11 +1,11 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { createMemo, For, Show } from 'solid-js';
-import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
-import { NotificationList } from '../Notification';
-import { InboxTab } from './InboxTab';
-import { Check, DotsMenu } from '../../icons';
 import { cn, useStyle } from '../../helpers';
+import { Check, DotsMenu } from '../../icons';
+import { NotificationList } from '../Notification';
+import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
 import { tabsRootVariants } from '../primitives/Tabs/TabsRoot';
+import { InboxTab as InboxTabComponent } from './InboxTab';
 import { useTabsDropdown } from './useTabsDropdown';
 import { useInboxContext } from '../../../ui/context';
 import type { Tab } from '../../types';
@@ -47,14 +47,14 @@ export const InboxTabs = (props: InboxTabsProps) => {
         fallback={
           <Tabs.List ref={setTabsList} appearanceKey="notificationsTabs__tabsList">
             {props.tabs.map((tab) => (
-              <InboxTab label={tab.label} class="nt-invisible" />
+              <InboxTabComponent label={tab.label} class="nt-invisible" />
             ))}
           </Tabs.List>
         }
       >
         <Tabs.List appearanceKey="notificationsTabs__tabsList">
           {visibleTabs().map((tab) => (
-            <InboxTab label={tab.label} />
+            <InboxTabComponent label={tab.label} />
           ))}
           <Show when={dropdownTabs().length > 0}>
             <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement={'bottom-start'}>
@@ -105,7 +105,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             cn(activeTab() === tab.label ? 'nt-block' : 'nt-hidden', 'nt-flex-1 nt-overflow-hidden')
           )}
         >
-          <NotificationList options={{ ...filter(), tags: tab.value }} />
+          <NotificationList filter={{ ...filter(), tags: tab.value }} />
         </Tabs.Content>
       ))}
     </Tabs.Root>

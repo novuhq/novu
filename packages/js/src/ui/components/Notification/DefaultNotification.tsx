@@ -1,20 +1,14 @@
-import { JSX, ParentProps, Show } from 'solid-js';
+import clsx from 'clsx';
+import { JSX, Show } from 'solid-js';
+import type { Notification } from '../../../notifications';
+import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
+import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
+import { NotificationStatus } from '../../types';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
-import type { Notification } from '../../../notifications';
-import { NotificationActionClickHandler, NotificationClickHandler, NotificationStatus } from '../../types';
-import { ActionTypeEnum } from '../../../types';
-import clsx from 'clsx';
-
-type NotificationBodyProps = ParentProps;
-const NotificationBody = (props: NotificationBodyProps) => {
-  const style = useStyle();
-
-  return <p class={style('notificationBody')}>{props.children}</p>;
-};
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -76,41 +70,89 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <img class={style('notificationImage', 'nt-size-8 nt-rounded-lg')} src={props.notification.avatar} />
       </Show>
       <div class={style('notificationBody', 'nt-overflow-hidden nt-w-full')}>
-        <p
-          class={style(
-            'notificationDate',
-            'nt-text-foreground-alpha-400 nt-ml-6 nt-shrink-0 nt-float-right group-hover:nt-hidden'
-          )}
-        >
-          {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale })}
-        </p>
-        <div
-          class={style(
-            'notificationDefaultActions',
-            'nt-gap-3 nt-shrink-0 nt-ml-6 nt-float-right nt-hidden group-hover:nt-flex'
-          )}
-        >
-          <Show when={status() !== NotificationStatus.ARCHIVED}>
+        {/* eslint-disable-next-line local-rules/no-class-without-style */}
+        <div class="nt-relative nt-shrink-0 nt-float-right">
+          <p
+            class={style(
+              'notificationDate',
+              'nt-text-foreground-alpha-400 nt-shrink-0 nt-float-right nt-text-right group-hover:nt-opacity-0'
+            )}
+          >
+            {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale })}
+          </p>
+          <div
+            class={style(
+              'notificationDefaultActions',
+              `nt-gap-3 nt-shrink-0 nt-float-right nt-hidden group-hover:nt-flex
+               nt-justify-center nt-items-center nt-absolute nt-top-0 nt-right-0
+               nt-bg-background p-0.5 nt-rounded
+               nt-z-50 nt-w-14`
+            )}
+          >
+            <Show when={status() !== NotificationStatus.ARCHIVED}>
+              <Show
+                when={props.notification.isRead}
+                fallback={
+                  <Tooltip.Root>
+                    <Tooltip.Trigger
+                      asChild={(childProps) => (
+                        <Button
+                          appearanceKey="notificationRead__button"
+                          size="icon"
+                          variant="icon"
+                          {...childProps}
+                          onClick={() => {
+                            props.notification.read();
+                          }}
+                        >
+                          <ReadAll />
+                        </Button>
+                      )}
+                    />
+                    <Tooltip.Content>{t('notification.actions.read.toolTip')}</Tooltip.Content>
+                  </Tooltip.Root>
+                }
+              >
+                <Tooltip.Root>
+                  <Tooltip.Trigger
+                    asChild={(childProps) => (
+                      <Button
+                        appearanceKey="notificationUnread__button"
+                        size="icon"
+                        variant="icon"
+                        {...childProps}
+                        onClick={() => {
+                          props.notification.unread();
+                        }}
+                      >
+                        <Unread />
+                      </Button>
+                    )}
+                  />
+                  <Tooltip.Content>{t('notification.actions.unread.toolTip')}</Tooltip.Content>
+                </Tooltip.Root>
+              </Show>
+            </Show>
             <Show
-              when={props.notification.isRead}
+              when={props.notification.isArchived}
               fallback={
                 <Tooltip.Root>
                   <Tooltip.Trigger
                     asChild={(childProps) => (
                       <Button
-                        appearanceKey="notificationRead__button"
+                        appearanceKey="notificationArchive__button"
                         size="icon"
                         variant="icon"
                         {...childProps}
                         onClick={() => {
-                          props.notification.read();
+                          props.notification.archive();
                         }}
                       >
-                        <ReadAll />
+                        <Archive />
                       </Button>
                     )}
                   />
-                  <Tooltip.Content>{t('notification.actions.read.toolTip')}</Tooltip.Content>
+                  <Tooltip.Content>{t('notification.actions.archive.toolTip')}</Tooltip.Content>
                 </Tooltip.Root>
               }
             >
@@ -118,64 +160,22 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                 <Tooltip.Trigger
                   asChild={(childProps) => (
                     <Button
-                      appearanceKey="notificationUnread__button"
+                      appearanceKey="notificationUnarchive__button"
                       size="icon"
                       variant="icon"
                       {...childProps}
                       onClick={() => {
-                        props.notification.unread();
+                        props.notification.unarchive();
                       }}
                     >
-                      <Unread />
+                      <Unarchive />
                     </Button>
                   )}
                 />
-                <Tooltip.Content>{t('notification.actions.unread.toolTip')}</Tooltip.Content>
+                <Tooltip.Content>{t('notification.actions.unarchive.toolTip')}</Tooltip.Content>
               </Tooltip.Root>
             </Show>
-          </Show>
-          <Show
-            when={props.notification.isArchived}
-            fallback={
-              <Tooltip.Root>
-                <Tooltip.Trigger
-                  asChild={(childProps) => (
-                    <Button
-                      appearanceKey="notificationArchive__button"
-                      size="icon"
-                      variant="icon"
-                      {...childProps}
-                      onClick={() => {
-                        props.notification.archive();
-                      }}
-                    >
-                      <Archive />
-                    </Button>
-                  )}
-                />
-                <Tooltip.Content>{t('notification.actions.archive.toolTip')}</Tooltip.Content>
-              </Tooltip.Root>
-            }
-          >
-            <Tooltip.Root>
-              <Tooltip.Trigger
-                asChild={(childProps) => (
-                  <Button
-                    appearanceKey="notificationUnarchive__button"
-                    size="icon"
-                    variant="icon"
-                    {...childProps}
-                    onClick={() => {
-                      props.notification.unarchive();
-                    }}
-                  >
-                    <Unarchive />
-                  </Button>
-                )}
-              />
-              <Tooltip.Content>{t('notification.actions.unarchive.toolTip')}</Tooltip.Content>
-            </Tooltip.Root>
-          </Show>
+          </div>
         </div>
         <Show when={props.notification.subject}>
           <p
@@ -188,8 +188,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             {props.notification.subject}
           </p>
         </Show>
-        <NotificationBody>{props.notification.body}</NotificationBody>
-
+        <p class={style('notificationBody')} title={props.notification.body}>
+          {props.notification.body}
+        </p>
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
