@@ -1,11 +1,12 @@
 import { JSX } from 'solid-js';
-import { useInboxContext } from '../../../context';
+import { useInboxContext, useLocalization } from '../../../context';
 import { useReadAll, useArchiveAllRead, useArchiveAll } from '../../../api';
 import { cn, useStyle } from '../../../helpers';
 import { Archive, ArchiveRead, ReadAll } from '../../../icons';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 export const MoreActionsOptions = () => {
+  const { t } = useLocalization();
   const { filter } = useInboxContext();
   const { readAll } = useReadAll();
   const { archiveAll } = useArchiveAll();
@@ -13,9 +14,21 @@ export const MoreActionsOptions = () => {
 
   return (
     <>
-      <ActionsItem label="Mark all as read" onClick={() => readAll({ tags: filter().tags })} icon={ReadAll} />
-      <ActionsItem label="Archive all" onClick={() => archiveAll({ tags: filter().tags })} icon={Archive} />
-      <ActionsItem label="Archive read" onClick={() => archiveAllRead({ tags: filter().tags })} icon={ArchiveRead} />
+      <ActionsItem
+        label={t('notifications.actions.readAll')}
+        onClick={() => readAll({ tags: filter().tags })}
+        icon={ReadAll}
+      />
+      <ActionsItem
+        label={t('notifications.actions.archiveAll')}
+        onClick={() => archiveAll({ tags: filter().tags })}
+        icon={Archive}
+      />
+      <ActionsItem
+        label={t('notifications.actions.archiveRead')}
+        onClick={() => archiveAllRead({ tags: filter().tags })}
+        icon={ArchiveRead}
+      />
     </>
   );
 };

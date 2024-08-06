@@ -1,4 +1,4 @@
-import { createContext, createMemo, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createMemo, ParentProps, useContext } from 'solid-js';
 import { defaultLocalization } from '../config/defaultLocalization';
 import { Path } from '../helpers/types';
 
@@ -9,7 +9,7 @@ type LocalizationPath = Path<Localization>;
 
 type LocalizationContextType = {
   t: (key: LocalizationPath) => string;
-  locale: string;
+  locale: Accessor<string>;
 };
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
@@ -25,11 +25,13 @@ export const LocalizationProvider = (props: LocalizationProviderProps) => {
     return value;
   };
 
+  const locale = createMemo(() => localization().locale);
+
   return (
     <LocalizationContext.Provider
       value={{
         t,
-        locale: localization().locale,
+        locale,
       }}
     >
       {props.children}
