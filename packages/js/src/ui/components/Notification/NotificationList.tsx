@@ -132,6 +132,10 @@ const NewMessageCTA: Component<{
             count() < 1 ? 'nt-animate-fade-up nt-opacity-0' : 'nt-animate-fade-down'
           }`}
           onClick={handleClick}
+          /**
+           * onAnimationEnd is is a native HTML event that is triggered when a CSS animation has completed.
+           * Ref: https://developer.mozilla.org/en-US/docs/Web/API/Element/animationend_event
+           */
           onAnimationEnd={onAnimationEnd}
         >
           {t('notifications.newNotifications', { notificationCount: count() })}
