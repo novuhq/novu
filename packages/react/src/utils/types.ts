@@ -3,6 +3,7 @@ import type {
   BaseNovuUIOptions,
   NotificationClickHandler,
   NotificationActionClickHandler,
+  Tab,
 } from '@novu/js/ui';
 
 export type NotificationsRenderProps = (args: { notification: Notification }) => React.ReactNode;

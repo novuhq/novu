@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
+import { useLocalization } from 'src/ui/context';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
 import { useStyle } from '../../../helpers';
@@ -9,6 +10,7 @@ import { LoadingScreen } from './LoadingScreen';
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
   const style = useStyle();
+  const { t } = useLocalization();
 
   const { preferences, mutate } = usePreferences();
 
@@ -48,7 +50,7 @@ export const Preferences = () => {
       </Show>
       <Show when={!preferences.loading && preferences()}>
         <PreferencesRow
-          label="Global Preferences"
+          label={t('preferences.global')}
           channels={allPreferences().globalPreference?.channels || {}}
           onChange={optimisticUpdate}
         />

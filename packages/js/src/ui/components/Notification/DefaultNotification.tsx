@@ -78,7 +78,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               'nt-text-foreground-alpha-400 nt-shrink-0 nt-float-right nt-text-right group-hover:nt-opacity-0'
             )}
           >
-            {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale })}
+            {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale: locale() })}
           </p>
           <div
             class={style(
