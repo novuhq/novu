@@ -40,7 +40,12 @@ export const Renderer = ({ options, children }: RendererProps) => {
   );
 
   useEffect(() => {
-    setNovuUI(new NovuUI(optionsRef.current));
+    const novu = new NovuUI(optionsRef.current);
+    setNovuUI(novu);
+
+    return () => {
+      novu.unmount();
+    };
   }, []);
 
   useEffect(() => {

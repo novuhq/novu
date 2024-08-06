@@ -75,12 +75,6 @@ export class NovuUI {
     this.#dispose = dispose;
   }
 
-  #unmountComponentRenderer(): void {
-    this.#dispose?.();
-    this.#dispose = null;
-    this.#rootElement?.remove();
-  }
-
   #updateComponentProps(element: MountableElement, props: unknown) {
     this.#setMountedElements((oldMountedElements) => {
       const newMountedElements = new Map(oldMountedElements);
@@ -114,11 +108,6 @@ export class NovuUI {
     });
   }
 
-  //All in one <Inbox />
-  mountInbox(element: MountableElement, props?: InboxProps) {
-    this.mountComponent({ name: 'Inbox', element, props });
-  }
-
   unmountComponent(element: MountableElement) {
     this.#setMountedElements((oldMountedElements) => {
       const newMountedElements = new Map(oldMountedElements);
@@ -142,5 +131,11 @@ export class NovuUI {
 
   updateTabs(tabs?: Array<Tab>) {
     this.#setTabs(tabs ?? []);
+  }
+
+  unmount(): void {
+    this.#dispose?.();
+    this.#dispose = null;
+    this.#rootElement?.remove();
   }
 }
