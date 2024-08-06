@@ -13,6 +13,18 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.APNS;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
+  protected keyCaseObject: Record<string, string> = {
+    contentAvailable: 'content-available',
+    launchImage: 'launch-image',
+    mutableContent: 'mutable-content',
+    urlArgs: 'url-args',
+    titleLocKey: 'title-loc-key',
+    titleLocArgs: 'title-loc-args',
+    actionLocKey: 'action-loc-key',
+    locKey: 'loc-key',
+    locArgs: 'loc-args',
+  };
+
   private provider: apn.Provider;
   constructor(
     private config: {

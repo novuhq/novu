@@ -22,6 +22,24 @@ export class MailgunEmailProvider
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
+  protected keyCaseObject: Record<string, string> = {
+    ampHtml: 'amp-html',
+    tVersion: 't:version',
+    tText: 't:text',
+    oTag: 'o:tag',
+    oDkim: 'o:dkim',
+    oDeliverytime: 'o:deliverytime',
+    oDeliverytimeOptimizePeriod: 'o:deliverytime-optimize-period',
+    oTimeZoneLocalize: 'o:time-zone-localize',
+    oTestmode: 'o:testmode',
+    oTracking: 'o:tracking',
+    oTrackingClicks: 'o:tracking-clicks',
+    oTrackingOpens: 'o:tracking-opens',
+    oRequireTls: 'o:require-tls',
+    oSkipVerification: 'o:skip-verification',
+    recipientVariables: 'recipient-variables',
+  };
+
   private mailgunClient: IMailgunClient;
 
   constructor(
