@@ -108,8 +108,8 @@ const NewMessageCTA: Component<{
   createEffect(() => count() > 0 && setRender(true));
 
   const handleClick = async () => {
-    await props.refetch!({ filter: props.filter ?? undefined });
-    props.containerRef()!.scrollTo({ top: 0, behavior: 'smooth' });
+    await props.refetch?.({ filter: props.filter ?? undefined });
+    props.containerRef()?.scrollTo({ top: 0, behavior: 'smooth' });
     resetNewMessagesCount();
   };
 
