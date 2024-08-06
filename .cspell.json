@@ -702,7 +702,12 @@
     "kebabcase",
     "nonenumerable",
     "Deepmerge",
-    "RBPT"
+    "RBPT",
+    "Primitiveboolean",
+    "Primitivenumber",
+    "Primitivestring",
+    "Listofobjects",
+    "Nestedobject"
   ],
   "flagWords": [],
   "patterns": [
