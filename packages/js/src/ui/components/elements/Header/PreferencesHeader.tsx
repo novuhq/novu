@@ -1,3 +1,4 @@
+import { useLocalization } from 'src/ui/context';
 import { useStyle } from '../../../helpers';
 import { ArrowLeft } from '../../../icons';
 
@@ -7,6 +8,7 @@ type PreferencesHeaderProps = {
 
 export const PreferencesHeader = (props: PreferencesHeaderProps) => {
   const style = useStyle();
+  const { t } = useLocalization();
 
   return (
     <div class={style('preferencesHeader', 'nt-flex nt-items-center nt-py-5 nt-px-6 nt-gap-2')}>
@@ -19,7 +21,7 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
       >
         <ArrowLeft />
       </button>
-      <div class={style('preferencesHeader__title', 'nt-text-xl nt-font-semibold')}>Notification Preferences</div>
+      <div class={style('preferencesHeader__title', 'nt-text-xl nt-font-semibold')}>{t('preferences.title')}</div>
     </div>
   );
 };
