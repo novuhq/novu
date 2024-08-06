@@ -707,7 +707,8 @@
     "Primitivenumber",
     "Primitivestring",
     "Listofobjects",
-    "Nestedobject"
+    "Nestedobject",
+    "Listoflistofobjects"
   ],
   "flagWords": [],
   "patterns": [
