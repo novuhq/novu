@@ -41,7 +41,11 @@ export abstract class BaseProvider {
     const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
     const result = this.casingTransform(bridgeData);
 
-    const defaultPassthrough = { body: {}, headers: {}, query: {} };
+    const defaultPassthrough: Passthrough = {
+      body: {},
+      headers: {},
+      query: {},
+    };
     const mergedPassthrough = deepMerge<Passthrough>(
       defaultPassthrough,
       _passthrough
@@ -51,7 +55,7 @@ export abstract class BaseProvider {
       body: deepMerge(
         triggerProviderData as unknown as Record<string, unknown>,
         deepMerge(result, mergedPassthrough.body)
-      ) as T_Output,
+      ),
       headers: mergedPassthrough.headers,
       query: mergedPassthrough.query,
     } as TransformOutput<T_Output>;
