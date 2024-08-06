@@ -19,6 +19,14 @@ export const navigateToWorkflows = () => {
 
 /**
  * Note: Do not use client-side navigation (react-router-dom),
+ * because we need to create new default headers for the dashboard.
+ */
+export const navigateToGetStarted = () => {
+  window.location.replace(window.location.origin + ROUTES.GET_STARTED);
+};
+
+/**
+ * Note: Do not use client-side navigation (react-router-dom),
  * because we need to create new default headers for the onboarding playground.
  */
 export const navigatePlayground = () => {
