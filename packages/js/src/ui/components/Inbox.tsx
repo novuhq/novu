@@ -7,13 +7,13 @@ import type {
   NotificationMounter,
 } from '../types';
 import { Bell, Footer, Header, Preferences, PreferencesHeader } from './elements';
-import { InboxTabs } from './InboxTabs';
+import { InboxTab, InboxTabs } from './InboxTabs';
 import { NotificationList } from './Notification';
 import { Button, Popover } from './primitives';
 
 export type InboxProps = {
   open?: boolean;
-  tabs?: Array<{ label: string; value: Array<string> }>;
+  tabs?: InboxTab[];
   mountNotification?: NotificationMounter;
   mountBell?: BellMounter;
   onNotificationClick?: NotificationClickHandler;
@@ -50,7 +50,7 @@ const InboxContent = (props: InboxContentProps) => {
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
-                options={{ archived: false }}
+                filter={{ archived: false }}
               />
             }
           >

@@ -1,19 +1,21 @@
-import { For, onCleanup, onMount } from 'solid-js';
+import { createMemo, For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import { NovuOptions } from '../../novu';
+import { DEFAULT_FILTER } from '../constants';
 import {
   Appearance,
   AppearanceProvider,
+  CountProvider,
   FocusManagerProvider,
   InboxNotificationStatusProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { UnreadCountProvider } from '../context/UnreadCountContext';
-import { Bell, Root, Preferences } from './elements';
+import { Bell, Preferences, Root } from './elements';
 import { Inbox } from './Inbox';
+import { InboxTab } from './InboxTabs';
 import { NotificationList as Notifications } from './Notification';
 
 export const novuComponents = {
@@ -42,9 +44,11 @@ type RendererProps = {
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
   options: NovuOptions;
+  tabs?: InboxTab[];
 };
 
 export const Renderer = (props: RendererProps) => {
+  const filters = createMemo(() => props.tabs?.map((t) => t.filter) || [DEFAULT_FILTER]);
   onMount(() => {
     const id = 'novu-default-css';
     const el = document.getElementById(id);
@@ -65,7 +69,7 @@ export const Renderer = (props: RendererProps) => {
 
   return (
     <NovuProvider options={props.options}>
-      <UnreadCountProvider>
+      <CountProvider filters={filters()}>
         <LocalizationProvider localization={props.localization}>
           <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
             <FocusManagerProvider>
@@ -87,7 +91,7 @@ export const Renderer = (props: RendererProps) => {
             </FocusManagerProvider>
           </AppearanceProvider>
         </LocalizationProvider>
-      </UnreadCountProvider>
+      </CountProvider>
     </NovuProvider>
   );
 };

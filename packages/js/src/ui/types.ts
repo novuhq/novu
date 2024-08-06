@@ -1,7 +1,7 @@
-import { NovuOptions } from '../novu';
-import { Appearance, Localization } from './context';
 import type { Notification } from '../notifications';
-import { ActionTypeEnum } from '../types';
+import { NovuOptions } from '../novu';
+import { InboxTab } from './components/InboxTabs';
+import { Appearance, Localization } from './context';
 
 export type NotificationClickHandler = (args: { notification: Notification }) => void;
 export type NotificationActionClickHandler = (args: { notification: Notification }) => void;
@@ -18,6 +18,7 @@ export type BaseNovuProviderProps = {
   appearance?: Appearance;
   localization?: Localization;
   options: NovuOptions;
+  tabs?: InboxTab[];
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {

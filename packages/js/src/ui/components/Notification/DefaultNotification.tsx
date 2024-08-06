@@ -1,20 +1,13 @@
-import { JSX, ParentProps, Show } from 'solid-js';
+import clsx from 'clsx';
+import { JSX, Show } from 'solid-js';
+import type { Notification } from '../../../notifications';
+import { ActionTypeEnum } from '../../../types';
 import { useLocalization } from '../../context';
 import { formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
+import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
-import type { Notification } from '../../../notifications';
-import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
-import { ActionTypeEnum } from '../../../types';
-import clsx from 'clsx';
-
-type NotificationBodyProps = ParentProps;
-const NotificationBody = (props: NotificationBodyProps) => {
-  const style = useStyle();
-
-  return <p class={style('notificationBody')}>{props.children}</p>;
-};
 
 type DefaultNotificationProps = {
   notification: Notification;
@@ -192,8 +185,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             {props.notification.subject}
           </p>
         </Show>
-        <NotificationBody>{props.notification.body}</NotificationBody>
-
+        <p class={style('notificationBody')} title={props.notification.body}>
+          {props.notification.body}
+        </p>
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
