@@ -10,25 +10,25 @@ import {
   snakeCase,
   trainCase,
 } from './index';
-const studPrimitiveObject = {
+const stubPrimitiveObject = {
   primitiveString: 'string',
   primitiveNumber: 1,
   primitiveBoolean: true,
 };
 
-const stud = {
-  ...studPrimitiveObject,
-  listOfObjects: [studPrimitiveObject, studPrimitiveObject],
+const stub = {
+  ...stubPrimitiveObject,
+  listOfObjects: [stubPrimitiveObject, stubPrimitiveObject],
   nestedObject: {
-    ...studPrimitiveObject,
-    listOfObjects: [studPrimitiveObject, studPrimitiveObject],
+    ...stubPrimitiveObject,
+    listOfObjects: [stubPrimitiveObject, stubPrimitiveObject],
   },
-  listOfListOfObjects: [[studPrimitiveObject], [studPrimitiveObject]],
+  listOfListOfObjects: [[stubPrimitiveObject], [stubPrimitiveObject]],
 };
 
 describe('change case', () => {
   it('should change case to capital case', () => {
-    expect(capitalCase(stud)).toEqual({
+    expect(capitalCase(stub)).toEqual({
       ListOfListOfObjects: [
         [
           {
@@ -81,7 +81,7 @@ describe('change case', () => {
   });
 
   it('should change case to constant case', () => {
-    expect(constantCase(stud)).toEqual({
+    expect(constantCase(stub)).toEqual({
       LIST_OF_LIST_OF_OBJECTS: [
         [
           {
@@ -134,7 +134,7 @@ describe('change case', () => {
   });
 
   it('should change case to dot case', () => {
-    expect(dotCase(stud)).toEqual({
+    expect(dotCase(stub)).toEqual({
       'list.of.list.of.objects': [
         [
           {
@@ -187,7 +187,7 @@ describe('change case', () => {
   });
 
   it('should change case to train case', () => {
-    expect(trainCase(stud)).toEqual({
+    expect(trainCase(stub)).toEqual({
       'List-Of-List-Of-Objects': [
         [
           {
@@ -240,7 +240,7 @@ describe('change case', () => {
   });
 
   it('should change case to no case', () => {
-    expect(noCase(stud)).toEqual({
+    expect(noCase(stub)).toEqual({
       'list of list of objects': [
         [
           {
@@ -293,7 +293,7 @@ describe('change case', () => {
   });
 
   it('should change case to kebab case', () => {
-    expect(kebabCase(stud)).toEqual({
+    expect(kebabCase(stub)).toEqual({
       'list-of-list-of-objects': [
         [
           {
@@ -346,7 +346,7 @@ describe('change case', () => {
   });
 
   it('should change case to pascal case', () => {
-    expect(pascalCase(stud)).toEqual({
+    expect(pascalCase(stub)).toEqual({
       ListOfListOfObjects: [
         [
           {
@@ -399,7 +399,7 @@ describe('change case', () => {
   });
 
   it('should change case to path case', () => {
-    expect(pathCase(stud)).toEqual({
+    expect(pathCase(stub)).toEqual({
       'list/of/list/of/objects': [
         [
           {
@@ -452,7 +452,7 @@ describe('change case', () => {
   });
 
   it('should change case to sentence case', () => {
-    expect(sentenceCase(stud)).toEqual({
+    expect(sentenceCase(stub)).toEqual({
       Listoflistofobjects: [
         [
           {
@@ -505,7 +505,7 @@ describe('change case', () => {
   });
 
   it('should change case to snake case', () => {
-    expect(snakeCase(stud)).toEqual({
+    expect(snakeCase(stub)).toEqual({
       list_of_list_of_objects: [
         [
           {

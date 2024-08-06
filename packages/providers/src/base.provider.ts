@@ -8,7 +8,7 @@ import {
 } from './utils/change-case';
 import { IOptions } from './utils/change-case/functions';
 import { deepmerge } from './utils/deepmerge.utils';
-import { WithPassthrough } from './utils/types';
+import { Passthrough, WithPassthrough } from './utils/types';
 
 export enum CasingEnum {
   CAMEL_CASE = 'camelCase',
@@ -38,23 +38,22 @@ export abstract class BaseProvider {
     bridgeProviderData: WithPassthrough<T_Input>,
     triggerProviderData: T_Data
   ): TransformOutput<T_Output> {
-    const {
-      _passthrough = {
-        body: {},
-        headers: {},
-        query: {},
-      },
-      ...bridgeData
-    } = bridgeProviderData;
+    const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
     const result = this.casingTransform(bridgeData);
+
+    const fallbackPassthrough = { body: {}, headers: {}, query: {} };
+    const mergedPassthrough = deepmerge<Passthrough>(
+      fallbackPassthrough,
+      _passthrough
+    );
 
     return {
       body: deepmerge(
         triggerProviderData as unknown as Record<string, unknown>,
-        deepmerge(result, _passthrough.body)
+        deepmerge(result, mergedPassthrough.body)
       ) as T_Output,
-      headers: _passthrough.headers || {},
-      query: _passthrough.query || {},
+      headers: mergedPassthrough.headers,
+      query: mergedPassthrough.query,
     } as TransformOutput<T_Output>;
   }
 
