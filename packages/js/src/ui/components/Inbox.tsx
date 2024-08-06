@@ -36,7 +36,6 @@ type InboxContentProps = {
 const InboxContent = (props: InboxContentProps) => {
   const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
   const { tabs, filter } = useInboxContext();
-  const options = createMemo(() => ({ read: filter().read, archived: filter().archived }));
 
   return (
     <>
@@ -52,7 +51,7 @@ const InboxContent = (props: InboxContentProps) => {
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
-                options={options()}
+                filter={filter()}
               />
             }
           >

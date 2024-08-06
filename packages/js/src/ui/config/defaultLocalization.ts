@@ -11,6 +11,10 @@ export const defaultLocalization = {
   'notifications.actions.readAll': 'Mark all as read',
   'notifications.actions.archiveAll': 'Archive all',
   'notifications.actions.archiveRead': 'Archive read',
+  'notifications.newNotifications': ({ notificationCount }: { notificationCount: number }) =>
+    `${notificationCount > 99 ? '99+' : notificationCount} new ${
+      notificationCount === 1 ? 'notification' : 'notifications'
+    }`,
   'notification.actions.read.toolTip': 'Mark as read',
   'notification.actions.unread.toolTip': 'Mark as unread',
   'notification.actions.archive.toolTip': 'Archive',

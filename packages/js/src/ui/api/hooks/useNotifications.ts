@@ -1,6 +1,6 @@
 import { Accessor, createEffect, onCleanup, onMount } from 'solid-js';
-import { isSameFilter } from '../../../utils/notification-utils';
 import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notifications';
+import { isSameFilter } from '../../../utils/notification-utils';
 import { useNovu } from '../../context';
 import { createInfiniteScroll } from '../../helpers';
 

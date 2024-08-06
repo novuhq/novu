@@ -32,6 +32,7 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     return (
       (schema as Exclude<JsonSchema, boolean>).type === 'object' ||
       !!(schema as Exclude<JsonSchema, boolean>).anyOf ||
+      !!(schema as Exclude<JsonSchema, boolean>).allOf ||
       !!(schema as Exclude<JsonSchema, boolean>).oneOf
     );
   }
