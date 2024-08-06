@@ -1,22 +1,11 @@
-import {
-  Accessor,
-  Component,
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  ParentComponent,
-  Setter,
-  Show,
-  Suspense,
-} from 'solid-js';
+import { JSX, createMemo, createSignal, For, ParentComponent, Setter, Show, Suspense } from 'solid-js';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { useLocalization, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
-import { Button } from '../primitives';
+import { NewMessagesCta } from './NewMessagesCta';
 import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
 
@@ -61,13 +50,19 @@ type NotificationListProps = {
 const NotificationListWrapper = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const { data, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
-  const [notificationListContainerRef, setNotificationListContainerRef] = createSignal<HTMLElement | null>(null);
+  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
+
+  const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
+    e.stopPropagation();
+    resetNewMessagesCount();
+    refetch({ filter: props.filter });
+  };
 
   return (
     <>
-      <NewMessageCTA filter={props.filter} containerRef={notificationListContainerRef} refetch={refetch} />
+      <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
       <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-        <NotificationListContainer ref={setNotificationListContainerRef}>
+        <NotificationListContainer>
           <For each={data()}>
             {(notification) => (
               <Notification
@@ -96,51 +91,5 @@ export const NotificationList = (props: NotificationListProps) => {
     <Suspense fallback={<NotificationListSkeleton count={8} />}>
       <NotificationListWrapper {...props} />
     </Suspense>
-  );
-};
-
-const NewMessageCTA: Component<{
-  filter?: NotificationListProps['filter'];
-  containerRef: Accessor<HTMLElement | null>;
-  refetch?: ({ filter }: { filter?: NotificationFilter }) => Promise<void>;
-}> = (props) => {
-  const style = useStyle();
-  const { t } = useLocalization();
-  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
-  const [shouldRender, setRender] = createSignal(!!count());
-  const onAnimationEnd = () => count() < 1 && setRender(false);
-
-  createEffect(() => count() > 0 && setRender(true));
-
-  const handleClick = async () => {
-    resetNewMessagesCount();
-    await props.refetch?.({ filter: props.filter ?? undefined });
-    props.containerRef()?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  return (
-    <Show when={shouldRender()}>
-      <div
-        class={style(
-          'notificationListNewNotificationsNoticeContainer',
-          'nt-relative nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
-        )}
-      >
-        <Button
-          appearanceKey="notificationListNewNotificationsNotice__button"
-          class={`nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 ${
-            count() < 1 ? 'nt-animate-fade-up nt-opacity-0' : 'nt-animate-fade-down'
-          }`}
-          onClick={handleClick}
-          /**
-           * onAnimationEnd is is a native HTML event that is triggered when a CSS animation has completed.
-           * Ref: https://developer.mozilla.org/en-US/docs/Web/API/Element/animationend_event
-           */
-          onAnimationEnd={onAnimationEnd}
-        >
-          {t('notifications.newNotifications', { notificationCount: count() })}
-        </Button>
-      </div>
-    </Show>
   );
 };
