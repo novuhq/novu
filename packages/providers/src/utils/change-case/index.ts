@@ -23,7 +23,7 @@ function changeKeysFactory<Options extends IOptions = IOptions>(
   changeCase: (input: string, options?: IOptions) => string
 ): (object: unknown, options?: Options) => unknown {
   return function changeKeys(object: unknown, options?: Options): unknown {
-    const depth = options.depth || 10000;
+    const depth = options?.depth || 10000;
 
     if (depth === 0 || !isObject(object)) return object;
 

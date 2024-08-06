@@ -198,7 +198,7 @@ export function deepmerge<
   ) as Output;
 }
 
-export function deepmergeAll(array: unknown[], options: IDeepmergeOptions) {
+export function deepmergeAll(array: unknown[], options?: IDeepmergeOptions) {
   if (!Array.isArray(array)) {
     throw new Error('first argument should be an array');
   }
