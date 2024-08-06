@@ -50,7 +50,6 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
   });
 
   const reset = async () => {
-    setData([]);
     setInitialLoading(true);
     setEnd(false);
 

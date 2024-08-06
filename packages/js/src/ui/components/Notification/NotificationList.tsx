@@ -5,15 +5,14 @@ import {
   createMemo,
   createSignal,
   For,
-  onMount,
   ParentComponent,
-  ParentProps,
   Setter,
   Show,
+  Suspense,
 } from 'solid-js';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
-import { useNewMessagesCount, useLocalization } from '../../context';
+import { useLocalization, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
@@ -58,38 +57,45 @@ type NotificationListProps = {
   limit?: number | undefined;
   filter?: NotificationFilter;
 };
-/* This is also going to be exported as a separate component. Keep it pure. */
-export const NotificationList = (props: NotificationListProps) => {
+
+const NotificationListWrapper = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
-  const { data, initialLoading, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
+  const { data, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
   const [notificationListContainerRef, setNotificationListContainerRef] = createSignal<HTMLElement | null>(null);
 
   return (
     <>
       <NewMessageCTA filter={props.filter} containerRef={notificationListContainerRef} refetch={refetch} />
-      <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
-        <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-          <NotificationListContainer ref={setNotificationListContainerRef}>
-            <For each={data()}>
-              {(notification) => (
-                <Notification
-                  notification={notification}
-                  mountNotification={props.mountNotification}
-                  onNotificationClick={props.onNotificationClick}
-                  onPrimaryActionClick={props.onPrimaryActionClick}
-                  onSecondaryActionClick={props.onSecondaryActionClick}
-                />
-              )}
-            </For>
-            <Show when={!end()}>
-              <div ref={setEl}>
-                <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
-              </div>
-            </Show>
-          </NotificationListContainer>
-        </Show>
+      <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
+        <NotificationListContainer ref={setNotificationListContainerRef}>
+          <For each={data()}>
+            {(notification) => (
+              <Notification
+                notification={notification}
+                mountNotification={props.mountNotification}
+                onNotificationClick={props.onNotificationClick}
+                onPrimaryActionClick={props.onPrimaryActionClick}
+                onSecondaryActionClick={props.onSecondaryActionClick}
+              />
+            )}
+          </For>
+          <Show when={!end()}>
+            <div ref={setEl}>
+              <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
+            </div>
+          </Show>
+        </NotificationListContainer>
       </Show>
     </>
+  );
+};
+
+/* This is also going to be exported as a separate component. Keep it pure. */
+export const NotificationList = (props: NotificationListProps) => {
+  return (
+    <Suspense fallback={<NotificationListSkeleton count={8} />}>
+      <NotificationListWrapper {...props} />
+    </Suspense>
   );
 };
 
@@ -101,16 +107,15 @@ const NewMessageCTA: Component<{
   const style = useStyle();
   const { t } = useLocalization();
   const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
-
   const [shouldRender, setRender] = createSignal(!!count());
   const onAnimationEnd = () => count() < 1 && setRender(false);
 
   createEffect(() => count() > 0 && setRender(true));
 
   const handleClick = async () => {
+    resetNewMessagesCount();
     await props.refetch?.({ filter: props.filter ?? undefined });
     props.containerRef()?.scrollTo({ top: 0, behavior: 'smooth' });
-    resetNewMessagesCount();
   };
 
   return (
