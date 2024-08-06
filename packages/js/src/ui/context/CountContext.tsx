@@ -42,7 +42,10 @@ export const CountProvider = (props: ParentProps) => {
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
-    eventHandler: (data) => setTotalUnreadCount(data.result),
+    eventHandler: (data) => {
+      setTotalUnreadCount(data.result);
+      updateUnreadCounts();
+    },
   });
 
   useNovuEvent({
