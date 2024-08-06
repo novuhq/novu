@@ -8,6 +8,7 @@ import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlayArrow, successMessage, errorMessage, Tooltip } from '@novu/design-system';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
+import { useContainer } from '../../../hooks/useContainer';
 
 export function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {
   const segment = useSegment();
@@ -91,6 +92,7 @@ const TriggerActionModal = ({
   handleTestClick: () => Promise<any>;
   onTestRun: () => void;
 }) => {
+  const { isBridgeAppLoading } = useContainer();
   const studioState = useStudioState() || {};
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
@@ -129,9 +131,9 @@ const TriggerActionModal = ({
           size="sm"
           Icon={IconPlayArrow}
           onClick={handleOnRunTestClick}
-          loading={isLoading}
+          loading={isLoading || isBridgeAppLoading}
         >
-          Run a test
+          Trigger Workflow
         </Button>
       </Tooltip>
       <ExecutionDetailsModalWrapper

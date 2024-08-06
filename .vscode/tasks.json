@@ -85,9 +85,7 @@
       },
       "dependsOn": [
         "SHARED",
-        "API",
-        "DESIGN SYSTEM",
-        "NOVUI"
+        "API"
       ]
     },
     {
