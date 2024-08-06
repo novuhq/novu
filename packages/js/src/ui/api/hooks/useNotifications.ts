@@ -1,11 +1,11 @@
 import { onCleanup, onMount } from 'solid-js';
-import { isSameFilter } from '../../../utils/notification-utils';
 import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notifications';
+import { isSameFilter } from '../../../utils/notification-utils';
 import { useNovu } from '../../context';
 import { createInfiniteScroll } from '../../helpers';
 
 type UseNotificationsInfiniteScrollProps = {
-  options?: Exclude<ListNotificationsArgs, 'offset'>;
+  options?: Exclude<ListNotificationsArgs, 'offset' | 'after'>;
 };
 export const useNotificationsInfiniteScroll = (props?: UseNotificationsInfiniteScrollProps) => {
   const novu = useNovu();
