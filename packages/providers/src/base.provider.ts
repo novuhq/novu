@@ -53,8 +53,8 @@ export abstract class BaseProvider {
         triggerProviderData as unknown as Record<string, unknown>,
         deepmerge(result, _passthrough.body)
       ) as T_Output,
-      headers: _passthrough.headers,
-      query: _passthrough.query,
+      headers: _passthrough.headers || {},
+      query: _passthrough.query || {},
     } as TransformOutput<T_Output>;
   }
 
