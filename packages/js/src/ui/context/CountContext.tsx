@@ -1,4 +1,5 @@
-import { Accessor, createContext, createMemo, createSignal, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
+import { NotificationFilter } from '../../types';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
 import { useInboxContext } from './InboxContext';
@@ -19,6 +20,25 @@ export const CountProvider = (props: ParentProps) => {
   const [totalUnreadCount, setTotalUnreadCount] = createSignal(0);
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
+
+  const updateUnreadCounts = async () => {
+    const filters = tabs().map((tab) => ({ tags: tab.value, read: false, archived: false }));
+    const { data } = await novu.notifications.count({ filters });
+    if (!data) {
+      return;
+    }
+
+    const newMap = new Map();
+    const counts = data.counts;
+    for (let i = 0; i < counts.length; i++) {
+      const tagsKey = createKey(counts[i].filter.tags);
+      newMap.set(tagsKey, data?.counts[i].count);
+    }
+
+    setUnreadCounts(newMap);
+  };
+
+  onMount(updateUnreadCounts);
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
@@ -73,22 +93,7 @@ export const CountProvider = (props: ParentProps) => {
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
-    eventHandler: async () => {
-      const filters = tabs().map((tab) => ({ tags: tab.value, read: false, archived: false }));
-      const { data } = await novu.notifications.count({ filters });
-      if (!data) {
-        return;
-      }
-
-      const newMap = new Map();
-      const counts = data.counts;
-      for (let i = 0; i < counts.length; i++) {
-        const tagsKey = createKey(counts[i].filter.tags ?? []);
-        newMap.set(tagsKey, data?.counts[i].count);
-      }
-
-      setUnreadCounts(newMap);
-    },
+    eventHandler: updateUnreadCounts,
   });
 
   const resetNewNotificationCounts = (key: string) => {
@@ -109,8 +114,8 @@ export const CountProvider = (props: ParentProps) => {
   );
 };
 
-const createKey = (tags: string[]) => {
-  return JSON.stringify({ tags: tags });
+const createKey = (tags?: NotificationFilter['tags']) => {
+  return JSON.stringify({ tags: tags ?? [] });
 };
 
 export const useTotalUnreadCount = () => {
@@ -122,27 +127,50 @@ export const useTotalUnreadCount = () => {
   return { totalUnreadCount: context.totalUnreadCount };
 };
 
-export const useNewMessagesCount = (props: { tags: string[] }) => {
+type UseNewMessagesCountProps = {
+  filter: Pick<NotificationFilter, 'tags'>;
+};
+export const useNewMessagesCount = (props: UseNewMessagesCountProps) => {
   const context = useContext(CountContext);
   if (!context) {
     throw new Error('useNewMessagesCount must be used within a CountProvider');
   }
 
-  const key = createMemo(() => createKey(props.tags));
+  const key = createMemo(() => createKey(props.filter.tags));
   const count = createMemo(() => context.newNotificationCounts().get(key()) || 0);
   const reset = () => context.resetNewNotificationCounts(key());
 
   return { count, reset };
 };
 
-export const useUnreadCount = (props: { tags: string[] }) => {
+type UseUnreadCountProps = {
+  filter: Pick<NotificationFilter, 'tags'>;
+};
+export const useUnreadCount = (props: UseUnreadCountProps) => {
   const context = useContext(CountContext);
   if (!context) {
     throw new Error('useUnreadCount must be used within a CountProvider');
   }
 
-  const key = createMemo(() => createKey(props.tags));
-  const count = createMemo(() => context.unreadCounts().get(key()) || 0);
+  const count = createMemo(() => context.unreadCounts().get(createKey(props.filter.tags)) || 0);
 
-  return { count };
+  return count;
+};
+
+type UseUnreadCountsProps = {
+  filters: Pick<NotificationFilter, 'tags'>[];
+};
+export const useUnreadCounts = (props: UseUnreadCountsProps) => {
+  const context = useContext(CountContext);
+  if (!context) {
+    throw new Error('useUnreadCounts must be used within a CountProvider');
+  }
+
+  const counts = createMemo(() =>
+    props.filters.map((filter) => {
+      return context.unreadCounts().get(createKey(filter.tags)) || 0;
+    })
+  );
+
+  return counts;
 };

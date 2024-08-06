@@ -155,6 +155,8 @@ export type Variables = {
   colorPrimaryForeground?: string;
   colorSecondary?: string;
   colorSecondaryForeground?: string;
+  colorCounter?: string;
+  colorCounterForeground?: string;
   colorNeutral?: string;
   fontSize?: string;
   borderRadius?: string;
