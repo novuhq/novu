@@ -128,11 +128,11 @@ export class NovuUI {
     });
   }
 
-  updateAppearance(appearance: Appearance) {
+  updateAppearance(appearance?: Appearance) {
     this.#setAppearance(appearance);
   }
 
-  updateLocalization(localization: Localization) {
+  updateLocalization(localization?: Localization) {
     this.#setLocalization(localization);
   }
 
@@ -140,7 +140,7 @@ export class NovuUI {
     this.#setOptions(options);
   }
 
-  updateTabs(tabs: Array<Tab>) {
-    this.#setTabs(tabs);
+  updateTabs(tabs?: Array<Tab>) {
+    this.#setTabs(tabs ?? []);
   }
 }
