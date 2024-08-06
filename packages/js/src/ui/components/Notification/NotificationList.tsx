@@ -115,7 +115,6 @@ const NewMessageCTA: Component<{
 
   return (
     <Show when={shouldRender()}>
-      hahahah
       <div
         class={style(
           'notificationListNewNotificationsNoticeContainer',
