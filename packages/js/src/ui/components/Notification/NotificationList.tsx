@@ -1,7 +1,7 @@
 import { createMemo, For, ParentProps, Show } from 'solid-js';
 import { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
-import { useUnreadCount, useLocalization } from '../../context';
+import { useNewMessagesCount, useLocalization } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
@@ -50,9 +50,9 @@ type NotificationListProps = {
 export const NotificationList = (props: NotificationListProps) => {
   const { t } = useLocalization();
   const style = useStyle();
-  const options = createMemo(() => ({ ...props.filter, limit: props.limit } ?? {}));
+  const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({ options });
-  const { count } = useUnreadCount({ tags: props.filter?.tags ?? [] });
+  const { count } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
 
   return (
     <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
@@ -61,7 +61,7 @@ export const NotificationList = (props: NotificationListProps) => {
           <div
             class={style(
               'notificationListNewNotificationsNoticeContainer',
-              'nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
+              'nt-relative nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
             )}
           >
             <Button

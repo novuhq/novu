@@ -9,6 +9,7 @@ import { useNovu } from './NovuContext';
 type CountContextValue = {
   totalUnreadCount: Accessor<number>;
   unreadCounts: Accessor<Map<string, number>>;
+  newNotificationCounts: Accessor<Map<string, number>>;
 };
 
 const CountContext = createContext<CountContextValue>(undefined);
@@ -18,6 +19,7 @@ export const CountProvider = (props: ParentProps) => {
   const { tabs } = useInboxContext();
   const [totalUnreadCount, setTotalUnreadCount] = createSignal(0);
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
+  const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
@@ -32,6 +34,31 @@ export const CountProvider = (props: ParentProps) => {
       }
 
       setTotalUnreadCount(data.totalUnreadCount);
+    },
+  });
+
+  useWebSocketEvent({
+    event: 'notifications.notification_received',
+    eventHandler: async (data) => {
+      const notification = data.result;
+      const allTabs = tabs();
+      for (let i = 0; i < allTabs.length; i++) {
+        const tab = allTabs[i];
+        const tags = tab.value;
+        const allNotifications = tags.length === 0;
+        const includeTags = notification.tags?.every((tag) => tags.includes(tag));
+        if (!allNotifications && !includeTags) {
+          continue;
+        }
+
+        setNewNotificationCounts((oldMap) => {
+          const tagsKey = createKey(tags);
+          const newMap = new Map(oldMap);
+          newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
+
+          return newMap;
+        });
+      }
     },
   });
 
@@ -55,7 +82,11 @@ export const CountProvider = (props: ParentProps) => {
     },
   });
 
-  return <CountContext.Provider value={{ totalUnreadCount, unreadCounts }}>{props.children}</CountContext.Provider>;
+  return (
+    <CountContext.Provider value={{ totalUnreadCount, unreadCounts, newNotificationCounts }}>
+      {props.children}
+    </CountContext.Provider>
+  );
 };
 
 const createKey = (tags: string[]) => {
@@ -65,16 +96,28 @@ const createKey = (tags: string[]) => {
 export const useTotalUnreadCount = () => {
   const context = useContext(CountContext);
   if (!context) {
-    throw new Error('useCount must be used within a CountProvider');
+    throw new Error('useTotalUnreadCount must be used within a CountProvider');
   }
 
   return { totalUnreadCount: context.totalUnreadCount };
 };
 
+export const useNewMessagesCount = (props: { tags: string[] }) => {
+  const context = useContext(CountContext);
+  if (!context) {
+    throw new Error('useNewMessagesCount must be used within a CountProvider');
+  }
+
+  const key = createMemo(() => createKey(props.tags));
+  const count = createMemo(() => context.newNotificationCounts().get(key()) || 0);
+
+  return { count };
+};
+
 export const useUnreadCount = (props: { tags: string[] }) => {
   const context = useContext(CountContext);
   if (!context) {
-    throw new Error('useCount must be used within a CountProvider');
+    throw new Error('useUnreadCount must be used within a CountProvider');
   }
 
   const key = createMemo(() => createKey(props.tags));
