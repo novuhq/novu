@@ -1,7 +1,7 @@
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { AppearanceKey } from '../../../context';
-import { cn, useStyle } from '../../../helpers';
+import { useStyle } from '../../../helpers';
 import { Popover, usePopover } from '../Popover';
 
 export const dropdownItemVariants = () =>

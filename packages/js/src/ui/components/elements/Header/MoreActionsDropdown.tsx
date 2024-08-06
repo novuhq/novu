@@ -1,8 +1,8 @@
 import { Show } from 'solid-js';
-import { NotificationStatus } from '../../../types';
 import { useInboxContext } from 'src/ui/context';
 import { useStyle } from '../../../helpers';
 import { DotsMenu } from '../../../icons';
+import { NotificationStatus } from '../../../types';
 import { Button, Dropdown } from '../../primitives';
 import { MoreActionsOptions } from './MoreActionsOptions';
 
@@ -16,7 +16,7 @@ export const MoreActionsDropdown = () => {
         <Dropdown.Trigger
           class={style('moreActions__dropdownTrigger')}
           asChild={(triggerProps) => (
-            <Button variant="ghost" size="icon" {...triggerProps}>
+            <Button variant="icon" size="icon" {...triggerProps}>
               <DotsMenu />
             </Button>
           )}

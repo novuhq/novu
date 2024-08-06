@@ -50,7 +50,7 @@ type NotificationListProps = {
 const NotificationListWrapper = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const { data, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
-  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
+  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
 
   const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
     e.stopPropagation();
