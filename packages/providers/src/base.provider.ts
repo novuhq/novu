@@ -7,7 +7,7 @@ import {
   snakeCase,
 } from './utils/change-case';
 import { IOptions } from './utils/change-case/functions';
-import { deepMerge } from './utils/deepmerge.utils';
+import { deepMerge, deepMergeAll } from './utils/deepmerge.utils';
 import { Passthrough, WithPassthrough } from './utils/types';
 
 export enum CasingEnum {
@@ -26,7 +26,7 @@ type TransformOutput<T> = {
 };
 
 export abstract class BaseProvider {
-  protected casing: CasingEnum | undefined;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
 
   protected keyCaseObject: Record<string, string> = {};
 
@@ -39,7 +39,7 @@ export abstract class BaseProvider {
     triggerProviderData: T_Data
   ): TransformOutput<T_Output> {
     const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
-    const result = this.casingTransform(bridgeData);
+    const bridgeKnownData = this.casingTransform(bridgeData);
 
     const defaultPassthrough: Passthrough = {
       body: {},
@@ -51,14 +51,31 @@ export abstract class BaseProvider {
       _passthrough
     );
 
-    return {
-      body: deepMerge(
-        triggerProviderData as unknown as Record<string, unknown>,
-        deepMerge(result, mergedPassthrough.body)
-      ),
-      headers: mergedPassthrough.headers,
-      query: mergedPassthrough.query,
-    } as TransformOutput<T_Output>;
+    mergedPassthrough.body = this.casingTransform(mergedPassthrough.body);
+
+    const triggerProviderPassthrough: Passthrough = {
+      body: triggerProviderData as unknown as Record<string, unknown>,
+      headers: {},
+      query: {},
+    };
+
+    const brideKnownDataPassthrough: Passthrough = {
+      body: bridgeKnownData,
+      headers: {},
+      query: {},
+    };
+
+    console.log(
+      triggerProviderPassthrough,
+      brideKnownDataPassthrough,
+      mergedPassthrough
+    );
+
+    return deepMergeAll([
+      triggerProviderPassthrough,
+      brideKnownDataPassthrough,
+      mergedPassthrough,
+    ]) as TransformOutput<T_Output>;
   }
 
   private keyCaseTransformer(key: string) {

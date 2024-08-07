@@ -10,7 +10,7 @@ import {
   EmailEventStatusEnum,
 } from '@novu/stateless';
 import { Errors, ServerClient, Message, Models } from 'postmark';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class PostmarkEmailProvider
@@ -18,6 +18,7 @@ export class PostmarkEmailProvider
   implements IEmailProvider
 {
   id = EmailProviderIdEnum.Postmark;
+  protected casing = CasingEnum.CAPITAL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private client: ServerClient;
 

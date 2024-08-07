@@ -12,7 +12,7 @@ import {
 import mailchimp from '@mailchimp/mailchimp_transactional';
 import { IMandrilInterface, IMandrillSendOptions } from './mandril.interface';
 import { EmailProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export enum MandrillStatusEnum {
@@ -30,6 +30,7 @@ export enum MandrillStatusEnum {
 
 export class MandrillProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Mandrill;
+  protected casing = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private transporter: IMandrilInterface;

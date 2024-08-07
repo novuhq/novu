@@ -6,7 +6,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 if (!globalThis.fetch) {
@@ -16,6 +16,7 @@ if (!globalThis.fetch) {
 
 export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Gupshup;
+  protected casing = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
 

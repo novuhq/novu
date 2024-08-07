@@ -41,12 +41,20 @@ test('should trigger mailgun correctly with custom baseUrl', async () => {
 
   const api = nock('https://api.eu.mailgun.net');
 
-  api.post('/v3/test.com/messages').reply(200, {
-    message: 'Queued. Thank you.',
-    id: '<20111114174239.25659.5817@samples.mailgun.org>',
-  });
+  api
+    .post('/v3/test.com/messages', (body) => {
+      expect(body.includes('name="o:tag"')).toBeTruthy();
 
-  await provider.sendMessage(mockNovuMessage);
+      return true;
+    })
+    .reply(200, {
+      message: 'Queued. Thank you.',
+      id: '<20111114174239.25659.5817@samples.mailgun.org>',
+    });
+
+  await provider.sendMessage(mockNovuMessage, {
+    oTag: ['test'],
+  });
 
   expect(api.isDone()).toBeTruthy();
   api.done();

@@ -197,3 +197,13 @@ export function deepMerge<
     options as IOptions
   ) as Output;
 }
+
+export function deepMergeAll(array: unknown[], options?: IDeepmergeOptions) {
+  if (!Array.isArray(array)) {
+    throw new Error('first argument should be an array');
+  }
+
+  return array.reduce(function (prev, next) {
+    return deepMerge(prev, next, options);
+  }, {});
+}

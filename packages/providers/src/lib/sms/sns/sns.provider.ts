@@ -12,11 +12,12 @@ import {
 
 import { SNSConfig } from './sns.config';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.SNS;
+  protected casing: CasingEnum = CasingEnum.CAPITAL_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private client: SNSClient;
 

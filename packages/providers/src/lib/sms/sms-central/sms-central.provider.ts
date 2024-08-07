@@ -6,7 +6,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SmsCentralSmsProvider
@@ -15,6 +15,7 @@ export class SmsCentralSmsProvider
 {
   public readonly DEFAULT_BASE_URL = 'https://my.smscentral.com.au/api/v3.2';
   id = SmsProviderIdEnum.SmsCentral;
+  protected casing = CasingEnum.CONSTANT_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   constructor(

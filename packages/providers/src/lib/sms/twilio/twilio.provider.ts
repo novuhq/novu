@@ -15,7 +15,7 @@ import { WithPassthrough } from '../../../utils/types';
 
 export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Twilio;
-  protected casing = CasingEnum.CAPITAL_CASE;
+  protected casing = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private twilioClient: Twilio;
 

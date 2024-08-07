@@ -32,7 +32,7 @@ test('should trigger Twilio correctly', async () => {
     from: '+112345',
     body: 'SMS Content',
     to: '+176543',
-    ApplicationSid: 'test',
+    applicationSid: 'test',
   });
 });
 
@@ -73,6 +73,6 @@ test('should trigger Twilio correctly with _passthrough', async () => {
     from: '+112345',
     body: 'SMS Content _passthrough',
     to: '+176543',
-    ApplicationSid: 'test',
+    applicationSid: 'test',
   });
 });
