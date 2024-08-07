@@ -161,3 +161,12 @@ export type Result<D = undefined, E = unknown> = Promise<{
   data?: D;
   error?: E;
 }>;
+
+export type NovuOptions = {
+  applicationIdentifier: string;
+  subscriberId: string;
+  subscriberHash?: string;
+  backendUrl?: string;
+  socketUrl?: string;
+  useCache?: boolean;
+};

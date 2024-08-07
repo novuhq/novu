@@ -1,5 +1,5 @@
 import { JSX, ParentProps, Show, splitProps } from 'solid-js';
-import { AppearanceKey } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
 import { useTabsContext } from './TabsRoot';
 

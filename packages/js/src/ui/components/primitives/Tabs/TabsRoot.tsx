@@ -9,7 +9,7 @@ import {
   useContext,
   splitProps,
 } from 'solid-js';
-import type { AppearanceKey } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
 import { useKeyboardNavigation } from './useKeyboardNavigation';
 

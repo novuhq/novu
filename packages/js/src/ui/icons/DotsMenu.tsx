@@ -1,5 +1,5 @@
 import { JSX, splitProps } from 'solid-js';
-import { AppearanceKey } from '../context';
+import type { AppearanceKey } from '../types';
 import { useStyle } from '../helpers';
 
 export const DotsMenu = (props: JSX.IntrinsicElements['svg'] & { appearanceKey?: AppearanceKey }) => {

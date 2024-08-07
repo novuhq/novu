@@ -1,8 +1,6 @@
 import { Accessor, createContext, createMemo, ParentProps, useContext } from 'solid-js';
 import { defaultLocalization } from '../config/defaultLocalization';
-
-export type LocalizationKey = keyof typeof defaultLocalization;
-export type Localization = Partial<Record<LocalizationKey, string>>;
+import type { Localization, LocalizationKey } from '../types';
 
 type LocalizationValue<K extends LocalizationKey> = (typeof defaultLocalization)[K];
 type LocalizationParams<K extends LocalizationKey> = LocalizationValue<K> extends (args: infer P) => any

@@ -1,4 +1,4 @@
-import { Variables } from '../context';
+import type { Variables } from '../types';
 
 export const defaultVariables: Required<Variables> = {
   colorPrimary: '#0081F1',

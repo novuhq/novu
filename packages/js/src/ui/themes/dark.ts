@@ -1,4 +1,4 @@
-import { Theme } from '../context';
+import type { Theme } from '../types';
 
 export const dark: Theme = {
   variables: {

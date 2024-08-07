@@ -7,7 +7,7 @@ export default function Home() {
     <>
       <Title title="Render Notification Props" />
       <Inbox
-        options={novuConfig}
+        {...novuConfig}
         renderNotification={({ notification }) => {
           return (
             <div className="flex gap-2 flex-nowrap items-start self-stretch my-1 p-2 hover:bg-slate-200">
