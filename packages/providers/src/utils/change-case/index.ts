@@ -53,11 +53,9 @@ function changeKeysFactory<Options extends IOptions = IOptions>(
 
 export const camelCase =
   changeKeysFactory<IPascalCaseOptions>(camelCaseTransformer);
-export const capitalCase = changeKeysFactory(capitalCaseTransformer);
 export const constantCase = changeKeysFactory(constantCaseTransformer);
 export const dotCase = changeKeysFactory(dotCaseTransformer);
 export const trainCase = changeKeysFactory(trainCaseTransformer);
-export const noCase = changeKeysFactory(noCaseTransformer);
 export const kebabCase = changeKeysFactory(kebabCaseTransformer);
 export const pascalCase = changeKeysFactory<IPascalCaseOptions>(
   pascalCaseTransformer

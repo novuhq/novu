@@ -11,7 +11,7 @@ import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MailgunEmailProvider
@@ -22,6 +22,7 @@ export class MailgunEmailProvider
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
+  protected casing = CasingEnum.CAMEL_CASE;
   protected keyCaseObject: Record<string, string> = {
     ampHtml: 'amp-html',
     tVersion: 't:version',

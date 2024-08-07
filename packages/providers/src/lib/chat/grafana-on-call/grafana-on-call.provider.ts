@@ -7,7 +7,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { v4 as uuid } from 'uuid';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class GrafanaOnCallChatProvider
@@ -16,6 +16,7 @@ export class GrafanaOnCallChatProvider
 {
   id = ChatProviderIdEnum.GrafanaOnCall;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
+  protected casing = CasingEnum.SNAKE_CASE;
   private axiosInstance = axios.create();
   constructor(
     private config: {

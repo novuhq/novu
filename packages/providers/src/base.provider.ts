@@ -1,6 +1,5 @@
 import {
   camelCase,
-  capitalCase,
   constantCase,
   kebabCase,
   pascalCase,
@@ -12,9 +11,9 @@ import { Passthrough, WithPassthrough } from './utils/types';
 export enum CasingEnum {
   CAMEL_CASE = 'camelCase',
   PASCAL_CASE = 'PascalCase',
-  CAPITAL_CASE = 'CapitalCase',
+  CAPITAL_CASE = 'Capital Case',
   SNAKE_CASE = 'snake_case',
-  KEBAB_CASE = 'kebabcase',
+  KEBAB_CASE = 'kebab-case',
   CONSTANT_CASE = 'CONSTANT_CASE',
 }
 
@@ -25,7 +24,7 @@ type MergedPassthrough<T> = {
 };
 
 export abstract class BaseProvider {
-  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+  protected abstract casing: CasingEnum;
 
   /**
    * A mapping of keys to their desired casing. This mapping should be
@@ -114,9 +113,6 @@ export abstract class BaseProvider {
       case CasingEnum.PASCAL_CASE:
         casing = pascalCase;
         break;
-      case CasingEnum.CAPITAL_CASE:
-        casing = capitalCase;
-        break;
       case CasingEnum.SNAKE_CASE:
         casing = snakeCase;
         break;
@@ -129,6 +125,8 @@ export abstract class BaseProvider {
       case CasingEnum.CAMEL_CASE:
         casing = camelCase;
         break;
+      default:
+        throw new Error(`Unknown casing: ${this.casing}`);
     }
 
     return casing(data, {

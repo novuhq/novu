@@ -1,9 +1,7 @@
 import {
-  capitalCase,
   constantCase,
   dotCase,
   kebabCase,
-  noCase,
   pascalCase,
   pathCase,
   sentenceCase,
@@ -27,59 +25,6 @@ const stub = {
 };
 
 describe('change case', () => {
-  it('should change case to capital case', () => {
-    expect(capitalCase(stub)).toEqual({
-      ListOfListOfObjects: [
-        [
-          {
-            PrimitiveBoolean: true,
-            PrimitiveNumber: 1,
-            PrimitiveString: 'string',
-          },
-        ],
-        [
-          {
-            PrimitiveBoolean: true,
-            PrimitiveNumber: 1,
-            PrimitiveString: 'string',
-          },
-        ],
-      ],
-      ListOfObjects: [
-        {
-          PrimitiveBoolean: true,
-          PrimitiveNumber: 1,
-          PrimitiveString: 'string',
-        },
-        {
-          PrimitiveBoolean: true,
-          PrimitiveNumber: 1,
-          PrimitiveString: 'string',
-        },
-      ],
-      NestedObject: {
-        ListOfObjects: [
-          {
-            PrimitiveBoolean: true,
-            PrimitiveNumber: 1,
-            PrimitiveString: 'string',
-          },
-          {
-            PrimitiveBoolean: true,
-            PrimitiveNumber: 1,
-            PrimitiveString: 'string',
-          },
-        ],
-        PrimitiveBoolean: true,
-        PrimitiveNumber: 1,
-        PrimitiveString: 'string',
-      },
-      PrimitiveBoolean: true,
-      PrimitiveNumber: 1,
-      PrimitiveString: 'string',
-    });
-  });
-
   it('should change case to constant case', () => {
     expect(constantCase(stub)).toEqual({
       LIST_OF_LIST_OF_OBJECTS: [
@@ -236,59 +181,6 @@ describe('change case', () => {
       'Primitive-Boolean': true,
       'Primitive-Number': 1,
       'Primitive-String': 'string',
-    });
-  });
-
-  it('should change case to no case', () => {
-    expect(noCase(stub)).toEqual({
-      'list of list of objects': [
-        [
-          {
-            'primitive boolean': true,
-            'primitive number': 1,
-            'primitive string': 'string',
-          },
-        ],
-        [
-          {
-            'primitive boolean': true,
-            'primitive number': 1,
-            'primitive string': 'string',
-          },
-        ],
-      ],
-      'list of objects': [
-        {
-          'primitive boolean': true,
-          'primitive number': 1,
-          'primitive string': 'string',
-        },
-        {
-          'primitive boolean': true,
-          'primitive number': 1,
-          'primitive string': 'string',
-        },
-      ],
-      'nested object': {
-        'list of objects': [
-          {
-            'primitive boolean': true,
-            'primitive number': 1,
-            'primitive string': 'string',
-          },
-          {
-            'primitive boolean': true,
-            'primitive number': 1,
-            'primitive string': 'string',
-          },
-        ],
-        'primitive boolean': true,
-        'primitive number': 1,
-        'primitive string': 'string',
-      },
-      'primitive boolean': true,
-      'primitive number': 1,
-      'primitive string': 'string',
     });
   });
 

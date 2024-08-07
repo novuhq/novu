@@ -6,7 +6,7 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class GetstreamChatProvider
@@ -15,6 +15,7 @@ export class GetstreamChatProvider
 {
   id = ChatProviderIdEnum.GetStream;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
+  protected casing = CasingEnum.SNAKE_CASE;
   private axiosInstance = axios.create();
 
   constructor(
