@@ -680,6 +680,35 @@ contexts.forEach((context: Context) => {
       expect(sentMessage.length).to.be.eq(1);
       expect(sentMessage[0].subject).to.equal('email subject stored_control_name');
     });
+
+    it(`should store 2 in-app messages for a single notification event [${context.name}]`, async () => {
+      const workflowId = `double-in-app-workflow-${context.name + '-' + uuidv4()}`;
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
+        await step.inApp('send-in-app1', () => ({ body: 'Hello there 1' }));
+        await step.inApp('send-in-app2', () => ({ body: 'Hello there 2' }));
+      });
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(2);
+      const messageBodies = sentMessages.map((message) => message.content);
+      expect(messageBodies).to.include('Hello there 1');
+      expect(messageBodies).to.include('Hello there 2');
+    });
   });
 });
 
