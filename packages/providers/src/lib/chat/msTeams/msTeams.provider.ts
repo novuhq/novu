@@ -6,12 +6,13 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MsTeamsProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.MsTeams;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   private axiosInstance = axios.create();
 
   constructor(private config) {

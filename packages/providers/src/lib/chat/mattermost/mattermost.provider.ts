@@ -6,7 +6,7 @@ import {
   IChatProvider,
 } from '@novu/stateless';
 import { ChatProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 interface IMattermostPayload {
@@ -17,6 +17,7 @@ interface IMattermostPayload {
 export class MattermostProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.Mattermost;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   private axiosInstance = axios.create();
 
   async sendMessage(

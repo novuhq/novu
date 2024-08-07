@@ -6,7 +6,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
@@ -16,6 +16,7 @@ export class WhatsappBusinessChatProvider
   implements IChatProvider
 {
   id = ChatProviderIdEnum.WhatsAppBusiness;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
   private readonly axiosClient: AxiosInstance;

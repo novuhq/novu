@@ -6,11 +6,12 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   public id = ChatProviderIdEnum.Slack;
   private axiosInstance = axios.create();
 
