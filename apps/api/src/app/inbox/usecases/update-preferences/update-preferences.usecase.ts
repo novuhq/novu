@@ -54,7 +54,16 @@ export class UpdatePreferences {
       level: updatedPreference.level,
       enabled: updatedPreference.enabled,
       channels: updatedPreference.channels,
-      ...(workflow && updatedPreference.level === PreferenceLevelEnum.TEMPLATE && { workflow }),
+      ...(workflow &&
+        updatedPreference.level === PreferenceLevelEnum.TEMPLATE && {
+          workflow: {
+            critical: workflow.critical,
+            id: workflow._id,
+            name: workflow.name,
+            tags: workflow.tags,
+            triggers: workflow.triggers,
+          },
+        }),
     };
   }
 
