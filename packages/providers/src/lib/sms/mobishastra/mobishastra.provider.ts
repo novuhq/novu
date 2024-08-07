@@ -47,7 +47,7 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
     });
     const response = await this.axiosInstance.request({
       method: 'POST',
-      data: JSON.stringify([transformedData]),
+      data: JSON.stringify([transformedData.body]),
       headers: transformedData.headers,
     });
 

@@ -1,4 +1,5 @@
 import { Sms77SmsProvider } from './sms77.provider';
+import { expect, test, vi } from 'vitest';
 
 test('should trigger sms77 correctly', async () => {
   const provider = new Sms77SmsProvider({
@@ -6,7 +7,7 @@ test('should trigger sms77 correctly', async () => {
     from: '+1145678',
   });
 
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.sms77Client, 'sms')
@@ -37,7 +38,7 @@ test('should trigger sms77 correctly with _passthrough', async () => {
     from: '+1145678',
   });
 
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.sms77Client, 'sms')

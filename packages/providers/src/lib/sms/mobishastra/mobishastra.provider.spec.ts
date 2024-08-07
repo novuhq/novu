@@ -1,5 +1,4 @@
 import { MobishastraProvider } from './mobishastra.provider';
-import crypto from 'crypto';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 
 const baseUrl = 'https://mshastra.com/sendsms_api_json.aspx';
@@ -48,6 +47,7 @@ test('should trigger Mobishastra library correctly', async () => {
         pwd: password,
       },
     ]),
+    headers: {},
   });
 });
 
@@ -83,5 +83,6 @@ test('should trigger Mobishastra library correctly with _passthrough', async () 
         pwd: password,
       },
     ]),
+    headers: {},
   });
 });
