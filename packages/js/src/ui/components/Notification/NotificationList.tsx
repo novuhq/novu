@@ -47,9 +47,10 @@ type NotificationListProps = {
   filter?: NotificationFilter;
 };
 
-const NotificationListWrapper = (props: NotificationListProps) => {
+/* This is also going to be exported as a separate component. Keep it pure. */
+export const NotificationList = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
-  const { data, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
+  const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
   const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
 
   const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
@@ -61,35 +62,28 @@ const NotificationListWrapper = (props: NotificationListProps) => {
   return (
     <>
       <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
-      <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-        <NotificationListContainer>
-          <For each={data()}>
-            {(notification) => (
-              <Notification
-                notification={notification}
-                mountNotification={props.mountNotification}
-                onNotificationClick={props.onNotificationClick}
-                onPrimaryActionClick={props.onPrimaryActionClick}
-                onSecondaryActionClick={props.onSecondaryActionClick}
-              />
-            )}
-          </For>
-          <Show when={!end()}>
-            <div ref={setEl}>
-              <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
-            </div>
-          </Show>
-        </NotificationListContainer>
+      <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
+        <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
+          <NotificationListContainer>
+            <For each={data()}>
+              {(notification) => (
+                <Notification
+                  notification={notification}
+                  mountNotification={props.mountNotification}
+                  onNotificationClick={props.onNotificationClick}
+                  onPrimaryActionClick={props.onPrimaryActionClick}
+                  onSecondaryActionClick={props.onSecondaryActionClick}
+                />
+              )}
+            </For>
+            <Show when={!end()}>
+              <div ref={setEl}>
+                <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
+              </div>
+            </Show>
+          </NotificationListContainer>
+        </Show>
       </Show>
     </>
-  );
-};
-
-/* This is also going to be exported as a separate component. Keep it pure. */
-export const NotificationList = (props: NotificationListProps) => {
-  return (
-    <Suspense fallback={<NotificationListSkeleton count={8} />}>
-      <NotificationListWrapper {...props} />
-    </Suspense>
   );
 };
