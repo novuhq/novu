@@ -1,19 +1,19 @@
-import { createMemo, For, ParentProps, Show } from 'solid-js';
-import { NotificationFilter } from '../../../types';
+import { JSX, createMemo, createSignal, For, ParentComponent, Setter, Show, Suspense } from 'solid-js';
+import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
-import { useNewMessagesCount, useLocalization } from '../../context';
+import { useLocalization, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
-import { Button } from '../primitives';
+import { NewMessagesCta } from './NewMessagesCta';
 import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
 
-export const NotificationListContainer = (props: ParentProps) => {
+export const NotificationListContainer: ParentComponent<{ ref?: Setter<HTMLElement | null> }> = (props) => {
   const style = useStyle();
 
   return (
-    <div class={style('notificationList', 'nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')}>
+    <div class={style('notificationList', 'nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')} ref={props.ref}>
       {props.children}
     </div>
   );
@@ -46,32 +46,22 @@ type NotificationListProps = {
   limit?: number | undefined;
   filter?: NotificationFilter;
 };
-/* This is also going to be exported as a separate component. Keep it pure. */
-export const NotificationList = (props: NotificationListProps) => {
-  const { t } = useLocalization();
-  const style = useStyle();
+
+const NotificationListWrapper = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
-  const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({ options });
-  const { count } = useNewMessagesCount({ tags: props.filter?.tags ?? [] });
+  const { data, setEl, end, refetch } = useNotificationsInfiniteScroll({ options });
+  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
+
+  const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
+    e.stopPropagation();
+    resetNewMessagesCount();
+    refetch({ filter: props.filter });
+  };
 
   return (
-    <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
+    <>
+      <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
       <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-        <Show when={!!count()}>
-          <div
-            class={style(
-              'notificationListNewNotificationsNoticeContainer',
-              'nt-relative nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
-            )}
-          >
-            <Button
-              appearanceKey="notificationListNewNotificationsNotice__button"
-              class="nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 nt-animate-fade-down"
-            >
-              {t('notifications.newNotifications', { notificationCount: count() })}
-            </Button>
-          </div>
-        </Show>
         <NotificationListContainer>
           <For each={data()}>
             {(notification) => (
@@ -91,6 +81,15 @@ export const NotificationList = (props: NotificationListProps) => {
           </Show>
         </NotificationListContainer>
       </Show>
-    </Show>
+    </>
+  );
+};
+
+/* This is also going to be exported as a separate component. Keep it pure. */
+export const NotificationList = (props: NotificationListProps) => {
+  return (
+    <Suspense fallback={<NotificationListSkeleton count={8} />}>
+      <NotificationListWrapper {...props} />
+    </Suspense>
   );
 };
