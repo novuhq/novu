@@ -11,7 +11,6 @@ import { Passthrough, WithPassthrough } from './utils/types';
 export enum CasingEnum {
   CAMEL_CASE = 'camelCase',
   PASCAL_CASE = 'PascalCase',
-  CAPITAL_CASE = 'Capital Case',
   SNAKE_CASE = 'snake_case',
   KEBAB_CASE = 'kebab-case',
   CONSTANT_CASE = 'CONSTANT_CASE',
@@ -24,6 +23,17 @@ type MergedPassthrough<T> = {
 };
 
 export abstract class BaseProvider {
+  /**
+   * The casing of the provider API. This is used to transform the @novu/framework provider data from
+   * a language-preferred casing to the casing required by the provider.
+   *
+   * The currently supported casings are:
+   * - camelCase
+   * - PascalCase
+   * - snake_case
+   * - kebab-case
+   * - CONSTANT_CASE
+   */
   protected abstract casing: CasingEnum;
 
   /**
