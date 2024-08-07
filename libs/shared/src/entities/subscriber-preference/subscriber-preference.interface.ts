@@ -24,9 +24,12 @@ export interface ISubscriberWorkflowPreferenceResponse extends IPreferenceRespon
   level: PreferenceLevelEnum.TEMPLATE;
 }
 
+export interface IWorkflow extends Omit<ITemplateConfiguration, '_id'> {
+  id: string;
+}
 export interface ISubscriberPreferences {
   level: PreferenceLevelEnum;
-  workflow?: ITemplateConfiguration;
+  workflow?: IWorkflow;
   enabled: boolean;
   channels: IPreferenceChannels;
   overrides?: IPreferenceOverride[];

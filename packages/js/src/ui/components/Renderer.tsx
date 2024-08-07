@@ -1,21 +1,20 @@
-import { createMemo, For, onCleanup, onMount } from 'solid-js';
+import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import { NovuOptions } from '../../novu';
-import { DEFAULT_FILTER } from '../constants';
 import {
   Appearance,
   AppearanceProvider,
   CountProvider,
   FocusManagerProvider,
-  InboxNotificationStatusProvider,
+  InboxProvider,
   Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { Bell, Preferences, Root } from './elements';
+import type { Tab } from '../types';
+import { Bell, Root, Preferences } from './elements';
 import { Inbox } from './Inbox';
-import { InboxTab } from './InboxTabs';
 import { NotificationList as Notifications } from './Notification';
 
 export const novuComponents = {
@@ -39,16 +38,15 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  defaultCss: string;
+  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
   options: NovuOptions;
-  tabs?: InboxTab[];
+  tabs: Array<Tab>;
 };
 
 export const Renderer = (props: RendererProps) => {
-  const filters = createMemo(() => props.tabs?.map((t) => t.filter) || [DEFAULT_FILTER]);
   onMount(() => {
     const id = 'novu-default-css';
     const el = document.getElementById(id);
@@ -56,10 +54,11 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const styleEl = document.createElement('style');
-    styleEl.id = id;
-    document.head.insertBefore(styleEl, document.head.firstChild);
-    styleEl.innerHTML = props.defaultCss;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = props.cssHref;
+    document.head.insertBefore(link, document.head.firstChild);
 
     onCleanup(() => {
       const element = document.getElementById(id);
@@ -69,11 +68,11 @@ export const Renderer = (props: RendererProps) => {
 
   return (
     <NovuProvider options={props.options}>
-      <CountProvider filters={filters()}>
-        <LocalizationProvider localization={props.localization}>
-          <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-            <FocusManagerProvider>
-              <InboxNotificationStatusProvider>
+      <LocalizationProvider localization={props.localization}>
+        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
+          <FocusManagerProvider>
+            <InboxProvider tabs={props.tabs}>
+              <CountProvider>
                 <For each={[...props.nodes]}>
                   {([node, component]) => {
                     const Component = novuComponents[component.name];
@@ -87,11 +86,11 @@ export const Renderer = (props: RendererProps) => {
                     );
                   }}
                 </For>
-              </InboxNotificationStatusProvider>
-            </FocusManagerProvider>
-          </AppearanceProvider>
-        </LocalizationProvider>
-      </CountProvider>
+              </CountProvider>
+            </InboxProvider>
+          </FocusManagerProvider>
+        </AppearanceProvider>
+      </LocalizationProvider>
     </NovuProvider>
   );
 };

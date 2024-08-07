@@ -242,4 +242,12 @@ export class Notifications extends BaseModule {
       })
     );
   }
+
+  clearCache({ filter }: { filter?: NotificationFilter } = {}): void {
+    if (filter) {
+      return this.#notificationsCache.clear(filter ?? {});
+    }
+
+    return this.#notificationsCache.clearAll();
+  }
 }

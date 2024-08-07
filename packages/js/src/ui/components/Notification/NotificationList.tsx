@@ -1,20 +1,19 @@
-import { createMemo, For, ParentProps, Show } from 'solid-js';
-import { NotificationFilter } from '../../../types';
+import { JSX, createMemo, createSignal, For, ParentComponent, Setter, Show, Suspense } from 'solid-js';
+import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
-import { DEFAULT_FILTER } from '../../constants';
-import { useCount, useLocalization } from '../../context';
+import { useLocalization, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
-import { Button } from '../primitives';
+import { NewMessagesCta } from './NewMessagesCta';
 import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
 
-export const NotificationListContainer = (props: ParentProps) => {
+export const NotificationListContainer: ParentComponent<{ ref?: Setter<HTMLElement | null> }> = (props) => {
   const style = useStyle();
 
   return (
-    <div class={style('notificationList', 'nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')}>
+    <div class={style('notificationList', 'nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')} ref={props.ref}>
       {props.children}
     </div>
   );
@@ -47,53 +46,44 @@ type NotificationListProps = {
   limit?: number | undefined;
   filter?: NotificationFilter;
 };
+
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
-  const { data, initialLoading, setEl, end } = useNotificationsInfiniteScroll({
-    options: { ...props.filter, limit: props.limit },
-  });
-  const { t } = useLocalization();
-  const style = useStyle();
-  const filter = createMemo(() => props.filter || DEFAULT_FILTER);
-  const { newNotificationCount } = useCount({ filter: filter() });
+  const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
+  const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
+  const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
+
+  const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
+    e.stopPropagation();
+    resetNewMessagesCount();
+    refetch({ filter: props.filter });
+  };
 
   return (
-    <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
-      <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-        <Show when={!!newNotificationCount()}>
-          <div
-            class={style(
-              'notificationListNewNotificationsNoticeContainer',
-              'nt-h-0 nt-w-full nt-flex nt-justify-center nt-top-4 nt-z-10'
-            )}
-          >
-            <Button
-              appearanceKey="notificationListNewNotificationsNotice__button"
-              class="nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 nt-animate-fade-down"
-            >
-              {t('notifications.newNotifications', { notificationCount: newNotificationCount() })}
-            </Button>
-          </div>
+    <>
+      <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
+      <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
+        <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
+          <NotificationListContainer>
+            <For each={data()}>
+              {(notification) => (
+                <Notification
+                  notification={notification}
+                  mountNotification={props.mountNotification}
+                  onNotificationClick={props.onNotificationClick}
+                  onPrimaryActionClick={props.onPrimaryActionClick}
+                  onSecondaryActionClick={props.onSecondaryActionClick}
+                />
+              )}
+            </For>
+            <Show when={!end()}>
+              <div ref={setEl}>
+                <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
+              </div>
+            </Show>
+          </NotificationListContainer>
         </Show>
-        <NotificationListContainer>
-          <For each={data()}>
-            {(notification) => (
-              <Notification
-                notification={notification}
-                mountNotification={props.mountNotification}
-                onNotificationClick={props.onNotificationClick}
-                onPrimaryActionClick={props.onPrimaryActionClick}
-                onSecondaryActionClick={props.onSecondaryActionClick}
-              />
-            )}
-          </For>
-          <Show when={!end()}>
-            <div ref={setEl}>
-              <For each={Array.from({ length: 3 })}>{() => <NotificationSkeleton />}</For>
-            </div>
-          </Show>
-        </NotificationListContainer>
       </Show>
-    </Show>
+    </>
   );
 };

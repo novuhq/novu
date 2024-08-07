@@ -8,6 +8,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     setEl: (el: Element) => void;
     offset: Accessor<number>;
     end: Accessor<boolean>;
+    reset: () => Promise<void>;
     mutate: Setter<
       | {
           data: T[];
@@ -21,7 +22,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
   const [initialLoading, setInitialLoading] = createSignal(true);
   const [offset, setOffset] = createSignal(0);
   const [end, setEnd] = createSignal(false);
-  const [contents, { mutate }] = createResource(offset, fetcher);
+  const [contents, { mutate, refetch }] = createResource(offset, fetcher);
 
   let setEl: (el: Element) => void = () => {};
   if (!isServer) {
@@ -48,6 +49,18 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     });
   });
 
+  const reset = async () => {
+    setData([]);
+    setInitialLoading(true);
+    setEnd(false);
+
+    if (offset() !== 0) {
+      setOffset(0);
+    } else {
+      await refetch();
+    }
+  };
+
   return [
     data,
     {
@@ -56,6 +69,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
       offset: offset,
       end: end,
       mutate,
+      reset,
     },
   ];
 }

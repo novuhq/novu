@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0-alpha.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -25,19 +25,25 @@
   "files": [
     "dist/cjs",
     "dist/esm",
-    "dist/types"
+    "dist/types",
+    "dist/index.css",
+    "dist/novu.min.js",
+    "dist/novu.min.js.gz"
   ],
   "sideEffects": false,
-  "private": true,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rimraf ./dist",
-    "start": "pnpm run build -- --watch --sourcemap",
-    "pre:build": "cp ./src/ui/index.css ./src/ui/index.directcss",
-    "build": "pnpm run clean && pnpm run pre:build && tsup && pnpm run post:build",
+    "start:server": "http-server ./dist -p 4010",
+    "build": "pnpm run clean && NODE_ENV=production tsup && pnpm run post:build",
     "build:declarations": "tsc -p tsconfig.declarations.json",
     "build:umd": "webpack --config webpack.config.cjs",
-    "build:watch": "pnpm run pre:build && tsup --watch && pnpm run post:build",
-    "post:build": "rm ./src/ui/index.directcss && node scripts/size-limit.mjs",
+    "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
+    "tsup:watch": "tsup --watch && pnpm run post:build",
+    "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },
@@ -61,10 +67,13 @@
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
     "compression-webpack-plugin": "^10.0.0",
+    "concurrently": "^5.3.0",
+    "cssnano": "^7.0.4",
     "esbuild-plugin-compress": "^1.0.1",
     "esbuild-plugin-inline-import": "^1.0.4",
     "esbuild-plugin-solid": "^0.6.0",
     "eslint-plugin-local-rules": "^3.0.2",
+    "http-server": "^0.13.0",
     "jest": "^29.3.1",
     "postcss": "^8.4.38",
     "postcss-load-config": "^6.0.1",

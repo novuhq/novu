@@ -120,7 +120,9 @@ export class ExecuteBridgeRequest {
         } else {
           // Handle unknown bridge request errors
           Logger.error(
-            `Unknown bridge request error calling \`${url}\`: \`${body}\``,
+            `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
+              body
+            )}\``,
             LOG_CONTEXT
           );
           throw error;

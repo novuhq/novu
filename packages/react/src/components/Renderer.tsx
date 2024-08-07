@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { NovuUI } from '@novu/js/ui';
 import type { NovuUIOptions } from '@novu/js/ui';
 import { MountedElement, RendererProvider } from '../context/RenderContext';
+import { useDataRef } from '../hooks/useDataRef';
 
 type RendererProps = React.PropsWithChildren<{
   options: NovuUIOptions;
@@ -12,12 +13,12 @@ type RendererProps = React.PropsWithChildren<{
  *
  * Renderer component that provides the NovuUI instance and mounts the elements on DOM in a portal
  */
-export const Renderer = (props: RendererProps) => {
-  const { options, children } = props;
-  const [novuUI, setNovuUI] = React.useState<NovuUI | undefined>();
-  const [mountedElements, setMountedElements] = React.useState(new Map<HTMLElement, MountedElement>());
+export const Renderer = ({ options, children }: RendererProps) => {
+  const optionsRef = useDataRef(options);
+  const [novuUI, setNovuUI] = useState<NovuUI | undefined>();
+  const [mountedElements, setMountedElements] = useState(new Map<HTMLElement, MountedElement>());
 
-  const mountElement = React.useCallback(
+  const mountElement = useCallback(
     (el: HTMLElement, mountedElement: MountedElement) => {
       setMountedElements((prev) => {
         const newMountedElements = new Map(prev);
@@ -38,9 +39,24 @@ export const Renderer = (props: RendererProps) => {
     [setMountedElements]
   );
 
-  React.useEffect(() => {
-    const ui: NovuUI = new NovuUI(options);
-    setNovuUI(ui);
+  useEffect(() => {
+    const novu = new NovuUI(optionsRef.current);
+    setNovuUI(novu);
+
+    return () => {
+      novu.unmount();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!novuUI) {
+      return;
+    }
+
+    novuUI.updateAppearance(options.appearance);
+    novuUI.updateLocalization(options.localization);
+    novuUI.updateTabs(options.tabs);
+    novuUI.updateOptions(options.options);
   }, [options]);
 
   if (!novuUI) {

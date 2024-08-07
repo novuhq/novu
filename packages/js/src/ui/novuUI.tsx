@@ -1,14 +1,22 @@
-import { ComponentProps, createSignal } from 'solid-js';
+import { Accessor, ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { Appearance } from './context';
 import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
-import { BaseNovuProviderProps, NovuProviderProps } from './types';
-//@ts-expect-error inline import esbuild syntax
-import css from 'directcss:./index.directcss';
+import type { BaseNovuProviderProps, NovuProviderProps, Tab } from './types';
 import { InboxProps } from './components';
+
+// eslint-disable-next-line
+// @ts-ignore
+const isDev = __DEV__;
+// eslint-disable-next-line
+// @ts-ignore
+const version = PACKAGE_VERSION;
+const cssHref = isDev
+  ? 'http://localhost:4010/index.css'
+  : `https://cdn.jsdelivr.net/npm/@novu/js@${version}/dist/index.css`;
 
 export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
@@ -23,6 +31,8 @@ export class NovuUI {
   #setLocalization;
   #options;
   #setOptions;
+  #tabs: Accessor<Array<Tab>>;
+  #setTabs;
   id: string;
 
   constructor(props: NovuProviderProps) {
@@ -31,6 +41,7 @@ export class NovuUI {
     const [localization, setLocalization] = createSignal(props.localization);
     const [options, setOptions] = createSignal(props.options);
     const [mountedElements, setMountedElements] = createSignal(new Map<MountableElement, NovuComponent>());
+    const [tabs, setTabs] = createSignal(props.tabs ?? []);
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -39,6 +50,8 @@ export class NovuUI {
     this.#setLocalization = setLocalization;
     this.#options = options;
     this.#setOptions = setOptions;
+    this.#tabs = tabs;
+    this.#setTabs = setTabs;
 
     this.#mountComponentRenderer();
   }
@@ -55,24 +68,19 @@ export class NovuUI {
     const dispose = render(
       () => (
         <Renderer
-          defaultCss={css}
+          cssHref={cssHref}
           novuUI={this}
           nodes={this.#mountedElements()}
           options={this.#options()}
           appearance={this.#appearance()}
           localization={this.#localization()}
+          tabs={this.#tabs()}
         />
       ),
       this.#rootElement
     );
 
     this.#dispose = dispose;
-  }
-
-  #unmountComponentRenderer(): void {
-    this.#dispose?.();
-    this.#dispose = null;
-    this.#rootElement?.remove();
   }
 
   #updateComponentProps(element: MountableElement, props: unknown) {
@@ -108,11 +116,6 @@ export class NovuUI {
     });
   }
 
-  //All in one <Inbox />
-  mountInbox(element: MountableElement, props?: InboxProps) {
-    this.mountComponent({ name: 'Inbox', element, props });
-  }
-
   unmountComponent(element: MountableElement) {
     this.#setMountedElements((oldMountedElements) => {
       const newMountedElements = new Map(oldMountedElements);
@@ -122,15 +125,25 @@ export class NovuUI {
     });
   }
 
-  updateAppearance(appearance: Appearance) {
+  updateAppearance(appearance?: Appearance) {
     this.#setAppearance(appearance);
   }
 
-  updateLocalization(localization: Localization) {
+  updateLocalization(localization?: Localization) {
     this.#setLocalization(localization);
   }
 
   updateOptions(options: NovuOptions) {
     this.#setOptions(options);
+  }
+
+  updateTabs(tabs?: Array<Tab>) {
+    this.#setTabs(tabs ?? []);
+  }
+
+  unmount(): void {
+    this.#dispose?.();
+    this.#dispose = null;
+    this.#rootElement?.remove();
   }
 }

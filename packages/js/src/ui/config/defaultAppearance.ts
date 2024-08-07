@@ -5,6 +5,8 @@ export const defaultVariables: Required<Variables> = {
   colorPrimaryForeground: 'white',
   colorSecondary: '#F3F3F3',
   colorSecondaryForeground: '#1A1523',
+  colorCounter: '#E5484D',
+  colorCounterForeground: 'white',
   colorBackground: '#FCFCFC',
   colorForeground: '#1A1523',
   colorNeutral: 'black',

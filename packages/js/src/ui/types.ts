@@ -1,6 +1,5 @@
 import type { Notification } from '../notifications';
 import { NovuOptions } from '../novu';
-import { InboxTab } from './components/InboxTabs';
 import { Appearance, Localization } from './context';
 
 export type NotificationClickHandler = (args: { notification: Notification }) => void;
@@ -14,11 +13,13 @@ export type NotificationMounter = (
 ) => () => void;
 export type BellMounter = (el: HTMLDivElement, options: { unreadCount: number }) => () => void;
 
+export type Tab = { label: string; value: Array<string> };
+
 export type BaseNovuProviderProps = {
   appearance?: Appearance;
   localization?: Localization;
   options: NovuOptions;
-  tabs?: InboxTab[];
+  tabs?: Array<Tab>;
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {

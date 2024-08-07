@@ -1,6 +1,6 @@
 import clsx, { ClassValue } from 'clsx';
-import { CSSProperties, Elements, Variables } from '../context';
 import { extendTailwindMerge, type ClassNameValue } from 'tailwind-merge';
+import { CSSProperties, Elements, Variables } from '../context';
 
 const twMerge = extendTailwindMerge({
   prefix: 'nt-',
@@ -92,6 +92,8 @@ export const parseVariables = (variables: Required<Variables>, id: string) => {
     generateDefaultColor({ color: variables.colorPrimaryForeground, key: 'color-primary-foreground', id }),
     generateDefaultColor({ color: variables.colorSecondary, key: 'color-secondary', id }),
     generateDefaultColor({ color: variables.colorSecondaryForeground, key: 'color-secondary-foreground', id }),
+    generateDefaultColor({ color: variables.colorCounter, key: 'color-counter', id }),
+    generateDefaultColor({ color: variables.colorCounterForeground, key: 'color-counter-foreground', id }),
     ...generatesAlphaShadesFromColor({ color: variables.colorBackground, key: 'color-background-alpha', id }),
     ...generatesAlphaShadesFromColor({ color: variables.colorForeground, key: 'color-foreground-alpha', id }),
     ...generatesSolidShadesFromColor({ color: variables.colorPrimary, key: 'color-primary', id }),
