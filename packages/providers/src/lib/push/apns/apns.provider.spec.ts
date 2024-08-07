@@ -107,6 +107,7 @@ test('should trigger apns library correctly with _passthrough', async () => {
       subscriber: {},
     },
     {
+      urlArgs: ['target'],
       _passthrough: {
         body: {
           topic: '_passthrough',
@@ -129,6 +130,7 @@ test('should trigger apns library correctly with _passthrough', async () => {
       expiry: -1,
       priority: 10,
       topic: '_passthrough',
+      'url-args': ['target'],
     },
     ['target']
   );
