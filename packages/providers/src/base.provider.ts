@@ -6,7 +6,6 @@ import {
   pascalCase,
   snakeCase,
 } from './utils/change-case';
-import { IOptions } from './utils/change-case/functions';
 import { deepMerge } from './utils/deepmerge.utils';
 import { Passthrough, WithPassthrough } from './utils/types';
 
@@ -19,7 +18,7 @@ export enum CasingEnum {
   CONSTANT_CASE = 'CONSTANT_CASE',
 }
 
-type TransformOutput<T> = {
+type MergedPassthrough<T> = {
   body: T;
   headers: Record<string, string>;
   query: Record<string, string>;
@@ -53,7 +52,7 @@ export abstract class BaseProvider {
   >(
     bridgeProviderData: WithPassthrough<T_Input>,
     triggerProviderData: T_Data
-  ): TransformOutput<T_Output> {
+  ): MergedPassthrough<T_Output> {
     const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
 
     // Construct the trigger data passthrough object
@@ -83,11 +82,13 @@ export abstract class BaseProvider {
      * 2. Bridge known data (provided via known schematized values)
      * 3. Unknown provider data (provided via `_passthrough`)
      */
-    return deepMerge([
+    const mergedPassthrough = deepMerge([
       triggerDataPassthrough,
       brideKnownDataPassthrough,
       bridgeUnknownDataPassthrough,
-    ]) as TransformOutput<T_Output>;
+    ]) as MergedPassthrough<T_Output>;
+
+    return mergedPassthrough;
   }
 
   /**
