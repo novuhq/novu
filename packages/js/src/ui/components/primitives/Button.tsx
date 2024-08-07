@@ -5,7 +5,11 @@ import { AppearanceKey } from '../../context';
 import { cn, useStyle } from '../../helpers';
 
 export const buttonVariants = cva(
-  'nt-inline-flex nt-gap-4 nt-items-center nt-justify-center nt-whitespace-nowrap nt-rounded-lg nt-text-sm nt-font-medium nt-ring-offset-background nt-transition-colors focus-visible:nt-outline-none focus-visible:nt-ring-2 focus-visible:nt-ring-primary nt-focus-visible:nt-ring-offset-2 disabled:nt-pointer-events-none disabled:nt-opacity-50',
+  `nt-inline-flex nt-gap-4 nt-items-center nt-justify-center nt-whitespace-nowrap
+  nt-rounded-lg nt-text-sm nt-font-medium nt-ring-offset-background nt-transition-colors
+  focus-visible:nt-outline-none focus-visible:nt-ring-2 focus-visible:nt-ring-primary
+  nt-focus-visible:nt-ring-offset-2 disabled:nt-pointer-events-none
+  disabled:nt-opacity-50 nt-outline-none`,
   {
     variants: {
       variant: {
