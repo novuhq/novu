@@ -63,30 +63,18 @@ export abstract class BaseProvider {
       query: {},
     };
 
-    // Transform the schematized bridge data to the desired casing
-    const transformedKnownData = this.casingTransform(bridgeData);
-    // Construct the known data passthrough object
+    // Transform the known provider data to the desired casing
     const brideKnownDataPassthrough: Passthrough = {
       body: this.casingTransform(bridgeData),
       headers: {},
       query: {},
     };
 
-    // Construct the default passthrough object
-    const defaultPassthrough: Passthrough = {
-      body: {},
-      headers: {},
-      query: {},
-    };
-    const unknownProviderDataPassthrough = deepMerge([
-      defaultPassthrough,
-      _passthrough,
-    ]);
     // Transform the unknown provider data to the desired casing
     const bridgeUnknownDataPassthrough: Passthrough = {
-      body: this.casingTransform(unknownProviderDataPassthrough.body),
-      headers: {},
-      query: {},
+      body: this.casingTransform(_passthrough.body || {}),
+      headers: _passthrough.headers || {},
+      query: _passthrough.query || {},
     };
 
     /**
