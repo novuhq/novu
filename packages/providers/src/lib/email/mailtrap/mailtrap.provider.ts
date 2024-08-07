@@ -8,7 +8,7 @@ import {
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { MailtrapClient, Address, Mail } from 'mailtrap';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MailtrapEmailProvider
@@ -16,6 +16,7 @@ export class MailtrapEmailProvider
   implements IEmailProvider
 {
   id = EmailProviderIdEnum.Mailtrap;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly mailtrapClient: MailtrapClient;
 

@@ -9,7 +9,7 @@ import {
 } from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MailersendEmailProvider
@@ -17,6 +17,7 @@ export class MailersendEmailProvider
   implements IEmailProvider
 {
   readonly id = EmailProviderIdEnum.MailerSend;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private mailerSend: MailerSend;
 

@@ -9,7 +9,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { ISparkPostErrorResponse, SparkPostError } from './sparkpost.error';
 
@@ -25,6 +25,7 @@ export class SparkPostEmailProvider
   extends BaseProvider
   implements IEmailProvider
 {
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   readonly id = EmailProviderIdEnum.SparkPost;
   readonly channelType = ChannelTypeEnum.EMAIL;
   private readonly endpoint: string;

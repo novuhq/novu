@@ -11,7 +11,7 @@ import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import DKIM from 'nodemailer/lib/dkim';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { ConnectionOptions } from 'tls';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 interface INodemailerConfig {
@@ -30,6 +30,7 @@ interface INodemailerConfig {
 
 export class NodemailerProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.CustomSMTP; // nodemailer
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 

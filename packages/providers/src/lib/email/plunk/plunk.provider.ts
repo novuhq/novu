@@ -11,12 +11,13 @@ import {
 
 import Plunk from '@plunk/node';
 import { SendParams } from '@plunk/node/dist/types/emails';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { IPlunkResponse } from './plunk.interface';
 
 export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Plunk;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private plunk: Plunk;

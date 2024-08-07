@@ -8,13 +8,14 @@ import {
 } from '@novu/stateless';
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import { EmailProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class InfobipEmailProvider
   extends BaseProvider
   implements IEmailProvider
 {
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   id = EmailProviderIdEnum.Infobip;
 

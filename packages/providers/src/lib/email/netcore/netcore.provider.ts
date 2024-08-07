@@ -10,7 +10,7 @@ import {
   EmailEventStatusEnum,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { IEmailBody, IEmailResponse } from './netcore-types';
 
@@ -27,6 +27,7 @@ export enum NetCoreStatusEnum {
 
 export class NetCoreProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.NetCore;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   public readonly BASE_URL = 'https://emailapi.netcorecloud.net/v5.1';
   private axiosInstance: AxiosInstance;

@@ -8,13 +8,14 @@ import {
   IEmailProvider,
 } from '@novu/stateless';
 import { Resend } from 'resend';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class ResendEmailProvider
   extends BaseProvider
   implements IEmailProvider
 {
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   id = EmailProviderIdEnum.Resend;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private resendClient: Resend;

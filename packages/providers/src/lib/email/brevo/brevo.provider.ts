@@ -11,12 +11,13 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { EmailProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BrevoEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Sendinblue; // brevo changed name from sendinblue.
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   private axiosInstance: AxiosInstance;
   public readonly BASE_URL = 'https://api.brevo.com/v3';
 

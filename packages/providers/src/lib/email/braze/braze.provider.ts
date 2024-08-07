@@ -13,11 +13,12 @@ import {
   UsersExportIdsObject,
   UsersExportIdsResponse,
 } from 'braze-api';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Braze;
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private braze: Braze;
 

@@ -11,7 +11,7 @@ import {
 
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
@@ -21,6 +21,7 @@ export class SendgridEmailProvider
   implements IEmailProvider
 {
   id = EmailProviderIdEnum.SendGrid;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private sendgridMail: MailService;
 
