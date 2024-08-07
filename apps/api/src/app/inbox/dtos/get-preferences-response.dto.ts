@@ -1,4 +1,4 @@
-import { IPreferenceChannels, IPreferenceOverride, ITemplateConfiguration, PreferenceLevelEnum } from '@novu/shared';
+import { IPreferenceChannels, IPreferenceOverride, IWorkflow, PreferenceLevelEnum } from '@novu/shared';
 import { IsDefined, IsEnum, IsOptional } from 'class-validator';
 
 export class GetPreferencesResponseDto {
@@ -9,7 +9,7 @@ export class GetPreferencesResponseDto {
   level: PreferenceLevelEnum;
 
   @IsOptional()
-  workflow?: ITemplateConfiguration;
+  workflow?: IWorkflow;
 
   @IsDefined()
   enabled: boolean;

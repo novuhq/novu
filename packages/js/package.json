@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0-alpha.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -25,10 +25,16 @@
   "files": [
     "dist/cjs",
     "dist/esm",
-    "dist/types"
+    "dist/types",
+    "dist/index.css",
+    "dist/novu.min.js",
+    "dist/novu.min.js.gz"
   ],
   "sideEffects": false,
-  "private": true,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rimraf ./dist",
     "start:server": "http-server ./dist -p 4010",
