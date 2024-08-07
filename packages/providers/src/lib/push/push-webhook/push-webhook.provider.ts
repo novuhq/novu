@@ -7,13 +7,14 @@ import {
 import crypto from 'crypto';
 import axios from 'axios';
 import { PushProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class PushWebhookPushProvider
   extends BaseProvider
   implements IPushProvider
 {
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = PushProviderIdEnum.PushWebhook;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 

@@ -6,11 +6,12 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import apn from '@parse/node-apn';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class APNSPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.APNS;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   protected keyCaseObject: Record<string, string> = {

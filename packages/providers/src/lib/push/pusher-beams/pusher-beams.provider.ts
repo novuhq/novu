@@ -6,13 +6,14 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class PusherBeamsPushProvider
   extends BaseProvider
   implements IPushProvider
 {
+  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   id = PushProviderIdEnum.PusherBeams;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
