@@ -9,12 +9,13 @@ import {
 } from '@novu/stateless';
 
 import plivo from 'plivo';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Plivo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   private plivoClient: plivo.Client;
 
   constructor(
@@ -32,15 +33,17 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const transformedData = this.transform(bridgeProviderData, {
+      from: options.from || this.config.from,
+      to: options.to,
+      text: options.content,
+    });
     const plivoResponse = await this.plivoClient.messages.create(
-      bridgeProviderData._passthrough?.body?.src ||
-        options.from ||
-        this.config.from,
-      bridgeProviderData._passthrough?.body?.dst || options.to,
-      (bridgeProviderData._passthrough?.body?.text as string) ||
-        options.content,
-      bridgeProviderData._passthrough?.body?.optionalParams as object,
-      bridgeProviderData._passthrough?.body?.powerpackUUID as string
+      transformedData.body.from,
+      transformedData.body.to,
+      transformedData.body.text as string,
+      transformedData.body.optionalParams as object,
+      transformedData.body.powerpackUUID as string
     );
 
     return {

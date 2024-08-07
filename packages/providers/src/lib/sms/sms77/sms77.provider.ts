@@ -7,7 +7,7 @@ import {
 } from '@novu/stateless';
 
 import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 if (!globalThis.fetch) {
@@ -18,6 +18,7 @@ if (!globalThis.fetch) {
 export class Sms77SmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sms77;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
   private sms77Client: Sms77Client;
 
   constructor(

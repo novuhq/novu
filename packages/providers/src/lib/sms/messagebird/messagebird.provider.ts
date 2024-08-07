@@ -8,7 +8,7 @@ import {
 import { Message, MessageParameters } from 'messagebird/types/messages';
 import { initClient } from 'messagebird';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MessageBirdSmsProvider
@@ -17,6 +17,7 @@ export class MessageBirdSmsProvider
 {
   id = SmsProviderIdEnum.MessageBird;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   private messageBirdClient: ReturnType<typeof initClient>;
   constructor(
     private config: {

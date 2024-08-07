@@ -7,7 +7,7 @@ import {
 import { ProxyAgent } from 'proxy-agent';
 import 'cross-fetch';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 declare global {
@@ -21,6 +21,7 @@ export class BrevoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BrevoSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly BASE_URL = 'https://api.brevo.com/v3';
+  protected casing = CasingEnum.CAMEL_CASE;
 
   constructor(
     private config: {

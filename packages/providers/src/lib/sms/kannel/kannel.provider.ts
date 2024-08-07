@@ -6,13 +6,14 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Kannel;
   apiBaseUrl: string;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
 
   constructor(
     private config: {

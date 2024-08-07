@@ -8,12 +8,13 @@ import {
 
 import axios, { AxiosInstance } from 'axios';
 import { fromUnixTime } from 'date-fns';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Maqsam;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   private axiosInstance: AxiosInstance;
 
   constructor(

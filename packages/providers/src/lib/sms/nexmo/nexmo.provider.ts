@@ -8,13 +8,14 @@ import {
 import { Vonage } from '@vonage/server-sdk';
 import { Auth } from '@vonage/auth';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class NexmoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Nexmo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private vonageClient: Vonage;
+  protected casing = CasingEnum.CAMEL_CASE;
 
   constructor(
     private config: {

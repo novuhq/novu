@@ -9,7 +9,7 @@ import {
 } from '@novu/stateless';
 import { SDK } from '@ringcentral/sdk';
 import Platform from '@ringcentral/sdk/lib/platform/Platform';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class RingCentralSmsProvider
@@ -18,6 +18,7 @@ export class RingCentralSmsProvider
 {
   id = SmsProviderIdEnum.RingCentral;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   sendSMSEndpoint = '/restapi/v1.0/account/~/extension/~/sms';
   private rcClient: Platform;
 

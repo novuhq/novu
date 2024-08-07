@@ -7,7 +7,7 @@ import {
   SmsEventStatusEnum,
   ISMSEventBody,
 } from '@novu/stateless';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { SmsParams, MessageChannel, SmsJsonResponse } from './sms';
 
@@ -18,6 +18,7 @@ if (!globalThis.fetch) {
 export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
   public static readonly BASE_URL = 'https://api.ng.termii.com/api/sms/send';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
   id = SmsProviderIdEnum.Termii;
 
   constructor(

@@ -9,7 +9,7 @@ import {
 } from '@novu/stateless';
 
 import Telnyx from 'telnyx';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 
 import { ITelnyxCLient } from './telnyx.interface';
 import { WithPassthrough } from '../../../utils/types';
@@ -17,6 +17,7 @@ import { WithPassthrough } from '../../../utils/types';
 export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Telnyx;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
   private telnyxClient: ITelnyxCLient;
 
   constructor(

@@ -7,7 +7,7 @@ import {
 } from '@novu/stateless';
 
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class ClickatellSmsProvider
@@ -16,6 +16,7 @@ export class ClickatellSmsProvider
 {
   id = SmsProviderIdEnum.Clickatell;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
 
   constructor(
     private config: {

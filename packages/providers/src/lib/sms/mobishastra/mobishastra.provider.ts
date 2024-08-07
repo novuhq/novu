@@ -4,15 +4,15 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import { v4 as uuid } from 'uuid';
 import axios, { AxiosInstance } from 'axios';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class MobishastraProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Mobishastra;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   axiosInstance: AxiosInstance;
   headers: Record<string, string>;
 
@@ -38,17 +38,17 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const transformedData = this.transform(bridgeProviderData, {
+      Sender: options.from || this.config.from,
+      number: options.to,
+      msg: options.content,
+      user: this.config.username,
+      pwd: this.config.password,
+    });
     const response = await this.axiosInstance.request({
       method: 'POST',
-      data: JSON.stringify([
-        this.transform(bridgeProviderData, {
-          Sender: options.from || this.config.from,
-          number: options.to,
-          msg: options.content,
-          user: this.config.username,
-          pwd: this.config.password,
-        }).body,
-      ]),
+      data: JSON.stringify([transformedData]),
+      headers: transformedData.headers,
     });
 
     const responseData = response.data?.[0];

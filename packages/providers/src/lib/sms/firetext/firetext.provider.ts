@@ -5,7 +5,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 if (!globalThis.fetch) {
@@ -16,6 +16,7 @@ if (!globalThis.fetch) {
 export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Firetext;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   private BASE_URL = 'https://www.firetext.co.uk/api/sendsms';
 
   constructor(

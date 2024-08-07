@@ -6,12 +6,13 @@ import {
 } from '@novu/stateless';
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   id = SmsProviderIdEnum.Infobip;
+  protected casing = CasingEnum.CAMEL_CASE;
 
   private infobipClient;
 

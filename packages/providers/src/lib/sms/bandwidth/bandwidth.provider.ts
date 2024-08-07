@@ -7,11 +7,12 @@ import {
 
 import { Client, ApiController, MessageRequest } from '@bandwidth/messaging';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 export class BandwidthSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Bandwidth;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   public controller: ApiController;
 
   constructor(

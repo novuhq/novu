@@ -7,12 +7,13 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import qs from 'qs';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BurstSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BurstSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
   private axiosInstance: AxiosInstance;
 
   constructor(

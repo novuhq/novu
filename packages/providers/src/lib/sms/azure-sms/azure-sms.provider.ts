@@ -6,12 +6,13 @@ import {
 } from '@novu/stateless';
 import { SmsClient, SmsSendRequest } from '@azure/communication-sms';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class AzureSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.AzureSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
 
   private smsClient: SmsClient;
   constructor(

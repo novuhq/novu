@@ -6,13 +6,14 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.BulkSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   public readonly DEFAULT_BASE_URL = 'https://api.bulksms.com/v1/messages';
+  protected casing = CasingEnum.CAMEL_CASE;
 
   constructor(
     private config: {

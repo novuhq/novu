@@ -6,7 +6,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 interface IFortySixElksSuccessObject {
@@ -31,6 +31,7 @@ export class FortySixElksSmsProvider
 {
   id = SmsProviderIdEnum.FortySixElks;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
 
   constructor(
     private config: {

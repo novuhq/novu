@@ -6,12 +6,13 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class EazySmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.EazySms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.CAMEL_CASE;
   public readonly DEFAULT_BASE_URL = 'https://api.eazy.im/v3';
   public readonly EAZY_SMS_CHANNEL = '@sms.eazy.im';
   constructor(

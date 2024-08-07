@@ -6,12 +6,13 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
-import { BaseProvider } from '../../../base.provider';
+import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sendchamp;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  protected casing = CasingEnum.SNAKE_CASE;
   public readonly BASE_URL = 'https://api.sendchamp.com/v1';
   private axiosInstance: AxiosInstance;
 
