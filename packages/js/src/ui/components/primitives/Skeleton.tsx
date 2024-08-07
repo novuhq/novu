@@ -1,4 +1,4 @@
-import { AppearanceKey } from '../../context';
+import type { AppearanceKey } from '../../types';
 import { ClassName, cn, useStyle } from '../../helpers';
 
 type SkeletonTextProps = { appearanceKey: AppearanceKey; class?: ClassName };

@@ -6,15 +6,7 @@ import { Preferences } from './preferences';
 import { Socket } from './ws';
 import { PRODUCTION_BACKEND_URL } from './utils/config';
 import { InboxServiceSingleton } from './utils/inbox-service-singleton';
-
-export type NovuOptions = {
-  applicationIdentifier: string;
-  subscriberId: string;
-  subscriberHash?: string;
-  backendUrl?: string;
-  socketUrl?: string;
-  useCache?: boolean;
-};
+import type { NovuOptions } from './types';
 
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;

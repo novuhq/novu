@@ -1,6 +1,6 @@
 import { JSX, ParentProps, Ref, splitProps } from 'solid-js';
-import { useStyle } from 'src/ui/helpers';
-import { AppearanceKey } from '../../../context';
+import { useStyle } from '../../../helpers';
+import type { AppearanceKey } from '../../../types';
 import { Button } from '../Button';
 import { useTabsContext } from './TabsRoot';
 

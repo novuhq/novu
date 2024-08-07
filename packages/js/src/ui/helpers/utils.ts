@@ -1,6 +1,6 @@
 import clsx, { ClassValue } from 'clsx';
 import { extendTailwindMerge, type ClassNameValue } from 'tailwind-merge';
-import { CSSProperties, Elements, Variables } from '../context';
+import type { CSSProperties, Elements, Variables } from '../types';
 
 const twMerge = extendTailwindMerge({
   prefix: 'nt-',

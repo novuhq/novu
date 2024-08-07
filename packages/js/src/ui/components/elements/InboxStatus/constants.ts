@@ -1,5 +1,4 @@
-import { LocalizationKey } from '../../../context';
-import { NotificationStatus } from '../../../types';
+import type { LocalizationKey, NotificationStatus } from '../../../types';
 
 export const notificationStatusOptionsLocalizationKeys = {
   unreadRead: 'inbox.status.options.unreadRead',
