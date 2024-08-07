@@ -32,6 +32,7 @@ import {
   EazySmsHandler,
   MobishastraHandler,
 } from './handlers';
+import { VerimorHandler } from './handlers/verimor.handler';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -65,6 +66,7 @@ export class SmsFactory implements ISmsFactory {
     new BrevoSmsHandler(),
     new EazySmsHandler(),
     new MobishastraHandler(),
+    new VerimorHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

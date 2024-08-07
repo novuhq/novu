@@ -31,6 +31,7 @@ import {
   whatsAppBusinessConfig,
   eazySmsConfig,
   mobishastraConfig,
+  verimorConfig,
 } from '../credentials';
 import { ChatProviderIdEnum, SmsProviderIdEnum } from '../provider.enum';
 
@@ -289,5 +290,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: mobishastraConfig,
     docReference: 'https://telkosh.com/mobishastra/',
     logoFileName: { light: 'mobishastra.png', dark: 'mobishastra.png' },
+  },
+  {
+    id: SmsProviderIdEnum.VeriMor,
+    displayName: 'Verimor',
+    channel: ChannelTypeEnum.SMS,
+    credentials: verimorConfig,
+    docReference: `https://github.com/verimor/SMS-API/blob/master/user_guide.md`,
+    logoFileName: { light: 'verimor.png', dark: 'verimor.png' },
   },
 ];
