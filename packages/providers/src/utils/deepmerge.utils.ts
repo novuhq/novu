@@ -27,7 +27,7 @@ function cloneUnlessOtherwiseSpecified(
   options: IOptions
 ): Record<string, unknown> | Record<string, unknown>[] {
   return options.clone !== false && options.isMergeableObject(value)
-    ? deepMerge(emptyTarget(value), value, options)
+    ? deepMergeObjects(emptyTarget(value), value, options)
     : value;
 }
 
@@ -46,11 +46,11 @@ function defaultArrayMerge(
 
 function getMergeFunction(key: string, options: IOptions) {
   if (!options.customMerge) {
-    return deepMerge;
+    return deepMergeObjects;
   }
   const customMerge = options.customMerge(key);
 
-  return typeof customMerge === 'function' ? customMerge : deepMerge;
+  return typeof customMerge === 'function' ? customMerge : deepMergeObjects;
 }
 
 function getKeys(target: Record<string, unknown>): unknown[] {
@@ -136,7 +136,7 @@ interface IOptions {
   clone?: boolean;
 }
 
-interface IDeepmergeOptions {
+interface IDeepMergeOptions {
   customMerge?: (
     key: string
   ) => (
@@ -157,13 +157,21 @@ interface IDeepmergeOptions {
   clone?: boolean;
 }
 
-export function deepMerge<
-  Output = Record<string, unknown> | Record<string, unknown>[]
+/**
+ * Merges two objects or arrays of objects using deepMerge. The second object
+ * takes precedence for any keys that are present in both objects.
+ * @param source - The source object or array of objects to merge from.
+ * @param target - The target object or array of objects to merge into.
+ * @param options - The options to pass to deepMerge.
+ * @returns The merged object or array of objects.
+ */
+function deepMergeObjects<
+  T extends Record<string, unknown> | Record<string, unknown>[]
 >(
   target: Record<string, unknown> | Record<string, unknown>[],
   source: Record<string, unknown> | Record<string, unknown>[],
-  options?: IDeepmergeOptions
-): Output {
+  options?: IDeepMergeOptions
+): T {
   options = options || {};
   options.arrayMerge = options.arrayMerge || defaultArrayMerge;
   options.isMergeableObject = options.isMergeableObject || isMergeableObject;
@@ -181,29 +189,40 @@ export function deepMerge<
     return cloneUnlessOtherwiseSpecified(
       source as Record<string, unknown>,
       options as IOptions
-    ) as Output;
+    ) as T;
   }
   if (sourceIsArray) {
     return options.arrayMerge(
       target as Record<string, unknown>[],
       source as Record<string, unknown>[],
       options as IOptions
-    ) as Output;
+    ) as T;
   }
 
   return mergeObject(
     target as Record<string, unknown>,
     source,
     options as IOptions
-  ) as Output;
+  ) as T;
 }
 
-export function deepMergeAll(array: unknown[], options?: IDeepmergeOptions) {
+/**
+ * Merges an array of objects using deepMerge. Items later in the array take
+ * precedence for any keys that are present in multiple objects.
+ *
+ * @param array - The array of objects to merge.
+ * @param options - The options to pass to deepMerge.
+ * @returns The merged object.
+ */
+export function deepMerge<T extends Record<string, unknown>>(
+  array: T[],
+  options?: IDeepMergeOptions
+): T {
   if (!Array.isArray(array)) {
     throw new Error('first argument should be an array');
   }
 
   return array.reduce(function (prev, next) {
-    return deepMerge(prev, next, options);
-  }, {});
+    return deepMergeObjects(prev, next, options);
+  }, {} as T);
 }
