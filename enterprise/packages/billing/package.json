@@ -48,5 +48,8 @@
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/throttler": "^5.0.1",
     "@novu/dal": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@novu/ee-auth": "workspace:*"
   }
 }

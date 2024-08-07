@@ -16,7 +16,6 @@
     "@handlebars/parser": "^2.1.0",
     "@novu/application-generic": "workspace:*",
     "@novu/ee-dal": "workspace:*",
-    "@novu/ee-auth": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/shared": "workspace:*",
     "class-transformer": "^0.5.1",
@@ -44,5 +43,8 @@
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/platform-express": "^10.2.2",
     "@novu/dal": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@novu/ee-auth": "workspace:*"
   }
 }
