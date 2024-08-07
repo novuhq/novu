@@ -18,7 +18,7 @@ export class PostmarkEmailProvider
   implements IEmailProvider
 {
   id = EmailProviderIdEnum.Postmark;
-  protected casing = CasingEnum.CAPITAL_CASE;
+  protected casing = CasingEnum.PASCAL_CASE;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private client: ServerClient;
 

@@ -17,7 +17,7 @@ import { WithPassthrough } from '../../../utils/types';
 
 export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.SNS;
-  protected casing: CasingEnum = CasingEnum.CAPITAL_CASE;
+  protected casing: CasingEnum = CasingEnum.PASCAL_CASE;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private client: SNSClient;
 

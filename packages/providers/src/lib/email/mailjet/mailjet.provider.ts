@@ -19,7 +19,7 @@ export class MailjetEmailProvider
   extends BaseProvider
   implements IEmailProvider
 {
-  protected casing: CasingEnum = CasingEnum.CAPITAL_CASE;
+  protected casing: CasingEnum = CasingEnum.PASCAL_CASE;
   id = EmailProviderIdEnum.Mailjet;
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
