@@ -38,7 +38,7 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  defaultCss: string;
+  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
@@ -54,10 +54,11 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const styleEl = document.createElement('style');
-    styleEl.id = id;
-    document.head.insertBefore(styleEl, document.head.firstChild);
-    styleEl.innerHTML = props.defaultCss;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = props.cssHref;
+    document.head.insertBefore(link, document.head.firstChild);
 
     onCleanup(() => {
       const element = document.getElementById(id);

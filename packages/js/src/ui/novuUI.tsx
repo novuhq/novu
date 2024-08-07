@@ -6,9 +6,17 @@ import { Appearance } from './context';
 import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
 import type { BaseNovuProviderProps, NovuProviderProps, Tab } from './types';
-//@ts-expect-error inline import esbuild syntax
-import css from 'directcss:./index.directcss';
 import { InboxProps } from './components';
+
+// eslint-disable-next-line
+// @ts-ignore
+const isDev = __DEV__;
+// eslint-disable-next-line
+// @ts-ignore
+const version = PACKAGE_VERSION;
+const cssHref = isDev
+  ? 'http://localhost:4010/index.css'
+  : `https://cdn.jsdelivr.net/npm/@novu/js@${version}/dist/index.css`;
 
 export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
@@ -60,7 +68,7 @@ export class NovuUI {
     const dispose = render(
       () => (
         <Renderer
-          defaultCss={css}
+          cssHref={cssHref}
           novuUI={this}
           nodes={this.#mountedElements()}
           options={this.#options()}
