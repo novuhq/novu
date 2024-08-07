@@ -19,7 +19,7 @@ export enum CasingEnum {
   CONSTANT_CASE = 'CONSTANT_CASE',
 }
 
-type TransformOutput<T extends Record<string, unknown>> = {
+type TransformOutput<T> = {
   body: T;
   headers: Record<string, string>;
   query: Record<string, string>;
@@ -47,9 +47,9 @@ export abstract class BaseProvider {
    * @returns The transformed provider data.
    */
   protected transform<
-    T_Output extends Record<string, unknown> = Record<string, unknown>,
-    T_Input extends Record<string, unknown> = Record<string, unknown>,
-    T_Data extends Record<string, unknown> = Record<string, unknown>
+    T_Output = Record<string, unknown>,
+    T_Input = Record<string, unknown>,
+    T_Data = Record<string, unknown>
   >(
     bridgeProviderData: WithPassthrough<T_Input>,
     triggerProviderData: T_Data
@@ -58,7 +58,7 @@ export abstract class BaseProvider {
 
     // Construct the trigger data passthrough object
     const triggerDataPassthrough: Passthrough = {
-      body: triggerProviderData,
+      body: triggerProviderData as Record<string, unknown>,
       headers: {},
       query: {},
     };
