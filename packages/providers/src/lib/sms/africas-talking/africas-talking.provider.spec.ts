@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { AfricasTalkingSmsProvider } from './africas-talking.provider';
 
 test(`should trigger Africa's Talking library correctly`, async () => {
@@ -7,15 +8,13 @@ test(`should trigger Africa's Talking library correctly`, async () => {
     from: '1234',
   });
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.africasTalkingClient, 'send')
     .mockImplementation(async () => {
       return {
         date: new Date().toISOString(),
         id: Math.ceil(Math.random() * 100),
-      } as any;
+      };
     });
 
   await provider.sendMessage({
@@ -38,15 +37,13 @@ test(`should trigger Africa's Talking library correctly with _passthrough`, asyn
     from: '1234',
   });
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.africasTalkingClient, 'send')
     .mockImplementation(async () => {
       return {
         date: new Date().toISOString(),
         id: Math.ceil(Math.random() * 100),
-      } as any;
+      };
     });
 
   await provider.sendMessage(

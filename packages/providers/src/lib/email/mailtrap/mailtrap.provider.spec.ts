@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { MailtrapEmailProvider } from './mailtrap.provider';
 import { MailtrapClient, SendResponse } from 'mailtrap';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
@@ -21,7 +22,7 @@ const mockMailtrapResponse: SendResponse = {
 
 test('should trigger mailtrap library correctly', async () => {
   const provider = new MailtrapEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailtrapClient.prototype, 'send')
     .mockImplementation(async () => mockMailtrapResponse);
 
@@ -38,7 +39,7 @@ test('should trigger mailtrap library correctly', async () => {
 
 test('should check integration successfully', async () => {
   const provider = new MailtrapEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailtrapClient.prototype, 'send')
     .mockImplementation(async () => mockMailtrapResponse);
 

@@ -1,15 +1,21 @@
+import { expect, test, vi, describe, beforeEach } from 'vitest';
 // Mock the external modules
 import { PlivoSmsProvider } from './plivo.provider';
 
-const createMock = jest.fn().mockResolvedValue({ messageUuid: 'mockedUUID' });
+const createMock = vi.fn().mockResolvedValue({ messageUuid: 'mockedUUID' });
 
-jest.mock('plivo', () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    messages: {
-      create: createMock,
-    },
-  })),
-}));
+vi.mock(import('plivo'), async (importOriginal) => {
+  const actual = await importOriginal();
+
+  return {
+    ...actual,
+    Client: vi.fn().mockImplementation(() => ({
+      messages: {
+        create: createMock,
+      },
+    })),
+  };
+});
 
 describe('PlivoSmsProvider', () => {
   beforeEach(() => {

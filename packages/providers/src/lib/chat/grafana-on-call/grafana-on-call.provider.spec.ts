@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { GrafanaOnCallChatProvider } from './grafana-on-call.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 

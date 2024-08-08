@@ -1,10 +1,11 @@
 // eslint-disable-next-line import/first
+import { expect, test, vi, describe, Mocked, beforeEach } from 'vitest';
 import { NetCoreProvider } from './netcore.provider';
 import axios from 'axios';
 import { IEmailOptions } from '@novu/stateless';
 import { IEmailBody } from './netcore-types';
 
-jest.mock('axios');
+vi.mock('axios');
 
 const mockConfig = {
   apiKey: 'test-key',
@@ -44,7 +45,7 @@ const mockNovuMessage: IEmailBody = {
 };
 
 describe('test netcore email send api', () => {
-  const mockedAxios = axios as jest.Mocked<typeof axios>;
+  const mockedAxios = axios as Mocked<typeof axios>;
 
   beforeEach(() => {
     mockedAxios.create.mockReturnThis();
@@ -65,7 +66,7 @@ describe('test netcore email send api', () => {
 
     const netCoreProvider = new NetCoreProvider(mockConfig);
 
-    const spy = jest.spyOn(netCoreProvider, 'sendMessage');
+    const spy = vi.spyOn(netCoreProvider, 'sendMessage');
 
     const res = await netCoreProvider.sendMessage(mockEmailOptions);
 

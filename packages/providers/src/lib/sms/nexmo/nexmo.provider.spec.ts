@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { NexmoSmsProvider } from './nexmo.provider';
 
 test('should trigger nexmo library correctly', async () => {
@@ -7,7 +8,7 @@ test('should trigger nexmo library correctly', async () => {
     from: '+112345',
   });
 
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.vonageClient.sms, 'send')
@@ -49,7 +50,7 @@ test('should trigger nexmo library correctly with _passthrough', async () => {
     from: '+112345',
   });
 
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.vonageClient.sms, 'send')

@@ -1,4 +1,5 @@
-import sendgridMail, { MailService } from '@sendgrid/mail';
+import { expect, test, vi } from 'vitest';
+import { MailService } from '@sendgrid/mail';
 import { SendgridEmailProvider } from './sendgrid.provider';
 
 const mockConfig = {
@@ -20,7 +21,7 @@ const mockNovuMessage = {
 
 test('should trigger sendgrid correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailService.prototype, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,7 +77,7 @@ test('should trigger sendgrid correctly', async () => {
 
 test('should trigger sendgrid correctly with _passthrough', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailService.prototype, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,7 +139,7 @@ test('should trigger sendgrid correctly with _passthrough', async () => {
 
 test('should check provider integration correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailService.prototype, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,8 +156,8 @@ test('should get ip pool name from credentials', async () => {
     ...mockConfig,
     ...{ ipPoolName: 'config_ip' },
   });
-  const sendMock = jest.fn().mockResolvedValue([{ statusCode: 202 }]);
-  jest.spyOn(MailService.prototype, 'send').mockImplementation(sendMock);
+  const sendMock = vi.fn().mockResolvedValue([{ statusCode: 202 }]);
+  vi.spyOn(MailService.prototype, 'send').mockImplementation(sendMock);
 
   await provider.sendMessage({
     ...mockNovuMessage,
@@ -171,8 +172,8 @@ test('should override credentials with mail data', async () => {
     ...mockConfig,
     ...{ ipPoolName: 'config_ip' },
   });
-  const sendMock = jest.fn().mockResolvedValue([{ statusCode: 202 }]);
-  jest.spyOn(MailService.prototype, 'send').mockImplementation(sendMock);
+  const sendMock = vi.fn().mockResolvedValue([{ statusCode: 202 }]);
+  vi.spyOn(MailService.prototype, 'send').mockImplementation(sendMock);
 
   await provider.sendMessage({
     ...mockNovuMessage,

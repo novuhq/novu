@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { BandwidthSmsProvider } from './bandwidth.provider';
 
 test('should trigger BandwidthSmsProvider library correctly', async () => {
@@ -7,7 +8,7 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
     accountId: '<your-bandwidth-accountId>',
   });
 
-  const spy = jest
+  const spy = vi
     .spyOn(provider.controller, 'createMessage')
     .mockImplementation(async () => {
       return {
@@ -16,7 +17,7 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
           time: new Date().toISOString(),
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      };
     });
 
   await provider.sendMessage({
@@ -42,7 +43,7 @@ test('should trigger BandwidthSmsProvider library correctly with _passthrough', 
     accountId: '<your-bandwidth-accountId>',
   });
 
-  const spy = jest
+  const spy = vi
     .spyOn(provider.controller, 'createMessage')
     .mockImplementation(async () => {
       return {
@@ -51,7 +52,7 @@ test('should trigger BandwidthSmsProvider library correctly with _passthrough', 
           time: new Date().toISOString(),
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      };
     });
 
   await provider.sendMessage(

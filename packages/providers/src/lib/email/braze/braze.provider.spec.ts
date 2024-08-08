@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { BrazeEmailProvider } from './braze.provider';
 
 const mockConfig = {
@@ -16,12 +17,10 @@ const mockEmailOptions = {
 test('should trigger sendMessage method correctly', async () => {
   const provider = new BrazeEmailProvider(mockConfig);
 
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
-    });
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return {} as any;
+  });
 
   await provider.sendMessage(mockEmailOptions);
 

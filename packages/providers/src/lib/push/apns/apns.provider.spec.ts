@@ -1,8 +1,9 @@
+import { expect, test, vi } from 'vitest';
 import { APNSPushProvider } from './apns.provider';
 import apn from '@parse/node-apn';
 
 test('should trigger apns library correctly', async () => {
-  const mockSend = jest.fn(() => {
+  const mockSend = vi.fn(() => {
     return {
       failed: [],
       sent: [
@@ -13,12 +14,12 @@ test('should trigger apns library correctly', async () => {
     };
   });
 
-  jest.spyOn(apn, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+    };
   });
 
   const provider = new APNSPushProvider({
@@ -64,7 +65,7 @@ test('should trigger apns library correctly', async () => {
 });
 
 test('should trigger apns library correctly with _passthrough', async () => {
-  const mockSend = jest.fn(() => {
+  const mockSend = vi.fn(() => {
     return {
       failed: [],
       sent: [
@@ -75,12 +76,12 @@ test('should trigger apns library correctly with _passthrough', async () => {
     };
   });
 
-  jest.spyOn(apn, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+    };
   });
 
   const provider = new APNSPushProvider({

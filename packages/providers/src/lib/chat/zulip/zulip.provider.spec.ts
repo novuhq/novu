@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { ZulipProvider } from './zulip.provider';
 
 const mockMessage = {
@@ -8,14 +9,12 @@ const mockMessage = {
 
 test('should trigger zulip library correctly', async () => {
   const provider = new ZulipProvider({});
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      return {
-        date: new Date().toISOString(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
-    });
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    return {
+      date: new Date().toISOString(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+  });
 
   await provider.sendMessage(mockMessage);
 

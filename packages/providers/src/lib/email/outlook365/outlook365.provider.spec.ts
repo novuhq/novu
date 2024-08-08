@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import {
   CheckIntegrationResponseEnum,
   ICheckIntegrationResponse,
@@ -5,14 +6,14 @@ import {
 import { Outlook365Provider } from './outlook365.provider';
 import nodemailer from 'nodemailer';
 
-const sendMailMock = jest.fn().mockReturnValue(() => {
+const sendMailMock = vi.fn().mockReturnValue(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {
     messageId: 'message-id',
   } as any;
 });
 
-jest.spyOn(nodemailer, 'createTransport').mockImplementation(() => {
+vi.spyOn(nodemailer, 'createTransport').mockImplementation(() => {
   return {
     sendMail: sendMailMock,
   } as any;
@@ -79,7 +80,7 @@ test('should trigger outlook365 library correctly with _passthrough', async () =
 test('should check provider integration correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
 
-  const spy = jest
+  const spy = vi
     .spyOn(provider, 'checkIntegration')
     .mockImplementation(async () => {
       return {

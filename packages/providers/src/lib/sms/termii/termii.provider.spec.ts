@@ -1,8 +1,8 @@
-import fetchMock from 'fetch-mock';
+import { afterEach, expect, test, vi } from 'vitest';
 import { TermiiSmsProvider } from './termii.provider';
 
 afterEach(() => {
-  fetchMock.reset();
+  vi.restoreAllMocks();
 });
 
 test('should trigger termii library correctly', async () => {
@@ -11,11 +11,10 @@ test('should trigger termii library correctly', async () => {
     from: 'TermiiTest',
   });
 
-  fetchMock.mock('*', {
-    body: {
-      message_id: '1',
-    },
+  const fetchMock = vi.fn().mockResolvedValue({
+    json: () => Promise.resolve({ message_id: '1' }),
   });
+  global.fetch = fetchMock;
 
   await provider.sendMessage({
     content: 'Your otp code is 32901',
@@ -23,8 +22,11 @@ test('should trigger termii library correctly', async () => {
     to: '+2347063317344',
   });
 
-  expect(fetchMock.calls()[0][1].body).toEqual(
-    '{"to":"+2347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}'
+  expect(fetchMock).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({
+      body: '{"to":"+2347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}',
+    })
   );
 });
 
@@ -34,11 +36,10 @@ test('should trigger termii library correctly with _passthrough', async () => {
     from: 'TermiiTest',
   });
 
-  fetchMock.mock('*', {
-    body: {
-      message_id: '1',
-    },
+  const fetchMock = vi.fn().mockResolvedValue({
+    json: () => Promise.resolve({ message_id: '1' }),
   });
+  global.fetch = fetchMock;
 
   await provider.sendMessage(
     {
@@ -55,7 +56,10 @@ test('should trigger termii library correctly with _passthrough', async () => {
     }
   );
 
-  expect(fetchMock.calls()[0][1].body).toEqual(
-    '{"to":"+3347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}'
+  expect(fetchMock).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({
+      body: '{"to":"+3347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}',
+    })
   );
 });

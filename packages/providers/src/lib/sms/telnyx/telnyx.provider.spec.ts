@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { TelnyxSmsProvider } from './telnyx.provider';
 
 test('should trigger Telnyx correctly', async () => {
@@ -7,9 +8,7 @@ test('should trigger Telnyx correctly', async () => {
     messageProfileId: 'jap-ops-pkd-pn-pair',
   });
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.telnyxClient.messages, 'create')
     .mockImplementation(async () => {
       return {
@@ -18,7 +17,7 @@ test('should trigger Telnyx correctly', async () => {
           received_at: new Date(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         },
-      } as any;
+      };
     });
   await provider.sendMessage({
     content: 'We are testing',
@@ -41,9 +40,7 @@ test('should trigger Telnyx correctly with _passthrough', async () => {
     messageProfileId: 'jap-ops-pkd-pn-pair',
   });
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.telnyxClient.messages, 'create')
     .mockImplementation(async () => {
       return {
@@ -52,7 +49,7 @@ test('should trigger Telnyx correctly with _passthrough', async () => {
           received_at: new Date(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         },
-      } as any;
+      };
     });
   await provider.sendMessage(
     {

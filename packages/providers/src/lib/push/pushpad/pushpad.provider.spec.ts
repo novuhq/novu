@@ -1,14 +1,15 @@
+import { expect, test, vi } from 'vitest';
 import { PushpadPushProvider } from './pushpad.provider';
 import Pushpad from 'pushpad';
 
 test('should trigger pushpad library correctly', async () => {
-  const spy = jest.spyOn(Pushpad, 'Notification').mockImplementation(() => {
+  const spy = vi.spyOn(Pushpad, 'Notification').mockImplementation(() => {
     return {
-      deliverTo: jest.fn((target, callback) => {
+      deliverTo: vi.fn((target, callback) => {
         callback(null, { id: 12345 });
       }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+    };
   });
 
   const provider = new PushpadPushProvider({
@@ -38,13 +39,13 @@ test('should trigger pushpad library correctly', async () => {
 });
 
 test('should trigger pushpad library correctly with _passthrough', async () => {
-  const spy = jest.spyOn(Pushpad, 'Notification').mockImplementation(() => {
+  const spy = vi.spyOn(Pushpad, 'Notification').mockImplementation(() => {
     return {
-      deliverTo: jest.fn((target, callback) => {
+      deliverTo: vi.fn((target, callback) => {
         callback(null, { id: 12345 });
       }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+    };
   });
 
   const provider = new PushpadPushProvider({

@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { RingCentralSmsProvider } from './ring-central.provider';
 
 test('should trigger ring-central library correctly', async () => {
@@ -9,7 +10,7 @@ test('should trigger ring-central library correctly', async () => {
     from: '<fromNumber>',
   });
 
-  const spyonLoggedIn = jest
+  const spyonLoggedIn = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
@@ -17,7 +18,7 @@ test('should trigger ring-central library correctly', async () => {
       return false;
     });
 
-  const spyOnLogin = jest
+  const spyOnLogin = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'login')
@@ -30,7 +31,7 @@ test('should trigger ring-central library correctly', async () => {
       } as Response;
     });
 
-  const spyOnPost = jest
+  const spyOnPost = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
@@ -77,7 +78,7 @@ test('should not login if already logged in', async () => {
     from: '+112345',
   });
 
-  const spyonLoggedIn = jest
+  const spyonLoggedIn = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
@@ -85,7 +86,7 @@ test('should not login if already logged in', async () => {
       return true;
     });
 
-  const spyOnLogin = jest
+  const spyOnLogin = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'login')
@@ -98,7 +99,7 @@ test('should not login if already logged in', async () => {
       } as Response;
     });
 
-  const spyOnPost = jest
+  const spyOnPost = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
@@ -144,7 +145,7 @@ test('should only use config.from if options.from is not provided', async () => 
     from: '+112345',
   });
 
-  const spyonLoggedIn = jest
+  const spyonLoggedIn = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
@@ -152,7 +153,7 @@ test('should only use config.from if options.from is not provided', async () => 
       return true;
     });
 
-  const spyOnPost = jest
+  const spyOnPost = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
@@ -196,7 +197,7 @@ test('should trigger ring-central library correctly with _passthrough', async ()
     from: '<fromNumber>',
   });
 
-  const spyonLoggedIn = jest
+  const spyonLoggedIn = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
@@ -204,7 +205,7 @@ test('should trigger ring-central library correctly with _passthrough', async ()
       return true;
     });
 
-  const spyOnPost = jest
+  const spyOnPost = vi
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')

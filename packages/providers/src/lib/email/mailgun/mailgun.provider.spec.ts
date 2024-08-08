@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import nock from 'nock';
 import { MailgunEmailProvider } from './mailgun.provider';
 

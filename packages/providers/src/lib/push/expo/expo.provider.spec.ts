@@ -1,3 +1,4 @@
+import { expect, test, vi, describe } from 'vitest';
 import { ExpoPushTicket } from 'expo-server-sdk';
 import { ExpoPushProvider } from './expo.provider';
 
@@ -7,7 +8,7 @@ describe('Expo', () => {
       accessToken: 'access-token',
     });
 
-    const spy = jest
+    const spy = vi
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
@@ -55,7 +56,7 @@ describe('Expo', () => {
       accessToken: 'access-token',
     });
 
-    const spy = jest
+    const spy = vi
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
@@ -114,7 +115,7 @@ describe('Expo', () => {
       accessToken: 'access-token',
     });
 
-    const spy = jest
+    const spy = vi
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
@@ -170,7 +171,7 @@ describe('Expo', () => {
       accessToken: 'access-token',
     });
 
-    const spy = jest
+    const spy = vi
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')

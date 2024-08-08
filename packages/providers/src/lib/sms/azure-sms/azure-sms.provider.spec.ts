@@ -1,10 +1,11 @@
 // azure-sms.provider.spec.ts
+import { expect, test, vi, MockedClass } from 'vitest';
 import { AzureSmsProvider } from './azure-sms.provider';
 import { SmsClient } from '@azure/communication-sms';
 
-jest.mock('@azure/communication-sms');
+vi.mock('@azure/communication-sms');
 test('should trigger AzureSmsProvider library correctly', async () => {
-  const mockSend = jest.fn().mockResolvedValue([
+  const mockSend = vi.fn().mockResolvedValue([
     {
       messageId: '12345-67a8',
       httpStatusCode: 202,
@@ -13,7 +14,7 @@ test('should trigger AzureSmsProvider library correctly', async () => {
     },
   ]);
 
-  (SmsClient as jest.MockedClass<typeof SmsClient>).mockImplementation(() => {
+  (SmsClient as MockedClass<typeof SmsClient>).mockImplementation(() => {
     return {
       send: mockSend,
     } as unknown as SmsClient;
@@ -39,7 +40,7 @@ test('should trigger AzureSmsProvider library correctly', async () => {
 });
 
 test('should trigger AzureSmsProvider library correctly with _passthrough', async () => {
-  const mockSend = jest.fn().mockResolvedValue([
+  const mockSend = vi.fn().mockResolvedValue([
     {
       messageId: '12345-67a8',
       httpStatusCode: 202,
@@ -48,7 +49,7 @@ test('should trigger AzureSmsProvider library correctly with _passthrough', asyn
     },
   ]);
 
-  (SmsClient as jest.MockedClass<typeof SmsClient>).mockImplementation(() => {
+  (SmsClient as MockedClass<typeof SmsClient>).mockImplementation(() => {
     return {
       send: mockSend,
     } as unknown as SmsClient;

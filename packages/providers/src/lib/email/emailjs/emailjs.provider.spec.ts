@@ -1,3 +1,5 @@
+import { expect, test, vi } from 'vitest';
+
 import {
   CheckIntegrationResponseEnum,
   IEmailOptions,
@@ -23,14 +25,12 @@ const mockNovuMessage = {
 
 test('should trigger emailjs with expected parameters', async () => {
   const provider = new EmailJsProvider(mockConfig);
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      return {
-        id: 'message-id',
-        date: '12/01/2020',
-      } as ISendMessageSuccessResponse;
-    });
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    return {
+      id: 'message-id',
+      date: '12/01/2020',
+    } as ISendMessageSuccessResponse;
+  });
 
   const response = await provider.sendMessage(mockNovuMessage);
 
@@ -56,7 +56,7 @@ test('should trigger emailjs with expected parameters', async () => {
 
 test('should trigger emailjs checkIntegration correctly', async () => {
   const provider = new EmailJsProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(provider, 'checkIntegration')
     .mockImplementation(async () => {
       return {

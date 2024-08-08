@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { InfobipSmsProvider } from './infobip.provider';
 
 test('should trigger infobip library correctly - SMS', async () => {
@@ -6,9 +7,7 @@ test('should trigger infobip library correctly - SMS', async () => {
     apiKey: '<infobip-auth-token>',
   });
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.infobipClient.channels.sms, 'send')
     .mockImplementation(async () => {
       return {
@@ -48,9 +47,7 @@ test('should trigger infobip library correctly - SMS', async () => {
     apiKey: '<infobip-auth-token>',
   });
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.infobipClient.channels.sms, 'send')
     .mockImplementation(async () => {
       return {

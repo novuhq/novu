@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { MailjetEmailProvider } from './mailjet.provider';
 
 const response = {
@@ -31,13 +32,16 @@ const response = {
   },
 };
 
-const requestFn = jest.fn().mockResolvedValue(response);
+const requestFn = vi.fn().mockResolvedValue(response);
 
-jest.mock('node-mailjet', () => {
+vi.mock(import('node-mailjet'), async (importOriginal) => {
+  const actual = await importOriginal();
+
   return {
-    Client: jest.fn().mockImplementation(() => {
+    ...actual,
+    Client: vi.fn().mockImplementation(() => {
       return {
-        post: jest.fn().mockImplementation(() => {
+        post: vi.fn().mockImplementation(() => {
           return {
             request: requestFn,
           };

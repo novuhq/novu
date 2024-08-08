@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { RocketChatProvider } from './rocket-chat.provider';
 

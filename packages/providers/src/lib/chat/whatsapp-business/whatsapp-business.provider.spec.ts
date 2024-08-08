@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 import { nanoid } from 'nanoid';
 import { IChatOptions } from '@novu/stateless';

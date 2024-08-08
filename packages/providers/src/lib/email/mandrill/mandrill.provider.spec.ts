@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { MandrillProvider } from './mandrill.provider';
 
 const mockConfig = {
@@ -8,7 +9,7 @@ const mockConfig = {
 
 test('should trigger mandrill correctly', async () => {
   const provider = new MandrillProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/dot-notation
     .spyOn(provider['transporter'].messages, 'send')
     .mockImplementation(async () => {
@@ -56,7 +57,7 @@ test('should trigger mandrill correctly', async () => {
 
 test('should trigger mandrill correctly with _passthrough', async () => {
   const provider = new MandrillProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/dot-notation
     .spyOn(provider['transporter'].messages, 'send')
     .mockImplementation(async () => {
@@ -112,7 +113,7 @@ test('should trigger mandrill correctly with _passthrough', async () => {
 
 test('should check provider integration correctly', async () => {
   const provider = new MandrillProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     // eslint-disable-next-line @typescript-eslint/dot-notation
     .spyOn(provider['transporter'].users, 'ping')
     .mockImplementation(async () => {

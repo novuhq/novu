@@ -1,8 +1,9 @@
+import { expect, test, vi, describe, beforeEach, Mocked } from 'vitest';
 import { OneSignalPushProvider } from './one-signal.provider';
 import axios from 'axios';
 import { IPushOptions } from '@novu/stateless';
 
-jest.mock('axios');
+vi.mock('axios');
 
 const mockNotificationOptions: IPushOptions = {
   title: 'Test',
@@ -20,7 +21,7 @@ const mockNotificationOptions: IPushOptions = {
 };
 
 describe('test onesignal notification api', () => {
-  const mockedAxios = axios as jest.Mocked<typeof axios>;
+  const mockedAxios = axios as Mocked<typeof axios>;
 
   beforeEach(() => {
     mockedAxios.create.mockReturnThis();
@@ -40,7 +41,7 @@ describe('test onesignal notification api', () => {
 
     mockedAxios.request.mockResolvedValue(response);
 
-    const spy = jest.spyOn(provider, 'sendMessage');
+    const spy = vi.spyOn(provider, 'sendMessage');
 
     const res = await provider.sendMessage(mockNotificationOptions, {
       iosBadgeCount: 2,
@@ -85,7 +86,7 @@ describe('test onesignal notification api', () => {
 
     mockedAxios.request.mockResolvedValue(response);
 
-    const spy = jest.spyOn(provider, 'sendMessage');
+    const spy = vi.spyOn(provider, 'sendMessage');
 
     const res = await provider.sendMessage(mockNotificationOptions, {
       iosBadgeCount: 2,

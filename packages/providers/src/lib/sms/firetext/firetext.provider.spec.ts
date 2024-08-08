@@ -1,5 +1,5 @@
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { FiretextSmsProvider } from './firetext.provider';
-import fetchMock from 'fetch-mock';
 
 describe('FiretextSmsProvider', () => {
   const date = new Date('2022-01-01T00:00:00.000Z');
@@ -10,18 +10,21 @@ describe('FiretextSmsProvider', () => {
   });
 
   afterEach(() => {
-    fetchMock.reset();
+    vi.restoreAllMocks();
   });
 
   test('should trigger firetext library correctly', async () => {
-    fetchMock.mock('*', {
+    const fetchMock = vi.fn().mockResolvedValue({
       headers: {
-        'X-Message': 'ID',
-        'Content-Type': 'text/plain',
-        Date: date.toString(),
+        get: (header) => {
+          if (header === 'X-Message') return 'ID';
+          if (header === 'Content-Type') return 'text/plain';
+          if (header === 'Date') return date.toString();
+        },
       },
-      body: '0:12 SMS successfully queued',
+      text: () => Promise.resolve('0:12 SMS successfully queued'),
     });
+    global.fetch = fetchMock;
 
     const result = await provider.sendMessage({
       content: 'content',
@@ -32,32 +35,38 @@ describe('FiretextSmsProvider', () => {
   });
 
   test('should call fetch correctly', async () => {
-    fetchMock.mock('*', {
+    const fetchMock = vi.fn().mockResolvedValue({
       headers: {
-        'X-Message': 'ID',
-        'Content-Type': 'text/plain',
+        get: (header) => {
+          if (header === 'X-Message') return 'ID';
+          if (header === 'Content-Type') return 'text/plain';
+        },
       },
-      body: '0:12 SMS successfully queued',
+      text: () => Promise.resolve('0:12 SMS successfully queued'),
     });
+    global.fetch = fetchMock;
 
     const result = await provider.sendMessage({
       content: 'content',
       to: '+44123456789',
     });
 
-    expect(fetchMock.lastUrl()).toBe(
+    expect(fetchMock).toHaveBeenCalledWith(
       'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B44123456789&from=testFrom&message=content'
     );
   });
 
   test('should call fetch correctly with _passthrough', async () => {
-    fetchMock.mock('*', {
+    const fetchMock = vi.fn().mockResolvedValue({
       headers: {
-        'X-Message': 'ID',
-        'Content-Type': 'text/plain',
+        get: (header) => {
+          if (header === 'X-Message') return 'ID';
+          if (header === 'Content-Type') return 'text/plain';
+        },
       },
-      body: '0:12 SMS successfully queued',
+      text: () => Promise.resolve('0:12 SMS successfully queued'),
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(
       {
@@ -73,19 +82,22 @@ describe('FiretextSmsProvider', () => {
       }
     );
 
-    expect(fetchMock.lastUrl()).toBe(
+    expect(fetchMock).toHaveBeenCalledWith(
       'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B24123456789&from=testFrom&message=content'
     );
   });
 
   test('should throw error', async () => {
-    fetchMock.mock('*', {
+    const fetchMock = vi.fn().mockResolvedValue({
       headers: {
-        'X-Message': 'ID',
-        'Content-Type': 'text/plain',
+        get: (header) => {
+          if (header === 'X-Message') return 'ID';
+          if (header === 'Content-Type') return 'text/plain';
+        },
       },
-      body: '1:0 Authentication error',
+      text: () => Promise.resolve('1:0 Authentication error'),
     });
+    global.fetch = fetchMock;
 
     const result = provider.sendMessage({
       content: 'content',
@@ -96,13 +108,16 @@ describe('FiretextSmsProvider', () => {
   });
 
   test('should handle unknown return codes', async () => {
-    fetchMock.mock('*', {
+    const fetchMock = vi.fn().mockResolvedValue({
       headers: {
-        'X-Message': 'ID',
-        'Content-Type': 'text/plain',
+        get: (header) => {
+          if (header === 'X-Message') return 'ID';
+          if (header === 'Content-Type') return 'text/plain';
+        },
       },
-      body: 'gobbledygook',
+      text: () => Promise.resolve('gobbledygook'),
     });
+    global.fetch = fetchMock;
 
     const result = provider.sendMessage({
       content: 'content',

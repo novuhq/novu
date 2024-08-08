@@ -1,3 +1,4 @@
+import { describe, expect, test, vi } from 'vitest';
 import { BrevoEmailProvider } from './brevo.provider';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { axiosSpy } from '../../../utils/test/spy-axios';
@@ -90,14 +91,12 @@ test('should send message with _passthrough', async () => {
 
 test('should correctly use sender email and name from the config', async () => {
   const provider = new BrevoEmailProvider(mockConfig);
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      return {
-        id: 'id',
-        date: new Date().toISOString(),
-      };
-    });
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    return {
+      id: 'id',
+      date: new Date().toISOString(),
+    };
+  });
   const { from, ...mockNovuMessageWithoutFrom } = mockNovuMessage;
 
   // use config.from if message.from is not provided

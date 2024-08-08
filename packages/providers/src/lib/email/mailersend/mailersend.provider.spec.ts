@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { MailersendEmailProvider } from './mailersend.provider';
 import MailerSend, { Attachment, Recipient } from 'mailersend';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
@@ -24,12 +25,10 @@ const mockNovuMessage = {
 
 test('should trigger mailerSend with expected parameters', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
-    });
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return {} as any;
+  });
 
   await provider.sendMessage(mockNovuMessage);
 
@@ -53,7 +52,7 @@ test('should trigger mailerSend with expected parameters', async () => {
 
 test('should trigger mailerSend correctly', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailerSend.prototype, 'request')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -96,7 +95,7 @@ test('should trigger mailerSend correctly', async () => {
 
 test('should check provider integration when success', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
-  const spy = jest
+  const spy = vi
     .spyOn(MailerSend.prototype, 'request')
     .mockImplementation(async () => ({
       ok: true,
@@ -117,7 +116,7 @@ test('should check provider integration when bad credentials', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
   const serverMessage = 'Bad credentials';
 
-  const spy = jest
+  const spy = vi
     .spyOn(MailerSend.prototype, 'request')
     .mockImplementation(async () => ({
       ok: false,
@@ -141,7 +140,7 @@ test('should check provider integration when failed', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
   const serverMessage = 'Server is under maintenance';
 
-  const spy = jest
+  const spy = vi
     .spyOn(MailerSend.prototype, 'request')
     .mockImplementation(async () => ({
       ok: false,

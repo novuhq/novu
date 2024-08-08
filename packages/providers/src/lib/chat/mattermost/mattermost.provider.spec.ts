@@ -1,13 +1,14 @@
+import { expect, test, vi } from 'vitest';
 import axios from 'axios';
 import { MattermostProvider } from './mattermost.provider';
 
 test('should trigger mattermost library correctly, default channel', async () => {
-  const fakePostDefaultChannel = jest.fn((webhookUrl, payload) => {
+  const fakePostDefaultChannel = vi.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe(undefined);
 
     return { headers: { ['x-request-id']: 'default' } };
   });
-  jest.spyOn(axios, 'create').mockImplementation(() => {
+  vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: fakePostDefaultChannel,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,12 +30,12 @@ test('should trigger mattermost library correctly, default channel', async () =>
 });
 
 test('should trigger mattermost library correctly, override channel', async () => {
-  const fakePostUserChannel = jest.fn((webhookUrl, payload) => {
+  const fakePostUserChannel = vi.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe('@username');
 
     return { headers: { ['x-request-id']: 'username' } };
   });
-  jest.spyOn(axios, 'create').mockImplementation(() => {
+  vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: fakePostUserChannel,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,12 +59,12 @@ test('should trigger mattermost library correctly, override channel', async () =
 });
 
 test('should trigger mattermost library correctly, default channel with _passthrough', async () => {
-  const fakePostDefaultChannel = jest.fn((webhookUrl, payload) => {
+  const fakePostDefaultChannel = vi.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe(undefined);
 
     return { headers: { ['x-request-id']: 'default' } };
   });
-  jest.spyOn(axios, 'create').mockImplementation(() => {
+  vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: fakePostDefaultChannel,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

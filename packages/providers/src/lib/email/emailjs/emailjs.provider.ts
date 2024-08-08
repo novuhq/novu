@@ -7,6 +7,7 @@ import {
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { IEmailJsConfig } from './emailjs.config';
+import { SMTPClient as Client } from 'emailjs';
 import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -21,7 +22,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
   constructor(private readonly config: IEmailJsConfig) {
     super();
     const { host, port, secure: ssl, user, password } = this.config;
-    this.client = new (require('emailjs').SMTPClient)({
+    this.client = new Client({
       host,
       port,
       ssl,

@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { SimpletextingSmsProvider } from './simpletexting.provider';
 
 import { axiosSpy } from '../../../utils/test/spy-axios';

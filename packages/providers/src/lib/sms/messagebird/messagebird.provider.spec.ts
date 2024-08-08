@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { MessageBirdSmsProvider } from './messagebird.provider';
 
 test('should trigger MessageBird correctly', async () => {
@@ -9,11 +10,9 @@ test('should trigger MessageBird correctly', async () => {
     id: 'messagebird-message-id',
     date: new Date(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+  };
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.messageBirdClient.messages, 'create')
     .mockImplementation(async (params, callback) => {
       callback(null, mockResponse);
@@ -48,11 +47,9 @@ test('should trigger MessageBird correctly with _passthrough', async () => {
     id: 'messagebird-message-id',
     date: new Date(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+  };
 
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.messageBirdClient.messages, 'create')
     .mockImplementation(async (params, callback) => {
       callback(null, mockResponse);

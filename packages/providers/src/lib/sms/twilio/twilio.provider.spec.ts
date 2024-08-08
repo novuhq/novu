@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { TwilioSmsProvider } from './twilio.provider';
 
 test('should trigger Twilio correctly', async () => {
@@ -6,15 +7,13 @@ test('should trigger Twilio correctly', async () => {
     authToken: '<twilio-auth-Token>',
     from: '+112345',
   });
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.twilioClient.messages, 'create')
     .mockImplementation(async () => {
       return {
         dateCreated: new Date(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      };
     });
 
   await provider.sendMessage(
@@ -42,15 +41,13 @@ test('should trigger Twilio correctly with _passthrough', async () => {
     authToken: '<twilio-auth-Token>',
     from: '+112345',
   });
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+  const spy = vi
     .spyOn(provider.twilioClient.messages, 'create')
     .mockImplementation(async () => {
       return {
         dateCreated: new Date(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      };
     });
 
   await provider.sendMessage(

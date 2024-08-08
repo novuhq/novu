@@ -1,10 +1,11 @@
+import { expect, test, vi } from 'vitest';
 import { SNSClient } from '@aws-sdk/client-sns';
 
 import { SNSSmsProvider } from './sns.provider';
 
 test('should trigger sns library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = jest
+  const spy = vi
     .spyOn(SNSClient.prototype, 'send')
     .mockImplementation(async () => mockResponse);
 
@@ -35,7 +36,7 @@ test('should trigger sns library correctly', async () => {
 
 test('should trigger sns library correctly with _passthrough', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = jest
+  const spy = vi
     .spyOn(SNSClient.prototype, 'send')
     .mockImplementation(async () => mockResponse);
 
@@ -64,6 +65,6 @@ test('should trigger sns library correctly with _passthrough', async () => {
   };
 
   expect(spy).toHaveBeenCalled();
-  expect(spy.mock.calls[1][0]?.input).toEqual(publishInput);
+  expect(spy.mock.calls[0][0]?.input).toEqual(publishInput);
   expect(response.id).toBe(mockResponse.MessageId);
 });

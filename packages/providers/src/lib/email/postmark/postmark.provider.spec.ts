@@ -1,3 +1,4 @@
+import { expect, test, vi } from 'vitest';
 import { PostmarkEmailProvider } from './postmark.provider';
 
 const mockConfig = {
@@ -39,12 +40,11 @@ const mockWebHook = {
 
 test('should trigger postmark correctly', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/dot-notation
+  const spy = vi
     .spyOn(provider['client'], 'sendEmail')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return {};
     });
 
   await provider.sendMessage(mockNovuMessage);
@@ -69,12 +69,11 @@ test('should trigger postmark correctly', async () => {
 
 test('should trigger postmark correctly with _passthrough', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/dot-notation
+  const spy = vi
     .spyOn(provider['client'], 'sendEmail')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return {};
     });
 
   await provider.sendMessage(mockNovuMessage, {
@@ -134,12 +133,11 @@ test('should parse postmark webhook', () => {
 
 test('should check provider integration correctly', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
-  const spy = jest
-    // eslint-disable-next-line @typescript-eslint/dot-notation
+  const spy = vi
     .spyOn(provider['client'], 'sendEmail')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return {};
     });
 
   const response = await provider.checkIntegration(mockNovuMessage);

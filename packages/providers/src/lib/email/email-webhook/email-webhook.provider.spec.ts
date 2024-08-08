@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import axios from 'axios';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { EmailWebhookProvider } from './email-webhook.provider';

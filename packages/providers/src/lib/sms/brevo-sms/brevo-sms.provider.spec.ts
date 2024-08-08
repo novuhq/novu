@@ -1,20 +1,11 @@
-import fetch from 'jest-fetch-mock';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BrevoSmsProvider } from './brevo-sms.provider';
-import { ISmsOptions, SmsEventStatusEnum } from '@novu/stateless';
-import { objectToEqual } from './objectToEqual';
-import { dateIsValid } from './dateIsValid';
+import { ISmsOptions } from '@novu/stateless';
 
 const mockConfig = {
   apiKey: 'ABCDE',
   from: 'My Company',
 };
-
-fetch.enableMocks();
-
-expect.extend({
-  objectToEqual,
-  dateIsValid,
-});
 
 const mockNovuMessage: ISmsOptions = {
   from: 'My Company',
@@ -31,36 +22,40 @@ const mockBrevoResponse = {
 };
 
 beforeEach(() => {
-  fetch.doMock();
+  vi.restoreAllMocks();
 });
 
 afterEach(() => {
-  fetch.resetMocks();
+  vi.restoreAllMocks();
 });
 
 describe('sendMessage method', () => {
   test('should call brevo API transactional sms endpoint once', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch).toBeCalled();
+    expect(fetchMock).toBeCalled();
   });
 
   test('should call brevo API transactional sms endpoint with right URL', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch.mock.calls[0][0]).toEqual(
+    expect(fetchMock.mock.calls[0][0]).toEqual(
       'https://api.brevo.com/v3/transactionalSMS/sms'
     );
   });
@@ -68,13 +63,15 @@ describe('sendMessage method', () => {
   test('should call brevo API transactional sms endpoint using POST method', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
       method: 'POST',
     });
   });
@@ -82,13 +79,15 @@ describe('sendMessage method', () => {
   test('should call brevo API using config apiKey', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
       headers: {
         'api-key': mockConfig.apiKey,
       },
@@ -98,65 +97,73 @@ describe('sendMessage method', () => {
   test('should send message with provided config from', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     const { from, ...mockNovuMessageWithoutFrom } = mockNovuMessage;
 
     await provider.sendMessage(mockNovuMessageWithoutFrom);
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
-      body: expect.objectToEqual('sender', mockConfig.from),
-    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.sender).toEqual(mockConfig.from);
   });
 
   test('should send message with provided option from overriding config from', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
-      body: expect.objectToEqual('sender', mockNovuMessage.from),
-    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.sender).toEqual(mockNovuMessage.from);
   });
+
   test('should send message with provided option to', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
-      body: expect.objectToEqual('recipient', mockNovuMessage.to),
-    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.recipient).toEqual(mockNovuMessage.to);
   });
+
   test('should send message with provided option content', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
-      body: expect.objectToEqual('content', mockNovuMessage.content),
-    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.content).toEqual(mockNovuMessage.content);
   });
 
   test('should send message with provided option content with _passthrough', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     await provider.sendMessage(mockNovuMessage, {
       _passthrough: {
@@ -166,17 +173,18 @@ describe('sendMessage method', () => {
       },
     });
 
-    expect(fetch.mock.calls[0][1]).toMatchObject({
-      body: expect.objectToEqual('content', '_passthrough content'),
-    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.content).toEqual('_passthrough content');
   });
 
   test('should return id returned in request response', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     const result = await provider.sendMessage(mockNovuMessage);
 
@@ -184,17 +192,18 @@ describe('sendMessage method', () => {
       id: mockBrevoResponse.messageId,
     });
   });
+
   test('should return date returned in request response', async () => {
     const provider = new BrevoSmsProvider(mockConfig);
 
-    fetch.mockResponseOnce(JSON.stringify(mockBrevoResponse), {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve(mockBrevoResponse),
       status: 201,
     });
+    global.fetch = fetchMock;
 
     const result = await provider.sendMessage(mockNovuMessage);
 
-    expect(result).toMatchObject({
-      date: expect.dateIsValid(),
-    });
+    expect(new Date(result.date).toString()).not.toEqual('Invalid Date');
   });
 });

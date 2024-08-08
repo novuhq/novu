@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { FortySixElksSmsProvider } from './forty-six-elks.provider';
 

@@ -1,12 +1,9 @@
-import { Resend } from 'resend';
-
+import { expect, test, vi } from 'vitest';
 import { ResendEmailProvider } from './resend.provider';
 const mockConfig = {
   apiKey: 'this-api-key-from-resend',
   from: 'test@test.com',
 };
-
-(global as any).Headers = () => {};
 
 const mockNovuMessage = {
   from: 'test@test.com',
@@ -25,12 +22,9 @@ const mockNovuMessage = {
 
 test('should trigger resend library correctly', async () => {
   const provider = new ResendEmailProvider(mockConfig);
-  const spy = jest
-    .spyOn(provider, 'sendMessage')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
-    });
+  const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
+    return {};
+  });
 
   await provider.sendMessage(mockNovuMessage);
 
@@ -52,11 +46,10 @@ test('should trigger resend email with From Name', async () => {
   };
 
   const provider = new ResendEmailProvider(mockConfigWithSenderName);
-  const spy = jest
+  const spy = vi
     .spyOn((provider as any).resendClient.emails, 'send')
     .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return {};
     });
 
   await provider.sendMessage(mockNovuMessage);
@@ -84,11 +77,10 @@ test('should trigger resend email correctly with _passthrough', async () => {
   };
 
   const provider = new ResendEmailProvider(mockConfigWithSenderName);
-  const spy = jest
+  const spy = vi
     .spyOn((provider as any).resendClient.emails, 'send')
     .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return {};
     });
 
   await provider.sendMessage(mockNovuMessage, {

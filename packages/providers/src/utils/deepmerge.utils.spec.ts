@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { deepMerge } from './deepmerge.utils';
 import { expect, describe, it } from 'vitest';
 

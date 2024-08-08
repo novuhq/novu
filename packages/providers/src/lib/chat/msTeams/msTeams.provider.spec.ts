@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { MsTeamsProvider } from './msTeams.provider';
 import { v4 as uuidv4 } from 'uuid';
 import { axiosSpy } from '../../../utils/test/spy-axios';

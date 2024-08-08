@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { Sms77SmsProvider } from './sms77.provider';
 import { expect, test, vi } from 'vitest';
 
@@ -15,7 +16,7 @@ test('should trigger sms77 correctly', async () => {
       return {
         messages: [{ id: null }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      };
     });
 
   await provider.sendMessage({
@@ -46,7 +47,7 @@ test('should trigger sms77 correctly with _passthrough', async () => {
       return {
         messages: [{ id: null }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      };
     });
 
   await provider.sendMessage(

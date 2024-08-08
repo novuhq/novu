@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { GenericSmsProvider } from './generic-sms.provider';
 import crypto from 'crypto';
 import { axiosSpy } from '../../../utils/test/spy-axios';
