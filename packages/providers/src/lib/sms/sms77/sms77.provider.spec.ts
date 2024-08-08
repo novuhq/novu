@@ -1,6 +1,5 @@
-import { expect, test } from 'vitest';
-import { Sms77SmsProvider } from './sms77.provider';
 import { expect, test, vi } from 'vitest';
+import { Sms77SmsProvider } from './sms77.provider';
 
 test('should trigger sms77 correctly', async () => {
   const provider = new Sms77SmsProvider({
@@ -9,13 +8,10 @@ test('should trigger sms77 correctly', async () => {
   });
 
   const spy = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    .spyOn(provider.sms77Client, 'sms')
+    .spyOn((provider as any).sms77Client, 'sms')
     .mockImplementation(async () => {
       return {
         messages: [{ id: null }],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       };
     });
 
@@ -40,13 +36,10 @@ test('should trigger sms77 correctly with _passthrough', async () => {
   });
 
   const spy = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    .spyOn(provider.sms77Client, 'sms')
+    .spyOn((provider as any).sms77Client, 'sms')
     .mockImplementation(async () => {
       return {
         messages: [{ id: null }],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       };
     });
 

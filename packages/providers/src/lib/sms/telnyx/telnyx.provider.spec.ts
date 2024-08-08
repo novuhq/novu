@@ -9,13 +9,12 @@ test('should trigger Telnyx correctly', async () => {
   });
 
   const spy = vi
-    .spyOn(provider.telnyxClient.messages, 'create')
+    .spyOn((provider as any).telnyxClient.messages, 'create')
     .mockImplementation(async () => {
       return {
         data: {
           id: Math.ceil(Math.random() * 100),
           received_at: new Date(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         },
       };
     });
@@ -41,13 +40,12 @@ test('should trigger Telnyx correctly with _passthrough', async () => {
   });
 
   const spy = vi
-    .spyOn(provider.telnyxClient.messages, 'create')
+    .spyOn((provider as any).telnyxClient.messages, 'create')
     .mockImplementation(async () => {
       return {
         data: {
           id: Math.ceil(Math.random() * 100),
           received_at: new Date(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         },
       };
     });

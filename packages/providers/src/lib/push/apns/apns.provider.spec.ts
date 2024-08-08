@@ -14,11 +14,10 @@ test('should trigger apns library correctly', async () => {
     };
   });
 
-  vi.spyOn(apn, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
   });
 
@@ -76,11 +75,10 @@ test('should trigger apns library correctly with _passthrough', async () => {
     };
   });
 
-  vi.spyOn(apn, 'Provider').mockImplementation(() => {
+  vi.spyOn(apn as any, 'Provider').mockImplementation(() => {
     return {
       send: mockSend,
       shutdown: () => {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
   });
 

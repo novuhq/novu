@@ -9,7 +9,7 @@ test(`should trigger Africa's Talking library correctly`, async () => {
   });
 
   const spy = vi
-    .spyOn(provider.africasTalkingClient, 'send')
+    .spyOn((provider as any).africasTalkingClient, 'send')
     .mockImplementation(async () => {
       return {
         date: new Date().toISOString(),
@@ -38,7 +38,7 @@ test(`should trigger Africa's Talking library correctly with _passthrough`, asyn
   });
 
   const spy = vi
-    .spyOn(provider.africasTalkingClient, 'send')
+    .spyOn((provider as any).africasTalkingClient, 'send')
     .mockImplementation(async () => {
       return {
         date: new Date().toISOString(),

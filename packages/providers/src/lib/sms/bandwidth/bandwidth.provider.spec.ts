@@ -9,14 +9,13 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
   });
 
   const spy = vi
-    .spyOn(provider.controller, 'createMessage')
+    .spyOn((provider as any).controller, 'createMessage')
     .mockImplementation(async () => {
       return {
         result: {
           id: '12345-67a8',
           time: new Date().toISOString(),
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       };
     });
 
@@ -44,14 +43,13 @@ test('should trigger BandwidthSmsProvider library correctly with _passthrough', 
   });
 
   const spy = vi
-    .spyOn(provider.controller, 'createMessage')
+    .spyOn((provider as any).controller, 'createMessage')
     .mockImplementation(async () => {
       return {
         result: {
           id: '12345-67a8',
           time: new Date().toISOString(),
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       };
     });
 

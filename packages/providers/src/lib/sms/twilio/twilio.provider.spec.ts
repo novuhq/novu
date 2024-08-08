@@ -8,11 +8,10 @@ test('should trigger Twilio correctly', async () => {
     from: '+112345',
   });
   const spy = vi
-    .spyOn(provider.twilioClient.messages, 'create')
+    .spyOn((provider as any).twilioClient.messages, 'create')
     .mockImplementation(async () => {
       return {
         dateCreated: new Date(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       };
     });
 
@@ -42,11 +41,10 @@ test('should trigger Twilio correctly with _passthrough', async () => {
     from: '+112345',
   });
   const spy = vi
-    .spyOn(provider.twilioClient.messages, 'create')
+    .spyOn((provider as any).twilioClient.messages, 'create')
     .mockImplementation(async () => {
       return {
         dateCreated: new Date(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       };
     });
 

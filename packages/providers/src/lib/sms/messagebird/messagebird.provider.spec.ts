@@ -9,13 +9,12 @@ test('should trigger MessageBird correctly', async () => {
   const mockResponse = {
     id: 'messagebird-message-id',
     date: new Date(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   };
 
   const spy = vi
-    .spyOn(provider.messageBirdClient.messages, 'create')
+    .spyOn((provider as any).messageBirdClient.messages, 'create')
     .mockImplementation(async (params, callback) => {
-      callback(null, mockResponse);
+      (callback as any)(null, mockResponse);
     });
 
   const testOptions = {
@@ -46,13 +45,12 @@ test('should trigger MessageBird correctly with _passthrough', async () => {
   const mockResponse = {
     id: 'messagebird-message-id',
     date: new Date(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   };
 
   const spy = vi
-    .spyOn(provider.messageBirdClient.messages, 'create')
+    .spyOn((provider as any).messageBirdClient.messages, 'create')
     .mockImplementation(async (params, callback) => {
-      callback(null, mockResponse);
+      (callback as any)(null, mockResponse);
     });
 
   const testOptions = {

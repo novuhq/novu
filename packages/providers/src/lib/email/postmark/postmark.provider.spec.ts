@@ -41,9 +41,8 @@ const mockWebHook = {
 test('should trigger postmark correctly', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   const spy = vi
-    .spyOn(provider['client'], 'sendEmail')
+    .spyOn((provider as any).client, 'sendEmail')
     .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {};
     });
 
@@ -70,9 +69,8 @@ test('should trigger postmark correctly', async () => {
 test('should trigger postmark correctly with _passthrough', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   const spy = vi
-    .spyOn(provider['client'], 'sendEmail')
+    .spyOn((provider as any).client, 'sendEmail')
     .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {};
     });
 
@@ -134,9 +132,8 @@ test('should parse postmark webhook', () => {
 test('should check provider integration correctly', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   const spy = vi
-    .spyOn(provider['client'], 'sendEmail')
+    .spyOn((provider as any).client, 'sendEmail')
     .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {};
     });
 

@@ -8,7 +8,7 @@ test('should trigger infobip library correctly - SMS', async () => {
   });
 
   const spy = vi
-    .spyOn(provider.infobipClient.channels.sms, 'send')
+    .spyOn((provider as any).infobipClient.channels.sms, 'send')
     .mockImplementation(async () => {
       return {
         data: {
@@ -48,7 +48,7 @@ test('should trigger infobip library correctly - SMS', async () => {
   });
 
   const spy = vi
-    .spyOn(provider.infobipClient.channels.sms, 'send')
+    .spyOn((provider as any).infobipClient.channels.sms, 'send')
     .mockImplementation(async () => {
       return {
         data: {
