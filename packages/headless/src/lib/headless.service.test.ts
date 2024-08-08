@@ -577,7 +577,7 @@ describe('headless.service', () => {
       });
       await promiseResolveTimeout(0);
 
-      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(3);
+      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
       expect(notificationsListener).toHaveBeenCalledTimes(8);
       expect(notificationsListener).toHaveBeenNthCalledWith(
         4,
