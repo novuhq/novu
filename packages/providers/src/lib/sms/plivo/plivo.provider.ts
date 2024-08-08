@@ -8,7 +8,7 @@ import {
   SmsEventStatusEnum,
 } from '@novu/stateless';
 
-import plivo from 'plivo';
+import { Client as PlivoClient } from 'plivo';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -16,7 +16,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Plivo;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
-  private plivoClient: plivo.Client;
+  private plivoClient: PlivoClient;
 
   constructor(
     private config: {
@@ -26,7 +26,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
-    this.plivoClient = new plivo.Client(config.accountSid, config.authToken);
+    this.plivoClient = new PlivoClient(config.accountSid, config.authToken);
   }
 
   async sendMessage(
@@ -34,13 +34,13 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, {
-      from: options.from || this.config.from,
-      to: options.to,
+      src: options.from || this.config.from,
+      dst: options.to,
       text: options.content,
     });
     const plivoResponse = await this.plivoClient.messages.create(
-      transformedData.body.from,
-      transformedData.body.to,
+      transformedData.body.src,
+      transformedData.body.dst,
       transformedData.body.text as string,
       transformedData.body.optionalParams as object,
       transformedData.body.powerpackUUID as string
