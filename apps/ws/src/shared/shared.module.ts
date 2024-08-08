@@ -16,11 +16,21 @@ import {
   DalServiceHealthIndicator,
   WebSocketsInMemoryProviderService,
   QueuesModule,
-  injectRepositories,
+  injectCommunityAuthProviders,
 } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
-import { JobTopicNameEnum } from '@novu/shared';
+import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
+
+function getDynamicAuthProviders() {
+  if (isClerkEnabled()) {
+    const eeAuthPackage = require('@novu/ee-auth');
+
+    return eeAuthPackage.injectEEAuthProviders();
+  } else {
+    return injectCommunityAuthProviders();
+  }
+}
 
 const DAL_MODELS = [
   UserRepository,
@@ -31,7 +41,7 @@ const DAL_MODELS = [
   NotificationRepository,
   MessageRepository,
   MemberRepository,
-  ...injectRepositories(),
+  ...getDynamicAuthProviders(),
 ];
 
 const dalService = {

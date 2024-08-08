@@ -1,16 +1,16 @@
-import {
-  AuthService,
-  SwitchEnvironment,
-  SwitchOrganization,
-  injectRepositories,
-  PlatformException,
-} from '@novu/application-generic';
+import { AuthService, SwitchEnvironment, SwitchOrganization, PlatformException } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { OrganizationModule } from '../organization/organization.module';
+
+function getEEAuthProviders() {
+  const eeAuthPackage = require('@novu/ee-auth');
+
+  return eeAuthPackage.injectEEAuthProviders();
+}
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
@@ -25,7 +25,7 @@ export function getEEModuleConfig(): ModuleMetadata {
     controllers: [...eeAuthModule.controllers],
     providers: [
       ...eeAuthModule.providers,
-      ...injectRepositories(),
+      ...getEEAuthProviders(),
       // reused services
       ApiKeyStrategy,
       JwtSubscriberStrategy,
