@@ -7,7 +7,6 @@ import {
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { IEmailJsConfig } from './emailjs.config';
-import { SMTPClient as Client } from 'emailjs';
 import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -17,24 +16,33 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.KEBAB_CASE;
   readonly id = EmailProviderIdEnum.EmailJS;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private readonly client: SMTPClient;
+  private client: SMTPClient | null = null;
 
   constructor(private readonly config: IEmailJsConfig) {
     super();
-    const { host, port, secure: ssl, user, password } = this.config;
-    this.client = new Client({
-      host,
-      port,
-      ssl,
-      user,
-      password,
-    });
+  }
+
+  private async ensureClientInitialized() {
+    if (!this.client) {
+      const { host, port, secure: ssl, user, password } = this.config;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const { SMTPClient: EmailJsClient } = await import('emailjs');
+      this.client = new EmailJsClient({
+        host,
+        port,
+        ssl,
+        user,
+        password,
+      });
+    }
   }
 
   async sendMessage(
     emailOptions: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    await this.ensureClientInitialized();
+
     const headers: Message['header'] = {
       from: emailOptions.from || this.config.from,
       to: emailOptions.to,
@@ -49,10 +57,12 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
       headers['reply-to'] = emailOptions.replyTo;
     }
 
-    const sent = await this.client.sendAsync(
-      new (require('emailjs').Message(
-        this.transform(bridgeProviderData, headers).body
-      ))()
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { Message: EmailJsMessage } = await import('emailjs');
+    const sent = await this.client?.sendAsync(
+      new EmailJsMessage(
+        this.transform(bridgeProviderData, headers).body as Message['header']
+      )
     );
 
     return {
