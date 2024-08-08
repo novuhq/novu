@@ -100,12 +100,15 @@ export class EmailHandler {
       );
     }
 
-    return await this.provider.sendMessage({
-      to: [data.$email],
-      subject,
-      html,
-      attachments,
-      text,
-    });
+    return await this.provider.sendMessage(
+      {
+        to: [data.$email],
+        subject,
+        html,
+        attachments,
+        text,
+      },
+      {}
+    );
   }
 }

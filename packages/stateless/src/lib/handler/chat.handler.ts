@@ -30,9 +30,12 @@ export class ChatHandler {
       );
     }
 
-    return await this.provider.sendMessage({
-      webhookUrl: data.$webhookUrl as string,
-      content,
-    });
+    return await this.provider.sendMessage(
+      {
+        webhookUrl: data.$webhookUrl as string,
+        content,
+      },
+      {}
+    );
   }
 }

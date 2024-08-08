@@ -4,8 +4,10 @@ import {
   I<%= pascalType %>Options,
   I<%= pascalType %>Provider,
 } from '@novu/stateless';
+import { BaseProvider } from '../../../base.provider';
+import { WithPassthrough } from '../../../utils/types';
 
-export class <%= pascalName %><%= pascalType %>Provider implements I<%= pascalType %>Provider {
+export class <%= pascalName %><%= pascalType %>Provider extends BaseProvider implements I<%= pascalType %>Provider {
   id = '<%= name %>';
   channelType = ChannelTypeEnum.<%= upperType %> as ChannelTypeEnum.<%= upperType %>;
 
@@ -14,11 +16,14 @@ export class <%= pascalName %><%= pascalType %>Provider implements I<%= pascalTy
       <%= upperType === 'EMAIL' ? 'apiKey: string;' : null %>
     }
   ) {
+    super();
   }
 
   async sendMessage(
-    options: I<%= pascalType %>Options
+    options: I<%= pascalType %>Options,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const data = this.transform(bridgeProviderData, options);
 
 
     return {
