@@ -38,7 +38,11 @@ export const CountProvider = (props: ParentProps) => {
     setUnreadCounts(newMap);
   };
 
-  onMount(updateUnreadCounts);
+  onMount(() => {
+    if (tabs().length > 0) {
+      updateUnreadCounts();
+    }
+  });
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
