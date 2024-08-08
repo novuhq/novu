@@ -7,7 +7,7 @@ export default function Home() {
     <>
       <Title title="Preferences Component" />
       <div className="w-96 h-96 overflow-y-auto">
-        <Inbox options={novuConfig}>
+        <Inbox {...novuConfig}>
           <Preferences />
         </Inbox>
       </div>

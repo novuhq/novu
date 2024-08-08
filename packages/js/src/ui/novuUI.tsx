@@ -1,14 +1,19 @@
 import { Accessor, ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
-import type { NovuOptions } from '../novu';
+import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
-import { Appearance } from './context';
-import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
-import type { BaseNovuProviderProps, NovuProviderProps, Tab } from './types';
-//@ts-expect-error inline import esbuild syntax
-import css from 'directcss:./index.directcss';
-import { InboxProps } from './components';
+import type { BaseNovuProviderProps, NovuProviderProps, Tab, Appearance, Localization } from './types';
+
+// eslint-disable-next-line
+// @ts-ignore
+const isDev = __DEV__;
+// eslint-disable-next-line
+// @ts-ignore
+const version = PACKAGE_VERSION;
+const cssHref = isDev
+  ? 'http://localhost:4010/index.css'
+  : `https://cdn.jsdelivr.net/npm/@novu/js@${version}/dist/index.css`;
 
 export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
@@ -60,7 +65,7 @@ export class NovuUI {
     const dispose = render(
       () => (
         <Renderer
-          defaultCss={css}
+          cssHref={cssHref}
           novuUI={this}
           nodes={this.#mountedElements()}
           options={this.#options()}
@@ -73,12 +78,6 @@ export class NovuUI {
     );
 
     this.#dispose = dispose;
-  }
-
-  #unmountComponentRenderer(): void {
-    this.#dispose?.();
-    this.#dispose = null;
-    this.#rootElement?.remove();
   }
 
   #updateComponentProps(element: MountableElement, props: unknown) {
@@ -114,11 +113,6 @@ export class NovuUI {
     });
   }
 
-  //All in one <Inbox />
-  mountInbox(element: MountableElement, props?: InboxProps) {
-    this.mountComponent({ name: 'Inbox', element, props });
-  }
-
   unmountComponent(element: MountableElement) {
     this.#setMountedElements((oldMountedElements) => {
       const newMountedElements = new Map(oldMountedElements);
@@ -142,5 +136,11 @@ export class NovuUI {
 
   updateTabs(tabs?: Array<Tab>) {
     this.#setTabs(tabs ?? []);
+  }
+
+  unmount(): void {
+    this.#dispose?.();
+    this.#dispose = null;
+    this.#rootElement?.remove();
   }
 }
