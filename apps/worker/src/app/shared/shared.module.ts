@@ -52,25 +52,15 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateTenant,
-  injectCommunityAuthProviders,
+  injectRepositories,
   ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
 import packageJson from '../../../package.json';
 import { CreateLog } from './logs';
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
+import { JobTopicNameEnum } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';
 import { UNIQUE_WORKER_DEPENDENCIES, workersToProcess } from '../../config/worker-init.config';
-
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
 
 const DAL_MODELS = [
   UserRepository,
@@ -96,7 +86,7 @@ const DAL_MODELS = [
   TenantRepository,
   WorkflowOverrideRepository,
   ControlVariablesRepository,
-  ...getDynamicAuthProviders(),
+  ...injectRepositories(),
 ];
 
 const dalService = {

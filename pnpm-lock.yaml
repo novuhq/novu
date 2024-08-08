@@ -1235,10 +1235,6 @@ importers:
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.1.16
@@ -1771,10 +1767,6 @@ importers:
       socket.io:
         specifier: ^4.7.2
         version: 4.7.2
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.1.16
@@ -1854,9 +1846,6 @@ importers:
       '@nestjs/swagger':
         specifier: ^7.1.9
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
-      '@novu/application-generic':
-        specifier: workspace:*
-        version: link:../../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../libs/dal
@@ -1978,10 +1967,6 @@ importers:
       stripe-event-types:
         specifier: ^3.1.0
         version: 3.1.0(stripe@11.18.0)
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../auth
     devDependencies:
       '@types/chai':
         specifier: ^4.2.11
@@ -2138,10 +2123,6 @@ importers:
       slugify:
         specifier: ^1.4.6
         version: 1.6.6
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../auth
     devDependencies:
       '@types/chai':
         specifier: ^4.2.11
@@ -2372,6 +2353,9 @@ importers:
         specifier: ^1.4.6
         version: 1.6.6
     optionalDependencies:
+      '@novu/ee-auth':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/auth
       '@novu/ee-shared-services':
         specifier: workspace:*
         version: link:../../enterprise/packages/shared-services

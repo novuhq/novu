@@ -41,22 +41,12 @@ import {
   storageService,
   ExecutionLogRoute,
   CreateExecutionDetails,
-  injectCommunityAuthProviders,
+  injectRepositories,
   ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
 import packageJson from '../../../package.json';
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
-
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
+import { JobTopicNameEnum } from '@novu/shared';
 
 const DAL_MODELS = [
   UserRepository,
@@ -82,7 +72,7 @@ const DAL_MODELS = [
   TenantRepository,
   WorkflowOverrideRepository,
   ControlVariablesRepository,
-  ...getDynamicAuthProviders(),
+  ...injectRepositories(),
 ];
 
 const dalService = {

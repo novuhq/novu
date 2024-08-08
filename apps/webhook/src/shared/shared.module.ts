@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AnalyticsService, injectCommunityAuthProviders } from '@novu/application-generic';
+import { AnalyticsService, injectRepositories } from '@novu/application-generic';
 import {
   DalService,
   UserRepository,
@@ -14,17 +14,6 @@ import {
   IntegrationRepository,
   JobRepository,
 } from '@novu/dal';
-import { isClerkEnabled } from '@novu/shared';
-
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
 
 const DAL_MODELS = [
   UserRepository,
@@ -38,7 +27,7 @@ const DAL_MODELS = [
   MemberRepository,
   IntegrationRepository,
   JobRepository,
-  ...getDynamicAuthProviders(),
+  ...injectRepositories(),
 ];
 
 const dalService = new DalService();
