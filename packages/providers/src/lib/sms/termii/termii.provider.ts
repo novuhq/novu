@@ -11,10 +11,6 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { SmsParams, MessageChannel, SmsJsonResponse } from './sms';
 
-if (!globalThis.fetch) {
-  globalThis.fetch = require('node-fetch');
-}
-
 export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
   public static readonly BASE_URL = 'https://api.ng.termii.com/api/sms/send';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;

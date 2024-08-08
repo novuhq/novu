@@ -10,11 +10,6 @@ import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-if (!globalThis.fetch) {
-  // eslint-disable-next-line global-require
-  globalThis.fetch = require('node-fetch');
-}
-
 export class Sms77SmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Sms77;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;

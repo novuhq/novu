@@ -9,11 +9,6 @@ import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-if (!globalThis.fetch) {
-  // eslint-disable-next-line global-require
-  globalThis.fetch = require('node-fetch');
-}
-
 export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Gupshup;
   protected casing = CasingEnum.SNAKE_CASE;
