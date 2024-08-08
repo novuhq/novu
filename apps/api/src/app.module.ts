@@ -99,6 +99,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TopicsModule,
   BlueprintModule,
   TenantModule,
+  StorageModule,
   WorkflowOverridesModule,
   RateLimitingModule,
   WidgetsModule,
@@ -110,7 +111,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 const enterpriseModules = enterpriseImports();
 
 if (!isClerkEnabled()) {
-  const communityModules = [StorageModule, InvitesModule];
+  const communityModules = [InvitesModule];
   baseModules.push(...communityModules);
 }
 
