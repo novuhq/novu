@@ -1,6 +1,6 @@
 import { JSX, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { AppearanceKey } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
 import { useTooltip } from './TooltipRoot';
 

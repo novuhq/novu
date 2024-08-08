@@ -1,18 +1,16 @@
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
-import { NovuOptions } from '../../novu';
+import type { NovuOptions } from '../../types';
 import {
-  Appearance,
   AppearanceProvider,
   CountProvider,
   FocusManagerProvider,
   InboxProvider,
-  Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Tab } from '../types';
+import type { Tab, Appearance, Localization } from '../types';
 import { Bell, Root, Preferences } from './elements';
 import { Inbox } from './Inbox';
 import { NotificationList as Notifications } from './Notification';

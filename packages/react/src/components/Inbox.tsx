@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
@@ -40,21 +40,24 @@ const DefaultInbox = ({
 };
 
 export const Inbox = React.memo((props: InboxProps) => {
-  if (isWithChildrenProps(props)) {
-    const { children, ...options } = props;
+  const { localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } =
+    props;
 
-    return <Renderer options={options}>{children}</Renderer>;
+  const options = useMemo(() => {
+    return {
+      localization,
+      appearance,
+      tabs,
+      options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
+    };
+  }, [localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl]);
+
+  if (isWithChildrenProps(props)) {
+    return <Renderer options={options}>{props.children}</Renderer>;
   }
 
-  const {
-    open,
-    renderNotification,
-    renderBell,
-    onNotificationClick,
-    onPrimaryActionClick,
-    onSecondaryActionClick,
-    ...options
-  } = props;
+  const { open, renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } =
+    props;
 
   return (
     <Renderer options={options}>

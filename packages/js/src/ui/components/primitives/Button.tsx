@@ -1,7 +1,7 @@
 import { cva, VariantProps } from 'class-variance-authority';
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { AppearanceKey } from '../../context';
+import type { AppearanceKey } from '../../types';
 import { cn, useStyle } from '../../helpers';
 
 export const buttonVariants = cva(

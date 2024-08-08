@@ -1,6 +1,6 @@
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { AppearanceKey } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
 import { Popover, usePopover } from '../Popover';
 
