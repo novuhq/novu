@@ -46,6 +46,7 @@ export const appearanceKeys = [
   'inbox__popoverContent',
 
   //Notifications
+  'notificationListContainer',
   'notificationList',
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',

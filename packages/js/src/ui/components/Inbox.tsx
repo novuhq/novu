@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
+import { createSignal, Match, Show, Switch } from 'solid-js';
 import { useInboxContext } from '../context';
 import { useStyle } from '../helpers';
 import type {
