@@ -397,8 +397,10 @@ export class SendMessageChat extends SendMessageBase {
         ...(command.overrides[integration?.channel] || {}),
         ...(command.overrides[integration?.providerId] || {}),
       };
+      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
       const result = await chatHandler.send({
+        bridgeProviderData,
         phoneNumber,
         customData: overrides,
         webhookUrl: chatWebhookUrl,

@@ -59,12 +59,6 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     }
   }
 
-  if (isClerkEnabled()) {
-    if (require('@novu/ee-auth')?.EEAuthModule) {
-      modules.push(require('@novu/ee-auth')?.EEAuthModule);
-    }
-  }
-
   return modules;
 };
 

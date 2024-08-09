@@ -1,12 +1,9 @@
 import { Accessor, ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
-import type { NovuOptions } from '../novu';
+import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
-import { Appearance } from './context';
-import { Localization } from './context/LocalizationContext';
 import { generateRandomString } from './helpers';
-import type { BaseNovuProviderProps, NovuProviderProps, Tab } from './types';
-import { InboxProps } from './components';
+import type { BaseNovuProviderProps, NovuProviderProps, Tab, Appearance, Localization } from './types';
 
 // eslint-disable-next-line
 // @ts-ignore

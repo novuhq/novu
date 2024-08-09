@@ -10,7 +10,7 @@ const twilioOutputSchema = {
   properties: {
     to: {
       type: 'string',
-      format: 'phone-number',
+      pattern: '^\\+[1-9]\\d{1,14}$',
       description:
         "The recipient's phone number in [E.164](https://www.twilio.com/docs/glossary/what-e164) format (for SMS/MMS) or [channel address](https://www.twilio.com/docs/messaging/channels), e.g. `whatsapp:+15552229999`.",
     },
@@ -108,7 +108,7 @@ const twilioOutputSchema = {
     },
     from: {
       type: 'string',
-      format: 'phone-number',
+      pattern: '^\\+[1-9]\\d{1,14}$',
       description:
         "The sender's Twilio phone number (in [E.164](https://en.wikipedia.org/wiki/E.164) format), [alphanumeric sender ID](https://www.twilio.com/docs/sms/quickstart), [Wireless SIM](https://www.twilio.com/docs/iot/wireless/programmable-wireless-send-machine-machine-sms-commands), [short code](https://www.twilio.com/en-us/messaging/channels/sms/short-codes), or [channel address](https://www.twilio.com/docs/messaging/channels) (e.g., `whatsapp:+15554449999`). The value of the `from` parameter must be a sender that is hosted within Twilio and belongs to the Account creating the Message. If you are using `messagingServiceSid`, this parameter can be empty (Twilio assigns a `from` value from the Messaging Service's Sender Pool) or you can provide a specific sender from your Sender Pool.",
     },
