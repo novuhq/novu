@@ -33,6 +33,7 @@ interface ISnippetInstructions {
 }
 
 const installReactNotificationCenter = 'npm install @novu/notification-center';
+const installReactInbox = 'npm install @novu/react';
 const installAngularNotificationCenter = 'npm install @novu/notification-center-angular';
 const installVueNotificationCenter = 'npm install @novu/notification-center-vue';
 
@@ -50,6 +51,15 @@ export const Header = () => {
         {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
       </PopoverNotificationCenter>
     </NovuProvider>
+  );
+};`;
+
+export const reactStarterSnippetV2 = `import React from 'react';
+import { Inbox } from '@novu/react';
+
+export const Header = () => {
+  return (
+    <Inbox subscriberId={'${onBoardingSubscriberId}'} applicationIdentifier={'${APPLICATION_IDENTIFIER}'} />
   );
 };`;
 
@@ -248,6 +258,20 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
         snippet: npmRunCommand,
         language: 'bash',
       },
+    ],
+  },
+];
+
+export const frameworkInstructionsV2: { key: string; value: ISnippetInstructions[] }[] = [
+  {
+    key: FrameworkEnum.REACT,
+    value: [
+      {
+        instruction: 'First you have to install the package:',
+        snippet: installReactInbox,
+        language: 'bash',
+      },
+      { instruction: 'Then import and render the components:', snippet: reactStarterSnippetV2 },
     ],
   },
 ];

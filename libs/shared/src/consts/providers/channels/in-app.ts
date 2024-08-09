@@ -9,7 +9,7 @@ import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 export const inAppProviders: IProviderConfig[] = [
   {
     id: InAppProviderIdEnum.Novu,
-    displayName: 'Novu In-App',
+    displayName: 'Novu Inbox',
     channel: ChannelTypeEnum.IN_APP,
     credentials: novuInAppConfig,
     docReference: `https://docs.novu.co/notification-center/introduction${UTM_CAMPAIGN_QUERY_PARAM}`,
