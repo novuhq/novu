@@ -5,7 +5,7 @@ const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
 
-import { css } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
 import { TerminalComponent } from './Terminal';
@@ -218,19 +218,35 @@ function Playground({
           </div>
         </Pane>
         <Pane preferredSize={'20%'}>
-          <div style={{ margin: '0 10px 10px 10px', height: '100%' }} className="terminal-component">
+          <div
+            className={cx(
+              css({
+                margin: '0 10px 10px 10px',
+                height: '100%',
+                borderRadius: '0 0 8px 8px',
+                overflow: 'hidden',
+              }),
+              'terminal-component'
+            )}
+          >
             <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} onStepAddGuide={onStepAddGuide} />
           </div>
         </Pane>
       </EditorView>
       <Pane preferredSize={'60%'}>
         <div
-          style={{
-            height: '100%',
-            margin: '0 10px 10px 10px',
-            borderRadius: '8px 8px 8px 8px',
-          }}
-          className="workflow-flow"
+          className={cx(
+            css({
+              height: '100%',
+              margin: '0 10px 10px 10px',
+              borderRadius: '8px 8px 8px 8px',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }),
+            'workflow-flow'
+          )}
         >
           <PlaygroundWorkflowComponent
             workflow={workflow}

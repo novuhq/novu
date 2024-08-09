@@ -104,6 +104,10 @@ export function PlaygroundWorkflowComponent({
             height: 'inherit',
             padding: '12px 12px 12px 0',
             backgroundColor: '#1e1e27',
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            overflowX: 'hidden',
           })
         )}
       >
