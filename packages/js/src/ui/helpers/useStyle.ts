@@ -60,6 +60,7 @@ export const useStyle = () => {
 
     return cn(
       ...finalAppearanceKeys.map((key) => `nv-${key}`),
+      '🔔',
       finalClassName, // default styles
       appearanceClassnames, // overrides via appearance prop classes
       ...cssInJsClasses
