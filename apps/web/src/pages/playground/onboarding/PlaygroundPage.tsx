@@ -238,7 +238,8 @@ function Playground({
           className={cx(
             css({
               height: '100%',
-              margin: '0 10px 10px 10px',
+              margin: '75',
+              marginTop: '0',
               borderRadius: '8px 8px 8px 8px',
               display: 'flex',
               flexDirection: 'column',
