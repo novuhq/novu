@@ -69,7 +69,7 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
           bg: '#292933',
           lineHeight: '20px',
           fontSize: '14px',
-          p: '4',
+          p: '25',
           width: '100%',
           display: 'flex',
           alignItems: 'center',
@@ -77,8 +77,8 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
           position: 'sticky',
         })}
       >
-        <span className={css({ display: 'flex', alignItems: 'center' })}>
-          <IconTerminal className={css({ mr: '4' })} />
+        <span className={hstack()}>
+          <IconTerminal className={css({ mr: '25' })} />
           Terminal
         </span>
 
@@ -90,9 +90,9 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
         className={css({
           height: '100%',
           // Applying padding to the terminal content.
-          '& .xterm-screen': { padding: '10px' },
+          '& .xterm-screen': { padding: '75' },
           // !important is necessary to override xterm.js styles.
-          '& .xterm-rows': { fontFamily: 'Menlo, Monaco, "Courier New", monospace !important' },
+          '& .xterm-rows': { fontFamily: 'mono !important' },
         })}
         ref={terminalRef}
       />

@@ -221,9 +221,12 @@ function Playground({
           <div
             className={cx(
               css({
-                margin: '0 10px 10px 10px',
-                height: '100%',
-                borderRadius: '0 0 8px 8px',
+               margin: '75',
+               marginTop: '0',
+               height: '100%',
+               borderRadius: '100',
+               borderRadiusTopLeft: '0',
+               borderRadiusTopRight: '0',
                 overflow: 'hidden',
               }),
               'terminal-component'
@@ -240,7 +243,7 @@ function Playground({
               height: '100%',
               margin: '75',
               marginTop: '0',
-              borderRadius: '8px 8px 8px 8px',
+              borderRadius: '100',
               display: 'flex',
               flexDirection: 'column',
               overflowY: 'auto',
