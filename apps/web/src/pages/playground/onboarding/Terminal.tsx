@@ -94,7 +94,7 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
           '& .xterm-screen': { padding: '75' },
           // !important is necessary to override xterm.js styles.
           '& .xterm-rows': { fontFamily: 'mono !important' },
-          '& .xterm .xterm-viewport': { bg: 'surface.page !important' },
+          '& .xterm .xterm-viewport': { bg: 'transparent !important' },
         })}
         ref={terminalRef}
       />
