@@ -47,4 +47,10 @@ export class Events extends WithHttp implements IEvents {
   async cancel(transactionId: string) {
     return await this.http.delete(`/events/trigger/${transactionId}`);
   }
+
+  async triggerBulkCancel(transactionIds: string[]) {
+    return await this.http.post(`/events/trigger/bulk-cancel`, {
+      transactionIds,
+    });
+  }
 }

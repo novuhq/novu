@@ -7,7 +7,7 @@ import { ProcessBulkCancelCommand } from './process-bulk-cancel.command';
 export class ProcessBulkCancel {
   constructor(private cancelDelayed: CancelDelayed) {}
 
-  async execute(command: ProcessBulkCancelCommand) {
+  async execute(command: ProcessBulkCancelCommand): Promise<TriggerBulkCancelResponseDto[]> {
     const results: TriggerBulkCancelResponseDto[] = [];
 
     for (const transactionId of command.transactionIds) {

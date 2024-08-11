@@ -214,7 +214,7 @@ export class EventsController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk-cancel')
   @ApiOkResponse({
-    type: TriggerBulkCancelResponseDto,
+    type: [TriggerBulkCancelResponseDto],
   })
   @ApiOperation({
     summary: 'Bulk Cancel triggered event',
