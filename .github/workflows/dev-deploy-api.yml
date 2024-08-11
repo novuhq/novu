@@ -22,11 +22,10 @@ jobs:
   test_api:
     strategy:
       matrix:
-        name: ['novu/api-ee', 'novu/api', 'novu/api-ee-clerk']
+        name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
-      ee-clerk: ${{ contains (matrix.name,'-ee-clerk') }}
       job-name: ${{ matrix.name }}
     secrets: inherit
 
