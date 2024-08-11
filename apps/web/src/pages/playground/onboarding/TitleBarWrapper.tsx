@@ -100,7 +100,7 @@ export const BrowserScreenWrapper = ({
           <div className={classes.barAction}></div>
         </Group>
         <div
-          className={css({ color: 'typography.text.secondary', fontSize: '14px', textAlign: 'center', width: '100%' })}
+          className={css({ color: 'typography.text.secondary', fontSize: '88', textAlign: 'center', width: 'full' })}
         >
           {title}
         </div>

@@ -76,21 +76,17 @@ export function PlaygroundWorkflowComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflow, controls, payload, clickedStepId]);
 
-  if (isBridgeAppLoading || isDemoWorkflow) {
-    return <StepNodeSkeleton />;
-  }
-
   return (
     <BrowserScreenWrapper
       title={
         <div
           className={css({
-            backgroundColor: '#1E1E26',
-            borderRadius: '6px',
-            maxWidth: '392px',
-            margin: '0 auto',
-            lineHeight: '20px',
-            fontSize: '14px !important',
+            bg: 'legacy.B15',
+            borderRadius: '25',
+            lineHeight: '125',
+            fontSize: '88',
+            maxW: '392px',
+            mx: 'auto',
           })}
         >
           http://localhost:2022/studio
@@ -100,10 +96,10 @@ export function PlaygroundWorkflowComponent({
       <div
         className={cx(
           css({
-            borderRadius: '0 0 8px 8px',
             height: 'inherit',
-            padding: '12px 12px 12px 0',
-            backgroundColor: '#1e1e27',
+            p: '75',
+            pb: '0',
+            bg: 'surface.page',
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'auto',
@@ -113,14 +109,23 @@ export function PlaygroundWorkflowComponent({
       >
         <When truthy={!clickedStepId}>
           <WorkflowBackgroundWrapper>
-            <WorkflowNodes
-              steps={steps || []}
-              onStepClick={(stepClicked) => {
-                setWorkflowTab('stepEdit');
-                setClickedStepId(stepClicked.stepId);
-              }}
-              onTriggerClick={() => {}}
-            />
+            <When truthy={isBridgeAppLoading || isDemoWorkflow}>
+              <VStack gap="0">
+                <StepNode.LoadingDisplay />
+                <StepNode.LoadingDisplay />
+                <StepNode.LoadingDisplay />
+              </VStack>
+            </When>
+            <When truthy={!(isBridgeAppLoading || isDemoWorkflow)}>
+              <WorkflowNodes
+                steps={steps || []}
+                onStepClick={(stepClicked) => {
+                  setWorkflowTab('stepEdit');
+                  setClickedStepId(stepClicked.stepId);
+                }}
+                onTriggerClick={() => {}}
+              />
+            </When>
           </WorkflowBackgroundWrapper>
         </When>
 
@@ -128,11 +133,9 @@ export function PlaygroundWorkflowComponent({
           <div>
             <HStack
               className={css({
-                marginTop: '8px',
-                marginBottom: '8px',
+                my: '50',
                 height: 'inherit',
-                borderRadius: '0 8px 8px 0',
-                paddingLeft: '12px',
+                pl: '75',
               })}
             >
               <BackButton
@@ -161,17 +164,5 @@ export function PlaygroundWorkflowComponent({
         </When>
       </div>
     </BrowserScreenWrapper>
-  );
-}
-
-function StepNodeSkeleton() {
-  return (
-    <WorkflowBackgroundWrapper>
-      <VStack gap="0" p="75">
-        <StepNode.LoadingDisplay />
-        <StepNode.LoadingDisplay />
-        <StepNode.LoadingDisplay />
-      </VStack>
-    </WorkflowBackgroundWrapper>
   );
 }

@@ -8,6 +8,7 @@ import { css } from '@novu/novui/css';
 import { Button } from '@novu/novui';
 
 import { TerminalHandle } from '../../../hooks/useContainer';
+import { hstack } from '@novu/novui/patterns';
 
 interface TerminalComponentProps {
   onChange?: (data: string) => void;
@@ -62,17 +63,16 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
   }, []);
 
   return (
-    <div className={css({ height: '100%' })}>
+    // Necessary to use `style` prop for dynamic, client-side height.
+    <>
       <div
-        className={css({
+        className={hstack({
           color: 'typography.text.secondary',
-          bg: '#292933',
-          lineHeight: '20px',
-          fontSize: '14px',
+          bg: '#23232b', // TODO: replace with semantic value
+          lineHeight: '125',
+          fontSize: '88',
           p: '25',
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
+          width: 'full',
           justifyContent: 'space-between',
           position: 'sticky',
         })}
@@ -88,14 +88,16 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
       </div>
       <div
         className={css({
-          height: '100%',
+          // Reduce the height by the header height.
+          height: `calc(100% - 32px)`,
           // Applying padding to the terminal content.
           '& .xterm-screen': { padding: '75' },
           // !important is necessary to override xterm.js styles.
           '& .xterm-rows': { fontFamily: 'mono !important' },
+          '& .xterm .xterm-viewport': { bg: 'surface.page !important' },
         })}
         ref={terminalRef}
       />
-    </div>
+    </>
   );
 });
