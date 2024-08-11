@@ -78,7 +78,7 @@ export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalCompon
         })}
       >
         <span className={hstack()}>
-          <IconTerminal className={css({ mr: '25' })} />
+          <IconTerminal className={css({ mx: '25' })} />
           Terminal
         </span>
 
