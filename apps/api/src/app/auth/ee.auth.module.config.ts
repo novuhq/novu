@@ -1,4 +1,10 @@
-import { AuthService, SwitchEnvironment, SwitchOrganization, PlatformException } from '@novu/application-generic';
+import {
+  AuthService,
+  SwitchEnvironment,
+  SwitchOrganization,
+  PlatformException,
+  CacheService,
+} from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
@@ -30,6 +36,7 @@ export function getEEModuleConfig(): ModuleMetadata {
       ApiKeyStrategy,
       JwtSubscriberStrategy,
       AuthService,
+      CacheService,
       SwitchEnvironment,
       SwitchOrganization,
       RolesGuard,
