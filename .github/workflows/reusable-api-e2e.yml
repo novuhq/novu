@@ -19,13 +19,8 @@ on:
         required: false
         default: false
         type: boolean
-      ee-clerk:
-        description: 'use the clerk ee version of api'
-        required: false
-        default: false
-        type: boolean
       job-name:
-        description: 'job name [options: novu/api-ee, novu/api, novu/api-ee-clerk]'
+        description: 'job name [options: novu/api-ee, novu/api]'
         required: true
         type: string
 
@@ -102,21 +97,9 @@ jobs:
           cd apps/api && pnpm test:e2e
 
       - name: Run E2E EE tests
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && !inputs.ee-clerk }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-          CI_EE_TEST: true
-        run: |
-          cd apps/api && pnpm test:e2e:ee
-
-      - name: Run E2E EE Clerk tests
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.ee-clerk }}
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           CI_EE_TEST: true
           CLERK_ENABLED: true
           CLERK_ISSUER_URL: ${{ vars.CLERK_ISSUER_URL }}
@@ -128,7 +111,7 @@ jobs:
         run: |
           export CLERK_PEM_PUBLIC_KEY=$(echo $CLERK_PEM_PUBLIC_KEY_BASE64 | base64 -d)
           export CLERK_PRIVATE_KEY=$(echo $CLERK_PRIVATE_KEY_BASE64 | base64 -d)
-          cd apps/api && pnpm test:e2e:clerk
+          cd apps/api && pnpm test:e2e:ee
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
