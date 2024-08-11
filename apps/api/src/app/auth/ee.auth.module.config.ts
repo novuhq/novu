@@ -3,7 +3,7 @@ import {
   SwitchEnvironment,
   SwitchOrganization,
   PlatformException,
-  CacheService,
+  cacheService,
 } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
@@ -36,7 +36,7 @@ export function getEEModuleConfig(): ModuleMetadata {
       ApiKeyStrategy,
       JwtSubscriberStrategy,
       AuthService,
-      CacheService,
+      cacheService,
       SwitchEnvironment,
       SwitchOrganization,
       RolesGuard,
