@@ -105,8 +105,6 @@ jobs:
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && !inputs.ee-clerk }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           CI_EE_TEST: true
         run: |
           cd apps/api && pnpm test:e2e:ee
@@ -115,8 +113,6 @@ jobs:
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee && inputs.ee-clerk }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           CI_EE_TEST: true
           CLERK_ENABLED: true
           CLERK_ISSUER_URL: ${{ vars.CLERK_ISSUER_URL }}
