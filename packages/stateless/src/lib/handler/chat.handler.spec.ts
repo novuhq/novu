@@ -29,10 +29,13 @@ test('send chat should call the provider method correctly', async () => {
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    content: 'Name: test name',
-    webhookUrl: 'https://test.com',
-  });
+  expect(spy).toHaveBeenCalledWith(
+    {
+      content: 'Name: test name',
+      webhookUrl: 'https://test.com',
+    },
+    {}
+  );
   spy.mockRestore();
 });
 

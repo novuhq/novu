@@ -23,7 +23,9 @@ export abstract class BaseHandler implements IMailHandler {
       return {};
     }
 
-    return await this.provider.sendMessage(mailData);
+    const { bridgeProviderData, ...otherOptions } = mailData;
+
+    return await this.provider.sendMessage(otherOptions, bridgeProviderData);
   }
 
   public getProvider(): IEmailProvider {
