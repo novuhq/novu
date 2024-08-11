@@ -8,10 +8,10 @@ const PROVIDERS_BASE_FOLDER = path.join('..', '..', 'packages', 'providers', 'sr
 export async function providerGenerator(tree: Tree, options: IProviderGeneratorSchema) {
   options = enrichOptionsWithMultipleCases(options);
   const providerNameInKebabCase = options.name;
-  const providerInnerFolder = path.join(PROVIDERS_BASE_FOLDER, providerNameInKebabCase);
+  const providerInnerFolder = path.join(PROVIDERS_BASE_FOLDER, options.type.toLowerCase(), providerNameInKebabCase);
   buildAndAddProjectConfiguration(tree, options, providerInnerFolder);
   generateFilesBasedOnTemplate(tree, providerInnerFolder, options);
-  addExportToIndexTs(providerNameInKebabCase);
+  addExportToIndexTs(providerNameInKebabCase, options.type);
   removeDefaultProjectJsonFromTree(tree, providerInnerFolder);
   await formatFiles(tree);
 }
@@ -65,7 +65,7 @@ function buildAndAddProjectConfiguration(tree: Tree, options: IProviderGenerator
   addProjectConfiguration(tree, options.name, {
     root: projectRoot,
     projectType: 'library',
-    sourceRoot: `${projectRoot}/src`,
+    sourceRoot: projectRoot,
     targets: {},
   });
 }
@@ -74,8 +74,8 @@ function buildExportLine(providerName: string) {
   return `export * from './${providerName}/${providerName}.provider';`;
 }
 
-function addExportToIndexTs(providerName: string) {
-  const indexTsPath = PROVIDERS_BASE_FOLDER + '/index.ts';
+function addExportToIndexTs(providerName: string, type: string) {
+  const indexTsPath = path.join(PROVIDERS_BASE_FOLDER, type.toLowerCase(), 'index.ts');
   addLineToFile(indexTsPath, buildExportLine(providerName));
 }
 
