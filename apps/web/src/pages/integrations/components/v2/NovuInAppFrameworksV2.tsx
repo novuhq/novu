@@ -46,7 +46,7 @@ const frameworks = [
   {
     icon: JavaScriptLogo,
     name: 'Headless',
-    href: `https://docs.novu.co/notification-center/client/headless/get-started${UTM_CAMPAIGN_QUERY_PARAM}`,
+    href: `https://docs.novu.co/inbox/introduction${UTM_CAMPAIGN_QUERY_PARAM}`,
   },
 ];
 
