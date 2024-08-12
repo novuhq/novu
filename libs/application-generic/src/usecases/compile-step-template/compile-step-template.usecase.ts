@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { OrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository } from '@novu/dal';
 
 import { ApiException } from '../../utils/exceptions';
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
@@ -10,10 +10,10 @@ import { CompileStepTemplateCommand } from './compile-step-template.command';
 export class CompileStepTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
-    protected organizationRepository: OrganizationRepository,
+    protected communityOrganizationRepository: CommunityOrganizationRepository,
     protected moduleRef: ModuleRef
   ) {
-    super(organizationRepository, moduleRef);
+    super(communityOrganizationRepository, moduleRef);
   }
 
   public async execute(
