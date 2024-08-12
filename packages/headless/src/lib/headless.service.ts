@@ -337,9 +337,6 @@ export class HeadlessService {
         WebSocketEventEnum.RECEIVED,
         (data?: { message: IMessage }) => {
           if (data?.message) {
-            this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
-              exact: false,
-            });
             listener(data.message);
           }
         }
