@@ -3,6 +3,9 @@ import AuthLayout from '../../../components/layout/components/AuthLayout';
 import { ROUTES } from '../../../constants/routes';
 
 export default function SignUpPage() {
+  // eslint-disable-next-line no-console
+  console.log('<SignUpPage>');
+
   return (
     <AuthLayout>
       <SignUp

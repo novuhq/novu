@@ -34,6 +34,13 @@ export function useVercelIntegration() {
     if (!canStartSetup || !code || !configurationId) {
       return;
     }
+    // eslint-disable-next-line no-console
+    console.log('startVercelSetup');
+    // eslint-disable-next-line no-console
+    console.log('code:', code);
+    // eslint-disable-next-line no-console
+    console.log('configurationId:', configurationId);
+
     mutate({ vercelIntegrationCode: code, configurationId });
   }, [canStartSetup, code, mutate, configurationId]);
 

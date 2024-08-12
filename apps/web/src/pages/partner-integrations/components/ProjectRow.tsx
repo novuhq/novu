@@ -7,6 +7,7 @@ import { IOrganizationEntity } from '@novu/shared';
 
 import { Text, Select, IconOutlineArrowLeft, IconOutlineArrowRight } from '@novu/design-system';
 import { ProjectLinkFormValues } from './LinkProjectContainer';
+import { OrganizationMembershipResource } from '@clerk/types';
 
 type ProjectDataType = {
   id: string;
@@ -23,7 +24,7 @@ type SelectItemProps = {
 
 type ProjectRowProps = {
   projectData: ProjectDataType[];
-  organizationsData: IOrganizationEntity[];
+  organizationsData: OrganizationMembershipResource[];
   deleteProjectRow: (projectRowIndex: number) => void;
   showDeleteBtn: boolean;
   control: Control<ProjectLinkFormValues>;
@@ -58,7 +59,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   const eligibleOrganizationOptions = organizationsData.filter((organization) =>
     formValues.every(
-      (state) => formValues[index].organizationId === organization._id || state.organizationId !== organization._id
+      (state) => formValues[index].organizationId === organization.id || state.organizationId !== organization.id
     )
   );
 
@@ -126,8 +127,8 @@ export function ProjectRow(props: ProjectRowProps) {
                 <Select
                   error={fieldState.error?.message}
                   data={(eligibleOrganizationOptions || []).map((item) => ({
-                    label: item.name,
-                    value: item._id,
+                    label: item.organization.name,
+                    value: item.organization.id,
                   }))}
                   {...field}
                 />

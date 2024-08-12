@@ -16,6 +16,7 @@ import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '@novu/design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import SetupLoader from '../../auth/components/SetupLoader';
+import { useOrganizationList } from '@clerk/clerk-react';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {
@@ -25,7 +26,8 @@ export type ProjectLinkFormValues = {
 };
 
 export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
-  const { data: organizations } = useOrganizations();
+  // const { data: organizations } = useOrganizations();
+  const { userMemberships, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
   const { configurationId, next } = useVercelParams();
   const {
     data: vercelProjects,
@@ -38,6 +40,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
     enabled: typeof configurationId === 'string',
     getNextPageParam: (lastPage) => lastPage.pagination.next,
   });
+  const organizations = userMemberships.data;
 
   const { mutateAsync: completeIntegrationMutate, isLoading } = useMutation(completeVercelIntegration, {
     onSuccess: () => {
@@ -75,7 +78,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
       projectLinkState: [
         {
           projectIds: [],
-          organizationId: organizations && organizations.length > 0 ? organizations[0]._id : '',
+          organizationId: organizations && organizations.length > 0 ? organizations[0].id : '',
         },
       ],
     },
@@ -141,6 +144,12 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   if (isLoading || loading) {
     return <SetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
   }
+
+  // eslint-disable-next-line no-console
+  console.log('projects ', projects);
+
+  // eslint-disable-next-line no-console
+  console.log('userMemberships ', userMemberships.data);
 
   return (
     <Stack>
