@@ -21,7 +21,10 @@ export const CountProvider = (props: ParentProps) => {
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
 
-  const updateUnreadCounts = async () => {
+  const updateTabCounts = async () => {
+    if (tabs().length === 0) {
+      return;
+    }
     const filters = tabs().map((tab) => ({ tags: tab.value, read: false, archived: false }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
@@ -39,16 +42,14 @@ export const CountProvider = (props: ParentProps) => {
   };
 
   onMount(() => {
-    if (tabs().length > 0) {
-      updateUnreadCounts();
-    }
+    updateTabCounts();
   });
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setTotalUnreadCount(data.result);
-      updateUnreadCounts();
+      updateTabCounts();
     },
   });
 
@@ -100,7 +101,7 @@ export const CountProvider = (props: ParentProps) => {
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
-    eventHandler: updateUnreadCounts,
+    eventHandler: updateTabCounts,
   });
 
   const resetNewNotificationCounts = (key: string) => {
@@ -123,15 +124,6 @@ export const CountProvider = (props: ParentProps) => {
 
 const createKey = (tags?: NotificationFilter['tags']) => {
   return JSON.stringify({ tags: tags ?? [] });
-};
-
-export const useTotalUnreadCount = () => {
-  const context = useContext(CountContext);
-  if (!context) {
-    throw new Error('useTotalUnreadCount must be used within a CountProvider');
-  }
-
-  return { totalUnreadCount: context.totalUnreadCount };
 };
 
 type UseNewMessagesCountProps = {
