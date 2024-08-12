@@ -50,7 +50,7 @@ export const NotificationList = (props: NotificationListProps) => {
   };
 
   return (
-    <div class={style('notificationListContainer', 'nt-h-full nt-overflow-hidden')}>
+    <div class={style('notificationListContainer', 'nt-relative nt-h-full nt-overflow-hidden')}>
       <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
       <div
         ref={(el) => {

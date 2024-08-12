@@ -44,20 +44,6 @@ module.exports = {
         'foreground-alpha': generateColorShades('nv-color-foreground-alpha'),
         'neutral-alpha': generateColorShades('nv-color-neutral-alpha'),
       },
-      keyframes: {
-        'fade-down': {
-          '0%': { opacity: '0', transform: 'translateY(-10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        'fade-up': {
-          '0%': { opacity: '1', transform: 'translateY(0)' },
-          '100%': { opacity: '0', transform: 'translateY(-10px)' },
-        },
-      },
-      animation: {
-        'fade-down': 'fade-down 0.5s ease-in-out',
-        'fade-up': 'fade-up 0.5s ease-in-out',
-      },
     },
   },
   plugins: [require('tailwindcss-animate'), require('@tailwindcss/line-clamp')],
