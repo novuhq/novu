@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { NotificationTemplateEntity, NotificationTemplateRepository, IntegrationRepository } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  IntegrationRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   InAppProviderIdEnum,
@@ -13,6 +18,7 @@ import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscr
 import {
   AnalyticsService,
   ApiException,
+  buildEnvironmentById,
   buildNotificationTemplateKey,
   CachedEntity,
   CreateNotificationJobs,
@@ -34,6 +40,7 @@ export class SubscriberJobBound {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
+    private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
@@ -75,6 +82,11 @@ export class SubscriberJobBound {
 
     await this.validateSubscriberIdProperty(subscriber);
 
+    const environment = await this.getEnvironment(environmentId);
+    if (!environment) {
+      throw new ApiException(`Environment with id ${environmentId} was not found`);
+    }
+
     /**
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
      */
@@ -90,6 +102,7 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
+      environmentName: environment.name,
       statelessWorkflow: !!command.bridge?.url,
     });
 
@@ -243,5 +256,12 @@ export class SubscriberJobBound {
     }
 
     return providers;
+  }
+
+  @CachedEntity({
+    builder: (environmentId: string) => buildEnvironmentById({ environmentId }),
+  })
+  private async getEnvironment(environmentId: string) {
+    return await this.environmentRepository.findOne({ _id: environmentId });
   }
 }

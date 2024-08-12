@@ -4,6 +4,7 @@ import {
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
+  OrgScopePrefixEnum,
   ServiceConfigIdentifierEnum,
 } from './identifiers';
 import {
@@ -13,7 +14,7 @@ import {
   buildOrganizationScopedKey,
   buildServiceConfigKey,
 } from './builder.scoped';
-import { buildUnscopedKey } from './builder.base';
+import { buildScopedKey, buildUnscopedKey } from './builder.base';
 
 export const buildSubscriberKey = ({
   subscriberId,
@@ -79,6 +80,18 @@ export const buildNotificationTemplateIdentifierKey = ({
     environmentId: _environmentId,
     identifierPrefix: IdentifierPrefixEnum.TEMPLATE_IDENTIFIER,
     identifier: templateIdentifier,
+  });
+
+export const buildEnvironmentById = ({
+  environmentId,
+}: {
+  environmentId: string;
+}): string =>
+  buildScopedKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.ENVIRONMENT,
+    scopedIdPrefix: OrgScopePrefixEnum.ENVIRONMENT_ID,
+    scopedId: environmentId,
   });
 
 export const buildEnvironmentByApiKey = ({

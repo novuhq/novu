@@ -20,6 +20,7 @@ export enum CacheKeyPrefixEnum {
   WORKFLOW_VARIABLES = 'workflow_variables',
   USER = 'user',
   INTEGRATION = 'integration',
+  ENVIRONMENT = 'environment',
   ENVIRONMENT_BY_API_KEY = 'environment_by_api_key',
   GROUPED_BLUEPRINTS = 'grouped-blueprints',
   AUTH_SERVICE = 'auth_service',
