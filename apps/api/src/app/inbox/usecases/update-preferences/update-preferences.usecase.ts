@@ -10,6 +10,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ISubscriberPreferences } from '@novu/shared';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -33,6 +34,9 @@ export class UpdatePreferences {
 
       if (!workflow) {
         throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
+      }
+      if (workflow.critical) {
+        throw new ApiException(`Critical workflow with id: ${command.workflowId} can not be updated`);
       }
     }
 
