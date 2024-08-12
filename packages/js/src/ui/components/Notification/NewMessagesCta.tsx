@@ -1,6 +1,6 @@
-import { JSX, Component, createEffect, createSignal, Show } from 'solid-js';
+import { Component, createEffect, createSignal, JSX, Show } from 'solid-js';
 import { useLocalization } from '../../context';
-import { useStyle } from '../../helpers';
+import { cn, useStyle } from '../../helpers';
 import { Button } from '../primitives';
 
 export const NewMessagesCta: Component<{
@@ -9,10 +9,9 @@ export const NewMessagesCta: Component<{
 }> = (props) => {
   const style = useStyle();
   const { t } = useLocalization();
-  const [shouldRender, setRender] = createSignal(!!props.count);
-  const onAnimationEnd = () => props.count < 1 && setRender(false);
+  const [shouldRender, setShouldRender] = createSignal(!!props.count);
 
-  createEffect(() => props.count > 0 && setRender(true));
+  createEffect(() => props.count > 0 && setShouldRender(true));
 
   return (
     <Show when={shouldRender()}>
@@ -24,15 +23,16 @@ export const NewMessagesCta: Component<{
       >
         <Button
           appearanceKey="notificationListNewNotificationsNotice__button"
-          class={`nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600 ${
-            props.count < 1 ? 'nt-animate-fade-up nt-opacity-0' : 'nt-animate-fade-down'
-          }`}
+          class={cn(`nt-sticky nt-self-center nt-rounded-full nt-mt-1 hover:nt-bg-primary-600`, {
+            'nt-animate-fade-down': props.count > 0,
+            'nt-opacity-0': props.count < 1,
+          })}
           onClick={props.onClick}
           /**
            * onAnimationEnd is is a native HTML event that is triggered when a CSS animation has completed.
            * Ref: https://developer.mozilla.org/en-US/docs/Web/API/Element/animationend_event
            */
-          onAnimationEnd={onAnimationEnd}
+          onAnimationEnd={() => props.count < 1 && setShouldRender(false)}
         >
           {t('notifications.newNotifications', { notificationCount: props.count })}
         </Button>

@@ -35,23 +35,29 @@ type NotificationListProps = {
   filter?: NotificationFilter;
 };
 
-/* This is also going to be exported as a separate component. Keep it pure. */
 export const NotificationList = (props: NotificationListProps) => {
   const options = createMemo(() => ({ ...props.filter, limit: props.limit }));
   const style = useStyle();
   const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
   const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
+  let notificationListElement: HTMLDivElement;
 
   const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
     e.stopPropagation();
     resetNewMessagesCount();
     refetch({ filter: props.filter });
+    notificationListElement.scrollTo({ top: 0 });
   };
 
   return (
-    <div class={style('notificationListContainer', 'nt-h-full')}>
+    <div class={style('notificationListContainer', 'nt-h-full nt-overflow-hidden')}>
       <NewMessagesCta count={count()} onClick={handleOnNewMessagesClick} />
-      <div class={style('notificationList', 'nt-relative nt-flex nt-flex-col nt-w-full nt-h-full nt-overflow-auto')}>
+      <div
+        ref={(el) => {
+          notificationListElement = el;
+        }}
+        class={style('notificationList', 'nt-relative nt-h-full nt-flex nt-flex-col nt-overflow-y-auto')}
+      >
         <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
           <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
             <For each={data()}>

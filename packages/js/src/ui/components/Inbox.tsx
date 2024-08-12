@@ -36,9 +36,10 @@ type InboxContentProps = {
 const InboxContent = (props: InboxContentProps) => {
   const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
   const { tabs, filter } = useInboxContext();
+  const style = useStyle();
 
   return (
-    <>
+    <div class={style('inboxContent', 'nt-h-full nt-flex nt-flex-col')}>
       <Switch>
         <Match when={currentScreen() === Screen.Inbox}>
           <Header updateScreen={setCurrentScreen} />
@@ -64,7 +65,7 @@ const InboxContent = (props: InboxContentProps) => {
         </Match>
       </Switch>
       <Footer />
-    </>
+    </div>
   );
 };
 

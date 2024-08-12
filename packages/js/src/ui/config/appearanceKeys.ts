@@ -42,6 +42,7 @@ export const appearanceKeys = [
   'loading',
 
   //Inbox
+  'inboxContent',
   'inbox__popoverTrigger',
   'inbox__popoverContent',
 
