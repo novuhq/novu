@@ -26,7 +26,7 @@ import {
   WorkflowInMemoryProviderService,
   ExecutionLogRoute,
 } from '@novu/application-generic';
-import { JobRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
 
 import {
   SendMessage,
@@ -82,7 +82,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
   return modules;
 };
-const REPOSITORIES = [JobRepository];
+const REPOSITORIES = [JobRepository, CommunityOrganizationRepository];
 
 const USE_CASES = [
   AddDelayJob,
