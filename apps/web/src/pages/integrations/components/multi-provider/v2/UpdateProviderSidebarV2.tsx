@@ -387,7 +387,7 @@ export function UpdateProviderSidebar({
             framework={framework?.toString() ?? ''}
             onDone={() => {
               setSidebarState(SidebarStateEnum.NORMAL);
-              successMessage('Successfully configured Novu In-App');
+              successMessage('Successfully configured Inbox');
             }}
             onConfigureLater={() => {
               setSidebarState(SidebarStateEnum.NORMAL);
