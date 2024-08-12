@@ -261,6 +261,10 @@ export class Client {
   ): ActionStep<T_Outputs, T_Result> {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
+
+      console.log('step', step);
+      console.log({ stepId });
+
       const eventClone = cloneData(event);
       const controls = await this.createStepControls(step, eventClone);
       const isPreview = event.action === 'preview';
@@ -338,7 +342,19 @@ export class Client {
     const actionMessageFormatted = `${actionMessage} workflowId:`;
     // eslint-disable-next-line no-console
     console.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
-    const workflow = this.getWorkflow(event.workflowId);
+
+    let workflow: DiscoverWorkflowOutput;
+
+    try {
+      workflow = this.getWorkflow(event.workflowId);
+    } catch (error) {
+      workflow = this.getWorkflow('novu-hosted-definitions');
+      event.workflowId = 'novu-hosted-definitions';
+
+      if (!workflow) {
+        throw new WorkflowNotFoundError(event.workflowId);
+      }
+    }
 
     const startTime = process.hrtime();
 
@@ -374,6 +390,9 @@ export class Client {
         ...event,
         payload: executionData,
       };
+
+      console.log({ workflow: workflow.steps, event });
+
       await Promise.race([
         earlyExitPromise,
         workflow.execute({

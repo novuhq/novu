@@ -234,6 +234,7 @@ export class CreateWorkflow {
       _creatorId: command.userId,
       _environmentId: command.environmentId,
       name: command.name,
+      type: command.__source === 'v2' ? WorkflowTypeEnum.BRIDGE : command.type,
       active: command.active,
       draft: command.draft,
       critical: command.critical,
@@ -244,7 +245,6 @@ export class CreateWorkflow {
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
-      type: command.type,
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema
         ? { payloadSchema: command.payloadSchema }

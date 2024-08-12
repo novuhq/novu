@@ -22,6 +22,13 @@ export async function createTemplate(
   return api.post(`/v1/notification-templates`, data, params);
 }
 
+export async function createTemplateV2(
+  data: ICreateNotificationTemplateDto,
+  params?: { __source?: string }
+): Promise<INotificationTemplate> {
+  return api.post(`/v1/notification-templates/v2`, data, params);
+}
+
 export async function updateTemplate(templateId: string, data: Partial<ICreateNotificationTemplateDto>) {
   return api.put(`/v1/notification-templates/${templateId}`, data);
 }

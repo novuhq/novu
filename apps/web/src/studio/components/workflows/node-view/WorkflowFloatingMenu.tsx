@@ -18,13 +18,15 @@ import { FC, PropsWithChildren } from 'react';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { DOCS_URL } from '../../../../components/docs/docs.const';
 
-type IWorkflowFloatingMenuProps = CoreProps;
-
-export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className }) => {
+export const WorkflowFloatingMenu = ({ className, create, onCreate }: any) => {
   const { Component: DocsModal, setPath, toggle } = useDocsModal();
 
   const handleClick = (pathToSet: string) => () => {
-    window.open(`${DOCS_URL}/sdks/framework/typescript/steps/${pathToSet}`, '_blank');
+    if (create) {
+      onCreate(pathToSet);
+    } else {
+      window.open(`${DOCS_URL}/sdks/framework/typescript/steps/${pathToSet}`, '_blank');
+    }
   };
 
   return (

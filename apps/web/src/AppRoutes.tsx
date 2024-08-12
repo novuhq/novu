@@ -63,6 +63,7 @@ import { OnboardingPage } from './pages/playground/onboarding/Onboarding';
 import { PlaygroundPage } from './pages/playground/onboarding/PlaygroundPage';
 import { BillingRoutes } from './pages/BillingPages';
 import { StudioStepEditorPage } from './studio/pages/StudioStepEditorPage';
+import { TemplateDetailsPageV2 } from './pages/templates/editor_v2/TemplateDetailsPageV2';
 
 const AuthRoutes = () => {
   const CommunityAuthRoutes = () => (
@@ -98,6 +99,8 @@ export const AppRoutes = () => {
         />
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
+        <Route path={ROUTES.WORKFLOWS_CREATE_V2} element={<TemplateDetailsPageV2 create />} />
+
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
         <Route path={ROUTES.WORKFLOWS_V2_TEST} element={<WorkflowsTestPage />} />
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>

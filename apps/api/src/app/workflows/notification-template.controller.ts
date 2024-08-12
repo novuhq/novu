@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -15,6 +16,7 @@ import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared'
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
+  ExecuteBridgeRequest,
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
@@ -40,6 +42,8 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { DiscoverOutput, GetActionEnum } from '@novu/framework';
+import { EnvironmentRepository } from '@novu/dal';
 
 @ApiCommonResponses()
 @ApiExcludeController()
@@ -54,7 +58,9 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private getNotificationTemplatesUsecase: GetNotificationTemplates,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
+    private executeBridgeRequest: ExecuteBridgeRequest,
+    private environmentRepository: EnvironmentRepository
   ) {}
 
   @Get('')
@@ -158,6 +164,69 @@ export class NotificationTemplateController {
         workflowIdOrIdentifier,
       })
     );
+  }
+
+  @Post('v2')
+  @ExternalApiAccessible()
+  @UseGuards(RootEnvironmentGuard)
+  @Roles(MemberRoleEnum.ADMIN)
+  async createV2(
+    @UserSession() user: UserSessionData,
+    @Query() query: CreateWorkflowQuery,
+    @Body() body: any
+  ): Promise<WorkflowResponse> {
+    const environment = await this.environmentRepository.findOne({ _id: user.environmentId });
+
+    if (!environment) {
+      throw new BadRequestException('Environment not found');
+    }
+
+    let discover: DiscoverOutput | undefined;
+    try {
+      discover = (await this.executeBridgeRequest.execute({
+        bridgeUrl: environment.bridge.url,
+        apiKey: environment.apiKeys[0].key,
+        action: GetActionEnum.DISCOVER,
+        retriesLimit: 1,
+      })) as DiscoverOutput;
+    } catch (error: any) {
+      throw new BadRequestException('Bridge URL is not valid. ' + error.message);
+    }
+
+    console.log({ discover: discover.workflows[0] });
+
+    for (const step of body.steps) {
+      const stepType = discover.workflows[0].steps.find((s) => s.type === step.template.type);
+
+      if (!stepType) {
+        console.log(step.template.type, discover.workflows[0].steps);
+        throw new BadRequestException('Step type not found');
+      }
+
+      step.template.controls = stepType.controls;
+      step.template.output = stepType.outputs;
+      console.log({ step });
+    }
+
+    return this.createWorkflowUsecase.execute({
+      organizationId: user.organizationId,
+      userId: user._id,
+      environmentId: user.environmentId,
+      name: body.name,
+      tags: body.tags,
+      description: body.description,
+      steps: body.steps,
+      notificationGroupId: body.notificationGroupId,
+      notificationGroup: body.notificationGroup,
+      active: body.active ?? false,
+      draft: !body.active,
+      critical: body.critical ?? false,
+      preferenceSettings: body.preferenceSettings,
+      blueprintId: body.blueprintId,
+      data: body.data,
+      __source: 'v2',
+      type: WorkflowTypeEnum.REGULAR,
+    } as any);
   }
 
   @Post('')

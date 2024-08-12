@@ -270,20 +270,17 @@ function WorkflowListPage() {
     >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         <TableActionsContainer>
-          {!isV2Enabled ? (
-            <CreateWorkflowDropdown
-              readonly={readonly}
-              blueprints={popular?.blueprints}
-              isLoading={areBlueprintsLoading}
-              isCreating={isCreatingTemplateFromBlueprint}
-              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-              onTemplateClick={handleOnBlueprintClick}
-              onAllTemplatesClick={openModal}
-            />
-          ) : (
-            <div></div>
-          )}
+          <CreateWorkflowDropdown
+            isV2Enabled={isV2Enabled}
+            readonly={readonly}
+            blueprints={popular?.blueprints}
+            isLoading={areBlueprintsLoading}
+            isCreating={isCreatingTemplateFromBlueprint}
+            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+            onTemplateClick={handleOnBlueprintClick}
+            onAllTemplatesClick={openModal}
+          />
 
           <SearchInput
             value={searchValue}

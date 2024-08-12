@@ -8,13 +8,8 @@
       "isBackground": true,
       "label": "API",
       "path": "/apps/api",
-      "icon": {
-        "id": "server",
-        "color": "terminal.ansiGreen"
-      },
       "problemMatcher": {
         "base": "$tsc-watch",
-        "fileLocation": "autoDetect",
         "owner": "typescript",
         "pattern": {
           "regexp": "^([^\\s].*)\\((\\d+|\\d+,\\d+|\\d+,\\d+,\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",

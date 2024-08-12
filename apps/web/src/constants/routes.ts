@@ -18,6 +18,8 @@ export enum ROUTES {
   ANY = '/*',
   WORKFLOWS_DIGEST_PLAYGROUND = '/workflows/:templateId/digest-playground',
   WORKFLOWS_CREATE = '/workflows/create',
+  WORKFLOWS_CREATE_V2 = '/workflows/new',
+
   WORKFLOWS_EDIT_TEMPLATEID = '/workflows/edit/:templateId',
   WORKFLOWS_V2_STEP_EDIT = '/workflows/edit/:templateId/step/:stepId',
   WORKFLOWS_V2_TEST = '/workflows/edit/:templateId/test',

@@ -10,9 +10,13 @@ import { WorkflowNodes } from '../../../studio/components/workflows/node-view/Wo
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Button, Input } from '@novu/novui';
+import { useMutation } from '@tanstack/react-query';
+import { createTemplate, createTemplateV2 } from '../../../api/notification-templates';
 
-export const TemplateDetailsPageV2 = () => {
+export const TemplateDetailsPageV2 = ({ create = false }: { create?: boolean }) => {
+  const [workflowData, setWorkflowData] = useState<{ steps: any[]; _id: string }>({ steps: [], _id: '' });
   const { templateId = '' } = useParams<{ templateId: string }>();
   const track = useTelemetry();
 
@@ -29,6 +33,14 @@ export const TemplateDetailsPageV2 = () => {
     navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
 
+  const { isLoading: isCreating, mutateAsync: createNotificationTemplate } = useMutation((data) =>
+    createTemplateV2(data as any)
+  );
+
+  async function handleSave() {
+    await createNotificationTemplate(workflowData as any);
+  }
+
   useEffect(() => {
     track('Workflow open - [Studio]', {
       workflowId: workflow?.name,
@@ -40,9 +52,32 @@ export const TemplateDetailsPageV2 = () => {
   return (
     <WorkflowsPageTemplate
       icon={<IconCable size="32" />}
-      title={title}
+      title={
+        !create ? (
+          title
+        ) : (
+          <Input
+            placeholder="Enter title"
+            onChange={(e) => {
+              setWorkflowData((prev) => ({
+                ...prev,
+                name: e.target.value,
+                _id: e.target.value,
+              }));
+            }}
+          />
+        )
+      }
       actions={
         <>
+          <Button
+            onClick={() => {
+              handleSave();
+            }}
+          >
+            Save
+          </Button>
+
           <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
             Test workflow
           </OutlineButton>
@@ -50,33 +85,78 @@ export const TemplateDetailsPageV2 = () => {
       }
     >
       <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
-        <WorkflowNodes
-          steps={
-            workflow?.steps?.map((item) => {
-              return {
-                stepId: item.stepId,
-                type: item.template?.type,
-              };
-            }) || []
-          }
-          onStepClick={(step) => {
-            navigate(
-              parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
-                templateId: workflow?._id as string,
-                stepId: step.stepId,
-              })
-            );
-          }}
-          onTriggerClick={() => {
-            navigate(
-              parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
-                templateId: workflow?._id as string,
-              })
-            );
-          }}
-        />
+        {!create ? (
+          <WorkflowNodes
+            steps={
+              workflow?.steps?.map((item) => {
+                return {
+                  stepId: item.stepId,
+                  type: item.template?.type,
+                };
+              }) || []
+            }
+            onStepClick={(step) => {
+              console.log({ workflowData });
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
+                  templateId: workflow?._id as string,
+                  stepId: step.stepId,
+                })
+              );
+            }}
+            onTriggerClick={() => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
+                  templateId: workflow?._id as string,
+                })
+              );
+            }}
+          />
+        ) : (
+          <WorkflowNodes
+            steps={
+              workflowData?.steps?.map((item) => {
+                return {
+                  stepId: item.stepId,
+                  type: item.template?.type,
+                };
+              }) || []
+            }
+            onStepClick={(step) => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
+                  templateId: workflowData?._id as string,
+                  stepId: step.stepId,
+                })
+              );
+            }}
+            onTriggerClick={() => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
+                  templateId: workflow?._id as string,
+                })
+              );
+            }}
+          />
+        )}
       </WorkflowBackgroundWrapper>
+
       <WorkflowFloatingMenu
+        create={create as boolean}
+        onCreate={(channel: any) => {
+          setWorkflowData((prev) => ({
+            ...prev,
+            steps: [
+              ...prev.steps,
+              {
+                stepId: channel,
+                template: {
+                  type: channel,
+                },
+              },
+            ],
+          }));
+        }}
         className={css({
           zIndex: 'docked',
           position: 'fixed',

@@ -17,6 +17,7 @@ import { useDocsModal } from '../../../components/docs/useDocsModal';
 import { useEffect } from 'react';
 import { PATHS } from '../../../components/docs/docs.const';
 import { ROUTES } from '../../../constants/routes';
+import { useNavigate } from 'react-router-dom';
 
 const WIDTH = 172;
 
@@ -35,6 +36,7 @@ export const CreateWorkflowDropdown = ({
   onBlankWorkflowClick,
   onTemplateClick,
   onAllTemplatesClick,
+  isV2Enabled,
 }: {
   readonly?: boolean;
   blueprints?: IBlueprintTemplate[];
@@ -44,11 +46,12 @@ export const CreateWorkflowDropdown = ({
   onBlankWorkflowClick: React.MouseEventHandler<HTMLButtonElement>;
   onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
+  isV2Enabled?: boolean;
 }) => {
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const segment = useSegment();
   const { item: templateId, onMouseEnter, onMouseLeave } = useHoverOverItem<string>();
   const { toggle, setPath, Component } = useDocsModal();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isV2Enabled) {
@@ -61,7 +64,14 @@ export const CreateWorkflowDropdown = ({
   if (isV2Enabled) {
     return (
       <>
-        <Button onClick={toggle} Icon={IconOutlineAdd} variant="transparent">
+        <Button
+          onClick={() => {
+            console.log('SAP');
+            navigate(ROUTES.WORKFLOWS_CREATE_V2);
+          }}
+          Icon={IconOutlineAdd}
+          variant="transparent"
+        >
           Add workflow
         </Button>
         <Component />

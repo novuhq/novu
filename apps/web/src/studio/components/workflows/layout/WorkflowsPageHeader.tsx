@@ -3,7 +3,7 @@ import { Box, Flex, HStack } from '@novu/novui/jsx';
 import { FC, ReactNode } from 'react';
 
 export interface IWorkflowsPageHeaderProps extends CoreProps {
-  title: LocalizedString;
+  title: any;
   icon: React.ReactNode;
   description?: LocalizedMessage;
   actions?: ReactNode | ReactNode[];
