@@ -126,6 +126,15 @@ const createKey = (tags?: NotificationFilter['tags']) => {
   return JSON.stringify({ tags: tags ?? [] });
 };
 
+export const useTotalUnreadCount = () => {
+  const context = useContext(CountContext);
+  if (!context) {
+    throw new Error('useTotalUnreadCount must be used within a CountProvider');
+  }
+
+  return { totalUnreadCount: context.totalUnreadCount };
+};
+
 type UseNewMessagesCountProps = {
   filter: Pick<NotificationFilter, 'tags'>;
 };
