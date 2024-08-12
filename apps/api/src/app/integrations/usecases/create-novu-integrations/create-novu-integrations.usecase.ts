@@ -109,18 +109,17 @@ export class CreateNovuIntegrations {
       _environmentId: command.environmentId,
     });
 
-    const isV2Enabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: 'system',
-        organizationId: command.organizationId,
-        key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
-      })
-    );
-
-    const name = isV2Enabled ? 'Novu Inbox' : 'Novu In-App';
-
     if (inAppIntegrationCount === 0) {
+      const isV2Enabled = await this.getFeatureFlag.execute(
+        GetFeatureFlagCommand.create({
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
+        })
+      );
+
+      const name = isV2Enabled ? 'Novu Inbox' : 'Novu In-App';
       await this.createIntegration.execute(
         CreateIntegrationCommand.create({
           name,
