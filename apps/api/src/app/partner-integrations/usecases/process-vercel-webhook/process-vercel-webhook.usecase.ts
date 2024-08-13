@@ -1,17 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
-import { OrganizationRepository, EnvironmentRepository, MemberRepository, EnvironmentEntity } from '@novu/dal';
+import {
+  EnvironmentRepository,
+  EnvironmentEntity,
+  CommunityOrganizationRepository,
+  CommunityMemberRepository,
+} from '@novu/dal';
 import crypto from 'node:crypto';
 import { Sync } from '../../../bridge/usecases/sync';
 
 @Injectable()
 export class ProcessVercelWebhook {
   constructor(
-    private organizationRepository: OrganizationRepository,
+    private organizationRepository: CommunityOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
-    private memberRepository: MemberRepository
+    private memberRepository: CommunityMemberRepository
   ) {}
 
   async execute(command: ProcessVercelWebhookCommand) {

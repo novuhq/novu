@@ -36,11 +36,21 @@ export class CompleteVercelIntegration {
 
   async execute(command: CompleteVercelIntegrationCommand): Promise<{ success: boolean }> {
     try {
-      const organizationIds = Object.keys(command.data);
+      const organizationIdsMap = Object.keys(command.data);
+      const organizationIds: string[] = [];
+      const internalOrgMap = {};
+      for (const orgId of organizationIdsMap) {
+        const internalOrg = await this.organizationRepository.findById(orgId);
+        if (internalOrg) {
+          organizationIds.push(internalOrg._id);
+
+          internalOrgMap[internalOrg._id] = command.data[orgId];
+        }
+      }
 
       const envKeys = await this.getEnvKeys(organizationIds);
 
-      const mappedProjectData = this.mapProjectKeys(envKeys, command.data);
+      const mappedProjectData = this.mapProjectKeys(envKeys, internalOrgMap);
 
       const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration(command.environmentId, {
         configurationId: command.configurationId,
@@ -65,12 +75,6 @@ export class CompleteVercelIntegration {
         _organization: command.organizationId,
       });
 
-      await this.updateBridgeUrl(
-        command.environmentId,
-        command.data[envKeys[0]._organizationId][0],
-        configurationDetails.accessToken
-      );
-
       return {
         success: true,
       };
@@ -79,41 +83,10 @@ export class CompleteVercelIntegration {
     }
   }
 
-  private async updateBridgeUrl(environmentId: string, projectIds: string, accessToken: string) {
-    try {
-      const getDomainsResponse = await lastValueFrom(
-        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectIds}/domains`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-      );
-
-      const bridgeUrl = getDomainsResponse.data.domains[0].name;
-
-      const fullBridgeUrl = `https://${bridgeUrl}/api/novu`;
-      await this.environmentRepository.update(
-        { _id: environmentId },
-        {
-          $set: {
-            echo: {
-              url: fullBridgeUrl,
-            },
-            bridge: {
-              url: fullBridgeUrl,
-            },
-          },
-        }
-      );
-    } catch (error) {
-      Logger.error(error, 'Error updating bridge url');
-    }
-  }
-
   private async getEnvKeys(organizationIds: string[]): Promise<EnvironmentEntity[]> {
     return await this.environmentRepository.find(
       {
-        _organizationId: organizationIds,
+        _organizationId: { $in: organizationIds },
       },
       'apiKeys identifier name _organizationId _id'
     );
