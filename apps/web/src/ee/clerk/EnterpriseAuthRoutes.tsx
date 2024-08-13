@@ -14,22 +14,13 @@ export const EnterpriseAuthRoutes = () => {
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
 
-  // eslint-disable-next-line no-console
-  console.log('isSignedIn:', isSignedIn, 'isFromVercel:', isFromVercel);
-
   useEffect(() => {
     if (isSignedIn && isFromVercel) {
       startVercelSetup();
     }
   }, [isSignedIn, isFromVercel, startVercelSetup]);
 
-  // eslint-disable-next-line no-console
-  console.log('<EnterpriseAuthRoutes>');
-
   const EnterprisePublicAuthLayout = () => {
-    // eslint-disable-next-line no-console
-    console.log('<EnterprisePublicAuthLayout>');
-
     return (
       <SignedOut>
         <PublicPageLayout />
@@ -39,9 +30,6 @@ export const EnterpriseAuthRoutes = () => {
 
   // private but we want appearance of public layout
   const EnterprisePrivateAuthLayout = () => {
-    // eslint-disable-next-line no-console
-    console.log('<EnterprisePrivateAuthLayout>');
-
     return (
       <>
         <SignedIn>

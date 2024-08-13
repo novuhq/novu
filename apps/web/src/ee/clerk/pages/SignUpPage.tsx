@@ -1,10 +1,24 @@
 import { SignUp } from '@clerk/clerk-react';
 import AuthLayout from '../../../components/layout/components/AuthLayout';
 import { ROUTES } from '../../../constants/routes';
+import { useVercelParams } from '../../../hooks/useVercelParams';
+import { useEffect } from 'react';
 
 export default function SignUpPage() {
-  // eslint-disable-next-line no-console
-  console.log('<SignUpPage>');
+  const { params, isFromVercel } = useVercelParams();
+
+  useEffect(() => {
+    if (isFromVercel) {
+      localStorage.setItem(
+        'vercel_redirect_data',
+        JSON.stringify({
+          params: params.toString(),
+          isFromVercel,
+          date: new Date().toISOString(),
+        })
+      );
+    }
+  }, [isFromVercel, params]);
 
   return (
     <AuthLayout>

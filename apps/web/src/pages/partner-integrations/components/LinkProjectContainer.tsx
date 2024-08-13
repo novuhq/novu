@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -29,6 +29,16 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   // const { data: organizations } = useOrganizations();
   const { userMemberships, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
   const { configurationId, next } = useVercelParams();
+  console.log('userMemberships:', userMemberships);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (userMemberships && userMemberships.revalidate) {
+        userMemberships.revalidate();
+      }
+    }, 1500);
+  }, []);
+
   const {
     data: vercelProjects,
     fetchNextPage,

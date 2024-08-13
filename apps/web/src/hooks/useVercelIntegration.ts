@@ -20,7 +20,7 @@ export function useVercelIntegration() {
   const { mutate, isLoading } = useMutation(vercelIntegrationSetup, {
     onSuccess: () => {
       if (next && configurationId) {
-        navigate(`/partner-integrations/vercel/link-projects?configurationId=${configurationId}&next=${next}`);
+        navigate(`/partner-integrations/vercel/link-projects?configuration_id=${configurationId}&next=${next}`);
       }
     },
     onError: (err: any) => {
@@ -34,12 +34,6 @@ export function useVercelIntegration() {
     if (!canStartSetup || !code || !configurationId) {
       return;
     }
-    // eslint-disable-next-line no-console
-    console.log('startVercelSetup');
-    // eslint-disable-next-line no-console
-    console.log('code:', code);
-    // eslint-disable-next-line no-console
-    console.log('configurationId:', configurationId);
 
     mutate({ vercelIntegrationCode: code, configurationId });
   }, [canStartSetup, code, mutate, configurationId]);
