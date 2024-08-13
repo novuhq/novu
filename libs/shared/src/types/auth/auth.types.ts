@@ -1,4 +1,5 @@
 import { JwtPayload } from '@clerk/types';
+import { SignUpOriginEnum } from '../analytics';
 
 export interface IJwtClaims {
   _id: string;
@@ -47,3 +48,8 @@ export type SentryUser = {
 export type HandledUser = (IJwtClaims & SentryUser) | false;
 
 export const NONE_AUTH_SCHEME = 'None';
+
+export type AuthenticateContext = {
+  invitationToken?: string;
+  origin?: SignUpOriginEnum;
+};

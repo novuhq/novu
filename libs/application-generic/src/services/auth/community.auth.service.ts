@@ -21,10 +21,10 @@ import {
 } from '@novu/dal';
 import {
   AuthProviderEnum,
+  AuthenticateContext,
   UserSessionData,
   ISubscriberJwt,
   MemberRoleEnum,
-  SignUpOriginEnum,
 } from '@novu/shared';
 
 import { AnalyticsService } from '../analytics.service';
@@ -42,7 +42,7 @@ import {
   CachedEntity,
 } from '../cache';
 import { ApiAuthSchemeEnum, normalizeEmail } from '@novu/shared';
-import { IAuthContext, IAuthService } from './auth.service.interface';
+import { IAuthService } from './auth.service.interface';
 
 @Injectable()
 export class CommunityAuthService implements IAuthService {
@@ -71,7 +71,7 @@ export class CommunityAuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    { origin, invitationToken }: IAuthContext = {}
+    { origin, invitationToken }: AuthenticateContext = {}
   ) {
     const email = normalizeEmail(profile.email);
     let user = await this.userRepository.findByEmail(email);

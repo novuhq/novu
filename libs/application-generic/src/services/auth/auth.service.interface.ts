@@ -1,15 +1,10 @@
 import { SubscriberEntity, UserEntity, MemberEntity } from '@novu/dal';
 import {
   AuthProviderEnum,
-  SignUpOriginEnum,
+  AuthenticateContext,
   ISubscriberJwt,
   UserSessionData,
 } from '@novu/shared';
-
-export interface IAuthContext {
-  invitationToken?: string;
-  origin?: SignUpOriginEnum;
-}
 
 export interface IAuthService {
   authenticate(
@@ -24,7 +19,7 @@ export interface IAuthService {
       id: string;
     },
     distinctId: string,
-    additionalContext?: IAuthContext
+    additionalContext?: AuthenticateContext
   ): Promise<{ newUser: boolean; token: string }>;
   refreshToken(userId: string): Promise<string>;
   isAuthenticatedForOrganization(
