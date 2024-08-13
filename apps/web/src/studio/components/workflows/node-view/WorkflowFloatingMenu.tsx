@@ -29,7 +29,7 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
 
   return (
     <>
-      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '50' }), className)}>
+      <menu className={cx(vstack({ display: 'flex', gap: '150', p: '50' }), className)}>
         <WorkflowFloatingMenuSection title="Actions">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAutoAwesomeMotion}
@@ -107,13 +107,12 @@ function WorkflowFloatingMenuButton({ Icon, tooltipLabel, onClick }: IWorkflowFl
         onClick={onClick}
         Icon={Icon}
         className={css({
-          padding: '75 !important',
+          padding: '75',
           borderRadius: '100',
           _hover: {
-            // TODO: this doesn't work due to all the !important in novui... need to fix layer styles
-            bg: { base: 'legacy.B80 !important', _dark: 'legacy.B30 !important' },
+            bg: { base: 'legacy.B80', _dark: 'legacy.B30' },
             '& svg': {
-              color: 'typography.text.main !important',
+              color: 'typography.text.main',
             },
           },
         })}
