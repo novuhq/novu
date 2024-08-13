@@ -1,48 +1,17 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import {
-  DalService,
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-} from '@novu/dal';
+import { DalService, SubscriberRepository, NotificationRepository, MessageRepository } from '@novu/dal';
 import {
   AnalyticsService,
   DalServiceHealthIndicator,
   WebSocketsInMemoryProviderService,
   QueuesModule,
-  injectCommunityAuthProviders,
 } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
+import { JobTopicNameEnum } from '@novu/shared';
 
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
-
-const DAL_MODELS = [
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-  ...getDynamicAuthProviders(),
-];
+const DAL_MODELS = [SubscriberRepository, NotificationRepository, MessageRepository];
 
 const dalService = {
   provide: DalService,
