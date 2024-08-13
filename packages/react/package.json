@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-canary.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React SDK for building custom inbox notification experiences",
   "author": "",
@@ -16,7 +16,7 @@
     ".": {
       "import": {
         "types": "./dist/client/index.d.ts",
-        "default": "./dist/server/server.js"
+        "default": "./dist/server/server.mjs"
       },
       "require": {
         "types": "./dist/server/server.d.ts",
