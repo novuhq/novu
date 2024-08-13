@@ -7,7 +7,7 @@ import {
   ThrottlerOptions,
   ThrottlerStorage,
 } from '@nestjs/throttler';
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { GetFeatureFlag, GetFeatureFlagCommand, Instrument } from '@novu/application-generic';
@@ -114,7 +114,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const apiRateLimitCost =
       this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
-    const { organizationId, environmentId } = this.getReqUser(context);
+    const { organizationId, environmentId, _id } = this.getReqUser(context);
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
       await this.evaluateApiRateLimit.execute(
@@ -152,6 +152,30 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       apiRateLimitCost,
       apiServiceLevel,
     };
+
+    /**
+     * The purpose of the dry run is to allow us to observe how
+     * the rate limiting would behave without actually enforcing it.
+     */
+    const isDryRun = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        environmentId,
+        organizationId,
+        userId: _id,
+        key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
+      })
+    );
+
+    if (isDryRun) {
+      if (!success) {
+        Logger.warn(
+          `[Dry run] ${THROTTLED_EXCEPTION_MESSAGE} orgId: ${organizationId}, envId: ${environmentId}`,
+          'ApiRateLimitInterceptor'
+        );
+      }
+
+      return true;
+    }
 
     if (success) {
       return true;
