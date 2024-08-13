@@ -80,7 +80,7 @@ export abstract class BaseProvider {
 
     // Transform the unknown provider data to the desired casing
     const bridgeUnknownDataPassthrough: Passthrough = {
-      body: this.casingTransform(_passthrough.body || {}),
+      body: _passthrough.body || {},
       headers: _passthrough.headers || {},
       query: _passthrough.query || {},
     };
