@@ -10,6 +10,7 @@ export const PageContainer: FC<PropsWithChildren<IPageContainerProps>> = ({ chil
     <Container
       className={cx(
         css({
+          overflowX: 'hidden',
           borderRadius: '0',
           px: 'paddings.page.horizontal',
           py: 'paddings.page.vertical',

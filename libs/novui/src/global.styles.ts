@@ -21,6 +21,25 @@ export const GLOBAL_CSS = defineGlobalStyles({
       base: `${token('colors.legacy.B80')} transparent`,
       _dark: `${token('colors.legacy.B30')} transparent`,
     },
+    '::-webkit-scrollbar': {
+      width: '14px',
+      height: '14px',
+    },
+    '::-webkit-scrollbar-thumb': {
+      border: '3px solid transparent',
+      backgroundClip: 'padding-box',
+      borderRadius: '8px',
+      backgroundColor: {
+        base: `${token('colors.legacy.B80')}`,
+        _dark: `${token('colors.legacy.B30')}`,
+      },
+    },
+    '::-webkit-scrollbar-track': {
+      backgroundColor: 'transparent',
+    },
+    '::-webkit-scrollbar-corner': {
+      backgroundColor: 'transparent',
+    },
   },
   a: {
     textDecoration: 'none',
