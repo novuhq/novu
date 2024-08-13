@@ -142,7 +142,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
 };
 
 export const formContainerClassName = css({
-  h: '80vh',
-  overflowY: 'auto !important',
+  h: '72vh',
+  overflowY: 'auto',
   scrollbar: 'hidden',
 });
