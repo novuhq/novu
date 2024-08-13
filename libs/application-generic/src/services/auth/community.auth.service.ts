@@ -111,10 +111,7 @@ export class CommunityAuthService implements IAuthService {
         origin: origin,
       });
     } else {
-      if (
-        authProvider === AuthProviderEnum.GITHUB ||
-        authProvider === AuthProviderEnum.GOOGLE
-      ) {
+      if (authProvider === AuthProviderEnum.GITHUB) {
         user = await this.updateUserUsername(user, profile, authProvider);
       }
 

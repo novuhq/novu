@@ -40,17 +40,11 @@ import { ProductFeatureInterceptor } from './app/shared/interceptors/product-fea
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { isClerkEnabled } from '@novu/shared';
-import { LegacyEEAuthModule } from './app/auth/legacy-ee-auth/auth.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    // TODO: remove after Clerk replaces legacy EE auth
-    if (process.env.CLERK_ENABLED !== 'true') {
-      modules.push(LegacyEEAuthModule);
-    }
-
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
     }
@@ -99,6 +93,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TopicsModule,
   BlueprintModule,
   TenantModule,
+  StorageModule,
   WorkflowOverridesModule,
   RateLimitingModule,
   WidgetsModule,
@@ -110,7 +105,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 const enterpriseModules = enterpriseImports();
 
 if (!isClerkEnabled()) {
-  const communityModules = [StorageModule, InvitesModule];
+  const communityModules = [InvitesModule];
   baseModules.push(...communityModules);
 }
 
