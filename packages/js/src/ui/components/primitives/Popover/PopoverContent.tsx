@@ -1,6 +1,7 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { AppearanceKey, useFocusManager } from '../../../context';
+import { useFocusManager } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { cn, useStyle } from '../../../helpers';
 import { Root } from '../../elements';
 import { usePopover } from './PopoverRoot';

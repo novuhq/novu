@@ -1,18 +1,16 @@
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
-import { NovuOptions } from '../../novu';
+import type { NovuOptions } from '../../types';
 import {
-  Appearance,
   AppearanceProvider,
   CountProvider,
   FocusManagerProvider,
   InboxProvider,
-  Localization,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Tab } from '../types';
+import type { Tab, Appearance, Localization } from '../types';
 import { Bell, Root, Preferences } from './elements';
 import { Inbox } from './Inbox';
 import { NotificationList as Notifications } from './Notification';
@@ -38,7 +36,7 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  defaultCss: string;
+  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
@@ -54,10 +52,11 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const styleEl = document.createElement('style');
-    styleEl.id = id;
-    document.head.insertBefore(styleEl, document.head.firstChild);
-    styleEl.innerHTML = props.defaultCss;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = props.cssHref;
+    document.head.insertBefore(link, document.head.firstChild);
 
     onCleanup(() => {
       const element = document.getElementById(id);

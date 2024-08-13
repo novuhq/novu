@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
+import { OrganizationEntity, CommunityOrganizationRepository } from '@novu/dal';
 import { IMessageButton } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 
@@ -11,10 +11,10 @@ import { CompileInAppTemplateCommand } from './compile-in-app-template.command';
 export class CompileInAppTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
-    protected organizationRepository: OrganizationRepository,
+    protected communityOrganizationRepository: CommunityOrganizationRepository,
     protected moduleRef: ModuleRef
   ) {
-    super(organizationRepository, moduleRef);
+    super(communityOrganizationRepository, moduleRef);
   }
 
   public async execute(

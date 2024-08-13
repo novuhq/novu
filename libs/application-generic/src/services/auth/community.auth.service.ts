@@ -112,10 +112,7 @@ export class CommunityAuthService implements IAuthService {
         wasInvited: Boolean(invitationToken),
       });
     } else {
-      if (
-        authProvider === AuthProviderEnum.GITHUB ||
-        authProvider === AuthProviderEnum.GOOGLE
-      ) {
+      if (authProvider === AuthProviderEnum.GITHUB) {
         user = await this.updateUserUsername(user, profile, authProvider);
       }
 

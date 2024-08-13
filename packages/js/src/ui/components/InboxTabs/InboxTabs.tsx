@@ -1,14 +1,14 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { createMemo, For, Show } from 'solid-js';
+import { useInboxContext, useUnreadCounts } from '../../../ui/context';
 import { cn, useStyle } from '../../helpers';
 import { Check, DotsMenu } from '../../icons';
+import { NotificationStatus, Tab } from '../../types';
 import { NotificationList } from '../Notification';
-import { Button, Dropdown, dropdownItemVariants, Tabs } from '../primitives';
+import { Button, Dropdown, Tabs } from '../primitives';
 import { tabsRootVariants } from '../primitives/Tabs/TabsRoot';
-import { InboxTab as InboxTabComponent } from './InboxTab';
+import { InboxDropdownTab, InboxTab as InboxTabComponent, InboxTabUnreadNotificationsCount } from './InboxTab';
 import { useTabsDropdown } from './useTabsDropdown';
-import { useInboxContext } from '../../../ui/context';
-import type { Tab } from '../../types';
 
 const tabsDropdownTriggerVariants = () =>
   `nt-relative after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +
@@ -20,14 +20,18 @@ type InboxTabsProps = {
 
 export const InboxTabs = (props: InboxTabsProps) => {
   const style = useStyle();
-  const { activeTab, setActiveTab, filter } = useInboxContext();
+  const { activeTab, status, setActiveTab, filter } = useInboxContext();
   const { dropdownTabs, setTabsList, visibleTabs } = useTabsDropdown({ tabs: props.tabs });
+  const dropdownTabsUnreadCounts = useUnreadCounts({ filters: dropdownTabs().map((tab) => ({ tags: tab.value })) });
 
   const options = createMemo(() =>
     dropdownTabs().map((tab) => ({
-      label: tab.label,
+      ...tab,
       rightIcon: tab.label === activeTab() ? <Check class={style('moreTabs__dropdownItemRightIcon')} /> : undefined,
     }))
+  );
+  const dropdownTabsUnreadSum = createMemo(() =>
+    dropdownTabsUnreadCounts().reduce((accumulator, currentValue) => accumulator + currentValue, 0)
   );
 
   const isTabsDropdownActive = createMemo(() =>
@@ -47,14 +51,14 @@ export const InboxTabs = (props: InboxTabsProps) => {
         fallback={
           <Tabs.List ref={setTabsList} appearanceKey="notificationsTabs__tabsList">
             {props.tabs.map((tab) => (
-              <InboxTabComponent label={tab.label} class="nt-invisible" />
+              <InboxTabComponent {...tab} class="nt-invisible" />
             ))}
           </Tabs.List>
         }
       >
         <Tabs.List appearanceKey="notificationsTabs__tabsList">
           {visibleTabs().map((tab) => (
-            <InboxTabComponent label={tab.label} />
+            <InboxTabComponent {...tab} />
           ))}
           <Show when={dropdownTabs().length > 0}>
             <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement={'bottom-start'}>
@@ -74,23 +78,15 @@ export const InboxTabs = (props: InboxTabsProps) => {
                     )}
                   >
                     <DotsMenu appearanceKey="moreTabs__dots" />
+                    <Show when={status() !== NotificationStatus.ARCHIVED && dropdownTabsUnreadSum()}>
+                      <InboxTabUnreadNotificationsCount count={dropdownTabsUnreadSum()} />
+                    </Show>
                   </Button>
                 )}
               />
               <Dropdown.Content appearanceKey="moreTabs__dropdownContent">
                 <For each={options()}>
-                  {(option) => (
-                    <Dropdown.Item
-                      class={style(
-                        'moreTabs__dropdownItem',
-                        cn(dropdownItemVariants(), 'nt-flex nt-justify-between nt-gap-2')
-                      )}
-                      onClick={() => setActiveTab(option.label)}
-                    >
-                      <span class={style('moreTabs__dropdownItemLabel', 'nt-mr-auto')}>{option.label}</span>
-                      {option.rightIcon}
-                    </Dropdown.Item>
-                  )}
+                  {(option) => <InboxDropdownTab onClick={() => setActiveTab(option.label)} {...option} />}
                 </For>
               </Dropdown.Content>
             </Dropdown.Root>

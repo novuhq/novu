@@ -1,7 +1,7 @@
 import { cva, VariantProps } from 'class-variance-authority';
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { AppearanceKey } from '../../context';
+import type { AppearanceKey } from '../../types';
 import { cn, useStyle } from '../../helpers';
 
 export const buttonVariants = cva(
@@ -17,6 +17,7 @@ export const buttonVariants = cva(
       },
       size: {
         none: '',
+        icon: 'nt-p-1',
         default: 'nt-h-8 nt-px-3',
         sm: 'nt-h-7 nt-rounded-md nt-px-3',
         lg: 'nt-h-10 nt-px-8',

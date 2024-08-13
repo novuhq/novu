@@ -17,6 +17,8 @@ export const PageContainer: FC<PropsWithChildren<IPageContainerProps>> = ({ chil
           m: '0',
           h: '100%',
           bg: 'surface.page',
+          display: 'flex',
+          flexDirection: 'column',
         }),
         className
       )}

@@ -1,5 +1,6 @@
 import { createContext, createMemo, JSX, useContext } from 'solid-js';
-import { Novu, NovuOptions } from '../../novu';
+import { Novu } from '../../novu';
+import type { NovuOptions } from '../../types';
 
 type NovuProviderProps = {
   options: NovuOptions;

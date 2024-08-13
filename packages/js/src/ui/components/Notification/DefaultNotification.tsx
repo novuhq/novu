@@ -75,7 +75,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           <p
             class={style(
               'notificationDate',
-              'nt-text-foreground-alpha-400 nt-shrink-0 nt-float-right nt-text-right group-hover:nt-opacity-0'
+              `nt-transition nt-duration-100 nt-ease-out nt-text-foreground-alpha-400 nt-shrink-0 
+              nt-float-right nt-text-right group-hover:nt-opacity-0`
             )}
           >
             {formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale: locale() })}
@@ -83,10 +84,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           <div
             class={style(
               'notificationDefaultActions',
-              `nt-gap-3 nt-shrink-0 nt-float-right nt-hidden group-hover:nt-flex
-               nt-justify-center nt-items-center nt-absolute nt-top-0 nt-right-0
-               nt-bg-background p-0.5 nt-rounded
-               nt-z-50 nt-w-14`
+              `nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 
+              nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center 
+              nt-absolute nt-top-0 nt-right-0  nt-bg-neutral-100 nt-p-0.5 nt-rounded nt-z-50`
             )}
           >
             <Show when={status() !== NotificationStatus.ARCHIVED}>
@@ -101,9 +101,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           size="icon"
                           variant="icon"
                           {...childProps}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             props.notification.read();
                           }}
+                          class="hover:nt-bg-neutral-200"
                         >
                           <ReadAll />
                         </Button>
@@ -121,9 +123,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         size="icon"
                         variant="icon"
                         {...childProps}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           props.notification.unread();
                         }}
+                        class="hover:nt-bg-neutral-200"
                       >
                         <Unread />
                       </Button>
@@ -144,9 +148,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         size="icon"
                         variant="icon"
                         {...childProps}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           props.notification.archive();
                         }}
+                        class="hover:nt-bg-neutral-200"
                       >
                         <Archive />
                       </Button>
@@ -164,9 +170,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       size="icon"
                       variant="icon"
                       {...childProps}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         props.notification.unarchive();
                       }}
+                      class="hover:nt-bg-neutral-200"
                     >
                       <Unarchive />
                     </Button>
@@ -178,19 +186,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           </div>
         </div>
         <Show when={props.notification.subject}>
-          <p
-            title={props.notification.subject}
-            class={style(
-              'notificationSubject',
-              'nt-font-semibold nt-overflow-ellipsis nt-whitespace-nowrap nt-overflow-hidden'
-            )}
-          >
-            {props.notification.subject}
-          </p>
+          <p class={style('notificationSubject', 'nt-font-semibold')}>{props.notification.subject}</p>
         </Show>
-        <p class={style('notificationBody')} title={props.notification.body}>
-          {props.notification.body}
-        </p>
+        <p class={style('notificationBody')}>{props.notification.body}</p>
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (

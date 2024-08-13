@@ -1,5 +1,7 @@
 import { createMemo, createSignal, onMount } from 'solid-js';
-import { AppearanceKey, appearanceKeys, Elements, useAppearance } from '../context';
+import { appearanceKeys } from '../config';
+import { useAppearance } from '../context';
+import type { AppearanceKey, Elements } from '../types';
 import { cn } from './utils';
 
 export const useStyle = () => {
@@ -58,6 +60,7 @@ export const useStyle = () => {
 
     return cn(
       ...finalAppearanceKeys.map((key) => `nv-${key}`),
+      '🔔',
       finalClassName, // default styles
       appearanceClassnames, // overrides via appearance prop classes
       ...cssInJsClasses

@@ -26,6 +26,7 @@ export interface IEmailOptions {
   customData?: Record<string, any>;
   headers?: Record<string, string>;
   senderName?: string;
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface ISmsOptions {
@@ -35,6 +36,7 @@ export interface ISmsOptions {
   attachments?: IAttachmentOptions[];
   id?: string;
   customData?: Record<string, any>;
+  bridgeProviderData?: Record<string, unknown>;
 }
 export interface IPushOptions {
   target: string[];
@@ -78,6 +80,7 @@ export interface IPushOptions {
     events: object[] | undefined;
     total_count: number | undefined;
   };
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface IChatOptions {
@@ -87,6 +90,7 @@ export interface IChatOptions {
   content: string;
   blocks?: IBlock[];
   customData?: Record<string, any>;
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface IBlock {
@@ -152,7 +156,10 @@ export interface ISMSEventBody extends IEventBody {
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
-  sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
+  sendMessage(
+    options: IEmailOptions,
+    bridgeProviderData: Record<string, unknown>
+  ): Promise<ISendMessageSuccessResponse>;
 
   getMessageId?: (body: any | any[]) => string[];
 
@@ -165,7 +172,10 @@ export interface IEmailProvider extends IProvider {
 }
 
 export interface ISmsProvider extends IProvider {
-  sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse>;
+  sendMessage(
+    options: ISmsOptions,
+    bridgeProviderData: Record<string, unknown>
+  ): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
 
@@ -178,12 +188,18 @@ export interface ISmsProvider extends IProvider {
 }
 
 export interface IChatProvider extends IProvider {
-  sendMessage(options: IChatOptions): Promise<ISendMessageSuccessResponse>;
+  sendMessage(
+    options: IChatOptions,
+    bridgeProviderData: Record<string, unknown>
+  ): Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
 }
 
 export interface IPushProvider extends IProvider {
-  sendMessage(options: IPushOptions): Promise<ISendMessageSuccessResponse>;
+  sendMessage(
+    options: IPushOptions,
+    bridgeProviderData: Record<string, unknown>
+  ): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;
 }

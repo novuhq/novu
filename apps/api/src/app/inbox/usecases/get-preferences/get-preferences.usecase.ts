@@ -66,7 +66,13 @@ export class GetPreferences {
         return {
           ...workflowPreference.preference,
           level: PreferenceLevelEnum.TEMPLATE,
-          workflow: workflowPreference.template,
+          workflow: {
+            id: workflow._id,
+            name: workflow.name,
+            critical: workflow.critical,
+            tags: workflow.tags,
+            triggers: workflow.triggers,
+          },
         };
       })
     );

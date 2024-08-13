@@ -5,7 +5,7 @@ const { Pane } = Allotment;
 const RootView = Allotment;
 const EditorView = Allotment;
 
-import { css } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
 import { TerminalComponent } from './Terminal';
@@ -21,6 +21,8 @@ import { useAPIKeys } from '../../../hooks/useApiKey';
 import { TourGuideComponent } from './PlaygroundTourGuide';
 import { Header } from './PlaygroundHeader';
 import { useContainer } from '../../../hooks/useContainer';
+import { hstack } from '@novu/novui/patterns';
+import { token } from '@novu/novui/tokens';
 
 export function PlaygroundPage() {
   const { apiKey } = useAPIKeys();
@@ -198,7 +200,8 @@ function Playground({
         handleEditorSizeChange();
       }}
       className={css({
-        height: 'calc(100vh - 54px) !important',
+        // Reduce the height by the header distance.
+        height: `calc(100vh - 54px) !important`,
         '--separator-border': 'transparent',
       })}
     >
@@ -208,29 +211,58 @@ function Playground({
           setEditorSizes(value);
           handleEditorSizeChange();
         }}
-        className={css({
-          borderRadius: '8px 8px 8px 8px',
-        })}
       >
         <Pane preferredSize={'80%'}>
-          <div style={{ height: editorSizes?.[0], margin: '0 10px 0 10px' }} className="code-editor">
+          <div
+            style={{ height: `calc(${editorSizes?.[0]}px - ${token('spacing.25')})` }}
+            className={cx(
+              css({ ml: '50', mr: '25', mb: '25', borderRadius: '100', overflow: 'hidden' }),
+              'code-editor'
+            )}
+          >
             <CodeEditor files={filteredCode} setFiles={setCode} />
           </div>
         </Pane>
         <Pane preferredSize={'20%'}>
-          <div style={{ margin: '0 10px 10px 10px', height: '100%' }} className="terminal-component">
-            <TerminalComponent height={String(editorSizes?.[1])} ref={terminalRef} onStepAddGuide={onStepAddGuide} />
+          <div
+            // Reduce the height by the margin spacing. Currently required when using `allotment`.
+            style={{ height: `calc(${editorSizes?.[1]}px - ${token('spacing.25')})` }}
+            className={cx(
+              css({
+                bg: 'surface.panelSection',
+                mt: '25',
+                ml: '50',
+                mr: '25',
+                mb: '50',
+                borderRadius: '100',
+                overflow: 'hidden',
+              }),
+              'terminal-component'
+            )}
+          >
+            {/* Reduce the height by the margin spacing. Currently required when using `allotment`. */}
+            <TerminalComponent
+              height={`calc(${editorSizes?.[1]}px - ${token('spacing.50')})`}
+              ref={terminalRef}
+              onStepAddGuide={onStepAddGuide}
+            />
           </div>
         </Pane>
       </EditorView>
       <Pane preferredSize={'60%'}>
         <div
-          style={{
-            height: '100%',
-            margin: '0 10px 10px 10px',
-            borderRadius: '8px 8px 8px 8px',
-          }}
-          className="workflow-flow"
+          className={cx(
+            hstack({
+              height: 'full',
+              ml: '25',
+              mb: '50',
+              mr: '50',
+              borderRadius: '100',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }),
+            'workflow-flow'
+          )}
         >
           <PlaygroundWorkflowComponent
             workflow={workflow}

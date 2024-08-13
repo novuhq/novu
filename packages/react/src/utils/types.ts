@@ -1,9 +1,10 @@
 import type {
   Notification,
-  BaseNovuUIOptions,
   NotificationClickHandler,
   NotificationActionClickHandler,
   Tab,
+  Appearance,
+  Localization,
 } from '@novu/js/ui';
 
 export type NotificationsRenderProps = (args: { notification: Notification }) => React.ReactNode;
@@ -17,7 +18,16 @@ export type DefaultInboxProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-export type BaseProps = BaseNovuUIOptions;
+export type BaseProps = {
+  applicationIdentifier: string;
+  subscriberId: string;
+  subscriberHash?: string;
+  backendUrl?: string;
+  socketUrl?: string;
+  appearance?: Appearance;
+  localization?: Localization;
+  tabs?: Array<Tab>;
+};
 
 export type DefaultProps = BaseProps &
   DefaultInboxProps & {

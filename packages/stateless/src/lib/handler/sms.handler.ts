@@ -40,10 +40,13 @@ export class SmsHandler {
       );
     }
 
-    return await this.provider.sendMessage({
-      to: data.$phone,
-      content,
-      attachments,
-    });
+    return await this.provider.sendMessage(
+      {
+        to: data.$phone,
+        content,
+        attachments,
+      },
+      {}
+    );
   }
 }

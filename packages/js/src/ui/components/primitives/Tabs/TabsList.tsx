@@ -1,6 +1,6 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { JSX, ParentProps, Ref, splitProps } from 'solid-js';
-import { AppearanceKey } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
 
 export const tabsListVariants = () => 'nt-flex nt-gap-6 nt-px-6 nt-py-1 nt-overflow-hidden';

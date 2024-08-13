@@ -1,4 +1,5 @@
 import { Accessor, createEffect, onCleanup, onMount } from 'solid-js';
+import type { NotificationFilter } from '../../../types';
 import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notifications';
 import { isSameFilter } from '../../../utils/notification-utils';
 import { useNovu } from '../../context';
@@ -43,5 +44,10 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
     filter = newFilter;
   });
 
-  return { data, initialLoading, setEl, end };
+  const refetch = ({ filter }: { filter?: NotificationFilter }) => {
+    novu.notifications.clearCache({ filter });
+    reset();
+  };
+
+  return { data, initialLoading, setEl, end, refetch };
 };

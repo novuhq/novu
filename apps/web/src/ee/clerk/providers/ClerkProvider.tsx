@@ -94,6 +94,9 @@ const CLERK_MODAL_ELEMENT = {
     width: 'var(--nv-sizes-125)',
     opacity: '1',
   },
+  impersonationFab: {
+    backgroundColor: 'var(--nv-colors-surface-page)',
+  },
 };
 
 const CLERK_OVERRIDE_VARIABLES: Variables = {

@@ -45,7 +45,13 @@ const mockedPreferencesResponse: any = [
   { level: PreferenceLevelEnum.GLOBAL, ...mockedGlobalPreferences.preference },
   {
     level: PreferenceLevelEnum.TEMPLATE,
-    workflow: mockedWorkflowPreference.template,
+    workflow: {
+      critical: undefined,
+      id: undefined,
+      name: undefined,
+      tags: undefined,
+      triggers: undefined,
+    },
     ...mockedWorkflowPreference.preference,
   },
 ];

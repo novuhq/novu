@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       <Title title="Default Inbox" />
-      <Inbox options={novuConfig} />
+      <Inbox {...novuConfig} />
     </>
   );
 }
