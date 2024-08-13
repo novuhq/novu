@@ -1,3 +1,4 @@
+import { css, cx } from '@novu/novui/css';
 import { FC, PropsWithChildren } from 'react';
 import { PageContainer } from '../../../layout/PageContainer';
 import { PageMeta } from '../../../layout/PageMeta';
@@ -28,16 +29,12 @@ export const WorkflowsPageTemplate: FC<PropsWithChildren<IWorkflowsPageTemplateP
   className,
 }) => {
   return (
-    <PageContainer className={className}>
-      <PageMeta title={title} />
-      <WorkflowsPageHeader
-        className={className}
-        title={title}
-        icon={icon}
-        actions={actions}
-        description={description}
-      />
-      {children}
-    </PageContainer>
+    <>
+      <WorkflowsPageHeader title={title} icon={icon} actions={actions} description={description} />
+      <PageContainer className={className}>
+        <PageMeta title={title} />
+        {children}
+      </PageContainer>
+    </>
   );
 };

@@ -130,7 +130,7 @@ export function CreateProviderInstanceSidebar({
         name: data.name,
         environmentId,
       });
-      successMessage('Instance configuration is created');
+      successMessage('Integration was created');
       onIntegrationCreated(integrationId ?? '');
 
       queryClient.refetchQueries({

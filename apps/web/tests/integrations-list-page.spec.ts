@@ -110,9 +110,9 @@ test('should show the table loading skeleton and then table', async ({ page }) =
   });
 
   await checkTableRow(page, {
-    name: 'Novu In-App',
+    name: 'Novu Inbox',
     isFree: false,
-    provider: 'Novu In-App',
+    provider: 'Novu Inbox',
     channel: 'In-App',
     environment: 'Development',
     status: 'Active',
@@ -888,7 +888,7 @@ test('should show the Novu in-app integration', async ({ page }) => {
   await page.goto('/integrations');
   await expect(page).toHaveURL(/\/integrations/);
 
-  await clickOnListRow(page, new RegExp(`Novu In-App.*Development`));
+  await clickOnListRow(page, new RegExp(`Novu Inbox.*Development`));
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar');
   await expect(updateProviderSidebar).toBeVisible();
@@ -920,7 +920,7 @@ test('should show the Novu in-app integration', async ({ page }) => {
 
   const selectedProviderName = page.getByTestId('provider-instance-name').first();
   await expect(selectedProviderName).toBeVisible();
-  await expect(selectedProviderName).toHaveValue('Novu In-App');
+  await expect(selectedProviderName).toHaveValue('Novu Inbox');
 
   const identifier = page.getByTestId('provider-instance-identifier');
   await expect(identifier).toHaveValue(/novu-in-app/);
@@ -946,7 +946,7 @@ test('should show the Novu in-app integration - React guide', async ({ page }) =
   await page.goto('/integrations');
   await expect(page).toHaveURL(/\/integrations/);
 
-  await clickOnListRow(page, new RegExp(`Novu In-App.*Development`));
+  await clickOnListRow(page, new RegExp(`Novu Inbox.*Development`));
 
   let updateProviderSidebar = page.getByTestId('update-provider-sidebar');
   await expect(updateProviderSidebar).toBeVisible();

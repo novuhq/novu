@@ -1,45 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AnalyticsService, injectCommunityAuthProviders } from '@novu/application-generic';
-import {
-  DalService,
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-  IntegrationRepository,
-  JobRepository,
-} from '@novu/dal';
-import { isClerkEnabled } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+import { DalService, ExecutionDetailsRepository, MessageRepository, IntegrationRepository } from '@novu/dal';
 
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
-
-const DAL_MODELS = [
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-  IntegrationRepository,
-  JobRepository,
-  ...getDynamicAuthProviders(),
-];
+const DAL_MODELS = [ExecutionDetailsRepository, MessageRepository, IntegrationRepository];
 
 const dalService = new DalService();
 

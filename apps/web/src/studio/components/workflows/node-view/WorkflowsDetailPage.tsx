@@ -37,6 +37,7 @@ export const WorkflowsDetailPage = () => {
 
   return (
     <WorkflowsPageTemplate
+      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'hidden' })}
       icon={<IconCable size="32" />}
       title={title}
       actions={
