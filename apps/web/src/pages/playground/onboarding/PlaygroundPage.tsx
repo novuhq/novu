@@ -229,7 +229,7 @@ function Playground({
             style={{ height: `calc(${editorSizes?.[1]}px - ${token('spacing.25')})` }}
             className={cx(
               css({
-                bg: 'surface.page',
+                bg: 'surface.panelSection',
                 mt: '25',
                 ml: '50',
                 mr: '25',
