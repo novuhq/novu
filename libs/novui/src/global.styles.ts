@@ -1,4 +1,5 @@
 import { defineGlobalStyles } from '@pandacss/dev';
+import { LEGACY_COLOR_TOKENS } from './tokens/colors.tokens';
 
 export const GLOBAL_CSS = defineGlobalStyles({
   body: {
@@ -14,6 +15,11 @@ export const GLOBAL_CSS = defineGlobalStyles({
 
     backgroundColor: 'surface.page',
     overflow: 'hidden',
+    scrollbarWidth: 'thin',
+    scrollbarColor: {
+      base: `${LEGACY_COLOR_TOKENS.legacy.B80.value} transparent`,
+      _dark: `${LEGACY_COLOR_TOKENS.legacy.B30.value} transparent`,
+    },
   },
   a: {
     textDecoration: 'none',
