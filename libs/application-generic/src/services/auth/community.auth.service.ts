@@ -21,10 +21,10 @@ import {
 } from '@novu/dal';
 import {
   AuthProviderEnum,
+  AuthenticateContext,
   UserSessionData,
   ISubscriberJwt,
   MemberRoleEnum,
-  SignUpOriginEnum,
 } from '@novu/shared';
 
 import { AnalyticsService } from '../analytics.service';
@@ -71,7 +71,7 @@ export class CommunityAuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    origin?: SignUpOriginEnum
+    { origin, invitationToken }: AuthenticateContext = {}
   ) {
     const email = normalizeEmail(profile.email);
     let user = await this.userRepository.findByEmail(email);
@@ -109,6 +109,7 @@ export class CommunityAuthService implements IAuthService {
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
         origin: origin,
+        wasInvited: Boolean(invitationToken),
       });
     } else {
       if (authProvider === AuthProviderEnum.GITHUB) {
