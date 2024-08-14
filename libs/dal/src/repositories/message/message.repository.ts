@@ -685,12 +685,16 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       _environmentId: string;
     } & Partial<Omit<MessageEntity, 'transactionId'>>
   ) {
-    const res = await this.MongooseModel.find({
-      transactionId: {
-        $in: query.transactionId,
+    const res = await this.MongooseModel.find(
+      {
+        transactionId: {
+          $in: query.transactionId,
+        },
+        _environmentId: query._environmentId,
       },
-      _environmentId: query._environmentId,
-    })
+      {},
+      { sort: { createdAt: -1 } }
+    )
       .populate('subscriber')
       .populate({
         path: 'actorSubscriber',
@@ -720,6 +724,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       filterQuery.transactionId = { $in: query.transactionId };
     }
     const data = await this.MongooseModel.find(query, select, {
+      sort: { createdAt: -1 },
       limit: options?.limit,
       skip: options?.skip,
     })
