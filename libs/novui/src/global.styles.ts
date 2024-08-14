@@ -1,6 +1,4 @@
 import { defineGlobalStyles } from '@pandacss/dev';
-import { LEGACY_COLOR_TOKENS } from './tokens/colors.tokens';
-import { token } from '../styled-system/tokens';
 
 export const GLOBAL_CSS = defineGlobalStyles({
   body: {
@@ -16,30 +14,27 @@ export const GLOBAL_CSS = defineGlobalStyles({
 
     backgroundColor: 'surface.page',
     overflow: 'hidden',
-    scrollbarWidth: 'thin',
-    scrollbarColor: {
-      base: `${token('colors.legacy.B80')} transparent`,
-      _dark: `${token('colors.legacy.B30')} transparent`,
-    },
+    scrollbarWidth: '{sizes.scrollbar.width}',
+    scrollbarColor: '{colors.scrollbar.color}',
+    /* SAFARI SCROLLBAR SUPPORT - remove after Safari supports `scrollbar-width` and `scrollbar-color` */
     '::-webkit-scrollbar': {
-      width: '14px',
-      height: '14px',
+      width: '{sizes.scrollbar.track}',
+      height: '{sizes.scrollbar.track}',
     },
     '::-webkit-scrollbar-thumb': {
-      border: '3px solid transparent',
+      // For this calculation, see: https://stackoverflow.com/questions/11691718/css-webkit-scrollbar-and-safari
+      border: `calc(({sizes.scrollbar.track} - {sizes.scrollbar.thumb}) / 2) solid {colors.scrollbar.track}`,
+      borderRadius: '{sizes.scrollbar.thumb}',
       backgroundClip: 'padding-box',
-      borderRadius: '8px',
-      backgroundColor: {
-        base: `${token('colors.legacy.B80')}`,
-        _dark: `${token('colors.legacy.B30')}`,
-      },
+      backgroundColor: '{colors.scrollbar.thumb}',
     },
     '::-webkit-scrollbar-track': {
-      backgroundColor: 'transparent',
+      backgroundColor: '{colors.scrollbar.track}',
     },
     '::-webkit-scrollbar-corner': {
-      backgroundColor: 'transparent',
+      backgroundColor: '{colors.scrollbar.track}',
     },
+    /* END SAFARI SCROLLBAR SUPPORT */
   },
   a: {
     textDecoration: 'none',
