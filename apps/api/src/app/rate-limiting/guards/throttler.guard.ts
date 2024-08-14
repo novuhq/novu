@@ -128,6 +128,37 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
+    /**
+     * The purpose of the dry run is to allow us to observe how
+     * the rate limiting would behave without actually enforcing it.
+     */
+    const isDryRun = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        environmentId,
+        organizationId,
+        userId: _id,
+        key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
+      })
+    );
+
+    if (isDryRun) {
+      if (!success) {
+        const logMessage = `[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`;
+        const logContext = JSON.stringify({
+          organizationId,
+          environmentId,
+          limit,
+          windowDuration,
+          burstLimit,
+          apiRateLimitCategory,
+          apiServiceLevel,
+        });
+        Logger.warn(`${logMessage} ${logContext}`, 'ApiRateLimitInterceptor');
+      }
+
+      return true;
+    }
+
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_RESET, secondsToReset);
@@ -152,30 +183,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       apiRateLimitCost,
       apiServiceLevel,
     };
-
-    /**
-     * The purpose of the dry run is to allow us to observe how
-     * the rate limiting would behave without actually enforcing it.
-     */
-    const isDryRun = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        environmentId,
-        organizationId,
-        userId: _id,
-        key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
-      })
-    );
-
-    if (isDryRun) {
-      if (!success) {
-        Logger.warn(
-          `[Dry run] ${THROTTLED_EXCEPTION_MESSAGE} orgId: ${organizationId}, envId: ${environmentId}`,
-          'ApiRateLimitInterceptor'
-        );
-      }
-
-      return true;
-    }
 
     if (success) {
       return true;
