@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import inlineCss from 'inline-css';
 import { addBreadcrumb } from '@sentry/node';
@@ -11,8 +11,6 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
-  OrganizationRepository,
-  OrganizationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,

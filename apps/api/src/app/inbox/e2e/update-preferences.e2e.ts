@@ -145,6 +145,27 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.status).to.equal(404);
   });
 
+  it('should throw error when tried to update a critical workflow', async function () {
+    const workflow = await session.createTemplate({
+      noFeedId: true,
+      critical: true,
+    });
+
+    const response = await session.testAgent
+      .patch(`/v1/inbox/preferences/${workflow._id}`)
+      .send({
+        email: true,
+        in_app: true,
+        sms: false,
+        push: false,
+        chat: true,
+      })
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.body.message).to.equal(`Critical workflow with id: ${workflow._id} can not be updated`);
+    expect(response.status).to.equal(400);
+  });
+
   it('should update workflow preferences', async function () {
     const workflow = await session.createTemplate({
       noFeedId: true,

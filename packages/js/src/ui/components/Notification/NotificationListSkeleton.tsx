@@ -1,6 +1,5 @@
 import { For } from 'solid-js';
 import { SkeletonAvatar, SkeletonText } from '../primitives/Skeleton';
-import { NotificationListContainer } from './NotificationList';
 
 export const NotificationSkeleton = () => {
   return (
@@ -31,9 +30,5 @@ type NotificationListSkeletonProps = {
   count: number;
 };
 export const NotificationListSkeleton = (props: NotificationListSkeletonProps) => {
-  return (
-    <NotificationListContainer>
-      <For each={Array.from({ length: props.count })}>{() => <NotificationSkeleton />}</For>
-    </NotificationListContainer>
-  );
+  return <For each={Array.from({ length: props.count })}>{() => <NotificationSkeleton />}</For>;
 };

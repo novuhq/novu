@@ -7,7 +7,6 @@ export default defineConfig([
     target: 'esnext',
     platform: 'browser',
     outDir: 'dist/client', // Output directory for client-side build
-    splitting: true,
     sourcemap: true,
     clean: true,
     dts: true,
