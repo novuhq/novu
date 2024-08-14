@@ -61,6 +61,7 @@ export class Sync {
       this.analyticsService.track('Sync Request - [Bridge API]', command.userId, {
         _organization: command.organizationId,
         _environment: command.environmentId,
+        environmentName: environment.name,
         workflowsCount: discover.workflows?.length || 0,
         localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : false,
         source: command.source,

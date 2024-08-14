@@ -10,13 +10,15 @@ export const PageContainer: FC<PropsWithChildren<IPageContainerProps>> = ({ chil
     <Container
       className={cx(
         css({
-          overflowY: 'auto !important',
+          overflowX: 'hidden',
           borderRadius: '0',
           px: 'paddings.page.horizontal',
           py: 'paddings.page.vertical',
           m: '0',
           h: '100%',
           bg: 'surface.page',
+          display: 'flex',
+          flexDirection: 'column',
         }),
         className
       )}

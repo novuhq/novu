@@ -73,9 +73,6 @@
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
   },
-  "optionalDependencies": {
-    "@novu/ee-auth": "workspace:*"
-  },
   "workspaces": {
     "nohoist": [
       "@nestjs/platform-socket.io",

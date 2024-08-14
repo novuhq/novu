@@ -8,9 +8,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
-
     "moduleResolution": "NodeNext",
-
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true

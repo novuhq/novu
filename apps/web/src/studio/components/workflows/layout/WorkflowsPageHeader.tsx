@@ -12,7 +12,13 @@ export interface IWorkflowsPageHeaderProps extends CoreProps {
 
 export const WorkflowsPageHeader: FC<IWorkflowsPageHeaderProps> = ({ icon, title, actions, description }) => {
   return (
-    <Flex justify={'space-between'} mb="margins.layout.page.titleBottom" minHeight={'300'}>
+    <Flex
+      justify={'space-between'}
+      mb="margins.layout.page.titleBottom"
+      pt="paddings.page.vertical"
+      px="paddings.page.horizontal"
+      minHeight={'300'}
+    >
       <HStack gap="50">
         {icon}
         <Box>

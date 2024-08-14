@@ -1232,10 +1232,6 @@ importers:
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.1.16
@@ -1768,10 +1764,6 @@ importers:
       socket.io:
         specifier: ^4.7.2
         version: 4.7.2
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.1.16

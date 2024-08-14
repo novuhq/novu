@@ -74,7 +74,7 @@ export class DevServer {
         <link href="${this.options.dashboardUrl}/favicon.svg" rel="icon" />
         <title>Novu Studio</title>
       </head>
-      <body style="padding: 0; margin: 0;">
+      <body style="padding: 0; margin: 0; overflow: hidden;">
         <script>
           const NOVU_CLOUD_STUDIO_ORIGIN = '${this.options.dashboardUrl}';
 

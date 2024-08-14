@@ -29,7 +29,6 @@ const helloWorld = workflow('hello-world', async ({ step, payload }) => {
             'You can change any of the content here using the Step Controls panel'
           ),
         buttonText: z.string().default('Hello World'),
-
       }),
     });
   },
