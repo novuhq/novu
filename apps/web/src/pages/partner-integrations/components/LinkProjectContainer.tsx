@@ -29,7 +29,6 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   // const { data: organizations } = useOrganizations();
   const { userMemberships, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
   const { configurationId, next } = useVercelParams();
-  console.log('userMemberships:', userMemberships);
 
   useEffect(() => {
     setTimeout(() => {
