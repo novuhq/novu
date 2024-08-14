@@ -46,4 +46,18 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
     value: '{sizes.300}',
     type: 'sizes',
   },
+  scrollbar: {
+    width: {
+      value: 'thin',
+      type: 'sizes',
+    },
+    track: {
+      value: '14px', // equivalent to `thin` scrollbar width
+      type: 'sizes',
+    },
+    thumb: {
+      value: '8px', // equivalent to `thin` scrollbar width
+      type: 'sizes',
+    },
+  },
 });
