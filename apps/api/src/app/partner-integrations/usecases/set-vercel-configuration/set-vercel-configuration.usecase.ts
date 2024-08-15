@@ -18,11 +18,6 @@ export class SetVercelConfiguration {
     try {
       const tokenData = await this.getVercelToken(command.vercelIntegrationCode);
 
-      // eslint-disable-next-line no-console
-      console.log('@@@@tokenData');
-      // eslint-disable-next-line no-console
-      console.log('tokenData:', tokenData);
-
       if (!tokenData) throw new ApiException('No token data found');
 
       const saveConfigurationData = {
@@ -38,11 +33,6 @@ export class SetVercelConfiguration {
         success: true,
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log('@@@@error');
-      // eslint-disable-next-line no-console
-      console.log('error:', error);
-
       throw new ApiException(
         error?.response?.data?.error_description || error?.response?.data?.message || error.message
       );

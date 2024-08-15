@@ -55,8 +55,6 @@ export class CreateWorkflow {
   ) {}
 
   async execute(usecaseCommand: CreateWorkflowCommand) {
-    console.log('CREATING WORKFLOW', usecaseCommand);
-
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
 

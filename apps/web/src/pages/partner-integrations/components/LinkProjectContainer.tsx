@@ -26,7 +26,6 @@ export type ProjectLinkFormValues = {
 };
 
 export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
-  // const { data: organizations } = useOrganizations();
   const { userMemberships, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
   const { configurationId, next } = useVercelParams();
 
@@ -153,12 +152,6 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   if (isLoading || loading) {
     return <SetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
   }
-
-  // eslint-disable-next-line no-console
-  console.log('projects ', projects);
-
-  // eslint-disable-next-line no-console
-  console.log('userMemberships ', userMemberships.data);
 
   return (
     <Stack>

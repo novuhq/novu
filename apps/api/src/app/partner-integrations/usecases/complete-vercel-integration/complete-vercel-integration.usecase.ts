@@ -81,8 +81,6 @@ export class CompleteVercelIntegration {
         });
 
         try {
-          console.log('updating bridge url', env.envId, env.projectIds[0], configurationDetails.accessToken);
-
           await this.updateBridgeUrl(
             env.envId,
             env.projectIds[0],
@@ -91,7 +89,6 @@ export class CompleteVercelIntegration {
             env._organizationId
           );
         } catch (error) {
-          console.error('Error updating bridge url', error);
           Logger.error(error, 'Error updating bridge url');
         }
       }

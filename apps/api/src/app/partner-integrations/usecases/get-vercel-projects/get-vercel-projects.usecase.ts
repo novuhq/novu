@@ -40,13 +40,9 @@ export class GetVercelProjects {
       payload.configurationId
     );
 
-    console.log('organization:', organization);
-
     if (!organization || !organization.length || !organization[0].partnerConfigurations?.length) {
       throw new Error('No configuration found for vercel');
     }
-
-    console.log(organization[0].partnerConfigurations[0], 'HAHA');
 
     return {
       accessToken: organization[0].partnerConfigurations[0].accessToken as string,
@@ -72,8 +68,6 @@ export class GetVercelProjects {
         },
       })
     );
-
-    console.log('response:', response);
 
     return { projects: this.mapProjects(response.data.projects), pagination: response.data.pagination };
   }

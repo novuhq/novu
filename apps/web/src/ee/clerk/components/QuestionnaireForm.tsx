@@ -99,7 +99,6 @@ export function QuestionnaireForm() {
           searchParams.set(key, value);
         });
         window.history.replaceState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
-        // localStorage.removeItem('vercel_redirect_data');
 
         setParams(searchParams);
 
@@ -109,7 +108,7 @@ export function QuestionnaireForm() {
 
         return;
       } else {
-        // localStorage.removeItem('vercel_redirect_data');
+        localStorage.removeItem('vercel_redirect_data');
       }
     }
 
