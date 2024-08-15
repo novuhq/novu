@@ -807,10 +807,10 @@ importers:
         version: 4.8.3(react@18.3.1)
       '@rjsf/core':
         specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1(react@18.3.1))(react@18.3.1)
+        version: 5.17.1(@rjsf/utils@5.20.0(react@18.3.1))(react@18.3.1)
       '@rjsf/validator-ajv8':
         specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1(react@18.3.1))
+        version: 5.17.1(@rjsf/utils@5.20.0(react@18.3.1))
       '@segment/analytics-next':
         specifier: ^1.48.0
         version: 1.51.3(encoding@0.1.13)
@@ -2783,40 +2783,40 @@ importers:
         version: 7.11.2(react@18.3.1)
       '@mantine/tiptap':
         specifier: ^7.11.2
-        version: 7.11.2(@mantine/core@7.11.2(@mantine/hooks@7.11.2(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.11.2(react@18.3.1))(@tiptap/extension-link@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))(@tiptap/react@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 7.11.2(@mantine/core@7.11.2(@mantine/hooks@7.11.2(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.11.2(react@18.3.1))(@tiptap/extension-link@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))(@tiptap/react@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@rjsf/core':
-        specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1(react@18.3.1))(react@18.3.1)
+        specifier: ^5.20.0
+        version: 5.20.0(@rjsf/utils@5.20.0(react@18.3.1))(react@18.3.1)
       '@rjsf/utils':
-        specifier: ^5.17.1
-        version: 5.17.1(react@18.3.1)
+        specifier: ^5.20.0
+        version: 5.20.0(react@18.3.1)
       '@rjsf/validator-ajv8':
         specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1(react@18.3.1))
+        version: 5.17.1(@rjsf/utils@5.20.0(react@18.3.1))
       '@tanstack/react-table':
         specifier: ^8.17.3
         version: 8.17.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tiptap/extension-document':
         specifier: ^2.5.0
-        version: 2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))
+        version: 2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))
       '@tiptap/extension-mention':
-        specifier: ^2.5.0
-        version: 2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(@tiptap/suggestion@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))
+        specifier: ^2.5.5
+        version: 2.6.2(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(@tiptap/suggestion@2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))
       '@tiptap/extension-paragraph':
         specifier: ^2.5.0
-        version: 2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))
+        version: 2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))
       '@tiptap/extension-text':
         specifier: ^2.5.0
-        version: 2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))
+        version: 2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))
       '@tiptap/pm':
         specifier: ^3.0.0
         version: 3.0.0
       '@tiptap/react':
         specifier: ^3.0.0
-        version: 3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tiptap/suggestion':
         specifier: ^2.5.0
-        version: 2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
+        version: 2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
       react-icons:
         specifier: ^5.0.1
         version: 5.0.1(react@18.3.1)
@@ -8293,9 +8293,6 @@ packages:
   '@floating-ui/utils@0.1.6':
     resolution: {integrity: sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==}
 
-  '@floating-ui/utils@0.2.2':
-    resolution: {integrity: sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==}
-
   '@floating-ui/utils@0.2.4':
     resolution: {integrity: sha512-dWO2pw8hhi+WrXq1YJy2yCuWoL20PddgGaqTgVe4cOS9Q6qklXCiA1tJEqX6BEwRNSCP84/afac9hd4MS+zEUA==}
 
@@ -11643,8 +11640,15 @@ packages:
       '@rjsf/utils': ^5.16.x
       react: ^16.14.0 || >=17
 
-  '@rjsf/utils@5.17.1':
-    resolution: {integrity: sha512-q1Igz/cuM2hi+jiXFkoaXqdRTUFB+a0jfVKNmZlHmvPmfYeeJfcfyOTzO8dQ41fHNHUFb15ryxa/TblDQimwkA==}
+  '@rjsf/core@5.20.0':
+    resolution: {integrity: sha512-WLxtdNx+KlOXmVpCcyAgXqiQEL9k8ejC8rFYMAhdY7kzuh1e/0y13wHjoTkFXFg/Cxd2faENxf+oQoe1TC3n5g==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@rjsf/utils': ^5.19.x
+      react: ^16.14.0 || >=17
+
+  '@rjsf/utils@5.20.0':
+    resolution: {integrity: sha512-1hICYfz4DI+kgyITJgKcOAX2WoTMHLVwb199dz9ZnTH90YzbpbaQeXoEs06/i5vy0HNYLJ6uKd4Ety5eN4Uf+w==}
     engines: {node: '>=14'}
     peerDependencies:
       react: ^16.14.0 || >=17
@@ -14255,11 +14259,10 @@ packages:
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
 
-  '@tiptap/core@3.0.0':
-    resolution: {integrity: sha512-ulUVq1VpiFYrH/kk0lHEwMJ3bV2NR5zLefJLmzV++lvxO/9BdYbF1XSImGkmsd1cqdqRbqkGUDaxdRTxAksAVQ==}
-    deprecated: There are no breaking changes in this packages, we meant to release 2.5.0
+  '@tiptap/core@2.5.9':
+    resolution: {integrity: sha512-PPUR+0tbr+wX2G8RG4FEps4qhbnAPEeXK1FUtirLXSRh8vm+TDgafu3sms7wBc4fAyw9zTO/KNNZ90GBe04guA==}
     peerDependencies:
-      '@tiptap/pm': ^3.0.0
+      '@tiptap/pm': ^2.5.9
 
   '@tiptap/extension-bubble-menu@3.0.0':
     resolution: {integrity: sha512-ETJTkapZhqVGtJmIQwILZKW1eeR/VZQH/H251Dm+07ChBpnOaE0fjGMJhX9KrYm1bLQTJherw+0Qr4z3yAcL1A==}
@@ -14287,12 +14290,12 @@ packages:
       '@tiptap/core': ^3.0.0
       '@tiptap/pm': ^3.0.0
 
-  '@tiptap/extension-mention@2.5.0':
-    resolution: {integrity: sha512-A0vTQV92pcwgnhb76yLqo+w5fUzfLYar4MAmntTqIBgpLS/TWSSRIJ0wNOJdiJJhrv3/4f7NTtC2FK083kljTQ==}
+  '@tiptap/extension-mention@2.6.2':
+    resolution: {integrity: sha512-UmZzC2gz0Jbs+kIc1sLBpuv28JjXtJ5LCEzNgV8j96YH2oHrtQJIQhgF+vowG7sNrxCK6iuAoXyHJfkifQ602Q==}
     peerDependencies:
-      '@tiptap/core': ^2.5.0
-      '@tiptap/pm': ^2.5.0
-      '@tiptap/suggestion': ^2.5.0
+      '@tiptap/core': ^2.6.2
+      '@tiptap/pm': ^2.6.2
+      '@tiptap/suggestion': ^2.6.2
 
   '@tiptap/extension-paragraph@2.5.0':
     resolution: {integrity: sha512-UgTx+nm3XgAL5/1ruHtjKn4cPwEcGTEo1ePyvBEn0xzy3RbveW9/r/yc+7jqKvT1B6OYc87dhKbgfqzFfXDrQQ==}
@@ -24303,8 +24306,8 @@ packages:
     engines: {node: '>= 14.0.0'}
     hasBin: true
 
-  mocha@10.7.0:
-    resolution: {integrity: sha512-v8/rBWr2VO5YkspYINnvu81inSz2y3ODJrhO175/Exzor1RcEZZkizgE2A+w/CAXXoESS8Kys5E62dOHGHzULA==}
+  mocha@10.7.3:
+    resolution: {integrity: sha512-uQWxAu44wwiACGqjbPYmjo7Lg8sFrS3dQe7PP2FQI+woptP4vZXSMcfMyFL/e1yFEeEpV4RtyTpZROOKmxis+A==}
     engines: {node: '>= 14.0.0'}
     hasBin: true
 
@@ -32308,7 +32311,7 @@ snapshots:
       '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -32693,7 +32696,7 @@ snapshots:
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -33248,9 +33251,26 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
     dependencies:
       '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/credential-provider-env': 3.575.0
+      '@aws-sdk/credential-provider-process': 3.575.0
+      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/types': 3.575.0
+      '@smithy/credential-provider-imds': 3.0.0
+      '@smithy/property-provider': 3.0.0
+      '@smithy/shared-ini-file-loader': 3.0.0
+      '@smithy/types': 3.0.0
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
+      - aws-crt
+
+  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
+    dependencies:
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -33319,7 +33339,7 @@ snapshots:
     dependencies:
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-http': 3.575.0
-      '@aws-sdk/credential-provider-ini': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/credential-provider-ini': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
@@ -40203,8 +40223,6 @@ snapshots:
 
   '@floating-ui/utils@0.1.6': {}
 
-  '@floating-ui/utils@0.2.2': {}
-
   '@floating-ui/utils@0.2.4': {}
 
   '@formkit/auto-animate@0.8.2': {}
@@ -41753,12 +41771,12 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@mantine/tiptap@7.11.2(@mantine/core@7.11.2(@mantine/hooks@7.11.2(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.11.2(react@18.3.1))(@tiptap/extension-link@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))(@tiptap/react@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@mantine/tiptap@7.11.2(@mantine/core@7.11.2(@mantine/hooks@7.11.2(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.11.2(react@18.3.1))(@tiptap/extension-link@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))(@tiptap/react@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@mantine/core': 7.11.2(@mantine/hooks@7.11.2(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mantine/hooks': 7.11.2(react@18.3.1)
-      '@tiptap/extension-link': 3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
-      '@tiptap/react': 3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tiptap/extension-link': 3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
+      '@tiptap/react': 3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
@@ -45509,9 +45527,9 @@ snapshots:
       '@rive-app/canvas': 2.10.3
       react: 18.3.1
 
-  '@rjsf/core@5.17.1(@rjsf/utils@5.17.1(react@18.3.1))(react@18.3.1)':
+  '@rjsf/core@5.17.1(@rjsf/utils@5.20.0(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@rjsf/utils': 5.17.1(react@18.3.1)
+      '@rjsf/utils': 5.20.0(react@18.3.1)
       lodash: 4.17.21
       lodash-es: 4.17.21
       markdown-to-jsx: 7.4.1(react@18.3.1)
@@ -45519,7 +45537,17 @@ snapshots:
       prop-types: 15.8.1
       react: 18.3.1
 
-  '@rjsf/utils@5.17.1(react@18.3.1)':
+  '@rjsf/core@5.20.0(@rjsf/utils@5.20.0(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@rjsf/utils': 5.20.0(react@18.3.1)
+      lodash: 4.17.21
+      lodash-es: 4.17.21
+      markdown-to-jsx: 7.4.1(react@18.3.1)
+      nanoid: 3.3.7
+      prop-types: 15.8.1
+      react: 18.3.1
+
+  '@rjsf/utils@5.20.0(react@18.3.1)':
     dependencies:
       json-schema-merge-allof: 0.8.1
       jsonpointer: 5.0.1
@@ -45528,9 +45556,9 @@ snapshots:
       react: 18.3.1
       react-is: 18.3.1
 
-  '@rjsf/validator-ajv8@5.17.1(@rjsf/utils@5.17.1(react@18.3.1))':
+  '@rjsf/validator-ajv8@5.17.1(@rjsf/utils@5.20.0(react@18.3.1))':
     dependencies:
-      '@rjsf/utils': 5.17.1(react@18.3.1)
+      '@rjsf/utils': 5.20.0(react@18.3.1)
       ajv: 8.12.0
       ajv-formats: 2.1.1(ajv@8.12.0)
       lodash: 4.17.21
@@ -50247,45 +50275,45 @@ snapshots:
     dependencies:
       '@testing-library/dom': 9.3.3
 
-  '@tiptap/core@3.0.0(@tiptap/pm@3.0.0)':
+  '@tiptap/core@2.5.9(@tiptap/pm@3.0.0)':
     dependencies:
       '@tiptap/pm': 3.0.0
 
-  '@tiptap/extension-bubble-menu@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
+  '@tiptap/extension-bubble-menu@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
-      '@tiptap/pm': 3.0.0
-      tippy.js: 6.3.7
-
-  '@tiptap/extension-document@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))':
-    dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
-
-  '@tiptap/extension-floating-menu@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
-    dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
       '@tiptap/pm': 3.0.0
       tippy.js: 6.3.7
 
-  '@tiptap/extension-link@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
+  '@tiptap/extension-document@2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
+
+  '@tiptap/extension-floating-menu@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
+    dependencies:
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
+      '@tiptap/pm': 3.0.0
+      tippy.js: 6.3.7
+
+  '@tiptap/extension-link@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
+    dependencies:
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
       '@tiptap/pm': 3.0.0
       linkifyjs: 4.1.3
 
-  '@tiptap/extension-mention@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(@tiptap/suggestion@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))':
+  '@tiptap/extension-mention@2.6.2(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(@tiptap/suggestion@2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0))':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
       '@tiptap/pm': 3.0.0
-      '@tiptap/suggestion': 2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
+      '@tiptap/suggestion': 2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
 
-  '@tiptap/extension-paragraph@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))':
+  '@tiptap/extension-paragraph@2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
 
-  '@tiptap/extension-text@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))':
+  '@tiptap/extension-text@2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
 
   '@tiptap/pm@3.0.0':
     dependencies:
@@ -50308,20 +50336,20 @@ snapshots:
       prosemirror-transform: 1.9.0
       prosemirror-view: 1.33.8
 
-  '@tiptap/react@3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@tiptap/react@3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
-      '@tiptap/extension-bubble-menu': 3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
-      '@tiptap/extension-floating-menu': 3.0.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
+      '@tiptap/extension-bubble-menu': 3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
+      '@tiptap/extension-floating-menu': 3.0.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)
       '@tiptap/pm': 3.0.0
       '@types/use-sync-external-store': 0.0.6
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       use-sync-external-store: 1.2.2(react@18.3.1)
 
-  '@tiptap/suggestion@2.5.0(@tiptap/core@3.0.0(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
+  '@tiptap/suggestion@2.5.0(@tiptap/core@2.5.9(@tiptap/pm@3.0.0))(@tiptap/pm@3.0.0)':
     dependencies:
-      '@tiptap/core': 3.0.0(@tiptap/pm@3.0.0)
+      '@tiptap/core': 2.5.9(@tiptap/pm@3.0.0)
       '@tiptap/pm': 3.0.0
 
   '@tokenizer/token@0.3.0': {}
@@ -56155,7 +56183,7 @@ snapshots:
 
   cypress-intellij-reporter@0.0.7:
     dependencies:
-      mocha: 10.7.0
+      mocha: 10.7.3
 
   cypress-network-idle@1.14.2: {}
 
@@ -64782,7 +64810,7 @@ snapshots:
       yargs-parser: 20.2.4
       yargs-unparser: 2.0.0
 
-  mocha@10.7.0:
+  mocha@10.7.3:
     dependencies:
       ansi-colors: 4.1.3
       browser-stdout: 1.3.1

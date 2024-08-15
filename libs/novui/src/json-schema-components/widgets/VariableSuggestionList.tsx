@@ -1,9 +1,9 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
-import { useClickOutside, useDisclosure } from '@mantine/hooks';
-import { Menu } from '@mantine/core';
+import { VisuallyHidden, Combobox, useCombobox } from '@mantine/core';
 import { type SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
 import { variableSuggestionList } from '../../../styled-system/recipes';
+import { Text } from '../../components';
 
 export type VariableItem = {
   id: string;
@@ -13,6 +13,7 @@ export type VariableItem = {
 export type SuggestionListRef = {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;
   focus: () => void;
+  blur: () => void;
   close: () => void;
 };
 
@@ -22,22 +23,69 @@ const suggestionListClassNames = variableSuggestionList();
 
 export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
   ({ clientRect, command, query, items }, ref) => {
-    const [opened, { close: closeSuggestionList, open: openSuggestionList }] = useDisclosure(true);
-    // ref for closing the menu any time there's a click elsewhere.
-    const clickOutRef = useClickOutside(() => {
-      closeSuggestionList();
+    const combobox = useCombobox({
+      defaultOpened: true,
+      onDropdownOpen: () => combobox.selectFirstOption(),
     });
+
+    useEffect(() => {
+      combobox.selectFirstOption();
+    }, [items]);
+
+    const customVariableLabel = () => {
+      const error = !query.endsWith('}}');
+      if (error) {
+        command({ label: `{{${query}`, id: '', error: 'true' });
+      } else {
+        command({ label: query.slice(0, -2), id: '', error: 'false' });
+      }
+    };
+
+    const options = items?.map((item) => (
+      <Combobox.Option value={item.id} key={item.id}>
+        {item.label}
+      </Combobox.Option>
+    ));
 
     useImperativeHandle(ref, () => ({
       close: () => {
-        closeSuggestionList();
+        combobox.closeDropdown();
       },
       focus: () => {
-        openSuggestionList();
+        combobox.openDropdown();
+      },
+      blur: () => {
+        customVariableLabel();
       },
       onKeyDown: ({ event }) => {
         if (event.key === 'Escape') {
-          closeSuggestionList();
+          combobox.closeDropdown();
+
+          return true;
+        }
+        if (event.key === 'ArrowDown') {
+          combobox.selectNextOption();
+
+          return true;
+        }
+        if (event.key === 'ArrowRight') {
+          customVariableLabel();
+
+          return true;
+        }
+        if (event.code === 'Space') {
+          customVariableLabel();
+
+          return true;
+        }
+        if (event.key === 'ArrowUp') {
+          combobox.selectPreviousOption();
+
+          return true;
+        }
+
+        if (event.key === 'Enter') {
+          combobox.clickSelectedOption();
 
           return true;
         }
@@ -51,39 +99,41 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       if (!item) {
         return;
       }
+
       command(item);
     };
 
     return createPortal(
-      <Menu
-        opened={opened}
-        closeOnEscape
+      <Combobox
+        store={combobox}
         classNames={suggestionListClassNames}
-        position="bottom-start"
-        // for some reason these don't seem to work, so we use clickOutRef on the dropdown
-        closeOnClickOutside
-        clickOutsideEvents={['click', 'mousedown', 'touchstart']}
+        withinPortal={false}
+        onOptionSubmit={(suggestionId) => {
+          handleCommand(suggestionId);
+          combobox.closeDropdown();
+        }}
       >
-        <Menu.Target>
-          <div
+        <Combobox.DropdownTarget>
+          <VisuallyHidden
             style={{
               position: 'absolute',
               top: clientRect?.()?.bottom,
               left: clientRect?.()?.left,
             }}
           />
-        </Menu.Target>
-
-        <Menu.Dropdown ref={clickOutRef}>
-          {items.map((item) => {
-            return (
-              <Menu.Item key={item.id} onClick={() => handleCommand(item.id)}>
-                {item.label}
-              </Menu.Item>
-            );
-          })}
-        </Menu.Dropdown>
-      </Menu>,
+        </Combobox.DropdownTarget>
+        <Combobox.Dropdown>
+          <Combobox.Options>
+            {options.length > 0 ? (
+              options
+            ) : (
+              <Combobox.Empty>
+                <Text>Nothing found</Text>
+              </Combobox.Empty>
+            )}
+          </Combobox.Options>
+        </Combobox.Dropdown>
+      </Combobox>,
       document.body
     );
   }

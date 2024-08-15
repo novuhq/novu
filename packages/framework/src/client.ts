@@ -619,14 +619,20 @@ export class Client {
   }
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
-    const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
+    try {
+      const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
-    const compiledString = await this.templateEngine.render(templateString, {
-      payload: event.payload || event.data,
-      subscriber: event.subscriber,
-    });
+      const compiledString = await this.templateEngine.render(templateString, {
+        payload: event.payload || event.data,
+        subscriber: event.subscriber,
+        // Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
+        ...(event.payload || event.data),
+      });
 
-    return JSON.parse(compiledString);
+      return JSON.parse(compiledString);
+    } catch (error) {
+      throw new CompilingStepControlInvalidError(event.workflowId, event.stepId);
+    }
   }
 
   /**
