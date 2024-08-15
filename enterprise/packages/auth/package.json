@@ -12,14 +12,15 @@
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
+    "@clerk/backend": "^1.6.2",
     "@clerk/clerk-sdk-node": "^5.0.19",
+    "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
-    "@novu/application-generic": "workspace:*",
-    "mongoose": "^7.5.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "jwks-rsa": "^3.1.0",
+    "mongoose": "^7.5.0",
     "svix": "^1.24.0"
   },
   "devDependencies": {
@@ -27,10 +28,10 @@
     "@types/mocha": "^8.0.1",
     "@types/node": "^20.14.10",
     "@types/passport-jwt": "^3.0.3",
-    "cross-env": "^7.0.3",
-    "mocha": "^8.1.1",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
+    "cross-env": "^7.0.3",
+    "mocha": "^8.1.1",
     "sinon": "^9.2.4",
     "ts-node": "~10.9.1",
     "typescript": "4.9.5"
