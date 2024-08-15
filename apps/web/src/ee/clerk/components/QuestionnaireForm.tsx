@@ -113,16 +113,7 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      if (isJobTitleIsTech(data.jobTitle)) {
-        if (isPlaygroundOnboardingEnabled && isSupported) {
-          navigate(ROUTES.DASHBOARD_PLAYGROUND);
-        } else {
-          trackRedirectionToOnboarding();
-          navigate(ROUTES.DASHBOARD_ONBOARDING);
-        }
-      } else {
-        navigate(ROUTES.WORKFLOWS);
-      }
+      navigate(ROUTES.DASHBOARD_ONBOARDING);
 
       return;
     }

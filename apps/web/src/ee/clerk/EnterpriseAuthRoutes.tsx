@@ -10,9 +10,9 @@ import { useVercelIntegration, useVercelParams } from '../../hooks';
 import { useEffect } from 'react';
 
 export const EnterpriseAuthRoutes = () => {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
-  const { isFromVercel, params: vercelParams } = useVercelParams();
+  const { isFromVercel } = useVercelParams();
 
   useEffect(() => {
     if (isSignedIn && isFromVercel) {
