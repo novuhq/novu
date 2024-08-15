@@ -148,7 +148,7 @@ export class Sync {
               type: WorkflowTypeEnum.BRIDGE,
               description: this.castToAnyNotSupportedParam(workflow.options).description,
               data: this.castToAnyNotSupportedParam(workflow.options)?.data,
-              tags: workflow.tags || [],
+              tags: workflow.tags,
               active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
               critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
               preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
