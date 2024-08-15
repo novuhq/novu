@@ -1,12 +1,19 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import {
+  CommunityUserRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  MemberRepository,
+  OrganizationRepository,
+} from '@novu/dal';
 import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
 
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { Sync } from '../../../bridge/usecases/sync';
 
 interface ISetEnvironment {
   name: string;
@@ -31,7 +38,10 @@ export class CompleteVercelIntegration {
     private environmentRepository: EnvironmentRepository,
     private getVercelProjectsUsecase: GetVercelProjects,
     private organizationRepository: OrganizationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private syncUsecase: Sync,
+    private memberRepository: MemberRepository,
+    private communityUserRepository: CommunityUserRepository
   ) {}
 
   async execute(command: CompleteVercelIntegrationCommand): Promise<{ success: boolean }> {
@@ -69,6 +79,21 @@ export class CompleteVercelIntegration {
           teamId: configurationDetails.teamId,
           token: configurationDetails.accessToken,
         });
+
+        try {
+          console.log('updating bridge url', env.envId, env.projectIds[0], configurationDetails.accessToken);
+
+          await this.updateBridgeUrl(
+            env.envId,
+            env.projectIds[0],
+            configurationDetails.accessToken,
+            configurationDetails.teamId,
+            env._organizationId
+          );
+        } catch (error) {
+          console.error('Error updating bridge url', error);
+          Logger.error(error, 'Error updating bridge url');
+        }
       }
 
       this.analyticsService.track('Create Vercel Integration - [Partner Integrations]', command.userId, {
@@ -80,6 +105,47 @@ export class CompleteVercelIntegration {
       };
     } catch (error) {
       throw new ApiException(error.message);
+    }
+  }
+
+  private async updateBridgeUrl(
+    environmentId: string,
+    projectIds: string,
+    accessToken: string,
+    teamId: string,
+    organizationId: string
+  ) {
+    try {
+      const getDomainsResponse = await lastValueFrom(
+        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectIds}?teamId=${teamId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      const production = getDomainsResponse.data?.targets?.production;
+      const bridgeUrl = production?.meta?.branchAlias || production?.automaticAliases[0];
+
+      if (!bridgeUrl) {
+        return;
+      }
+
+      const fullBridgeUrl = `https://${bridgeUrl}/api/novu`;
+
+      const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(organizationId);
+      const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
+
+      await this.syncUsecase.execute({
+        organizationId: organizationId,
+        userId: internalUser?._id as string,
+        environmentId: environmentId,
+        bridgeUrl: fullBridgeUrl,
+        source: 'vercel',
+      });
+    } catch (error) {
+      Logger.error(error, 'Error updating bridge url');
     }
   }
 

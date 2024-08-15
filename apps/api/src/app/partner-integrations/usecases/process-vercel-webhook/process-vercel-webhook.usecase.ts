@@ -5,7 +5,9 @@ import {
   EnvironmentRepository,
   EnvironmentEntity,
   CommunityOrganizationRepository,
-  CommunityMemberRepository,
+  MemberRepository,
+  UserRepository,
+  CommunityUserRepository,
 } from '@novu/dal';
 import crypto from 'node:crypto';
 import { Sync } from '../../../bridge/usecases/sync';
@@ -16,7 +18,8 @@ export class ProcessVercelWebhook {
     private organizationRepository: CommunityOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
-    private memberRepository: CommunityMemberRepository
+    private memberRepository: MemberRepository,
+    private communityUserRepository: CommunityUserRepository
   ) {}
 
   async execute(command: ProcessVercelWebhookCommand) {
@@ -53,10 +56,11 @@ export class ProcessVercelWebhook {
     }
 
     const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
+    const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
 
     await this.syncUsecase.execute({
       organizationId: environment._organizationId,
-      userId: orgAdmin?._userId as string,
+      userId: internalUser?._id as string,
       environmentId: environment._id,
       bridgeUrl: 'https://' + url + '/api/novu',
       source: 'vercel',
