@@ -16,7 +16,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { Roles } from '../auth/framework/roles.decorator';
+import { Roles, RolesGuard } from '@novu/application-generic';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowOverride } from './usecases/create-workflow-override/create-workflow-override.usecase';
@@ -180,7 +180,7 @@ export class WorkflowOverridesController {
   }
 
   @Delete('/:overrideId')
-  @UseGuards(RootEnvironmentGuard)
+  @UseGuards(RootEnvironmentGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: DataBooleanDto,

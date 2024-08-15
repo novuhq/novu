@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { UserSessionData, MemberRoleEnum } from '@novu/shared';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../auth/framework/roles.decorator';
+import { Roles, RolesGuard } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
@@ -75,6 +75,7 @@ export class EEOrganizationController {
 
   @Patch('/')
   @ExternalApiAccessible()
+  @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(RenameOrganizationDto)
   @ApiOperation({

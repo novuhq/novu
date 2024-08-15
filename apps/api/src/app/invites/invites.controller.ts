@@ -6,6 +6,7 @@ import {
   Headers,
   Param,
   Post,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -18,7 +19,7 @@ import {
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
-import { Roles } from '../auth/framework/roles.decorator';
+import { Roles, RolesGuard } from '@novu/application-generic';
 import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
 import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
 import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
@@ -76,6 +77,7 @@ export class InvitesController {
   }
 
   @Post('/')
+  @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @UserAuthentication()
   async inviteMember(
@@ -97,6 +99,7 @@ export class InvitesController {
   }
 
   @Post('/resend')
+  @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @UserAuthentication()
   async resendInviteMember(
@@ -119,6 +122,7 @@ export class InvitesController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @UserAuthentication()
+  @UseGuards(RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,

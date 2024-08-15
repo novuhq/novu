@@ -15,6 +15,7 @@ import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared'
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
+  RolesGuard,
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
@@ -34,7 +35,7 @@ import { WorkflowResponse } from './dto/workflow-response.dto';
 import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
-import { Roles } from '../auth/framework/roles.decorator';
+import { Roles } from '@novu/application-generic';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
@@ -115,7 +116,7 @@ export class NotificationTemplateController {
   }
 
   @Delete('/:templateId')
-  @UseGuards(RootEnvironmentGuard)
+  @UseGuards(RootEnvironmentGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: DataBooleanDto,
@@ -162,7 +163,7 @@ export class NotificationTemplateController {
 
   @Post('')
   @ExternalApiAccessible()
-  @UseGuards(RootEnvironmentGuard)
+  @UseGuards(RootEnvironmentGuard, RolesGuard)
   @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create Notification template',
@@ -199,7 +200,7 @@ export class NotificationTemplateController {
   }
 
   @Put('/:templateId/status')
-  @UseGuards(RootEnvironmentGuard)
+  @UseGuards(RootEnvironmentGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
