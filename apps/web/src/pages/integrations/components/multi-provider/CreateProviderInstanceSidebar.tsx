@@ -118,7 +118,7 @@ export function CreateProviderInstanceSidebar({
         channel: selectedChannel,
         name: data.name,
         credentials: {},
-        active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
+        active: true,
         check: false,
         conditions,
         _environmentId: environmentId,
