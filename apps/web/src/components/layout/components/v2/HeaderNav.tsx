@@ -28,7 +28,7 @@ export function HeaderNav() {
 
   useBootIntercom();
 
-  const { themeIcon, themeLabel, toggleColorScheme } = useThemeChange();
+  const { Icon, themeLabel, toggleColorScheme } = useThemeChange();
 
   return (
     <Header
@@ -37,7 +37,7 @@ export function HeaderNav() {
         position: 'sticky',
         top: 0,
         borderBottom: 'none !important',
-        zIndex: 'sticky',
+        zIndex: '200 !important',
         padding: '50',
       })}
     >
@@ -48,7 +48,9 @@ export function HeaderNav() {
           {shouldShowNewNovuExperience && <BridgeMenuItems />}
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeLabel}>
-              <div>{themeIcon}</div>
+              <div>
+                <Icon title="color-scheme-preference-icon" />
+              </div>
             </Tooltip>
           </ActionIcon>
           {/* Ugly fallback to satisfy the restrictive typings of the NotificationCenterWidget */}

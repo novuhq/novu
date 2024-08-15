@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
 import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { type AuthContextValue } from '../../../components/providers/AuthProvider';
-import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import type { IOrganizationEntity, IUserEntity, ProductUseCases } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
@@ -102,11 +102,11 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
       if (hasOrgs) {
         const firstOrg = clerkUser.organizationMemberships[0].organization;
         setActive({ organization: firstOrg });
-      } else {
-        navigate(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST);
+      } else if (!location.href.includes(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST)) {
+        redirectTo({ url: ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST });
       }
     }
-  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId]);
+  }, [navigate, setActive, isOrgListLoaded, clerkUser, orgId, redirectTo]);
 
   const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
   const currentOrganization = useMemo(
@@ -118,7 +118,8 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   useEffect(() => {
     // if linked, externalOrgId = internal org ObjectID, which is required on backend
     const isInternalOrgLinked = !!clerkOrganization?.publicMetadata.externalOrgId;
-    const isOrgChanged = currentOrganization && currentOrganization._id !== clerkOrganization?.id;
+    const isOrgChanged =
+      currentOrganization && currentOrganization._id !== clerkOrganization?.publicMetadata.externalOrgId;
 
     if (isInternalOrgLinked && isOrgChanged) {
       switchOrgCallback();
@@ -138,7 +139,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     reloadOrganization,
   } as AuthContextValue;
   /*
-   * The previous assestion is necessary as Boolean and true or false discriminating unions
+   * The 'as AuthContextValue' is necessary as Boolean and true or false discriminating unions
    * don't work with inference. See here https://github.com/microsoft/TypeScript/issues/19360
    *
    * Alternatively, we will have to conditionally generate the value object based on the isLoaded values.
@@ -147,27 +148,58 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
   return <EnterpriseAuthContext.Provider value={value}>{children}</EnterpriseAuthContext.Provider>;
 };
 
-const toUserEntity = (clerkUser: UserResource): IUserEntity => ({
-  _id: clerkUser.id,
-  firstName: clerkUser.firstName,
-  lastName: clerkUser.lastName,
-  email: clerkUser.emailAddresses[0].emailAddress,
-  profilePicture: clerkUser.imageUrl,
-  createdAt: clerkUser.createdAt?.toString() ?? '',
-  showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
-  showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
-  servicesHashes: clerkUser.publicMetadata.servicesHashes,
-  jobTitle: clerkUser.publicMetadata.jobTitle,
-  hasPassword: clerkUser.passwordEnabled,
-});
+const toUserEntity = (clerkUser: UserResource): IUserEntity => {
+  /*
+   * When mapping to IUserEntity, we have 2 cases:
+   *  - user exists and has signed in
+   *  - user is signing up
+   *
+   * In the case where the user is still signing up, we are using the clerk identifier for the id.
+   * This however quickly gets update to the externalId (which is actually the novu internal
+   * entity identifier) that gets used further in the app. There are a few consumers that
+   * want to use this identifier before it is set to the internal value. These consumers
+   * should make sure they only report with the correct value, a reference
+   * implementation can be found in 'apps/web/src/hooks/useMonitoring.ts'
+   */
 
-const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => ({
-  _id: clerkOrganization.id,
-  name: clerkOrganization.name,
-  createdAt: clerkOrganization.createdAt.toString(),
-  updatedAt: clerkOrganization.updatedAt.toString(),
-  apiServiceLevel: clerkOrganization.publicMetadata.apiServiceLevel,
-  defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
-  domain: clerkOrganization.publicMetadata.domain,
-  productUseCases: clerkOrganization.publicMetadata.productUseCases,
-});
+  return {
+    _id: clerkUser.externalId ?? clerkUser.id,
+    firstName: clerkUser.firstName,
+    lastName: clerkUser.lastName,
+    email: clerkUser.emailAddresses[0].emailAddress,
+    profilePicture: clerkUser.imageUrl,
+    createdAt: clerkUser.createdAt?.toISOString() ?? '',
+    showOnBoarding: clerkUser.publicMetadata.showOnBoarding,
+    showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour,
+    servicesHashes: clerkUser.publicMetadata.servicesHashes,
+    jobTitle: clerkUser.publicMetadata.jobTitle,
+    hasPassword: clerkUser.passwordEnabled,
+  };
+};
+
+const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
+  /*
+   * When mapping to IOrganizationEntity, we have 2 cases:
+   *  - user exists and has signed in
+   *  - user is signing up
+   *
+   *
+   * In the case where the user is still signing up, we are using the clerk identifier for the id.
+   * This however quickly gets update to the externalId (which is actually the novu internal
+   * entity identifier) that gets used further in the app. There are a few consumers that
+   * want to use this identifier before it is set to the internal value. These consumers
+   * should make sure they only report with the correct value, a reference
+   * implementation can be found in 'apps/web/src/hooks/useMonitoring.ts'
+   */
+
+  return {
+    _id: clerkOrganization.publicMetadata.externalOrgId ?? clerkOrganization.id,
+    name: clerkOrganization.name,
+    createdAt: clerkOrganization.createdAt.toISOString(),
+    updatedAt: clerkOrganization.updatedAt.toISOString(),
+    defaultLocale: clerkOrganization.publicMetadata.defaultLocale,
+    domain: clerkOrganization.publicMetadata.domain,
+    productUseCases: clerkOrganization.publicMetadata.productUseCases,
+    language: clerkOrganization.publicMetadata.language,
+  };
+};

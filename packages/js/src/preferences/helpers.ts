@@ -1,43 +1,9 @@
-import type { ApiService } from '@novu/client';
-
+import { InboxService } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
-import type { TODO } from '../types';
-import { PreferenceLevel } from '../types';
+import type { Result } from '../types';
 import { Preference } from './preference';
 import type { UpdatePreferencesArgs } from './types';
-
-export const mapPreference = (apiPreference: {
-  template?: TODO;
-  preference: {
-    enabled: boolean;
-    channels: {
-      email?: boolean;
-      sms?: boolean;
-      in_app?: boolean;
-      chat?: boolean;
-      push?: boolean;
-    };
-  };
-}): Preference => {
-  const { template: workflow, preference } = apiPreference;
-  const hasWorkflow = workflow !== undefined;
-  const level = hasWorkflow ? PreferenceLevel.TEMPLATE : PreferenceLevel.GLOBAL;
-
-  return new Preference({
-    level,
-    enabled: preference.enabled,
-    channels: preference.channels,
-    workflow: hasWorkflow
-      ? {
-          id: workflow?._id,
-          name: workflow?.name,
-          critical: workflow?.critical,
-          identifier: workflow?.identifier,
-          data: workflow?.data,
-        }
-      : undefined,
-  });
-};
+import { NovuError } from '../utils/errors';
 
 export const updatePreference = async ({
   emitter,
@@ -45,26 +11,38 @@ export const updatePreference = async ({
   args,
 }: {
   emitter: NovuEventEmitter;
-  apiService: ApiService;
+  apiService: InboxService;
   args: UpdatePreferencesArgs;
-}): Promise<Preference> => {
-  const { workflowId, enabled, channel } = args;
+}): Result<Preference> => {
+  const { workflowId, channelPreferences } = args;
   try {
-    emitter.emit('preferences.update.pending', { args });
+    emitter.emit('preferences.update.pending', {
+      args,
+      data: args.preference
+        ? new Preference({
+            ...args.preference,
+            channels: {
+              ...args.preference.channels,
+              ...channelPreferences,
+            },
+          })
+        : undefined,
+    });
 
     let response;
     if (workflowId) {
-      response = await apiService.updateSubscriberPreference(workflowId, channel, enabled);
+      response = await apiService.updateWorkflowPreferences({ workflowId, channelPreferences });
     } else {
-      response = await apiService.updateSubscriberGlobalPreference([{ channelType: channel, enabled }]);
+      response = await apiService.updateGlobalPreferences(channelPreferences);
     }
 
-    const preference = new Preference(mapPreference(response));
-    emitter.emit('preferences.update.success', { args, result: preference });
+    const preference = new Preference(response);
+    emitter.emit('preferences.update.resolved', { args, data: preference });
 
-    return preference;
+    return { data: preference };
   } catch (error) {
-    emitter.emit('preferences.update.error', { args, error });
-    throw error;
+    emitter.emit('preferences.update.resolved', { args, error });
+
+    return { error: new NovuError('Failed to fetch notifications', error) };
   }
 };

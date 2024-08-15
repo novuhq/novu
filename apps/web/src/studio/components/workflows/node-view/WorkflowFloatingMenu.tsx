@@ -29,48 +29,48 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
 
   return (
     <>
-      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '50' }), className)}>
+      <menu className={cx(vstack({ display: 'flex', gap: '150', p: '50' }), className)}>
         <WorkflowFloatingMenuSection title="Actions">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAutoAwesomeMotion}
-            tooltipLabel="Guide of how to add a Digest step for embedding in code"
+            tooltipLabel="Add a Digest step to your workflow"
             onClick={handleClick('digest')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAvTimer}
-            tooltipLabel="Guide of how to add a Delay step for embedding in code"
+            tooltipLabel="Add a Delay step to your workflow"
             onClick={handleClick('delay')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineBolt}
-            tooltipLabel="Guide of how to add a Custom step for embedding in code"
+            tooltipLabel="Add a Custom step to your workflow"
             onClick={handleClick('custom')}
           />
         </WorkflowFloatingMenuSection>
         <WorkflowFloatingMenuSection title="Channels">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineNotifications}
-            tooltipLabel="Guide of how to add an In-app step for embedding in code"
+            tooltipLabel="Add an In-app step to your workflow"
             onClick={handleClick('inbox')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineEmail}
-            tooltipLabel="Guide of how to add an Email step for embedding in code"
+            tooltipLabel="Add an Email step to your workflow"
             onClick={handleClick('email')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineSms}
-            tooltipLabel="Guide of how to add an SMS step for embedding in code"
+            tooltipLabel="Add an SMS step to your workflow"
             onClick={handleClick('sms')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineMobileFriendly}
-            tooltipLabel="Guide of how to add a Push step for embedding in code"
+            tooltipLabel="Add a Push step to your workflow"
             onClick={handleClick('push')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineForum}
-            tooltipLabel="Guide of how to add a Chat step for embedding in code"
+            tooltipLabel="Add a Chat step to your workflow"
             onClick={handleClick('chat')}
           />
         </WorkflowFloatingMenuSection>
@@ -107,12 +107,12 @@ function WorkflowFloatingMenuButton({ Icon, tooltipLabel, onClick }: IWorkflowFl
         onClick={onClick}
         Icon={Icon}
         className={css({
-          padding: '75 !important',
+          padding: '75',
           borderRadius: '100',
           _hover: {
-            bg: 'select.option.surface.selected',
+            bg: { base: 'legacy.B80', _dark: 'legacy.B30' },
             '& svg': {
-              color: 'typography.text.main !important',
+              color: 'typography.text.main',
             },
           },
         })}

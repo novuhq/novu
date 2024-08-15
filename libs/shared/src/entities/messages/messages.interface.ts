@@ -24,6 +24,8 @@ export interface IMessage {
   _layoutId?: string;
   payload: Record<string, unknown>;
   actor?: IActor;
+  avatar?: string;
+  subject?: string;
 }
 
 export interface IMessageCTA {
@@ -47,6 +49,7 @@ export interface IMessageButton {
   type: ButtonTypeEnum;
   content: string;
   resultContent?: string;
+  url?: string;
 }
 
 export enum MessageActionStatusEnum {

@@ -1,12 +1,11 @@
 import { For } from 'solid-js';
 import { SkeletonAvatar, SkeletonText } from '../primitives/Skeleton';
-import { NotificationListContainer } from './NotificationList';
 
 export const NotificationSkeleton = () => {
   return (
     <>
       {/* eslint-disable-next-line local-rules/no-class-without-style */}
-      <div class="nt-flex nt-gap-2 nt-p-4">
+      <div class="nt-flex nt-gap-2 nt-p-4 nt-w-full">
         <SkeletonAvatar appearanceKey="skeletonAvatar" />
         {/* eslint-disable-next-line local-rules/no-class-without-style */}
         <div class={'nt-flex nt-flex-col nt-self-stretch nt-gap-3 nt-flex-1'}>
@@ -31,9 +30,5 @@ type NotificationListSkeletonProps = {
   count: number;
 };
 export const NotificationListSkeleton = (props: NotificationListSkeletonProps) => {
-  return (
-    <NotificationListContainer>
-      <For each={Array.from({ length: props.count })}>{() => <NotificationSkeleton />}</For>
-    </NotificationListContainer>
-  );
+  return <For each={Array.from({ length: props.count })}>{() => <NotificationSkeleton />}</For>;
 };

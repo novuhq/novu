@@ -34,6 +34,7 @@ import type {
   ValidationError,
   Workflow,
 } from './types';
+import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, sanitizeHtmlInObject } from './utils';
 import { cloneData } from './utils/clone.utils';
 import { transformSchema, validateData } from './validators';
@@ -470,7 +471,7 @@ export class Client {
     event: Event,
     step: DiscoverStepOutput,
     outputs: Record<string, unknown>
-  ): Promise<Record<string, Record<string, unknown>>> {
+  ): Promise<Record<string, WithPassthrough<Record<string, unknown>>>> {
     return step.providers.reduce(async (acc, provider) => {
       const result = await acc;
       const previewProviderHandler = this.previewProvider.bind(this);
@@ -483,7 +484,7 @@ export class Client {
         ...result,
         [provider.type]: providerResult,
       };
-    }, Promise.resolve({} as Record<string, Record<string, unknown>>));
+    }, Promise.resolve({} as Record<string, WithPassthrough<Record<string, unknown>>>));
   }
 
   private previewProvider(
@@ -504,7 +505,7 @@ export class Client {
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
     outputs: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
+  ): Promise<WithPassthrough<Record<string, unknown>>> {
     const spinner = ora({ indent: 2 }).start(`Executing provider: \`${provider.type}\``);
     try {
       if (event.stepId === step.stepId) {

@@ -33,6 +33,7 @@ interface ISnippetInstructions {
 }
 
 const installReactNotificationCenter = 'npm install @novu/notification-center';
+const installReactInbox = 'npm install @novu/react';
 const installAngularNotificationCenter = 'npm install @novu/notification-center-angular';
 const installVueNotificationCenter = 'npm install @novu/notification-center-vue';
 
@@ -50,6 +51,15 @@ export const Header = () => {
         {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
       </PopoverNotificationCenter>
     </NovuProvider>
+  );
+};`;
+
+export const reactStarterSnippetV2 = `import React from 'react';
+import { Inbox } from '@novu/react';
+
+export const Header = () => {
+  return (
+    <Inbox subscriberId={'${onBoardingSubscriberId}'} applicationIdentifier={'${APPLICATION_IDENTIFIER}'} />
   );
 };`;
 
@@ -252,6 +262,20 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
   },
 ];
 
+export const frameworkInstructionsV2: { key: string; value: ISnippetInstructions[] }[] = [
+  {
+    key: FrameworkEnum.REACT,
+    value: [
+      {
+        instruction: 'First you have to install the package:',
+        snippet: installReactInbox,
+        language: 'bash',
+      },
+      { instruction: 'Then import and render the components:', snippet: reactStarterSnippetV2 },
+    ],
+  },
+];
+
 export enum OnBoardingAnalyticsEnum {
   FRAMEWORK_SETUP_VISIT = 'In app frameworks select',
   FRAMEWORKS_SETUP_VISIT = 'Framework Setup Page Visit',
@@ -279,6 +303,7 @@ export enum OnBoardingAnalyticsEnum {
   IN_APP_SANDBOX_SUCCESS_VISIT = 'Success Page Visit - [In-App Sandbox - Success]',
   IN_APP_SANDBOX_RUN_TRIGGER_CLICK = 'Run Trigger Clicked - [In-App Sandbox]',
   CONFIGURE_LATER_CLICK = 'Configure Later Click',
+  BRIDGE_PLAYGROUND_CONTINUE_CLICK = 'Continue Click [Bridge Playground]',
 
   // Onboarding Experiment
   ONBOARDING_EXPERIMENT_TEST_NOTIFICATION = 'Button Clicked - [Onboarding]',

@@ -1,4 +1,4 @@
-import { useInboxStatusContext, useLocalization } from '../../../context';
+import { useInboxContext, useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown } from '../../../icons';
 import { Button, buttonVariants, Dropdown } from '../../primitives';
@@ -7,11 +7,11 @@ import { StatusOptions } from './InboxStatusOptions';
 
 export const StatusDropdown = () => {
   const style = useStyle();
-  const { status, setStatus } = useInboxStatusContext();
+  const { status, setStatus } = useInboxContext();
   const { t } = useLocalization();
 
   return (
-    <Dropdown.Root fallbackPlacements={['bottom', 'top']} placement="bottom">
+    <Dropdown.Root>
       <Dropdown.Trigger
         class={style('inboxStatus__dropdownTrigger', buttonVariants({ variant: 'unstyled', size: 'none' }))}
         asChild={(triggerProps) => (

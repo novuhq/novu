@@ -26,7 +26,9 @@ export abstract class BasePushHandler implements IPushHandler {
       );
     }
 
-    return await this.provider.sendMessage(options);
+    const { bridgeProviderData, ...otherOptions } = options;
+
+    return await this.provider.sendMessage(otherOptions, bridgeProviderData);
   }
 
   abstract buildProvider(credentials: ICredentials);

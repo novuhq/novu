@@ -1,6 +1,6 @@
 import { splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { AppearanceKey } from '../../../context';
+import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
 import { Popover, usePopover } from '../Popover';
 
@@ -10,12 +10,12 @@ export const dropdownItemVariants = () =>
 type DropdownItemProps = JSX.IntrinsicElements['button'] & { appearanceKey?: AppearanceKey };
 export const DropdownItem = (props: DropdownItemProps) => {
   const style = useStyle();
-  const [local, rest] = splitProps(props, ['appearanceKey', 'onClick']);
+  const [local, rest] = splitProps(props, ['appearanceKey', 'onClick', 'class']);
   const { onClose } = usePopover();
 
   return (
     <Popover.Close
-      class={style(local.appearanceKey || 'dropdownItem', dropdownItemVariants())}
+      class={local.class ? local.class : style(local.appearanceKey || 'dropdownItem', dropdownItemVariants())}
       onClick={(e) => {
         if (typeof local.onClick === 'function') {
           local.onClick(e);

@@ -41,6 +41,7 @@ export interface IEmailOptions {
   customData?: Record<string, any>;
   headers?: Record<string, string>;
   senderName?: string;
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface ITriggerPayload {

@@ -3,6 +3,7 @@ import { type PropsWithChildren, useLayoutEffect } from 'react';
 import { useAuth, useEnvironment, useMonitoring, useRouteScopes } from './hooks';
 import { ROUTES } from './constants/routes';
 import { IS_EE_AUTH_ENABLED } from './config/index';
+import { navigateToAuthApplication } from './utils';
 
 export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   useMonitoring();
@@ -33,8 +34,19 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
 
   function isOnboardingComplete() {
     if (IS_EE_AUTH_ENABLED) {
-      // TODO: replace with actual check property (e.g. isOnboardingCompleted)
-      return currentOrganization?.productUseCases !== undefined;
+      if (!currentOrganization) {
+        return true;
+      }
+
+      const createdBefore =
+        currentOrganization?.createdAt && new Date(currentOrganization.createdAt) < new Date('2024-07-31');
+
+      // Prompt organizations to complete onboarding if created on or after 2024-07-31
+      if (!createdBefore) {
+        return currentOrganization?.productUseCases !== undefined || currentOrganization?.language !== undefined;
+      }
+
+      return true;
     }
 
     return currentOrganization;
@@ -53,7 +65,9 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   }
 
   if (!isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {
-    return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
+    navigateToAuthApplication();
+
+    return null;
   }
 
   return <>{children}</>;

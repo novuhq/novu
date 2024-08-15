@@ -53,6 +53,7 @@ const messageSchema = new Schema<MessageDBModel>(
             },
             content: Schema.Types.String,
             resultContent: Schema.Types.String,
+            url: Schema.Types.String,
           },
         ],
         result: {

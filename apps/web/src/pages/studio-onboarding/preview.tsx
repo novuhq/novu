@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 import { Prism } from '@mantine/prism';
 import { errorMessage, Tabs } from '@novu/design-system';
-import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
@@ -50,8 +49,8 @@ export const StudioOnboardingPreview = () => {
 
   const { data: preview, isLoading: previewLoading } = useWorkflowPreview(
     {
-      workflowId: workflow?.workflowId,
-      stepId: step?.stepId,
+      workflowId: workflow?.workflowId || '',
+      stepId: step?.stepId || '',
       payload: payload,
       controls: controls,
     },
@@ -86,12 +85,12 @@ export const StudioOnboardingPreview = () => {
       };
 
       const response = await trigger({
-        workflowId: workflow?.workflowId,
+        workflowId: workflow?.workflowId || '',
         to,
         payload: { ...payload, __source: 'studio-onboarding-test-workflow' },
         controls: {
           steps: {
-            [step?.stepId]: controls,
+            [step?.stepId || '']: controls,
           },
         },
       });
@@ -152,6 +151,7 @@ export const StudioOnboardingPreview = () => {
 
             <WorkflowsPanelLayout>
               <WorkflowStepEditorContentPanel
+                source="studio"
                 error={null}
                 step={step}
                 preview={preview}

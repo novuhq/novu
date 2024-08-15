@@ -16,6 +16,7 @@ export interface IOrganizationEntity {
   defaultLocale?: string;
   domain?: string;
   productUseCases?: ProductUseCases;
+  language?: string[];
   createdAt: string;
   updatedAt: string;
   externalId?: string;

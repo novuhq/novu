@@ -111,6 +111,7 @@ export function workflow<
       schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
+    tags: options.tags || [],
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 

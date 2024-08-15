@@ -1,19 +1,17 @@
 import { useNovu } from '../../context';
+import type { NotificationFilter } from '../../../types';
 
-/**
- * TODO: Update the snippet to after Filter is implemented to change the status and also add hooks for archive and other statuses
- */
 export const useReadAll = (props?: { onSuccess?: () => void; onError?: (err: unknown) => void }) => {
   const novu = useNovu();
 
-  const markAllAsRead = async () => {
+  const readAll = async ({ tags }: { tags?: NotificationFilter['tags'] } = {}) => {
     try {
-      await novu.feeds.readAll();
+      await novu.notifications.readAll({ tags });
       props?.onSuccess?.();
     } catch (error) {
       props?.onError?.(error);
     }
   };
 
-  return { markAllAsRead };
+  return { readAll };
 };

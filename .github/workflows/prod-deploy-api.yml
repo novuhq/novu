@@ -13,7 +13,7 @@ jobs:
     environment: Production
     strategy:
       matrix:
-        name: [ 'novu/api-ee', 'novu/api' ]
+        name: [ 'novu/api-ee' ]
     outputs:
       docker_image: ${{ steps.build-image.outputs.IMAGE }}
     permissions:
@@ -42,11 +42,6 @@ jobs:
                 "containerd-snapshotter": true
               }
             }
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -106,7 +101,6 @@ jobs:
 
   deploy_prod_api_us:
     needs:
-      - deploy_prod_api_eu
       - build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit

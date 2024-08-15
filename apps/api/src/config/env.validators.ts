@@ -47,8 +47,6 @@ export const envValidators = {
   NOTIFICATION_RETENTION_DAYS: num({ default: DEFAULT_NOTIFICATION_RETENTION_DAYS }),
   MESSAGE_GENERIC_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS }),
   MESSAGE_IN_APP_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS }),
-  GOOGLE_OAUTH_CLIENT_SECRET: str({ default: undefined }),
-  GOOGLE_OAUTH_CLIENT_ID: str({ default: undefined }),
   LEGACY_V1_FRONT_BASE_URL: url({ default: undefined }),
   LEGACY_STAGING_DASHBOARD_URL: url({ default: undefined }),
   API_ROOT_URL: url({ default: undefined }),

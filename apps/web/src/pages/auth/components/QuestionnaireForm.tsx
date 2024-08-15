@@ -1,28 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
 import { captureException } from '@sentry/react';
 
-import { FeatureFlagsKeysEnum, ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
-import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  ICreateOrganizationDto,
+  IResponseError,
+  JobTitleEnum,
+  jobTitleToLabelMapper,
+  ProductUseCases,
+  ProductUseCasesEnum,
+} from '@novu/shared';
 import { Button, Input, inputStyles, Select } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useEnvironment, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useEffectOnce, useEnvironment, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { QueryKeys } from '../../../api/query.keys';
+import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
+import { useContainer } from '../../../hooks/useContainer';
 
 export function QuestionnaireForm() {
   const queryClient = useQueryClient();
-
+  const { initializeWebContainer } = useContainer();
+  const { isSupported } = useWebContainerSupported();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
+
+  useEffectOnce(() => {
+    if (isSupported) {
+      initializeWebContainer();
+    }
+  }, isPlaygroundOnboardingEnabled);
+
   const [loading, setLoading] = useState<boolean>();
   const {
     handleSubmit,
@@ -30,7 +48,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentOrganization, reloadOrganization } = useAuth();
+  const { login, currentOrganization } = useAuth();
   const { refetchEnvironments } = useEnvironment();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
@@ -100,16 +118,13 @@ export function QuestionnaireForm() {
     }
 
     if (isV2Enabled) {
-      const isTechnicalJobTitle = [
-        JobTitleEnum.ENGINEER,
-        JobTitleEnum.ENGINEERING_MANAGER,
-        JobTitleEnum.ARCHITECT,
-        JobTitleEnum.FOUNDER,
-        JobTitleEnum.STUDENT,
-      ].includes(data.jobTitle);
-
-      if (isTechnicalJobTitle) {
-        navigate(ROUTES.DASHBOARD_ONBOARDING);
+      if (isJobTitleIsTech(data.jobTitle)) {
+        if (isPlaygroundOnboardingEnabled && isSupported) {
+          navigate(ROUTES.DASHBOARD_PLAYGROUND);
+        } else {
+          trackRedirectionToOnboarding();
+          navigate(ROUTES.DASHBOARD_ONBOARDING);
+        }
       } else {
         navigate(ROUTES.WORKFLOWS);
       }
@@ -130,6 +145,14 @@ export function QuestionnaireForm() {
       border-color: #e03131;
     }
   `;
+
+  const trackRedirectionToOnboarding = () => {
+    if (isPlaygroundOnboardingEnabled && !isSupported) {
+      segment.track(
+        'Redirected to onboarding page because the playground was not supported on the browser - [Sign-Up]'
+      );
+    }
+  };
 
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>
@@ -264,4 +287,14 @@ function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCase
   }
 
   return undefined;
+}
+
+function isJobTitleIsTech(jobTitle: JobTitleEnum) {
+  return [
+    JobTitleEnum.ENGINEER,
+    JobTitleEnum.ENGINEERING_MANAGER,
+    JobTitleEnum.ARCHITECT,
+    JobTitleEnum.FOUNDER,
+    JobTitleEnum.STUDENT,
+  ].includes(jobTitle);
 }

@@ -40,6 +40,8 @@ jobs:
       netlify_alias: dev
       netlify_gh_env: development
       netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
+      clerk_publishable_key: pk_live_Y2xlcmsubm92dS5jbyQ
+      clerk_is_ee_auth_enabled: true
     secrets: inherit
 
   publish_docker_image_web:

@@ -1,26 +1,28 @@
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
-import { NovuOptions } from '../../novu';
+import type { NovuOptions } from '../../types';
 import {
-  Appearance,
   AppearanceProvider,
+  CountProvider,
   FocusManagerProvider,
-  InboxNotificationStatusProvider,
-  Localization,
+  InboxProvider,
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import { UnreadCountProvider } from '../context/UnreadCountContext';
-import { Bell, Root } from './elements';
+import type { Appearance, Localization, Tab } from '../types';
+import { Bell, Preferences, Root } from './elements';
 import { Inbox } from './Inbox';
+import { NotificationList as Notifications } from './Notification';
 
 export const novuComponents = {
   Inbox,
   Bell,
+  Preferences,
+  Notifications,
 };
 
-export type NovuComponent = { name: NovuComponentName; props?: unknown };
+export type NovuComponent = { name: NovuComponentName; props?: any };
 
 export type NovuMounterProps = NovuComponent & { element: MountableElement };
 
@@ -34,11 +36,12 @@ export type NovuComponentControls = {
 
 type RendererProps = {
   novuUI: NovuUI;
-  defaultCss: string;
+  cssHref: string;
   appearance?: Appearance;
   nodes: Map<MountableElement, NovuComponent>;
   localization?: Localization;
   options: NovuOptions;
+  tabs: Array<Tab>;
 };
 
 export const Renderer = (props: RendererProps) => {
@@ -49,10 +52,11 @@ export const Renderer = (props: RendererProps) => {
       return;
     }
 
-    const styleEl = document.createElement('style');
-    styleEl.id = id;
-    document.head.insertBefore(styleEl, document.head.firstChild);
-    styleEl.innerHTML = props.defaultCss;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = props.cssHref;
+    document.head.insertBefore(link, document.head.firstChild);
 
     onCleanup(() => {
       const element = document.getElementById(id);
@@ -62,23 +66,44 @@ export const Renderer = (props: RendererProps) => {
 
   return (
     <NovuProvider options={props.options}>
-      <UnreadCountProvider>
-        <LocalizationProvider localization={props.localization}>
-          <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
-            <FocusManagerProvider>
-              <InboxNotificationStatusProvider>
+      <LocalizationProvider localization={props.localization}>
+        <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
+          <FocusManagerProvider>
+            <InboxProvider tabs={props.tabs}>
+              <CountProvider>
                 <For each={[...props.nodes]}>
-                  {([node, component]) => (
-                    <Portal mount={node}>
-                      <Root>{novuComponents[component.name](component.props || {})}</Root>
-                    </Portal>
-                  )}
+                  {([node, component]) => {
+                    let portalDivElement: HTMLDivElement;
+                    const Component = novuComponents[component.name];
+
+                    onMount(() => {
+                      if (!['Notifications', 'Preferences'].includes(component.name)) return;
+
+                      if (node instanceof HTMLElement) {
+                        node.classList.add('nt-h-full');
+                      }
+                      portalDivElement.classList.add('nt-h-full');
+                    });
+
+                    return (
+                      <Portal
+                        mount={node}
+                        ref={(el) => {
+                          portalDivElement = el;
+                        }}
+                      >
+                        <Root>
+                          <Component {...component.props} />
+                        </Root>
+                      </Portal>
+                    );
+                  }}
                 </For>
-              </InboxNotificationStatusProvider>
-            </FocusManagerProvider>
-          </AppearanceProvider>
-        </LocalizationProvider>
-      </UnreadCountProvider>
+              </CountProvider>
+            </InboxProvider>
+          </FocusManagerProvider>
+        </AppearanceProvider>
+      </LocalizationProvider>
     </NovuProvider>
   );
 };

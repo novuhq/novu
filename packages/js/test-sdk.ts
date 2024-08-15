@@ -8,8 +8,8 @@ const test = async () => {
     backendUrl: 'http://localhost:3000',
   });
 
-  const feed = await novu.feeds.fetch();
-  console.log(feed);
+  const { data: notifications } = await novu.notifications.list();
+  console.log(notifications);
 };
 
 test();

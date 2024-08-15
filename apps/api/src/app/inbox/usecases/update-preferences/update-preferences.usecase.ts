@@ -10,6 +10,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ISubscriberPreferences } from '@novu/shared';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -34,6 +35,9 @@ export class UpdatePreferences {
       if (!workflow) {
         throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
       }
+      if (workflow.critical) {
+        throw new ApiException(`Critical workflow with id: ${command.workflowId} can not be updated`);
+      }
     }
 
     const userPreference = await this.findPreference(command, subscriber);
@@ -52,11 +56,18 @@ export class UpdatePreferences {
 
     return {
       level: updatedPreference.level,
-      preferences: {
-        enabled: updatedPreference.enabled,
-        channels: updatedPreference.channels,
-      },
-      ...(workflow && updatedPreference.level === PreferenceLevelEnum.TEMPLATE && { workflow }),
+      enabled: updatedPreference.enabled,
+      channels: updatedPreference.channels,
+      ...(workflow &&
+        updatedPreference.level === PreferenceLevelEnum.TEMPLATE && {
+          workflow: {
+            critical: workflow.critical,
+            id: workflow._id,
+            name: workflow.name,
+            tags: workflow.tags,
+            triggers: workflow.triggers,
+          },
+        }),
     };
   }
 

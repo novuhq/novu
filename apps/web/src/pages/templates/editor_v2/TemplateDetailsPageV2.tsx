@@ -1,5 +1,4 @@
-import { Button } from '@novu/novui';
-import { css } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 import { IconCable, IconPlayArrow } from '@novu/novui/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
@@ -22,6 +21,10 @@ export const TemplateDetailsPageV2 = () => {
   const title = workflow?.name || '';
   const navigate = useNavigate();
 
+  const workflowBackgroundWrapperClass = css({
+    mx: '0',
+  });
+
   const handleTestClick = () => {
     navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
@@ -36,6 +39,7 @@ export const TemplateDetailsPageV2 = () => {
 
   return (
     <WorkflowsPageTemplate
+      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
       icon={<IconCable size="32" />}
       title={title}
       actions={
@@ -46,7 +50,7 @@ export const TemplateDetailsPageV2 = () => {
         </>
       }
     >
-      <WorkflowBackgroundWrapper>
+      <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
         <WorkflowNodes
           steps={
             workflow?.steps?.map((item) => {

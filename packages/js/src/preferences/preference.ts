@@ -1,15 +1,15 @@
-import type { ApiService } from '@novu/client';
+import { InboxService } from '../api';
+import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 
 import { NovuEventEmitter } from '../event-emitter';
-import { ChannelPreference, ChannelType, PreferenceLevel, Workflow } from '../types';
-import { ApiServiceSingleton } from '../utils/api-service-singleton';
+import { ChannelPreference, PreferenceLevel, Result, Workflow } from '../types';
 import { updatePreference } from './helpers';
 
 type PreferenceLike = Pick<Preference, 'level' | 'enabled' | 'channels' | 'workflow'>;
 
 export class Preference {
   #emitter: NovuEventEmitter;
-  #apiService: ApiService;
+  #apiService: InboxService;
 
   readonly level: PreferenceLevel;
   readonly enabled: boolean;
@@ -18,7 +18,7 @@ export class Preference {
 
   constructor(preference: PreferenceLike) {
     this.#emitter = NovuEventEmitter.getInstance();
-    this.#apiService = ApiServiceSingleton.getInstance();
+    this.#apiService = InboxServiceSingleton.getInstance();
 
     this.level = preference.level;
     this.enabled = preference.enabled;
@@ -26,11 +26,20 @@ export class Preference {
     this.workflow = preference.workflow;
   }
 
-  updatePreference({ enabled, channel }: { enabled: boolean; channel: ChannelType }): Promise<Preference> {
+  update({ channelPreferences }: { channelPreferences: ChannelPreference }): Result<Preference> {
     return updatePreference({
       emitter: this.#emitter,
       apiService: this.#apiService,
-      args: { workflowId: this.workflow?.id, enabled, channel },
+      args: {
+        workflowId: this.workflow?.id,
+        channelPreferences,
+        preference: {
+          level: this.level,
+          enabled: this.enabled,
+          channels: this.channels,
+          workflow: this.workflow,
+        },
+      },
     });
   }
 }

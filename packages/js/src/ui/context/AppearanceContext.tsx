@@ -11,115 +11,7 @@ import {
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
 import { parseElements, parseVariables } from '../helpers';
-
-export type CSSProperties = {
-  [key: string]: string | number;
-};
-
-export type ElementStyles = string | CSSProperties;
-
-/*
- * The double underscore signals that entire key extends the right part of the key
- * i.e. foo__bar means that foo_bar is an extension of bar. Both keys will be applied when foo_bar is used
- * meaning you would have `bar foo__bar` in the dom
- */
-export const appearanceKeys = [
-  //Primitives
-  'button',
-  'popoverContent',
-  'popoverTrigger',
-  'dropdownContent',
-  'dropdownTrigger',
-  'dropdownItem',
-  'dropdownItemLabel',
-  'dropdownItemLabelContainer',
-  'dropdownItemLeftIcon',
-  'dropdownItemRightIcon',
-  'back__button',
-  'skeletonText',
-  'skeletonAvatar',
-
-  //General
-  'root',
-  'bellIcon',
-  'bellContainer',
-  'bellDot',
-  'settings__button',
-  'settingsContainer',
-  'inboxHeader',
-  'loading',
-
-  //Inbox
-  'inbox__popoverTrigger',
-  'inbox__popoverContent',
-
-  //Notifications
-  'notificationList',
-  'notificationListEmptyNoticeContainer',
-  'notificationListEmptyNotice',
-  'notificationListEmptyNoticeIcon',
-  'notificationContainer',
-  'notificationDot',
-  'notificationSubject',
-  'notificationSubjectContainer',
-
-  //Inbox status
-  'inboxStatus__title',
-  'inboxStatus__dropdownTrigger',
-  'inboxStatus__dropdownContent',
-  'inboxStatus__dropdownItem',
-  'inboxStatus__dropdownItemLabel',
-  'inboxStatus__dropdownItemLabelContainer',
-  'inboxStatus__dropdownItemLeftIcon',
-  'inboxStatus__dropdownItemRightIcon',
-
-  //More actions
-  'moreActionsContainer',
-  'moreActions__dropdownTrigger',
-  'moreActions__dropdownContent',
-  'moreActions__dropdownItem',
-  'moreActions__dropdownItemLabel',
-  'moreActions__dropdownItemLabelContainer',
-  'moreActions__dropdownItemLeftIcon',
-
-  //workflow
-  'workflowContainer',
-  'workflowLabel',
-  'workflowLabelContainer',
-
-  // channel
-  'channelContainer',
-  'channelsContainer',
-  'channelLabel',
-  'channelLabelContainer',
-  'channelDescription',
-  'channelSwitchContainer',
-  'channelSwitch',
-  'channelSwitchThumb',
-
-  //Settings Header
-  'settingsHeader',
-  'settingsHeader__back__button',
-  'settingsHeader__title',
-
-  //Settings Loading
-  'settingsLoadingContainer',
-] as const;
-
-export type Variables = {
-  colorBackground?: string;
-  colorForeground?: string;
-  colorPrimary?: string;
-  colorPrimaryForeground?: string;
-  colorSecondary?: string;
-  colorSecondaryForeground?: string;
-  colorNeutral?: string;
-  fontSize?: string;
-  borderRadius?: string;
-};
-
-export type AppearanceKey = (typeof appearanceKeys)[number];
-export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
+import type { Appearance, Elements, Variables } from '../types';
 
 type AppearanceContextType = {
   variables?: Variables;
@@ -129,9 +21,6 @@ type AppearanceContextType = {
 };
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
-
-export type Theme = Pick<AppearanceContextType, 'elements' | 'variables'>;
-export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
 type AppearanceProviderProps = ParentProps & { appearance?: Appearance } & { id: string };
 

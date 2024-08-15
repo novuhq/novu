@@ -38,7 +38,7 @@ export class GetPreferences {
 
     const updatedGlobalPreference = {
       level: PreferenceLevelEnum.GLOBAL,
-      preferences: globalPreference.preference,
+      ...globalPreference.preference,
     };
 
     const workflowList =
@@ -64,9 +64,15 @@ export class GetPreferences {
         );
 
         return {
+          ...workflowPreference.preference,
           level: PreferenceLevelEnum.TEMPLATE,
-          preferences: workflowPreference.preference,
-          workflow: workflowPreference.template,
+          workflow: {
+            id: workflow._id,
+            name: workflow.name,
+            critical: workflow.critical,
+            tags: workflow.tags,
+            triggers: workflow.triggers,
+          },
         };
       })
     );
