@@ -1825,6 +1825,9 @@ importers:
 
   enterprise/packages/auth:
     dependencies:
+      '@clerk/backend':
+        specifier: ^1.6.2
+        version: 1.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@clerk/clerk-sdk-node':
         specifier: ^5.0.19
         version: 5.0.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6605,6 +6608,10 @@ packages:
     resolution: {integrity: sha512-6Lc1dTLKmOEZz5CRnHbow0EDdrU4pwuN1SMW/cdQxgGhfWkDjkwgsHSseWq54XL5HQuwAsZBaAeapY2XKRmspw==}
     engines: {node: '>=18.17.0'}
 
+  '@clerk/backend@1.6.2':
+    resolution: {integrity: sha512-Tiidp1dBs/vBQ82yL+HgRa7GlNjTNjBPNUQj2+Tn176i02wglgTfLWivDzuRwAe/cdf7gu/8OBWTxOF59L4KRQ==}
+    engines: {node: '>=18.17.0'}
+
   '@clerk/clerk-js@5.10.1':
     resolution: {integrity: sha512-ViChiKSeY2h79H5dAWlgpN2jukyHUA5vbGAjB6kK1tHjZkPLlQyg8pGBwd7Fcty1XF8e013de+Mez55rw3NXIw==}
     engines: {node: '>=18.17.0'}
@@ -6651,8 +6658,24 @@ packages:
       react-dom:
         optional: true
 
+  '@clerk/shared@2.5.0':
+    resolution: {integrity: sha512-dYRlFQJN4YIQbYJHCDKd5yLF7rcI42pw2JOQEKiOAWPiAMlmhTtiEL0YWMVoGNaGRI72fyIge6/+V7r9WWT0wg==}
+    engines: {node: '>=18.17.0'}
+    peerDependencies:
+      react: '>=18 || >=19.0.0-beta'
+      react-dom: '>=18 || >=19.0.0-beta'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   '@clerk/themes@2.1.10':
     resolution: {integrity: sha512-1XlXVt+AhkiFJ4CXLSmnL7UFCLRLtHe6HV/2haabKpBuLgmleVYXf6dveTJnc8ZnHadGH91bbOz0le4Dl3wByw==}
+    engines: {node: '>=18.17.0'}
+
+  '@clerk/types@4.13.0':
+    resolution: {integrity: sha512-W/iZ5ig35UgJHmZqqgO1tosHuGtdKR8e+f8FJWphpdIW6KNCK+Oxc5lOO/hJU1c9aih0x5QdlLrKsqF3S8JKdA==}
     engines: {node: '>=18.17.0'}
 
   '@clerk/types@4.6.1':
@@ -39019,6 +39042,17 @@ snapshots:
       - react
       - react-dom
 
+  '@clerk/backend@1.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@clerk/shared': 2.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@clerk/types': 4.13.0
+      cookie: 0.5.0
+      snakecase-keys: 5.4.4
+      tslib: 2.4.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
   '@clerk/clerk-js@5.10.1(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@clerk/localizations': 2.5.1
@@ -39086,10 +39120,25 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
+  '@clerk/shared@2.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@clerk/types': 4.13.0
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.7.0
+      swr: 2.2.5(react@18.3.1)
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   '@clerk/themes@2.1.10':
     dependencies:
       '@clerk/types': 4.6.1
       tslib: 2.4.1
+
+  '@clerk/types@4.13.0':
+    dependencies:
+      csstype: 3.1.1
 
   '@clerk/types@4.6.1':
     dependencies:
@@ -43021,12 +43070,6 @@ snapshots:
     transitivePeerDependencies:
       - nx
 
-  '@nrwl/devkit@17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))':
-    dependencies:
-      '@nx/devkit': 17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))
-    transitivePeerDependencies:
-      - nx
-
   '@nrwl/eslint-plugin-nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.5))(@types/node@20.14.10)(@typescript-eslint/parser@5.62.0(eslint@8.38.0)(typescript@4.9.5))(eslint-config-prettier@8.8.0(eslint@8.38.0))(eslint@8.38.0)(nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))(typescript@4.9.5)(verdaccio@5.31.0(encoding@0.1.13))':
     dependencies:
       '@nx/eslint-plugin': 16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.5))(@types/node@20.14.10)(@typescript-eslint/parser@5.62.0(eslint@8.38.0)(typescript@4.9.5))(eslint-config-prettier@8.8.0(eslint@8.38.0))(eslint@8.38.0)(nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))(typescript@4.9.5)(verdaccio@5.31.0(encoding@0.1.13))
@@ -43328,7 +43371,7 @@ snapshots:
 
   '@nx/devkit@17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))':
     dependencies:
-      '@nrwl/devkit': 17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))
+      '@nrwl/devkit': 17.3.2(nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.5))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.5)))
       ejs: 3.1.9
       enquirer: 2.3.6
       ignore: 5.2.4
