@@ -43,7 +43,10 @@ export const Preferences = () => {
 
   return (
     <div
-      class={style('preferencesContainer', 'nt-p-2 nt-flex nt-flex-col nt-gap-1 nt-bg-background nt-overflow-y-auto')}
+      class={style(
+        'preferencesContainer',
+        'nt-p-2 nt-flex nt-flex-col nt-gap-1 nt-bg-background nt-overflow-y-auto nt-h-full'
+      )}
     >
       <Show when={preferences.loading}>
         <LoadingScreen />

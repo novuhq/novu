@@ -21,7 +21,10 @@ export const CountProvider = (props: ParentProps) => {
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
 
-  const updateUnreadCounts = async () => {
+  const updateTabCounts = async () => {
+    if (tabs().length === 0) {
+      return;
+    }
     const filters = tabs().map((tab) => ({ tags: tab.value, read: false, archived: false }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
@@ -38,13 +41,15 @@ export const CountProvider = (props: ParentProps) => {
     setUnreadCounts(newMap);
   };
 
-  onMount(updateUnreadCounts);
+  onMount(() => {
+    updateTabCounts();
+  });
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setTotalUnreadCount(data.result);
-      updateUnreadCounts();
+      updateTabCounts();
     },
   });
 
@@ -96,7 +101,7 @@ export const CountProvider = (props: ParentProps) => {
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
-    eventHandler: updateUnreadCounts,
+    eventHandler: updateTabCounts,
   });
 
   const resetNewNotificationCounts = (key: string) => {

@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { MemberEntity, SubscriberEntity, UserEntity } from '@novu/dal';
 import {
   AuthProviderEnum,
-  SignUpOriginEnum,
+  AuthenticateContext,
   ISubscriberJwt,
   UserSessionData,
 } from '@novu/shared';
@@ -24,7 +24,7 @@ export class AuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    origin?: SignUpOriginEnum
+    authContext: AuthenticateContext = {}
   ): Promise<{ newUser: boolean; token: string }> {
     return this.authService.authenticate(
       authProvider,
@@ -32,7 +32,7 @@ export class AuthService implements IAuthService {
       refreshToken,
       profile,
       distinctId,
-      origin
+      authContext
     );
   }
 

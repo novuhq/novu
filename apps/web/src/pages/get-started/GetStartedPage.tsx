@@ -31,7 +31,7 @@ export function GetStartedPage() {
   };
 
   return (
-    <PageContainer>
+    <PageContainer className={css({ overflowY: 'auto' })}>
       <div
         className={css({
           maxWidth: '1000px',

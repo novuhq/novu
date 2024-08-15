@@ -42,15 +42,16 @@ export const appearanceKeys = [
   'loading',
 
   //Inbox
+  'inboxContent',
   'inbox__popoverTrigger',
   'inbox__popoverContent',
 
   //Notifications
+  'notificationListContainer',
   'notificationList',
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',
   'notificationListEmptyNoticeIcon',
-  'notificationListNewNotificationsNoticeContainer',
   'notificationListNewNotificationsNotice__button',
 
   'notification',

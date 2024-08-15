@@ -22,7 +22,7 @@ export const LocalStudioHeader: FC = () => {
         position: 'sticky',
         top: 0,
         borderBottom: 'none !important',
-        zIndex: 'sticky',
+        zIndex: 'docked !important', // !important is necessary to override Mantine's z-index
         padding: '50',
       })}
     >

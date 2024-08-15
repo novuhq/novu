@@ -10,8 +10,8 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Tab, Appearance, Localization } from '../types';
-import { Bell, Root, Preferences } from './elements';
+import type { Appearance, Localization, Tab } from '../types';
+import { Bell, Preferences, Root } from './elements';
 import { Inbox } from './Inbox';
 import { NotificationList as Notifications } from './Notification';
 
@@ -73,10 +73,25 @@ export const Renderer = (props: RendererProps) => {
               <CountProvider>
                 <For each={[...props.nodes]}>
                   {([node, component]) => {
+                    let portalDivElement: HTMLDivElement;
                     const Component = novuComponents[component.name];
 
+                    onMount(() => {
+                      if (!['Notifications', 'Preferences'].includes(component.name)) return;
+
+                      if (node instanceof HTMLElement) {
+                        node.classList.add('nt-h-full');
+                      }
+                      portalDivElement.classList.add('nt-h-full');
+                    });
+
                     return (
-                      <Portal mount={node}>
+                      <Portal
+                        mount={node}
+                        ref={(el) => {
+                          portalDivElement = el;
+                        }}
+                      >
                         <Root>
                           <Component {...component.props} />
                         </Root>

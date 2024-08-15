@@ -1,5 +1,4 @@
-export const REACT_EMAIL_CODE = `
-import {
+export const REACT_EMAIL_CODE = `import {
   Body,
   Button,
   Container,
@@ -56,7 +55,6 @@ export const ReactEmail = ({
     </Html>
   );
 };
-
 
 export function renderEmail(controls) {
   return render(<ReactEmail {...controls} />);

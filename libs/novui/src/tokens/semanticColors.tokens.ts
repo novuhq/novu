@@ -358,4 +358,18 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  scrollbar: {
+    color: {
+      value: '{colors.scrollbar.thumb} {colors.scrollbar.track}',
+      type: 'color',
+    },
+    track: {
+      value: { base: '{colors.transparent}', _dark: '{colors.transparent}' },
+      type: 'color',
+    },
+    thumb: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
+    },
+  },
 });
