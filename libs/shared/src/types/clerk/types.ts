@@ -3,7 +3,7 @@ import { ApiServiceLevelEnum } from '../organization';
 import { IServicesHashes } from '../../entities/user';
 import { JobTitleEnum } from '../organization';
 
-export type _OrganizationPublicMetadata = {
+export type OrganizationPublicMetadata = {
   externalOrgId?: string;
   apiServiceLevel?: ApiServiceLevelEnum;
   domain?: string;
@@ -12,7 +12,7 @@ export type _OrganizationPublicMetadata = {
   defaultLocale?: string;
 };
 
-export type _UserPublicMetadata = {
+export type UserPublicMetadata = {
   profilePicture?: string | null;
   showOnBoarding?: boolean;
   showOnBoardingTour?: number;

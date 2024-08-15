@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
-import { _UserPublicMetadata, _OrganizationPublicMetadata } from '@novu/shared';
+import type {
+  UserPublicMetadata as _UserPublicMetadata,
+  OrganizationPublicMetadata as _OrganizationPublicMetadata,
+} from '@novu/shared';
 
 declare global {
   interface UserPublicMetadata extends _UserPublicMetadata {}
