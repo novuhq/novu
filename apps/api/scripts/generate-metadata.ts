@@ -3,6 +3,7 @@ import path from 'node:path';
 import { PluginMetadataGenerator } from '@nestjs/cli/lib/compiler/plugins';
 import { ReadonlyVisitor } from '@nestjs/swagger/dist/plugin';
 
+const tsconfigPath = 'tsconfig.build.json';
 const srcPath = path.join(__dirname, '..', 'src');
 const metadataPath = path.join(srcPath, 'metadata.ts');
 
@@ -27,5 +28,5 @@ const generator = new PluginMetadataGenerator();
 generator.generate({
   visitors: [new ReadonlyVisitor({ introspectComments: true, pathToSource: srcPath })],
   outputDir: srcPath,
-  tsconfigPath: 'tsconfig.build.json',
+  tsconfigPath,
 });
