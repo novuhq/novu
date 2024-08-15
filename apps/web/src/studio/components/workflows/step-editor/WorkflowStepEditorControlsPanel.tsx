@@ -99,7 +99,6 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
-                    errors={error}
                     variables={[...(subscriberVariables || []), ...(payloadProperties || [])]}
                   />
                 </When>

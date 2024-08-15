@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
 import Form, { FormProps } from '@rjsf/core';
-import { RegistryWidgetsType, UiSchema, toErrorSchema, RJSFValidationError, FormValidation } from '@rjsf/utils';
+import { RegistryWidgetsType, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 
 import { splitCssProps } from '../../styled-system/jsx';
@@ -36,46 +35,16 @@ export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
   CoreProps &
   Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'> & {
     variables?: string[];
-    errors?: any;
   };
-
-const getExtraErrors = (errors: RJSFValidationError[]) => {
-  if (!errors) return;
-
-  return toErrorSchema(errors);
-};
-
-function transformErrors(errors: RJSFValidationError[]) {
-  console.log('transformErrors', errors);
-
-  return [];
-}
 
 /**
  * Specialized form editor for data passed as JSON.
  */
 export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TFormData>) {
-  const [cssProps, { className, variables, errors, ...formProps }] = splitCssProps(props);
-
-  const formRef = useRef<Form>(null);
-
-  function customValidate(formData: TFormData, formErrors: FormValidation<TFormData>) {
-    const extraErrors = getExtraErrors(errors);
-
-    if (extraErrors) {
-      formErrors = { ...formErrors, ...extraErrors };
-    }
-
-    return formErrors;
-  }
-
-  useEffect(() => {
-    formRef.current.validateForm();
-  }, [errors]);
+  const [cssProps, { className, variables, ...formProps }] = splitCssProps(props);
 
   return (
     <Form
-      ref={formRef}
       tagName={'fieldset'}
       className={cx(
         css({
@@ -94,10 +63,7 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
       uiSchema={UI_SCHEMA}
       widgets={WIDGETS}
       validator={validator}
-      transformErrors={transformErrors}
-      customValidate={customValidate}
       liveValidate
-      noHtml5Validate
       autoComplete={'false'}
       formContext={{ variables }}
       idSeparator={JSON_SCHEMA_FORM_ID_DELIMITER}

@@ -15,13 +15,10 @@ export class ZodValidator implements Validator<ZodSchema> {
     } else {
       return {
         success: false,
-        errors: result.error.errors.map((err) => {
-          return {
-            property: `.${err.path.join('.')}`,
-            path: `/${err.path.join('/')}`,
-            message: err.message,
-          };
-        }),
+        errors: result.error.errors.map((err) => ({
+          path: `/${err.path.join('/')}`,
+          message: err.message,
+        })),
       };
     }
   }
