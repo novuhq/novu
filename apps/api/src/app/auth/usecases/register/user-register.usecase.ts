@@ -65,6 +65,7 @@ export class UserRegister {
     this.analyticsService.track('[Authentication] - Signup', user._id, {
       loginType: 'email',
       origin: command.origin || SignUpOriginEnum.WEB,
+      wasInvited: Boolean(command.wasInvited),
     });
 
     return {

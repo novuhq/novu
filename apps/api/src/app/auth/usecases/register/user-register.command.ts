@@ -1,4 +1,4 @@
-import { IsDefined, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsDefined, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 import { JobTitleEnum, ProductUseCases, SignUpOriginEnum } from '@novu/shared';
 
@@ -41,6 +41,10 @@ export class UserRegisterCommand extends BaseCommand {
 
   @IsOptional()
   productUseCases?: ProductUseCases;
+
+  @IsOptional()
+  @IsBoolean()
+  wasInvited?: boolean = false;
 
   language?: string[];
 }
