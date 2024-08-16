@@ -14,6 +14,7 @@ import {
   DotsHorizontal,
   StarEmpty,
   Trash,
+  When,
 } from '@novu/design-system';
 
 import { useEnvironment } from '../../../hooks';
@@ -132,13 +133,15 @@ export const UpdateIntegrationSidebarHeader = ({
         />
         <Group spacing={12} noWrap ml="auto">
           {children}
-          <PrimaryIconButton
-            primary={provider.primary}
-            onClick={() => {
-              makePrimaryIntegration({ id: provider.integrationId });
-            }}
-            conditions={numOfConditions}
-          />
+          <When truthy={canMarkAsPrimary}>
+            <PrimaryIconButton
+              primary={provider.primary}
+              onClick={() => {
+                makePrimaryIntegration({ id: provider.integrationId });
+              }}
+              conditions={numOfConditions}
+            />
+          </When>
           <ConditionIconButton primary={provider.primary} onClick={openConditions} conditions={numOfConditions} />
           <div>
             <Dropdown

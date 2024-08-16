@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.0.0-canary.8",
+  "version": "2.0.0-canary.9",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {

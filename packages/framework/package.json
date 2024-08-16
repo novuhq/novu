@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.0.0-canary.5",
+  "version": "2.0.0-canary.6",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
