@@ -15,10 +15,10 @@ import { css, cx } from '../../../styled-system/css';
 import { input, inputEditorWidget } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
 
+import { CustomMention } from './customMentionExtension';
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
-import { AUTOCOMPLETE_OPEN_TAG, INVALID_VARIABLE_REGEX, VALID_VARIABLE_REGEX } from '../utils';
 
-import { CustomMention } from './customMentionExtention';
+import { AUTOCOMPLETE_OPEN_TAG, INVALID_VARIABLE_REGEX, VALID_VARIABLE_REGEX } from '../utils';
 
 const inputEditorClassNames = inputEditorWidget();
 
