@@ -14,7 +14,7 @@ export enum TriggerEventStatusEnum {
 
 export interface IAttachmentOptions {
   mime: string;
-  file: Buffer;
+  file: Buffer | string;
   name?: string;
   channels?: ChannelTypeEnum[];
   cid?: string;
