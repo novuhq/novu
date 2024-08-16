@@ -150,7 +150,7 @@ async function connectToTunnel(parsedUrl: URL, parsedOrigin: URL) {
     {
       WebSocket: ws,
       connectionTimeout: 2000,
-      maxRetries: 10,
+      maxRetries: Infinity,
     },
     { verbose: false }
   );
