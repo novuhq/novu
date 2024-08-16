@@ -1,10 +1,13 @@
 import {
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   chatProviders,
   EmailProviderIdEnum,
   emailProviders,
   InAppProviderIdEnum,
   inAppProviders,
+  ProvidersIdEnum,
+  PushProviderIdEnum,
   pushProviders,
   SmsProviderIdEnum,
   smsProviders,
@@ -1088,4 +1091,73 @@ test('should show the Novu SMS integration sidebar', async ({ page }) => {
   const limitbarLimit = page.getByTestId('limitbar-limit');
   const limitbarText = await limitbarLimit.innerText();
   await expect(limitbarText).toEqual('20 messages per month');
+});
+
+type PrimaryToggleButtonTest = {
+  channelType: ChannelTypeEnum;
+  providerId: ProvidersIdEnum;
+  providerName: string;
+  enabled: boolean;
+};
+
+const testCases: PrimaryToggleButtonTest[] = [
+  {
+    channelType: ChannelTypeEnum.SMS,
+    providerId: SmsProviderIdEnum.Twilio,
+    providerName: 'Twilio',
+    enabled: true,
+  },
+  {
+    channelType: ChannelTypeEnum.EMAIL,
+    providerId: EmailProviderIdEnum.Mailjet,
+    providerName: 'Mailjet',
+    enabled: true,
+  },
+  {
+    channelType: ChannelTypeEnum.CHAT,
+    providerId: ChatProviderIdEnum.Discord,
+    providerName: 'Discord',
+    enabled: false,
+  },
+  {
+    channelType: ChannelTypeEnum.PUSH,
+    providerId: PushProviderIdEnum.FCM,
+    providerName: 'Firebase',
+    enabled: false,
+  },
+];
+
+testCases.forEach((testCase) => {
+  test(`should ${testCase.enabled ? 'show' : 'NOT show'} the primary toggle button for ${
+    testCase.providerName
+  }`, async ({ page }) => {
+    await page.goto('/integrations');
+    await expect(page).toHaveURL(/\/integrations/);
+
+    const addProvider = page.getByTestId('add-provider');
+    await expect(addProvider).toBeEnabled();
+    await addProvider.click();
+
+    const selectProviderSidebar = page.getByTestId('select-provider-sidebar');
+    await expect(selectProviderSidebar).toBeVisible();
+
+    const mailjet = page.getByTestId(`provider-${testCase.providerId}`);
+    await expect(mailjet).toContainText(testCase.providerName);
+    await mailjet.click();
+
+    const next = page.getByTestId('select-provider-sidebar-next');
+    await expect(next).toContainText('Next');
+    await next.click();
+
+    const providerName = page.getByTestId('provider-instance-name');
+    await providerName.clear();
+    await providerName.fill(`${testCase.providerName} Integration`);
+
+    const create = page.getByTestId('create-provider-instance-sidebar-create');
+    await expect(create).toContainText('Create');
+    await expect(create).toBeEnabled();
+    await create.click();
+
+    await expect(page.getByTestId('header-make-primary-btn')).toBeVisible({ visible: testCase.enabled });
+  });
 });
