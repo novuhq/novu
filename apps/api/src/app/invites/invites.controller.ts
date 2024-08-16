@@ -31,7 +31,7 @@ import { GetInvite } from './usecases/get-invite/get-invite.usecase';
 import { ResendInviteDto } from './dtos/resend-invite.dto';
 import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
@@ -63,6 +63,7 @@ export class InvitesController {
   }
 
   @Post('/:inviteToken/accept')
+  @ApiBearerAuth()
   @UseGuards(UserAuthGuard)
   async acceptInviteToken(
     @UserSession() user: UserSessionData,
@@ -77,6 +78,7 @@ export class InvitesController {
   }
 
   @Post('/')
+  @ApiBearerAuth()
   @UseGuards(UserAuthGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   async inviteMember(
@@ -98,6 +100,7 @@ export class InvitesController {
   }
 
   @Post('/resend')
+  @ApiBearerAuth()
   @UseGuards(UserAuthGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   async resendInviteMember(
@@ -119,6 +122,7 @@ export class InvitesController {
 
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
+  @ApiBearerAuth()
   @UseGuards(UserAuthGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   async bulkInviteMembers(
