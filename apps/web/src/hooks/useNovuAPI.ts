@@ -4,13 +4,18 @@ import { buildApiHttpClient } from '../api/api.client';
 // eslint-disable-next-line import/no-namespace
 import * as mixpanel from 'mixpanel-browser';
 import { useStudioState } from '../studio/StudioStateProvider';
-import { getToken } from '../auth/getToken';
+import { getToken } from '../components/providers/AuthProvider';
+import { useEnvironment } from './useEnvironment';
 
 function useNovuAPI() {
   const { devSecretKey } = useStudioState();
+  const { currentEnvironment } = useEnvironment();
+  const token = getToken();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => buildApiHttpClient({ secretKey: devSecretKey, jwt: getToken() }), []);
+  return useMemo(
+    () => buildApiHttpClient({ secretKey: devSecretKey, jwt: token, environmentId: currentEnvironment?._id }),
+    [currentEnvironment?._id, devSecretKey, token]
+  );
 }
 
 // WIP: This method should accept more parameters, not just transactionId

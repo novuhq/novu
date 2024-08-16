@@ -3,12 +3,12 @@ import { colors, Text, Title, Container } from '@novu/design-system';
 import PageMeta from './PageMeta';
 
 export default function AuthLayout({
-  title,
+  title = '',
   description = '',
   children,
   customDescription,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   children: React.ReactNode;
   customDescription?: React.ReactNode;

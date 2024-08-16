@@ -43,5 +43,8 @@
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/platform-express": "^10.2.2",
     "@novu/dal": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@novu/ee-auth": "workspace:*"
   }
 }

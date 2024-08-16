@@ -11,6 +11,14 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
       type: 'color',
     },
+    panelSection: {
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    panelSubsection: {
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
+      type: 'color',
+    },
     popover: {
       value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B20}' },
       type: 'color',
@@ -347,6 +355,20 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
   icon: {
     main: {
       value: { base: '{colors.mauve.20.light}', _dark: '{colors.mauve.20.dark}' },
+      type: 'color',
+    },
+  },
+  scrollbar: {
+    color: {
+      value: '{colors.scrollbar.thumb} {colors.scrollbar.track}',
+      type: 'color',
+    },
+    track: {
+      value: { base: '{colors.transparent}', _dark: '{colors.transparent}' },
+      type: 'color',
+    },
+    thumb: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
       type: 'color',
     },
   },

@@ -8,7 +8,6 @@ export const Aside = styled(
       display: 'flex !important',
       flexDirection: 'column',
       zIndex: 'auto',
-      backgroundColor: 'transparent',
       borderRight: 'none',
       width: '[272px]',
       height: 'full',

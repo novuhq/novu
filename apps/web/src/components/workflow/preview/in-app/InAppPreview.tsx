@@ -13,13 +13,14 @@ import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { InAppBasePreview } from './InAppBasePreview';
+import { IMessageButton, inAppMessageFromBridgeOutputs } from '@novu/shared';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
   const [payloadValue, setPayloadValue] = useState('{}');
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvironment({}, template?.bridge);
+  const { bridge } = useEnvironment({ bridge: template?.bridge });
   const path = useStepFormPath();
 
   const content = watch(`${path}.template.content`);
@@ -28,19 +29,28 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const processedVariables = useProcessVariables(variables);
 
   const stepId = watch(`${path}.uuid`);
-  const [bridgeContent, setBridgeContent] = useState({ content: '', ctaButtons: [] });
+  const [bridgeContent, setBridgeContent] = useState<{
+    content: string;
+    ctaButtons: Array<IMessageButton>;
+    subject?: string;
+    avatar?: string;
+  }>({
+    content: '',
+    ctaButtons: [],
+    subject: '',
+    avatar: '',
+  });
 
-  const {
-    mutateAsync,
-    isLoading: isBridgeLoading,
-    error: previewError,
-  } = useMutation(
+  const { mutateAsync, isLoading: isBridgeLoading } = useMutation(
     (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
     {
       onSuccess(data) {
+        const inAppMessage = inAppMessageFromBridgeOutputs(data.outputs);
         setBridgeContent({
-          content: data.outputs.body,
-          ctaButtons: [],
+          subject: inAppMessage.subject,
+          content: inAppMessage.content,
+          avatar: inAppMessage.avatar,
+          ctaButtons: inAppMessage.cta.action.buttons,
         });
       },
     }

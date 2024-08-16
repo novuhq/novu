@@ -24,6 +24,11 @@ export const StudioOnboarding = () => {
   const { data, isLoading } = useHealthCheck();
 
   useEffect(() => {
+    track('Add endpoint step started - [Onboarding - Signup]');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     /**
      * User already onboarded to Novu and have more than one workflow
      */
@@ -33,11 +38,6 @@ export const StudioOnboarding = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
-
-  useEffect(() => {
-    track('Add endpoint step started - [Onboarding - Signup]');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const welcomeMessage = `Welcome ${capitalizeFirstLetter(testUser?.firstName || '')}`.trim() + `. Let's get started!`;
 

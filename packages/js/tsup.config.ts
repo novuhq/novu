@@ -1,5 +1,6 @@
+import fs from 'fs';
+import path from 'path';
 import { compress } from 'esbuild-plugin-compress';
-import inlineImportPlugin from 'esbuild-plugin-inline-import';
 import { solidPlugin } from 'esbuild-plugin-solid';
 import postcss from 'postcss';
 import loadPostcssConfig from 'postcss-load-config';
@@ -11,6 +12,14 @@ const processCSS = async (css: string, filePath: string) => {
   const result = await postcss(plugins).process(css, { ...options, from: filePath });
 
   return result.css;
+};
+
+const buildCSS = async () => {
+  const cssFilePath = path.join(__dirname, './src/ui/index.css');
+  const destinationCssFilePath = path.join(__dirname, './dist/index.css');
+  const css = fs.readFileSync(cssFilePath, 'utf-8');
+  const processedCss = await processCSS(css, cssFilePath);
+  fs.writeFileSync(destinationCssFilePath, processedCss);
 };
 
 const runAfterLast =
@@ -27,27 +36,13 @@ const baseConfig: Options = {
   splitting: true,
   sourcemap: false,
   clean: true,
-  dts: true,
-  esbuildPlugins: [
-    //@ts-expect-error types
-    inlineImportPlugin({
-      filter: /^directcss:/,
-      transform: async (contents, args) => {
-        const processedCss = processCSS(contents, args.path);
-
-        return processedCss;
-      },
-    }),
-    solidPlugin(),
-  ],
+  esbuildPlugins: [solidPlugin()],
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
 };
 
 const baseModuleConfig: Options = {
   ...baseConfig,
   treeshake: true,
-  dts: false,
-  define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
   entry: {
     index: './src/index.ts',
     'ui/index': './src/ui/index.ts',
@@ -64,16 +59,16 @@ export default defineConfig((config: Options) => {
 
   const cjs: Options = {
     ...baseModuleConfig,
-    format: 'esm',
-    outDir: 'dist/esm',
-    tsconfig: 'tsconfig.json',
+    format: 'cjs',
+    outDir: 'dist/cjs',
+    tsconfig: 'tsconfig.cjs.json',
   };
 
   const esm: Options = {
     ...baseModuleConfig,
-    format: 'cjs',
-    outDir: 'dist/cjs',
-    tsconfig: 'tsconfig.cjs.json',
+    format: 'esm',
+    outDir: 'dist/esm',
+    tsconfig: 'tsconfig.json',
   };
 
   const umd: Options = {
@@ -96,7 +91,8 @@ export default defineConfig((config: Options) => {
         exclude: ['**/*.map'],
       }),
     ],
+    onSuccess: async () => await buildCSS(),
   };
 
-  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs'), 'tsc --noEmit'])(umd, esm, cjs);
+  return runAfterLast(['pnpm run build:declarations', copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
 });

@@ -54,9 +54,9 @@ export function CreateProviderInstanceSidebar({
   onIntegrationCreated: (id: string) => void;
 }) {
   const { colorScheme } = useMantineTheme();
-  const { environments, isLoading: areEnvironmentsLoading } = useEnvironment();
+  const { environments, isLoaded } = useEnvironment();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
-  const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
+  const isLoading = !isLoaded || areIntegrationsLoading;
   const queryClient = useQueryClient();
   const segment = useSegment();
   const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
@@ -130,7 +130,7 @@ export function CreateProviderInstanceSidebar({
         name: data.name,
         environmentId,
       });
-      successMessage('Instance configuration is created');
+      successMessage('Integration was created');
       onIntegrationCreated(integrationId ?? '');
 
       queryClient.refetchQueries({

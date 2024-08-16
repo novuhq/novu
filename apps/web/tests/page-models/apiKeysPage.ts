@@ -3,22 +3,15 @@ import { Page, expect } from '@playwright/test';
 export class ApiKeysPage {
   constructor(private page: Page) {}
 
-  static async goTo(page: Page, env = 'Development'): Promise<ApiKeysPage> {
-    const pageDataLoadedPromise = this.getPageDataLoadedPromise(page);
-    await page.goto(`/api-keys/${env}`);
-    await pageDataLoadedPromise;
+  static async goTo(page: Page): Promise<ApiKeysPage> {
+    const responsePromise = page.waitForResponse('**/environments/api-keys');
+    await page.goto(`/api-keys`);
+    await responsePromise;
 
     return new ApiKeysPage(page);
   }
 
-  private static getPageDataLoadedPromise(page: Page) {
-    const apiKeysPromise = page.waitForResponse('**/environments/api-keys');
-    const currentEnvironmentPromise = page.waitForResponse('**/environments/me');
-
-    return Promise.all([apiKeysPromise, currentEnvironmentPromise]);
-  }
-
-  getApiKeyContainer() {
+  async getApiKeyContainer() {
     return this.page.getByTestId('api-key');
   }
 

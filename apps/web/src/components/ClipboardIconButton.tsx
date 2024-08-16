@@ -3,7 +3,7 @@ import { LocalizedMessage } from '../types/LocalizedMessage';
 import { FC } from 'react';
 import { IconButton } from './IconButton';
 
-interface IClipboardIconButtonProps extends Pick<IIconProps, 'color' | 'size'> {
+interface IClipboardIconButtonProps extends Partial<Pick<IIconProps, 'color' | 'size'>> {
   handleCopy: () => void;
   isCopied: boolean;
   testId?: string;

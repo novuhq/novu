@@ -24,7 +24,7 @@ export class UserService {
 
     await this.organizationService.addMember(organization._id, user._id);
 
-    await this.environmentService.createEnvironment(organization._id, user._id);
+    await this.environmentService.createDevelopmentEnvironment(organization._id, user._id);
 
     return user;
   }

@@ -53,6 +53,7 @@ const messageSchema = new Schema<MessageDBModel>(
             },
             content: Schema.Types.String,
             resultContent: Schema.Types.String,
+            url: Schema.Types.String,
           },
         ],
         result: {
@@ -115,6 +116,7 @@ const messageSchema = new Schema<MessageDBModel>(
     },
     expireAt: Schema.Types.Date,
     tags: [Schema.Types.String],
+    avatar: Schema.Types.String,
   },
   schemaOptions
 );

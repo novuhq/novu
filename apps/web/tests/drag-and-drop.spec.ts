@@ -17,8 +17,6 @@ test('should drag and drop channel', async ({ page }) => {
   await workflowSidePanel.closeSidePanel();
 
   await workflowEditorPage.addChannelToWorkflow(ChannelType.IN_APP);
-  await waitForNetworkIdle(page);
-  await workflowEditorPage.addChannelToWorkflow(ChannelType.IN_APP);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP, true);
 });
 

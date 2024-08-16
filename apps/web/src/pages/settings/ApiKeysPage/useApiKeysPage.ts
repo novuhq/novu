@@ -1,9 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useClipboard } from '@mantine/hooks';
-
-import { getApiKeys } from '../../../api/environment';
-import { useEnvironment } from '../../../hooks';
+import { useEnvironment, useApiKeys } from '../../../hooks';
 import { useRegenerateSecretKeyModal } from './useRegenerateApiKeyModal';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
@@ -19,12 +16,12 @@ export const useApiKeysPage = () => {
   const clipboardSecretKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentId = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
-  const { data: secretKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const { environment } = useEnvironment();
 
-  const secretKey = secretKeys?.length ? secretKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
-  const environmentId = environment?._id ? environment._id : '';
+  const { data: secretKeys } = useApiKeys();
+
+  const secretKey = secretKeys?.length ? secretKeys[0].key : '';
 
   const [isSecretKeyMasked, setIsSecretKeyMasked] = useState<boolean>(true);
 
@@ -35,13 +32,12 @@ export const useApiKeysPage = () => {
   return {
     secretKey,
     environmentIdentifier,
-    environmentId,
+    environmentId: environment?._id,
     isSecretKeyMasked,
     toggleSecretKeyVisibility,
     clipboardSecretKey,
     clipboardEnvironmentIdentifier,
     clipboardEnvironmentId,
-    pageEnv: environment?.name ?? '',
     regenerationModalProps,
   };
 };

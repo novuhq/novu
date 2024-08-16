@@ -11,6 +11,10 @@ export type UpdateOrgBrandingPayloadType = {
   contentBackgroundValue?: string;
 };
 
+export function getOrganization() {
+  return api.get(`/v1/organizations/me`);
+}
+
 export function getOrganizations() {
   return api.get(`/v1/organizations`);
 }

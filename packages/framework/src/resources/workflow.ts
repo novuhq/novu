@@ -1,14 +1,7 @@
-import { ChannelStepEnum } from '../constants';
+import { ActionStepEnum, ChannelStepEnum } from '../constants';
 import { MissingSecretKeyError, StepAlreadyExistsError, WorkflowPayloadInvalidError } from '../errors';
-import {
-  channelStepSchemas,
-  delayChannelSchemas,
-  digestChannelSchemas,
-  emptySchema,
-  providerSchemas,
-} from '../schemas';
+import { channelStepSchemas, delayActionSchemas, digestActionSchemas, emptySchema, providerSchemas } from '../schemas';
 import type {
-  ActionStep,
   Awaitable,
   CancelEventTriggerResponse,
   CustomStep,
@@ -21,7 +14,11 @@ import type {
   EventTriggerResponse,
   Workflow,
   WorkflowOptions,
+  ChannelStep,
+  ActionStep,
+  StepOutput,
 } from '../types';
+import { WithPassthrough } from '../types/provider.types';
 import { EMOJI, getBridgeUrl, initApiClient, log } from '../utils';
 import { transformSchema, validateData } from '../validators';
 
@@ -31,11 +28,11 @@ import { transformSchema, validateData } from '../validators';
 export function workflow<
   T_PayloadSchema extends Schema,
   T_ControlSchema extends Schema,
-  T_Payload = FromSchema<T_PayloadSchema>,
-  T_Control = FromSchema<T_ControlSchema>
+  T_Payload extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
 >(
   workflowId: string,
-  execute: Execute<T_Payload, T_Control>,
+  execute: Execute<T_Payload, T_Controls>,
   workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema>
 ): Workflow<T_Payload> {
   const options = workflowOptions ? workflowOptions : {};
@@ -61,7 +58,7 @@ export function workflow<
       name: workflowId,
       to: event.to,
       payload: {
-        ...event?.payload,
+        ...validatedData,
       },
       ...(event.transactionId && { transactionId: event.transactionId }),
       ...(event.overrides && { overrides: event.overrides }),
@@ -114,52 +111,65 @@ export function workflow<
       schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
-    execute: execute as Execute<any, any>,
+    tags: options.tags || [],
+    execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 
   execute({
     payload: {} as T_Payload,
     subscriber: {},
     environment: {},
-    controls: {} as T_Control,
+    controls: {} as T_Controls,
+    input: {} as T_Controls,
     step: {
-      // eslint-disable-next-line multiline-comment-style
-      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-      push: discoverStepFactory(newWorkflow, 'push', channelStepSchemas.push.output, channelStepSchemas.push.result),
-      // eslint-disable-next-line multiline-comment-style
-      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-      chat: discoverStepFactory(newWorkflow, 'chat', channelStepSchemas.chat.output, channelStepSchemas.chat.result),
-      // eslint-disable-next-line multiline-comment-style
-      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-      email: discoverStepFactory(
+      push: discoverChannelStepFactory(
         newWorkflow,
-        'email',
+        ChannelStepEnum.PUSH,
+        channelStepSchemas.push.output,
+        channelStepSchemas.push.result
+      ),
+      chat: discoverChannelStepFactory(
+        newWorkflow,
+        ChannelStepEnum.CHAT,
+        channelStepSchemas.chat.output,
+        channelStepSchemas.chat.result
+      ),
+      email: discoverChannelStepFactory(
+        newWorkflow,
+        ChannelStepEnum.EMAIL,
         channelStepSchemas.email.output,
         channelStepSchemas.email.result
       ),
-      // eslint-disable-next-line multiline-comment-style
-      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-      sms: discoverStepFactory(newWorkflow, 'sms', channelStepSchemas.sms.output, channelStepSchemas.sms.result),
-      // eslint-disable-next-line multiline-comment-style
-      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-      inApp: discoverStepFactory(
+      sms: discoverChannelStepFactory(
         newWorkflow,
-        'in_app',
+        ChannelStepEnum.SMS,
+        channelStepSchemas.sms.output,
+        channelStepSchemas.sms.result
+      ),
+      inApp: discoverChannelStepFactory(
+        newWorkflow,
+        ChannelStepEnum.IN_APP,
         channelStepSchemas.in_app.output,
         channelStepSchemas.in_app.result
       ),
-      digest: discoverStepFactory(newWorkflow, 'digest', digestChannelSchemas.output, digestChannelSchemas.result),
-      delay: discoverStepFactory(newWorkflow, 'delay', delayChannelSchemas.output, delayChannelSchemas.result),
-      custom: discoverCustomStepFactory(newWorkflow, 'custom'),
-    },
+      digest: discoverActionStepFactory(
+        newWorkflow,
+        ActionStepEnum.DIGEST,
+        digestActionSchemas.output,
+        digestActionSchemas.result
+      ),
+      delay: discoverActionStepFactory(
+        newWorkflow,
+        ActionStepEnum.DELAY,
+        delayActionSchemas.output,
+        delayActionSchemas.result
+      ),
+      custom: discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
+    } as never,
+    // eslint-disable-next-line promise/always-return
+  }).then(() => {
+    prettyPrintDiscovery(newWorkflow);
   });
-
-  prettyPrintDiscovery(newWorkflow);
 
   return {
     trigger,
@@ -167,12 +177,13 @@ export function workflow<
   };
 }
 
-function discoverStepFactory<T, U>(
+function discoverChannelStepFactory(
   targetWorkflow: DiscoverWorkflowOutput,
-  type: StepType,
+  type: ChannelStepEnum,
   outputSchema: Schema,
   resultSchema: Schema
-): ActionStep<T, U> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): ChannelStep<ChannelStepEnum, any, any> {
   return async (stepId, resolve, options = {}) => {
     const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
 
@@ -195,7 +206,7 @@ function discoverStepFactory<T, U>(
         schema: transformSchema(resultSchema),
         unknownSchema: resultSchema,
       },
-      resolve,
+      resolve: resolve as (controls: Record<string, unknown>) => Awaitable<Record<string, unknown>>,
       code: resolve.toString(),
       options,
       providers: [],
@@ -203,14 +214,67 @@ function discoverStepFactory<T, U>(
 
     discoverStep(targetWorkflow, stepId, step);
 
-    if (
-      Object.values(ChannelStepEnum).includes(type as ChannelStepEnum) &&
-      Object.keys(options.providers || {}).length > 0
-    ) {
+    if (Object.keys(options.providers || {}).length > 0) {
       discoverProviders(step, type as ChannelStepEnum, options.providers || {});
     }
 
-    return undefined as any;
+    return {
+      _ctx: {
+        timestamp: Date.now(),
+        state: {
+          status: 'pending',
+          error: false,
+        },
+      },
+    };
+  };
+}
+
+function discoverActionStepFactory(
+  targetWorkflow: DiscoverWorkflowOutput,
+  type: ActionStepEnum,
+  outputSchema: Schema,
+  resultSchema: Schema
+  // TODO: fix typing for `resolve` to use generic typings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): ActionStep<any, any> {
+  return async (stepId, resolve, options = {}) => {
+    const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
+
+    discoverStep(targetWorkflow, stepId, {
+      stepId,
+      type,
+      inputs: {
+        schema: transformSchema(controlSchema),
+        unknownSchema: controlSchema,
+      },
+      controls: {
+        schema: transformSchema(controlSchema),
+        unknownSchema: controlSchema,
+      },
+      outputs: {
+        schema: transformSchema(outputSchema),
+        unknownSchema: outputSchema,
+      },
+      results: {
+        schema: transformSchema(resultSchema),
+        unknownSchema: resultSchema,
+      },
+      resolve: resolve as (controls: Record<string, unknown>) => Awaitable<Record<string, unknown>>,
+      code: resolve.toString(),
+      options,
+      providers: [],
+    });
+
+    return {
+      _ctx: {
+        timestamp: Date.now(),
+        state: {
+          status: 'pending',
+          error: false,
+        },
+      },
+    };
   };
 }
 
@@ -225,7 +289,16 @@ function discoverStep(targetWorkflow: DiscoverWorkflowOutput, stepId: string, st
 function discoverProviders(
   step: DiscoverStepOutput,
   channelType: ChannelStepEnum,
-  providers: Record<string, (payload: unknown) => Awaitable<unknown>>
+  providers: Record<
+    string,
+    ({
+      controls,
+      outputs,
+    }: {
+      controls: Record<string, unknown>;
+      outputs: Record<string, unknown>;
+    }) => Awaitable<WithPassthrough<Record<string, unknown>>>
+  >
 ): void {
   const channelSchemas = providerSchemas[channelType];
 
@@ -270,13 +343,23 @@ function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type:
         schema: transformSchema(outputSchema),
         unknownSchema: outputSchema,
       },
-      resolve,
+      resolve: resolve as (controls: Record<string, unknown>) => Awaitable<Record<string, unknown>>,
       code: resolve.toString(),
       options,
       providers: [],
     });
 
-    return undefined as any;
+    return {
+      _ctx: {
+        timestamp: Date.now(),
+        state: {
+          status: 'pending',
+          error: false,
+        },
+      },
+      // TODO: fix typing for `resolve` to use generic typings
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as Awaited<StepOutput<any>>;
   };
 }
 
@@ -284,13 +367,16 @@ function prettyPrintDiscovery(discoveredWorkflow: DiscoverWorkflowOutput): void 
   // eslint-disable-next-line no-console
   console.log(`\n${log.bold(log.underline('Discovered workflowId:'))} '${discoveredWorkflow.workflowId}'`);
   discoveredWorkflow.steps.forEach((step, i) => {
-    const prefix = i === discoveredWorkflow.steps.length - 1 ? '└' : '├';
+    const isLastStep = i === discoveredWorkflow.steps.length - 1;
+    const prefix = isLastStep ? '└' : '├';
     // eslint-disable-next-line no-console
     console.log(`${prefix} ${EMOJI.STEP} Discovered stepId: '${step.stepId}'\tType: '${step.type}'`);
     step.providers.forEach((provider, providerIndex) => {
-      const providerPrefix = providerIndex === step.providers.length - 1 ? '└' : '├';
+      const isLastProvider = providerIndex === step.providers.length - 1;
+      const stepPrefix = isLastStep ? ' ' : '│';
+      const providerPrefix = isLastProvider ? '└' : '├';
       // eslint-disable-next-line no-console
-      console.log(`  ${providerPrefix} ${EMOJI.PROVIDER} Discovered provider: '${provider.type}'`);
+      console.log(`${stepPrefix} ${providerPrefix} ${EMOJI.PROVIDER} Discovered provider: '${provider.type}'`);
     });
   });
 }

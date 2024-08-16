@@ -1,98 +1,58 @@
 import type {
-  FetchCountArgs,
-  FetchFeedArgs,
-  MarkNotificationAsArgs,
-  MarkAllNotificationsAsArgs,
-  MarkNotificationsAsArgs,
-  MarkNotificationActionAsArgs,
+  CountArgs,
+  ListNotificationsArgs,
   Notification,
-  RemoveNotificationArgs,
-  RemoveAllNotificationsArgs,
-  RemoveNotificationsArgs,
-} from '../feeds';
+  ListNotificationsResponse,
+  CountResponse,
+  ReadArgs,
+  ArchivedArgs,
+  CompleteArgs,
+  RevertArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+} from '../notifications';
 import { Preference } from '../preferences/preference';
-import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
+import { UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
-import { PaginatedResponse, Session, WebSocketEvent } from '../types';
+import { Session, WebSocketEvent } from '../types';
 
-type NovuPendingEvent<A, O = undefined> = {
+type NovuPendingEvent<A, D = undefined> = {
   args: A;
-  optimistic?: O;
+  data?: D;
 };
-type NovuSuccessEvent<A, R> = Pick<NovuPendingEvent<A>, 'args'> & {
-  result: R;
+type NovuResolvedEvent<A, D> = NovuPendingEvent<A, D> & {
+  error?: unknown;
 };
-type NovuErrorEvent<A, F = undefined> = Pick<NovuPendingEvent<A>, 'args'> & {
-  error: unknown;
-  fallback?: F;
-};
-// three possible status of the event: pending, success, error
-type EventName<T extends string> = `${T}.pending` | `${T}.success` | `${T}.error`;
+// two possible status of the event: pending, resolved
+type EventName<T extends string> = `${T}.pending` | `${T}.resolved`;
 // infer the "status" of the event based on the string `module.action.status`
 type EventStatus<T extends string> = `${T extends `${infer _}.${infer __}.${infer V}` ? V : never}`;
 // based on the key it returns the event pending, success or error object
-type EventObject<
-  K extends string,
-  ARGS,
-  RESULT,
-  OPTIMISTIC = undefined,
-  FALLBACK = undefined,
-  EVENT_STATUS = EventStatus<K>
-> = EVENT_STATUS extends 'pending'
-  ? NovuPendingEvent<ARGS, OPTIMISTIC>
-  : EVENT_STATUS extends 'success'
-  ? NovuSuccessEvent<ARGS, RESULT>
-  : NovuErrorEvent<ARGS, FALLBACK>;
+type EventObject<K extends string, ARGS, DATA, EVENT_STATUS = EventStatus<K>> = EVENT_STATUS extends 'pending'
+  ? NovuPendingEvent<ARGS, DATA>
+  : NovuResolvedEvent<ARGS, DATA>;
 
-type BaseEvents<T extends string, ARGS, RESULT, OPTIMISTIC = undefined, FALLBACK = undefined> = {
-  [key in `${EventName<T>}`]: EventObject<key, ARGS, RESULT, OPTIMISTIC, FALLBACK>;
+type BaseEvents<T extends string, ARGS, DATA> = {
+  [key in `${EventName<T>}`]: EventObject<key, ARGS, DATA>;
 };
 
 type SessionInitializeEvents = BaseEvents<'session.initialize', InitializeSessionArgs, Session>;
-type FeedFetchEvents = BaseEvents<'feeds.fetch', FetchFeedArgs, PaginatedResponse<Notification>>;
-type FeedFetchCountEvents = BaseEvents<'feeds.fetch_count', FetchCountArgs, number>;
-type FeedMarkNotificationsAsEvents = BaseEvents<
-  'feeds.mark_notifications_as',
-  MarkNotificationsAsArgs,
-  Notification[],
-  Notification[],
+type NotificationsFetchEvents = BaseEvents<'notifications.list', ListNotificationsArgs, ListNotificationsResponse>;
+type NotificationsFetchCountEvents = BaseEvents<'notifications.count', CountArgs, CountResponse>;
+type NotificationReadEvents = BaseEvents<'notification.read', ReadArgs, Notification>;
+type NotificationUnreadEvents = BaseEvents<'notification.unread', UnreadArgs, Notification>;
+type NotificationArchiveEvents = BaseEvents<'notification.archive', ArchivedArgs, Notification>;
+type NotificationUnarchiveEvents = BaseEvents<'notification.unarchive', UnarchivedArgs, Notification>;
+type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action', CompleteArgs, Notification>;
+type NotificationRevertActionEvents = BaseEvents<'notification.revert_action', RevertArgs, Notification>;
+type NotificationsReadAllEvents = BaseEvents<'notifications.read_all', { tags?: string[] }, Notification[]>;
+type NotificationsArchivedAllEvents = BaseEvents<'notifications.archive_all', { tags?: string[] }, Notification[]>;
+type NotificationsReadArchivedAllEvents = BaseEvents<
+  'notifications.archive_all_read',
+  { tags?: string[] },
   Notification[]
 >;
-type FeedMarkAllNotificationsAsEvents = BaseEvents<
-  'feeds.mark_all_notifications_as',
-  MarkAllNotificationsAsArgs,
-  number
->;
-type FeedRemoveNotificationsEvents = BaseEvents<
-  'feeds.remove_notifications',
-  RemoveNotificationsArgs,
-  Notification[] | undefined,
-  Notification[],
-  Notification[]
->;
-type FeedRemoveAllNotificationsEvents = BaseEvents<'feeds.remove_all_notifications', RemoveAllNotificationsArgs, void>;
-type NotificationMarkAsEvents = BaseEvents<
-  'notification.mark_as',
-  MarkNotificationAsArgs,
-  Notification,
-  Notification,
-  Notification
->;
-type NotificationMarkActionAsEvents = BaseEvents<
-  'notification.mark_action_as',
-  MarkNotificationActionAsArgs,
-  Notification,
-  Notification,
-  Notification
->;
-type NotificationRemoveEvents = BaseEvents<
-  'notification.remove',
-  RemoveNotificationArgs,
-  Notification | undefined,
-  Notification,
-  Notification
->;
-type PreferencesFetchEvents = BaseEvents<'preferences.fetch', FetchPreferencesArgs, Preference[]>;
+type PreferencesFetchEvents = BaseEvents<'preferences.list', undefined, Preference[]>;
 type PreferencesUpdateEvents = BaseEvents<'preferences.update', UpdatePreferencesArgs, Preference>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
@@ -112,29 +72,40 @@ type SocketEvents = {
  * The event name consists of second pattern: module.action.status
  * - module: the name of the module
  * - action: the action that is being performed
- * - status: the status of the action, could be pending, success or error
+ * - status: the status of the action, could be pending or resolved
  *
  * Each event has a corresponding payload that is associated with the event:
  * - pending: the args that are passed to the action and the optional optimistic value
- * - success: the args that are passed to the action and the result of the action
- * - error: the args that are passed to the action, the error that is thrown, and the optional fallback value
+ * - resolved: the args that are passed to the action and the result of the action or the error that is thrown
  */
 export type Events = SessionInitializeEvents &
-  FeedFetchEvents &
-  FeedFetchCountEvents &
-  FeedMarkNotificationsAsEvents &
-  FeedMarkAllNotificationsAsEvents &
-  FeedRemoveNotificationsEvents &
-  FeedRemoveAllNotificationsEvents &
-  NotificationMarkAsEvents &
-  NotificationMarkActionAsEvents &
-  NotificationRemoveEvents &
+  NotificationsFetchEvents & {
+    'notifications.list.updated': { data: ListNotificationsResponse };
+  } & NotificationsFetchCountEvents &
   PreferencesFetchEvents &
   PreferencesUpdateEvents &
   SocketConnectEvents &
-  SocketEvents;
+  SocketEvents &
+  NotificationReadEvents &
+  NotificationUnreadEvents &
+  NotificationArchiveEvents &
+  NotificationUnarchiveEvents &
+  NotificationCompleteActionEvents &
+  NotificationRevertActionEvents &
+  NotificationsReadAllEvents &
+  NotificationsArchivedAllEvents &
+  NotificationsReadArchivedAllEvents;
 
 export type EventNames = keyof Events;
 export type SocketEventNames = keyof SocketEvents;
+export type NotificationEvents = keyof (NotificationReadEvents &
+  NotificationUnreadEvents &
+  NotificationArchiveEvents &
+  NotificationUnarchiveEvents &
+  NotificationCompleteActionEvents &
+  NotificationRevertActionEvents &
+  NotificationsReadAllEvents &
+  NotificationsArchivedAllEvents &
+  NotificationsReadArchivedAllEvents);
 
 export type EventHandler<T = unknown> = (event: T) => void;

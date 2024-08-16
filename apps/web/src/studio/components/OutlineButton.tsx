@@ -19,6 +19,7 @@ export const OutlineButton: FC<OutlineButtonProps> = ({ className, children, ...
             '&, & svg': { color: 'typography.text.main !important', fill: 'typography.text.main !important' },
             WebkitTextFillColor: 'unset !important',
           },
+          bg: 'transparent',
         }),
         className
       )}

@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';
 import { Group } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import { useSubscription } from '../utils/hooks/useSubscription';
+import { useSubscription } from '../hooks/useSubscription';
 import React, { useState, useMemo } from 'react';
 import { WARNING_LIMIT_DAYS, COLOR_WARNING, pluralizeDaysLeft } from '../utils/freeTrial.constants';
 import { ContactSalesModal } from './ContactSalesModal';

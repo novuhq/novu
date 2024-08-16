@@ -1,135 +1,103 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../../../studio/components/workflows/layout';
-import { WorkflowStepEditorContentPanel } from '../../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
-import { WorkflowStepEditorControlsPanel } from '../../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTemplateController } from '../components/useTemplateController';
-import { api } from '../../../api';
-import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
-import { errorMessage, successMessage } from '../../../utils/notifications';
-import { IconPlayArrow } from '@novu/novui/icons';
-import { ROUTES } from '../../../constants/routes';
 import { parseUrl } from '../../../utils/routeUtils';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { api } from '../../../api/api.client';
+import { ROUTES } from '../../../constants/routes';
+import { errorMessage, IconPlayArrow, successMessage } from '@novu/design-system';
+import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
+import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
+import { StepIcon, WorkflowsPageTemplate } from '../../../studio/components/workflows/layout/WorkflowsPageTemplate';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
-import { useTelemetry } from '../../../hooks/useNovuAPI';
 
 export const WorkflowsStepEditorPageV2 = () => {
-  const track = useTelemetry();
   const navigate = useNavigate();
-  const [controls, setStepControls] = useState({});
-  const [payload, setPayload] = useState({});
-  const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
-  const { template: workflow } = useTemplateController(templateId);
-  const step = (workflow?.steps as any)?.find((item) => item.stepId === stepId);
+  const { templateId = '', stepId: paramStepId = '' } = useParams<{ templateId: string; stepId: string }>();
+  const { template } = useTemplateController(templateId);
+  const currentWorkflow = template;
+  const currentStepId = paramStepId;
 
-  const { data: controlVariables, isInitialLoading } = useQuery(
-    ['controls', workflow?.name, stepId],
-    () => api.get(`/v1/bridge/controls/${workflow?.name}/${stepId}`),
+  let step = (currentWorkflow?.steps as any)?.find((item) => item.stepId === currentStepId);
+  step = step?.template ? step : { ...step, template: step };
+
+  const workflowId = (currentWorkflow?.triggers as any)?.[0]?.identifier;
+  const {
+    data: controlVariables,
+    isInitialLoading,
+    refetch,
+  } = useQuery(
+    ['controls', workflowId, currentStepId],
+    () => api.get(`/v1/bridge/controls/${workflowId}/${currentStepId}`),
     {
-      enabled: !!workflow,
+      enabled: !!currentWorkflow,
     }
+  );
+
+  const {
+    preview,
+    isLoading: loadingPreview,
+    error,
+    controls,
+    setControls,
+    onControlsChange,
+  } = useControlsHandler(
+    (data) => api.post('/v1/bridge/preview/' + workflowId + '/' + currentStepId, data),
+    workflowId as string,
+    currentStepId,
+    'dashboard'
   );
 
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
-    api.put('/v1/bridge/controls/' + workflow?.name + '/' + stepId, { variables: data })
+    api.put('/v1/bridge/controls/' + workflowId + '/' + currentStepId, { variables: data })
   );
 
-  const handleTestClick = () => {
-    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
+  useEffect(() => {
+    if (!currentWorkflow) return;
+    if (!isInitialLoading) {
+      setControls(controlVariables?.controls || controlVariables?.inputs);
+    }
+  }, [currentWorkflow, isInitialLoading, controlVariables, setControls]);
+
+  const handleTestClick = async () => {
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { workflowId: templateId }));
   };
 
-  const {
-    data: preview,
-    isLoading: loadingPreview,
-    mutateAsync: renderStepPreview,
-    error,
-  } = useMutation<any, any, any>((data) => api.post('/v1/bridge/preview/' + workflow?.name + '/' + stepId, data));
-
-  const title = step?.stepId;
-
-  useEffect(() => {
-    if (!workflow) return;
-
-    if (!isInitialLoading) {
-      setStepControls(controlVariables?.controls);
-    }
-  }, [workflow, isInitialLoading, controlVariables, setStepControls]);
-
-  useEffect(() => {
-    if (!workflow) return;
-
-    if (isInitialLoading) return;
-
-    renderStepPreview({
-      inputs: controls,
-      controls,
-      payload,
-    });
-  }, [controls, payload, renderStepPreview, workflow, isInitialLoading]);
-
-  function onControlsChange(type: string, form: any, id?: string) {
-    switch (type) {
-      case 'step':
-        track('Step Controls Changes', {
-          key: id,
-          origin: 'dashboard',
-        });
-        setStepControls(form.formData);
-        break;
-      case 'payload':
-        setPayload(form.formData);
-        break;
-    }
-  }
-
-  async function onControlsSave() {
+  const onControlsSave = async () => {
     try {
       await saveControls(controls as any);
+      refetch();
       successMessage('Successfully saved controls');
     } catch (err: unknown) {
       if (err instanceof Error) {
         errorMessage(err?.message || 'Failed to save controls');
       }
     }
-  }
+  };
 
-  function Icon({ size }) {
-    const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
-    if (!IconElement) {
-      return null;
-    }
-
-    return (
-      <>
-        <IconElement size={size} />
-      </>
-    );
-  }
+  if (isInitialLoading || !template) return null;
 
   return (
     <WorkflowsPageTemplate
-      title={title}
-      icon={<Icon size="32" />}
+      title={step.stepId}
+      icon={<StepIcon type={step?.template?.type} size="32" />}
       actions={
-        <>
-          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
-            Test workflow
-          </OutlineButton>
-        </>
+        <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+          Test workflow
+        </OutlineButton>
       }
     >
-      <WorkflowsPanelLayout>
-        <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
-        <WorkflowStepEditorControlsPanel
-          isLoadingSave={isSavingControls}
-          onSave={onControlsSave}
-          step={step?.template}
-          workflow={workflow}
-          defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
-          onChange={onControlsChange}
-        />
-      </WorkflowsPanelLayout>
+      <WorkflowsStepEditor
+        workflow={template}
+        step={{ stepId: step.stepId, ...step.template }}
+        preview={preview}
+        loadingPreview={loadingPreview}
+        isSavingControls={isSavingControls}
+        error={error}
+        defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
+        onControlsChange={onControlsChange}
+        onControlsSave={onControlsSave}
+      />
     </WorkflowsPageTemplate>
   );
 };

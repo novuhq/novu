@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
+import { HttpResponseHeaderKeysEnum } from '@novu/shared';
 import { CacheService } from '@novu/application-generic';
 import { expect } from 'chai';
-import { HttpResponseHeaderKeysEnum } from './types';
 import { DOCS_LINK } from './idempotency.interceptor';
 
 process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state

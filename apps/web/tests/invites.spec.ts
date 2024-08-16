@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { test } from './utils/baseTest';
 import { AuthLoginPage } from './page-models/authLoginPage';
 import { HeaderPage } from './page-models/headerPage';
@@ -25,14 +25,17 @@ test.describe('Invites', () => {
     session = newSession;
   });
 
-  test('invite a new user to the organization', async ({ context, page }) => {
+  test('invite a new user to the organization', async ({ browser, page }) => {
     const inviteeEmail = randomEmail();
     const invitation = await inviteUser(session, inviteeEmail);
     await logout(page, session);
 
-    await page.goto(`/auth/invitation/${invitation.token}`);
+    const newContext = await browser.newContext();
+    const pageForInvitedUser = await newContext.newPage();
 
-    const signUpPage = new SignUpPage(page);
+    await pageForInvitedUser.goto(`/auth/invitation/${invitation.token}`);
+
+    const signUpPage = new SignUpPage(pageForInvitedUser);
     await signUpPage.getFullNameLocator().fill('Invited User');
     await signUpPage.getPasswordLocator().fill(testPassword());
     await signUpPage.getAcceptTermsAndConditionsCheckMark().click();
@@ -44,24 +47,26 @@ test.describe('Invites', () => {
 
     await signUpPage.assertNavigationPath('/get-started**');
 
-    const sidebarPage = await SidebarPage.goTo(page);
-    const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
-    expect(orgSwitchValue).toBe(invitation.organization.name.toLowerCase());
+    const sidebarPage = await SidebarPage.goTo(pageForInvitedUser);
+    await expect(sidebarPage.getOrganizationSwitch()).toHaveValue(new RegExp(invitation.organization.name, 'i'));
   });
 
-  test('invite an existing user to the organization', async ({ context, page }) => {
+  test('invite an existing user to the organization', async ({ browser, page }) => {
     const invitation = await inviteUser(session, testUser.email);
     await logout(page, session);
 
-    await page.goto(`/auth/invitation/${invitation.token}`);
+    const newContext = await browser.newContext();
+    const pageForInvitedUser = await newContext.newPage();
 
-    const loginPage = new AuthLoginPage(page);
+    await pageForInvitedUser.goto(`/auth/invitation/${invitation.token}`);
+
+    const loginPage = new AuthLoginPage(pageForInvitedUser);
     await expect(loginPage.getEmailLocator()).toHaveValue(testUser.email);
     await loginPage.setPasswordTo(testPassword());
     await loginPage.clickSignInButton();
 
-    await new HeaderPage(page).clickAvatar();
-    const orgSwitch = new SidebarPage(page).getOrganizationSwitch();
+    await new HeaderPage(pageForInvitedUser).clickAvatar();
+    const orgSwitch = new SidebarPage(pageForInvitedUser).getOrganizationSwitch();
     await orgSwitch.focus();
     const orgOptions = orgSwitch.page().getByRole('option', { name: invitation.organization.name });
     await expect(orgOptions).toBeVisible();

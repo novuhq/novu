@@ -1,32 +1,31 @@
 import { BaseModule } from '../base-module';
-import { PreferenceLevel } from '../types';
-import { mapPreference, updatePreference } from './helpers';
+import { updatePreference } from './helpers';
 import { Preference } from './preference';
-import type { FetchPreferencesArgs, UpdatePreferencesArgs } from './types';
+import type { UpdatePreferencesArgs } from './types';
+import { Result } from '../types';
 
 export class Preferences extends BaseModule {
-  async fetch({ level = PreferenceLevel.TEMPLATE }: FetchPreferencesArgs = {}): Promise<Preference[]> {
+  async list(): Result<Preference[]> {
     return this.callWithSession(async () => {
-      const args = { level };
       try {
-        this._emitter.emit('preferences.fetch.pending', { args });
+        this._emitter.emit('preferences.list.pending');
 
-        const response = await this._apiService.getPreferences({ level });
-        const modifiedResponse: Preference[] = response.map((el) => new Preference(mapPreference(el)));
+        const response = await this._inboxService.fetchPreferences();
+        const modifiedResponse: Preference[] = response.map((el) => new Preference(el));
 
-        this._emitter.emit('preferences.fetch.success', { args, result: modifiedResponse });
+        this._emitter.emit('preferences.list.resolved', { args: undefined, data: modifiedResponse });
 
-        return modifiedResponse;
+        return { data: modifiedResponse };
       } catch (error) {
-        this._emitter.emit('preferences.fetch.error', { args, error });
+        this._emitter.emit('preferences.list.resolved', { args: undefined, error });
         throw error;
       }
     });
   }
 
-  async update(args: UpdatePreferencesArgs): Promise<Preference> {
+  async update(args: UpdatePreferencesArgs): Result<Preference> {
     return this.callWithSession(async () =>
-      updatePreference({ emitter: this._emitter, apiService: this._apiService, args })
+      updatePreference({ emitter: this._emitter, apiService: this._inboxService, args })
     );
   }
 }

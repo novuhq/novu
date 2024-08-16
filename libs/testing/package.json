@@ -21,7 +21,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@clerk/clerk-sdk-node": "^5.0.9",
+    "@clerk/clerk-sdk-node": "^5.0.19",
     "@clerk/types": "^4.6.1",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",
@@ -50,6 +50,7 @@
   "devDependencies": {
     "@types/async": "^3.2.1",
     "@types/node": "^20.14.10",
+    "@types/supertest": "^6.0.2",
     "@typescript-eslint/parser": "^4.14.2",
     "apollo-boost": "0.4.9",
     "ts-node": "~10.9.1",

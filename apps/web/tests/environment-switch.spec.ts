@@ -2,30 +2,20 @@ import { expect } from '@playwright/test';
 import { test } from './utils/baseTest';
 import { initializeSession } from './utils/browser';
 import { Environment, SidebarPage } from './page-models/sidebarPage';
-import { getAuthToken } from './utils/authUtils';
-import { SessionData } from './utils/plugins';
 
-let session: SessionData;
 test.beforeEach(async ({ page }) => {
-  ({ session } = await initializeSession(page));
+  await initializeSession(page);
 });
 
-test('should display switch when page is loaded', async ({ page }) => {
+test('should switch between development and production environment via the environment select', async ({ page }) => {
   const sidebarPage = await SidebarPage.goTo(page);
-  const envSwitch = sidebarPage.getEnvironmentSwitch();
+  const envSwitch = await sidebarPage.getEnvironmentSwitch();
 
-  await expect(envSwitch).toBeVisible();
-  await envSwitch.click();
+  expect(envSwitch).toHaveValue(Environment.Development);
 
-  await expect(envSwitch.page().getByRole('option', { name: Environment.Development })).toBeVisible();
-  await expect(envSwitch.page().getByRole('option', { name: Environment.Production })).toBeVisible();
-});
-
-test('should use different jwt token after switches', async ({ page }) => {
-  const originToken = session.token;
-  const sidebarPage = await SidebarPage.goTo(page);
   await sidebarPage.toggleToProduction();
+  await expect(sidebarPage.getEnvironmentSwitch()).toHaveValue(Environment.Production);
 
-  const newToken = await getAuthToken(page);
-  expect(newToken).not.toBe(originToken);
+  await sidebarPage.toggleToDevelopment();
+  await expect(sidebarPage.getEnvironmentSwitch()).toHaveValue(Environment.Development);
 });

@@ -18,7 +18,7 @@ export const THEME_TITLE_LOOKUP: Record<ColorSchemePreferenceEnum, string> = {
 export function useLocalThemePreference() {
   const [themeStatus, setThemeStatus] = useLocalStorage<ColorSchemePreferenceEnum>({
     key: STORAGE_KEY,
-    defaultValue: ColorSchemePreferenceEnum.SYSTEM,
+    defaultValue: ColorSchemePreferenceEnum.DARK,
     getInitialValueInEffect: true,
   });
 

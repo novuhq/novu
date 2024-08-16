@@ -2,7 +2,7 @@ import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
-import { FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
+import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -33,7 +33,9 @@ import type {
   ValidationError,
   Workflow,
 } from './types';
-import { EMOJI, log } from './utils';
+import { WithPassthrough } from './types/provider.types';
+import { EMOJI, log, sanitizeHtmlInObject } from './utils';
+import { cloneData } from './utils/clone.utils';
 import { transformSchema, validateData } from './validators';
 
 /**
@@ -153,10 +155,11 @@ export class Client {
    * @returns mocked data
    */
   private mock(schema: Schema): Record<string, unknown> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return JSONSchemaFaker.generate(transformSchema(schema) as any) as Record<string, unknown>;
   }
 
-  private async validate<T>(
+  private async validate<T extends Record<string, unknown>>(
     data: T,
     schema: Schema,
     component: 'event' | 'step' | 'provider',
@@ -252,17 +255,21 @@ export class Client {
     }
   }
 
-  private executeStepFactory<T, U>(event: Event, setResult: (result: any) => void): ActionStep<T, U> {
+  private executeStepFactory<T_Outputs extends Record<string, unknown>, T_Result extends Record<string, unknown>>(
+    event: Event,
+    setResult: (result: Pick<ExecuteOutput, 'outputs' | 'providers' | 'options'>) => void
+  ): ActionStep<T_Outputs, T_Result> {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
-      const eventClone = clone<Event>(event);
+      const eventClone = cloneData(event);
       const controls = await this.createStepControls(step, eventClone);
       const isPreview = event.action === 'preview';
 
-      if (!isPreview && (await this.shouldSkip(options?.skip, controls))) {
-        const skippedResult = { options: { skip: true } };
+      if (!isPreview && (await this.shouldSkip(options?.skip as typeof step.options.skip, controls))) {
+        const skippedResult: Omit<ExecuteOutput, 'metadata'> = { options: { skip: true }, outputs: {}, providers: {} };
         setResult(skippedResult);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return {} as any;
       }
 
@@ -270,10 +277,12 @@ export class Client {
       const executeStepHandler = this.executeStep.bind(this);
       const handler = isPreview ? previewStepHandler : executeStepHandler;
 
-      const stepResult = await handler(event, {
+      let stepResult = await handler(event, {
         ...step,
         providers: step.providers.map((provider) => {
-          const providerResolve = options?.providers?.[provider.type];
+          // TODO: Update return type to include ChannelStep and fix typings
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const providerResolve = (options as any)?.providers?.[provider.type] as typeof provider.resolve;
 
           if (!providerResolve) {
             throw new ProviderNotFoundError(provider.type);
@@ -284,18 +293,34 @@ export class Client {
             resolve: providerResolve,
           };
         }),
-        resolve: stepResolve,
+        resolve: stepResolve as typeof step.resolve,
       });
 
-      if (stepId === event.stepId) {
-        setResult(stepResult);
+      if (Object.values(ChannelStepEnum).includes(step.type as ChannelStepEnum)) {
+        // Sanitize the outputs to avoid XSS attacks via Channel content.
+        stepResult = {
+          ...stepResult,
+          outputs: sanitizeHtmlInObject(stepResult.outputs),
+        };
       }
 
-      return stepResult.outputs as any;
+      if (stepId === event.stepId) {
+        setResult({
+          ...stepResult,
+          options: {
+            skip: false,
+          },
+        });
+      }
+
+      return stepResult.outputs;
     };
   }
 
-  private async shouldSkip(skip: Skip<any> | undefined, controls: any): Promise<boolean> {
+  private async shouldSkip<T_Controls extends Record<string, unknown>>(
+    skip: Skip<T_Controls> | undefined,
+    controls: T_Controls
+  ): Promise<boolean> {
     if (!skip) {
       return false;
     }
@@ -317,21 +342,17 @@ export class Client {
 
     const startTime = process.hrtime();
 
-    let result: {
-      outputs: Record<string, unknown>;
-      providers: Record<string, unknown>;
-      options: Record<string, unknown>;
-    } = {
+    let result: Omit<ExecuteOutput, 'metadata'> = {
       outputs: {},
       providers: {},
-      options: {},
+      options: { skip: false },
     };
     let resolveEarlyExit: (value?: unknown) => void;
     const earlyExitPromise = new Promise((resolve) => {
       resolveEarlyExit = resolve;
     });
 
-    const setResult = (stepResult: any): void => {
+    const setResult = (stepResult: Omit<ExecuteOutput, 'metadata'>): void => {
       resolveEarlyExit();
       result = stepResult;
     };
@@ -349,38 +370,27 @@ export class Client {
       }
 
       const executionData = await this.createExecutionPayload(event, workflow);
+      const validatedEvent = {
+        ...event,
+        payload: executionData,
+      };
       await Promise.race([
         earlyExitPromise,
         workflow.execute({
           payload: executionData,
           environment: {},
-          inputs: {},
+          input: {},
           controls: {},
           subscriber: event.subscriber,
           step: {
-            // eslint-disable-next-line multiline-comment-style
-            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-            email: this.executeStepFactory(event, setResult),
-            // eslint-disable-next-line multiline-comment-style
-            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-            sms: this.executeStepFactory(event, setResult),
-            // eslint-disable-next-line multiline-comment-style
-            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-            inApp: this.executeStepFactory(event, setResult),
-            digest: this.executeStepFactory(event, setResult),
-            delay: this.executeStepFactory(event, setResult),
-            // eslint-disable-next-line multiline-comment-style
-            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-            push: this.executeStepFactory(event, setResult),
-            // eslint-disable-next-line multiline-comment-style
-            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
-            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-            chat: this.executeStepFactory(event, setResult),
-            custom: this.executeStepFactory(event, setResult),
+            email: this.executeStepFactory(validatedEvent, setResult),
+            sms: this.executeStepFactory(validatedEvent, setResult),
+            inApp: this.executeStepFactory(validatedEvent, setResult),
+            digest: this.executeStepFactory(validatedEvent, setResult),
+            delay: this.executeStepFactory(validatedEvent, setResult),
+            push: this.executeStepFactory(validatedEvent, setResult),
+            chat: this.executeStepFactory(validatedEvent, setResult),
+            custom: this.executeStepFactory(validatedEvent, setResult),
           },
         }),
       ]);
@@ -460,7 +470,7 @@ export class Client {
     event: Event,
     step: DiscoverStepOutput,
     outputs: Record<string, unknown>
-  ): Promise<Record<string, unknown>> {
+  ): Promise<Record<string, WithPassthrough<Record<string, unknown>>>> {
     return step.providers.reduce(async (acc, provider) => {
       const result = await acc;
       const previewProviderHandler = this.previewProvider.bind(this);
@@ -473,7 +483,7 @@ export class Client {
         ...result,
         [provider.type]: providerResult,
       };
-    }, Promise.resolve({} as Record<string, unknown>));
+    }, Promise.resolve({} as Record<string, WithPassthrough<Record<string, unknown>>>));
   }
 
   private previewProvider(
@@ -481,7 +491,7 @@ export class Client {
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
     outputs: Record<string, unknown>
-  ): unknown {
+  ): Record<string, unknown> {
     // eslint-disable-next-line no-console
     console.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
     const mockOutput = this.mock(provider.outputs.schema);
@@ -494,7 +504,7 @@ export class Client {
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
     outputs: Record<string, unknown>
-  ): Promise<unknown> {
+  ): Promise<WithPassthrough<Record<string, unknown>>> {
     const spinner = ora({ indent: 2 }).start(`Executing provider: \`${provider.type}\``);
     try {
       if (event.stepId === step.stepId) {
@@ -514,13 +524,18 @@ export class Client {
         );
         spinner.succeed(`Executed provider: \`${provider.type}\``);
 
-        return validatedOutput;
+        return {
+          ...validatedOutput,
+          _passthrough: result._passthrough,
+        };
       } else {
         // No-op. We don't execute providers for hydrated steps
         spinner.stopAndPersist({
           symbol: EMOJI.HYDRATED,
           text: `Hydrated provider: \`${provider.type}\``,
         });
+
+        return {};
       }
     } catch (error) {
       spinner.stopAndPersist({

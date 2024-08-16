@@ -14,9 +14,16 @@ import { ModuleRef } from '@nestjs/core';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth
-@Injectable({
-  scope: Scope.REQUEST,
-})
+
+/**
+ * This logic is closely related to the CreateOrganization use case.
+ * @see src/app/organization/usecases/create-organization/create-organization.usecase.ts
+ *
+ * The side effects of creating a new organization are largely
+ * consistent with those in CreateOrganization, with only minor differences.
+ */
+
+@Injectable()
 export class SyncExternalOrganization {
   constructor(
     private readonly organizationRepository: OrganizationRepository,

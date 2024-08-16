@@ -7,11 +7,11 @@ import { fcmProviderSchemas } from './fcm.schema';
 import { oneSignalProviderSchema } from './one-signal.schema';
 
 export const pushProviderSchemas = {
-  [PushProviderIdEnum.FCM]: fcmProviderSchemas,
   [PushProviderIdEnum.APNS]: apnsProviderSchemas,
   [PushProviderIdEnum.EXPO]: expoProviderSchemas,
+  [PushProviderIdEnum.FCM]: fcmProviderSchemas,
   [PushProviderIdEnum.OneSignal]: oneSignalProviderSchema,
-  [PushProviderIdEnum.PushWebhook]: genericProviderSchemas,
   [PushProviderIdEnum.PusherBeams]: genericProviderSchemas,
   [PushProviderIdEnum.Pushpad]: genericProviderSchemas,
+  [PushProviderIdEnum.PushWebhook]: genericProviderSchemas,
 } satisfies Record<PushProviderIdEnum, { output: Schema }>;

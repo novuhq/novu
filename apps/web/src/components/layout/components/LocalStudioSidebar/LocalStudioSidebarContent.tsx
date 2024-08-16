@@ -6,7 +6,7 @@ import { IBridgeWorkflow } from '../../../../studio/types';
 import { NavMenu } from '../../../nav/NavMenu';
 import { NavMenuSection } from '../../../nav/NavMenuSection';
 import { LocalStudioSidebarOrganizationDisplay } from './LocalStudioSidebarOrganizationDisplay';
-import { LocalStudioSidebarToggleButton } from './LocalStudioSidebarToggleButtonProps';
+import { LocalStudioSidebarToggleButton } from './LocalStudioSidebarToggleButton';
 import { token } from '@novu/novui/tokens';
 import { css, cx } from '@novu/novui/css';
 import { useStudioState } from '../../../../studio/StudioStateProvider';

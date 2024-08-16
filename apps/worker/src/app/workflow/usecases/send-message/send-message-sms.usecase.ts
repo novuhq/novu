@@ -22,6 +22,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
+import { SmsOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -90,8 +91,8 @@ export class SendMessageSms extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeBody = command.bridgeData?.outputs.body;
-    let content: string = bridgeBody || '';
+    const bridgeOutput = command.bridgeData?.outputs as SmsOutput | undefined;
+    let content: string = bridgeOutput?.body || '';
 
     try {
       if (!command.bridgeData) {
@@ -279,6 +280,7 @@ export class SendMessageSms extends SendMessageBase {
       if (!smsHandler) {
         throw new PlatformException(`Sms handler for provider ${integration.providerId} is  not found`);
       }
+      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
       const result = await smsHandler.send({
         to: overrides.to || phone,
@@ -286,6 +288,7 @@ export class SendMessageSms extends SendMessageBase {
         content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
+        bridgeProviderData,
       });
 
       await this.executionLogRoute.execute(

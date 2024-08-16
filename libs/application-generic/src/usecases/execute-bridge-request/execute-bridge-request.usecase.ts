@@ -14,6 +14,7 @@ import {
 } from '@novu/framework';
 import { decryptApiKey } from '../../encryption';
 
+export const DEFAULT_TIMEOUT = 15_000; // 15 seconds
 export const DEFAULT_RETRIES_LIMIT = 3;
 export const RETRYABLE_HTTP_CODES: number[] = [
   408, 413, 429, 500, 502, 503, 504, 521, 522, 524,
@@ -46,7 +47,7 @@ export class ExecuteBridgeRequest {
 
     const url = bridgeActionUrl.toString();
     const options: OptionsOfTextResponseBody = {
-      timeout: 3000,
+      timeout: DEFAULT_TIMEOUT,
       json: command.event,
       retry: {
         calculateDelay: ({
@@ -119,7 +120,9 @@ export class ExecuteBridgeRequest {
         } else {
           // Handle unknown bridge request errors
           Logger.error(
-            `Unknown bridge request error calling \`${url}\`: \`${body}\``,
+            `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
+              body
+            )}\``,
             LOG_CONTEXT
           );
           throw error;

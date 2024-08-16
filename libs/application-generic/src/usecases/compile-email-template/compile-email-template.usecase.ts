@@ -3,7 +3,7 @@ import { merge } from 'lodash';
 import { readFile } from 'fs/promises';
 import { ModuleRef } from '@nestjs/core';
 
-import { IEmailBlock, OrganizationRepository } from '@novu/dal';
+import { IEmailBlock, CommunityOrganizationRepository } from '@novu/dal';
 
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
 import { ApiException } from '../../utils/exceptions';
@@ -16,12 +16,12 @@ import { GetNovuLayout } from '../get-novu-layout';
 export class CompileEmailTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
-    protected organizationRepository: OrganizationRepository,
+    protected communityOrganizationRepository: CommunityOrganizationRepository,
     private getLayoutUsecase: GetLayoutUseCase,
     private getNovuLayoutUsecase: GetNovuLayout,
     protected moduleRef: ModuleRef
   ) {
-    super(organizationRepository, moduleRef);
+    super(communityOrganizationRepository, moduleRef);
   }
 
   public async execute(

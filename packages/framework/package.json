@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.0.0-canary.3",
+  "version": "2.0.0-canary.5",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,7 +18,6 @@
     "README.md"
   ],
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "lint": "eslint src --ext .ts --config .eslintrc.js",
@@ -95,9 +94,9 @@
   "peerDependencies": {
     "@sveltejs/kit": ">=1.27.3",
     "@vercel/node": ">=2.15.9",
+    "aws-lambda": ">=1.0.7",
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
-    "aws-lambda": ">=1.0.7",
     "next": ">=12.0.0",
     "zod": ">=3.0.0",
     "zod-to-json-schema": ">=3.0.0"
@@ -132,24 +131,25 @@
     }
   },
   "devDependencies": {
+    "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@sveltejs/kit": "^1.27.3",
+    "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
     "@types/node": "^20.14.10",
-    "@types/aws-lambda": "^8.10.141",
+    "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",
+    "aws-lambda": "^1.0.7",
     "express": "^4.19.2",
     "h3": "^1.11.1",
-    "aws-lambda": "^1.0.7",
     "next": "^13.5.4",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
+    "tsx": "4.16.2",
     "typescript": "^5.3.3",
     "vitest": "^1.2.1",
     "zod": "^3.23.0",
-    "zod-to-json-schema": "^3.23.0",
-    "@apidevtools/json-schema-ref-parser": "11.6.4",
-    "tsx": "4.16.2"
+    "zod-to-json-schema": "^3.23.0"
   },
   "dependencies": {
     "@novu/shared": "workspace:*",
@@ -161,6 +161,7 @@
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
     "liquidjs": "^10.13.1",
-    "ora": "^5.4.1"
+    "ora": "^5.4.1",
+    "sanitize-html": "^2.13.0"
   }
 }

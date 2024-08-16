@@ -1,4 +1,4 @@
-const { useBabelRc, override } = require('customize-cra');
+const { useBabelRc, override, overrideDevServer } = require('customize-cra');
 const { DefinePlugin } = require('webpack');
 const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
@@ -23,5 +23,35 @@ function overrideConfig(config, env) {
   };
 }
 
-// eslint-disable-next-line react-hooks/rules-of-hooks
-module.exports = override(useBabelRc(), overrideConfig);
+const devServerConfig = () => (config) => {
+  return {
+    ...config,
+    headers: (req, res, context) => {
+      const defaultHeaders = {
+        'Referrer-Policy': 'no-referrer',
+        'X-XSS-Protection': '1; mode=block',
+        'X-Content-Type-Options': 'nosniff',
+        'Permissions-Policy':
+          'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()',
+      };
+
+      const playgroundHeaders = {
+        ...defaultHeaders,
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
+        'Referrer-Policy': 'no-referrer-when-downgrade',
+      };
+
+      const secureRoutes = ['/auth/application', '/playground'];
+
+      return secureRoutes.includes(req.baseUrl) ? playgroundHeaders : defaultHeaders;
+    },
+  };
+};
+
+module.exports = {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  webpack: override(useBabelRc(), overrideConfig),
+  devServer: overrideDevServer(devServerConfig()),
+};

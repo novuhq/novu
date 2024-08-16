@@ -1,6 +1,5 @@
 import { ActionIcon, Input as MantineInput } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 
 import {
@@ -13,8 +12,7 @@ import {
   IconOutlineVisibility,
   IconOutlineVisibilityOff,
 } from '@novu/design-system';
-import { getApiKeys } from '../../../api/environment';
-import { useEnvironment } from '../../../hooks';
+import { useAPIKeys, useEnvironment } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
 import { When } from '../../../components/utils/When';
 import { useState } from 'react';
@@ -23,11 +21,10 @@ export const ApiKeysCard = () => {
   const clipboardApiKey = useClipboard({ timeout: 1000 });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
   const clipboardEnvironmentId = useClipboard({ timeout: 1000 });
-  const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const { apiKey } = useAPIKeys();
 
   const { environment } = useEnvironment();
 
-  const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const environmentId = environment?._id ? environment._id : '';
 

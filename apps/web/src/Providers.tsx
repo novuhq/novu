@@ -1,14 +1,16 @@
 import { ThemeProvider } from '@novu/design-system';
-import { SegmentProvider } from './components/providers/SegmentProvider';
-import { StudioStateProvider } from './studio/StudioStateProvider';
+import { HelmetProvider } from 'react-helmet-async';
 import { withProfiler } from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
-import { HelmetProvider } from 'react-helmet-async';
 import { api } from './api/api.client';
 import { NovuiProvider } from '@novu/novui';
 import { AuthProvider } from './components/providers/AuthProvider';
 import { ClerkProvider } from './ee/clerk/providers/ClerkProvider';
+import { EnvironmentProvider } from './components/providers/EnvironmentProvider';
+import { SegmentProvider } from './components/providers/SegmentProvider';
+import { StudioStateProvider } from './studio/StudioStateProvider';
+import { ContainerProvider } from './hooks/useContainer';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -28,15 +30,19 @@ const queryClient = new QueryClient({
 
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
-    <ThemeProvider>
+    <ThemeProvider shouldDisableGlobals>
       <NovuiProvider>
         <ClerkProvider>
           <SegmentProvider>
             <QueryClientProvider client={queryClient}>
               <AuthProvider>
-                <HelmetProvider>
-                  <StudioStateProvider>{children}</StudioStateProvider>
-                </HelmetProvider>
+                <EnvironmentProvider>
+                  <HelmetProvider>
+                    <StudioStateProvider>
+                      <ContainerProvider>{children}</ContainerProvider>
+                    </StudioStateProvider>
+                  </HelmetProvider>
+                </EnvironmentProvider>
               </AuthProvider>
             </QueryClientProvider>
           </SegmentProvider>

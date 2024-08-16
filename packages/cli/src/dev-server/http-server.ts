@@ -74,7 +74,7 @@ export class DevServer {
         <link href="${this.options.dashboardUrl}/favicon.svg" rel="icon" />
         <title>Novu Studio</title>
       </head>
-      <body style="padding: 0; margin: 0;">
+      <body style="padding: 0; margin: 0; overflow: hidden;">
         <script>
           const NOVU_CLOUD_STUDIO_ORIGIN = '${this.options.dashboardUrl}';
 
@@ -92,7 +92,7 @@ export class DevServer {
             };
             
             const iframe = window.document.createElement('iframe');
-            iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin allow-popups'
+            iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin allow-popups allow-popups-to-escape-sandbox'
             iframe.allow = 'clipboard-read; clipboard-write'
             iframe.style = 'width: 100%; height: 100vh; border: none;';
             

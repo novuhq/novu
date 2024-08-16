@@ -3,35 +3,33 @@ import { test } from './utils/baseTest';
 import { initializeSession } from './utils/browser';
 import { SidebarPage } from './page-models/sidebarPage';
 import { addOrganization, SessionData } from './utils/plugins';
-import { getAuthToken } from './utils/authUtils';
 
 let session: SessionData;
 test.beforeEach(async ({ page }) => {
   ({ session } = await initializeSession(page));
 });
 
-test('should display switch when page is loaded', async ({ page }) => {
+test('should display organization select with the current organization', async ({ page }) => {
   const sidebarPage = await SidebarPage.goTo(page);
-  const orgSwitch = sidebarPage.getOrganizationSwitch();
-  await expect(orgSwitch).toBeVisible();
-  const orgName = await orgSwitch.getAttribute('value');
-  expect(orgName?.toLowerCase()).toEqual(session.organization.name.toLowerCase());
+  await expect(sidebarPage.getOrganizationSwitch()).toHaveValue(new RegExp(session.organization.name, 'i'));
 });
 
-test('should use different jwt token after switches', async ({ page }) => {
+test('should use a different jwt token after switching organization', async ({ page }) => {
   const originToken = session.token;
   const newOrg = await addOrganization(session.user._id);
 
+  await page.reload();
+
   const sidebarPage = await SidebarPage.goTo(page);
-  const orgSwitch = sidebarPage.getOrganizationSwitch();
+  const orgSwitch = await sidebarPage.getOrganizationSwitch();
   await orgSwitch.scrollIntoViewIfNeeded();
   await orgSwitch.focus();
 
-  const selectItem = orgSwitch.page().getByRole('option', { name: newOrg.name });
   const responsePromise = page.waitForResponse('**/auth/organizations/**/switch');
+  const selectItem = orgSwitch.page().getByRole('option', { name: newOrg.name });
   await selectItem.click({ force: true });
   await responsePromise;
 
-  const newToken = await getAuthToken(page);
+  const newToken = await page.evaluate(() => localStorage.getItem('nv_auth_token'));
   expect(newToken).not.toBe(originToken);
 });

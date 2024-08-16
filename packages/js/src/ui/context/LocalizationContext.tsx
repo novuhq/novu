@@ -1,15 +1,18 @@
-import { ParentProps, createContext, createMemo, useContext } from 'solid-js';
-import { defaultLocalization } from '../config/default-localization';
-import { Path } from '../helpers/types';
+import { Accessor, createContext, createMemo, ParentProps, useContext } from 'solid-js';
+import { defaultLocalization } from '../config/defaultLocalization';
+import type { Localization, LocalizationKey } from '../types';
 
-export type Localization = {
-  'inbox.title': string;
-};
-
-type LocalizationPath = Path<Localization>;
+type LocalizationValue<K extends LocalizationKey> = (typeof defaultLocalization)[K];
+type LocalizationParams<K extends LocalizationKey> = LocalizationValue<K> extends (args: infer P) => any
+  ? P
+  : undefined;
 
 type LocalizationContextType = {
-  t: (key: LocalizationPath) => string;
+  t: <K extends LocalizationKey>(
+    key: K,
+    ...args: LocalizationParams<K> extends undefined ? [] : [LocalizationParams<K>]
+  ) => string;
+  locale: Accessor<string>;
 };
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
@@ -19,16 +22,22 @@ type LocalizationProviderProps = ParentProps & { localization?: Localization };
 export const LocalizationProvider = (props: LocalizationProviderProps) => {
   const localization = createMemo(() => ({ ...defaultLocalization, ...(props.localization || {}) }));
 
-  const t = (key: LocalizationPath) => {
+  const t: LocalizationContextType['t'] = (key, ...args) => {
     const value = localization()[key];
+    if (typeof value === 'function') {
+      return (value as (args: LocalizationParams<typeof key>) => string)(args[0]!);
+    }
 
-    return value;
+    return value as string;
   };
+
+  const locale = createMemo(() => localization().locale);
 
   return (
     <LocalizationContext.Provider
       value={{
         t,
+        locale,
       }}
     >
       {props.children}

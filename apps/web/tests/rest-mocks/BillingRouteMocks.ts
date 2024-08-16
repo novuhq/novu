@@ -8,9 +8,22 @@ interface GetSubscriptionResponsePayload {
   status: string;
 }
 
+const PLAN_ROUTE = '**/v1/billing/plan';
 const SUBSCRIPTION_ROUTE = '**/v1/billing/subscription';
 
 export class BillingRouteMocks {
+  public static async mockPlanRestCall(page, mockPayload: { apiServiceLevel: string }) {
+    await page.route(PLAN_ROUTE, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: mockPayload,
+        }),
+      });
+    });
+  }
+
   public static async mockSubscriptionRestCall(page, mockPayload: GetSubscriptionResponsePayload) {
     await page.route(SUBSCRIPTION_ROUTE, (route) => {
       route.fulfill({

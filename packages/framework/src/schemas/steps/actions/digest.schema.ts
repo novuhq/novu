@@ -65,7 +65,7 @@ export const digestResultSchema = {
   additionalProperties: false,
 } as const satisfies Schema;
 
-export const digestChannelSchemas = {
+export const digestActionSchemas = {
   output: digestOutputSchema,
   result: digestResultSchema,
 };

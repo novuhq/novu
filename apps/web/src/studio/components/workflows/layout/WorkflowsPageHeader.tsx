@@ -7,11 +7,18 @@ export interface IWorkflowsPageHeaderProps extends CoreProps {
   icon: React.ReactNode;
   description?: LocalizedMessage;
   actions?: ReactNode | ReactNode[];
+  className?: string;
 }
 
 export const WorkflowsPageHeader: FC<IWorkflowsPageHeaderProps> = ({ icon, title, actions, description }) => {
   return (
-    <Flex justify={'space-between'} mb="margins.layout.page.titleBottom" minHeight={'300'}>
+    <Flex
+      justify={'space-between'}
+      mb="margins.layout.page.titleBottom"
+      pt="paddings.page.vertical"
+      px="paddings.page.horizontal"
+      minHeight={'300'}
+    >
       <HStack gap="50">
         {icon}
         <Box>

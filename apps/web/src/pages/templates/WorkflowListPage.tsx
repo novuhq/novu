@@ -44,6 +44,8 @@ import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
 import { GetStartedPageV2 } from '../../studio/components/GetStartedPageV2/index';
+import { css } from '@novu/novui/css';
+import { Button } from '@novu/novui';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -254,10 +256,6 @@ function WorkflowListPage() {
     debouncedSearchChange(value);
   };
 
-  if ((isV2Enabled && shouldShowEmptyState) || (isV2Enabled && areWorkflowsLoading && isOnboarding)) {
-    return <GetStartedPageV2 location="workflows" />;
-  }
-
   return (
     <ListPage
       title="Workflows"
@@ -272,16 +270,21 @@ function WorkflowListPage() {
     >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         <TableActionsContainer>
-          <CreateWorkflowDropdown
-            readonly={readonly}
-            blueprints={popular?.blueprints}
-            isLoading={areBlueprintsLoading}
-            isCreating={isCreatingTemplateFromBlueprint}
-            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={handleOnBlueprintClick}
-            onAllTemplatesClick={openModal}
-          />
+          {!isV2Enabled ? (
+            <CreateWorkflowDropdown
+              readonly={readonly}
+              blueprints={popular?.blueprints}
+              isLoading={areBlueprintsLoading}
+              isCreating={isCreatingTemplateFromBlueprint}
+              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+              onTemplateClick={handleOnBlueprintClick}
+              onAllTemplatesClick={openModal}
+            />
+          ) : (
+            <div></div>
+          )}
+
           <SearchInput
             value={searchValue}
             placeholder="Type name or identifier..."
@@ -303,7 +306,7 @@ function WorkflowListPage() {
             noDataPlaceholder={shouldShowNoResults && <WorkflowListNoMatches />}
           />
         </When>
-        <When truthy={shouldShowEmptyState}>
+        <When truthy={shouldShowEmptyState && !isV2Enabled}>
           <TemplatesListNoData
             readonly={readonly}
             blueprints={popular?.blueprints}
@@ -315,6 +318,28 @@ function WorkflowListPage() {
             onAllTemplatesClick={openModal}
           />
         </When>
+
+        <When truthy={shouldShowEmptyState && isV2Enabled}>
+          <div
+            className={css({
+              color: colors.B40,
+              fontSize: '18px',
+              lineHeight: '22px',
+              textAlign: 'center',
+              maxWidth: '600px',
+              margin: '0 auto',
+              marginTop: '80px',
+            })}
+          >
+            To create a workflow in this environment, you need to create a workflow using the @novu/framework and sync
+            it using the {readonly ? 'production' : 'development'} secret key. Follow{' '}
+            <Link className={css({ textDecoration: 'underline' })} to={ROUTES.GET_STARTED}>
+              this guide
+            </Link>{' '}
+            to get started.
+          </div>
+        </When>
+
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
     </ListPage>

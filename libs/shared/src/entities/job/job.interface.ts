@@ -30,6 +30,7 @@ export interface IJob {
   expireAt?: string;
   _templateId: string;
   digest?: IWorkflowStepMetadata & {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events?: any[];
   };
   type?: StepTypeEnum;

@@ -1,1 +1,3 @@
-export * from './default-appearance';
+export * from './defaultVariables';
+export * from './defaultLocalization';
+export * from './appearanceKeys';

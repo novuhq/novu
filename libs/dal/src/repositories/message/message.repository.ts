@@ -594,9 +594,26 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     actionType: ButtonTypeEnum;
     actionStatus: MessageActionStatusEnum;
   }) {
+    const message = await this.findOne({
+      _id: id,
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+    });
+
+    if (!message) {
+      throw new DalException(`Could not find a message with id ${id}`);
+    }
+
     const isUpdatingPrimaryCta = actionType === ButtonTypeEnum.PRIMARY;
     const isUpdatingSecondaryCta = actionType === ButtonTypeEnum.SECONDARY;
-    const updatePayload: Partial<MessageEntity> = {};
+    const updatePayload: FilterQuery<MessageEntity> = !message.read
+      ? {
+          seen: true,
+          lastSeenDate: new Date(),
+          read: true,
+          lastReadDate: new Date(),
+        }
+      : {};
 
     if (isUpdatingPrimaryCta) {
       updatePayload['cta.action.result.type'] = ButtonTypeEnum.PRIMARY;

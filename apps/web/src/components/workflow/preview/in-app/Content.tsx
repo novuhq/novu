@@ -1,10 +1,12 @@
 import { Group, Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { MessageActionStatusEnum } from '@novu/shared';
+import { ActorTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 import { useHover } from '../../../../hooks';
 import { ActionBlockContainer } from '../../../../pages/templates/components/in-app-editor/preview/ActionBlockContainer';
-import AvatarContainer from '../../../../pages/templates/components/in-app-editor/preview/AvatarContainer';
+import AvatarContainer, {
+  RenderAvatar,
+} from '../../../../pages/templates/components/in-app-editor/preview/AvatarContainer';
 import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { PreviewEditOverlay } from '../common';
 import {
@@ -12,6 +14,7 @@ import {
   ContentStyled,
   NotificationTextStyled,
   SkeletonStyled,
+  SubjectTextStyled,
   TimeTextStyled,
 } from './Content.styles';
 
@@ -48,7 +51,11 @@ export default function Content({
               <div>
                 <Group spacing={10} align="flex-start">
                   {enableAvatar && <AvatarContainer opened={false} setOpened={() => {}} readonly={true} />}
+                  {parsedPreviewState.avatar && (
+                    <RenderAvatar actor={{ type: ActorTypeEnum.SYSTEM_CUSTOM, data: parsedPreviewState.avatar }} />
+                  )}
                   <Stack spacing={24}>
+                    {parsedPreviewState.subject && <SubjectTextStyled>{parsedPreviewState.subject}</SubjectTextStyled>}
                     <NotificationTextStyled
                       isExampleNotification={false}
                       dangerouslySetInnerHTML={{

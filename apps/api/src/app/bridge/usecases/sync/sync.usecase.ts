@@ -57,13 +57,16 @@ export class Sync {
       throw new BadRequestException('Invalid Bridge URL Response');
     }
 
-    this.analyticsService.track('Sync Request - [Bridge API]', command.userId, {
-      _organization: command.organizationId,
-      _environment: command.environmentId,
-      workflowsCount: discover.workflows?.length || 0,
-      localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : undefined,
-      source: command.source,
-    });
+    if (command.source !== 'sample-workspace') {
+      this.analyticsService.track('Sync Request - [Bridge API]', command.userId, {
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        environmentName: environment.name,
+        workflowsCount: discover.workflows?.length || 0,
+        localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : false,
+        source: command.source,
+      });
+    }
 
     const createdWorkflows = await this.createWorkflows(command, discover.workflows);
 
@@ -145,7 +148,7 @@ export class Sync {
               type: WorkflowTypeEnum.BRIDGE,
               description: this.castToAnyNotSupportedParam(workflow.options).description,
               data: this.castToAnyNotSupportedParam(workflow.options)?.data,
-              tags: this.castToAnyNotSupportedParam(workflow.options)?.tags,
+              tags: workflow.tags,
               active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
               critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
               preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
@@ -187,7 +190,7 @@ export class Sync {
               active: isWorkflowActive,
               description: this.castToAnyNotSupportedParam(workflow.options).description,
               data: this.castToAnyNotSupportedParam(workflow).options?.data,
-              tags: this.castToAnyNotSupportedParam(workflow).options?.tags,
+              tags: workflow.tags,
               critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
               preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
             })

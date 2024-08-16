@@ -28,10 +28,6 @@
   - providers/**/*
 'CI/CD':
   - .github/**/*
-'helm':
-  - docker/kubernetes/helm/**/*
-'kustomize':
-  - docker/kubernetes/kustomize/**/*
 'docker':
   - docker/**/*
 'scripts':

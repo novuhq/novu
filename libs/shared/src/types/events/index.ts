@@ -32,12 +32,16 @@ export interface IEmailOptions {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadDetails?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   notificationDetails?: any;
   ipPoolName?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customData?: Record<string, any>;
   headers?: Record<string, string>;
   senderName?: string;
+  bridgeProviderData?: Record<string, unknown>;
 }
 
 export interface ITriggerPayload {
