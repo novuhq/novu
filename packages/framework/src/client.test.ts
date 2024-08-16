@@ -591,6 +591,79 @@ describe('Novu Client', () => {
       expect(body).toContain('cat');
       expect(body).toContain('dog');
     });
+    it('should compile default control variable with backwards compatability for payload variables', async () => {
+      const bodyTemplate = `
+{% for element in elements %}
+  {{ element }}
+{% endfor %}`;
+
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => {
+              return {
+                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                body: controls.body,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: '{{name}}' },
+                  lastName: { type: 'string', default: '{{subscriber.lastName}}' },
+                  role: { type: 'string', default: '{{role}}' },
+                  body: { type: 'string', default: bodyTemplate },
+                },
+                required: [],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: '`default_name`' },
+              role: { type: 'string' },
+              elements: { type: 'array' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: { role: 'product manager', elements: ['cat', 'dog'] },
+        payload: { role: 'product manager', elements: ['cat', 'dog'] },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {
+          lastName: "Smith's",
+        },
+        state: [],
+        inputs: {},
+        controls: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const subject = emailExecutionResult.outputs.subject;
+      expect(subject).toBe("body static prefix `default_name` Smith's product manager");
+      const body = emailExecutionResult.outputs.body;
+      expect(body).toContain('cat');
+      expect(body).toContain('dog');
+    });
 
     it('should throw error on execute action without payload', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {

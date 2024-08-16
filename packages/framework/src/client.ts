@@ -633,7 +633,7 @@ export class Client {
 
       return JSON.parse(compiledString);
     } catch (error) {
-      throw new CompilingStepControlInvalidError(event.workflowId, event.stepId);
+      throw new CompilingStepControlInvalidError(event.workflowId, event.stepId, error);
     }
   }
 

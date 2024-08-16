@@ -58,7 +58,7 @@ export const INPUT_EDITOR_WIDGET_RECIPE = defineSlotRecipe({
           textDecoration: 'underline',
           textDecorationStyle: 'wavy',
           textDecorationColor: 'input.border.error',
-          textUnderlineOffset: '5px',
+          textUnderlineOffset: '25',
           textDecorationThickness: 'from-font',
         },
       },

@@ -209,6 +209,7 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
     text: {
+      // TODO: Design owes us base tokens / palette values to use here instead
       value: { base: '#B743FF', _dark: '#AD74FF' },
       type: 'color',
     },

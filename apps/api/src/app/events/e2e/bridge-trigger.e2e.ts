@@ -622,6 +622,62 @@ contexts.forEach((context: Context) => {
       expect(sentMessage[1].subject).to.include('prefix Hello default_name');
       expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
     });
+    it(`should trigger the bridge workflow with control default and payload data [${context.name}] - with backwards compatability for payload variable`, async () => {
+      const workflowId = `default-payload-params-workflow-${context.name + '-' + uuidv4()}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.email(
+            'send-email',
+            async (controls) => {
+              return {
+                subject: 'prefix ' + controls.name,
+                body: 'Body result',
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: 'Hello {{name}}' },
+                },
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: 'default_name' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await session.awaitRunningJobs();
+      await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' }, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessage = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(sentMessage.length).to.be.eq(2);
+      expect(sentMessage[1].subject).to.include('prefix Hello default_name');
+      expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
+    });
 
     it(`should trigger the bridge workflow with control variables [${context.name}]`, async () => {
       const workflowId = `control-variables-workflow-${context.name + '-' + uuidv4()}`;

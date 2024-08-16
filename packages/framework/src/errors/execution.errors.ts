@@ -67,10 +67,11 @@ export class ExecutionStateResultInvalidError extends BadRequestError {
 export class CompilingStepControlInvalidError extends BadRequestError {
   code = ErrorCodeEnum.COMPILING_STEP_CONTROL_INVALID_ERROR;
 
-  constructor(workflowId: string, stepId: string) {
+  constructor(workflowId: string, stepId: string, data: unknown) {
     super(
       `Workflow with id: \`${workflowId}\` has invalid controls syntax in step with id: \`${stepId}\`. Please correct step control syntax.`
     );
+    this.data = data;
   }
 }
 
