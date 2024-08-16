@@ -1,6 +1,6 @@
 import { ChangeEvent, FocusEvent, useState } from 'react';
 import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, AUTOCOMPLETE_REGEX } from '../utils';
+import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, AUTOCOMPLETE_REGEX } from '../constants';
 
 export function Variable({ editor, node, updateAttributes, ...props }: NodeViewProps) {
   const [hasError, setHasError] = useState<boolean>(node.attrs.error || false);

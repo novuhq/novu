@@ -18,7 +18,7 @@ import { splitCssProps } from '../../../styled-system/jsx';
 import { CustomMention } from './customMentionExtension';
 import { VariableSuggestionList, SuggestionListRef, VariableItem } from './VariableSuggestionList';
 
-import { AUTOCOMPLETE_OPEN_TAG, INVALID_VARIABLE_REGEX, VALID_VARIABLE_REGEX } from '../utils';
+import { AUTOCOMPLETE_OPEN_TAG, INVALID_VARIABLE_REGEX, VALID_VARIABLE_REGEX } from '../constants';
 
 const inputEditorClassNames = inputEditorWidget();
 

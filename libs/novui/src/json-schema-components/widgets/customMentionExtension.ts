@@ -1,7 +1,7 @@
 import { Mention as ExternalMention } from '@tiptap/extension-mention';
 import { mergeAttributes, ReactNodeViewRenderer } from '@tiptap/react';
 import { Variable } from './Variable';
-import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG } from '../utils';
+import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG } from '../constants';
 
 export const CustomMention = ExternalMention.extend({
   name: ExternalMention.name,

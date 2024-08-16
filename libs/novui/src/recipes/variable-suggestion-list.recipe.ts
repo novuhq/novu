@@ -22,7 +22,7 @@ export const VARIABLE_SUGGESTION_LIST_RECIPE = defineSlotRecipe({
     },
     option: {
       ...SELECT_RECIPE.base.option,
-      // overflowX: 'hidden !important',
+      // overflowX: '[hidden] !important',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       _selected: {

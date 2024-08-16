@@ -11,7 +11,7 @@ import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } f
 import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templates/IconButton';
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
 import { CheckboxWidget, SelectWidget, InputEditorWidget } from './widgets';
-import { JSON_SCHEMA_FORM_ID_DELIMITER } from './utils';
+import { JSON_SCHEMA_FORM_ID_DELIMITER } from './constants';
 
 const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,
