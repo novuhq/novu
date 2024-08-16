@@ -10,6 +10,7 @@ import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
+import { PATHS } from '../../../../components/docs/docs.const';
 import { getSuggestionVariables, subscriberVariables } from '../../../utils';
 
 export type OnChangeType = 'step' | 'payload';
@@ -111,7 +112,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
-                      setPath('concepts/controls');
+                      setPath(PATHS.CONCEPT_CONTROLS);
                       toggle();
                     }}
                   />
@@ -138,7 +139,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <ControlsEmptyPanel
                     content="Payload ensures correct formatting and data validity."
                     onDocsClick={() => {
-                      setPath('workflow/introduction#payload-schema');
+                      setPath(PATHS.WORKFLOW_INTRODUCTION + '#payload-schema');
                       toggle();
                     }}
                   />
