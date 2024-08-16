@@ -8,7 +8,7 @@ export default function Home() {
       <Title title="Render Bell props" />
       <Inbox
         {...novuConfig}
-        renderBell={({ unreadCount }) => {
+        renderBell={(unreadCount) => {
           return (
             <button className="p-1 w-full">
               <div className="relative">
