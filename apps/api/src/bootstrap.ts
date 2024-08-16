@@ -105,7 +105,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalInterceptors(getErrorInterceptor());
 
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
-  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
+  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector), app.get(PinoLogger)));
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));

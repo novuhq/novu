@@ -51,6 +51,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       lastName: string;
       email: string;
       password: string;
+      invitationToken?: string;
     }
   >((data) => api.post('/v1/auth/register', data));
 
@@ -66,6 +67,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       email: data.email,
       password: data.password,
       origin: origin,
+      invitationToken,
     };
 
     const response = await mutateAsync(itemData);

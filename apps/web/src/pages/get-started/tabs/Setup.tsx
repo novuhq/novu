@@ -47,7 +47,7 @@ export const buildGuides = [
               </TextElement>
 
               <CodeEditor
-                height="200px"
+                height="300px"
                 readonly
                 setCode={() => {}}
                 code={`import { workflow } from '@novu/framework';
@@ -58,9 +58,12 @@ export const myWorkflow = workflow('my-workflow', async ({ step }) => {
       subject: controls.subject,
       body: '<h1>Hello World</h1>',
     }
+  }, {
+    controlSchema: z.object({
+      subject: z.string().default('Hello World'),
+    })
   })
-});
-                `}
+});`}
               />
 
               <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>
@@ -84,17 +87,13 @@ export const myWorkflow = workflow('my-workflow', async ({ step }) => {
               </TextElement>
               <br /> <br />
               <CodeEditor
-                height="120px"
+                height="100px"
                 readonly
                 setCode={() => {}}
                 code={`import { serve } from '@novu/framework/next';
 import { myWorkflow } from '../../novu/workflows';
 
-export const { GET, POST, OPTIONS } = serve({
-  workflows: [myWorkflow],
-});
-
-                `}
+export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });`}
               />
             </>
           );
@@ -158,9 +157,7 @@ export const { GET, POST, OPTIONS } = serve({ workflows: [testWorkflow] });`,
       bridgeEndpointCode: `import { serve } from "@novu/framework/remix";
 import { testWorkflow } from "../novu/workflows";
 
-const handler = serve({
-    workflows: [testWorkflow]
-});
+const handler = serve({ workflows: [testWorkflow] });
 
 export { handler as action, handler as loader };`,
     }),
@@ -278,21 +275,19 @@ import { z } from 'zod';
 
 export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
   await step.email('send-email', async (controls) => {
-      return {
-          subject: controls.subject,
-          body: 'This is your first Novu Email ' + payload.userName,
-      };
-  },
-  {
-      controlSchema: z.object({
-          subject: z.string().default('A Successful Test on Novu from {{userName}}'),
-      }),
-  });
+    return {
+      subject: controls.subject,
+      body: 'This is your first Novu Email ' + payload.userName,
+    };
   }, {
-      payloadSchema: z.object({
-          userName: z.string().default('John Doe'),
-      }),
+    controlSchema: z.object({
+      subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+    }),
   });
+}, {
+  payloadSchema: z.object({
+    userName: z.string().default('John Doe'),
+  }),
 });`}
           />
           <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>

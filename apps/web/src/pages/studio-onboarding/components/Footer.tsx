@@ -8,9 +8,16 @@ import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { Button } from '@novu/novui';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
-import { DOCS_URL, PATHS } from '../../../components/docs/docs.const';
+import { PATHS } from '../../../components/docs/docs.const';
+import { DocsPaths, useDocsPath } from '../../../components/docs/useDocsPath';
+import { ROUTES } from '../../../constants/routes';
 
 const Text = styled('a', text);
+
+const paths: DocsPaths = {
+  [ROUTES.STUDIO_ONBOARDING]: PATHS.QUICK_START_NEXTJS,
+  [ROUTES.STUDIO_ONBOARDING_PREVIEW]: PATHS.CONCEPT_CONTROLS,
+};
 
 export const Footer = ({
   showLearnMore = true,
@@ -29,6 +36,7 @@ export const Footer = ({
 }) => {
   const track = useTelemetry();
   const { pathname } = useLocation();
+  const path = useDocsPath(paths);
 
   return (
     <div
@@ -53,6 +61,7 @@ export const Footer = ({
           <div>
             <When truthy={showLearnMore}>
               <DocsButton
+                path={path}
                 TriggerButton={({ onClick: onDocsClick }) => (
                   <HStack gap="50" className={css({ color: 'typography.text.secondary' })}>
                     <IconOutlineMenuBook />
@@ -62,7 +71,7 @@ export const Footer = ({
                         track('Documentation linked clicked - [Onboarding - Signup]', {
                           step: pathname,
                         });
-                        window.open(`${DOCS_URL}/${PATHS[pathname]}`, '_blank');
+                        onDocsClick();
                       }}
                       href=""
                     >
