@@ -12,13 +12,17 @@ import {
   HandledUser,
   NONE_AUTH_SCHEME,
 } from '@novu/shared';
+import { PinoLogger } from '../../logging';
 
 @Injectable()
 export class CommunityUserAuthGuard extends AuthGuard([
   PassportStrategyEnum.JWT,
   PassportStrategyEnum.HEADER_API_KEY,
 ]) {
-  constructor(private readonly reflector: Reflector) {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly logger: PinoLogger
+  ) {
     super();
   }
 
@@ -28,6 +32,8 @@ export class CommunityUserAuthGuard extends AuthGuard([
 
     const authScheme = authorizationHeader?.split(' ')[0] || NONE_AUTH_SCHEME;
     request.authScheme = authScheme;
+
+    this.logger.assign({ authScheme });
 
     switch (authScheme) {
       case ApiAuthSchemeEnum.BEARER:
@@ -77,6 +83,8 @@ export class CommunityUserAuthGuard extends AuthGuard([
     } else {
       handledUser = user;
     }
+
+    this.logger.assign({ user: handledUser });
 
     return super.handleRequest(err, handledUser, info, context, status);
   }
