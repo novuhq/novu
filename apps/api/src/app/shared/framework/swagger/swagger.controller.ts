@@ -5,6 +5,8 @@ import { injectDocumentComponents } from './injection';
 import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
+// Necessary to resolve ESlint errors that surface before metadata generation
+// eslint-disable-next-line import/extensions
 import metadata from '../../../../metadata';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
