@@ -62,6 +62,7 @@ export class CreateIntegration {
       );
     } else {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
+      result.primary = true;
     }
 
     return result;
