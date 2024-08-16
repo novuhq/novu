@@ -408,7 +408,7 @@ test('should create a new mailjet integration', async ({ page }) => {
     provider: 'Mailjet',
     channel: 'Email',
     environment: 'Development',
-    status: 'Disabled',
+    status: 'Active',
   });
 });
 
@@ -499,7 +499,7 @@ test('should create a new mailjet integration with conditions', async ({ page })
     provider: 'Mailjet',
     channel: 'Email',
     environment: 'Development',
-    status: 'Disabled',
+    status: 'Active',
   });
 });
 
@@ -692,7 +692,7 @@ test('should update the mailjet integration', async ({ page }) => {
   await expect(integrationEnvironment).toContainText('Development');
 
   const isActive = page.getByTestId('is_active_id');
-  await expect(isActive).toHaveValue('false');
+  await expect(isActive).toHaveValue('true');
 
   providerName = updateProviderSidebar.getByPlaceholder('Enter instance name');
   await expect(providerName).toHaveValue('Mailjet Integration');
@@ -777,7 +777,7 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   await expect(updateProviderSidebar).toBeVisible();
 
   const isActive = page.getByTestId('is_active_id');
-  await expect(isActive).toHaveValue('false');
+  await expect(isActive).toHaveValue('true');
 
   providerName = updateProviderSidebar.getByPlaceholder('Enter instance name');
   await expect(providerName).toHaveValue('Mailjet Integration');
