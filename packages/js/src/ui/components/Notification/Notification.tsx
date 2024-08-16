@@ -25,13 +25,7 @@ export const Notification = (props: NotificationProps) => {
         />
       }
     >
-      <ExternalElementMounter
-        mount={(el) =>
-          props.mountNotification!(el, {
-            notification: props.notification,
-          })
-        }
-      />
+      <ExternalElementMounter mount={(el) => props.mountNotification!(el, props.notification)} />
     </Show>
   );
 };
