@@ -52,6 +52,7 @@ export const BubbleText = styled(Text)`
   overflow: hidden;
   margin: 0;
   color: ${colors.white};
+  word-break: break-word;
 `;
 
 export const Delivered = styled.span`
