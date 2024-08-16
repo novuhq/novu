@@ -10,6 +10,7 @@ import {
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
+import { PinoLogger } from '../logging';
 import {
   AnalyticsService,
   CommunityAuthService,
@@ -84,10 +85,10 @@ export function injectCommunityAuthProviders(
 
   const userAuthGuardProvider = {
     provide: 'USER_AUTH_GUARD',
-    useFactory: (reflector: Reflector) => {
-      return new CommunityUserAuthGuard(reflector);
+    useFactory: (reflector: Reflector, logger: PinoLogger) => {
+      return new CommunityUserAuthGuard(reflector, logger);
     },
-    inject: [Reflector],
+    inject: [Reflector, PinoLogger],
   };
 
   if (repositoriesOnly) {

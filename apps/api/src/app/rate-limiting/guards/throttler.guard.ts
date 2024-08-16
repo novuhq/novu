@@ -10,7 +10,7 @@ import {
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { GetFeatureFlag, GetFeatureFlagCommand, Instrument } from '@novu/application-generic';
+import { GetFeatureFlag, GetFeatureFlagCommand, Instrument, PinoLogger } from '@novu/application-generic';
 import {
   ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
@@ -40,7 +40,8 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
+    private logger: PinoLogger
   ) {
     super(options, storageService, reflector);
   }
@@ -128,6 +129,18 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
+    const rateLimitPolicy = {
+      limit,
+      windowDuration,
+      burstLimit,
+      algorithm,
+      apiRateLimitCategory,
+      apiRateLimitCost,
+      apiServiceLevel,
+    };
+
+    this.logger.assign({ rateLimitPolicy });
+
     /**
      * The purpose of the dry run is to allow us to observe how
      * the rate limiting would behave without actually enforcing it.
@@ -143,17 +156,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     if (isDryRun) {
       if (!success) {
-        const logMessage = `[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`;
-        const logContext = JSON.stringify({
-          organizationId,
-          environmentId,
-          limit,
-          windowDuration,
-          burstLimit,
-          apiRateLimitCategory,
-          apiServiceLevel,
-        });
-        Logger.warn(`${logMessage} ${logContext}`, 'ApiRateLimitInterceptor');
+        Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');
       }
 
       return true;
@@ -174,15 +177,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
         apiServiceLevel
       )
     );
-    res.rateLimitPolicy = {
-      limit,
-      windowDuration,
-      burstLimit,
-      algorithm,
-      apiRateLimitCategory,
-      apiRateLimitCost,
-      apiServiceLevel,
-    };
+    res.rateLimitPolicy = rateLimitPolicy;
 
     if (success) {
       return true;
