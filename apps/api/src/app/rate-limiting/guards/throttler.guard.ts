@@ -177,7 +177,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
         apiServiceLevel
       )
     );
-    res.rateLimitPolicy = rateLimitPolicy;
 
     if (success) {
       return true;
