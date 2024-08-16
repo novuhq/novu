@@ -36,7 +36,7 @@ import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
 import { InviteNudgeWebhook } from './usecases/invite-nudge/invite-nudge.usecase';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -63,7 +63,7 @@ export class InvitesController {
   }
 
   @Post('/:inviteToken/accept')
-  @UserAuthentication()
+  @UseGuards(UserAuthGuard)
   async acceptInviteToken(
     @UserSession() user: UserSessionData,
     @Param('inviteToken') inviteToken: string
@@ -77,9 +77,8 @@ export class InvitesController {
   }
 
   @Post('/')
-  @UseGuards(RolesGuard)
+  @UseGuards(UserAuthGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @UserAuthentication()
   async inviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: InviteMemberDto
@@ -99,9 +98,8 @@ export class InvitesController {
   }
 
   @Post('/resend')
-  @UseGuards(RolesGuard)
+  @UseGuards(UserAuthGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @UserAuthentication()
   async resendInviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: ResendInviteDto
@@ -121,8 +119,7 @@ export class InvitesController {
 
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
-  @UserAuthentication()
-  @UseGuards(RolesGuard)
+  @UseGuards(UserAuthGuard, RolesGuard)
   @Roles(MemberRoleEnum.ADMIN)
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,
