@@ -34,7 +34,7 @@ describe('Initialization with enabled HMAC encryption in shell', function () {
   // TODO: re-enable this test.
   // It passes locally but fails in CI.
   // It's not clear why, one assumption is that a Cypress upgrade has broken iFramed
-  // testing environments.
+  // testing environments in CI.
   it.skip('should initialize encrypted session with the help of HMAC hash shell', function () {
     cy.intercept('**/widgets/session/initialize**').as('sessionInitialize');
     cy.initializeSession({ shell: true, hmacEncryption: true })
