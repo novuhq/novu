@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "pnpm build:metadata && nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
@@ -16,6 +16,7 @@
     "start:test": "cross-env NODE_ENV=test PORT=1336 nest start --watch",
     "start:debug": "nest start --debug",
     "start:prod": "node dist/main.js",
+    "build:metadata": "cross-env ts-node scripts/generate-metadata.ts",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "lint:openapi": "spectral lint http://127.0.0.1:${PORT:-3000}/openapi.yaml",
