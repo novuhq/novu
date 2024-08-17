@@ -119,6 +119,8 @@ export const appearanceKeys = [
   'channelLabel',
   'channelLabelContainer',
   'channelDescription',
+  'channelName',
+  'channelNameDisabled',
   'channelSwitchContainer',
   'channelSwitch',
   'channelSwitchThumb',

@@ -78,15 +78,42 @@ export const Preferences = () => {
 
 const ChannelsLabel = (props: { channels: ChannelPreference }) => {
   const style = useStyle();
-  const definedKeys = () =>
-    Object.keys(props.channels || {})
-      .filter((key) => props.channels[key as keyof ChannelPreference] !== undefined)
-      .map((key) => getLabel(key as ChannelType))
-      .join(', ');
+
+  const channelNames = () => {
+    const channels = [];
+
+    for (const key in props.channels) {
+      if (props.channels[key as keyof ChannelPreference] !== undefined) {
+        const isDisabled = !props.channels[key as keyof ChannelPreference];
+        const appearanceKey = isDisabled ? 'channelNameDisabled' : 'channelName';
+
+        const element = (
+          <span
+            class={style(
+              appearanceKey,
+              clsx({
+                'nt-text-foreground-alpha-200': !props.channels[key as keyof ChannelPreference],
+              })
+            )}
+          >
+            {getLabel(key as ChannelType)}
+          </span>
+        );
+        channels.push(element);
+      }
+    }
+
+    return channels.map((c, index) => (
+      <>
+        {c}
+        {index < channels.length - 1 && ', '}
+      </>
+    ));
+  };
 
   return (
     <div class={style('channelDescription', 'nt-text-sm nt-text-foreground-alpha-600 nt-text-start')}>
-      {definedKeys()}
+      {channelNames()}
     </div>
   );
 };
