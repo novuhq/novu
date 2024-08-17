@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
+import { CLERK_ROLES } from './constants';
 
 const asyncNoop = async () => {};
 
@@ -17,7 +18,7 @@ export const EnterpriseAuthContext = createContext<AuthContextValue>(DEFAULT_AUT
 EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { signOut, orgId } = useAuth();
+  const { signOut, orgId, has } = useAuth();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
   // TODO @ChmaraX: Can we use setActive from useSession, useSignIn, or useSignUp to avoid loading the list?
@@ -114,6 +115,9 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     [clerkOrganization]
   );
 
+  const isCurrentUserAdministrator = useMemo(() => (has ? has({ role: CLERK_ROLES.ADMINISTRATOR }) : false), [has]);
+  const isCurrentUserEditor = useMemo(() => (has ? has({ role: CLERK_ROLES.EDITOR }) : false), [has]);
+
   // refetch queries on organization switch
   useEffect(() => {
     // if linked, externalOrgId = internal org ObjectID, which is required on backend
@@ -137,6 +141,8 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
     redirectToSignUp,
     switchOrganization: asyncNoop,
     reloadOrganization,
+    isCurrentUserAdministrator,
+    isCurrentUserEditor,
   } as AuthContextValue;
   /*
    * The 'as AuthContextValue' is necessary as Boolean and true or false discriminating unions

@@ -12,6 +12,7 @@ import { includedEventQuotaFromApiServiceLevel } from '../utils/plan.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { BillingIntervalControl } from './BillingIntervalControl';
 import { useSubscriptionContext } from './SubscriptionProvider';
+import { useAuth } from '../../../hooks/useAuth';
 
 const black = colors.BGDark;
 
@@ -21,6 +22,7 @@ const columnStyle = {
 
 export const PlanHeader = () => {
   const segment = useSegment();
+  const { isCurrentUserAdministrator } = useAuth();
 
   const { hasPaymentMethod } = useSubscriptionContext();
   const { isLoading: isLoadingSubscriptionData, apiServiceLevel: subscriptionApiServiceLevel } = useSubscription();
@@ -182,21 +184,23 @@ export const PlanHeader = () => {
                   Manage subscription
                 </Button>
               </When>
-              <When truthy={!hasPaymentMethod}>
-                <Button
-                  variant="outline"
-                  data-test-id="plan-business-add-payment"
-                  loading={isCheckingOut}
-                  onClick={() => {
-                    checkout({
-                      billingInterval,
-                      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-                    });
-                  }}
-                >
-                  Add payment method
-                </Button>
-              </When>
+              {isCurrentUserAdministrator && (
+                <When truthy={!hasPaymentMethod}>
+                  <Button
+                    variant="outline"
+                    data-test-id="plan-business-add-payment"
+                    loading={isCheckingOut}
+                    onClick={() => {
+                      checkout({
+                        billingInterval,
+                        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                      });
+                    }}
+                  >
+                    Add payment method
+                  </Button>
+                </When>
+              )}
             </When>
           </Stack>
         </div>

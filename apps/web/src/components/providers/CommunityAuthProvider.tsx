@@ -191,6 +191,8 @@ export const CommunityAuthProvider = ({ children }: { children: React.ReactNode 
     redirectToSignUp,
     switchOrganization,
     reloadOrganization,
+    isCurrentUserAdministrator: true,
+    isCurrentUserEditor: true,
   } as AuthContextValue;
   /*
    * The 'as AuthContextValue' is necessary as Boolean and true or false discriminating unions

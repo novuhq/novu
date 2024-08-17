@@ -39,6 +39,8 @@ export type AuthContextValue = UserState &
     redirectToSignUp: (params: { redirectURL?: string; origin?: string; anonymousId?: string }) => void;
     switchOrganization: (organizationId: string) => Promise<void>;
     reloadOrganization: () => Promise<{}>;
+    isCurrentUserAdministrator: boolean;
+    isCurrentUserEditor: boolean;
   };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

@@ -5,11 +5,13 @@ import { SettingsPageContainer } from '../SettingsPageContainer';
 import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegenerationModal';
 import { useEnvironment } from '../../../hooks/useEnvironment';
 import { useApiKeysPage } from './useApiKeysPage';
+import { useAuth } from '../../../hooks/useAuth';
 
 const INPUT_ICON_SIZE: IconSize = '16';
 
 export const ApiKeysPage = () => {
   const { environment } = useEnvironment();
+  const { isCurrentUserAdministrator } = useAuth();
   const {
     secretKey,
     isSecretKeyMasked,
@@ -37,13 +39,15 @@ export const ApiKeysPage = () => {
           rightSection={
             // this is ugly, but we define the width of rightSection explicitly, which messes with larger elements
             <Flex gap="125" position={'absolute'} right="100">
-              <IconButton
-                onClick={openModal}
-                tooltipProps={{ label: 'Regenerate API Key' }}
-                id={'api-key-regenerate-btn'}
-              >
-                <IconRefresh size={INPUT_ICON_SIZE} />
-              </IconButton>
+              {isCurrentUserAdministrator && (
+                <IconButton
+                  onClick={openModal}
+                  tooltipProps={{ label: 'Regenerate API Key' }}
+                  id={'api-key-regenerate-btn'}
+                >
+                  <IconRefresh size={INPUT_ICON_SIZE} />
+                </IconButton>
+              )}
               <IconButton
                 onClick={toggleSecretKeyVisibility}
                 tooltipProps={{ label: isSecretKeyMasked ? 'Show API Key' : 'Hide API Key' }}

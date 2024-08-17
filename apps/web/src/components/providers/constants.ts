@@ -14,4 +14,6 @@ export const DEFAULT_AUTH_CONTEXT_VALUE: AuthContextValue = {
   redirectToSignUp: noop,
   switchOrganization: asyncNoop,
   reloadOrganization: async () => ({}),
+  isCurrentUserAdministrator: false,
+  isCurrentUserEditor: false,
 };
