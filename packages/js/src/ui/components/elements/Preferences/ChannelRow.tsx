@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { JSX } from 'solid-js';
 import { ChannelType } from '../../../../types';
 import { useNovu } from '../../../context';
@@ -11,6 +12,7 @@ type ChannelRowProps = {
   channelIcon?: () => JSX.Element;
   workflowId?: string;
   onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
+  isCritical?: boolean;
 };
 
 export const ChannelRow = (props: ChannelRowProps) => {
@@ -18,6 +20,10 @@ export const ChannelRow = (props: ChannelRowProps) => {
   const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
+    if (props.isCritical) {
+      return;
+    }
+
     try {
       await novu.preferences.update({
         workflowId: props.workflowId,
@@ -35,13 +41,20 @@ export const ChannelRow = (props: ChannelRowProps) => {
   };
 
   return (
-    <div class={style('channelContainer', 'nt-flex nt-justify-between nt-items-center nt-h-11')}>
+    <div
+      class={style(
+        'channelContainer',
+        clsx('nt-flex nt-justify-between nt-items-center nt-h-11', {
+          'nt-text-foreground-alpha-600': props.isCritical,
+        })
+      )}
+    >
       <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
         <div>{getIcon(props.channel)}</div>
         <span class={style('channelLabel', 'nt-text-base nt-font-semibold')}>{getLabel(props.channel)}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
-        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
+        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} disabled={props.isCritical} />
       </div>
     </div>
   );

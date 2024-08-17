@@ -109,6 +109,9 @@ export const appearanceKeys = [
   'workflowContainer',
   'workflowLabel',
   'workflowLabelContainer',
+  'worfklowLabelDisabledIcon',
+  'workflowContainerRightIcon',
+  'workflowContainerDisabledNotice',
 
   // channel
   'channelContainer',
