@@ -12,5 +12,9 @@ export default defineConfig({
     open: true,
     // this sets a default port to 4200
     port: 4200,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
   },
 });

@@ -9,7 +9,8 @@ import { configureFiles } from '../pages/playground/web-container-configuration/
 import { useSegment } from '../components/providers/SegmentProvider';
 import { REACT_EMAIL_CODE, WORKFLOW } from '../pages/playground/web-container-configuration';
 
-const { WebContainer } = require('@webcontainer/api');
+// @ts-expect-error - WebContainer doesn't have CJS types.
+import { WebContainer } from '@webcontainer/api';
 
 type ContainerState = {
   terminalRef: React.RefObject<TerminalHandle>;
