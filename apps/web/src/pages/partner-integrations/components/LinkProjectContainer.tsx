@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { useOrganizations } from '../../../hooks/useOrganizations';
 
 import {
   completeVercelIntegration,
@@ -35,6 +34,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
         userMemberships.revalidate();
       }
     }, 1500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const {

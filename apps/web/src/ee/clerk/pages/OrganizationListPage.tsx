@@ -7,9 +7,9 @@ import { useRedirectURL } from '../../../hooks/useRedirectURL';
 export default function OrganizationListPage() {
   const { setRedirectURL } = useRedirectURL();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setRedirectURL();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
