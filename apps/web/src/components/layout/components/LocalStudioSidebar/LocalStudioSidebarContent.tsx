@@ -13,6 +13,8 @@ import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { WithLoadingSkeleton } from '@novu/novui';
 import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 import { useDocsModal } from '../../../docs/useDocsModal';
+import { PATHS } from '../../../docs/docs.const';
+import { ROUTES } from '../../../../constants/routes';
 
 type LocalStudioSidebarContentProps = {
   workflows: IBridgeWorkflow[];
@@ -41,7 +43,7 @@ export const LocalStudioSidebarContent: WithLoadingSkeleton<FC<LocalStudioSideba
           <button
             onClick={(e) => {
               e.preventDefault();
-              setPath('workflow/introduction');
+              setPath(PATHS.WORKFLOW_INTRODUCTION);
               toggle();
             }}
             className={css({ width: 'full' })}
