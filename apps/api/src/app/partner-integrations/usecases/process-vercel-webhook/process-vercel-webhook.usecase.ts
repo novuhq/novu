@@ -56,7 +56,15 @@ export class ProcessVercelWebhook {
     }
 
     const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
+    if (!orgAdmin) {
+      throw new ApiException('Organization admin not found');
+    }
+
     const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
+
+    if (!internalUser) {
+      throw new ApiException('User not found');
+    }
 
     await this.syncUsecase.execute({
       organizationId: environment._organizationId,
