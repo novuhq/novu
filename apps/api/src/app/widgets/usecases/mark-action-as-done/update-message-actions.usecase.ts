@@ -75,14 +75,11 @@ export class UpdateMessageActions {
       );
     }
 
-    const organizationAdmin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    if (organizationAdmin) {
-      this.analyticsService.track('Notification Action Clicked - [Notification Center]', organizationAdmin?._userId, {
-        _subscriber: subscriber._id,
-        _organization: command.organizationId,
-        _environment: command.environmentId,
-      });
-    }
+    this.analyticsService.track('Notification Action Clicked - [Notification Center]', '', {
+      _subscriber: subscriber._id,
+      _organization: command.organizationId,
+      _environment: command.environmentId,
+    });
 
     return (await this.messageRepository.findOne({
       _environmentId: command.environmentId,

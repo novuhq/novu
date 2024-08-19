@@ -82,17 +82,13 @@ export class RemoveMessage {
   }
 
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: MarkEnum) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-
     this.updateSocketCount(subscriber, marked);
 
-    if (admin) {
-      this.analyticsService.track(`Removed Message - [Notification Center]`, admin._userId, {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
-    }
+    this.analyticsService.track(`Removed Message - [Notification Center]`, '', {
+      _subscriber: message._subscriberId,
+      _organization: command.organizationId,
+      _template: message._templateId,
+    });
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {

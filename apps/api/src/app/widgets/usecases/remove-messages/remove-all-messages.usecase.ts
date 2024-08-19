@@ -62,15 +62,12 @@ export class RemoveAllMessages {
       await this.updateServices(command, subscriber, MarkEnum.SEEN);
       await this.updateServices(command, subscriber, MarkEnum.READ);
 
-      const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-      if (admin) {
-        this.analyticsService.track(`Removed All Feed Messages - [Notification Center]`, admin._userId, {
-          _subscriber: subscriber._id,
-          _organization: command.organizationId,
-          _environment: command.environmentId,
-          _feedId: command.feedId,
-        });
-      }
+      this.analyticsService.track(`Removed All Feed Messages - [Notification Center]`, '', {
+        _subscriber: subscriber._id,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        _feedId: command.feedId,
+      });
 
       await this.invalidateCache.invalidateQuery({
         key: buildFeedKey().invalidate({
