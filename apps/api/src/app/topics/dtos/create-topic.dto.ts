@@ -1,11 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDefined, IsString } from 'class-validator';
 
-import { TopicDto } from './topic.dto';
+export class CreateTopicResponseDto {
+  @ApiPropertyOptional({
+    description: 'The unique identifier for the Topic created.',
+  })
+  _id: string;
 
-import { TopicKey, TopicName } from '../types';
-
-export class CreateTopicResponseDto implements Pick<TopicDto, '_id' & 'key'> {}
+  @ApiProperty({
+    description:
+      'User defined custom key and provided by the user that will be an unique identifier for the Topic created.',
+  })
+  key: string;
+}
 
 export class CreateTopicRequestDto {
   @ApiProperty({
@@ -14,12 +21,12 @@ export class CreateTopicRequestDto {
   })
   @IsString()
   @IsDefined()
-  key: TopicKey;
+  key: string;
 
   @ApiProperty({
     description: 'User defined custom name and provided by the user that will name the Topic created.',
   })
   @IsString()
   @IsDefined()
-  name: TopicName;
+  name: string;
 }
