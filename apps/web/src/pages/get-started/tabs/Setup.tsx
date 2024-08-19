@@ -35,6 +35,71 @@ export const buildGuides = [
         },
       },
       {
+        title: 'Create a workflow',
+        content: () => {
+          return (
+            <div>
+              <TextElement>
+                To define a new workflow you will use the <Code>@novu/framework</Code> Typescript SDK.
+                <br />
+                In a new file let's define a workflow with a simple email step.
+                <br /> <br />
+              </TextElement>
+
+              <CodeEditor
+                height="300px"
+                readonly
+                setCode={() => {}}
+                code={`import { workflow } from '@novu/framework';
+
+export const myWorkflow = workflow('my-workflow', async ({ step }) => {
+  await step.email('step', async (controls) => {
+    return {
+      subject: controls.subject,
+      body: '<h1>Hello World</h1>',
+    }
+  }, {
+    controlSchema: z.object({
+      subject: z.string().default('Hello World'),
+    })
+  })
+});`}
+              />
+
+              <HStack gap="50" className={css({ color: 'typography.text.secondary', mt: '12px' })}>
+                <IconOutlineMenuBook />
+                <a href="https://docs.novu.co/workflow/introduction" target={'_blank'}>
+                  Learn more on building workflows
+                </a>
+              </HStack>
+            </div>
+          );
+        },
+      },
+      {
+        title: 'Expose your workflow',
+        content: () => {
+          return (
+            <>
+              <TextElement>
+                Once a workflow has been created, we would need to expose it to the <code>serve</code> function so that
+                it will be visible on the Novu Studio.
+              </TextElement>
+              <br /> <br />
+              <CodeEditor
+                height="100px"
+                readonly
+                setCode={() => {}}
+                code={`import { serve } from '@novu/framework/next';
+import { myWorkflow } from '../../novu/workflows';
+
+export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });`}
+              />
+            </>
+          );
+        },
+      },
+      {
         title: 'Run Novu Studio',
         content: () => {
           return (

@@ -17,7 +17,7 @@ export function useVercelIntegration() {
 
   const navigate = useNavigate();
 
-  const { mutateAsync, isLoading } = useMutation(vercelIntegrationSetup, {
+  const { mutate, isLoading } = useMutation(vercelIntegrationSetup, {
     onSuccess: () => {
       if (next && configurationId) {
         navigate(`/partner-integrations/vercel/link-projects?configuration_id=${configurationId}&next=${next}`);
@@ -30,13 +30,13 @@ export function useVercelIntegration() {
     },
   });
 
-  async function startVercelSetup() {
+  const startVercelSetup = useCallback(() => {
     if (!canStartSetup || !code || !configurationId) {
       return;
     }
 
-    await mutateAsync({ vercelIntegrationCode: code, configurationId });
-  }
+    mutate({ vercelIntegrationCode: code, configurationId });
+  }, [canStartSetup, code, mutate, configurationId]);
 
   return {
     isLoading,

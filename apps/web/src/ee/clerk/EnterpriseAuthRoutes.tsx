@@ -6,7 +6,7 @@ import OrganizationListPage from './pages/OrganizationListPage';
 import QuestionnairePage from './pages/QuestionnairePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
-import { useEffectOnce, useVercelIntegration, useVercelParams } from '../../hooks';
+import { useVercelIntegration, useVercelParams } from '../../hooks';
 import { useEffect } from 'react';
 
 export const EnterpriseAuthRoutes = () => {
@@ -14,11 +14,11 @@ export const EnterpriseAuthRoutes = () => {
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (isSignedIn && isFromVercel) {
       startVercelSetup();
     }
-  }, !!(isSignedIn && isFromVercel));
+  }, [isSignedIn, isFromVercel, startVercelSetup]);
 
   const EnterprisePublicAuthLayout = () => {
     return (
