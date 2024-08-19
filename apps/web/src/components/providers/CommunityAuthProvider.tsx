@@ -9,6 +9,7 @@ import { useSegment } from './SegmentProvider';
 import { clearEnvironmentId } from './EnvironmentProvider';
 import { getUser } from '../../api/user';
 import { switchOrganization as apiSwitchOrganization, getOrganization } from '../../api/organization';
+import { DEFAULT_AUTH_CONTEXT_VALUE } from './constants';
 import { type AuthContextValue } from './AuthProvider';
 import { useRouteScopes } from '../../hooks/useRouteScopes';
 import { inIframe } from '../../utils/iframe';
