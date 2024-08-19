@@ -168,7 +168,7 @@ const PreferencesRow = (props: {
                 <Tooltip.Root>
                   <Tooltip.Trigger
                     asChild={(childProps) => (
-                      <span class={style('worfklowLabelDisabledIcon', 'nt-text-foreground-alpha-600')} {...childProps}>
+                      <span class={style('workflowLabelDisabledIcon', 'nt-text-foreground-alpha-600')} {...childProps}>
                         <Lock />
                       </span>
                     )}
