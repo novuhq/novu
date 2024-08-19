@@ -48,6 +48,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
           'nt-text-foreground-alpha-600': props.isCritical,
         })
       )}
+      data-disabled={props.isCritical}
     >
       <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
         <div>{getIcon(props.channel)}</div>
