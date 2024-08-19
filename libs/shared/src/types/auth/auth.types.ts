@@ -20,7 +20,6 @@ export type ClerkJwtPayload = JwtPayload & {
   email: string;
   lastName: string;
   firstName: string;
-  environmentId: string; // TODO
   profilePicture: string;
   externalId?: string;
   externalOrgId?: string;
