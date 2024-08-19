@@ -37,14 +37,7 @@ export function QuestionnaireForm() {
   const { startVercelSetup } = useVercelIntegration();
   const segment = useSegment();
   const location = useLocation();
-  const { initializeWebContainer } = useContainer();
   const [_, setParams] = useSearchParams();
-
-  useEffectOnce(() => {
-    if (isSupported) {
-      initializeWebContainer();
-    }
-  }, isPlaygroundOnboardingEnabled);
 
   const { mutateAsync: updateOrganizationMutation } = useMutation<{ _id: string }, IResponseError, any>(
     (data: UpdateExternalOrganizationDto) => updateClerkOrgMetadata(data)
@@ -102,18 +95,28 @@ export function QuestionnaireForm() {
 
         setParams(searchParams);
 
-        setTimeout(() => {
-          startVercelSetup();
-        }, 1000);
+        await new Promise<void>((resolve) => {
+          setTimeout(async () => {
+            try {
+              await startVercelSetup();
 
-        return;
+              return;
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            } finally {
+              localStorage.removeItem('vercel_redirect_data');
+              resolve();
+            }
+          }, 1000);
+        });
       } else {
         localStorage.removeItem('vercel_redirect_data');
       }
     }
 
     if (isV2Enabled) {
-      navigate(ROUTES.DASHBOARD_ONBOARDING);
+      navigate(ROUTES.GET_STARTED);
 
       return;
     }
