@@ -1,17 +1,12 @@
 import type { Notification } from '../notifications';
 import type { NovuOptions } from '../types';
-import { defaultLocalization, appearanceKeys } from './config';
+import { appearanceKeys, defaultLocalization } from './config';
 
-export type NotificationClickHandler = (args: { notification: Notification }) => void;
-export type NotificationActionClickHandler = (args: { notification: Notification }) => void;
+export type NotificationClickHandler = (notification: Notification) => void;
+export type NotificationActionClickHandler = (notification: Notification) => void;
 
-export type NotificationMounter = (
-  el: HTMLDivElement,
-  options: {
-    notification: Notification;
-  }
-) => () => void;
-export type BellMounter = (el: HTMLDivElement, options: { unreadCount: number }) => () => void;
+export type NotificationMounter = (el: HTMLDivElement, notification: Notification) => () => void;
+export type BellMounter = (el: HTMLDivElement, unreadCount: number) => () => void;
 
 export type Tab = { label: string; value: Array<string> };
 

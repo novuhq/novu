@@ -23,9 +23,9 @@ const DefaultInbox = ({
         props: {
           open,
           mountNotification: renderNotification
-            ? (el, { notification }) => mountElement(el, renderNotification({ notification }))
+            ? (el, notification) => mountElement(el, renderNotification(notification))
             : undefined,
-          mountBell: renderBell ? (el, { unreadCount }) => mountElement(el, renderBell({ unreadCount })) : undefined,
+          mountBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
           onNotificationClick,
           onPrimaryActionClick,
           onSecondaryActionClick,
