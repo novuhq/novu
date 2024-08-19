@@ -13,7 +13,7 @@ export const Bell: Component<BellProps> = (props) => {
 
   return (
     <Show when={props.mountBell} fallback={<BellContainer unreadCount={totalUnreadCount()} />}>
-      <ExternalElementMounter mount={(el) => props.mountBell!(el, { unreadCount: totalUnreadCount() })} />
+      <ExternalElementMounter mount={(el) => props.mountBell!(el, totalUnreadCount())} />
     </Show>
   );
 };

@@ -1,14 +1,14 @@
 import React from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
-
-export type BellRenderProps = ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
+import { BellRenderer } from '../utils/types';
 
 export type BellProps = {
-  children?: never | BellRenderProps;
+  renderBell?: BellRenderer;
 };
 
 export const Bell = React.memo((props: BellProps) => {
+  const { renderBell } = props;
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback(
@@ -16,12 +16,10 @@ export const Bell = React.memo((props: BellProps) => {
       return novuUI.mountComponent({
         name: 'Bell',
         element,
-        props: props.children
-          ? { mountBell: (el, { unreadCount }) => mountElement(el, props.children?.({ unreadCount })) }
-          : undefined,
+        props: renderBell ? { mountBell: (el, unreadCount) => mountElement(el, renderBell(unreadCount)) } : undefined,
       });
     },
-    [props.children]
+    [renderBell]
   );
 
   return <Mounter mount={mount} />;

@@ -1,38 +1,37 @@
 import React from 'react';
 import { useRenderer } from '../context/RenderContext';
-import { NotificationsRenderProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import type { NotificationClickHandler, NotificationActionClickHandler } from '@novu/js/ui';
+import { NotificationsRenderer } from '../utils/types';
 
 export type NotificationProps = {
-  children?: never | NotificationsRenderProps;
+  renderNotification?: NotificationsRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-export const Notifications = React.memo(
-  ({ children, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick }: NotificationProps) => {
-    const { novuUI, mountElement } = useRenderer();
+export const Notifications = React.memo((props: NotificationProps) => {
+  const { onNotificationClick, onPrimaryActionClick, renderNotification, onSecondaryActionClick } = props;
+  const { novuUI, mountElement } = useRenderer();
 
-    const mount = React.useCallback(
-      (element: HTMLElement) => {
-        return novuUI.mountComponent({
-          name: 'Notifications',
-          element,
-          props: children
-            ? {
-                mountNotification: (el, { notification }) => mountElement(el, children?.({ notification })),
-                onNotificationClick,
-                onPrimaryActionClick,
-                onSecondaryActionClick,
-              }
-            : { onNotificationClick, onPrimaryActionClick, onSecondaryActionClick },
-        });
-      },
-      [children, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
-    );
+  const mount = React.useCallback(
+    (element: HTMLElement) => {
+      return novuUI.mountComponent({
+        name: 'Notifications',
+        element,
+        props: {
+          mountNotification: renderNotification
+            ? (el, notification) => mountElement(el, renderNotification(notification))
+            : undefined,
+          onNotificationClick,
+          onPrimaryActionClick,
+          onSecondaryActionClick,
+        },
+      });
+    },
+    [renderNotification, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick]
+  );
 
-    return <Mounter mount={mount} />;
-  }
-);
+  return <Mounter mount={mount} />;
+});

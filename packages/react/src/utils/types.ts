@@ -7,12 +7,13 @@ import type {
   Localization,
 } from '@novu/js/ui';
 
-export type NotificationsRenderProps = (args: { notification: Notification }) => React.ReactNode;
+export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
+export type BellRenderer = (unreadCount: number) => React.ReactNode;
 
 export type DefaultInboxProps = {
   open?: boolean;
-  renderNotification?: (args: { notification: Notification }) => React.ReactNode;
-  renderBell?: ({ unreadCount }: { unreadCount: number }) => React.ReactNode;
+  renderNotification?: NotificationsRenderer;
+  renderBell?: BellRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
