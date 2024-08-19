@@ -14,6 +14,7 @@ import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
+import { Modal } from '@mantine/core';
 
 const AppShell = styled.div`
   display: flex;
@@ -29,7 +30,7 @@ const ContentShell = styled.div`
   overflow: hidden; // for appropriate scroll
 `;
 
-export function PrivatePageLayout() {
+export function PrivatePageLayout({ inModal }: { inModal?: boolean }) {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
   const { environment } = useEnvironment();
   const location = useLocation();
@@ -92,7 +93,13 @@ export function PrivatePageLayout() {
                 {showSampleModeBanner && <SampleModeBanner />}
                 <FreeTrialBanner />
                 <HeaderNav />
-                <Outlet />
+                {inModal ? (
+                  <Modal opened onClose={() => {}} size="90%">
+                    <Outlet />
+                  </Modal>
+                ) : (
+                  <Outlet />
+                )}
               </ContentShell>
             </AppShell>
           </SpotLight>

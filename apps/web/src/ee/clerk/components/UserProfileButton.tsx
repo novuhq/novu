@@ -15,7 +15,7 @@ export function UserProfileButton() {
   const headerColor = colorScheme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(33, 33, 38)';
 
   return (
-    <UserButton afterSignOutUrl={ROUTES.AUTH_LOGIN}>
+    <UserButton afterSignOutUrl={ROUTES.AUTH_LOGIN} userProfileUrl="/manage-account">
       <UserButton.UserProfilePage label="account" />
       <UserButton.UserProfilePage label="security" />
       <UserButton.UserProfilePage label="Organization" url={ROUTES.ORGANIZATION} labelIcon={<IconRoomPreferences />}>

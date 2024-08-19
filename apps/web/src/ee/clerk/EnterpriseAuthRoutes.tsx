@@ -4,9 +4,11 @@ import { PublicPageLayout } from '../../components/layout/components/PublicPageL
 import { ROUTES } from '../../constants/routes';
 import OrganizationListPage from './pages/OrganizationListPage';
 import QuestionnairePage from './pages/QuestionnairePage';
+import ManageAccountPage from './pages/ManageAccountPage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import { useEffectOnce, useVercelIntegration, useVercelParams } from '../../hooks';
+import { PrivatePageLayout } from '../../components/layout/components/PrivatePageLayout';
 
 const EnterprisePublicAuthLayout = () => {
   return (
@@ -50,6 +52,9 @@ export const EnterpriseAuthRoutes = () => {
       <Route element={<EnterprisePrivateAuthLayout />}>
         <Route path={ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST} element={<OrganizationListPage />} />
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+      </Route>
+      <Route element={<PrivatePageLayout inModal />}>
+        <Route path="/manage-account/*" element={<ManageAccountPage />} />
       </Route>
     </>
   );
