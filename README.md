@@ -65,7 +65,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 - 💌 Easily re-use existing content in various frameworks, including React Email, Vue-email, Maizzle, MJML, and more
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
-- 📦 Embeddadle Inbox component with real-time updates
+- 📦 Embeddable Inbox component with real-time updates
 - 📤 Embeddable user preferences component gives your subscribers control over their notifications
 - 👨‍💻 Community-driven
 
