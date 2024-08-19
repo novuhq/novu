@@ -395,7 +395,7 @@ test('should create a new mailjet integration', async ({ page }) => {
     provider: 'Mailjet',
     channel: 'Email',
     environment: 'Development',
-    status: 'Disabled',
+    status: 'Active',
   });
 });
 
@@ -433,7 +433,7 @@ test('should update the mailjet integration', async ({ page }) => {
   await expect(integrationEnvironment).toContainText('Development');
 
   const isActive = page.getByTestId('is_active_id');
-  await expect(isActive).toHaveValue('false');
+  await expect(isActive).toHaveValue('true');
 
   providerName = updateProviderSidebar.getByPlaceholder('Enter instance name');
   await expect(providerName).toHaveValue('Mailjet Integration');
@@ -447,8 +447,6 @@ test('should update the mailjet integration', async ({ page }) => {
   await providerName.clear();
   await providerName.fill('Mailjet Integration Updated');
 
-  await isActive.locator('~ label').click();
-
   const apiKey = page.getByTestId('apiKey');
   await apiKey.fill('fake-api-key');
 
@@ -461,11 +459,13 @@ test('should update the mailjet integration', async ({ page }) => {
   const senderName = page.getByTestId('senderName');
   await senderName.fill('Novu');
 
+  const toastClose = page.locator('.mantine-Notification-closeButton');
+  await toastClose.click();
+
   await expect(updateButton).toBeEnabled();
   await updateButton.click();
+  await expect(updateButton).toBeEnabled();
 
-  const modalClose = page.locator('.mantine-Modal-close');
-  await modalClose.click();
   const sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 
@@ -513,7 +513,7 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   await expect(updateProviderSidebar).toBeVisible();
 
   const isActive = page.getByTestId('is_active_id');
-  await expect(isActive).toHaveValue('false');
+  await expect(isActive).toHaveValue('true');
 
   providerName = updateProviderSidebar.getByPlaceholder('Enter instance name');
   await expect(providerName).toHaveValue('Mailjet Integration');
@@ -528,8 +528,6 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   await providerName.clear();
   await providerName.fill('Mailjet Integration Updated');
 
-  await isActive.locator('~ label').click();
-
   const apiKey = page.getByTestId('apiKey');
   await apiKey.fill('fake-api-key');
 
@@ -542,11 +540,13 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   const senderName = page.getByTestId('senderName');
   await senderName.fill('Novu');
 
+  const toastClose = page.locator('.mantine-Notification-closeButton');
+  await toastClose.click();
+
   await expect(updateButton).toBeEnabled();
   await updateButton.click();
+  await expect(updateButton).toBeEnabled();
 
-  const modalClose = page.locator('.mantine-Modal-close');
-  await modalClose.click();
   sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 

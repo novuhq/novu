@@ -12,7 +12,10 @@ export function LinkVercelProjectPage({ type }: { type: 'edit' | 'create' }) {
         <Stack spacing="xl">
           <Stack spacing="xs">
             <Title>Link Vercel Projects to Novu</Title>
-            <Text>Choose the projects to link with your Organizations</Text>
+            <Text>
+              Choose the projects to link with your Organizations, this action will perform a sync of the projects with
+              your Novu environments as their bridge url.
+            </Text>
           </Stack>
           <LinkProjectContainer type={type} />
         </Stack>

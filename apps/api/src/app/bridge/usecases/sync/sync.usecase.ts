@@ -159,6 +159,7 @@ export class Sync {
             this.castToAnyNotSupportedParam(workflow.options)?.notificationGroupId,
             command.environmentId
           );
+
           if (!notificationGroupId) {
             throw new BadRequestException('Notification group not found');
           }
@@ -190,7 +191,7 @@ export class Sync {
               active: isWorkflowActive,
               description: this.castToAnyNotSupportedParam(workflow.options).description,
               data: this.castToAnyNotSupportedParam(workflow).options?.data,
-              tags: workflow.tags,
+              tags: workflow.tags || [],
               critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
               preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
             })

@@ -1,8 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { useOrganizations } from '../../../hooks/useOrganizations';
 
 import {
   completeVercelIntegration,
@@ -16,6 +15,7 @@ import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '@novu/design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import SetupLoader from '../../auth/components/SetupLoader';
+import { useOrganizationList } from '@clerk/clerk-react';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {
@@ -25,8 +25,18 @@ export type ProjectLinkFormValues = {
 };
 
 export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
-  const { data: organizations } = useOrganizations();
+  const { userMemberships, isLoaded: isOrgListLoaded } = useOrganizationList({ userMemberships: { infinite: true } });
   const { configurationId, next } = useVercelParams();
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (userMemberships && userMemberships.revalidate) {
+        userMemberships.revalidate();
+      }
+    }, 1500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {
     data: vercelProjects,
     fetchNextPage,
@@ -38,6 +48,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
     enabled: typeof configurationId === 'string',
     getNextPageParam: (lastPage) => lastPage.pagination.next,
   });
+  const organizations = userMemberships.data;
 
   const { mutateAsync: completeIntegrationMutate, isLoading } = useMutation(completeVercelIntegration, {
     onSuccess: () => {
@@ -75,7 +86,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
       projectLinkState: [
         {
           projectIds: [],
-          organizationId: organizations && organizations.length > 0 ? organizations[0]._id : '',
+          organizationId: organizations && organizations.length > 0 ? organizations[0].id : '',
         },
       ],
     },
