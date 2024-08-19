@@ -22,30 +22,34 @@
 </p>
 
 <h1 align="center">
-  The open-source notification infrastructure for developers
+  The open source notifications framework that makes it easy for devs to empower product teams.
 </h1>
 
 <div align="center">
-  The ultimate service for managing multi-channel notifications with a single API.
+  Novu is the easy button for developer teams that need to quickly integrate notifications into their application, and enable product teams to own notifications content and messaging.
 </div>
 
 <p align="center">
   <br />
-  <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <a href="https://docs.novu.co?utm_campaign=github-readme" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <br />
+  or
+  <br />
+  <a href="https://dashboard.novu.co?utm_campaign=github-readme" rel="dofollow"><strong>Create a free account »</strong></a>
   <br />
 
 <br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
   ·
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request a Feature</a>
   ·
-<a href="https://discord.novu.co">Join Our Discord</a>
+<a href="https://bit.ly/novu-github-discord">Join our Discord</a>
   ·
-  <a href="https://roadmap.novu.co">Roadmap</a>
+  <a href="https://bit.ly/novu-github-roadmap">Roadmap</a>
   ·
   <a href="https://twitter.com/novuhq">X</a>
   ·
-  <a href="https://notifications.directory">Notifications Directory</a>
+  <a href="https://novu.co/contact-us/?utm_campaign=github-readme">Contact us</a>
 </p>
 
 ## ⭐️ Why Novu?
@@ -55,28 +59,32 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
-- 💅 Fully managed GitOps Flow, deployed from your CI
-- 🔥 Define workflow and step validations with Zod or JSON Schema
-- 💌 React Email/Maizzle/MJML integrations
+- 🌈 Single API for all messaging providers (Inbox/In-App, Email, SMS, Push, Chat)
+- 💅 Fully managed GitOps flow, deployed from your CI
+- 🔥 Define workflow and step controls with Zod or JSON Schema
+- 💌 Easily re-use existing content in various frameworks, including React Email, Vue-email, Maizzle, MJML, and more
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
-- 📦 Embeddable notification center with real-time updates
+- 📦 Embeddadle Inbox component with real-time updates
+- 📤 Embeddable user preferences component gives your subscribers control over their notifications
 - 👨‍💻 Community-driven
 
 ## 🚀 Getting Started
 
-To get started, type the following command in your Terminal.
+There are two ways to get started:
+
+1. type the following command in your terminal.
 
 ```bash
 npx novu@latest dev
 ```
+2. [Create a free cloud account](https://dashboard.novu.co?utm_campaign=github-readme)
 
-## 📚 Table Of Contents
+## 📚 Table of contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
 - [GitOps & React Email Integration](https://github.com/novuhq/novu#-gitops)
-- [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
+- [Embeddable Inbox and Preferences](https://github.com/novuhq/novu#embeddable-notification-center)
 - [Providers](https://github.com/novuhq/novu#providers)
   - [Email](https://github.com/novuhq/novu#-email)
   - [SMS](https://github.com/novuhq/novu#-sms)
@@ -88,9 +96,9 @@ npx novu@latest dev
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
-## Notification Workflows as Code
+## Notification workflows as code
 
-For API documentation and reference, please visit our [API Reference](https://docs.novu.co/getting-started/introduction?utm_campaign=github-readme).
+For API documentation and reference, please visit our [API Reference](https://docs.novu.co/api-reference/overview?utm_campaign=github-readme).
 
 ```ts
 import { workflow, CronExpression } from '@novu/framework';
@@ -122,26 +130,19 @@ await commentWorkflow.trigger({
 
 ```
 
-## Embeddable Notification Center
+## Embeddable Inbox component
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started?utm_campaign=github-readme) / [Vue](https://docs.novu.co/notification-center/client/vue?utm_campaign=github-readme) / [Angular](https://docs.novu.co/notification-center/client/angular?utm_campaign=github-readme) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe?utm_campaign=github-readme), as well as a [Web component](https://docs.novu.co/notification-center/client/web-component?utm_campaign=github-readme).
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
 
 <div align="center">
-<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
+<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://novu.co/static/6e670ba56ed7a65c7f5ccff5d58c56fb/a9e85/inbox.webp" alt-text="GIF of Novu's Embeddable Notification Center">
 
-Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
-
-<p align="center">
-  <a href="https://docs.novu.co/sdks/react?utm_campaign=github-readme">React Component</a>
-  · <a href="https://docs.novu.co/sdks/vue?utm_campaign=github-readme">Vue Component</a>
-  · <a href="https://docs.novu.co/sdks/angular?utm_campaign=github-readme">Angular Component</a>
-  </p>
-  
+Read more about how to add a [notification center Inbox](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme) to your app.
 </div>
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use API and UI interface.
 
 #### 💌 Email
 
@@ -198,11 +199,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
-
-#### Other (Coming Soon...)
-
-- [ ] PagerDuty
+- [x] [Novu](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme)
 
 ## 📋 Read Our Code Of Conduct
 
@@ -215,14 +212,14 @@ We are more than happy to help you. If you are getting any errors or facing prob
 ## 🔗 Links
 
 - [Home page](https://novu.co?utm_campaign=github-readme)
-- [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-readme)
+- [Contribution guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
+- [Run Novu locally](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-readme)
 
 ## 🛡️ License
 
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
 
-## 💪 Thanks To All Contributors
+## 💪 Thanks to all of our contributors
 
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
