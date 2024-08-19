@@ -1,12 +1,19 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import {
+  CommunityUserRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  MemberRepository,
+  OrganizationRepository,
+} from '@novu/dal';
 import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
 
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { Sync } from '../../../bridge/usecases/sync';
 
 interface ISetEnvironment {
   name: string;
@@ -31,16 +38,29 @@ export class CompleteVercelIntegration {
     private environmentRepository: EnvironmentRepository,
     private getVercelProjectsUsecase: GetVercelProjects,
     private organizationRepository: OrganizationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private syncUsecase: Sync,
+    private memberRepository: MemberRepository,
+    private communityUserRepository: CommunityUserRepository
   ) {}
 
   async execute(command: CompleteVercelIntegrationCommand): Promise<{ success: boolean }> {
     try {
-      const organizationIds = Object.keys(command.data);
+      const organizationIdsMap = Object.keys(command.data);
+      const organizationIds: string[] = [];
+      const internalOrgMap = {};
+      for (const orgId of organizationIdsMap) {
+        const internalOrg = await this.organizationRepository.findById(orgId);
+        if (internalOrg) {
+          organizationIds.push(internalOrg._id);
+
+          internalOrgMap[internalOrg._id] = command.data[orgId];
+        }
+      }
 
       const envKeys = await this.getEnvKeys(organizationIds);
 
-      const mappedProjectData = this.mapProjectKeys(envKeys, command.data);
+      const mappedProjectData = this.mapProjectKeys(envKeys, internalOrgMap);
 
       const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration(command.environmentId, {
         configurationId: command.configurationId,
@@ -59,6 +79,18 @@ export class CompleteVercelIntegration {
           teamId: configurationDetails.teamId,
           token: configurationDetails.accessToken,
         });
+
+        try {
+          await this.updateBridgeUrl(
+            env.envId,
+            env.projectIds[0],
+            configurationDetails.accessToken,
+            configurationDetails.teamId,
+            env._organizationId
+          );
+        } catch (error) {
+          Logger.error(error, 'Error updating bridge url');
+        }
       }
 
       this.analyticsService.track('Create Vercel Integration - [Partner Integrations]', command.userId, {
@@ -73,10 +105,59 @@ export class CompleteVercelIntegration {
     }
   }
 
+  private async updateBridgeUrl(
+    environmentId: string,
+    projectIds: string,
+    accessToken: string,
+    teamId: string,
+    organizationId: string
+  ) {
+    try {
+      const getDomainsResponse = await lastValueFrom(
+        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectIds}?teamId=${teamId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      const production = getDomainsResponse.data?.targets?.production;
+      const bridgeUrl = production?.meta?.branchAlias || production?.automaticAliases[0];
+
+      if (!bridgeUrl) {
+        return;
+      }
+
+      const fullBridgeUrl = `https://${bridgeUrl}/api/novu`;
+
+      const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(organizationId);
+      if (!orgAdmin) {
+        throw new ApiException('Organization admin not found');
+      }
+
+      const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
+
+      if (!internalUser) {
+        throw new ApiException('User not found');
+      }
+
+      await this.syncUsecase.execute({
+        organizationId: organizationId,
+        userId: internalUser?._id as string,
+        environmentId: environmentId,
+        bridgeUrl: fullBridgeUrl,
+        source: 'vercel',
+      });
+    } catch (error) {
+      Logger.error(error, 'Error updating bridge url');
+    }
+  }
+
   private async getEnvKeys(organizationIds: string[]): Promise<EnvironmentEntity[]> {
     return await this.environmentRepository.find(
       {
-        _organizationId: organizationIds,
+        _organizationId: { $in: organizationIds },
       },
       'apiKeys identifier name _organizationId _id'
     );

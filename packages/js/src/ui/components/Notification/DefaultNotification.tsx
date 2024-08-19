@@ -44,7 +44,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       props.notification.read();
     }
 
-    props.onNotificationClick?.({ notification: props.notification });
+    props.onNotificationClick?.(props.notification);
     if (props.notification.redirect?.url) {
       window.open(props.notification.redirect?.url, '_blank', 'noreferrer noopener');
     }
@@ -55,10 +55,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
 
     if (action === ActionTypeEnum.PRIMARY) {
       props.notification.completePrimary();
-      props.onPrimaryActionClick?.({ notification: props.notification });
+      props.onPrimaryActionClick?.(props.notification);
     } else {
       props.notification.completeSecondary();
-      props.onSecondaryActionClick?.({ notification: props.notification });
+      props.onSecondaryActionClick?.(props.notification);
     }
   };
 
