@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import { createSignal } from 'solid-js';
 import { useStyle } from '../../../helpers';
 
 type SwitchProps = {
@@ -10,7 +9,6 @@ type SwitchProps = {
 
 export const Switch = (props: SwitchProps) => {
   const style = useStyle();
-  const [isChecked, setIsChecked] = createSignal(props.checked || false);
 
   return (
     <label
@@ -20,15 +18,13 @@ export const Switch = (props: SwitchProps) => {
     nt-inline-flex nt-cursor-pointer nt-items-center`
       )}
       data-disabled={props.disabled}
-      data-checked={isChecked()}
     >
       <input
         type="checkbox"
         // eslint-disable-next-line local-rules/no-class-without-style
         class="nt-peer nt-sr-only"
-        checked={isChecked()}
+        checked={props.checked}
         onChange={(e) => {
-          setIsChecked(e.target.checked);
           props.onChange(e.target.checked);
         }}
         disabled={props.disabled}
@@ -51,7 +47,6 @@ export const Switch = (props: SwitchProps) => {
           )
         )}
         data-disabled={props.disabled}
-        data-checked={isChecked()}
       />
     </label>
   );
