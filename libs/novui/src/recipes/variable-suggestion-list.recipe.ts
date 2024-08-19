@@ -17,14 +17,18 @@ export const VARIABLE_SUGGESTION_LIST_RECIPE = defineSlotRecipe({
       overflowY: 'auto',
     },
 
-    options: {
-      overflowX: 'hidden !important',
-    },
     option: {
-      ...SELECT_RECIPE.base.option,
-      // overflowX: '[hidden] !important',
+      padding: '50',
+      marginY: '25',
+      borderRadius: '50',
+      color: 'typography.text.main',
+      overflowX: '[hidden] !important',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+
+      _hover: {
+        bg: 'select.option.surface.hover',
+      },
       _selected: {
         bg: 'select.option.surface.hover',
       },
