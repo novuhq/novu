@@ -54,7 +54,7 @@ export const EnterpriseAuthRoutes = () => {
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
       </Route>
       <Route element={<PrivatePageLayout inModal />}>
-        <Route path="/manage-account/*" element={<ManageAccountPage />} />
+        <Route path="/manage-account/:tabValue" element={<ManageAccountPage />} />
       </Route>
     </>
   );
