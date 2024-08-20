@@ -4,12 +4,12 @@ import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { EvaluateEventResourceLimit, GetPlatformNotificationUsage, GetSubscription } from '@novu/ee-billing';
+import { GetEventResourceLimit, GetPlatformNotificationUsage, GetSubscription } from '@novu/ee-billing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../../../app.module';
 
-describe('EvaluateEventResourceLimit', async () => {
-  let useCase: EvaluateEventResourceLimit;
+describe('GetEventResourceLimit', async () => {
+  let useCase: GetEventResourceLimit;
   let session: UserSession;
   let getSubscription: GetSubscription;
   let getPlatformNotificationUsage: GetPlatformNotificationUsage;
@@ -28,7 +28,7 @@ describe('EvaluateEventResourceLimit', async () => {
     session = new UserSession();
     await session.initialize();
 
-    useCase = moduleRef.get(EvaluateEventResourceLimit);
+    useCase = moduleRef.get(GetEventResourceLimit);
     getSubscription = moduleRef.get<GetSubscription>(GetSubscription);
     getPlatformNotificationUsage = moduleRef.get(GetPlatformNotificationUsage);
 
