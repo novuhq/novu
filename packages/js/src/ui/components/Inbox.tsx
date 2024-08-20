@@ -2,10 +2,10 @@ import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { useInboxContext } from '../context';
 import { useStyle } from '../helpers';
 import type {
-  BellMounter,
+  BellRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
-  NotificationMounter,
+  NotificationRenderer,
 } from '../types';
 import { Bell, Footer, Header, Preferences, PreferencesHeader } from './elements';
 import { InboxTabs } from './InboxTabs';
@@ -14,8 +14,8 @@ import { Button, Popover } from './primitives';
 
 export type InboxProps = {
   open?: boolean;
-  mountNotification?: NotificationMounter;
-  mountBell?: BellMounter;
+  renderNotification?: NotificationRenderer;
+  renderBell?: BellRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -27,7 +27,7 @@ export enum InboxPage {
 }
 
 export type InboxContentProps = {
-  mountNotification?: NotificationMounter;
+  mountNotification?: NotificationRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -60,7 +60,7 @@ export const InboxContent = (props: InboxContentProps) => {
             when={tabs() && tabs().length > 0}
             fallback={
               <NotificationList
-                mountNotification={props.mountNotification}
+                renderNotification={props.renderNotification}
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
@@ -89,13 +89,13 @@ export const Inbox = (props: InboxProps) => {
       <Popover.Trigger
         asChild={(triggerProps) => (
           <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>
-            <Bell mountBell={props.mountBell} />
+            <Bell renderBell={props.renderBell} />
           </Button>
         )}
       />
       <Popover.Content appearanceKey="inbox__popoverContent">
         <InboxContent
-          mountNotification={props.mountNotification}
+          renderNotification={props.renderNotification}
           onNotificationClick={props.onNotificationClick}
           onPrimaryActionClick={props.onPrimaryActionClick}
           onSecondaryActionClick={props.onSecondaryActionClick}
