@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { GetEventResourceLimit } from 'enterprise/packages/billing/dist';
+import { GetEventResourceUsage } from '@novu/ee-billing';
 
 process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
 
@@ -60,23 +60,23 @@ describe('Resource Limiting', () => {
         });
 
         describe('Base Quota FF is enabled', () => {
-          let getEventResourceLimitStub: sinon.SinonStub;
+          let getEventResourceUsageStub: sinon.SinonStub;
 
           beforeEach(() => {
             process.env.IS_QUOTA_LIMITING_ENABLED = 'true';
 
-            const getEventResourceLimit = session.testServer?.getService(
-              GetEventResourceLimit
-            ) as GetEventResourceLimit;
-            getEventResourceLimitStub = sinon.stub(getEventResourceLimit, 'execute');
+            const getEventResourceUsage = session.testServer?.getService(
+              GetEventResourceUsage
+            ) as GetEventResourceUsage;
+            getEventResourceUsageStub = sinon.stub(getEventResourceUsage, 'execute');
           });
 
           afterEach(() => {
-            getEventResourceLimitStub.reset();
+            getEventResourceUsageStub.reset();
           });
 
           it('should NOT block the request when the quota limit is NOT exceeded', async () => {
-            getEventResourceLimitStub.resolves({
+            getEventResourceUsageStub.resolves({
               remaining: 50,
               limit: 100,
               success: true,
@@ -91,7 +91,7 @@ describe('Resource Limiting', () => {
           });
 
           it('should block the request when the quota limit is exceeded and product tier is free', async () => {
-            getEventResourceLimitStub.resolves({
+            getEventResourceUsageStub.resolves({
               remaining: 0,
               limit: 100,
               success: false,
@@ -106,7 +106,7 @@ describe('Resource Limiting', () => {
           });
 
           it('should NOT block the request when the quota limit is exceeded and product tier is NOT free', async () => {
-            getEventResourceLimitStub.resolves({
+            getEventResourceUsageStub.resolves({
               remaining: 0,
               limit: 100,
               success: false,
@@ -121,7 +121,7 @@ describe('Resource Limiting', () => {
           });
 
           it('should NOT block the request when the evaluation lock is false', async () => {
-            getEventResourceLimitStub.resolves({
+            getEventResourceUsageStub.resolves({
               remaining: 0,
               limit: 0,
               success: true,
@@ -136,7 +136,7 @@ describe('Resource Limiting', () => {
           });
 
           it('should set the quota limit headers when the evaluation lock is true', async () => {
-            getEventResourceLimitStub.resolves({
+            getEventResourceUsageStub.resolves({
               remaining: 0,
               limit: 100,
               success: false,
@@ -156,7 +156,7 @@ describe('Resource Limiting', () => {
           });
 
           it('should NOT set the quota limit headers when the evaluation lock is false', async () => {
-            getEventResourceLimitStub.resolves({
+            getEventResourceUsageStub.resolves({
               remaining: 0,
               limit: 100,
               success: false,
