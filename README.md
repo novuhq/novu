@@ -22,7 +22,7 @@
 </p>
 
 <h1 align="center">
-  The open source notifications framework that makes it easy for devs to empower product teams.
+  The open source notifications framework that makes it easy for developers to empower product teams.
 </h1>
 
 <div align="center">
@@ -39,9 +39,9 @@
   <br />
 
 <br/>
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report a bug</a>
   ·
-  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request a Feature</a>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request a feature</a>
   ·
 <a href="https://bit.ly/novu-github-discord">Join our Discord</a>
   ·
@@ -54,7 +54,7 @@
 
 ## ⭐️ Why Novu?
 
-Novu provides a unified API that makes it simple to send notifications through multiple channels, including In-App, Push, Email, SMS, and Chat.
+Novu provides a unified API that makes it simple to send notifications through multiple channels, including Inbox/In-App, Push, Email, SMS, and Chat.
 With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
 
 ## ✨ Features
