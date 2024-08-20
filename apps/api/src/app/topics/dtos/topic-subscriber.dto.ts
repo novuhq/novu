@@ -2,24 +2,22 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { ITopicSubscriber } from '@novu/shared';
 
-import { EnvironmentId, ExternalSubscriberId, OrganizationId, SubscriberId, TopicId, TopicKey } from '../types';
-
 export class TopicSubscriberDto implements ITopicSubscriber {
   @ApiProperty()
-  _organizationId: OrganizationId;
+  _organizationId: string;
 
   @ApiProperty()
-  _environmentId: EnvironmentId;
+  _environmentId: string;
 
   @ApiProperty()
-  _subscriberId: SubscriberId;
+  _subscriberId: string;
 
   @ApiProperty()
-  _topicId: TopicId;
+  _topicId: string;
 
   @ApiProperty()
-  topicKey: TopicKey;
+  topicKey: string;
 
   @ApiProperty()
-  externalSubscriberId: ExternalSubscriberId;
+  externalSubscriberId: string;
 }
