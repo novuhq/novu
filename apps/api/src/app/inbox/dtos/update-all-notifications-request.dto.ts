@@ -1,8 +1,6 @@
 import { IsArray, IsOptional, IsString } from 'class-validator';
 
-import type { NotificationFilter } from '../utils/types';
-
-export class UpdateAllNotificationsRequestDto implements Pick<NotificationFilter, 'tags'> {
+export class UpdateAllNotificationsRequestDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

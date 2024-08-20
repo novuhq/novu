@@ -1,25 +1,14 @@
-import {
-  ChannelTypeEnum,
-  EnvironmentId,
-  IEmailBlock,
-  ITemplateVariable,
-  OrganizationId,
-  LayoutDescription,
-  LayoutId,
-  LayoutName,
-  LayoutIdentifier,
-  UserId,
-} from '../../types';
+import { ChannelTypeEnum, IEmailBlock, ITemplateVariable } from '../../types';
 
 export class LayoutDto {
-  _id?: LayoutId;
-  _organizationId: OrganizationId;
-  _environmentId: EnvironmentId;
-  _creatorId: UserId;
-  _parentId?: LayoutId;
-  name: LayoutName;
-  identifier: LayoutIdentifier;
-  description?: LayoutDescription;
+  _id?: string;
+  _organizationId: string;
+  _environmentId: string;
+  _creatorId: string;
+  _parentId?: string;
+  name: string;
+  identifier: string;
+  description?: string;
   channel: ChannelTypeEnum;
   content: IEmailBlock[];
   contentType: string;
