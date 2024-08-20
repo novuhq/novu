@@ -16,7 +16,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
         `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md nt-relative nt-text-foreground-alpha-600 nt-cursor-pointer`
       )}
     >
-      <BellIcon />
+      <BellIcon class={style('bellIcon')} />
       <Show when={props.unreadCount > 0}>
         <span
           class={style(
