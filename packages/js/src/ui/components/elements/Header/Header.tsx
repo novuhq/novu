@@ -3,7 +3,7 @@ import { StatusDropdown } from '../InboxStatus/InboxStatusDropdown';
 import { ActionsContainer } from './ActionsContainer';
 
 type HeaderProps = {
-  updateScreen: (screen: 'inbox' | 'preferences') => void;
+  navigateToPreferences?: () => void;
 };
 
 export const Header = (props: HeaderProps) => {
@@ -17,7 +17,7 @@ export const Header = (props: HeaderProps) => {
       )}
     >
       <StatusDropdown />
-      <ActionsContainer showPreferences={() => props.updateScreen('preferences')} />
+      <ActionsContainer showPreferences={props.navigateToPreferences} />
     </div>
   );
 };

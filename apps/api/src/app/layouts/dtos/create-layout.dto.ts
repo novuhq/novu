@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
-import { LayoutDto } from './layout.dto';
+import { LayoutVariables } from '../types';
 
-import { LayoutDescription, LayoutId, LayoutIdentifier, LayoutName, LayoutVariables } from '../types';
-
-export class CreateLayoutResponseDto implements Pick<LayoutDto, '_id'> {
-  @ApiProperty()
-  _id: LayoutId;
+export class CreateLayoutResponseDto {
+  @ApiProperty({
+    description: 'The unique identifier for the Layout created.',
+  })
+  _id: string;
 }
 
 export class CreateLayoutRequestDto {
@@ -16,21 +16,21 @@ export class CreateLayoutRequestDto {
   })
   @IsString()
   @IsDefined()
-  name: LayoutName;
+  name: string;
 
   @ApiProperty({
     description: 'User defined custom key that will be a unique identifier for the Layout created.',
   })
   @IsString()
   @IsDefined()
-  identifier: LayoutIdentifier;
+  identifier: string;
 
   @ApiPropertyOptional({
     description: 'User description of the layout',
   })
   @IsString()
   @IsOptional()
-  description: LayoutDescription;
+  description: string;
 
   @ApiProperty({
     description: 'User defined content for the layout.',

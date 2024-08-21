@@ -39,15 +39,7 @@ describe('CreateUsageRecords', () => {
   const upsertSubscriptionUsecase = { execute: () => Promise.resolve() };
   const getCustomerUsecase = { execute: () => Promise.resolve() };
   const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
-
   let createUsageRecordStub: sinon.SinonStub;
-  const getOrganizationAdminUserStub = {
-    execute: () => {
-      return {
-        _id: 'admin_user_id',
-      };
-    },
-  };
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
   let getCustomerStub: sinon.SinonStub;
@@ -94,8 +86,7 @@ describe('CreateUsageRecords', () => {
       getCustomerUsecase,
       upsertSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
-      analyticsServiceStub,
-      getOrganizationAdminUserStub
+      analyticsServiceStub
     );
 
     return useCase;

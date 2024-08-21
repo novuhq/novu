@@ -13,7 +13,6 @@ import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   ControlsDto,
-  TopicKey,
   TriggerRecipients,
   TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
@@ -27,7 +26,7 @@ export class TenantPayloadDto extends UpdateTenantRequestDto {}
 
 export class TopicPayloadDto {
   @ApiProperty()
-  topicKey: TopicKey;
+  topicKey: string;
 
   @ApiProperty({ example: 'Topic', enum: TriggerRecipientsTypeEnum })
   type: TriggerRecipientsTypeEnum;

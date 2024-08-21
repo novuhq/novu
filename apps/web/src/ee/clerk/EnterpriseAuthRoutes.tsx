@@ -7,7 +7,28 @@ import QuestionnairePage from './pages/QuestionnairePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import { useEffectOnce, useVercelIntegration, useVercelParams } from '../../hooks';
-import { useEffect } from 'react';
+
+const EnterprisePublicAuthLayout = () => {
+  return (
+    <SignedOut>
+      <PublicPageLayout />
+    </SignedOut>
+  );
+};
+
+// private but we want appearance of public layout
+const EnterprisePrivateAuthLayout = () => {
+  return (
+    <>
+      <SignedIn>
+        <PublicPageLayout />
+      </SignedIn>
+      <SignedOut>
+        <Navigate to={ROUTES.AUTH_LOGIN} replace />
+      </SignedOut>
+    </>
+  );
+};
 
 export const EnterpriseAuthRoutes = () => {
   const { isSignedIn } = useAuth();
@@ -19,28 +40,6 @@ export const EnterpriseAuthRoutes = () => {
       startVercelSetup();
     }
   }, !!(isSignedIn && isFromVercel));
-
-  const EnterprisePublicAuthLayout = () => {
-    return (
-      <SignedOut>
-        <PublicPageLayout />
-      </SignedOut>
-    );
-  };
-
-  // private but we want appearance of public layout
-  const EnterprisePrivateAuthLayout = () => {
-    return (
-      <>
-        <SignedIn>
-          <PublicPageLayout />
-        </SignedIn>
-        <SignedOut>
-          <Navigate to={ROUTES.AUTH_LOGIN} replace />
-        </SignedOut>
-      </>
-    );
-  };
 
   return (
     <>

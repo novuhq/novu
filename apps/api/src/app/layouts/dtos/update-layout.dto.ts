@@ -3,7 +3,7 @@ import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 import { LayoutDto } from './layout.dto';
 
-import { LayoutDescription, LayoutIdentifier, LayoutName, LayoutVariables } from '../types';
+import { LayoutVariables } from '../types';
 
 export class UpdateLayoutResponseDto extends LayoutDto {}
 
@@ -13,21 +13,21 @@ export class UpdateLayoutRequestDto {
   })
   @IsString()
   @IsOptional()
-  name?: LayoutName;
+  name?: string;
 
   @ApiProperty({
     description: 'User defined custom key that will be a unique identifier for the Layout updated.',
   })
   @IsString()
   @IsOptional()
-  identifier: LayoutIdentifier;
+  identifier: string;
 
   @ApiPropertyOptional({
     description: 'User defined description of the layout',
   })
   @IsString()
   @IsOptional()
-  description?: LayoutDescription;
+  description?: string;
 
   @ApiPropertyOptional({
     description: 'User defined content for the layout.',

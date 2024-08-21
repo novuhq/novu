@@ -1,4 +1,4 @@
-import { createSignal, Match, Show, Switch } from 'solid-js';
+import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { useInboxContext } from '../context';
 import { useStyle } from '../helpers';
 import type {
@@ -21,28 +21,40 @@ export type InboxProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-enum Screen {
-  Inbox = 'inbox',
+export enum InboxPage {
+  Notifications = 'notifications',
   Preferences = 'preferences',
 }
 
-type InboxContentProps = {
+export type InboxContentProps = {
   mountNotification?: NotificationMounter;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
+  initialPage?: InboxPage;
+  hideNav?: boolean;
 };
 
-const InboxContent = (props: InboxContentProps) => {
-  const [currentScreen, setCurrentScreen] = createSignal<Screen>(Screen.Inbox);
+export const InboxContent = (props: InboxContentProps) => {
+  const [currentPage, setCurrentPage] = createSignal<InboxPage>(props.initialPage || InboxPage.Notifications);
   const { tabs, filter } = useInboxContext();
   const style = useStyle();
+
+  const navigateToPage = createMemo(() => (page: InboxPage) => {
+    if (props.hideNav) {
+      return undefined;
+    }
+
+    return () => {
+      setCurrentPage(page);
+    };
+  });
 
   return (
     <div class={style('inboxContent', 'nt-h-full nt-flex nt-flex-col')}>
       <Switch>
-        <Match when={currentScreen() === Screen.Inbox}>
-          <Header updateScreen={setCurrentScreen} />
+        <Match when={currentPage() === InboxPage.Notifications}>
+          <Header navigateToPreferences={navigateToPage()(InboxPage.Preferences)} />
           <Show
             keyed
             when={tabs() && tabs().length > 0}
@@ -59,8 +71,8 @@ const InboxContent = (props: InboxContentProps) => {
             <InboxTabs tabs={tabs()} />
           </Show>
         </Match>
-        <Match when={currentScreen() === Screen.Preferences}>
-          <PreferencesHeader backAction={() => setCurrentScreen(Screen.Inbox)} />
+        <Match when={currentPage() === InboxPage.Preferences}>
+          <PreferencesHeader navigateToNotifications={navigateToPage()(InboxPage.Notifications)} />
           <Preferences />
         </Match>
       </Switch>
