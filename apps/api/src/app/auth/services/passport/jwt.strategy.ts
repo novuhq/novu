@@ -32,31 +32,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   @Instrument()
   async resolveEnvironmentId(req: http.IncomingMessage, session: UserSessionData) {
-    // Fetch the environmentId from the request header
     const environmentIdFromHeader =
       (req.headers[HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()] as string) || '';
 
-    /*
-     * Ensure backwards compatibility with existing JWTs that contain environmentId
-     * or cached SPA versions of Dashboard as there is no guarantee all current users
-     * will have environmentId in localStorage instantly after the deployment.
-     */
-    const environmentIdFromLegacyAuthToken = session.environmentId;
-
     let currentEnvironmentId = '';
 
-    if (environmentIdFromLegacyAuthToken) {
-      currentEnvironmentId = environmentIdFromLegacyAuthToken;
-    } else {
-      const environments = await this.environmentRepository.findOrganizationEnvironments(session.organizationId);
-      const environmentIds = environments.map((env) => env._id);
-      const developmentEnvironmentId = environments.find((env) => env.name === 'Development')?._id || '';
+    const environments = await this.environmentRepository.findOrganizationEnvironments(session.organizationId);
+    const environmentIds = environments.map((env) => env._id);
+    const developmentEnvironmentId = environments.find((env) => env.name === 'Development')?._id || '';
 
-      currentEnvironmentId = developmentEnvironmentId;
+    currentEnvironmentId = developmentEnvironmentId;
 
-      if (environmentIds.includes(environmentIdFromHeader)) {
-        currentEnvironmentId = environmentIdFromHeader;
-      }
+    if (environmentIds.includes(environmentIdFromHeader)) {
+      currentEnvironmentId = environmentIdFromHeader;
     }
 
     session.environmentId = currentEnvironmentId;
