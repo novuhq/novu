@@ -58,7 +58,8 @@ export const INPUT_EDITOR_WIDGET_RECIPE = defineSlotRecipe({
           textDecoration: 'underline',
           textDecorationStyle: 'wavy',
           textDecorationColor: 'input.border.error',
-          textUnderlineOffset: '25',
+          // Panda doesn't use spacing tokens by default for offset
+          textUnderlineOffset: 'var(--nv-spacing-25)',
           textDecorationThickness: 'from-font',
         },
       },
