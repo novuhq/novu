@@ -1,4 +1,4 @@
-import { createContextAndHook } from 'src/utils';
+import { createContextAndHook } from '../utils';
 
 export type InputAutocompleteContextValue = { variablesSet: Set<string> };
 
