@@ -1,4 +1,4 @@
-import { onCleanup, onMount, ParentProps } from 'solid-js';
+import { createEffect, onCleanup, ParentProps } from 'solid-js';
 
 type ExternalElementMounterProps = ParentProps<{
   mount: (el: HTMLDivElement) => () => void;
@@ -7,7 +7,7 @@ type ExternalElementMounterProps = ParentProps<{
 export const ExternalElementMounter = ({ mount, ...rest }: ExternalElementMounterProps) => {
   let ref: HTMLDivElement;
 
-  onMount(() => {
+  createEffect(() => {
     const unmount = mount(ref);
 
     onCleanup(() => {

@@ -10,7 +10,7 @@ export default function Home() {
         {...novuConfig}
         renderBell={(unreadCount) => {
           return (
-            <button className="p-1 w-full">
+            <button className="p-1 w-full animate-in slide-in-from-left fade-in">
               <div className="relative">
                 <span className="absolute top-0 left-full text-cyan-600 rounded-full p-1 transform -translate-x-1/2 -translate-y-1/2">
                   {unreadCount}
