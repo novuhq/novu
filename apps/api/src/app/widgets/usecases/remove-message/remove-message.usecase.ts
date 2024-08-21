@@ -1,12 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  MessageEntity,
-  DalException,
-  MessageRepository,
-  SubscriberRepository,
-  SubscriberEntity,
-  CommunityUserRepository,
-} from '@novu/dal';
+import { MessageEntity, DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -27,8 +20,7 @@ export class RemoveMessage {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository,
-    private communityUserRepository: CommunityUserRepository
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
@@ -84,17 +76,11 @@ export class RemoveMessage {
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: MarkEnum) {
     this.updateSocketCount(subscriber, marked);
 
-    const orgUser = await this.communityUserRepository.findOne({
-      _organizationId: command.organizationId,
+    this.analyticsService.track(`Removed Message - [Notification Center]`, command.organizationId, {
+      _subscriber: message._subscriberId,
+      _organization: command.organizationId,
+      _template: message._templateId,
     });
-
-    if (orgUser) {
-      this.analyticsService.track(`Removed Message - [Notification Center]`, orgUser._id, {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
-    }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
