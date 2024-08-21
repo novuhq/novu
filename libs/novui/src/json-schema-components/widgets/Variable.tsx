@@ -1,14 +1,24 @@
-import { ChangeEvent, FocusEvent, useState } from 'react';
+import { ChangeEvent, FocusEvent, useEffect, useState } from 'react';
 import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, AUTOCOMPLETE_REGEX } from '../constants';
+import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, AUTOCOMPLETE_REGEX, VariableErrorCode } from '../constants';
+import { useInputAutocompleteContext } from '../context';
 
 export function Variable({ editor, node, updateAttributes, ...props }: NodeViewProps) {
-  const [hasError, setHasError] = useState<boolean>(node.attrs.error || false);
+  const [errorCode, setErrorCode] = useState<VariableErrorCode | undefined>();
 
-  const updateVariableAttributes = (label: string, error: boolean) => {
-    updateAttributes({ label, error: `${error}` });
-    setHasError(error);
+  const { variablesSet } = useInputAutocompleteContext();
+
+  const updateVariableAttributes = (label: string, newErrorCode?: VariableErrorCode) => {
+    updateAttributes({ label, error: newErrorCode });
+    setErrorCode(newErrorCode);
   };
+
+  // Initialize error state after validating variable
+  useEffect(() => {
+    if (variablesSet && variablesSet.size > 0 && !getValidatedVariable(node.attrs.label, variablesSet)) {
+      setErrorCode(VariableErrorCode.INVALID_NAME);
+    }
+  }, [node.attrs.label, variablesSet]);
 
   // In case of an invalid variable input, set content to be the label variable  which will include the whole invalid variable
   const renderedNodeViewContent = !node.attrs.label.includes(AUTOCOMPLETE_OPEN_TAG)
@@ -22,28 +32,30 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
         className={'suggestion'}
         contentEditable
         suppressContentEditableWarning
-        data-error={hasError}
+        data-error={!!errorCode}
         onInput={(event: ChangeEvent<HTMLInputElement>) => {
-          const text = event.currentTarget.innerText;
-          const regRes = text.match(AUTOCOMPLETE_REGEX);
-          const sub = regRes?.[1];
-          if (!regRes) {
-            if (text.length === 0) {
-              props.deleteNode();
-              editor.commands.focus();
-            }
-          } else {
-            updateVariableAttributes(sub, false);
+          const text = event.target.innerText;
+          const variable = getValidatedVariable(text, variablesSet);
+
+          if (variable) {
+            updateVariableAttributes(variable);
+            return;
+          }
+
+          // remove empty node
+          if (text.length === 0) {
+            props.deleteNode();
+            editor.commands.focus();
           }
         }}
         onBlur={(event: FocusEvent<HTMLInputElement>) => {
-          const text = event.currentTarget.innerText;
-          const regRes = text.match(AUTOCOMPLETE_REGEX);
-          const sub = regRes?.[1];
-          if (!regRes) {
-            updateVariableAttributes(text, true);
+          const text = event.target.innerText;
+          const variable = getValidatedVariable(text, variablesSet);
+
+          if (variable) {
+            updateVariableAttributes(variable);
           } else {
-            updateVariableAttributes(sub, false);
+            updateVariableAttributes(text, VariableErrorCode.INVALID_NAME);
           }
         }}
       >
@@ -51,4 +63,20 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
       </NodeViewContent>
     </NodeViewWrapper>
   );
+}
+/**
+ * Get the variable name from input text if a valid reference exists. Otherwise, returns undefined.
+ */
+function getValidatedVariable(text: string = '', possibleVariables: Set<string>) {
+  const variableName = text.includes(AUTOCOMPLETE_OPEN_TAG) ? text.match(AUTOCOMPLETE_REGEX)?.[1] : text;
+
+  if (!variableName) {
+    return;
+  }
+
+  if (!possibleVariables.has(variableName)) {
+    return;
+  }
+
+  return variableName;
 }

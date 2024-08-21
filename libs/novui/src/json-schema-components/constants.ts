@@ -12,3 +12,15 @@ export const INVALID_VARIABLE_REGEX = new RegExp(
   `(${AUTOCOMPLETE_OPEN_TAG}[^{}|\\s]*[}|\\s](?!})|{{[^{}]*}(?!}})|{{[^{}]*$)`,
   'g'
 );
+
+export const VARIABLE_HTML_ERROR_STATE_REGEX = /data-error=\"([A-Z_])+\"/gi;
+
+export enum VariableErrorCode {
+  INVALID_SYNTAX = 'INVALID_SYNTAX',
+  INVALID_NAME = 'INVALID_NAME',
+}
+
+export const VARIABLE_ERROR_MESSAGES: Record<VariableErrorCode, string> = {
+  [VariableErrorCode.INVALID_SYNTAX]: 'Incorrect variable syntax',
+  [VariableErrorCode.INVALID_NAME]: 'Invalid variable name',
+};
