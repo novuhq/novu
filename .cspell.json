@@ -633,6 +633,8 @@
     "unpublish",
     "unsub",
     "untracked",
+    "unvalidated",
+    "Unvalidated",
     "upsert",
     "upserted",
     "upstash",
