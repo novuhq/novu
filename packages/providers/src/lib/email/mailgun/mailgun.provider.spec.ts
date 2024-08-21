@@ -7,6 +7,7 @@ const mockConfig = {
   domain: 'test.com',
   username: 'api',
   from: 'test@test.com',
+  senderName: 'Novu Mailgun test',
 };
 
 const mockNovuMessage = {
