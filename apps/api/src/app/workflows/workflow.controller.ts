@@ -15,6 +15,7 @@ import {
   CreateWorkflow,
   CreateWorkflowCommand,
   RolesGuard,
+  Roles,
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
@@ -40,7 +41,6 @@ import { WorkflowResponse } from './dto/workflow-response.dto';
 import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
-import { Roles } from '@novu/application-generic';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
@@ -133,6 +133,8 @@ export class WorkflowController {
   })
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string): Promise<boolean> {
+    console.log('im i here');
+
     return this.deleteWorkflowByIdUsecase.execute(
       DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
