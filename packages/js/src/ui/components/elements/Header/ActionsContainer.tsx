@@ -1,10 +1,11 @@
+import { Show } from 'solid-js';
 import { useStyle } from '../../../helpers';
 import { Settings } from '../../../icons';
 import { Button } from '../../primitives';
 import { MoreActionsDropdown } from './MoreActionsDropdown';
 
 type ActionsContainerProps = {
-  showPreferences: () => void;
+  showPreferences?: () => void;
 };
 
 export const ActionsContainer = (props: ActionsContainerProps) => {
@@ -13,9 +14,13 @@ export const ActionsContainer = (props: ActionsContainerProps) => {
   return (
     <div class={style('moreActionsContainer', 'nt-flex nt-gap-2')}>
       <MoreActionsDropdown />
-      <Button appearanceKey="preferences__button" variant="icon" size="icon" onClick={props.showPreferences}>
-        <Settings />
-      </Button>
+      <Show when={props.showPreferences}>
+        {(showPreferences) => (
+          <Button appearanceKey="preferences__button" variant="icon" size="icon" onClick={showPreferences()}>
+            <Settings />
+          </Button>
+        )}
+      </Show>
     </div>
   );
 };

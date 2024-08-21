@@ -11,15 +11,19 @@ import {
   NovuProvider,
 } from '../context';
 import type { Appearance, Localization, Tab } from '../types';
-import { Bell, Preferences, Root } from './elements';
-import { Inbox } from './Inbox';
-import { NotificationList as Notifications } from './Notification';
+import { Bell, Root } from './elements';
+import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
 export const novuComponents = {
   Inbox,
+  // InboxContent, //enable this to also allow the whole inbox content as a component
   Bell,
-  Preferences,
-  Notifications,
+  Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
+    <InboxContent {...props} hideNav={true} initialPage={InboxPage.Notifications} />
+  ),
+  Preferences: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
+    <InboxContent {...props} hideNav={true} initialPage={InboxPage.Preferences} />
+  ),
 };
 
 export type NovuComponent = { name: NovuComponentName; props?: any };

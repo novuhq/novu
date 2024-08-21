@@ -9,5 +9,5 @@ export class AddSubscribersRequestDto {
   })
   @IsArray()
   @IsDefined()
-  subscribers: ExternalSubscriberId[];
+  subscribers: string[];
 }
