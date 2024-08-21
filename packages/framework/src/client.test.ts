@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeEach } from 'vitest';
+import { expect, it, describe, beforeEach, vi } from 'vitest';
 
 import { Client } from './client';
 import {
@@ -781,6 +781,98 @@ describe('Novu Client', () => {
           ],
         },
       });
+    });
+
+    it('should evaluate code in the provided stepId', async () => {
+      const mockFn = vi.fn();
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('active-step-id', async () => {
+          mockFn();
+
+          return { body: 'Test Body', subject: 'Subject' };
+        });
+        await step.email('inactive-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }));
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'active-step-id',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await client.executeWorkflow(event);
+
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT evaluate code in steps after the provided stepId', async () => {
+      const mockFn = vi.fn();
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('active-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }));
+        await step.email('inactive-step-id', async () => {
+          mockFn();
+
+          return { body: 'Test Body', subject: 'Subject' };
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'active-step-id',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await client.executeWorkflow(event);
+
+      expect(mockFn).toHaveBeenCalledTimes(0);
+    });
+
+    it('should evaluate code in steps after a skipped step', async () => {
+      const mockFn = vi.fn();
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('skipped-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          skip: () => true,
+        });
+        await step.email('active-step-id', async () => {
+          mockFn();
+
+          return { body: 'Test Body', subject: 'Subject' };
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'active-step-id',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await client.executeWorkflow(event);
+
+      expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     it('should preview with mocked payload during preview', async () => {
