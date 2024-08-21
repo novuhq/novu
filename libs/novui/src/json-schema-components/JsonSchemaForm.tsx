@@ -12,6 +12,8 @@ import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templat
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
 import { CheckboxWidget, SelectWidget, InputEditorWidget } from './widgets';
 import { JSON_SCHEMA_FORM_ID_DELIMITER } from './constants';
+import { InputWidget } from './widgets/InputWidget';
+import { TextareaWidget } from './widgets/TextareaWidget';
 
 const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,
@@ -19,6 +21,15 @@ const WIDGETS: RegistryWidgetsType = {
   TextWidget: InputEditorWidget,
   URLWidget: InputEditorWidget,
   EmailWidget: InputEditorWidget,
+};
+
+/** @deprecated TODO: delete after Autocomplete is fully released */
+const LEGACY_WIDGETS: RegistryWidgetsType = {
+  CheckboxWidget: CheckboxWidget,
+  SelectWidget: SelectWidget,
+  TextWidget: TextareaWidget,
+  URLWidget: InputWidget,
+  EmailWidget: InputWidget,
 };
 
 const UI_SCHEMA: UiSchema = {
@@ -43,6 +54,8 @@ export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
 export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TFormData>) {
   const [cssProps, { className, variables, ...formProps }] = splitCssProps(props);
 
+  const isAutocompleteEnabled = Boolean(variables && variables.length > 0);
+
   return (
     <Form
       tagName={'fieldset'}
@@ -61,7 +74,7 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
         className
       )}
       uiSchema={UI_SCHEMA}
-      widgets={WIDGETS}
+      widgets={isAutocompleteEnabled ? WIDGETS : LEGACY_WIDGETS}
       validator={validator}
       liveValidate
       autoComplete={'false'}

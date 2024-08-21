@@ -1,8 +1,8 @@
-import { FC, useEffect, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 
 import { Button, JsonSchemaForm, Tabs, Title } from '@novu/novui';
 import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/novui/icons';
-import { css, cx } from '@novu/novui/css';
+import { css } from '@novu/novui/css';
 import { Container, Flex } from '@novu/novui/jsx';
 import { useDebouncedCallback } from '@novu/novui';
 
@@ -12,6 +12,8 @@ import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { PATHS } from '../../../../components/docs/docs.const';
 import { getSuggestionVariables, subscriberVariables } from '../../../utils';
+import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export type OnChangeType = 'step' | 'payload';
 
@@ -68,6 +70,14 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     onChange(type, data, id);
   }, TYPING_DEBOUNCE_TIME_MS);
 
+  const isAutocompleteEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTROLS_AUTOCOMPLETE_ENABLED);
+
+  // set variables to undefined when autocomplete flag is disabled to use plain text entry.
+  const variables = useMemo(
+    () => (isAutocompleteEnabled ? [...(subscriberVariables || []), ...(payloadProperties || [])] : undefined),
+    [payloadProperties, isAutocompleteEnabled]
+  );
+
   return (
     <>
       <Tabs
@@ -105,7 +115,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
                     formData={defaultControls || {}}
-                    variables={[...(subscriberVariables || []), ...(payloadProperties || [])]}
+                    variables={variables}
                   />
                 </When>
                 <When truthy={!haveControlProperties}>
