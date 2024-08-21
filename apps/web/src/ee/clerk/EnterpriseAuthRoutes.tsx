@@ -6,41 +6,40 @@ import OrganizationListPage from './pages/OrganizationListPage';
 import QuestionnairePage from './pages/QuestionnairePage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
-import { useVercelIntegration, useVercelParams } from '../../hooks';
-import { useEffect } from 'react';
+import { useEffectOnce, useVercelIntegration, useVercelParams } from '../../hooks';
+
+const EnterprisePublicAuthLayout = () => {
+  return (
+    <SignedOut>
+      <PublicPageLayout />
+    </SignedOut>
+  );
+};
+
+// private but we want appearance of public layout
+const EnterprisePrivateAuthLayout = () => {
+  return (
+    <>
+      <SignedIn>
+        <PublicPageLayout />
+      </SignedIn>
+      <SignedOut>
+        <Navigate to={ROUTES.AUTH_LOGIN} replace />
+      </SignedOut>
+    </>
+  );
+};
 
 export const EnterpriseAuthRoutes = () => {
   const { isSignedIn } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
 
-  useEffect(() => {
+  useEffectOnce(() => {
     if (isSignedIn && isFromVercel) {
       startVercelSetup();
     }
-  }, [isSignedIn, isFromVercel, startVercelSetup]);
-
-  const EnterprisePublicAuthLayout = () => {
-    return (
-      <SignedOut>
-        <PublicPageLayout />
-      </SignedOut>
-    );
-  };
-
-  // private but we want appearance of public layout
-  const EnterprisePrivateAuthLayout = () => {
-    return (
-      <>
-        <SignedIn>
-          <PublicPageLayout />
-        </SignedIn>
-        <SignedOut>
-          <Navigate to={ROUTES.AUTH_LOGIN} replace />
-        </SignedOut>
-      </>
-    );
-  };
+  }, !!(isSignedIn && isFromVercel));
 
   return (
     <>

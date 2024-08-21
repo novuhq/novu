@@ -18,11 +18,13 @@ export class MailgunHandler extends BaseHandler {
       domain: string;
       from: string;
       baseUrl?: string;
+      senderName: string;
     } = {
       apiKey: credentials.apiKey,
       username: credentials.user,
       domain: credentials.domain,
       baseUrl: credentials.baseUrl,
+      senderName: credentials.senderName,
       from: from as string,
     };
 

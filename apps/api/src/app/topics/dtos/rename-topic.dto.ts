@@ -3,8 +3,6 @@ import { IsDefined, IsString } from 'class-validator';
 
 import { TopicDto } from './topic.dto';
 
-import { TopicName } from '../types';
-
 export class RenameTopicResponseDto extends TopicDto {}
 
 export class RenameTopicRequestDto {
@@ -13,5 +11,5 @@ export class RenameTopicRequestDto {
   })
   @IsString()
   @IsDefined()
-  name: TopicName;
+  name: string;
 }
