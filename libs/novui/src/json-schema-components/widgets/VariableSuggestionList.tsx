@@ -4,7 +4,7 @@ import { VisuallyHidden, Combobox, useCombobox } from '@mantine/core';
 import { type SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
 import { variableSuggestionList } from '../../../styled-system/recipes';
 import { Text } from '../../components';
-import { VariableErrorCode } from '../constants';
+import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, VariableErrorCode } from '../constants';
 
 export type VariableItem = {
   id: string;
@@ -34,8 +34,8 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
     }, [items]);
 
     const customVariableLabel = () => {
-      if (!query.endsWith('}}')) {
-        command({ label: `{{${query}`, id: '', error: VariableErrorCode.INVALID_SYNTAX });
+      if (!query.endsWith(AUTOCOMPLETE_CLOSE_TAG)) {
+        command({ label: `${AUTOCOMPLETE_OPEN_TAG}${query}`, id: '', error: VariableErrorCode.INVALID_SYNTAX });
       } else {
         command({ label: query.slice(0, -2), id: '', error: undefined });
       }
