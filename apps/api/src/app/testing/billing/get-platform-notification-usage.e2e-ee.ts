@@ -1,6 +1,6 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { EnvironmentRepository, NotificationRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationRepository, CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
 
@@ -14,9 +14,10 @@ describe('GetPlatformNotificationUsage', () => {
 
   const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
+  const communityOrganizationRepo = new CommunityOrganizationRepository();
 
   const createUseCase = () => {
-    const useCase = new GetPlatformNotificationUsage(environmentRepo);
+    const useCase = new GetPlatformNotificationUsage(environmentRepo, notificationRepo, communityOrganizationRepo);
 
     return useCase;
   };

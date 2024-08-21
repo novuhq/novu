@@ -1,11 +1,5 @@
 import { ChatProviderIdEnum, PushProviderIdEnum } from '../../consts';
-import {
-  EnvironmentId,
-  ExternalSubscriberId,
-  ISubscriberChannel,
-  OrganizationId,
-  SubscriberCustomData,
-} from '../../types';
+import { ISubscriberChannel } from '../../types';
 
 interface IChannelCredentials {
   webhookUrl?: string;
@@ -20,15 +14,15 @@ interface IChannelSettings {
 
 export class SubscriberDto {
   _id: string;
-  _organizationId: OrganizationId;
-  _environmentId: EnvironmentId;
+  _organizationId: string;
+  _environmentId: string;
   firstName: string;
   lastName: string;
   email: string;
   phone?: string;
   avatar?: string;
   locale?: string;
-  subscriberId: ExternalSubscriberId;
+  subscriberId: string;
   channels?: IChannelSettings[];
   deleted: boolean;
 }

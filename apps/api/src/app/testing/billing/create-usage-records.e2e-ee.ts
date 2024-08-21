@@ -36,10 +36,10 @@ describe('CreateUsageRecords', () => {
   const analyticsServiceStub = {
     track: sinon.stub(),
   };
+  const communityUserRepositoryStub = { findOne: () => Promise.resolve({ _id: 'user_id' }) };
   const upsertSubscriptionUsecase = { execute: () => Promise.resolve() };
   const getCustomerUsecase = { execute: () => Promise.resolve() };
   const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
-
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
@@ -87,6 +87,7 @@ describe('CreateUsageRecords', () => {
       getCustomerUsecase,
       upsertSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
+      communityUserRepositoryStub,
       analyticsServiceStub
     );
 
