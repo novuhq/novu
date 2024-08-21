@@ -4,7 +4,7 @@ import {
   MessageRepository,
   MessageTemplateEntity,
   SubscriberRepository,
-  MemberRepository,
+  CommunityUserRepository,
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -18,7 +18,7 @@ export class UpdateMessageActions {
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
-    private memberRepository: MemberRepository
+    private communityUserRepository: CommunityUserRepository
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
@@ -75,11 +75,17 @@ export class UpdateMessageActions {
       );
     }
 
-    this.analyticsService.track('Notification Action Clicked - [Notification Center]', '', {
-      _subscriber: subscriber._id,
-      _organization: command.organizationId,
-      _environment: command.environmentId,
+    const orgUser = await this.communityUserRepository.findOne({
+      _organizationId: command.organizationId,
     });
+
+    if (orgUser) {
+      this.analyticsService.track('Notification Action Clicked - [Notification Center]', orgUser._id, {
+        _subscriber: subscriber._id,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+      });
+    }
 
     return (await this.messageRepository.findOne({
       _environmentId: command.environmentId,

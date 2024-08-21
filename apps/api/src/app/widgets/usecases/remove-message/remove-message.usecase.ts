@@ -5,7 +5,7 @@ import {
   MessageRepository,
   SubscriberRepository,
   SubscriberEntity,
-  MemberRepository,
+  CommunityUserRepository,
 } from '@novu/dal';
 import {
   WebSocketsQueueService,
@@ -28,7 +28,7 @@ export class RemoveMessage {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private memberRepository: MemberRepository
+    private communityUserRepository: CommunityUserRepository
   ) {}
 
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
@@ -84,11 +84,17 @@ export class RemoveMessage {
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: MarkEnum) {
     this.updateSocketCount(subscriber, marked);
 
-    this.analyticsService.track(`Removed Message - [Notification Center]`, '', {
-      _subscriber: message._subscriberId,
-      _organization: command.organizationId,
-      _template: message._templateId,
+    const orgUser = await this.communityUserRepository.findOne({
+      _organizationId: command.organizationId,
     });
+
+    if (orgUser) {
+      this.analyticsService.track(`Removed Message - [Notification Center]`, orgUser._id, {
+        _subscriber: message._subscriberId,
+        _organization: command.organizationId,
+        _template: message._templateId,
+      });
+    }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
