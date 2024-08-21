@@ -58,11 +58,11 @@ export const StatusItem = (props: {
       onClick={props.onClick}
     >
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
-        <span class={style('inboxStatus__dropdownItemLeftIcon')}>{props.icon()}</span>
+        <span class={style('inboxStatus__dropdownItemLeftIcon', 'nt-text-foreground-alpha-600')}>{props.icon()}</span>
         <span class={style('inboxStatus__dropdownItemLabel')}>{props.label}</span>
       </span>
       <Show when={props.isSelected}>
-        <span class={style('inboxStatus__dropdownItemRightIcon', 'nt-justify-self-end')}>
+        <span class={style('inboxStatus__dropdownItemRightIcon', 'nt-justify-self-end nt-text-foreground-alpha-600')}>
           <Check />
         </span>
       </Show>

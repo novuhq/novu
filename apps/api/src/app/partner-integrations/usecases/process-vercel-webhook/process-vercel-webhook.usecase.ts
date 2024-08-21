@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import {
@@ -6,7 +6,6 @@ import {
   EnvironmentEntity,
   CommunityOrganizationRepository,
   MemberRepository,
-  UserRepository,
   CommunityUserRepository,
 } from '@novu/dal';
 import crypto from 'node:crypto';
@@ -23,6 +22,16 @@ export class ProcessVercelWebhook {
   ) {}
 
   async execute(command: ProcessVercelWebhookCommand) {
+    Logger.log(
+      {
+        teamId: command.teamId,
+        projectId: command.projectId,
+        vercelEnvironment: command.vercelEnvironment,
+        deploymentUrl: command.deploymentUrl,
+      },
+      'Processing vercel webhook for ${command.vercelEnvironment}'
+    );
+
     this.verifySignature(command.signatureHeader, command.body);
 
     const url = command.deploymentUrl;
@@ -36,6 +45,18 @@ export class ProcessVercelWebhook {
     );
 
     const organization = organizations[0];
+
+    if (!organization) {
+      Logger.error(
+        {
+          teamId: command.teamId,
+          projectId: command.projectId,
+        },
+        'Organization not found for vercel webhook integration'
+      );
+
+      throw new ApiException('Organization not found');
+    }
 
     let environment: EnvironmentEntity | null;
 

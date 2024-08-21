@@ -1,11 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  MessageEntity,
-  MessageRepository,
-  MessageTemplateEntity,
-  SubscriberRepository,
-  MemberRepository,
-} from '@novu/dal';
+import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
@@ -17,8 +11,7 @@ export class UpdateMessageActions {
   constructor(
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
-    private analyticsService: AnalyticsService,
-    private memberRepository: MemberRepository
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
@@ -75,14 +68,11 @@ export class UpdateMessageActions {
       );
     }
 
-    const organizationAdmin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    if (organizationAdmin) {
-      this.analyticsService.track('Notification Action Clicked - [Notification Center]', organizationAdmin?._userId, {
-        _subscriber: subscriber._id,
-        _organization: command.organizationId,
-        _environment: command.environmentId,
-      });
-    }
+    this.analyticsService.track('Notification Action Clicked - [Notification Center]', command.organizationId, {
+      _subscriber: subscriber._id,
+      _organization: command.organizationId,
+      _environment: command.environmentId,
+    });
 
     return (await this.messageRepository.findOne({
       _environmentId: command.environmentId,

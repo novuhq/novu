@@ -50,6 +50,7 @@ export class MailgunEmailProvider
       username: string;
       domain: string;
       from: string;
+      senderName: string;
     }
   ) {
     super();
@@ -66,8 +67,10 @@ export class MailgunEmailProvider
     emailOptions: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const senderName = emailOptions.senderName || this.config.senderName;
+    const fromAddress = emailOptions.from || this.config.from;
     const data = {
-      from: emailOptions.from || this.config.from,
+      from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
       to: emailOptions.to,
       subject: emailOptions.subject,
       html: emailOptions.html,

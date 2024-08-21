@@ -6,14 +6,9 @@ import { Renderer } from './Renderer';
 
 export type InboxProps = DefaultProps | WithChildrenProps;
 
-const DefaultInbox = ({
-  open,
-  renderNotification,
-  renderBell,
-  onNotificationClick,
-  onPrimaryActionClick,
-  onSecondaryActionClick,
-}: DefaultInboxProps) => {
+const DefaultInbox = (props: DefaultInboxProps) => {
+  const { open, renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } =
+    props;
   const { novuUI, mountElement } = useRenderer();
 
   const mount = React.useCallback(
