@@ -12,7 +12,6 @@ import { TranslationGroupEmptyList } from '../components/TranslationGroup/Transl
 import { TranslationGroupListToolbar } from '../components/TranslationGroup/TranslationGroupListToolbar';
 import { TranslationGroupsList } from '../components/TranslationGroup/TranslationGroupsList';
 import { ROUTES } from '../routes';
-import { DocsButton } from '../../../components/docs/DocsButton';
 import { Flex } from '@novu/novui/jsx';
 
 export const TranslationGroupsPage = () => {
@@ -51,7 +50,6 @@ export const TranslationGroupsPage = () => {
           <Title size={2} data-test-id="translation-title">
             Translations
           </Title>
-          <DocsButton />
         </Flex>
 
         <When truthy={currentOrganization && hasTranslationGroups}>

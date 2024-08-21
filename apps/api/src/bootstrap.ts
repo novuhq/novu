@@ -9,7 +9,7 @@ const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
 import { init, Integrations, Handlers } from '@sentry/node';
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger as PinoLogger, RolesGuard } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 import { AppModule } from './app.module';
@@ -103,7 +103,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
 
-  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
+  app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
+  app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector), app.get(PinoLogger)));
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));

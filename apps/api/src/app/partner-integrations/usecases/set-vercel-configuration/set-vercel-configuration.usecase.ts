@@ -17,6 +17,7 @@ export class SetVercelConfiguration {
   async execute(command: SetVercelConfigurationCommand): Promise<SetupVercelConfigurationResponseDto> {
     try {
       const tokenData = await this.getVercelToken(command.vercelIntegrationCode);
+
       if (!tokenData) throw new ApiException('No token data found');
 
       const saveConfigurationData = {
@@ -43,28 +44,34 @@ export class SetVercelConfiguration {
     userId: string;
     teamId: string | null;
   }> {
-    const postData = new URLSearchParams({
-      code,
-      client_id: process.env.VERCEL_CLIENT_ID as string,
-      client_secret: process.env.VERCEL_CLIENT_SECRET as string,
-      redirect_uri: process.env.VERCEL_REDIRECT_URI as string,
-    });
+    try {
+      const postData = new URLSearchParams({
+        code: code as string,
+        client_id: process.env.VERCEL_CLIENT_ID as string,
+        client_secret: process.env.VERCEL_CLIENT_SECRET as string,
+        redirect_uri: process.env.VERCEL_REDIRECT_URI as string,
+      });
 
-    const response = await lastValueFrom(
-      this.httpService.post(`${process.env.VERCEL_BASE_URL}/v2/oauth/access_token`, postData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      })
-    );
+      const response = await lastValueFrom(
+        this.httpService.post(`${process.env.VERCEL_BASE_URL}/v2/oauth/access_token`, postData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        })
+      );
 
-    const data = response.data;
+      const data = response.data;
 
-    return {
-      accessToken: data.access_token,
-      userId: data.user_id,
-      teamId: data.team_id,
-    };
+      return {
+        accessToken: data.access_token,
+        userId: data.user_id,
+        teamId: data.team_id,
+      };
+    } catch (error) {
+      throw new ApiException(
+        error?.response?.data?.error_description || error?.response?.data?.message || error.message
+      );
+    }
   }
 
   private async saveConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {

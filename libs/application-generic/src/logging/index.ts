@@ -128,15 +128,6 @@ export function createNestLoggingModuleOptions(
       },
       transport: transport,
       autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
-      customProps: (req: any, res: any) => ({
-        user: {
-          userId: req?.user?._id || null,
-          environmentId: req?.user?.environmentId || null,
-          organizationId: req?.user?.organizationId || null,
-        },
-        authScheme: req?.authScheme,
-        rateLimitPolicy: res?.rateLimitPolicy,
-      }),
     },
   };
 }

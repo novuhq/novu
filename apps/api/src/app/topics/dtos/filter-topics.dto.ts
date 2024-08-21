@@ -4,8 +4,6 @@ import { Transform } from 'class-transformer';
 
 import { TopicDto } from './topic.dto';
 
-import { TopicKey } from '../types';
-
 export class FilterTopicsRequestDto {
   @Transform(({ value }) => Number(value))
   @IsOptional()
@@ -24,7 +22,7 @@ export class FilterTopicsRequestDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({ type: String })
-  public key?: TopicKey;
+  public key?: string;
 }
 
 export class FilterTopicsResponseDto {

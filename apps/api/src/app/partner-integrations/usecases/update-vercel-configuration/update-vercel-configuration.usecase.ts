@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -73,6 +73,8 @@ export class UpdateVercelConfiguration {
         configurationId: command.configurationId,
         userId: command.userId,
       });
+
+      await this.updateBridgeUrl(command.environmentId, projectIds[0], configurationDetails.accessToken);
 
       const { newAndUpdatedProjectIds, removedProjectIds } = await this.getUpdatedAndRemovedProjectIds(
         command,
@@ -151,6 +153,37 @@ export class UpdateVercelConfiguration {
 
       return acc;
     }, {});
+  }
+
+  private async updateBridgeUrl(environmentId: string, projectIds: string, accessToken: string) {
+    try {
+      const getDomainsResponse = await lastValueFrom(
+        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectIds}/domains`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+      );
+
+      const bridgeUrl = getDomainsResponse.data.domains[0].name;
+
+      const fullBridgeUrl = `https://${bridgeUrl}/api/novu`;
+      await this.environmentRepository.update(
+        { _id: environmentId },
+        {
+          $set: {
+            echo: {
+              url: fullBridgeUrl,
+            },
+            bridge: {
+              url: fullBridgeUrl,
+            },
+          },
+        }
+      );
+    } catch (error) {
+      Logger.error(error, 'Error updating bridge url');
+    }
   }
 
   private async setEnvironmentVariables({
