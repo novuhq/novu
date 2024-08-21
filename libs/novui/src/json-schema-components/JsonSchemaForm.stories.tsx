@@ -70,6 +70,7 @@ const schema: RJSFSchema = {
         country: {
           type: 'string',
           title: 'Country',
+          default: 'Hello {{fakeautocomplete.foo}}, my name is {{invalid}} yo'
         },
         address: {
           type: 'string',
@@ -214,4 +215,21 @@ const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
 export const ArrayDesigns = Template.bind({});
 ArrayDesigns.args = {
   schema: ARRAY_DESIGNS_SCHEMA,
+};
+
+const SIMPLE_AUTOCOMPLETE_SCHEMA: RJSFSchema = {
+  type: 'object',
+  title: 'Simple autocomplete',
+  properties: {
+    country: {
+      type: 'string',
+      title: 'Name',
+      default: 'Hello {{fakeautocomplete.foo}}, my name is {{invalid}} yo'
+    },
+  },
+};
+
+export const SimpleAutocomplete = Template.bind({});
+SimpleAutocomplete.args = {
+  schema: SIMPLE_AUTOCOMPLETE_SCHEMA,
 };
