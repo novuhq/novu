@@ -6,7 +6,6 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   FeedRepository,
-  CommunityUserRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
@@ -29,7 +28,6 @@ export class RemoveAllMessages {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private communityUserRepository: CommunityUserRepository,
     private feedRepository: FeedRepository
   ) {}
 
@@ -62,18 +60,12 @@ export class RemoveAllMessages {
       await this.updateServices(command, subscriber, MarkEnum.SEEN);
       await this.updateServices(command, subscriber, MarkEnum.READ);
 
-      const orgUser = await this.communityUserRepository.findOne({
-        _organizationId: command.organizationId,
+      this.analyticsService.track(`Removed All Feed Messages - [Notification Center]`, command.organizationId, {
+        _subscriber: subscriber._id,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        _feedId: command.feedId,
       });
-
-      if (orgUser) {
-        this.analyticsService.track(`Removed All Feed Messages - [Notification Center]`, orgUser._id, {
-          _subscriber: subscriber._id,
-          _organization: command.organizationId,
-          _environment: command.environmentId,
-          _feedId: command.feedId,
-        });
-      }
 
       await this.invalidateCache.invalidateQuery({
         key: buildFeedKey().invalidate({
