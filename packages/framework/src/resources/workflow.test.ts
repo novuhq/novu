@@ -62,6 +62,17 @@ describe('workflow function', () => {
         result?.foo === 'custom';
       });
     });
+
+    it('should compile when returning undefined for a result property that has a default value', async () => {
+      const delayType = undefined;
+      workflow('custom-test-something', async ({ step }) => {
+        await step.delay('custom', async () => ({
+          type: delayType,
+          amount: 1,
+          unit: 'seconds',
+        }));
+      });
+    });
   });
 
   describe('trigger', () => {

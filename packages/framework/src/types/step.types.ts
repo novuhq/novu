@@ -3,7 +3,7 @@ import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas';
 import { actionStepSchemas } from '../schemas/steps/actions';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import type { Providers } from './provider.types';
-import type { FromSchema, Schema } from './schema.types';
+import type { FromSchema, FromSchemaUnvalidated, Schema } from './schema.types';
 import type { Skip } from './skip.types';
 import type { Awaitable, Prettify } from './util.types';
 
@@ -173,27 +173,42 @@ export type ChannelStep<
 ) => StepOutput<T_Result>;
 
 export type EmailOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['output']>;
+export type EmailOutputUnvalidated = FromSchemaUnvalidated<
+  (typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['output']
+>;
 export type EmailResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['result']>;
 
 export type SmsOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.SMS]['output']>;
+export type SmsOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)[ChannelStepEnum.SMS]['output']>;
 export type SmsResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.SMS]['result']>;
 
 export type PushOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.PUSH]['output']>;
+export type PushOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)[ChannelStepEnum.PUSH]['output']>;
 export type PushResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.PUSH]['result']>;
 
 export type ChatOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.CHAT]['output']>;
+export type ChatOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)[ChannelStepEnum.CHAT]['output']>;
 export type ChatResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.CHAT]['result']>;
 
 export type InAppOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.IN_APP]['output']>;
+export type InAppOutputUnvalidated = FromSchemaUnvalidated<
+  (typeof channelStepSchemas)[ChannelStepEnum.IN_APP]['output']
+>;
 export type InAppResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.IN_APP]['result']>;
 
 export type DelayOutput = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['output']>;
+export type DelayOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['output']>;
 export type DelayResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['result']>;
 
 export type digestRegularOutput = FromSchema<typeof digestRegularOutputSchema>;
+export type digestRegularOutputUnvalidated = FromSchemaUnvalidated<typeof digestRegularOutputSchema>;
 export type digestTimedOutput = FromSchema<typeof digestTimedOutputSchema>;
+export type digestTimedOutputUnvalidated = FromSchemaUnvalidated<typeof digestTimedOutputSchema>;
 
 export type DigestOutput = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DIGEST]['output']>;
+export type DigestOutputUnvalidated = FromSchemaUnvalidated<
+  (typeof actionStepSchemas)[ActionStepEnum.DIGEST]['output']
+>;
 export type DigestResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DIGEST]['result']>;
 
 /**
@@ -201,19 +216,19 @@ export type DigestResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.
  */
 export type Step = {
   /** Send an email. */
-  email: ChannelStep<ChannelStepEnum.EMAIL, EmailOutput, EmailResult>;
+  email: ChannelStep<ChannelStepEnum.EMAIL, EmailOutputUnvalidated, EmailResult>;
   /** Send an SMS. */
-  sms: ChannelStep<ChannelStepEnum.SMS, SmsOutput, SmsResult>;
+  sms: ChannelStep<ChannelStepEnum.SMS, SmsOutputUnvalidated, SmsResult>;
   /** Send a push notification. */
-  push: ChannelStep<ChannelStepEnum.PUSH, PushOutput, PushResult>;
+  push: ChannelStep<ChannelStepEnum.PUSH, PushOutputUnvalidated, PushResult>;
   /** Send a chat message. */
-  chat: ChannelStep<ChannelStepEnum.CHAT, ChatOutput, ChatResult>;
+  chat: ChannelStep<ChannelStepEnum.CHAT, ChatOutputUnvalidated, ChatResult>;
   /** Send an in-app notification. */
-  inApp: ChannelStep<ChannelStepEnum.IN_APP, InAppOutput, InAppResult>;
+  inApp: ChannelStep<ChannelStepEnum.IN_APP, InAppOutputUnvalidated, InAppResult>;
   /** Aggregate events for a period of time. */
-  digest: ActionStep<DigestOutput, DigestResult>;
+  digest: ActionStep<DigestOutputUnvalidated, DigestResult>;
   /** Delay the workflow for a period of time. */
-  delay: ActionStep<DelayOutput, DelayResult>;
+  delay: ActionStep<DelayOutputUnvalidated, DelayResult>;
   /** Execute custom code */
   custom: CustomStep;
 };
