@@ -1,13 +1,13 @@
 import type { LocalizationKey, NotificationStatus } from '../../../types';
 
 export const notificationStatusOptionsLocalizationKeys = {
-  unreadRead: 'inbox.status.options.unreadRead',
-  unread: 'inbox.status.options.unread',
-  archived: 'inbox.status.options.archived',
+  unreadRead: 'inbox.filters.dropdownOptions.default',
+  unread: 'inbox.filters.dropdownOptions.unread',
+  archived: 'inbox.filters.dropdownOptions.archived',
 } as const satisfies Record<NotificationStatus, LocalizationKey>;
 
-export const inboxStatusLocalizationKeys = {
-  unreadRead: 'inbox.status.unreadRead',
-  unread: 'inbox.status.unread',
-  archived: 'inbox.status.archived',
+export const inboxFilterLocalizationKeys = {
+  unreadRead: 'inbox.filters.labels.default',
+  unread: 'inbox.filters.labels.unread',
+  archived: 'inbox.filters.labels.archived',
 } as const satisfies Record<NotificationStatus, LocalizationKey>;
