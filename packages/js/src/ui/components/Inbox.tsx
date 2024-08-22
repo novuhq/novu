@@ -68,7 +68,13 @@ export const InboxContent = (props: InboxContentProps) => {
               />
             }
           >
-            <InboxTabs tabs={tabs()} />
+            <InboxTabs
+              renderNotification={props.renderNotification}
+              onNotificationClick={props.onNotificationClick}
+              onPrimaryActionClick={props.onPrimaryActionClick}
+              onSecondaryActionClick={props.onSecondaryActionClick}
+              tabs={tabs()}
+            />
           </Show>
         </Match>
         <Match when={currentPage() === InboxPage.Preferences}>

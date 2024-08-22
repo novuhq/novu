@@ -3,7 +3,13 @@ import { createMemo, For, Show } from 'solid-js';
 import { useInboxContext, useUnreadCounts } from '../../../ui/context';
 import { cn, useStyle } from '../../helpers';
 import { Check, Dots } from '../../icons';
-import { NotificationStatus, Tab } from '../../types';
+import {
+  NotificationActionClickHandler,
+  NotificationClickHandler,
+  NotificationRenderer,
+  NotificationStatus,
+  Tab,
+} from '../../types';
 import { NotificationList } from '../Notification';
 import { Button, Dropdown, Tabs } from '../primitives';
 import { tabsRootVariants } from '../primitives/Tabs/TabsRoot';
@@ -15,6 +21,10 @@ const tabsDropdownTriggerVariants = () =>
   `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-pb-[0.625rem]`;
 
 type InboxTabsProps = {
+  renderNotification?: NotificationRenderer;
+  onNotificationClick?: NotificationClickHandler;
+  onPrimaryActionClick?: NotificationActionClickHandler;
+  onSecondaryActionClick?: NotificationActionClickHandler;
   tabs: Array<Tab>;
 };
 
@@ -101,7 +111,13 @@ export const InboxTabs = (props: InboxTabsProps) => {
             cn(activeTab() === tab.label ? 'nt-block' : 'nt-hidden', 'nt-flex-1 nt-overflow-hidden')
           )}
         >
-          <NotificationList filter={{ ...filter(), tags: tab.value }} />
+          <NotificationList
+            renderNotification={props.renderNotification}
+            onNotificationClick={props.onNotificationClick}
+            onPrimaryActionClick={props.onPrimaryActionClick}
+            onSecondaryActionClick={props.onSecondaryActionClick}
+            filter={{ ...filter(), tags: tab.value }}
+          />
         </Tabs.Content>
       ))}
     </Tabs.Root>
