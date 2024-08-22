@@ -101,8 +101,8 @@ export type CustomStep = <
    */
   T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
   /*
-   * These intermediary types are needed to capture the types in a single location
-   * and stop Typescript from erroring with:
+   * These intermediary types are needed to capture the types in a single type instance
+   * to stop Typescript from erroring with:
    * `Type instantiation is excessively deep and possibly infinite.`
    */
   T_IntermediaryResult extends Record<string, unknown> = FromSchema<T_OutputsSchema>,
