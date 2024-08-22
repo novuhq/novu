@@ -62,6 +62,41 @@ describe('workflow function', () => {
         result?.foo === 'custom';
       });
     });
+
+    it('should compile when returning undefined for a built-in step property that has a default value', async () => {
+      const delayType = undefined;
+      workflow('built-in-default-test', async ({ step }) => {
+        await step.delay('custom', async () => ({
+          type: delayType,
+          amount: 1,
+          unit: 'seconds',
+        }));
+      });
+    });
+
+    it('should compile when returning undefined for a custom step property that has a default value', async () => {
+      const delayType = undefined;
+      workflow('custom-default-test', async ({ step }) => {
+        const data = await step.custom(
+          'custom',
+          async () => ({
+            withDefault: undefined,
+            withoutDefault: 'bar',
+          }),
+          {
+            outputSchema: {
+              type: 'object',
+              properties: {
+                withDefault: { type: 'string', default: 'bar' },
+                withoutDefault: { type: 'string' },
+              },
+              required: ['withoutDefault'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+    });
   });
 
   describe('trigger', () => {
@@ -100,6 +135,38 @@ describe('workflow function', () => {
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
           payload: {},
+          to: 'test@test.com',
+        });
+    });
+
+    it('should compile when returning undefined for a payload property that has a default value', async () => {
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              withDefault: { type: 'string', default: 'bar' },
+              withoutDefault: { type: 'string' },
+            },
+            required: ['withoutDefault'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
+          payload: {
+            withDefault: undefined,
+            withoutDefault: 'bar',
+          },
           to: 'test@test.com',
         });
     });

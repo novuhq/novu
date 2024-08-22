@@ -17,6 +17,7 @@ import type {
   ChannelStep,
   ActionStep,
   StepOutput,
+  FromSchemaUnvalidated,
 } from '../types';
 import { WithPassthrough } from '../types/provider.types';
 import { EMOJI, getBridgeUrl, initApiClient, log } from '../utils';
@@ -28,29 +29,33 @@ import { transformSchema, validateData } from '../validators';
 export function workflow<
   T_PayloadSchema extends Schema,
   T_ControlSchema extends Schema,
-  T_Payload extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
+  T_PayloadValidated extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
+  T_PayloadUnvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_PayloadSchema>,
   T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
 >(
   workflowId: string,
-  execute: Execute<T_Payload, T_Controls>,
+  execute: Execute<T_PayloadValidated, T_Controls>,
   workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema>
-): Workflow<T_Payload> {
+): Workflow<T_PayloadUnvalidated> {
   const options = workflowOptions ? workflowOptions : {};
 
   const apiClient = initApiClient(process.env.NOVU_SECRET_KEY as string);
 
-  const trigger: Workflow<T_Payload>['trigger'] = async (event) => {
+  const trigger: Workflow<T_PayloadUnvalidated>['trigger'] = async (event) => {
     if (!process.env.NOVU_SECRET_KEY) {
       throw new MissingSecretKeyError();
     }
 
-    let validatedData: T_Payload = event.payload;
+    let validatedData: T_PayloadValidated;
     if (options.payloadSchema) {
       const validationResult = await validateData(options.payloadSchema, event.payload);
       if (validationResult.success === false) {
         throw new WorkflowPayloadInvalidError(workflowId, validationResult.errors);
       }
       validatedData = validationResult.data;
+    } else {
+      // This type coercion provides support to trigger Workflows without a payload schema
+      validatedData = event.payload as unknown as T_PayloadValidated;
     }
     const bridgeUrl = await getBridgeUrl();
 
@@ -116,7 +121,7 @@ export function workflow<
   };
 
   execute({
-    payload: {} as T_Payload,
+    payload: {} as T_PayloadValidated,
     subscriber: {},
     environment: {},
     controls: {} as T_Controls,
