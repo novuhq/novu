@@ -1,4 +1,5 @@
 import { SignUp } from '@clerk/clerk-react';
+import { PageMeta } from '@novu/design-system';
 import AuthLayout from '../../../components/layout/components/AuthLayout';
 import { ROUTES } from '../../../constants/routes';
 import { useVercelParams } from '../../../hooks/useVercelParams';
@@ -22,6 +23,7 @@ export default function SignUpPage() {
 
   return (
     <AuthLayout>
+      <PageMeta title="Sign up" />
       <SignUp
         path={ROUTES.AUTH_SIGNUP}
         signInUrl={ROUTES.AUTH_LOGIN}
