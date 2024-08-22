@@ -14,7 +14,6 @@ import {
 import { OrganizationEntity } from '@novu/dal';
 import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Roles, RolesGuard } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { CreateOrganizationCommand } from './usecases/create-organization/create-organization.command';
@@ -115,8 +114,6 @@ export class OrganizationController {
   @SdkGroupName('Organizations.Members')
   @Delete('/members/:memberId')
   @ExternalApiAccessible()
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(MemberResponseDto)
   @ApiOperation({
     summary: 'Remove a member from organization using memberId',
@@ -135,8 +132,6 @@ export class OrganizationController {
   @Put('/members/:memberId/roles')
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(MemberResponseDto)
   @ApiOperation({
     summary: 'Update a member role to admin',
@@ -199,8 +194,6 @@ export class OrganizationController {
 
   @Patch('/')
   @ExternalApiAccessible()
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(RenameOrganizationDto)
   @ApiOperation({
     summary: 'Rename organization name',

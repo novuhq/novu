@@ -11,12 +11,11 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
+import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
   OtelSpan,
-  RolesGuard,
 } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -175,8 +174,6 @@ export class IntegrationsController {
   }
 
   @Put('/:integrationId')
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
     description: 'The integration with the integrationId provided does not exist in the database.',
@@ -216,8 +213,6 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/set-primary')
-  @UseGuards(RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
     description: 'The integration with the integrationId provided does not exist in the database.',

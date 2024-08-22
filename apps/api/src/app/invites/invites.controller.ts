@@ -19,7 +19,6 @@ import {
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
-import { Roles, RolesGuard } from '@novu/application-generic';
 import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
 import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
 import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
@@ -79,8 +78,7 @@ export class InvitesController {
 
   @Post('/')
   @ApiBearerAuth()
-  @UseGuards(UserAuthGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(UserAuthGuard)
   async inviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: InviteMemberDto
@@ -101,8 +99,7 @@ export class InvitesController {
 
   @Post('/resend')
   @ApiBearerAuth()
-  @UseGuards(UserAuthGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(UserAuthGuard)
   async resendInviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: ResendInviteDto
@@ -123,8 +120,7 @@ export class InvitesController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @ApiBearerAuth()
-  @UseGuards(UserAuthGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(UserAuthGuard)
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto

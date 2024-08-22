@@ -14,8 +14,6 @@ import {
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
-  RolesGuard,
-  Roles,
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
@@ -122,8 +120,7 @@ export class WorkflowController {
   }
 
   @Delete('/:workflowId')
-  @UseGuards(RootEnvironmentGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(RootEnvironmentGuard)
   @ApiOkResponse({
     type: DataBooleanDto,
   })
@@ -133,8 +130,6 @@ export class WorkflowController {
   })
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string): Promise<boolean> {
-    console.log('im i here');
-
     return this.deleteWorkflowByIdUsecase.execute(
       DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -187,13 +182,12 @@ export class WorkflowController {
 
   @Post('')
   @ExternalApiAccessible()
-  @UseGuards(RootEnvironmentGuard, RolesGuard)
+  @UseGuards(RootEnvironmentGuard)
   @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create workflow',
     description: `Workflow was previously named notification template`,
   })
-  @Roles(MemberRoleEnum.ADMIN)
   create(
     @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
@@ -223,8 +217,7 @@ export class WorkflowController {
   }
 
   @Put('/:workflowId/status')
-  @UseGuards(RootEnvironmentGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(RootEnvironmentGuard)
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update workflow status',

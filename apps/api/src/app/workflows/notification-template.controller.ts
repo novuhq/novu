@@ -11,11 +11,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
+import { UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
-  RolesGuard,
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
@@ -35,7 +34,6 @@ import { WorkflowResponse } from './dto/workflow-response.dto';
 import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
-import { Roles } from '@novu/application-generic';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
@@ -116,8 +114,7 @@ export class NotificationTemplateController {
   }
 
   @Delete('/:templateId')
-  @UseGuards(RootEnvironmentGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(RootEnvironmentGuard)
   @ApiOkResponse({
     type: DataBooleanDto,
   })
@@ -163,14 +160,13 @@ export class NotificationTemplateController {
 
   @Post('')
   @ExternalApiAccessible()
-  @UseGuards(RootEnvironmentGuard, RolesGuard)
+  @UseGuards(RootEnvironmentGuard)
   @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create Notification template',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
-  @Roles(MemberRoleEnum.ADMIN)
   create(
     @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
@@ -200,8 +196,7 @@ export class NotificationTemplateController {
   }
 
   @Put('/:templateId/status')
-  @UseGuards(RootEnvironmentGuard, RolesGuard)
-  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(RootEnvironmentGuard)
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update Notification template status',
