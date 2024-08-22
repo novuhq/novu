@@ -1,5 +1,5 @@
 import { providerSchemas } from '../schemas';
-import type { FromSchema } from './schema.types';
+import type { FromSchemaUnvalidated } from './schema.types';
 import { Awaitable, Prettify } from './util.types';
 
 export type Passthrough = {
@@ -29,5 +29,5 @@ export type Providers<T_StepType extends keyof typeof providerSchemas, T_Control
     // eslint-disable-next-line multiline-comment-style
     // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
     // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
-  }) => Awaitable<WithPassthrough<FromSchema<(typeof providerSchemas)[T_StepType][K]['output']>>>;
+  }) => Awaitable<WithPassthrough<FromSchemaUnvalidated<(typeof providerSchemas)[T_StepType][K]['output']>>>;
 };
