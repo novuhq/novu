@@ -4,8 +4,8 @@ import {
   SwitchOrganization,
   PlatformException,
   cacheService,
+  RolesGuard,
 } from '@novu/application-generic';
-import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';

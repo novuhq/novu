@@ -1,5 +1,15 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Param, Post, Put, UseInterceptors } from '@nestjs/common';
-import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ApiAuthSchemeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
@@ -19,7 +29,8 @@ import { UpdateEnvironment } from './usecases/update-environment/update-environm
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
+import { RolesGuard, Roles } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @Controller('/environments')
@@ -130,13 +141,9 @@ export class EnvironmentsController {
   }
 
   @Post('/api-keys/regenerate')
-  @ApiOperation({
-    summary: 'Regenerate api keys',
-  })
   @ApiResponse(ApiKey, 201, true)
-  @ExternalApiAccessible()
-  @SdkGroupName('Environments.ApiKeys')
-  @SdkMethodName('regenerate')
+  @UseGuards(RolesGuard)
+  @Roles(MemberRoleEnum.ADMIN)
   async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
