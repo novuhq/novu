@@ -200,10 +200,10 @@ export type DelayOutput = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.D
 export type DelayOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['output']>;
 export type DelayResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['result']>;
 
-export type digestRegularOutput = FromSchema<typeof digestRegularOutputSchema>;
-export type digestRegularOutputUnvalidated = FromSchemaUnvalidated<typeof digestRegularOutputSchema>;
-export type digestTimedOutput = FromSchema<typeof digestTimedOutputSchema>;
-export type digestTimedOutputUnvalidated = FromSchemaUnvalidated<typeof digestTimedOutputSchema>;
+export type DigestRegularOutput = FromSchema<typeof digestRegularOutputSchema>;
+export type DigestRegularOutputUnvalidated = FromSchemaUnvalidated<typeof digestRegularOutputSchema>;
+export type DigestTimedOutput = FromSchema<typeof digestTimedOutputSchema>;
+export type DigestTimedOutputUnvalidated = FromSchemaUnvalidated<typeof digestTimedOutputSchema>;
 
 export type DigestOutput = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DIGEST]['output']>;
 export type DigestOutputUnvalidated = FromSchemaUnvalidated<
