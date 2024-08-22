@@ -85,16 +85,11 @@ const ChannelsLabel = (props: { channels: ChannelPreference }) => {
     for (const key in props.channels) {
       if (props.channels[key as keyof ChannelPreference] !== undefined) {
         const isDisabled = !props.channels[key as keyof ChannelPreference];
-        const appearanceKey = isDisabled ? 'channelNameDisabled' : 'channelName';
 
         const element = (
           <span
-            class={style(
-              appearanceKey,
-              clsx({
-                'nt-text-foreground-alpha-200': !props.channels[key as keyof ChannelPreference],
-              })
-            )}
+            class={style('channelName', 'data-[disabled=true]:nt-text-foreground-alpha-200')}
+            data-disabled={isDisabled}
           >
             {getLabel(key as ChannelType)}
           </span>
@@ -136,12 +131,8 @@ const PreferencesRow = (props: {
       <div
         class={style(
           'workflowContainer',
-          clsx(
-            'nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch hover:nt-bg-neutral-100 nt-rounded-lg',
-            {
-              'nt-bg-neutral-alpha-50': props.isCritical,
-            }
-          )
+          `nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch 
+          hover:nt-bg-neutral-100 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
         )}
         data-disabled={props.isCritical}
         data-open={isOpen()}
@@ -183,9 +174,7 @@ const PreferencesRow = (props: {
           <span
             class={style(
               'workflowContainerRightIcon',
-              clsx('nt-text-foreground-alpha-600 nt-transition-all nt-duration-200', {
-                'nt-transform nt-rotate-180': isOpen(),
-              })
+              `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
             )}
             data-disabled={props.isCritical}
             data-open={isOpen()}

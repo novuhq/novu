@@ -120,7 +120,6 @@ export const appearanceKeys = [
   'channelLabelContainer',
   'channelDescription',
   'channelName',
-  'channelNameDisabled',
   'channelSwitchContainer',
   'channelSwitch',
   'channelSwitchThumb',

@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { JSX } from 'solid-js';
 import { ChannelType } from '../../../../types';
 import { useNovu } from '../../../context';
@@ -44,9 +43,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
     <div
       class={style(
         'channelContainer',
-        clsx('nt-flex nt-justify-between nt-items-center nt-h-11', {
-          'nt-text-foreground-alpha-600': props.isCritical,
-        })
+        'nt-flex nt-justify-between nt-items-center nt-h-11 data-[disabled=true]:nt-text-foreground-alpha-600'
       )}
       data-disabled={props.isCritical}
     >
