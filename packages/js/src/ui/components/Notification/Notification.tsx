@@ -1,6 +1,7 @@
-import { createEffect, onCleanup, Show } from 'solid-js';
+import { Show } from 'solid-js';
 import type { Notification as NotificationType } from '../../../notifications';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationRenderer } from '../../types';
+import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { DefaultNotification } from './DefaultNotification';
 
 type NotificationProps = {
@@ -12,16 +13,6 @@ type NotificationProps = {
 };
 
 export const Notification = (props: NotificationProps) => {
-  let ref: HTMLDivElement;
-
-  createEffect(() => {
-    const unmount = props.renderNotification?.(ref, props.notification);
-
-    onCleanup(() => {
-      unmount?.();
-    });
-  });
-
   return (
     <Show
       when={props.renderNotification}
@@ -34,11 +25,7 @@ export const Notification = (props: NotificationProps) => {
         />
       }
     >
-      <div
-        ref={(el) => {
-          ref = el;
-        }}
-      />
+      <ExternalElementRenderer render={(el) => props.renderNotification!(el, props.notification)} />
     </Show>
   );
 };
