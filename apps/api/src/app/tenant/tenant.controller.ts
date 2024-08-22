@@ -54,7 +54,7 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 
 import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 
-const v2Description = ' Tenants is not supported in code first version of the API.';
+const v2TenantsApiDescription = ' Tenants is not supported in code first version of the API.';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -79,14 +79,15 @@ export class TenantController {
   @ApiOperation({
     summary: 'Get tenants',
     description:
-      'Returns a list of tenants, could paginated using the `page` and `limit` query parameter.' + v2Description,
+      'Returns a list of tenants, could paginated using the `page` and `limit` query parameter.' +
+      v2TenantsApiDescription,
   })
   @SdkUsePagination()
   async listTenants(
     @UserSession() user: UserSessionData,
     @Query() query: GetTenantsRequestDto
   ): Promise<PaginatedResponseDto<GetTenantResponseDto>> {
-    await this.checkV2(user);
+    await this.verifyTenantsApiAvailability(user);
 
     return await this.getTenantsUsecase.execute(
       GetTenantsCommand.create({
@@ -102,7 +103,7 @@ export class TenantController {
   @ApiResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenant',
-    description: `Get tenant by your internal id used to identify the tenant` + v2Description,
+    description: `Get tenant by your internal id used to identify the tenant` + v2TenantsApiDescription,
   })
   @ApiNotFoundResponse({
     description: 'The tenant with the identifier provided does not exist in the database.',
@@ -112,7 +113,7 @@ export class TenantController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
   ): Promise<GetTenantResponseDto> {
-    await this.checkV2(user);
+    await this.verifyTenantsApiAvailability(user);
 
     return await this.getTenantUsecase.execute(
       GetTenantCommand.create({
@@ -128,7 +129,7 @@ export class TenantController {
   @ApiResponse(CreateTenantResponseDto)
   @ApiOperation({
     summary: 'Create tenant',
-    description: 'Create tenant under the current environment' + v2Description,
+    description: 'Create tenant under the current environment' + v2TenantsApiDescription,
   })
   @ApiConflictResponse({
     description: 'A tenant with the same identifier is already exist.',
@@ -137,7 +138,7 @@ export class TenantController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateTenantRequestDto
   ): Promise<CreateTenantResponseDto> {
-    await this.checkV2(user);
+    await this.verifyTenantsApiAvailability(user);
 
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
@@ -156,7 +157,7 @@ export class TenantController {
   @ApiResponse(UpdateTenantResponseDto)
   @ApiOperation({
     summary: 'Update tenant',
-    description: 'Update tenant by your internal id used to identify the tenant' + v2Description,
+    description: 'Update tenant by your internal id used to identify the tenant' + v2TenantsApiDescription,
   })
   @ApiNotFoundResponse({
     description: 'The tenant with the identifier provided does not exist in the database.',
@@ -166,7 +167,7 @@ export class TenantController {
     @Param('identifier') identifier: string,
     @Body() body: UpdateTenantRequestDto
   ): Promise<UpdateTenantResponseDto> {
-    await this.checkV2(user);
+    await this.verifyTenantsApiAvailability(user);
 
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
@@ -186,7 +187,7 @@ export class TenantController {
   @UserAuthentication()
   @ApiOperation({
     summary: 'Delete tenant',
-    description: 'Deletes a tenant entity from the Novu platform.' + v2Description,
+    description: 'Deletes a tenant entity from the Novu platform.' + v2TenantsApiDescription,
   })
   @ApiNoContentResponse({
     description: 'The tenant has been deleted correctly',
@@ -196,7 +197,7 @@ export class TenantController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeTenant(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<void> {
-    await this.checkV2(user);
+    await this.verifyTenantsApiAvailability(user);
 
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
@@ -208,7 +209,7 @@ export class TenantController {
     );
   }
 
-  private async checkV2(user: UserSessionData) {
+  private async verifyTenantsApiAvailability(user: UserSessionData) {
     const isV2Enabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         userId: user._id,
@@ -222,6 +223,6 @@ export class TenantController {
       return;
     }
 
-    throw new MethodNotAllowedException(v2Description.trim());
+    throw new MethodNotAllowedException(v2TenantsApiDescription.trim());
   }
 }
