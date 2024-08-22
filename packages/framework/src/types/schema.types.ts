@@ -4,7 +4,11 @@ import zod from 'zod';
 export type JsonSchema = JSONSchema;
 
 /**
- * A JSONSchema or a ZodSchema.
+ * A schema used to validate a JSON object.
+ *
+ * Supported schemas:
+ * - JSONSchema
+ * - ZodSchema
  */
 export type Schema = JsonSchema | zod.ZodSchema;
 
