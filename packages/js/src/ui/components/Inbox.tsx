@@ -27,7 +27,7 @@ export enum InboxPage {
 }
 
 export type InboxContentProps = {
-  mountNotification?: NotificationRenderer;
+  renderNotification?: NotificationRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
