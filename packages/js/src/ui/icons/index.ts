@@ -16,3 +16,4 @@ export * from './Settings';
 export * from './Sms';
 export * from './Unarchive';
 export * from './Unread';
+export * from './Lock';

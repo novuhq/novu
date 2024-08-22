@@ -109,6 +109,9 @@ export const appearanceKeys = [
   'workflowContainer',
   'workflowLabel',
   'workflowLabelContainer',
+  'workflowLabelDisabledIcon',
+  'workflowContainerRightIcon',
+  'workflowContainerDisabledNotice',
 
   // channel
   'channelContainer',
@@ -116,6 +119,7 @@ export const appearanceKeys = [
   'channelLabel',
   'channelLabelContainer',
   'channelDescription',
+  'channelName',
   'channelSwitchContainer',
   'channelSwitch',
   'channelSwitchThumb',

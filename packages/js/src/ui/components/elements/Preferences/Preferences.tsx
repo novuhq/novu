@@ -1,9 +1,11 @@
+import clsx from 'clsx';
 import { createMemo, createSignal, For, Show } from 'solid-js';
 import { useLocalization } from 'src/ui/context';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
 import { useStyle } from '../../../helpers';
-import { ArrowDropDown } from '../../../icons';
+import { ArrowDropDown, Lock } from '../../../icons';
+import { Tooltip } from '../../primitives/Tooltip';
 import { ChannelRow, getLabel } from './ChannelRow';
 import { LoadingScreen } from './LoadingScreen';
 
@@ -65,6 +67,7 @@ export const Preferences = () => {
               channels={preference.channels}
               workflowId={preference.workflow?.id}
               onChange={optimisticUpdate}
+              isCritical={preference.workflow?.critical}
             />
           )}
         </For>
@@ -75,15 +78,37 @@ export const Preferences = () => {
 
 const ChannelsLabel = (props: { channels: ChannelPreference }) => {
   const style = useStyle();
-  const definedKeys = () =>
-    Object.keys(props.channels || {})
-      .filter((key) => props.channels[key as keyof ChannelPreference] !== undefined)
-      .map((key) => getLabel(key as ChannelType))
-      .join(', ');
+
+  const channelNames = () => {
+    const channels = [];
+
+    for (const key in props.channels) {
+      if (props.channels[key as keyof ChannelPreference] !== undefined) {
+        const isDisabled = !props.channels[key as keyof ChannelPreference];
+
+        const element = (
+          <span
+            class={style('channelName', 'data-[disabled=true]:nt-text-foreground-alpha-200')}
+            data-disabled={isDisabled}
+          >
+            {getLabel(key as ChannelType)}
+          </span>
+        );
+        channels.push(element);
+      }
+    }
+
+    return channels.map((c, index) => (
+      <>
+        {c}
+        {index < channels.length - 1 && ', '}
+      </>
+    ));
+  };
 
   return (
     <div class={style('channelDescription', 'nt-text-sm nt-text-foreground-alpha-600 nt-text-start')}>
-      {definedKeys()}
+      {channelNames()}
     </div>
   );
 };
@@ -93,30 +118,82 @@ const PreferencesRow = (props: {
   channels: ChannelPreference;
   workflowId?: string;
   onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
+  isCritical?: boolean;
 }) => {
   const [isOpen, setIsOpen] = createSignal(false);
   const style = useStyle();
+  const { t } = useLocalization();
 
   const channels = createMemo(() => Object.keys(props.channels || {}));
 
   return (
     <Show when={channels().length > 0}>
-      <div class={style('workflowContainer', 'nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch')}>
+      <div
+        class={style(
+          'workflowContainer',
+          `nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch 
+          hover:nt-bg-neutral-100 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
+        )}
+        data-disabled={props.isCritical}
+        data-open={isOpen()}
+      >
         <div
           class={style(
             'workflowLabelContainer',
             'nt-flex nt-justify-between nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center'
           )}
           onClick={() => setIsOpen((prev) => !prev)}
+          data-disabled={props.isCritical}
+          data-open={isOpen()}
         >
           <div>
-            <div class={style('workflowLabel', 'nt-text-base nt-font-semibold nt-text-start')}>{props.label}</div>
+            <div
+              class={style(
+                'workflowLabel',
+                'nt-text-base nt-font-semibold nt-text-start nt-flex nt-items-center nt-gap-1'
+              )}
+              data-disabled={props.isCritical}
+              data-open={isOpen()}
+            >
+              <Show when={props.isCritical}>
+                <Tooltip.Root>
+                  <Tooltip.Trigger
+                    asChild={(childProps) => (
+                      <span class={style('workflowLabelDisabledIcon', 'nt-text-foreground-alpha-600')} {...childProps}>
+                        <Lock />
+                      </span>
+                    )}
+                  />
+                  <Tooltip.Content>{t('preferences.workflow.disabled.tooltip')}</Tooltip.Content>
+                </Tooltip.Root>
+              </Show>
+              {props.label}
+            </div>
             <ChannelsLabel channels={props.channels} />
           </div>
-          <ArrowDropDown />
+          <span
+            class={style(
+              'workflowContainerRightIcon',
+              `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
+            )}
+            data-disabled={props.isCritical}
+            data-open={isOpen()}
+          >
+            <ArrowDropDown />
+          </span>
         </div>
         <Show when={isOpen()}>
           <div class={style('channelsContainer', 'nt-flex nt-flex-col nt-gap-1 nt-self-stretch')}>
+            <Show when={props.isCritical}>
+              <span
+                class={style(
+                  'workflowContainerDisabledNotice',
+                  'nt-text-sm nt-text-foreground-alpha-600 nt-text-start'
+                )}
+              >
+                {t('preferences.workflow.disabled.notice')}
+              </span>
+            </Show>
             <For each={channels()}>
               {(channel) => (
                 <ChannelRow
@@ -124,6 +201,7 @@ const PreferencesRow = (props: {
                   enabled={!!props.channels[channel as keyof ChannelPreference]}
                   workflowId={props.workflowId}
                   onChange={props.onChange}
+                  isCritical={props.isCritical}
                 />
               )}
             </For>
