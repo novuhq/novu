@@ -30,12 +30,12 @@ import { GetInvite } from './usecases/get-invite/get-invite.usecase';
 import { ResendInviteDto } from './dtos/resend-invite.dto';
 import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
-import { ApiBearerAuth, ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
 import { InviteNudgeWebhook } from './usecases/invite-nudge/invite-nudge.usecase';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -62,8 +62,7 @@ export class InvitesController {
   }
 
   @Post('/:inviteToken/accept')
-  @ApiBearerAuth()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   async acceptInviteToken(
     @UserSession() user: UserSessionData,
     @Param('inviteToken') inviteToken: string
@@ -77,8 +76,7 @@ export class InvitesController {
   }
 
   @Post('/')
-  @ApiBearerAuth()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   async inviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: InviteMemberDto
@@ -98,8 +96,7 @@ export class InvitesController {
   }
 
   @Post('/resend')
-  @ApiBearerAuth()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   async resendInviteMember(
     @UserSession() user: UserSessionData,
     @Body() body: ResendInviteDto
@@ -119,8 +116,7 @@ export class InvitesController {
 
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
-  @ApiBearerAuth()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto

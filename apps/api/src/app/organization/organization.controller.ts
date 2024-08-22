@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Put,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
