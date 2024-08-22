@@ -6,7 +6,6 @@ import {
   Headers,
   Param,
   Post,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
