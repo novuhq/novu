@@ -100,19 +100,28 @@ export type CustomStep = <
    * The controls for the step.
    */
   T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
+  /*
+   * These intermediary types are needed to capture the types in a single location
+   * and stop Typescript from erroring with:
+   * `Type instantiation is excessively deep and possibly infinite.`
+   */
+  T_IntermediaryResult extends Record<string, unknown> = FromSchema<T_OutputsSchema>,
+  T_IntermediaryOutput extends Record<string, unknown> = FromSchemaUnvalidated<T_OutputsSchema>,
+  /**
+   * The output for the step.
+   */
+  T_Outputs extends T_IntermediaryOutput = T_IntermediaryOutput,
   /**
    * The result for the step.
    */
-  T_Intermediary extends Record<string, unknown> = FromSchema<T_OutputsSchema>,
-  T_Outputs extends T_Intermediary = T_Intermediary,
-  T_Result extends T_Intermediary = T_Intermediary
+  T_Result extends T_IntermediaryResult = T_IntermediaryResult
 >(
   /**
    * The name of the step. This is used to identify the step in the workflow.
    */
   name: string,
   /**
-   * The function to resolve the step notification content for the step.
+   * The function to resolve the custom data for the step.
    *
    * @param controls The controls for the step.
    */
