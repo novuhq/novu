@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { createMemo, createSignal, For, Show } from 'solid-js';
 import { useLocalization } from 'src/ui/context';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
@@ -14,7 +13,7 @@ export const Preferences = () => {
   const style = useStyle();
   const { t } = useLocalization();
 
-  const { preferences, mutate } = usePreferences();
+  const { preferences, loading, mutate } = usePreferences();
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
@@ -50,10 +49,10 @@ export const Preferences = () => {
         'nt-p-2 nt-flex nt-flex-col nt-gap-1 nt-bg-background nt-overflow-y-auto nt-h-full'
       )}
     >
-      <Show when={preferences.loading}>
+      <Show when={loading()}>
         <LoadingScreen />
       </Show>
-      <Show when={!preferences.loading && preferences()}>
+      <Show when={!loading() && preferences()}>
         <PreferencesRow
           label={t('preferences.global')}
           channels={allPreferences().globalPreference?.channels || {}}
