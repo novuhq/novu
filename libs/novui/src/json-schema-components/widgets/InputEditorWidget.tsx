@@ -5,6 +5,7 @@ import { RichTextEditor } from '@mantine/tiptap';
 import { ErrorSchema, WidgetProps } from '@rjsf/utils';
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
+import HistoryExtension from '@tiptap/extension-history';
 import Text from '@tiptap/extension-text';
 import { Editor, ReactRenderer, useEditor, type Extensions } from '@tiptap/react';
 import { css, cx } from '../../../styled-system/css';
@@ -18,7 +19,7 @@ import { SuggestionListRef, VariableItem, VariableSuggestionList } from './Varia
 
 const inputEditorClassNames = inputEditorWidget();
 
-const DEFAULT_EDITOR_EXTENSIONS: Extensions = [Document, Paragraph, Text];
+const DEFAULT_EDITOR_EXTENSIONS: Extensions = [Document, Paragraph, Text, HistoryExtension];
 
 export const InputEditorWidget = (props: WidgetProps) => {
   const { value, label, formContext, onChange, required, readonly, rawErrors } = props;
