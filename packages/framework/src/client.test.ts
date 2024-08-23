@@ -591,6 +591,106 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
+    it('should compile control variables used in other control variables', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email(
+          'send-email',
+          async (controls) => ({
+            body: controls.body,
+            subject: controls.subject,
+          }),
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                body: { type: 'string' },
+                subject: { type: 'string' },
+              },
+              required: ['body', 'subject'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: {},
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: 'body {{controls.subject}}',
+          subject: 'subject',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const subject = emailExecutionResult.outputs.subject;
+      expect(subject).toBe('subject');
+      const body = emailExecutionResult.outputs.body;
+      expect(body).toBe('body subject');
+    });
+
+    it('should compile control variables nested in the same control variables', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email(
+          'send-email',
+          async (controls) => ({
+            body: controls.body,
+            subject: controls.subject,
+          }),
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                body: { type: 'string' },
+                subject: { type: 'string' },
+              },
+              required: ['body', 'subject'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: {},
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: 'body',
+          subject: 'subject {{controls.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const subject = emailExecutionResult.outputs.subject;
+      expect(subject).toBe('subject subject {{controls.subject}}');
+      const body = emailExecutionResult.outputs.body;
+      expect(body).toBe('body');
+    });
+
     it('should compile default control variable with backwards compatability for payload variables', async () => {
       const bodyTemplate = `
 {% for element in elements %}
