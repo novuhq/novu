@@ -386,4 +386,10 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  sidebar: {
+    background: {
+      value: '{colors.legacy.B17}',
+      type: 'color',
+    },
+  },
 });

@@ -36,6 +36,7 @@ import {
   JSON_SCHEMA_FORM_SECTION_RECIPE,
   JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
   TOGGLE_RECIPE,
+  SIDEBAR_RECIPE,
 } from './recipes';
 
 /**
@@ -102,6 +103,7 @@ export const novuPandaPreset = definePreset({
         tabs: TABS_RECIPE,
         input: INPUT_RECIPE,
         toggle: TOGGLE_RECIPE,
+        sidebar: SIDEBAR_RECIPE,
         select: SELECT_RECIPE,
         checkbox: CHECKBOX_RECIPE,
         codeBlock: CODE_BLOCK_RECIPE,
