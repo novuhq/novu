@@ -159,6 +159,20 @@ describe('workflow function', () => {
         });
     });
 
+    it('should compile when the payload is not specified and the payloadSchema is not specified', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
+          to: 'test@test.com',
+        });
+    });
+
     it('should throw an error when the NOVU_SECRET_KEY is not set', async () => {
       const originalEnv = process.env.NOVU_SECRET_KEY;
       delete process.env.NOVU_SECRET_KEY;
