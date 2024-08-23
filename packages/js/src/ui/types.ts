@@ -1,6 +1,7 @@
 import type { Notification } from '../notifications';
 import type { NovuOptions } from '../types';
-import { appearanceKeys, defaultLocalization } from './config';
+import { appearanceKeys } from './config';
+import { Localization } from './context/LocalizationContext';
 
 export type NotificationClickHandler = (notification: Notification) => void;
 export type NotificationActionClickHandler = (notification: Notification) => void;
@@ -39,9 +40,6 @@ export type Theme = {
 };
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
-export type LocalizationKey = keyof typeof defaultLocalization;
-export type Localization = Partial<Record<LocalizationKey, string>>;
-
 export type BaseNovuProviderProps = {
   appearance?: Appearance;
   localization?: Localization;
@@ -59,3 +57,5 @@ export enum NotificationStatus {
   UNREAD = 'unread',
   ARCHIVED = 'archived',
 }
+
+export { Localization, LocalizationKey } from './context/LocalizationContext';

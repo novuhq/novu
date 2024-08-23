@@ -127,7 +127,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         </Button>
                       )}
                     />
-                    <Tooltip.Content>{t('notification.actions.read.toolTip')}</Tooltip.Content>
+                    <Tooltip.Content data-localization="notification.actions.read.tooltip">
+                      {t('notification.actions.read.tooltip')}
+                    </Tooltip.Content>
                   </Tooltip.Root>
                 }
               >
@@ -149,7 +151,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       </Button>
                     )}
                   />
-                  <Tooltip.Content>{t('notification.actions.unread.toolTip')}</Tooltip.Content>
+                  <Tooltip.Content data-localization="notification.actions.unread.tooltip">
+                    {t('notification.actions.unread.tooltip')}
+                  </Tooltip.Content>
                 </Tooltip.Root>
               </Show>
             </Show>
@@ -174,7 +178,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       </Button>
                     )}
                   />
-                  <Tooltip.Content>{t('notification.actions.archive.toolTip')}</Tooltip.Content>
+                  <Tooltip.Content data-localization="notification.actions.archive.tooltip">
+                    {t('notification.actions.archive.tooltip')}
+                  </Tooltip.Content>
                 </Tooltip.Root>
               }
             >
@@ -196,7 +202,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     </Button>
                   )}
                 />
-                <Tooltip.Content>{t('notification.actions.unarchive.toolTip')}</Tooltip.Content>
+                <Tooltip.Content data-localization="notification.actions.unarchive.tooltip">
+                  {t('notification.actions.unarchive.tooltip')}
+                </Tooltip.Content>
               </Tooltip.Root>
             </Show>
           </div>
