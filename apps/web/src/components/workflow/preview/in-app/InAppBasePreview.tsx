@@ -4,7 +4,7 @@ import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import ContentOld from './Content';
 import { Header } from './Header';
-import { Content } from './v2/Content';
+import { InboxPreviewContent } from './v2/InboxPreviewContent';
 
 const ContainerStyled = styled.div<{ removePadding: boolean }>`
   width: 27.5rem;
@@ -39,7 +39,7 @@ export const InAppBasePreview = ({
   return (
     <ContainerStyled removePadding={!showEditOverlay}>
       {isV2Enabled ? (
-        <Content isPreviewLoading={loading} parsedPreviewState={content} />
+        <InboxPreviewContent isPreviewLoading={loading} parsedPreviewState={content} />
       ) : (
         <>
           <Header

@@ -1,13 +1,28 @@
-import { Avatar } from '@mantine/core';
 import { Text, Title } from '@novu/novui';
 import { css, cva } from '@novu/novui/css';
-import { IconArrowDropDown, IconMoreHoriz, IconPerson, IconSettings } from '@novu/novui/icons';
+import { IconArrowDropDown, IconMoreHoriz, IconSettings } from '@novu/novui/icons';
 import { Center, Flex, HStack, Stack } from '@novu/novui/jsx';
-
 import { ParsedPreviewStateType } from '../../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { SkeletonStyled } from '../Content.styles';
+import { InboxAvatar } from './InboxAvatar';
 
-export function Content({
+export const INBOX_TOKENS = {
+  'semantic/color/neutral/60': '#828299',
+  'semantic/color/neutral/80': '#3D3D4D',
+  'semantic/color/neutral/90': '#292933',
+  'Inbox/whiteLable/buttons/accent/normal': '#369EFF',
+  'Inbox/whiteLable/secondaryButton': '#2E2E32',
+  'Inbox/whiteLable/devider': '#2E2E32',
+  '--Inbox-paddings-header-vertical': '20px',
+  '--Inbox-paddings-header-horizontal': '24px',
+  '--Inbox-paddings-message-horizontal': '24px',
+  '--Inbox-paddings-message-vertical': '16px',
+  '--Inbox-margin-message-avatar-txt': '8px',
+  '--Inbox-margin-message-txt-buttons': '16px',
+  '--semantic-margins-buttons-S-S': '16px',
+} as const;
+
+export function InboxPreviewContent({
   isPreviewLoading,
   parsedPreviewState,
 }: {
@@ -15,26 +30,25 @@ export function Content({
   parsedPreviewState: ParsedPreviewStateType;
 }) {
   return (
-    <div
+    <Flex
       className={css({
-        display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
         alignSelf: 'stretch',
         borderRadius: '150',
         bgColor: 'surface.popover',
-        padding: '1.25rem 1.5rem',
+        py: INBOX_TOKENS['--Inbox-paddings-header-vertical'],
+        px: INBOX_TOKENS['--Inbox-paddings-header-horizontal'],
         h: '32.5rem',
       })}
     >
       {/* Header -  Inbox dropdown and settings icon section */}
-      <div
+      <Flex
         className={css({
-          display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           alignSelf: 'stretch',
-          paddingBottom: '1.25rem',
+          paddingBottom: INBOX_TOKENS['--Inbox-paddings-header-vertical'],
         })}
       >
         <HStack gap={8}>
@@ -45,13 +59,13 @@ export function Content({
           <IconMoreHoriz />
           <IconSettings />
         </HStack>
-      </div>
+      </Flex>
 
       {/* Feed tabs section */}
       <HStack
         gap={28}
         className={css({
-          borderColor: 'tabs.border',
+          borderColor: INBOX_TOKENS['Inbox/whiteLable/devider'],
           borderBottom: 'solid',
           borderBottomWidth: '1',
           alignSelf: 'stretch',
@@ -111,14 +125,22 @@ export function Content({
       {/* Content Section */}
 
       {isPreviewLoading ? (
-        <Flex paddingBlock="1rem" gap="0.5rem" alignSelf="stretch" flexGrow={1}>
-          <Avatar radius={8}>
-            <IconPerson />
-          </Avatar>
+        <Flex
+          paddingBlock={INBOX_TOKENS['--Inbox-paddings-message-vertical']}
+          gap={INBOX_TOKENS['--Inbox-margin-message-avatar-txt']}
+          alignSelf="stretch"
+          flexGrow={1}
+        >
+          <InboxAvatar />
           <Skeletons />
         </Flex>
       ) : (
-        <Flex paddingBlock="1rem" gap="0.5rem" alignSelf="stretch" flexGrow={1}>
+        <Flex
+          paddingBlock={INBOX_TOKENS['--Inbox-paddings-message-vertical']}
+          gap={INBOX_TOKENS['--Inbox-margin-message-avatar-txt']}
+          alignSelf="stretch"
+          flexGrow={1}
+        >
           {/* Unread Dot */}
           <span
             className={css({
@@ -131,13 +153,9 @@ export function Content({
           />
 
           {/* Avatar Section */}
-          {parsedPreviewState.avatar ? (
-            <Avatar src={parsedPreviewState.avatar} radius={8}>
-              <IconPerson />
-            </Avatar>
-          ) : null}
+          {parsedPreviewState.avatar ? <InboxAvatar src={parsedPreviewState.avatar} /> : null}
           {/* Message Section */}
-          <Stack gap="1rem" flexGrow={1}>
+          <Stack gap={INBOX_TOKENS['--Inbox-margin-message-txt-buttons']} flexGrow={1}>
             <Stack gap="0.25rem">
               <HStack justifyContent="space-between">
                 <Text variant="main" fontWeight="strong">
@@ -155,7 +173,7 @@ export function Content({
 
             {/* Actions Section */}
             {parsedPreviewState.ctaButtons && parsedPreviewState.ctaButtons.length > 0 ? (
-              <Flex gap="1rem">
+              <Flex gap={INBOX_TOKENS['--semantic-margins-buttons-S-S']}>
                 {parsedPreviewState.ctaButtons.map((button, index) => (
                   <button key={index} className={actionButtonRecipe({ type: button.type })}>
                     {button.content}
@@ -179,7 +197,7 @@ export function Content({
         />
         <Text variant="secondary">Powered by Novu</Text>
       </Center>
-    </div>
+    </Flex>
   );
 }
 
@@ -209,10 +227,10 @@ const actionButtonRecipe = cva({
   variants: {
     type: {
       primary: {
-        bgColor: '#369EFF',
+        bgColor: INBOX_TOKENS['Inbox/whiteLable/buttons/accent/normal'],
       },
       secondary: {
-        bgColor: '#2E2E32',
+        bgColor: INBOX_TOKENS['Inbox/whiteLable/secondaryButton'],
       },
     },
   },
