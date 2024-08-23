@@ -85,7 +85,7 @@ describe('ConditionalPartial', () => {
     const testConditionalPartialFalseInvalid: TestConditionalPartialFalse = {};
   });
 
-  it('should not compile when the first argument is an indexable type', () => {
+  it('should not compile when the first argument is not an indexable type', () => {
     // @ts-expect-error - string is not an object
     type TestConditionalPartialFalse = ConditionalPartial<string, false>;
   });
