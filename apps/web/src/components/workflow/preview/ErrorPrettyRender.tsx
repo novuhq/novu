@@ -1,5 +1,4 @@
 import { useDisclosure } from '@mantine/hooks';
-import { ErrorCodeEnum } from '@novu/framework';
 import { css } from '@novu/novui/css';
 import { Text } from '@novu/novui';
 import { hstack } from '@novu/novui/patterns';
@@ -9,7 +8,11 @@ import { IconErrorOutline, IconExpandLess, IconExpandMore } from '@novu/novui/ic
 export function ErrorPrettyRender({ error: unparsedError }) {
   const [isExpanded, { toggle }] = useDisclosure();
   const error = 'response' in unparsedError ? unparsedError?.response?.data : unparsedError;
-  const isInvalidControlSyntax = error?.code === ErrorCodeEnum.STEP_CONTROL_COMPILATION_FAILED_ERROR;
+  /*
+   * TODO: find a way to import ErrorCodeEnum from @novu/framework without transiently importing
+   * types that are not available in the browser, like `crypto`
+   */
+  const isInvalidControlSyntax = error?.code === 'StepControlCompilationFailedError';
 
   // If invalid syntax of var (e.g. missing closing bracket {{var {{var}), show preview as loading.
   if (isInvalidControlSyntax) {
