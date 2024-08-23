@@ -15,8 +15,6 @@ import { useRouteScopes } from '../../hooks/useRouteScopes';
 import { inIframe } from '../../utils/iframe';
 import { navigateToAuthApplication } from '../../utils';
 
-export const LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
-
 export const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'nv_auth_token';
 
 function saveToken(token: string | null) {
@@ -25,14 +23,10 @@ function saveToken(token: string | null) {
   } else {
     localStorage.removeItem(LOCAL_STORAGE_AUTH_TOKEN_KEY);
   }
-  // Clean up legacy token when the next token arrives
-  localStorage.removeItem(LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY);
 }
 
 export function getToken() {
-  return (
-    localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_LOCAL_STORAGE_AUTH_TOKEN_KEY)
-  );
+  return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY);
 }
 
 export const CommunityAuthContext = createContext<AuthContextValue>(DEFAULT_AUTH_CONTEXT_VALUE);

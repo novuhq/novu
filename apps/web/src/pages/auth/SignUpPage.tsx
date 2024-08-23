@@ -1,9 +1,13 @@
+import { PageMeta } from '@novu/design-system';
 import { SignUpForm } from './components/SignUpForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 
+const title = 'Sign up';
+
 export default function SignUpPage() {
   return (
-    <AuthLayout title="Sign Up" description="Hello and welcome! Sign up to the best notifications platform ever">
+    <AuthLayout title={title}>
+      <PageMeta title={title} />
       <SignUpForm />
     </AuthLayout>
   );

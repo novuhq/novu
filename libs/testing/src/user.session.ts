@@ -246,6 +246,7 @@ export class UserSession {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
+      org_role: 'org:admin',
     });
   }
 
