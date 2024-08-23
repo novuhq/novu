@@ -41,7 +41,7 @@ export const ActionsItem = (props: { label: string; onClick: () => void; icon: (
       class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
       onClick={props.onClick}
     >
-      <span class={style('moreActions__dropdownItemLeftIcon')}>{props.icon()}</span>
+      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-text-foreground-alpha-600')}>{props.icon()}</span>
       <span class={style('moreActions__dropdownItemLabel')}>{props.label}</span>
     </Dropdown.Item>
   );

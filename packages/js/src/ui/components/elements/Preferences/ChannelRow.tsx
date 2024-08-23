@@ -48,7 +48,9 @@ export const ChannelRow = (props: ChannelRowProps) => {
       data-disabled={props.isCritical}
     >
       <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
-        <div>{getIcon(props.channel)}</div>
+        <div>
+          <ChannelIcon channel={props.channel} />
+        </div>
         <span class={style('channelLabel', 'nt-text-base nt-font-semibold')}>{getLabel(props.channel)}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
@@ -58,8 +60,8 @@ export const ChannelRow = (props: ChannelRowProps) => {
   );
 };
 
-const getIcon = (channel: ChannelType) => {
-  switch (channel) {
+const ChannelIcon = (props: { channel: ChannelType } & JSX.HTMLAttributes<SVGSVGElement>) => {
+  switch (props.channel) {
     case ChannelType.IN_APP:
       return <InApp />;
     case ChannelType.EMAIL:

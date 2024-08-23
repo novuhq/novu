@@ -54,15 +54,15 @@ export const StatusItem = (props: {
 
   return (
     <Dropdown.Item
-      class={style('inboxStatus__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-8'))}
+      class={style('inboxStatus__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-8 nt-justify-between'))}
       onClick={props.onClick}
     >
       <span class={style('inboxStatus__dropdownItemLabelContainer', 'nt-flex nt-gap-2 nt-items-center')}>
-        <span class={style('inboxStatus__dropdownItemLeftIcon', 'nt-text-foreground-alpha-600')}>{props.icon()}</span>
+        <span class={style('inboxStatus__dropdownItemLeft__icon')}>{props.icon()}</span>
         <span class={style('inboxStatus__dropdownItemLabel')}>{props.label}</span>
       </span>
       <Show when={props.isSelected}>
-        <span class={style('inboxStatus__dropdownItemRightIcon', 'nt-justify-self-end nt-text-foreground-alpha-600')}>
+        <span class={style('inboxStatus__dropdownItemRight__icon')}>
           <Check />
         </span>
       </Show>
