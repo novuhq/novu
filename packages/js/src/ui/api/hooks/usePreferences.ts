@@ -1,12 +1,11 @@
-import { createEffect, createResource } from 'solid-js';
+import { createEffect, createResource, createSignal } from 'solid-js';
 import { FetchPreferencesArgs } from '../../../preferences/types';
 import { useNovu } from '../../context';
-import { createDelayedLoading } from '../../helpers/createDelayedLoading';
 
 export const usePreferences = (options?: FetchPreferencesArgs) => {
   const novu = useNovu();
 
-  const [loading, setLoading] = createDelayedLoading(true, 300);
+  const [loading, setLoading] = createSignal(true);
   const [preferences, { mutate, refetch }] = createResource(options || {}, async () => {
     try {
       const response = await novu.preferences.list();
