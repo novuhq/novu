@@ -1,51 +1,24 @@
 import { useEffect, useMemo, useRef } from 'react';
 
-import { ErrorSchema, WidgetProps } from '@rjsf/utils';
-
 import { Input } from '@mantine/core';
 import { RichTextEditor } from '@mantine/tiptap';
-
+import { ErrorSchema, WidgetProps } from '@rjsf/utils';
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
-import { ReactRenderer, useEditor, type Extensions } from '@tiptap/react';
+import { Editor, ReactRenderer, useEditor, type Extensions } from '@tiptap/react';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
 import { input, inputEditorWidget } from '../../../styled-system/recipes';
-import {
-  AUTOCOMPLETE_OPEN_TAG,
-  INVALID_VARIABLE_REGEX,
-  VALID_VARIABLE_REGEX,
-  VariableErrorCode,
-  VARIABLE_ERROR_MESSAGES,
-} from '../constants';
+import { AUTOCOMPLETE_OPEN_TAG, VARIABLE_ERROR_MESSAGES } from '../constants';
 import { InputAutocompleteContextProvider } from '../context';
-import { cleanVariableMatch, extractErrorCodesFromHtmlContent } from '../utils';
+import { extractErrorCodesFromHtmlContent, getInitContentWithVariableNodeView } from '../utils';
 import { CustomMention } from './customMentionExtension';
 import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
 
 const inputEditorClassNames = inputEditorWidget();
 
-const getInitContentWithVariableNodeView = (inputString: string, variablesSet: Set<string>) => {
-  if (!inputString) {
-    return inputString;
-  }
-
-  let result = inputString.toString().replace(VALID_VARIABLE_REGEX, (match, validContent) => {
-    const cleanedMatch = cleanVariableMatch(match);
-    const isValidVariable = variablesSet.has(cleanedMatch);
-
-    return `<mention-component data-label="${validContent}" data-id="${validContent}" ${
-      !isValidVariable ? `data-error="${VariableErrorCode.INVALID_NAME}"` : ''
-    }></mention-component>`;
-  });
-
-  result = result?.replace(INVALID_VARIABLE_REGEX, (match) => {
-    return `<mention-component data-label="${match}" data-id="${match}" data-error="${VariableErrorCode.INVALID_SYNTAX}"></mention-component>`;
-  });
-
-  return result;
-};
+const DEFAULT_EDITOR_EXTENSIONS: Extensions = [Document, Paragraph, Text];
 
 export const InputEditorWidget = (props: WidgetProps) => {
   const { value, label, formContext, onChange, required, readonly, rawErrors } = props;
@@ -65,16 +38,19 @@ export const InputEditorWidget = (props: WidgetProps) => {
     return [variableDisplayList, new Set(variables)];
   }, [variables]);
 
-  const baseExtensions: Extensions = [Document, Paragraph, Text];
+  const extensions = useMemo(() => {
+    if (!variables || variables.length === 0) {
+      return DEFAULT_EDITOR_EXTENSIONS;
+    }
 
-  if (variables.length) {
-    baseExtensions.push(
+    return DEFAULT_EDITOR_EXTENSIONS.concat(
       CustomMention(variables).configure({
         suggestion: {
           items: ({ query }) => {
             return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
           },
           char: AUTOCOMPLETE_OPEN_TAG,
+          decorationTag: 'span',
           decorationClass: 'suggestion',
           allowSpaces: true,
           allowedPrefixes: null,
@@ -104,12 +80,28 @@ export const InputEditorWidget = (props: WidgetProps) => {
         },
       })
     );
-  }
+  }, [variablesList]);
+
+  const handleEditorUpdateWithValidation = ({ editor }: { editor: Editor }) => {
+    const content = editor.isEmpty ? undefined : editor.getText();
+    const htmlContent = editor.isEmpty ? undefined : editor.getHTML();
+
+    // extract error messages from HTML and convert to user-friendly messages
+    const parsedErrorCodes = extractErrorCodesFromHtmlContent(htmlContent);
+
+    const errorMessages: string[] | undefined =
+      parsedErrorCodes && parsedErrorCodes.size > 0
+        ? [...parsedErrorCodes.values()].map((code) => VARIABLE_ERROR_MESSAGES[code])
+        : undefined;
+
+    onChange(content, { __errors: errorMessages } as ErrorSchema);
+  };
 
   const editor = useEditor({
-    extensions: baseExtensions,
+    extensions,
     content: '',
     editable: !readonly,
+    parseOptions: {},
     onFocus: () => {
       reactRenderer.current?.ref?.focus();
     },
@@ -117,18 +109,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       reactRenderer.current?.ref?.blur();
     },
     onUpdate: ({ editor }) => {
-      const content = editor.isEmpty ? undefined : editor.getText();
-      const htmlContent = editor.isEmpty ? undefined : editor.getHTML();
-
-      // extract error messages from HTML and convert to user-friendly messages
-      const parsedErrorCodes = extractErrorCodesFromHtmlContent(htmlContent);
-
-      let errorMessages: string[];
-      if (parsedErrorCodes && parsedErrorCodes.length > 0) {
-        errorMessages = [...new Set(parsedErrorCodes).values()].map((code) => VARIABLE_ERROR_MESSAGES[code]);
-      }
-
-      onChange(content, { __errors: errorMessages } as ErrorSchema);
+      handleEditorUpdateWithValidation({ editor });
     },
   });
 
@@ -139,6 +120,8 @@ export const InputEditorWidget = (props: WidgetProps) => {
       // Set timeout is for a known tiptap error with setting content on initial render https://github.com/ueberdosis/tiptap/issues/3764
       const timeoutId = setTimeout(() => {
         editor.commands.setContent(output);
+        // validate on initial render
+        handleEditorUpdateWithValidation({ editor });
       });
 
       return () => {

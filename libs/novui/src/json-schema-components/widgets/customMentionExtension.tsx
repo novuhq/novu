@@ -1,9 +1,8 @@
 import { Mention as ExternalMention } from '@tiptap/extension-mention';
-import { mergeAttributes, Node, NodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
-import { Variable } from './Variable';
-import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, VariableErrorCode } from '../constants';
-import { memo } from 'react';
+import { mergeAttributes, NodeViewProps, ReactNodeViewRenderer } from '@tiptap/react';
+import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, VARIABLE_HTML_TAG_NAME } from '../constants';
 import { checkIsValidVariableErrorCode } from '../utils';
+import { Variable } from './Variable';
 
 export const CustomMention = (variables: string[]) => {
   const variableSet = new Set(variables);
@@ -33,35 +32,17 @@ export const CustomMention = (variables: string[]) => {
     },
     // called on attempting to add a mention
     addNodeView() {
-      return ReactNodeViewRenderer(
-        memo<NodeViewProps>((props) => {
-          const isValidVariable = variableSet.has(props.node.attrs.label);
-
-          const updatedProps: NodeViewProps = {
-            ...props,
-            node: {
-              ...props.node,
-              attrs: {
-                ...props.node.attrs,
-                error: isValidVariable ? undefined : VariableErrorCode.INVALID_NAME,
-              },
-            },
-          } as unknown as NodeViewProps;
-
-          return <Variable {...updatedProps} />;
-        }),
-        {
-          attrs: { contentEditable: 'false' },
-          update: () => {
-            return true;
-          },
-        }
-      );
+      return ReactNodeViewRenderer(Variable, {
+        attrs: { contentEditable: 'false' },
+        update: () => {
+          return true;
+        },
+      });
     },
     parseHTML() {
       return [
         {
-          tag: 'mention-component',
+          tag: VARIABLE_HTML_TAG_NAME,
         },
       ];
     },
@@ -75,7 +56,7 @@ export const CustomMention = (variables: string[]) => {
         ? node.attrs.label
         : `${AUTOCOMPLETE_OPEN_TAG}${node.attrs.label ?? node.attrs.id}${AUTOCOMPLETE_CLOSE_TAG}`;
 
-      return ['mention-component', mergeAttributes(HTMLAttributes), htmlOutput];
+      return [VARIABLE_HTML_TAG_NAME, mergeAttributes(HTMLAttributes), htmlOutput];
     },
   });
 };

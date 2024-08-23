@@ -5,6 +5,7 @@ import { type SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion
 import { variableSuggestionList } from '../../../styled-system/recipes';
 import { Text } from '../../components';
 import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, VariableErrorCode } from '../constants';
+import { useInputAutocompleteContext } from '../context';
 
 export type VariableItem = {
   id: string;
@@ -29,16 +30,31 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       onDropdownOpen: () => combobox.selectFirstOption(),
     });
 
+    const { variablesSet } = useInputAutocompleteContext();
+
     useEffect(() => {
       combobox.selectFirstOption();
     }, [items]);
 
+    // called on entering the AUTOCOMPLETE_CLOSE_TAG or onBlur of the variable entry
     const customVariableLabel = () => {
+      // ensure query has closing characters
       if (!query.endsWith(AUTOCOMPLETE_CLOSE_TAG)) {
         command({ label: `${AUTOCOMPLETE_OPEN_TAG}${query}`, id: '', error: VariableErrorCode.INVALID_SYNTAX });
-      } else {
-        command({ label: query.slice(0, -2), id: '', error: undefined });
+        return;
       }
+
+      // extract variable name without special closing characters
+      const variableName = query.slice(0, -AUTOCOMPLETE_CLOSE_TAG.length);
+
+      // set error if the variable is not a valid reference
+      if (!variablesSet.has(variableName)) {
+        command({ label: variableName, id: '', error: VariableErrorCode.INVALID_NAME });
+        return;
+      }
+
+      // happy path -- valid variable reference
+      return command({ label: variableName, id: variableName });
     };
 
     const options = items?.map((item) => (

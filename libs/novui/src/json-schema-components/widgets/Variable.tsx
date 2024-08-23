@@ -20,7 +20,7 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
     }
   }, [node.attrs.label, variablesSet]);
 
-  // In case of an invalid variable input, set content to be the label variable  which will include the whole invalid variable
+  // In case of an invalid variable input, set content to be the label variable which will include the whole invalid variable
   const renderedNodeViewContent = !node.attrs.label.includes(AUTOCOMPLETE_OPEN_TAG)
     ? `${AUTOCOMPLETE_OPEN_TAG}${node.attrs.label}${AUTOCOMPLETE_CLOSE_TAG}`
     : `${node.attrs.label}`;
@@ -32,7 +32,7 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
         className={'suggestion'}
         contentEditable
         suppressContentEditableWarning
-        data-error={!!errorCode}
+        data-error={errorCode}
         onInput={(event: ChangeEvent<HTMLInputElement>) => {
           const text = event.target.innerText;
           const variable = getValidatedVariable(text, variablesSet);
