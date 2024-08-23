@@ -1,9 +1,8 @@
-import clsx from 'clsx';
 import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { formatToRelativeTime, useStyle } from '../../helpers';
+import { cn, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';
@@ -66,9 +65,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     <a
       class={style(
         'notification',
-        clsx('nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2', {
-          'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-        })
+        cn(
+          'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-pr-4 nt-pl-6 nt-gap-2',
+          {
+            'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
+          }
+        )
       )}
       onClick={handleNotificationClick}
     >
@@ -76,7 +78,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <span
           class={style(
             'notificationDot',
-            'nt-absolute -nt-translate-x-[150%] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
+            'nt-absolute -nt-translate-x-[1.0625rem] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
           )}
         />
       </Show>
