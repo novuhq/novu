@@ -19,7 +19,7 @@ export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 /**
  * Mark properties of T as optional if Condition is true
  */
-export type ConditionalPartial<T, Condition extends boolean> = Condition extends true ? Partial<T> : T;
+export type ConditionalPartial<T extends Obj, Condition extends boolean> = Condition extends true ? Partial<T> : T;
 
 /**
  * Same as Nullable except without `null`.
