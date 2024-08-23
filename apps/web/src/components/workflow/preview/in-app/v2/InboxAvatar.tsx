@@ -18,11 +18,11 @@ export const InboxAvatar = (props: { src?: string }) => {
           borderRadius: 'm',
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
+          width: '2rem',
+          height: '2rem',
         })}
         onError={handleError}
         alt="avatar"
-        width="2rem"
-        height="2rem"
       />
     );
   }
@@ -35,6 +35,8 @@ export const InboxAvatar = (props: { src?: string }) => {
         alignItems: 'center',
         borderRadius: 'm',
         bgColor: INBOX_TOKENS['semantic/color/neutral/90'],
+        width: '2rem',
+        height: '2rem',
       })}
     >
       <IconPerson />

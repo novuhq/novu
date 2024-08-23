@@ -10,16 +10,16 @@ export const INBOX_TOKENS = {
   'semantic/color/neutral/60': '#828299',
   'semantic/color/neutral/80': '#3D3D4D',
   'semantic/color/neutral/90': '#292933',
+  'semantic/margins/buttons/S/S': '1rem',
   'Inbox/whiteLable/buttons/accent/normal': '#369EFF',
   'Inbox/whiteLable/secondaryButton': '#2E2E32',
   'Inbox/whiteLable/devider': '#2E2E32',
-  '--Inbox-paddings-header-vertical': '20px',
-  '--Inbox-paddings-header-horizontal': '24px',
-  '--Inbox-paddings-message-horizontal': '24px',
-  '--Inbox-paddings-message-vertical': '16px',
-  '--Inbox-margin-message-avatar-txt': '8px',
-  '--Inbox-margin-message-txt-buttons': '16px',
-  '--semantic-margins-buttons-S-S': '16px',
+  'Inbox/paddings/header/vertical': '1.25rem',
+  'Inbox/paddings/header/horizontal': '1.5rem',
+  'Inbox/paddings/message/horizontal': '1.5rem',
+  'Inbox/paddings/message/vertical': '1rem',
+  'Inbox/margin/message/avatar/txt': '0.5rem',
+  'Inbox/margin/message/txt/buttons': '1rem',
 } as const;
 
 export function InboxPreviewContent({
@@ -37,8 +37,8 @@ export function InboxPreviewContent({
         alignSelf: 'stretch',
         borderRadius: '150',
         bgColor: 'surface.popover',
-        py: INBOX_TOKENS['--Inbox-paddings-header-vertical'],
-        px: INBOX_TOKENS['--Inbox-paddings-header-horizontal'],
+        py: INBOX_TOKENS['Inbox/paddings/header/vertical'],
+        px: INBOX_TOKENS['Inbox/paddings/header/horizontal'],
         h: '32.5rem',
       })}
     >
@@ -48,7 +48,7 @@ export function InboxPreviewContent({
           justifyContent: 'space-between',
           alignItems: 'center',
           alignSelf: 'stretch',
-          paddingBottom: INBOX_TOKENS['--Inbox-paddings-header-vertical'],
+          paddingBottom: INBOX_TOKENS['Inbox/paddings/header/vertical'],
         })}
       >
         <HStack gap={8}>
@@ -126,8 +126,8 @@ export function InboxPreviewContent({
 
       {isPreviewLoading ? (
         <Flex
-          paddingBlock={INBOX_TOKENS['--Inbox-paddings-message-vertical']}
-          gap={INBOX_TOKENS['--Inbox-margin-message-avatar-txt']}
+          paddingBlock={INBOX_TOKENS['Inbox/paddings/message/vertical']}
+          gap={INBOX_TOKENS['Inbox/margin/message/avatar/txt']}
           alignSelf="stretch"
           flexGrow={1}
         >
@@ -136,8 +136,8 @@ export function InboxPreviewContent({
         </Flex>
       ) : (
         <Flex
-          paddingBlock={INBOX_TOKENS['--Inbox-paddings-message-vertical']}
-          gap={INBOX_TOKENS['--Inbox-margin-message-avatar-txt']}
+          paddingBlock={INBOX_TOKENS['Inbox/paddings/message/vertical']}
+          gap={INBOX_TOKENS['Inbox/margin/message/avatar/txt']}
           alignSelf="stretch"
           flexGrow={1}
         >
@@ -155,7 +155,7 @@ export function InboxPreviewContent({
           {/* Avatar Section */}
           {parsedPreviewState.avatar ? <InboxAvatar src={parsedPreviewState.avatar} /> : null}
           {/* Message Section */}
-          <Stack gap={INBOX_TOKENS['--Inbox-margin-message-txt-buttons']} flexGrow={1}>
+          <Stack gap={INBOX_TOKENS['Inbox/margin/message/txt/buttons']} flexGrow={1}>
             <Stack gap="0.25rem">
               <HStack justifyContent="space-between">
                 <Text variant="main" fontWeight="strong">
@@ -173,7 +173,7 @@ export function InboxPreviewContent({
 
             {/* Actions Section */}
             {parsedPreviewState.ctaButtons && parsedPreviewState.ctaButtons.length > 0 ? (
-              <Flex gap={INBOX_TOKENS['--semantic-margins-buttons-S-S']}>
+              <Flex gap={INBOX_TOKENS['semantic/margins/buttons/S/S']}>
                 {parsedPreviewState.ctaButtons.map((button, index) => (
                   <button key={index} className={actionButtonRecipe({ type: button.type })}>
                     {button.content}
