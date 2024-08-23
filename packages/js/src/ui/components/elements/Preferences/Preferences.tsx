@@ -158,7 +158,10 @@ const PreferencesRow = (props: {
                 <Tooltip.Root>
                   <Tooltip.Trigger
                     asChild={(childProps) => (
-                      <span class={style('workflowLabelDisabledIcon', 'nt-text-foreground-alpha-600')} {...childProps}>
+                      <span
+                        class={style('workflowLabelDisabled__icon', 'nt-text-foreground-alpha-600')}
+                        {...childProps}
+                      >
                         <Lock />
                       </span>
                     )}
@@ -172,13 +175,13 @@ const PreferencesRow = (props: {
           </div>
           <span
             class={style(
-              'workflowContainerRightIcon',
+              'workflowContainerRight__icon',
               `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
             )}
             data-disabled={props.isCritical}
             data-open={isOpen()}
           >
-            <ArrowDropDown />
+            <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600')} />
           </span>
         </div>
         <Show when={isOpen()}>

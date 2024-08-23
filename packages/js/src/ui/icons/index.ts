@@ -5,7 +5,7 @@ export * from './ArrowLeft';
 export * from './BellIcon';
 export * from './Chat';
 export * from './Check';
-export * from './DotsMenu';
+export * from './Dots';
 export * from './Email';
 export * from './InApp';
 export * from './Inbox';

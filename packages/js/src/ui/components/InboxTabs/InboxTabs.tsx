@@ -2,7 +2,7 @@
 import { createMemo, For, Show } from 'solid-js';
 import { useInboxContext, useUnreadCounts } from '../../../ui/context';
 import { cn, useStyle } from '../../helpers';
-import { Check, DotsMenu } from '../../icons';
+import { Check, Dots } from '../../icons';
 import { NotificationStatus, Tab } from '../../types';
 import { NotificationList } from '../Notification';
 import { Button, Dropdown, Tabs } from '../primitives';
@@ -27,7 +27,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
   const options = createMemo(() =>
     dropdownTabs().map((tab) => ({
       ...tab,
-      rightIcon: tab.label === activeTab() ? <Check class={style('moreTabs__dropdownItemRightIcon')} /> : undefined,
+      rightIcon: tab.label === activeTab() ? <Check class={style('moreTabs__dropdownItemRight__icon')} /> : undefined,
     }))
   );
   const dropdownTabsUnreadSum = createMemo(() =>
@@ -77,7 +77,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
                         : 'after:nt-border-b-transparent nt-text-foreground-alpha-600'
                     )}
                   >
-                    <DotsMenu appearanceKey="moreTabs__dots" />
+                    <Dots class={style('moreTabs__dots')} />
                     <Show when={status() !== NotificationStatus.ARCHIVED && dropdownTabsUnreadSum()}>
                       <InboxTabUnreadNotificationsCount count={dropdownTabsUnreadSum()} />
                     </Show>
