@@ -372,4 +372,18 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  toggle: {
+    background: {
+      value: '{colors.legacy.B30}',
+      type: 'color',
+    },
+    thumb: {
+      value: '{colors.legacy.white}',
+      type: 'color',
+    },
+    checked: {
+      value: '{colors.green.30.dark}',
+      type: 'color',
+    },
+  },
 });

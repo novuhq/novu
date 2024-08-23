@@ -10,3 +10,4 @@ export * from './text';
 export * from './textarea';
 export * from './title';
 export * from './loader';
+export * from './toggle';
