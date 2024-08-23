@@ -64,8 +64,8 @@ export class ExecutionStateResultInvalidError extends BadRequestError {
   }
 }
 
-export class CompilingStepControlInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.COMPILING_STEP_CONTROL_INVALID_ERROR;
+export class StepControlCompilationFailedError extends BadRequestError {
+  code = ErrorCodeEnum.STEP_CONTROL_COMPILATION_FAILED_ERROR;
 
   constructor(workflowId: string, stepId: string, data: unknown) {
     super(

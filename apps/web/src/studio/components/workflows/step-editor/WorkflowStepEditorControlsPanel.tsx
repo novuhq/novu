@@ -62,9 +62,15 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     return getSuggestionVariables(payloadObject, 'payload');
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
-  const haveControlProperties = useMemo(() => {
-    return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
+  const controls = useMemo(() => {
+    return step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {};
   }, [step?.controls?.schema, step?.inputs?.schema]);
+  const controlProperties = useMemo(() => {
+    return getSuggestionVariables(controls, 'controls');
+  }, [controls]);
+  const haveControlProperties = useMemo(() => {
+    return Object.keys(controls).length > 0;
+  }, [controls]);
 
   const handleOnChange = useDebouncedCallback(async (type: OnChangeType, data: any, id?: string) => {
     onChange(type, data, id);
@@ -74,8 +80,11 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
 
   // set variables to undefined when autocomplete flag is disabled to use plain text entry.
   const variables = useMemo(
-    () => (isAutocompleteEnabled ? [...(subscriberVariables || []), ...(payloadProperties || [])] : undefined),
-    [payloadProperties, isAutocompleteEnabled]
+    () =>
+      isAutocompleteEnabled
+        ? [...(subscriberVariables || []), ...(payloadProperties || []), ...(controlProperties || [])]
+        : undefined,
+    [payloadProperties, isAutocompleteEnabled, controlProperties]
   );
 
   return (

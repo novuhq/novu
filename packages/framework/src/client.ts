@@ -4,7 +4,7 @@ import ora from 'ora';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
-  CompilingStepControlInvalidError,
+  StepControlCompilationFailedError,
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
   ExecutionProviderOutputInvalidError,
@@ -647,13 +647,14 @@ export class Client {
       const compiledString = await this.templateEngine.render(templateString, {
         payload: event.payload || event.data,
         subscriber: event.subscriber,
+        controls: event.controls,
         // Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
         ...(event.payload || event.data),
       });
 
       return JSON.parse(compiledString);
     } catch (error) {
-      throw new CompilingStepControlInvalidError(event.workflowId, event.stepId, error);
+      throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }
   }
 
