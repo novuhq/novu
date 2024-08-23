@@ -18,8 +18,8 @@
     "README.md"
   ],
   "scripts": {
-    "test": "vitest",
-    "test:watch": "vitest --watch",
+    "test": "vitest --typecheck",
+    "test:watch": "vitest --typecheck --watch",
     "lint": "eslint src --ext .ts --config .eslintrc.js",
     "lint:fix": "eslint src --ext .ts --fix --config .eslintrc.js",
     "format": "prettier --check --ignore-path .gitignore .",

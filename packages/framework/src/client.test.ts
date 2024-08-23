@@ -273,7 +273,7 @@ describe('Novu Client', () => {
           }),
           {
             providers: {
-              slack: async ({ controls }) => {
+              slack: async () => {
                 return {
                   blocks: [
                     {

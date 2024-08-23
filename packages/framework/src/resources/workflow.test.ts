@@ -27,7 +27,7 @@ describe('workflow function', () => {
               type: 'object',
               properties: {
                 foo: { type: 'number' },
-                bar: { type: 'string' },
+                bar: { type: 'string', default: 'baz' },
               },
               required: ['foo', 'bar'],
               additionalProperties: false,
@@ -100,6 +100,61 @@ describe('workflow function', () => {
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
           payload: {},
+          to: 'test@test.com',
+        });
+    });
+
+    it('should not compile when the payload is not specified and the payloadSchema declares required properties', async () => {
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step, payload }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            required: ['foo'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
+          // @ts-expect-error - payload is missing from the trigger
+          payload: undefined,
+          to: 'test@test.com',
+        });
+    });
+
+    it('should compile when the payload is not specified and the payloadSchema does not declare required properties', async () => {
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step, payload }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
           to: 'test@test.com',
         });
     });
