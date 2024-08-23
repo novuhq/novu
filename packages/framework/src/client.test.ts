@@ -590,6 +590,7 @@ describe('Novu Client', () => {
       expect(body).toContain('cat');
       expect(body).toContain('dog');
     });
+
     it('should compile default control variable with backwards compatability for payload variables', async () => {
       const bodyTemplate = `
 {% for element in elements %}
