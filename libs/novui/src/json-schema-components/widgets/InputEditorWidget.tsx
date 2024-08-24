@@ -48,7 +48,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       CustomMention(variables).configure({
         suggestion: {
           items: ({ query }) => {
-            return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
+            return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
           },
           char: AUTOCOMPLETE_OPEN_TAG,
           decorationTag: 'span',

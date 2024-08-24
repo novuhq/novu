@@ -6,6 +6,7 @@ import { variableSuggestionList } from '../../../styled-system/recipes';
 import { Text } from '../../components';
 import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, VariableErrorCode } from '../constants';
 import { useInputAutocompleteContext } from '../context';
+import { cleanVariableMatch } from '../utils';
 
 export type VariableItem = {
   id: string;
@@ -45,16 +46,17 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       }
 
       // extract variable name without special closing characters
-      const variableName = query.slice(0, -AUTOCOMPLETE_CLOSE_TAG.length);
+      const variableName = cleanVariableMatch(query);
+      const cleanedQuery = query.slice(0, -AUTOCOMPLETE_CLOSE_TAG.length);
 
       // set error if the variable is not a valid reference
       if (!variablesSet.has(variableName)) {
-        command({ label: variableName, id: '', error: VariableErrorCode.INVALID_NAME });
+        command({ label: cleanedQuery, id: '', error: VariableErrorCode.INVALID_NAME });
         return;
       }
 
       // happy path -- valid variable reference
-      return command({ label: variableName, id: variableName });
+      return command({ label: cleanedQuery, id: variableName });
     };
 
     const options = items?.map((item) => (
@@ -90,6 +92,10 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
           return true;
         }
         if (event.code === 'Space') {
+          // don't allow Space to close variable entry if the user hasn't typed the closing tag
+          if (!query.endsWith(AUTOCOMPLETE_CLOSE_TAG)) {
+            return false;
+          }
           customVariableLabel();
 
           return true;

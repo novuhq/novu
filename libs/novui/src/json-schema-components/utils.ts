@@ -24,7 +24,7 @@ export const cleanVariableMatch = (variableMatch?: string): string => {
     return '';
   }
 
-  return variableMatch.replace(AUTOCOMPLETE_OPEN_TAG, '').replace(AUTOCOMPLETE_CLOSE_TAG, '');
+  return variableMatch.replace(AUTOCOMPLETE_OPEN_TAG, '').replace(AUTOCOMPLETE_CLOSE_TAG, '').split('|')[0].trim();
 };
 
 const VARIABLE_ERROR_CODE_SET = new Set(Object.values(VariableErrorCode));

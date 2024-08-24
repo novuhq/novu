@@ -14,6 +14,11 @@ export default {
 } as Meta<typeof JsonSchemaForm>;
 
 const VARIABLES = [
+  'ctrl.a',
+  'ctrl.b',
+  'ctrl.c',
+  'ctrl.d',
+  'ctrl.e',
   'fakeAutocomplete.foo',
   'fakeAutocomplete.bar',
   'fakeAutocomplete.fizz',
@@ -223,7 +228,7 @@ const SIMPLE_AUTOCOMPLETE_SCHEMA: RJSFSchema = {
     country: {
       type: 'string',
       title: 'Name',
-      default: `Hello {{${VARIABLES[0]}}}, my name is {{invalid}} yo {{p`,
+      default: `Hello {{${VARIABLES[0]}}}, {{ ${VARIABLES[1]} | upcase }} {{invalidRef}} {{badSyntax`,
     },
   },
 };

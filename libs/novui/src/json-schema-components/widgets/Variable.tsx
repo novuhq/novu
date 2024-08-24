@@ -1,6 +1,12 @@
 import { ChangeEvent, FocusEvent, useEffect, useState } from 'react';
 import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, AUTOCOMPLETE_REGEX, VariableErrorCode } from '../constants';
+import {
+  AUTOCOMPLETE_CLOSE_TAG,
+  AUTOCOMPLETE_OPEN_TAG,
+  AUTOCOMPLETE_REGEX,
+  LIQUID_FILTER_CHAR,
+  VariableErrorCode,
+} from '../constants';
 import { useInputAutocompleteContext } from '../context';
 
 export function Variable({ editor, node, updateAttributes, ...props }: NodeViewProps) {
@@ -68,11 +74,13 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
  * Get the variable name from input text if a valid reference exists. Otherwise, returns undefined.
  */
 function getValidatedVariable(text: string = '', possibleVariables: Set<string>) {
-  const variableName = text.includes(AUTOCOMPLETE_OPEN_TAG) ? text.match(AUTOCOMPLETE_REGEX)?.[1] : text;
+  const variableContent = text.includes(AUTOCOMPLETE_OPEN_TAG) ? text.match(AUTOCOMPLETE_REGEX)?.[1] : text;
 
-  if (!variableName) {
+  if (!variableContent) {
     return;
   }
+
+  const variableName = variableContent.split(LIQUID_FILTER_CHAR)[0].trim();
 
   if (!possibleVariables.has(variableName)) {
     return;
