@@ -62,15 +62,11 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     return getSuggestionVariables(payloadObject, 'payload');
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
-  const controls = useMemo(() => {
-    return step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {};
+  const [controlsProperties, haveControlProperties] = useMemo(() => {
+    const controlsObject = step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {};
+
+    return [getSuggestionVariables(controlsObject, 'controls'), Object.keys(controlsObject).length > 0];
   }, [step?.controls?.schema, step?.inputs?.schema]);
-  const controlProperties = useMemo(() => {
-    return getSuggestionVariables(controls, 'controls');
-  }, [controls]);
-  const haveControlProperties = useMemo(() => {
-    return Object.keys(controls).length > 0;
-  }, [controls]);
 
   const handleOnChange = useDebouncedCallback(async (type: OnChangeType, data: any, id?: string) => {
     onChange(type, data, id);
@@ -82,9 +78,9 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   const variables = useMemo(
     () =>
       isAutocompleteEnabled
-        ? [...(subscriberVariables || []), ...(payloadProperties || []), ...(controlProperties || [])]
+        ? [...(controlsProperties || []), ...(subscriberVariables || []), ...(payloadProperties || [])]
         : undefined,
-    [payloadProperties, isAutocompleteEnabled, controlProperties]
+    [controlsProperties, payloadProperties, isAutocompleteEnabled]
   );
 
   return (
