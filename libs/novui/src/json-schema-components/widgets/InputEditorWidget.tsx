@@ -28,9 +28,9 @@ export const InputEditorWidget = (props: WidgetProps) => {
   const [cssProps] = splitCssProps(inputProps);
   const classNames = input(variantProps);
 
-  const { variables = [] } = formContext;
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
 
+  const { variables = [] } = formContext;
   const [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
     const variableDisplayList = variables?.map((variable: string) => {
       return { label: variable, id: variable };
@@ -40,12 +40,12 @@ export const InputEditorWidget = (props: WidgetProps) => {
   }, [variables]);
 
   const extensions = useMemo(() => {
-    if (!variables || variables.length === 0) {
+    if (!variablesList || variablesList.length === 0) {
       return DEFAULT_EDITOR_EXTENSIONS;
     }
 
     return DEFAULT_EDITOR_EXTENSIONS.concat(
-      CustomMention(variables).configure({
+      CustomMention().configure({
         suggestion: {
           items: ({ query }) => {
             return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));

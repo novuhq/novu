@@ -4,9 +4,7 @@ import { AUTOCOMPLETE_CLOSE_TAG, AUTOCOMPLETE_OPEN_TAG, VARIABLE_HTML_TAG_NAME }
 import { checkIsValidVariableErrorCode } from '../utils';
 import { Variable } from './Variable';
 
-export const CustomMention = (variables: string[]) => {
-  const variableSet = new Set(variables);
-
+export const CustomMention = () => {
   return ExternalMention.extend({
     name: ExternalMention.name,
     content: 'text*',

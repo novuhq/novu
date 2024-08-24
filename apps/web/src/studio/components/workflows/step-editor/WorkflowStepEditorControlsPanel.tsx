@@ -41,25 +41,15 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
-  const havePayloadProperties = useMemo(() => {
-    return (
-      Object.keys(
-        workflow?.payload?.schema?.properties ||
-          workflow?.options?.payloadSchema?.properties ||
-          workflow?.payloadSchema?.properties ||
-          {}
-      ).length > 0
-    );
-  }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
-  const payloadProperties = useMemo(() => {
+  const [payloadProperties, havePayloadProperties] = useMemo(() => {
     const payloadObject =
       workflow?.payload?.schema?.properties ||
       workflow?.options?.payloadSchema?.properties ||
       workflow?.payloadSchema?.properties ||
       {};
 
-    return getSuggestionVariables(payloadObject, 'payload');
+    return [getSuggestionVariables(payloadObject, 'payload'), Object.keys(payloadObject).length > 0];
   }, [workflow?.payload?.schema, workflow?.options?.payloadSchema, workflow?.payloadSchema]);
 
   const [controlsProperties, haveControlProperties] = useMemo(() => {
