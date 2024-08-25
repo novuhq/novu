@@ -8,9 +8,10 @@ services:
       driver: 'none'
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      interval: 30s      
+      timeout: 5s        
+      retries: 3         
+      start_period: 10s   
   
   mongodb:
     image: mongo
@@ -31,11 +32,11 @@ services:
     ports:
       - 27017:27017
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+      test: ["CMD-SHELL", "echo 'db.runCommand({ ping: 1 }).ok' | mongosh mongodb://root:secret@127.0.0.1:27017/admin --quiet"]
+      interval: 30s        
+      timeout: 10s         
+      retries: 5           
+      start_period: 60s    
 
   api:
     image: 'ghcr.io/novuhq/novu/api:0.24.0'
@@ -81,10 +82,11 @@ services:
     ports:
       - '3000:3000'
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:3000 || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:3000/v1/health-check || exit 1"]
+      interval: 30s      
+      timeout: 10s       
+      retries: 3         
+      start_period: 10s   
 
   worker:
     image: 'ghcr.io/novuhq/novu/worker:0.24.0'
@@ -123,10 +125,12 @@ services:
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
       IS_MULTI_TENANCY_ENABLED: ${IS_MULTI_TENANCY_ENABLED}
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:3000/health || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "wget --spider --quiet http://api:3000/v1/health-check || exit 1"]
+      interval: 30s         
+      timeout: 10s         
+      retries: 3          
+      start_period: 10s   
+
   ws:
     image: 'ghcr.io/novuhq/novu/ws:0.24.0'
     depends_on:
@@ -156,10 +160,11 @@ services:
     ports:
       - '3002:3002'
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:3002 || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:3002 || exit 1"]
+      interval: 30s        
+      timeout: 10s      
+      retries: 3         
+      start_period: 10s   
 
   web:
     image: 'ghcr.io/novuhq/novu/web:0.24.0'
@@ -185,10 +190,11 @@ services:
     ports:
       - 4200:4200
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:4200 || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:4200 || exit 1"]
+      interval: 30s        
+      timeout: 10s        
+      retries: 3       
+      start_period: 10s    
 
   widget:
     image: 'ghcr.io/novuhq/novu/widget:0.24.0'
@@ -214,10 +220,11 @@ services:
     ports:
       - 4500:4500
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:4500 || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:4500 || exit 1"]
+      interval: 30s      
+      timeout: 10s       
+      retries: 3         
+      start_period: 10s   
 
   embed:
     image: 'ghcr.io/novuhq/novu/embed:0.24.0'
@@ -238,10 +245,11 @@ services:
     ports:
       - 4701:4701
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:4701 || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:4701 || exit 1"]
+      interval: 30s       
+      timeout: 10s        
+      retries: 3          
+      start_period: 10s    
 
 volumes:
   mongodb: ~
