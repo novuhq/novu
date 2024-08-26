@@ -90,6 +90,8 @@ export class MessageEntity {
 
   payload: Record<string, unknown>;
 
+  data?: Record<string, unknown>;
+
   overrides: Record<string, unknown>;
 
   identifier?: string;

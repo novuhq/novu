@@ -17,6 +17,7 @@ const mapSingleItem = ({
   avatar,
   cta,
   tags,
+  data,
 }: MessageEntity): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
@@ -56,6 +57,7 @@ const mapSingleItem = ({
           url: cta.data.url,
         }
       : undefined,
+    data,
   };
 };
 

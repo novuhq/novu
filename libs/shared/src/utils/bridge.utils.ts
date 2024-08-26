@@ -25,9 +25,10 @@ type InAppOutput = {
     label: string;
     url?: string;
   };
+  data?: Record<string, unknown>;
 };
 
-type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar'>;
+type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar' | 'data'>;
 
 /**
  * This function maps the V2 InAppOutput to the V1 MessageEntity.
@@ -66,5 +67,6 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
     content: outputs?.body || '',
     cta,
     avatar: outputs?.avatar,
+    data: outputs?.data,
   } satisfies InAppMessage;
 };
