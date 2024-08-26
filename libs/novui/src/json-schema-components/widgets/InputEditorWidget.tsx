@@ -16,6 +16,7 @@ import { InputAutocompleteContextProvider } from '../context';
 import { extractErrorCodesFromHtmlContent, getInitContentWithVariableNodeView } from '../utils';
 import { CustomMention } from './customMentionExtension';
 import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
+import { SuggestionListExtension, SuggestionListStorage } from './SuggestionListExtension';
 
 const inputEditorClassNames = inputEditorWidget();
 
@@ -31,7 +32,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
 
   const { variables = [] } = formContext;
-  const [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
+  let [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
     const variableDisplayList = variables?.map((variable: string) => {
       return { label: variable, id: variable };
     });
@@ -44,11 +45,14 @@ export const InputEditorWidget = (props: WidgetProps) => {
       return DEFAULT_EDITOR_EXTENSIONS;
     }
 
-    return DEFAULT_EDITOR_EXTENSIONS.concat(
+    return DEFAULT_EDITOR_EXTENSIONS.concat([
+      SuggestionListExtension,
       CustomMention().configure({
         suggestion: {
-          items: ({ query }) => {
-            return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
+          items: ({ editor, query }) => {
+            const suggestions = (editor.storage.SuggestionListStorage as SuggestionListStorage).suggestions;
+
+            return suggestions?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
           },
           char: AUTOCOMPLETE_OPEN_TAG,
           decorationTag: 'span',
@@ -79,8 +83,8 @@ export const InputEditorWidget = (props: WidgetProps) => {
             };
           },
         },
-      })
-    );
+      }),
+    ]);
   }, [variablesList]);
 
   const handleEditorUpdateWithValidation = ({ editor }: { editor: Editor }) => {
@@ -113,6 +117,18 @@ export const InputEditorWidget = (props: WidgetProps) => {
       handleEditorUpdateWithValidation({ editor });
     },
   });
+
+  useEffect(() => {
+    if (editor) {
+      variablesList = variables?.map((variable: string) => {
+        return { label: variable, id: variable };
+      });
+
+      variablesSet = new Set(variables);
+
+      editor.storage.SuggestionListStorage.suggestions = variablesList;
+    }
+  }, [variables, editor]);
 
   useEffect(() => {
     if (editor) {
