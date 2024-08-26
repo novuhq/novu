@@ -118,6 +118,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
     },
   });
 
+  // keep the suggestion list popover synced with the component state
   useEffect(() => {
     if (editor) {
       editor.storage.SuggestionListStorage.suggestions = variablesList;
