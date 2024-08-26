@@ -32,7 +32,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
 
   const { variables = [] } = formContext;
-  let [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
+  const [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
     const variableDisplayList = variables?.map((variable: string) => {
       return { label: variable, id: variable };
     });
@@ -120,15 +120,9 @@ export const InputEditorWidget = (props: WidgetProps) => {
 
   useEffect(() => {
     if (editor) {
-      variablesList = variables?.map((variable: string) => {
-        return { label: variable, id: variable };
-      });
-
-      variablesSet = new Set(variables);
-
       editor.storage.SuggestionListStorage.suggestions = variablesList;
     }
-  }, [variables, editor]);
+  }, [variablesList, editor]);
 
   useEffect(() => {
     if (editor) {
