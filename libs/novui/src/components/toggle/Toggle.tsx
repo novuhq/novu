@@ -1,33 +1,37 @@
 import { PolymorphicRef } from '../../types/props-helpers';
-import { ChangeEvent, forwardRef, ReactNode } from 'react';
+import { ChangeEvent, forwardRef } from 'react';
 import { Switch } from '@mantine/core';
 import { css, cx } from '../../../styled-system/css';
 import { toggle } from '../../../styled-system/recipes';
 import { splitCssProps } from '../../../styled-system/jsx';
+import { CoreProps, LocalizedMessage } from '../../types';
 
-interface IToggleProps {
-  label?: ReactNode;
+export type ToggleProps = CoreProps & {
+  label?: LocalizedMessage;
   checked?: boolean;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-  className?: string;
   disabled?: boolean;
-}
+  readOnly?: boolean;
+  required?: boolean;
+};
 
-export const Toggle = forwardRef((props: IToggleProps, ref?: PolymorphicRef<'input'>) => {
+export const Toggle = forwardRef((props: ToggleProps, ref?: PolymorphicRef<'input'>) => {
   const [variantProps, toggleProps] = toggle.splitVariantProps(props);
   const [cssProps, localProps] = splitCssProps(toggleProps);
-  const { onChange, className, checked, disabled, label } = localProps;
+  const { onChange, className, checked, disabled, label, required, readOnly } = localProps;
   const classNames = toggle(variantProps);
 
   return (
     <Switch
       ref={ref}
-      onChange={(event) => onChange?.(event)}
+      onChange={onChange}
       checked={checked}
       classNames={classNames}
       className={cx(css(cssProps), className)}
       disabled={disabled}
       size="lg"
+      required={required}
+      readOnly={readOnly}
       label={label}
     />
   );

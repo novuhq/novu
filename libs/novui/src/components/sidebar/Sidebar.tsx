@@ -1,10 +1,10 @@
 import { MouseEventHandler, ReactNode } from 'react';
-import { MdClose } from 'react-icons/md';
 import { Flex } from '../../../styled-system/jsx';
 import { sidebar } from '../../../styled-system/recipes';
 import { Title } from '../title';
 import { BUTTON_SIZE_TO_ICON_SIZE } from '../button/Button.const';
 import { Button } from '../button';
+import { IconClose } from '../../icons';
 
 export const Sidebar = (props: { children: ReactNode; title: ReactNode; onClose: MouseEventHandler }) => {
   const classNames = sidebar();
@@ -14,7 +14,7 @@ export const Sidebar = (props: { children: ReactNode; title: ReactNode; onClose:
       <Flex className={classNames.header} justify="space-between">
         <Title variant="section">{props.title}</Title>
         <Button size="sm" variant="transparent" onClick={props.onClose}>
-          <MdClose size={BUTTON_SIZE_TO_ICON_SIZE['sm']} title="Close Sidebar" />
+          <IconClose size={BUTTON_SIZE_TO_ICON_SIZE['sm']} title="Close Sidebar" />
         </Button>
       </Flex>
       {props.children}
