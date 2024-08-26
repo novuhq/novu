@@ -3,7 +3,7 @@ import { defineSlotRecipe } from '@pandacss/dev';
 export const SIDEBAR_RECIPE = defineSlotRecipe({
   className: 'sidebar',
   jsx: ['Sidebar'],
-  slots: ['sidebar'],
+  slots: ['sidebar', 'header'],
   base: {
     sidebar: {
       padding: 150,
@@ -12,7 +12,12 @@ export const SIDEBAR_RECIPE = defineSlotRecipe({
       position: 'absolute',
       right: 50,
       bottom: 50,
-      width: '34%',
+      top: 50,
+      width: '45%',
+      zIndex: 'docked',
+    },
+    header: {
+      marginBottom: 150,
     },
   },
 });
