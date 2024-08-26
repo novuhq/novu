@@ -11,8 +11,6 @@ export type ToggleProps = CoreProps & {
   checked?: boolean;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
-  readOnly?: boolean;
-  required?: boolean;
 };
 
 export const Toggle = forwardRef((props: ToggleProps, ref?: PolymorphicRef<'input'>) => {
@@ -30,8 +28,6 @@ export const Toggle = forwardRef((props: ToggleProps, ref?: PolymorphicRef<'inpu
       className={cx(css(cssProps), className)}
       disabled={disabled}
       size="lg"
-      required={required}
-      readOnly={readOnly}
       label={label}
     />
   );
