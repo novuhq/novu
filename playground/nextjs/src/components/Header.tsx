@@ -13,6 +13,8 @@ const LINKS: LinkType[] = [
   { href: '/render-notification', label: 'Render Notification' },
   { href: '/preferences', label: 'Preferences' },
   { href: '/notifications', label: 'Notifications' },
+  { href: '/novu-theme', label: 'Novu Theme' },
+  { href: '/custom-popover', label: 'Custom Popover' },
 ];
 
 const NavLink = ({ href, label }: LinkType) => {
