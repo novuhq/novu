@@ -1,6 +1,10 @@
 import { getInputProps, WidgetProps } from '@rjsf/utils';
 import { Input, TextInputType } from '../../components/input/Input';
 
+/**
+ * @deprecated
+ * Use `InputEditorWidget` instead
+ */
 export const InputWidget = (props: WidgetProps) => {
   const { type, value, label, schema, onChange, options, required, readonly, rawErrors, disabled } = props;
   const inputProps = getInputProps(schema, type, options);

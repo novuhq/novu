@@ -202,9 +202,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           </div>
         </div>
         <Show when={props.notification.subject}>
-          <p class={style('notificationSubject', 'nt-font-semibold')}>{props.notification.subject}</p>
+          <p class={style('notificationSubject', 'nt-text-start nt-font-semibold')}>{props.notification.subject}</p>
         </Show>
-        <p class={style('notificationBody')}>{props.notification.body}</p>
+        <p class={style('notificationBody', 'nt-text-start')}>{props.notification.body}</p>
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (

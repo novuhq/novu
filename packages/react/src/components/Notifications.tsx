@@ -21,7 +21,7 @@ export const Notifications = React.memo((props: NotificationProps) => {
         name: 'Notifications',
         element,
         props: {
-          mountNotification: renderNotification
+          renderNotification: renderNotification
             ? (el, notification) => mountElement(el, renderNotification(notification))
             : undefined,
           onNotificationClick,
