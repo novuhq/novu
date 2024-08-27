@@ -216,6 +216,70 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     data: Schema.Types.Mixed,
     rawData: Schema.Types.Mixed,
     payloadSchema: Schema.Types.Mixed,
+    preference: {
+      workflow: {
+        defaultValue: {
+          type: Schema.Types.Boolean,
+          default: true,
+        },
+        readOnly: {
+          type: Schema.Types.Boolean,
+          default: false,
+        },
+      },
+      channels: {
+        email: {
+          defaultValue: {
+            type: Schema.Types.Boolean,
+            default: true,
+          },
+          readOnly: {
+            type: Schema.Types.Boolean,
+            default: false,
+          },
+        },
+        sms: {
+          defaultValue: {
+            type: Schema.Types.Boolean,
+            default: true,
+          },
+          readOnly: {
+            type: Schema.Types.Boolean,
+            default: false,
+          },
+        },
+        in_app: {
+          defaultValue: {
+            type: Schema.Types.Boolean,
+            default: true,
+          },
+          readOnly: {
+            type: Schema.Types.Boolean,
+            default: false,
+          },
+        },
+        chat: {
+          defaultValue: {
+            type: Schema.Types.Boolean,
+            default: true,
+          },
+          readOnly: {
+            type: Schema.Types.Boolean,
+            default: false,
+          },
+        },
+        push: {
+          defaultValue: {
+            type: Schema.Types.Boolean,
+            default: true,
+          },
+          readOnly: {
+            type: Schema.Types.Boolean,
+            default: false,
+          },
+        },
+      },
+    },
   },
   { ...schemaOptions, minimize: false }
 );

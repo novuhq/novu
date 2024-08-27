@@ -1,6 +1,6 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
-import { MissingSecretKeyError } from '../errors';
-import { workflow } from './workflow';
+import { MissingSecretKeyError } from '../../errors';
+import { workflow } from '.';
 
 describe('workflow function', () => {
   describe('Type tests', () => {
