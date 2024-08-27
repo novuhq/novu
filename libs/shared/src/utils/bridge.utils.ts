@@ -19,16 +19,17 @@ type InAppOutput = {
   avatar?: string;
   primaryAction?: {
     label: string;
-    url?: string;
+    redirect?: Redirect;
   };
   secondaryAction?: {
     label: string;
-    url?: string;
+    redirect?: Redirect;
   };
   data?: Record<string, unknown>;
+  redirect?: Redirect;
 };
 
-type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar' | 'data'>;
+type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar'>;
 
 /**
  * This function maps the V2 InAppOutput to the V1 MessageEntity.
@@ -36,7 +37,10 @@ type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar' | 'd
 export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
   const cta = {
     type: ChannelCTATypeEnum.REDIRECT,
-    data: {},
+    data: {
+      url: outputs?.redirect?.url,
+      target: outputs?.redirect?.target,
+    },
     action: {
       result: {},
       buttons: [
@@ -45,7 +49,8 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
               {
                 type: ButtonTypeEnum.PRIMARY,
                 content: outputs.primaryAction.label,
-                url: outputs.primaryAction.url,
+                url: outputs.primaryAction.redirect?.url,
+                target: outputs?.primaryAction.redirect?.target,
               },
             ]
           : []),
@@ -54,7 +59,8 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
               {
                 type: ButtonTypeEnum.SECONDARY,
                 content: outputs.secondaryAction.label,
-                url: outputs.secondaryAction.url,
+                url: outputs.secondaryAction.redirect?.url,
+                target: outputs?.secondaryAction.redirect?.target,
               },
             ]
           : []),

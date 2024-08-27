@@ -45,7 +45,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
 
     props.onNotificationClick?.(props.notification);
     if (props.notification.redirect?.url) {
-      window.open(props.notification.redirect?.url, '_blank', 'noreferrer noopener');
+      const target = props.notification.redirect?.target || '_blank';
+      window.open(props.notification.redirect?.url, target, 'noreferrer noopener');
     }
   };
 
@@ -55,9 +56,18 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     if (action === ActionTypeEnum.PRIMARY) {
       props.notification.completePrimary();
       props.onPrimaryActionClick?.(props.notification);
+      if (props.notification.primaryAction?.redirect?.url) {
+        const target = props.notification.primaryAction?.redirect?.target || '_blank';
+        window.open(props.notification.primaryAction?.redirect?.url, target, 'noreferrer noopener');
+      }
     } else {
       props.notification.completeSecondary();
       props.onSecondaryActionClick?.(props.notification);
+
+      if (props.notification.secondaryAction?.redirect?.url) {
+        const target = props.notification.secondaryAction?.redirect?.target || '_blank';
+        window.open(props.notification.secondaryAction?.redirect?.url, target, 'noreferrer noopener');
+      }
     }
   };
 

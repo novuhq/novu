@@ -29,10 +29,12 @@ export interface IMessage {
   subject?: string;
 }
 
+type UrlTarget = '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
 export interface IMessageCTA {
   type: ChannelCTATypeEnum;
   data: {
     url?: string;
+    target?: UrlTarget;
   };
   action?: IMessageAction;
 }
@@ -51,6 +53,7 @@ export interface IMessageButton {
   content: string;
   resultContent?: string;
   url?: string;
+  target?: UrlTarget;
 }
 
 export enum MessageActionStatusEnum {
