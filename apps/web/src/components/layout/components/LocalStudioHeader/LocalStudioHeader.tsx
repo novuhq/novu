@@ -24,6 +24,8 @@ export const LocalStudioHeader: FC = () => {
         borderBottom: 'none !important',
         zIndex: 'docked !important', // !important is necessary to override Mantine's z-index
         padding: '50',
+        // TODO: because this component is directly from mantine, it doesn't respect layer styles
+        bgColor: 'surface.page !important',
       })}
     >
       <HStack justifyContent="space-between" width="full" display="flex">

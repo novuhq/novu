@@ -5,8 +5,8 @@ import { appearanceKeys, defaultLocalization } from './config';
 export type NotificationClickHandler = (notification: Notification) => void;
 export type NotificationActionClickHandler = (notification: Notification) => void;
 
-export type NotificationMounter = (el: HTMLDivElement, notification: Notification) => () => void;
-export type BellMounter = (el: HTMLDivElement, unreadCount: number) => () => void;
+export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
 
 export type Tab = { label: string; value: Array<string> };
 
@@ -50,8 +50,8 @@ export type BaseNovuProviderProps = {
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {
-  mountNotification?: NotificationMounter;
-  mountBell?: BellMounter;
+  renderNotification?: NotificationRenderer;
+  renderBell?: BellRenderer;
 };
 
 export enum NotificationStatus {

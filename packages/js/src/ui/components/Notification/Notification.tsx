@@ -1,12 +1,12 @@
 import { Show } from 'solid-js';
 import type { Notification as NotificationType } from '../../../notifications';
-import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
-import { ExternalElementMounter } from '../ExternalElementMounter';
+import type { NotificationActionClickHandler, NotificationClickHandler, NotificationRenderer } from '../../types';
+import { ExternalElementRenderer } from '../ExternalElementRenderer';
 import { DefaultNotification } from './DefaultNotification';
 
 type NotificationProps = {
   notification: NotificationType;
-  mountNotification?: NotificationMounter;
+  renderNotification?: NotificationRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -15,7 +15,7 @@ type NotificationProps = {
 export const Notification = (props: NotificationProps) => {
   return (
     <Show
-      when={props.mountNotification}
+      when={props.renderNotification}
       fallback={
         <DefaultNotification
           notification={props.notification}
@@ -25,7 +25,7 @@ export const Notification = (props: NotificationProps) => {
         />
       }
     >
-      <ExternalElementMounter mount={(el) => props.mountNotification!(el, props.notification)} />
+      <ExternalElementRenderer render={(el) => props.renderNotification!(el, props.notification)} />
     </Show>
   );
 };

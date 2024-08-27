@@ -17,10 +17,10 @@ const DefaultInbox = (props: DefaultInboxProps) => {
         name: 'Inbox',
         props: {
           open,
-          mountNotification: renderNotification
+          renderNotification: renderNotification
             ? (el, notification) => mountElement(el, renderNotification(notification))
             : undefined,
-          mountBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
+          renderBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
           onNotificationClick,
           onPrimaryActionClick,
           onSecondaryActionClick,
