@@ -55,7 +55,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen, refe
         color: 'green',
         message: (
           <>
-            Successfully synced. Visit{' '}
+            Successfully synced. Visit the{' '}
             <a
               href={`${process.env.PUBLIC_URL}/workflows`}
               target="_blank"
