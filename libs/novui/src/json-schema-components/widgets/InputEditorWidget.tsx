@@ -16,6 +16,7 @@ import { InputAutocompleteContextProvider } from '../context';
 import { extractErrorCodesFromHtmlContent, getInitContentWithVariableNodeView } from '../utils';
 import { CustomMention } from './customMentionExtension';
 import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
+import { SuggestionListExtension, SuggestionListStorage } from './SuggestionListExtension';
 
 const inputEditorClassNames = inputEditorWidget();
 
@@ -44,11 +45,14 @@ export const InputEditorWidget = (props: WidgetProps) => {
       return DEFAULT_EDITOR_EXTENSIONS;
     }
 
-    return DEFAULT_EDITOR_EXTENSIONS.concat(
+    return DEFAULT_EDITOR_EXTENSIONS.concat([
+      SuggestionListExtension,
       CustomMention().configure({
         suggestion: {
-          items: ({ query }) => {
-            return variablesList?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
+          items: ({ editor, query }) => {
+            const suggestions = (editor.storage.SuggestionListStorage as SuggestionListStorage).suggestions;
+
+            return suggestions?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
           },
           char: AUTOCOMPLETE_OPEN_TAG,
           decorationTag: 'span',
@@ -79,8 +83,8 @@ export const InputEditorWidget = (props: WidgetProps) => {
             };
           },
         },
-      })
-    );
+      }),
+    ]);
   }, [variablesList]);
 
   const handleEditorUpdateWithValidation = ({ editor }: { editor: Editor }) => {
@@ -113,6 +117,13 @@ export const InputEditorWidget = (props: WidgetProps) => {
       handleEditorUpdateWithValidation({ editor });
     },
   });
+
+  // keep the suggestion list popover synced with the component state
+  useEffect(() => {
+    if (editor) {
+      editor.storage.SuggestionListStorage.suggestions = variablesList;
+    }
+  }, [variablesList, editor]);
 
   useEffect(() => {
     if (editor) {
