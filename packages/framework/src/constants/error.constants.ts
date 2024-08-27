@@ -16,6 +16,7 @@ export enum ErrorCodeEnum {
   EXECUTION_EVENT_PAYLOAD_INVALID_ERROR = 'ExecutionEventPayloadInvalidError',
   EXECUTION_EVENT_CONTROL_INVALID_ERROR = 'ExecutionEventControlInvalidError',
   EXECUTION_STATE_CONTROL_INVALID_ERROR = 'ExecutionStateControlInvalidError',
+  STEP_CONTROL_COMPILATION_FAILED_ERROR = 'StepControlCompilationFailedError',
   METHOD_NOT_ALLOWED_ERROR = 'MethodNotAllowedError',
   INVALID_ACTION_ERROR = 'InvalidActionError',
   MISSING_SECRET_KEY_ERROR = 'MissingSecretKeyError',

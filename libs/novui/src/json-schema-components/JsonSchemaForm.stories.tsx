@@ -13,6 +13,23 @@ export default {
   argTypes: {},
 } as Meta<typeof JsonSchemaForm>;
 
+const VARIABLES = [
+  'ctrl.a',
+  'ctrl.b',
+  'ctrl.c',
+  'ctrl.d',
+  'ctrl.e',
+  'payload.var',
+  'payload.obj.var',
+  'fakeAutocomplete.foo',
+  'fakeAutocomplete.bar',
+  'fakeAutocomplete.fizz',
+  'fakeAutocomplete.buzz',
+  'fakeAutocomplete.croissants',
+  'fakeAutocomplete.olympics',
+  'fakeAutocomplete.aReallyLongStringThatShouldOverflowFromTheContainer',
+];
+
 const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => {
   const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -27,7 +44,7 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => 
           Save
         </Button>
       </HStack>
-      <JsonSchemaForm {...args} />
+      <JsonSchemaForm {...args} variables={VARIABLES} />
     </form>
   );
 };
@@ -59,6 +76,7 @@ const schema: RJSFSchema = {
         country: {
           type: 'string',
           title: 'Country',
+          default: `Hello {{${VARIABLES[0]}}}, my name is {{invalid}} yo`,
         },
         address: {
           type: 'string',
@@ -203,4 +221,21 @@ const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
 export const ArrayDesigns = Template.bind({});
 ArrayDesigns.args = {
   schema: ARRAY_DESIGNS_SCHEMA,
+};
+
+const SIMPLE_AUTOCOMPLETE_SCHEMA: RJSFSchema = {
+  type: 'object',
+  title: 'Simple autocomplete',
+  properties: {
+    country: {
+      type: 'string',
+      title: 'Name',
+      default: `Hello {{${VARIABLES[0]}}}, {{ ${VARIABLES[1]} | upcase }} {{invalidRef}} {{badSyntax`,
+    },
+  },
+};
+
+export const SimpleAutocomplete = Template.bind({});
+SimpleAutocomplete.args = {
+  schema: SIMPLE_AUTOCOMPLETE_SCHEMA,
 };

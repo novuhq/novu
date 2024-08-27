@@ -35,6 +35,8 @@ import {
   LOADING_OVERLAY_RECIPE,
   JSON_SCHEMA_FORM_SECTION_RECIPE,
   JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
+  VARIABLE_SUGGESTION_LIST_RECIPE,
+  INPUT_EDITOR_WIDGET_RECIPE,
 } from './recipes';
 
 /**
@@ -106,15 +108,20 @@ export const novuPandaPreset = definePreset({
         loadingOverlay: LOADING_OVERLAY_RECIPE,
         jsonSchemaFormSection: JSON_SCHEMA_FORM_SECTION_RECIPE,
         jsonSchemaFormArrayToolbar: JSON_SCHEMA_FORM_ARRAY_TOOLBAR_RECIPE,
+        variableSuggestionList: VARIABLE_SUGGESTION_LIST_RECIPE,
+        inputEditorWidget: INPUT_EDITOR_WIDGET_RECIPE,
       },
     },
   },
   conditions: {
     extend: {
       // Mantine uses *-error.
-      error: '&:is(:error, [data-error=true], [aria-error=true])',
+      error: '&:is(:error, [data-error], [aria-error])',
+      groupError: '.group:is(:error, [data-error], [aria-error]) &',
+      /** Mantine uses hover*ed*, so extend the selector to support it */
+      hover: '&:is(:hover, [data-hover], [data-hovered])',
       /** apply hover only when element or child is not disabled */
-      hoverNotDisabled: '&:is(:hover, [data-hover])&:not(:has(:disabled))',
+      hoverNotDisabled: '&:is(:hover, [data-hover], [data-hovered])&:not(:has(:disabled))',
     },
   },
   staticCss: {

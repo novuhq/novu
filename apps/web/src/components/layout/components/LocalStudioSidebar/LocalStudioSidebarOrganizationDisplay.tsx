@@ -2,7 +2,7 @@ import { LocalizedMessage, Text } from '@novu/novui';
 import { Flex, Stack } from '@novu/novui/jsx';
 import { FC } from 'react';
 import { css } from '@novu/novui/css';
-import { Popover, Tooltip, useColorScheme } from '@novu/design-system';
+import { Popover, useColorScheme } from '@novu/design-system';
 import { useDisclosure } from '@mantine/hooks';
 
 type LocalStudioSidebarOrganizationDisplayProps = {
@@ -24,6 +24,9 @@ export const LocalStudioSidebarOrganizationDisplay: FC<LocalStudioSidebarOrganiz
       offset={0}
       withinPortal
       title="Novu Local Studio"
+      classNames={{
+        dropdown: css({ bg: 'surface.popover !important', border: 'none !important', shadow: 'medium !important' }),
+      }}
       target={
         <Flex gap="50" py="75" px="100" onMouseEnter={open} onMouseLeave={close}>
           <img
