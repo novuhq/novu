@@ -1,6 +1,10 @@
 import { getInputProps, WidgetProps } from '@rjsf/utils';
 import { TextInputType, Textarea } from '../../components';
 
+/**
+ * @deprecated
+ * Use `InputEditorWidget` instead
+ */
 export const TextareaWidget = (props: WidgetProps) => {
   const { type, value, label, schema, onChange, options, required, readonly, rawErrors, disabled } = props;
   const inputProps = getInputProps(schema, type, options);
