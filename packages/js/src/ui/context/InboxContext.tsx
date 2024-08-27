@@ -6,6 +6,8 @@ type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
   status: Accessor<NotificationStatus>;
   filter: Accessor<NotificationFilter>;
+  limit: Accessor<number>;
+  setLimit: (tab: number) => void;
   tabs: Accessor<Array<Tab>>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
@@ -19,6 +21,8 @@ const STATUS_TO_FILTER: Record<NotificationStatus, NotificationFilter> = {
   [NotificationStatus.ARCHIVED]: { archived: true },
 };
 
+export const DEFAULT_LIMIT = 10;
+
 type InboxProviderProps = ParentProps<{
   tabs: Array<Tab>;
 }>;
@@ -27,6 +31,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
   const [tabs, setTabs] = createSignal<Array<Tab>>(props.tabs);
   const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
   const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD_READ);
+  const [limit, setLimit] = createSignal<number>(DEFAULT_LIMIT);
   const [filter, setFilter] = createSignal<NotificationFilter>({
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? props.tabs[0].value : [],
@@ -63,6 +68,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
         tabs,
         activeTab,
         setActiveTab: setNewActiveTab,
+        limit,
+        setLimit,
       }}
     >
       {props.children}
