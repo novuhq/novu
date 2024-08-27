@@ -37,4 +37,5 @@ export const TOGGLE_RECIPE = defineSlotRecipe({
       width: 125,
     },
   },
+  staticCss: ['*'],
 });

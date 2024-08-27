@@ -60,4 +60,10 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
       type: 'sizes',
     },
   },
+  sidebar: {
+    width: {
+      value: '432px',
+      type: 'sizes',
+    },
+  },
 });

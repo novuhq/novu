@@ -13,7 +13,7 @@ export const SIDEBAR_RECIPE = defineSlotRecipe({
       right: 50,
       bottom: 50,
       top: 50,
-      width: '45%',
+      width: 'sidebar.width',
       zIndex: 'docked',
     },
     header: {
