@@ -647,7 +647,6 @@ export class Client {
       const compiledString = await this.templateEngine.render(templateString, {
         payload: event.payload || event.data,
         subscriber: event.subscriber,
-        controls: event.controls,
         // Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
         ...(event.payload || event.data),
       });
