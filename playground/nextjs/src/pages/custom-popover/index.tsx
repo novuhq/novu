@@ -10,14 +10,14 @@ export default function Home() {
       <Popover.Root>
         <Popover.Trigger asChild>
           <button>
-            <Bell>
-              {({ unreadCount }) => (
+            <Bell
+              renderBell={(unreadCount) => (
                 <div>
                   <span>{unreadCount}</span>
                   <BellIcon />
                 </div>
               )}
-            </Bell>
+            ></Bell>
           </button>
         </Popover.Trigger>
         <Popover.Portal>
