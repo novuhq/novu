@@ -87,8 +87,8 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   type: WorkflowTypeEnum;
 
-  @IsDefined()
-  preference: DiscoverWorkflowOutputPreference;
+  @IsOptional()
+  preference?: DiscoverWorkflowOutputPreference;
 }
 
 export interface IStepControl {
