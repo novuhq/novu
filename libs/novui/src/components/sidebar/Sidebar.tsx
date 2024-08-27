@@ -6,7 +6,9 @@ import { BUTTON_SIZE_TO_ICON_SIZE } from '../button/Button.const';
 import { Button } from '../button';
 import { IconClose } from '../../icons';
 
-export const Sidebar = (props: { children: ReactNode; title: ReactNode; onClose: MouseEventHandler }) => {
+export type SidebarProps = { children: ReactNode; title: ReactNode; onClose: MouseEventHandler };
+
+export const Sidebar = (props: SidebarProps) => {
   const classNames = sidebar();
 
   return (
