@@ -6,6 +6,9 @@ export default {
   title: 'Components/Sidebar',
   component: CSidebar,
   argTypes: {
+    title: {
+      control: 'text',
+    },
     onClose: {
       table: {
         disable: true,
