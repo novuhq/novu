@@ -16,7 +16,7 @@ export type ToggleProps = CoreProps & {
 export const Toggle = forwardRef((props: ToggleProps, ref?: PolymorphicRef<'input'>) => {
   const [variantProps, toggleProps] = toggle.splitVariantProps(props);
   const [cssProps, localProps] = splitCssProps(toggleProps);
-  const { onChange, className, checked, disabled, label, required, readOnly } = localProps;
+  const { onChange, className, checked, disabled, label } = localProps;
   const classNames = toggle(variantProps);
 
   return (

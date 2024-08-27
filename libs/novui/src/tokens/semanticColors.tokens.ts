@@ -374,21 +374,21 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
   },
   toggle: {
     background: {
-      value: '{colors.legacy.B30}',
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
       type: 'color',
     },
     thumb: {
-      value: '{colors.legacy.white}',
+      value: { base: '{colors.legacy.B17}', _dark: '{colors.legacy.white}' },
       type: 'color',
     },
     checked: {
-      value: '{colors.green.30.dark}',
+      value: { base: '{colors.green.30.dark}', _dark: '{colors.green.30.dark}' },
       type: 'color',
     },
   },
   sidebar: {
     background: {
-      value: '{colors.legacy.B17}',
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
       type: 'color',
     },
   },
