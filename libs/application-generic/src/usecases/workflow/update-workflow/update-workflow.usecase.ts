@@ -80,7 +80,7 @@ export class UpdateWorkflow {
       );
 
     let updatePayload: Partial<NotificationTemplateEntity> = {
-      preference: command.preference,
+      preferences: command.preferences,
     };
     if (command.name) {
       updatePayload.name = command.name;
