@@ -11,6 +11,7 @@ type ChannelRowProps = {
   channelIcon?: () => JSX.Element;
   workflowId?: string;
   onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
+  isCritical?: boolean;
 };
 
 export const ChannelRow = (props: ChannelRowProps) => {
@@ -18,6 +19,10 @@ export const ChannelRow = (props: ChannelRowProps) => {
   const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
+    if (props.isCritical) {
+      return;
+    }
+
     try {
       await novu.preferences.update({
         workflowId: props.workflowId,
@@ -35,20 +40,28 @@ export const ChannelRow = (props: ChannelRowProps) => {
   };
 
   return (
-    <div class={style('channelContainer', 'nt-flex nt-justify-between nt-items-center nt-h-11')}>
+    <div
+      class={style(
+        'channelContainer',
+        'nt-flex nt-justify-between nt-items-center nt-h-11 data-[disabled=true]:nt-text-foreground-alpha-600'
+      )}
+      data-disabled={props.isCritical}
+    >
       <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
-        <div>{getIcon(props.channel)}</div>
+        <div>
+          <ChannelIcon channel={props.channel} />
+        </div>
         <span class={style('channelLabel', 'nt-text-base nt-font-semibold')}>{getLabel(props.channel)}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
-        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
+        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} disabled={props.isCritical} />
       </div>
     </div>
   );
 };
 
-const getIcon = (channel: ChannelType) => {
-  switch (channel) {
+const ChannelIcon = (props: { channel: ChannelType } & JSX.HTMLAttributes<SVGSVGElement>) => {
+  switch (props.channel) {
     case ChannelType.IN_APP:
       return <InApp />;
     case ChannelType.EMAIL:

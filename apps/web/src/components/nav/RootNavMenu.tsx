@@ -117,14 +117,14 @@ export const RootNavMenu: React.FC = () => {
           link={ROUTES.SUBSCRIBERS}
           testId="side-nav-subscribers-link"
         />
-        <NavMenuLinkButton
-          label="Tenants"
-          isVisible={true}
-          icon={<IconDomain />}
-          link={ROUTES.TENANTS}
-          testId="side-nav-tenants-link"
-        />
         <When truthy={!isV2Enabled}>
+          <NavMenuLinkButton
+            label="Tenants"
+            isVisible={true}
+            icon={<IconDomain />}
+            link={ROUTES.TENANTS}
+            testId="side-nav-tenants-link"
+          />
           <NavMenuLinkButton
             label="Layouts"
             icon={<IconViewQuilt />}

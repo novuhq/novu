@@ -20,4 +20,7 @@ export const defaultLocalization = {
   'notification.actions.unarchive.toolTip': 'Unarchive',
   'preferences.title': 'Notification Preferences',
   'preferences.global': 'Global Preferences',
+  'preferences.workflow.disabled.notice':
+    'Contact admin to enable subscription management for this critical notification.',
+  'preferences.workflow.disabled.tooltip': 'Contact admin to edit',
 } as const;

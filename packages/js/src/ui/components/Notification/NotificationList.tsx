@@ -20,7 +20,7 @@ const EmptyNotificationList = () => {
         'nt-absolute nt-inset-0 nt-flex nt-flex-col nt-items-center nt-m-auto nt-h-fit nt-w-full nt-text-foreground-alpha-100'
       )}
     >
-      <EmptyIcon />
+      <EmptyIcon class={style('notificationListEmptyNoticeIcon')} />
       <p class={style('notificationListEmptyNotice')}>{t('notifications.emptyNotice')}</p>
     </div>
   );
