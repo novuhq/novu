@@ -4,8 +4,18 @@ import { Sidebar as CSidebar, SidebarProps } from './Sidebar';
 
 export default {
   title: 'Components/Sidebar',
-  args: {
-    title: 'Title',
+  component: CSidebar,
+  argTypes: {
+    onClose: {
+      table: {
+        disable: true,
+      },
+    },
+    children: {
+      table: {
+        disable: true,
+      },
+    },
   },
 } as Meta<SidebarProps>;
 
