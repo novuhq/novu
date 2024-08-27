@@ -26,7 +26,7 @@ import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
 import { JSONSchema } from 'json-schema-to-ts';
 
-type WorkflowOptionsPreference = {
+type WorkflowOptionsPreferences = {
   workflow: {
     defaultValue: boolean;
     readOnly: boolean;
@@ -94,7 +94,7 @@ export class NotificationTemplateEntity implements INotificationTemplate {
 
   payloadSchema?: any;
 
-  preference?: WorkflowOptionsPreference;
+  preferences?: WorkflowOptionsPreferences;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<

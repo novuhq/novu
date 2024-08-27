@@ -18,7 +18,7 @@ import { discoverActionStepFactory } from './discover-action-step-factory';
 import { discoverChannelStepFactory } from './discover-channel-step-factory';
 import { discoverCustomStepFactory } from './discover-custom-step-factory';
 import { prettyPrintDiscovery } from './pretty-print-discovery';
-import { transformPreference } from './transform-preference';
+import { buildPreferences } from './build-preferences';
 
 /**
  * Define a new notification workflow.
@@ -28,7 +28,7 @@ export function workflow<
   T_ControlSchema extends Schema,
   T_PayloadValidated extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
   T_PayloadUnvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_PayloadSchema>,
-  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
 >(
   workflowId: string,
   execute: Execute<T_PayloadValidated, T_Controls>,
@@ -114,7 +114,7 @@ export function workflow<
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     tags: options.tags || [],
-    preference: transformPreference(options.preference),
+    preferences: buildPreferences(options.preference),
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 

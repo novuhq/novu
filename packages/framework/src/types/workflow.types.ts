@@ -38,7 +38,7 @@ export type WorkflowOptionChannelPreference = {
   readOnly?: boolean;
 };
 
-export type WorkflowOptionsPreference = {
+export type WorkflowOptionsPreferences = {
   workflow?: WorkflowOptionChannelPreference;
   channels?: {
     [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]?: WorkflowOptionChannelPreference;
@@ -58,6 +58,6 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    */
   inputSchema?: T_ControlSchema;
   controlSchema?: T_ControlSchema;
-  preference?: WorkflowOptionsPreference;
+  preference?: WorkflowOptionsPreferences;
   tags?: string[];
 };

@@ -55,7 +55,7 @@ export type ChannelPreference = {
   readOnly: boolean;
 };
 
-export type DiscoverWorkflowOutputPreference = {
+export type DiscoverWorkflowOutputPreferences = {
   workflow: ChannelPreference;
   channels: {
     [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]: ChannelPreference;
@@ -86,7 +86,7 @@ export type DiscoverWorkflowOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
-  preference: DiscoverWorkflowOutputPreference;
+  preferences: DiscoverWorkflowOutputPreferences;
   tags: string[];
 };
 

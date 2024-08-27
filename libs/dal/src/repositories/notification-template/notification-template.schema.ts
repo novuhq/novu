@@ -216,7 +216,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     data: Schema.Types.Mixed,
     rawData: Schema.Types.Mixed,
     payloadSchema: Schema.Types.Mixed,
-    preference: {
+    preferences: {
       workflow: {
         defaultValue: {
           type: Schema.Types.Boolean,
