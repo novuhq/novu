@@ -79,9 +79,12 @@ export class UpdateWorkflow {
         `Notification template with id ${command.id} not found`
       );
 
-    let updatePayload: Partial<NotificationTemplateEntity> = {
-      preferences: command.preferences,
-    };
+    let updatePayload: Partial<NotificationTemplateEntity> = {};
+
+    if (command.preferences) {
+      updatePayload.preferences = command.preferences;
+    }
+
     if (command.name) {
       updatePayload.name = command.name;
     }
