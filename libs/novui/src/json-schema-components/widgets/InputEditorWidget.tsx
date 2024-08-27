@@ -13,7 +13,11 @@ import { splitCssProps } from '../../../styled-system/jsx';
 import { input, inputEditorWidget } from '../../../styled-system/recipes';
 import { AUTOCOMPLETE_OPEN_TAG, VARIABLE_ERROR_MESSAGES } from '../constants';
 import { InputAutocompleteContextProvider } from '../context';
-import { extractErrorCodesFromHtmlContent, getInitContentWithVariableNodeView } from '../utils';
+import {
+  extractErrorCodesFromHtmlContent,
+  getDeprecatedPayloadVariables,
+  getInitContentWithVariableNodeView,
+} from '../utils';
 import { CustomMention } from './customMentionExtension';
 import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
 import { SuggestionListExtension, SuggestionListStorage } from './SuggestionListExtension';
@@ -37,7 +41,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       return { label: variable, id: variable };
     });
 
-    return [variableDisplayList, new Set(variables)];
+    return [variableDisplayList, new Set([...variables, ...getDeprecatedPayloadVariables(variables)])];
   }, [variables]);
 
   const extensions = useMemo(() => {

@@ -8,6 +8,7 @@ import {
   VariableErrorCode,
   VARIABLE_HTML_ERROR_STATE_REGEX,
   VARIABLE_HTML_TAG_NAME,
+  PAYLOAD_NAMESPACE,
 } from './constants';
 
 /** determine the tree depth of a JsonSchemaForm section with the given sectionId */
@@ -69,4 +70,15 @@ export const extractErrorCodesFromHtmlContent = (htmlContent?: string): Set<stri
     ?.filter((code) => checkIsValidVariableErrorCode(code));
 
   return errorCodes ? new Set(errorCodes) : undefined;
+};
+
+// Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
+export const getDeprecatedPayloadVariables = (variables: string[]): string[] => {
+  return variables
+    .filter((variable: string) => variable.startsWith(`${PAYLOAD_NAMESPACE}.`))
+    .map(getVariableWithoutNamespace);
+};
+
+export const getVariableWithoutNamespace = (variableName: string): string => {
+  return variableName.split('.').splice(1).join('.');
 };
