@@ -49,6 +49,7 @@ export class Notifications extends BaseModule {
       const args = { limit, ...restOptions };
       try {
         let data: ListNotificationsResponse | undefined = this.#useCache ? this.cache.getAll(args) : undefined;
+        this._emitter.emit('notifications.list.pending', { args, data });
 
         if (!data) {
           const response = await this._inboxService.fetchNotifications({
