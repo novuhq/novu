@@ -712,7 +712,9 @@
     "Primitivestring",
     "Listofobjects",
     "Nestedobject",
-    "Listoflistofobjects"
+    "Listoflistofobjects",
+    "noopener",
+    "noreferrer"
   ],
   "flagWords": [],
   "patterns": [

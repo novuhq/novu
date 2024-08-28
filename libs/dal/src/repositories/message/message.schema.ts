@@ -102,6 +102,7 @@ const messageSchema = new Schema<MessageDBModel>(
     },
     identifier: Schema.Types.String,
     payload: Schema.Types.Mixed,
+    data: Schema.Types.Mixed,
     overrides: Schema.Types.Mixed,
     actor: {
       type: {
