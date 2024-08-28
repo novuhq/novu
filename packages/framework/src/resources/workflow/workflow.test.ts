@@ -103,8 +103,8 @@ describe('workflow function', () => {
     const { definition } = workflow(
       'setup-workflow',
       async ({ step }) => {
-        // @ts-expect-error - email subject is missing from the output
         await step.email('send-email', async () => ({
+          subject: 'Test Subject',
           body: 'Test Body',
         }));
       },
