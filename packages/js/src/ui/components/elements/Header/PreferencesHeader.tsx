@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { useLocalization } from 'src/ui/context';
+import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowLeft } from '../../../icons';
 
@@ -26,7 +26,12 @@ export const PreferencesHeader = (props: PreferencesHeaderProps) => {
           </button>
         )}
       </Show>
-      <div class={style('preferencesHeader__title', 'nt-text-xl nt-font-semibold')}>{t('preferences.title')}</div>
+      <div
+        data-localization="preferences.title"
+        class={style('preferencesHeader__title', 'nt-text-xl nt-font-semibold')}
+      >
+        {t('preferences.title')}
+      </div>
     </div>
   );
 };

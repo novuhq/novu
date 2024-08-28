@@ -1,7 +1,8 @@
-import { createMemo, createSignal, For, Show } from 'solid-js';
-import { useLocalization } from 'src/ui/context';
+import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
+import { setDynamicLocalization } from '../../../config';
+import { StringLocalizationKey, useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown, Lock } from '../../../icons';
 import { Tooltip } from '../../primitives/Tooltip';
@@ -11,7 +12,6 @@ import { LoadingScreen } from './LoadingScreen';
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
   const style = useStyle();
-  const { t } = useLocalization();
 
   const { preferences, loading, mutate } = usePreferences();
 
@@ -20,6 +20,18 @@ export const Preferences = () => {
     const workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
 
     return { globalPreference, workflowPreferences };
+  });
+
+  createEffect(() => {
+    // Register the names as localizable
+    setDynamicLocalization((prev) => ({
+      ...prev,
+      ...allPreferences().workflowPreferences?.reduce<Record<string, string>>((acc, preference) => {
+        acc[preference.workflow!.identifier] = preference.workflow!.name;
+
+        return acc;
+      }, {}),
+    }));
   });
 
   const optimisticUpdate = ({
@@ -33,7 +45,10 @@ export const Preferences = () => {
   }) => {
     mutate((prev) =>
       prev?.map((preference) => {
-        if (preference.workflow?.id === workflowId || (!workflowId && preference.level === PreferenceLevel.GLOBAL)) {
+        if (
+          preference.workflow?.identifier === workflowId ||
+          (!workflowId && preference.level === PreferenceLevel.GLOBAL)
+        ) {
           preference.channels[channel] = enabled;
         }
 
@@ -54,7 +69,7 @@ export const Preferences = () => {
       </Show>
       <Show when={!loading() && preferences()}>
         <PreferencesRow
-          label={t('preferences.global')}
+          localizationKey="preferences.global"
           channels={allPreferences().globalPreference?.channels || {}}
           onChange={optimisticUpdate}
         />
@@ -62,9 +77,9 @@ export const Preferences = () => {
         <For each={allPreferences().workflowPreferences}>
           {(preference) => (
             <PreferencesRow
-              label={preference.workflow?.name as string}
+              localizationKey={preference.workflow!.identifier as StringLocalizationKey}
               channels={preference.channels}
-              workflowId={preference.workflow?.id}
+              workflowId={preference.workflow?.identifier}
               onChange={optimisticUpdate}
               isCritical={preference.workflow?.critical}
             />
@@ -113,7 +128,7 @@ const ChannelsLabel = (props: { channels: ChannelPreference }) => {
 };
 
 const PreferencesRow = (props: {
-  label: string;
+  localizationKey: StringLocalizationKey;
   channels: ChannelPreference;
   workflowId?: string;
   onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
@@ -152,6 +167,7 @@ const PreferencesRow = (props: {
                 'nt-text-base nt-font-semibold nt-text-start nt-flex nt-items-center nt-gap-1'
               )}
               data-disabled={props.isCritical}
+              data-localization={props.localizationKey}
               data-open={isOpen()}
             >
               <Show when={props.isCritical}>
@@ -166,10 +182,12 @@ const PreferencesRow = (props: {
                       </span>
                     )}
                   />
-                  <Tooltip.Content>{t('preferences.workflow.disabled.tooltip')}</Tooltip.Content>
+                  <Tooltip.Content data-localization="preferences.workflow.disabled.tooltip">
+                    {t('preferences.workflow.disabled.tooltip')}
+                  </Tooltip.Content>
                 </Tooltip.Root>
               </Show>
-              {props.label}
+              {t(props.localizationKey)}
             </div>
             <ChannelsLabel channels={props.channels} />
           </div>
@@ -192,6 +210,7 @@ const PreferencesRow = (props: {
                   'workflowContainerDisabledNotice',
                   'nt-text-sm nt-text-foreground-alpha-600 nt-text-start'
                 )}
+                data-localization="preferences.workflow.disabled.notice"
               >
                 {t('preferences.workflow.disabled.notice')}
               </span>

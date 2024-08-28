@@ -19,7 +19,10 @@ export const StatusDropdown = () => {
         )}
         asChild={(triggerProps) => (
           <Button variant="unstyled" size="none" {...triggerProps}>
-            <span class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold')}>
+            <span
+              data-localization={inboxStatusLocalizationKeys[status()]}
+              class={style('inboxStatus__title', 'nt-text-xl nt-font-semibold')}
+            >
               {t(inboxStatusLocalizationKeys[status()])}
             </span>
             <span class={style('inboxStatus__dropdownItemRight__icon', 'nt-text-foreground-alpha-600')}>

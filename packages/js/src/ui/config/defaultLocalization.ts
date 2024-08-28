@@ -1,3 +1,5 @@
+import { createSignal } from 'solid-js';
+
 export const defaultLocalization = {
   locale: 'en-US',
   'inbox.status.options.unread': 'Unread only',
@@ -14,13 +16,15 @@ export const defaultLocalization = {
     `${notificationCount > 99 ? '99+' : notificationCount} new ${
       notificationCount === 1 ? 'notification' : 'notifications'
     }`,
-  'notification.actions.read.toolTip': 'Mark as read',
-  'notification.actions.unread.toolTip': 'Mark as unread',
-  'notification.actions.archive.toolTip': 'Archive',
-  'notification.actions.unarchive.toolTip': 'Unarchive',
+  'notification.actions.read.tooltip': 'Mark as read',
+  'notification.actions.unread.tooltip': 'Mark as unread',
+  'notification.actions.archive.tooltip': 'Archive',
+  'notification.actions.unarchive.tooltip': 'Unarchive',
   'preferences.title': 'Notification Preferences',
   'preferences.global': 'Global Preferences',
   'preferences.workflow.disabled.notice':
     'Contact admin to enable subscription management for this critical notification.',
   'preferences.workflow.disabled.tooltip': 'Contact admin to edit',
 } as const;
+
+export const [dynamicLocalization, setDynamicLocalization] = createSignal<Record<string, string>>({});
