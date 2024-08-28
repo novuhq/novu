@@ -17,7 +17,6 @@ import {
   IMessageTemplate,
   ControlsDto,
   WorkflowTypeEnum,
-  ChannelTypeEnum,
 } from '@novu/shared';
 
 import { NotificationGroupEntity } from '../notification-group';
@@ -25,19 +24,6 @@ import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
 import { JSONSchema } from 'json-schema-to-ts';
-
-type WorkflowOptionsPreferences = {
-  workflow: {
-    defaultValue: boolean;
-    readOnly: boolean;
-  };
-  channels: {
-    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]?: {
-      defaultValue: boolean;
-      readOnly: boolean;
-    };
-  };
-};
 
 export class NotificationTemplateEntity implements INotificationTemplate {
   _id: string;
@@ -93,8 +79,6 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   rawData?: any;
 
   payloadSchema?: any;
-
-  preferences?: WorkflowOptionsPreferences;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<

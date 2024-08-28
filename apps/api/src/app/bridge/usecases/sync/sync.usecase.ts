@@ -152,7 +152,6 @@ export class Sync {
               active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
               critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
               preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
-              preferences: workflow.preferences,
             })
           );
         } else {

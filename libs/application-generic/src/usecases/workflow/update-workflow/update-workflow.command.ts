@@ -17,7 +17,7 @@ import {
 
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { NotificationStep } from '../..';
-import { DiscoverWorkflowOutputPreferences, JsonSchema } from '@novu/framework';
+import { JsonSchema } from '@novu/framework';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -86,9 +86,6 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   type: WorkflowTypeEnum;
-
-  @IsOptional()
-  preferences?: DiscoverWorkflowOutputPreferences;
 }
 
 export interface IStepControl {
