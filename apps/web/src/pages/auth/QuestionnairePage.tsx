@@ -6,6 +6,9 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '../../hooks';
 import { HUBSPOT_PORTAL_ID } from '../../config';
 import { HubspotSignupForm } from './components/HubspotSignupForm';
+import { PageMeta } from '@novu/design-system';
+
+const title = 'Tell us more about you';
 
 export default function QuestionnairePage() {
   // TODO: Remove vercel integration logic from this page
@@ -18,7 +21,8 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <AuthLayout title="Let's create your organization">
+    <AuthLayout title={title}>
+      <PageMeta title={title} />
       {isHubspotEnabled ? <HubspotSignupForm /> : <QuestionnaireForm />}
     </AuthLayout>
   );

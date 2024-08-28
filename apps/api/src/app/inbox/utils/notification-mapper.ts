@@ -17,6 +17,7 @@ const mapSingleItem = ({
   avatar,
   cta,
   tags,
+  data,
 }: MessageEntity): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
@@ -44,18 +45,32 @@ const mapSingleItem = ({
     primaryAction: primaryCta && {
       label: primaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
+      redirect: primaryCta.url
+        ? {
+            url: primaryCta.url,
+            target: primaryCta.target,
+          }
+        : undefined,
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
+      redirect: secondaryCta.url
+        ? {
+            url: secondaryCta.url,
+            target: secondaryCta.target,
+          }
+        : undefined,
     },
     channelType: channel,
     tags,
     redirect: cta.data?.url
       ? {
           url: cta.data.url,
+          target: cta.data.target,
         }
       : undefined,
+    data,
   };
 };
 

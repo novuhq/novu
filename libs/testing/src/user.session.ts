@@ -12,7 +12,6 @@ import {
   JobTopicNameEnum,
   StepTypeEnum,
   TriggerRecipientsPayload,
-  ClerkJwtPayload,
   isClerkEnabled,
 } from '@novu/shared';
 import {
@@ -39,6 +38,7 @@ import { JobsService } from './jobs.service';
 import { EEUserService } from './ee/ee.user.service';
 import { EEOrganizationService } from './ee/ee.organization.service';
 import { TEST_USER_PASSWORD } from './constants';
+import { ClerkJwtPayload } from './ee/types';
 
 type UserSessionOptions = {
   noOrganization?: boolean;
@@ -246,6 +246,7 @@ export class UserSession {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
+      org_role: 'org:admin',
     });
   }
 

@@ -1,12 +1,11 @@
 import { JSX } from 'solid-js';
 import { useArchiveAll, useArchiveAllRead, useReadAll } from '../../../api';
-import { useInboxContext, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Archive, ArchiveRead, ReadAll } from '../../../icons';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 
 export const MoreActionsOptions = () => {
-  const { t } = useLocalization();
   const { filter } = useInboxContext();
   const { readAll } = useReadAll();
   const { archiveAll } = useArchiveAll();
@@ -15,17 +14,17 @@ export const MoreActionsOptions = () => {
   return (
     <>
       <ActionsItem
-        label={t('notifications.actions.readAll')}
+        localizationKey="notifications.actions.readAll"
         onClick={() => readAll({ tags: filter().tags })}
         icon={ReadAll}
       />
       <ActionsItem
-        label={t('notifications.actions.archiveAll')}
+        localizationKey="notifications.actions.archiveAll"
         onClick={() => archiveAll({ tags: filter().tags })}
         icon={Archive}
       />
       <ActionsItem
-        label={t('notifications.actions.archiveRead')}
+        localizationKey="notifications.actions.archiveRead"
         onClick={() => archiveAllRead({ tags: filter().tags })}
         icon={ArchiveRead}
       />
@@ -33,16 +32,23 @@ export const MoreActionsOptions = () => {
   );
 };
 
-export const ActionsItem = (props: { label: string; onClick: () => void; icon: () => JSX.Element }) => {
+export const ActionsItem = (props: {
+  localizationKey: StringLocalizationKey;
+  onClick: () => void;
+  icon: () => JSX.Element;
+}) => {
   const style = useStyle();
+  const { t } = useLocalization();
 
   return (
     <Dropdown.Item
       class={style('moreActions__dropdownItem', cn(dropdownItemVariants(), 'nt-flex nt-gap-2'))}
       onClick={props.onClick}
     >
-      <span class={style('moreActions__dropdownItemLeftIcon')}>{props.icon()}</span>
-      <span class={style('moreActions__dropdownItemLabel')}>{props.label}</span>
+      <span class={style('moreActions__dropdownItemLeft__icon', 'nt-text-foreground-alpha-600')}>{props.icon()}</span>
+      <span data-localization={props.localizationKey} class={style('moreActions__dropdownItemLabel')}>
+        {t(props.localizationKey)}
+      </span>
     </Dropdown.Item>
   );
 };

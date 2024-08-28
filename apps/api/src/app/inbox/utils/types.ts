@@ -1,4 +1,4 @@
-import type { ChannelTypeEnum } from '@novu/shared';
+import type { ChannelTypeEnum, Redirect } from '@novu/shared';
 
 export type Subscriber = {
   id: string;
@@ -11,6 +11,7 @@ export type Subscriber = {
 type Action = {
   label: string;
   isCompleted: boolean;
+  redirect?: Redirect;
 };
 
 export type InboxNotification = {
@@ -28,9 +29,8 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelTypeEnum;
   tags?: string[];
-  redirect?: {
-    url: string;
-  };
+  data?: Record<string, unknown>;
+  redirect?: Redirect;
 };
 
 export type NotificationFilter = {

@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import { QueryObserverResult } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 // TODO: replace with Novui Code Block when available
@@ -53,7 +53,19 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen, refe
 
       showNotification({
         color: 'green',
-        message: `Synced successfully. Visit https://dashboard.novu.co`,
+        message: (
+          <>
+            Successfully synced. Visit the{' '}
+            <a
+              href={`${process.env.PUBLIC_URL}/workflows`}
+              target="_blank"
+              className={css({ textDecoration: 'underline' })}
+            >
+              Dashboard
+            </a>{' '}
+            to see your workflows.
+          </>
+        ),
       });
     } catch (error: any) {
       showNotification({

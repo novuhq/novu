@@ -1,6 +1,6 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
-import { MissingSecretKeyError } from '../errors';
-import { workflow } from './workflow';
+import { MissingSecretKeyError } from '../../errors';
+import { workflow } from '.';
 
 describe('workflow function', () => {
   describe('Type tests', () => {
@@ -27,7 +27,7 @@ describe('workflow function', () => {
               type: 'object',
               properties: {
                 foo: { type: 'number' },
-                bar: { type: 'string' },
+                bar: { type: 'string', default: 'baz' },
               },
               required: ['foo', 'bar'],
               additionalProperties: false,
@@ -61,6 +61,71 @@ describe('workflow function', () => {
         // @ts-expect-error - result is a string
         result?.foo === 'custom';
       });
+    });
+
+    it('should compile when returning undefined for a built-in step property that has a default value', async () => {
+      const delayType = undefined;
+      workflow('built-in-default-test', async ({ step }) => {
+        await step.delay('custom', async () => ({
+          type: delayType,
+          amount: 1,
+          unit: 'seconds',
+        }));
+      });
+    });
+
+    it('should compile when returning undefined for a custom step property that has a default value', async () => {
+      const delayType = undefined;
+      workflow('custom-default-test', async ({ step }) => {
+        const data = await step.custom(
+          'custom',
+          async () => ({
+            withDefault: undefined,
+            withoutDefault: 'bar',
+          }),
+          {
+            outputSchema: {
+              type: 'object',
+              properties: {
+                withDefault: { type: 'string', default: 'bar' },
+                withoutDefault: { type: 'string' },
+              },
+              required: ['withoutDefault'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+    });
+  });
+
+  it('should include preferences', async () => {
+    const { definition } = workflow(
+      'setup-workflow',
+      async ({ step }) => {
+        await step.email('send-email', async () => ({
+          subject: 'Test Subject',
+          body: 'Test Body',
+        }));
+      },
+      {
+        preferences: {
+          channels: {
+            email: { defaultValue: true, readOnly: true },
+          },
+        },
+      }
+    );
+
+    expect(definition.preferences).to.deep.equal({
+      workflow: { defaultValue: true, readOnly: false },
+      channels: {
+        email: { defaultValue: true, readOnly: true },
+        sms: { defaultValue: true, readOnly: false },
+        push: { defaultValue: true, readOnly: false },
+        in_app: { defaultValue: true, readOnly: false },
+        chat: { defaultValue: true, readOnly: false },
+      },
     });
   });
 
@@ -100,6 +165,107 @@ describe('workflow function', () => {
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
           payload: {},
+          to: 'test@test.com',
+        });
+    });
+
+    it('should compile when returning undefined for a payload property that has a default value', async () => {
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              withDefault: { type: 'string', default: 'bar' },
+              withoutDefault: { type: 'string' },
+            },
+            required: ['withoutDefault'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
+          payload: {
+            withDefault: undefined,
+            withoutDefault: 'bar',
+          },
+          to: 'test@test.com',
+        });
+    });
+
+    it('should not compile when the payload is not specified and the payloadSchema declares required properties', async () => {
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step, payload }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            required: ['foo'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
+          // @ts-expect-error - payload is missing from the trigger
+          payload: undefined,
+          to: 'test@test.com',
+        });
+    });
+
+    it('should compile when the payload is not specified and the payloadSchema does not declare required properties', async () => {
+      const testWorkflow = workflow(
+        'test-workflow',
+        async ({ step, payload }) => {
+          await step.custom('custom', async () => ({
+            foo: 'bar',
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
+          to: 'test@test.com',
+        });
+    });
+
+    it('should compile when the payload is not specified and the payloadSchema is not specified', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      // Capture in a test function to avoid throwing execution errors
+      const testFn = () =>
+        testWorkflow.trigger({
           to: 'test@test.com',
         });
     });

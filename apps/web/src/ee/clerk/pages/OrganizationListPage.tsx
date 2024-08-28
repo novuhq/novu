@@ -1,5 +1,6 @@
 import { OrganizationList } from '@clerk/clerk-react';
-import { useEffect, useState } from 'react';
+import { PageMeta } from '@novu/design-system';
+import { useEffect } from 'react';
 import AuthLayout from '../../../components/layout/components/AuthLayout';
 import { ROUTES } from '../../../constants/routes';
 import { useRedirectURL } from '../../../hooks/useRedirectURL';
@@ -13,10 +14,8 @@ export default function OrganizationListPage() {
   }, []);
 
   return (
-    <AuthLayout
-      title="Select or create organization"
-      description="Please select or create an organization to continue."
-    >
+    <AuthLayout>
+      <PageMeta title="Select or create organization" />
       <OrganizationList
         appearance={{
           elements: {

@@ -3,6 +3,7 @@ import { useStyle } from '../../../helpers';
 type SwitchProps = {
   checked?: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
 };
 
 export const Switch = (props: SwitchProps) => {
@@ -15,6 +16,7 @@ export const Switch = (props: SwitchProps) => {
         `nt-relative
     nt-inline-flex nt-cursor-pointer nt-items-center`
       )}
+      data-disabled={props.disabled}
     >
       <input
         type="checkbox"
@@ -24,6 +26,7 @@ export const Switch = (props: SwitchProps) => {
         onChange={(e) => {
           props.onChange(e.target.checked);
         }}
+        disabled={props.disabled}
       />
       <div
         class={style(
@@ -34,8 +37,11 @@ export const Switch = (props: SwitchProps) => {
           after:nt-border-gray-300
           after:nt-bg-white after:nt-transition-all after:nt-content-['']
           peer-checked:nt-bg-primary peer-checked:after:nt-translate-x-full
-          peer-checked:after:nt-border-white peer-focus:nt-ring-green-300`
+          peer-checked:after:nt-border-white
+          nt-transition-all nt-duration-200 after:nt-duration-200
+          data-[disabled=true]:nt-opacity-40`
         )}
+        data-disabled={props.disabled}
       />
     </label>
   );

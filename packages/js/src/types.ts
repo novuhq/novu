@@ -79,9 +79,15 @@ export type Subscriber = {
   subscriberId: string;
 };
 
+export type Redirect = {
+  url: string;
+  target?: '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
+};
+
 export type Action = {
   label: string;
   isCompleted: boolean;
+  redirect?: Redirect;
 };
 
 export type InboxNotification = {
@@ -99,9 +105,8 @@ export type InboxNotification = {
   secondaryAction?: Action;
   channelType: ChannelType;
   tags?: string[];
-  redirect?: {
-    url: string;
-  };
+  data?: Record<string, unknown>;
+  redirect?: Redirect;
 };
 
 export type NotificationFilter = {

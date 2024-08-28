@@ -1,9 +1,9 @@
-import clsx from 'clsx';
 import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
+
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { formatToRelativeTime, useStyle } from '../../helpers';
+import { cn, formatToRelativeTime, useStyle, DEFAULT_TARGET, DEFAULT_REFERRER } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';
@@ -46,7 +46,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
 
     props.onNotificationClick?.(props.notification);
     if (props.notification.redirect?.url) {
-      window.open(props.notification.redirect?.url, '_blank', 'noreferrer noopener');
+      const target = props.notification.redirect?.target || DEFAULT_TARGET;
+      window.open(props.notification.redirect?.url, target, DEFAULT_REFERRER);
     }
   };
 
@@ -56,9 +57,18 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     if (action === ActionTypeEnum.PRIMARY) {
       props.notification.completePrimary();
       props.onPrimaryActionClick?.(props.notification);
+      if (props.notification.primaryAction?.redirect?.url) {
+        const target = props.notification.primaryAction?.redirect?.target || DEFAULT_TARGET;
+        window.open(props.notification.primaryAction?.redirect?.url, target, DEFAULT_REFERRER);
+      }
     } else {
       props.notification.completeSecondary();
       props.onSecondaryActionClick?.(props.notification);
+
+      if (props.notification.secondaryAction?.redirect?.url) {
+        const target = props.notification.secondaryAction?.redirect?.target || DEFAULT_TARGET;
+        window.open(props.notification.secondaryAction?.redirect?.url, target, DEFAULT_REFERRER);
+      }
     }
   };
 
@@ -66,9 +76,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     <a
       class={style(
         'notification',
-        clsx('nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-px-6 nt-py-4 nt-gap-2', {
-          'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-        })
+        cn(
+          'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-pr-4 nt-pl-6 nt-gap-2',
+          {
+            'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
+          }
+        )
       )}
       onClick={handleNotificationClick}
     >
@@ -76,7 +89,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <span
           class={style(
             'notificationDot',
-            'nt-absolute -nt-translate-x-[150%] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
+            'nt-absolute -nt-translate-x-[1.0625rem] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
           )}
         />
       </Show>
@@ -125,7 +138,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         </Button>
                       )}
                     />
-                    <Tooltip.Content>{t('notification.actions.read.toolTip')}</Tooltip.Content>
+                    <Tooltip.Content data-localization="notification.actions.read.tooltip">
+                      {t('notification.actions.read.tooltip')}
+                    </Tooltip.Content>
                   </Tooltip.Root>
                 }
               >
@@ -147,7 +162,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       </Button>
                     )}
                   />
-                  <Tooltip.Content>{t('notification.actions.unread.toolTip')}</Tooltip.Content>
+                  <Tooltip.Content data-localization="notification.actions.unread.tooltip">
+                    {t('notification.actions.unread.tooltip')}
+                  </Tooltip.Content>
                 </Tooltip.Root>
               </Show>
             </Show>
@@ -172,7 +189,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                       </Button>
                     )}
                   />
-                  <Tooltip.Content>{t('notification.actions.archive.toolTip')}</Tooltip.Content>
+                  <Tooltip.Content data-localization="notification.actions.archive.tooltip">
+                    {t('notification.actions.archive.tooltip')}
+                  </Tooltip.Content>
                 </Tooltip.Root>
               }
             >
@@ -194,15 +213,17 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                     </Button>
                   )}
                 />
-                <Tooltip.Content>{t('notification.actions.unarchive.toolTip')}</Tooltip.Content>
+                <Tooltip.Content data-localization="notification.actions.unarchive.tooltip">
+                  {t('notification.actions.unarchive.tooltip')}
+                </Tooltip.Content>
               </Tooltip.Root>
             </Show>
           </div>
         </div>
         <Show when={props.notification.subject}>
-          <p class={style('notificationSubject', 'nt-font-semibold')}>{props.notification.subject}</p>
+          <p class={style('notificationSubject', 'nt-text-start nt-font-semibold')}>{props.notification.subject}</p>
         </Show>
-        <p class={style('notificationBody')}>{props.notification.body}</p>
+        <p class={style('notificationBody', 'nt-text-start')}>{props.notification.body}</p>
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (

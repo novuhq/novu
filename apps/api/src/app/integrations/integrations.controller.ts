@@ -8,9 +8,10 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
+import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
@@ -23,7 +24,7 @@ import { CreateIntegrationRequestDto } from './dtos/create-integration-request.d
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
-import { Roles } from '../auth/framework/roles.decorator';
+import { Roles } from '@novu/application-generic';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
@@ -173,7 +174,6 @@ export class IntegrationsController {
   }
 
   @Put('/:integrationId')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
     description: 'The integration with the integrationId provided does not exist in the database.',
@@ -213,7 +213,6 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/set-primary')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
     description: 'The integration with the integrationId provided does not exist in the database.',

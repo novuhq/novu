@@ -52,6 +52,7 @@
     "bcast",
     "behaviour",
     "bestguess",
+    "tiptap",
     "binipdisplay",
     "bitauth",
     "bitjson",
@@ -633,6 +634,8 @@
     "unpublish",
     "unsub",
     "untracked",
+    "unvalidated",
+    "Unvalidated",
     "upsert",
     "upserted",
     "upstash",
@@ -709,7 +712,9 @@
     "Primitivestring",
     "Listofobjects",
     "Nestedobject",
-    "Listoflistofobjects"
+    "Listoflistofobjects",
+    "noopener",
+    "noreferrer"
   ],
   "flagWords": [],
   "patterns": [

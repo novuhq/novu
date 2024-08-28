@@ -4,6 +4,7 @@ import ora from 'ora';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
+  StepControlCompilationFailedError,
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
   ExecutionProviderOutputInvalidError,
@@ -35,7 +36,6 @@ import type {
 } from './types';
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, sanitizeHtmlInObject } from './utils';
-import { cloneData } from './utils/clone.utils';
 import { transformSchema, validateData } from './validators';
 
 /**
@@ -261,14 +261,23 @@ export class Client {
   ): ActionStep<T_Outputs, T_Result> {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
-      const eventClone = cloneData(event);
-      const controls = await this.createStepControls(step, eventClone);
+      const controls = await this.createStepControls(step, event);
       const isPreview = event.action === 'preview';
 
       if (!isPreview && (await this.shouldSkip(options?.skip as typeof step.options.skip, controls))) {
-        const skippedResult: Omit<ExecuteOutput, 'metadata'> = { options: { skip: true }, outputs: {}, providers: {} };
-        setResult(skippedResult);
+        if (stepId === event.stepId) {
+          // Only set the result when the step is the current step.
+          setResult({
+            options: { skip: true },
+            outputs: {},
+            providers: {},
+          });
+        }
 
+        /*
+         * Return an empty object for results when a step is skipped.
+         * TODO: fix typings when `skip` is specified to return `Partial<T_Result>`
+         */
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return {} as any;
       }
@@ -347,13 +356,25 @@ export class Client {
       providers: {},
       options: { skip: false },
     };
-    let resolveEarlyExit: (value?: unknown) => void;
-    const earlyExitPromise = new Promise((resolve) => {
-      resolveEarlyExit = resolve;
-    });
 
+    let concludeExecution: (value?: unknown) => void;
+    const concludeExecutionPromise = new Promise((resolve) => {
+      concludeExecution = resolve;
+    });
+    /**
+     * Set the result of the workflow execution.
+     *
+     * In order to exit evaluation of the Workflow's `execute` method when the specified
+     * `stepId` is reached, we need to `Promise.race` the `concludeExecutionPromise` with the
+     * `workflow.execute` method. By resolving the `concludeExecutionPromise` when setting the result,
+     * we can ensure that the `workflow.execute` method is not evaluated after the `stepId` is reached.
+     *
+     * This function should only be called once per workflow execution.
+     *
+     * @param stepResult The result of the workflow execution.
+     */
     const setResult = (stepResult: Omit<ExecuteOutput, 'metadata'>): void => {
-      resolveEarlyExit();
+      concludeExecution();
       result = stepResult;
     };
 
@@ -375,7 +396,7 @@ export class Client {
         payload: executionData,
       };
       await Promise.race([
-        earlyExitPromise,
+        concludeExecutionPromise,
         workflow.execute({
           payload: executionData,
           environment: {},
@@ -401,7 +422,7 @@ export class Client {
 
     const elapsedSeconds = endTime[0];
     const elapsedNanoseconds = endTime[1];
-    const elapsedTimeInMilliseconds = elapsedSeconds * 1000 + elapsedNanoseconds / 1_000_000;
+    const elapsedTimeInMilliseconds = elapsedSeconds * 1_000 + elapsedNanoseconds / 1_000_000;
 
     const emoji = executionError ? EMOJI.ERROR : EMOJI.SUCCESS;
     const resultMessage =
@@ -589,7 +610,7 @@ export class Client {
         const result = event.state.find((state) => state.stepId === step.stepId);
 
         if (result) {
-          const validatedResult = await this.validate(
+          const validatedOutput = await this.validate(
             result.outputs,
             step.results.unknownSchema,
             'step',
@@ -603,8 +624,8 @@ export class Client {
           });
 
           return {
-            outputs: validatedResult,
-            providers: await this.executeProviders(event, step, validatedResult),
+            outputs: validatedOutput,
+            providers: await this.executeProviders(event, step, validatedOutput),
           };
         } else {
           throw new ExecutionStateCorruptError(event.workflowId, step.stepId);
@@ -620,14 +641,20 @@ export class Client {
   }
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
-    const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
+    try {
+      const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
-    const compiledString = await this.templateEngine.render(templateString, {
-      ...(event.payload || event.data),
-      subscriber: event.subscriber,
-    });
+      const compiledString = await this.templateEngine.render(templateString, {
+        payload: event.payload || event.data,
+        subscriber: event.subscriber,
+        // Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
+        ...(event.payload || event.data),
+      });
 
-    return JSON.parse(compiledString);
+      return JSON.parse(compiledString);
+    } catch (error) {
+      throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
+    }
   }
 
   /**
