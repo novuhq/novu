@@ -117,11 +117,10 @@ export type NotificationFilter = {
 
 export type Workflow = {
   id: string;
+  identifier: string;
   name: string;
   critical: boolean;
-  identifier: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: Record<string, any>;
+  tags?: string[];
 };
 
 export type ChannelPreference = {
