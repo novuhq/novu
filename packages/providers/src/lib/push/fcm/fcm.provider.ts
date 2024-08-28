@@ -68,7 +68,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     let res;
 
     if (type === 'data') {
-      res = await this.messaging.sendEachForMulticast(
+      res = await this.messaging.sendMulticast(
         this.transform<MulticastMessage>(bridgeProviderData, {
           tokens: options.target,
           data: {
