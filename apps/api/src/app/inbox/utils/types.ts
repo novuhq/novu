@@ -1,4 +1,4 @@
-import type { ChannelTypeEnum } from '@novu/shared';
+import type { ChannelTypeEnum, IPreferenceChannels, PreferenceLevelEnum } from '@novu/shared';
 
 export type Subscriber = {
   id: string;
@@ -38,4 +38,19 @@ export type NotificationFilter = {
   tags?: string[];
   read?: boolean;
   archived?: boolean;
+};
+
+export type Workflow = {
+  id: string;
+  identifier: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
+};
+
+export type InboxPreference = {
+  level: PreferenceLevelEnum;
+  enabled: boolean;
+  channels: IPreferenceChannels;
+  workflow?: Workflow;
 };

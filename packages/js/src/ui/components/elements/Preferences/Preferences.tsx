@@ -45,10 +45,7 @@ export const Preferences = () => {
   }) => {
     mutate((prev) =>
       prev?.map((preference) => {
-        if (
-          preference.workflow?.identifier === workflowId ||
-          (!workflowId && preference.level === PreferenceLevel.GLOBAL)
-        ) {
+        if (preference.workflow?.id === workflowId || (!workflowId && preference.level === PreferenceLevel.GLOBAL)) {
           preference.channels[channel] = enabled;
         }
 
@@ -79,7 +76,7 @@ export const Preferences = () => {
             <PreferencesRow
               localizationKey={preference.workflow!.identifier as StringLocalizationKey}
               channels={preference.channels}
-              workflowId={preference.workflow?.identifier}
+              workflowId={preference.workflow?.id}
               onChange={optimisticUpdate}
               isCritical={preference.workflow?.critical}
             />
