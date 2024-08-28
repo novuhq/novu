@@ -3,7 +3,7 @@ import { Schema } from '../../../types/schema.types';
 const redirectSchema = {
   type: 'object',
   properties: {
-    url: { type: 'string' },
+    url: { type: 'string', format: 'uri' },
     target: { type: 'string', enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'], default: '_blank' },
   },
   required: ['url'],

@@ -1,4 +1,4 @@
-import type { ChannelTypeEnum, UrlTarget } from '@novu/shared';
+import type { ChannelTypeEnum, Redirect } from '@novu/shared';
 
 export type Subscriber = {
   id: string;
@@ -6,11 +6,6 @@ export type Subscriber = {
   lastName?: string;
   avatar?: string;
   subscriberId: string;
-};
-
-type Redirect = {
-  url?: string;
-  target?: UrlTarget;
 };
 
 type Action = {

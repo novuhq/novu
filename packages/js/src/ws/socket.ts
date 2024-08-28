@@ -66,18 +66,22 @@ const mapToNotification = ({
     primaryAction: primaryCta && {
       label: primaryCta.content,
       isCompleted: actionType === ActionTypeEnum.PRIMARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: {
-        target: primaryCta.target,
-        url: primaryCta?.url,
-      },
+      redirect: primaryCta.url
+        ? {
+            target: primaryCta.target,
+            url: primaryCta.url,
+          }
+        : undefined,
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
       isCompleted: actionType === ActionTypeEnum.SECONDARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: {
-        target: secondaryCta.target,
-        url: secondaryCta?.url,
-      },
+      redirect: secondaryCta.url
+        ? {
+            target: secondaryCta.target,
+            url: secondaryCta.url,
+          }
+        : undefined,
     },
     channelType: channel,
     tags,

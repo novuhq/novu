@@ -45,18 +45,22 @@ const mapSingleItem = ({
     primaryAction: primaryCta && {
       label: primaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
-      redirect: {
-        url: primaryCta.url,
-        target: primaryCta.target,
-      },
+      redirect: primaryCta.url
+        ? {
+            url: primaryCta.url,
+            target: primaryCta.target,
+          }
+        : undefined,
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
-      redirect: {
-        url: secondaryCta.url,
-        target: secondaryCta.target,
-      },
+      redirect: secondaryCta.url
+        ? {
+            url: secondaryCta.url,
+            target: secondaryCta.target,
+          }
+        : undefined,
     },
     channelType: channel,
     tags,

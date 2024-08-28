@@ -29,7 +29,7 @@ type InAppOutput = {
   redirect?: Redirect;
 };
 
-type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar'>;
+type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar' | 'data'>;
 
 /**
  * This function maps the V2 InAppOutput to the V1 MessageEntity.
