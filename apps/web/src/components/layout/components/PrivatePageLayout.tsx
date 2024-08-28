@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ErrorBoundary } from '@sentry/react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { IntercomProvider } from 'react-use-intercom';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT, BRIDGE_ENDPOINTS_LEGACY_VERSIONS, INTERCOM_APP_ID } from '../../../config';
@@ -14,8 +14,6 @@ import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
-import { Modal } from '@mantine/core';
-import { ROUTES } from '../../../constants/routes';
 
 const AppShell = styled.div`
   display: flex;
