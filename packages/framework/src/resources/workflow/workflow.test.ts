@@ -99,6 +99,36 @@ describe('workflow function', () => {
     });
   });
 
+  it('should include preferences', async () => {
+    const { definition } = workflow(
+      'setup-workflow',
+      async ({ step }) => {
+        // @ts-expect-error - email subject is missing from the output
+        await step.email('send-email', async () => ({
+          body: 'Test Body',
+        }));
+      },
+      {
+        preferences: {
+          channels: {
+            email: { defaultValue: true, readOnly: true },
+          },
+        },
+      }
+    );
+
+    expect(definition.preferences).to.deep.equal({
+      workflow: { defaultValue: true, readOnly: false },
+      channels: {
+        email: { defaultValue: true, readOnly: true },
+        sms: { defaultValue: true, readOnly: false },
+        push: { defaultValue: true, readOnly: false },
+        in_app: { defaultValue: true, readOnly: false },
+        chat: { defaultValue: true, readOnly: false },
+      },
+    });
+  });
+
   describe('trigger', () => {
     beforeEach(() => {
       process.env.NOVU_SECRET_KEY = 'test';

@@ -114,7 +114,7 @@ export function workflow<
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     tags: options.tags || [],
-    preferences: buildPreferences(options.preference),
+    preferences: buildPreferences(options.preferences),
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 
