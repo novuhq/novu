@@ -18,11 +18,164 @@ const CLERK_LOCALIZATION = {
   },
 
   userButton: {
-    action__signOut: 'Log Out',
+    action__signOut: 'Log out',
+    action__signOutAll: 'Log out from all accounts',
+    action__manageAccount: 'Settings',
   },
 };
 
 const CLERK_MODAL_ELEMENT = {
+  organizationSwitcherPopoverMain: { backgroundColor: 'var(--nv-colors-surface-panel-subsection)' },
+  userPreviewMainIdentifier: {
+    fontWeight: 'var(--nv-font-weights-strong)',
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+  },
+  userPreview: {
+    gap: '12px',
+  },
+  userPreviewSecondaryIdentifier: {
+    color: 'var(--nv-colors-typography-text-secondary)',
+  },
+  userPreviewAvatarContainer: {
+    width: '40px',
+    height: '40px',
+  },
+  userPreviewAvatarBox: {
+    width: '40px',
+    height: '40px',
+  },
+  userButtonPopoverFooter: {
+    borderStyle: 'none',
+    borderWidth: '0 !important',
+    background: 'inherit',
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection) !important',
+  },
+  userButtonPopoverCard: {
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    borderStyle: 'none',
+    borderWidth: '0 !important',
+  },
+  userButtonPopoverActionButton: {
+    fontWeight: 'var(--nv-font-weights-strong)',
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+    borderStyle: 'none',
+    borderWidth: '0 !important',
+  },
+  button__manageAccount: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderStyle: 'none',
+    boxShadow: 'unset !important',
+    fontSize: 'var(--nv-font-sizes-75)',
+    borderRadius: '6px',
+    width: '120px !important',
+    height: '24px',
+    padding: '0px',
+  },
+  button__signOut: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderStyle: 'none',
+    boxShadow: 'unset !important',
+    fontSize: 'var(--nv-font-sizes-75)',
+    borderRadius: '6px',
+    width: '120px !important',
+    height: '24px',
+    padding: '0px',
+  },
+  organizationPreviewMainIdentifier: {
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+  },
+  organizationPreviewSecondaryIdentifier: {
+    color: 'var(--nv-colors-typography-text-secondary)',
+  },
+  userButtonPopoverActionButtonIconBox__addAccount: {
+    width: '40px',
+    height: '40px',
+    flex: 'none',
+  },
+  userButtonPopoverActionButtonIcon__addAccount: {
+    width: '40px',
+    height: '40px',
+    '& circle': {
+      r: 18,
+      'stroke-opacity': 0,
+    },
+  },
+  userButtonPopoverActionButton__signOutAll: {
+    gap: '12px',
+    '&:hover': {
+      color: 'var(--nv-colors-typography-text-main)',
+    },
+  },
+  userButtonPopoverActionButton__addAccount: {
+    gap: '12px',
+    '&:hover': {
+      color: 'var(--nv-colors-typography-text-main)',
+    },
+  },
+  userButtonPopoverActionButtonIconBox__signOutAll: {
+    width: '40px',
+    height: '40px',
+    flex: 'none',
+    gap: 'none',
+  },
+  userButtonPopoverActionButtonIcon__signOutAll: {
+    width: '24px',
+    height: '24px',
+    //margin: '16px',
+  },
+  organizationSwitcherPopoverActionButtonIconBox: {
+    width: '40px',
+    height: '40px',
+    flex: 'none',
+  },
+  organizationSwitcherPopoverActionButtonIcon: {
+    width: '40px',
+    height: '40px',
+    '& circle': {
+      r: 18,
+      'stroke-opacity': 0,
+    },
+  },
+  organizationSwitcherPopoverActionButton: {
+    borderWidth: '0 !important',
+    borderStyle: 'none',
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+    fontFamily: 'var(--nv-fonts-system)',
+    fontSize: 'var(--nv-font-sizes-88)',
+    fontWeight: 'var(--nv-font-weights-strong)',
+    gap: '12px',
+    padding: '16px 20px 16px 20px',
+    '&:hover': {
+      color: 'var(--nv-colors-typography-text-main) !important',
+    },
+  },
+  organizationSwitcherTrigger: {
+    '.cl-organizationPreview': {
+      gap: '12px',
+      '.cl-organizationPreviewAvatarContainer > .cl-organizationPreviewAvatarBox': {
+        width: '20px',
+        height: '20px',
+      },
+    },
+  },
+  organizationSwitcherPreviewButton: {
+    borderWidth: '0px !important',
+    borderStyle: 'none',
+  },
+  organizationSwitcherPopoverCard: {
+    borderWidth: '0',
+    borderStyle: 'none',
+  },
+
+  organizationPreviewAvatarBox: {
+    width: '40px',
+    height: '40px',
+  },
+
   modalContent: {
     width: '80rem',
     display: 'block',
@@ -34,10 +187,11 @@ const CLERK_MODAL_ELEMENT = {
     width: '100%',
   },
   scrollBox: {
-    backgroundColor: 'var(--nv-colors-surface-page)',
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
   },
   userButtonPopoverMain: {
-    backgroundColor: 'var(--nv-colors-surface-page)',
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    boxShadow: 'unset !important',
   },
   rootBox: {
     width: 'auto',

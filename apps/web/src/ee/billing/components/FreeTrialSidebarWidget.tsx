@@ -45,7 +45,7 @@ export const FreeTrialSidebarWidget = () => {
       />
       <Button
         onClick={() => {
-          navigate(IS_EE_AUTH_ENABLED ? '/billing' : '/settings/billing');
+          navigate(IS_EE_AUTH_ENABLED ? '/manage-account/billing' : '/settings/billing');
         }}
         data-test-id="free-trial-widget-button"
         mt={12}

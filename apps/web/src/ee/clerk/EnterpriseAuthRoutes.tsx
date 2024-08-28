@@ -53,7 +53,7 @@ export const EnterpriseAuthRoutes = () => {
         <Route path={ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST} element={<OrganizationListPage />} />
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
       </Route>
-      <Route element={<PrivatePageLayout inModal />}>
+      <Route element={<PrivatePageLayout />}>
         <Route path="/manage-account/:tabValue" element={<ManageAccountPage />} />
       </Route>
     </>

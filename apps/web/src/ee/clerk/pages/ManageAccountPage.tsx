@@ -1,11 +1,28 @@
+import './ManageAccountPage.css';
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
-import { Tabs } from '@mantine/core';
+import { useColorScheme } from '@novu/design-system';
+import { Modal, Tabs } from '@mantine/core';
+import {
+  IconAdminPanelSettings,
+  IconCreditCard,
+  IconGroups,
+  IconLocalActivity,
+  IconManageAccounts,
+  IconRoomPreferences,
+} from '@novu/novui/icons';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ROUTES } from '../../../constants/routes';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
+import { BrandingPage } from '../../../pages/brand/BrandingPage';
 import { BillingPage } from '../../billing/pages/BillingPage';
+import { Title } from '@novu/novui';
+import { css } from '@novu/novui/css';
 
-const _appearance = {
+const clerkComponentAppearance = {
   elements: {
     navbar: { display: 'none' },
+    navbarMobileMenuRow: { display: 'none !important' },
     cardBox: {
       display: 'block',
       width: '100%',
@@ -18,51 +35,100 @@ const _appearance = {
 export default function ManageAccountPage() {
   const navigate = useNavigate();
   const { tabValue } = useParams();
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+  const { colorScheme } = useColorScheme();
+  const headerColor = colorScheme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(33, 33, 38)';
 
   return (
-    <>
-      <Tabs
-        defaultValue="account"
-        value={tabValue}
-        onTabChange={(value) => navigate(`/manage-account/${value}`)}
-        orientation="vertical"
-      >
-        <Tabs.List>
-          <Tabs.Tab value="account">Account</Tabs.Tab>
-          <Tabs.Tab value="security">Security</Tabs.Tab>
-          <Tabs.Tab value="organization">Organization</Tabs.Tab>
-          <Tabs.Tab value="team">Team</Tabs.Tab>
-          <Tabs.Tab value="billing">Billing</Tabs.Tab>
-        </Tabs.List>
+    <Modal
+      opened
+      padding={8}
+      title={
+        <Title padding={'paddings.page.vertical'} variant={'page'} color={headerColor}>
+          Settings
+        </Title>
+      }
+      onClose={() => {
+        navigate(ROUTES.WORKFLOWS);
+      }}
+      size="90%"
+    >
+      <>
+        <Tabs value={tabValue} onTabChange={(value) => navigate(`/manage-account/${value}`)} orientation="vertical">
+          <Tabs.List>
+            <Tabs.Tab value="user-profile" icon={<IconManageAccounts />}>
+              User profile
+            </Tabs.Tab>
+            <Tabs.Tab value="access-security" icon={<IconAdminPanelSettings />}>
+              Access security
+            </Tabs.Tab>
+            <Tabs.Tab value="organization" icon={<IconRoomPreferences />}>
+              Organization
+            </Tabs.Tab>
+            <Tabs.Tab value="team-members" icon={<IconGroups />}>
+              Team members
+            </Tabs.Tab>
+            {!isV2Enabled && (
+              <Tabs.Tab value="branding" icon={<IconLocalActivity />}>
+                Branding
+              </Tabs.Tab>
+            )}
+            <Tabs.Tab value="billing" icon={<IconCreditCard />}>
+              Billing plans
+            </Tabs.Tab>
+          </Tabs.List>
 
-        <Tabs.Panel value="account">
-          <UserProfile appearance={_appearance}>
-            <UserProfile.Page label="account" />
-            <UserProfile.Page label="security" />
-          </UserProfile>
-        </Tabs.Panel>
-        <Tabs.Panel value="security">
-          <UserProfile appearance={_appearance}>
-            <UserProfile.Page label="security" />
-            <UserProfile.Page label="account" />
-          </UserProfile>
-        </Tabs.Panel>
-        <Tabs.Panel value="organization">
-          <OrganizationProfile appearance={_appearance}>
-            <OrganizationProfile.Page label="general" />
-            <OrganizationProfile.Page label="members" />
-          </OrganizationProfile>
-        </Tabs.Panel>
-        <Tabs.Panel value="team">
-          <OrganizationProfile appearance={_appearance}>
-            <OrganizationProfile.Page label="members" />
-            <OrganizationProfile.Page label="general" />
-          </OrganizationProfile>
-        </Tabs.Panel>
-        <Tabs.Panel value="billing">
-          <BillingPage />
-        </Tabs.Panel>
-      </Tabs>
-    </>
+          <Tabs.Panel value="user-profile">
+            <UserProfile appearance={clerkComponentAppearance}>
+              <UserProfile.Page label="account" />
+              <UserProfile.Page label="security" />
+            </UserProfile>
+          </Tabs.Panel>
+          <Tabs.Panel value="access-security">
+            <UserProfile appearance={clerkComponentAppearance}>
+              <UserProfile.Page label="security" />
+              <UserProfile.Page label="account" />
+            </UserProfile>
+          </Tabs.Panel>
+          <Tabs.Panel value="organization">
+            <OrganizationProfile appearance={clerkComponentAppearance}>
+              <OrganizationProfile.Page label="general" />
+              <OrganizationProfile.Page label="members" />
+            </OrganizationProfile>
+          </Tabs.Panel>
+          <Tabs.Panel value="team-members">
+            <OrganizationProfile appearance={clerkComponentAppearance}>
+              <OrganizationProfile.Page label="members" />
+              <OrganizationProfile.Page label="general" />
+            </OrganizationProfile>
+          </Tabs.Panel>
+          {!isV2Enabled && (
+            <Tabs.Panel value="branding">
+              <BrandingPage />
+            </Tabs.Panel>
+          )}
+          <Tabs.Panel value="billing">
+            <div className={css({ padding: '1.75rem 1.5rem 1.75rem 2rem' })}>
+              <Title
+                marginBottom="150"
+                className={css({
+                  fontFamily: 'var(--nv-fonts-system)',
+                  fontWeight: 'var(--nv-font-weights-strong)',
+                  fontSize: 'var(--nv-font-sizes-125)',
+                  letterSpacing: '0',
+                  textDecoration: 'none',
+                  lineHeight: 'var(--nv-line-heights-175)',
+                })}
+                variant={'page'}
+                color={headerColor}
+              >
+                Billing plans
+              </Title>
+              <BillingPage />
+            </div>
+          </Tabs.Panel>
+        </Tabs>
+      </>
+    </Modal>
   );
 }

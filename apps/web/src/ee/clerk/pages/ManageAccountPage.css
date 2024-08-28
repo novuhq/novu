@@ -1,0 +1,68 @@
+.mantine-Modal-modal {
+  border-radius: 12px;
+  background-color: var(--nv-colors-surface-panel);
+}
+
+.mantine-Tabs-panel {
+  padding: var(--semantic-paddings-popover-vertical, 24px) var(--semantic-paddings-popover-horisontal, 24px);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--semantic-margins-layout-PageTitleBottom, 24px);
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 12px;
+  background: var(--nv-colors-surface-panel-subsection);
+  margin-top: 4px;
+}
+
+.mantine-Modal-header {
+  margin-bottom: 0px;
+  margin-right: 16px;
+  background: var(--nv-colors-surface-panel);
+}
+
+.mantine-Modal-close {
+  margin-right: 12px;
+}
+
+.mantine-Tabs-tabsList {
+  border-right: unset;
+  background: var(--nv-colors-surface-panel);
+}
+
+.mantine-Tabs-tab {
+  font-weight: var(--nv-font-weights-strong);
+  font-family: var(--nv-fonts-system);
+  font-size: var(--nv-font-sizes-88);
+  color: var(--nv-colors-typography-text-secondary);
+  padding: 8px 10px;
+  margin: 4px;
+  border-radius: 6px;
+  min-width: 204px;
+
+  &:hover {
+    color: var(--nv-colors-typography-text-primary);
+    background-color: var(--nv-colors-surface-panel-subsection);
+  }
+}
+
+.mantine-Tabs-tab[data-active="true"] {
+  color: var(--nv-colors-typography-text-primary);
+  background-color: var(--nv-colors-surface-panel-subsection);
+}
+
+.mantine-Tabs-tabIcon {
+  margin-right: 8px !important;
+}
+
+.mantine-Tabs-tabIcon>svg {
+  color: inherit;
+}
+
+.mantine-Tabs-tabLabel {
+  font-weight: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+
+}
