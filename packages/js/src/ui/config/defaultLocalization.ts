@@ -2,12 +2,12 @@ import { createSignal } from 'solid-js';
 
 export const defaultLocalization = {
   locale: 'en-US',
-  'inbox.status.options.unread': 'Unread only',
-  'inbox.status.options.unreadRead': 'Unread & read',
-  'inbox.status.options.archived': 'Archived',
-  'inbox.status.unread': 'Unread',
-  'inbox.status.unreadRead': 'Inbox',
-  'inbox.status.archived': 'Archived',
+  'inbox.filters.dropdownOptions.unread': 'Unread only',
+  'inbox.filters.dropdownOptions.default': 'Unread & read',
+  'inbox.filters.dropdownOptions.archived': 'Archived',
+  'inbox.filters.labels.unread': 'Unread',
+  'inbox.filters.labels.default': 'Inbox',
+  'inbox.filters.labels.archived': 'Archived',
   'notifications.emptyNotice': 'No notifications',
   'notifications.actions.readAll': 'Mark all as read',
   'notifications.actions.archiveAll': 'Archive all',
