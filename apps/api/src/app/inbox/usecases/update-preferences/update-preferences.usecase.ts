@@ -9,9 +9,9 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ISubscriberPreferences } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
+import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class UpdatePreferences {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: UpdatePreferencesCommand): Promise<ISubscriberPreferences> {
+  async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
@@ -61,11 +61,11 @@ export class UpdatePreferences {
       ...(workflow &&
         updatedPreference.level === PreferenceLevelEnum.TEMPLATE && {
           workflow: {
-            critical: workflow.critical,
             id: workflow._id,
+            identifier: workflow.triggers[0].identifier,
             name: workflow.name,
+            critical: workflow.critical,
             tags: workflow.tags,
-            triggers: workflow.triggers,
           },
         }),
     };
