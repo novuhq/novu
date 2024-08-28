@@ -43,9 +43,10 @@ export function workflow<
       throw new MissingSecretKeyError();
     }
 
+    const unvalidatedData = (event.payload || {}) as T_PayloadUnvalidated;
     let validatedData: T_PayloadValidated;
     if (options.payloadSchema) {
-      const validationResult = await validateData(options.payloadSchema, event.payload);
+      const validationResult = await validateData(options.payloadSchema, unvalidatedData);
       if (validationResult.success === false) {
         throw new WorkflowPayloadInvalidError(workflowId, validationResult.errors);
       }
@@ -65,7 +66,6 @@ export function workflow<
       ...(event.transactionId && { transactionId: event.transactionId }),
       ...(event.overrides && { overrides: event.overrides }),
       ...(event.actor && { actor: event.actor }),
-      ...(event.tenant && { tenant: event.tenant }),
       ...(bridgeUrl && { bridgeUrl }),
     };
 

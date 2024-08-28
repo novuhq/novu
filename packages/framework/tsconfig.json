@@ -16,5 +16,5 @@
     "strict": true
   },
   "include": ["./src/**/*", "./package.json", "scripts/devtool.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "exclude": ["node_modules"]
 }
