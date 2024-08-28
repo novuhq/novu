@@ -1,6 +1,6 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
-import { MissingSecretKeyError } from '../errors';
-import { workflow } from './workflow';
+import { MissingSecretKeyError } from '../../errors';
+import { workflow } from '.';
 
 describe('workflow function', () => {
   describe('Type tests', () => {
@@ -96,6 +96,36 @@ describe('workflow function', () => {
           }
         );
       });
+    });
+  });
+
+  it('should include preferences', async () => {
+    const { definition } = workflow(
+      'setup-workflow',
+      async ({ step }) => {
+        await step.email('send-email', async () => ({
+          subject: 'Test Subject',
+          body: 'Test Body',
+        }));
+      },
+      {
+        preferences: {
+          channels: {
+            email: { defaultValue: true, readOnly: true },
+          },
+        },
+      }
+    );
+
+    expect(definition.preferences).to.deep.equal({
+      workflow: { defaultValue: true, readOnly: false },
+      channels: {
+        email: { defaultValue: true, readOnly: true },
+        sms: { defaultValue: true, readOnly: false },
+        push: { defaultValue: true, readOnly: false },
+        in_app: { defaultValue: true, readOnly: false },
+        chat: { defaultValue: true, readOnly: false },
+      },
     });
   });
 
