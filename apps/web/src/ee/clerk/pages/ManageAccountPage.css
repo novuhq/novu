@@ -1,6 +1,9 @@
 .mantine-Modal-modal {
   border-radius: 12px;
   background-color: var(--nv-colors-surface-panel);
+  padding: 0px;
+  min-height: 100%;
+  max-height: 100%;
 }
 
 .mantine-Tabs-panel {
@@ -12,7 +15,10 @@
   align-self: stretch;
   border-radius: 12px;
   background: var(--nv-colors-surface-panel-subsection);
-  margin-top: 4px;
+  overflow-y: auto;
+  /* TODO: these 2 are wrong, need to calculate based on available parent size */
+  max-height: 807px;
+  min-height: 807px;
 }
 
 .mantine-Modal-header {
@@ -28,6 +34,15 @@
 .mantine-Tabs-tabsList {
   border-right: unset;
   background: var(--nv-colors-surface-panel);
+  border-radius: 12px;
+  border-bottom-right-radius: 0px;
+}
+
+.mantine-Modal-close {
+  position: fixed;
+  right: 0px;
+  top: 10px;
+  z-index: 2;
 }
 
 .mantine-Tabs-tab {

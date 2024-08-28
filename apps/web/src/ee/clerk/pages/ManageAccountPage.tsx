@@ -43,11 +43,7 @@ export default function ManageAccountPage() {
     <Modal
       opened
       padding={8}
-      title={
-        <Title padding={'paddings.page.vertical'} variant={'page'} color={headerColor}>
-          Settings
-        </Title>
-      }
+      title={undefined}
       onClose={() => {
         navigate(ROUTES.WORKFLOWS);
       }}
@@ -56,6 +52,25 @@ export default function ManageAccountPage() {
       <>
         <Tabs value={tabValue} onTabChange={(value) => navigate(`/manage-account/${value}`)} orientation="vertical">
           <Tabs.List>
+            <Tabs.Tab
+              disabled
+              value="title"
+              className={css({
+                color: 'var(--nv-colors-typography-text-primary) !important',
+                fontSize: 'var(--nv-font-sizes-150) !important',
+                lineHeight: 'var(--nv-line-heights-175) !important',
+                opacity: '1 !important',
+                padding: '24px !important',
+                '&:hover': {
+                  color: 'var(--nv-colors-typography-text-primary) !important',
+                  backgroundColor: 'unset !important',
+                  borderColor: 'var(--nv-colors-surface-panel) !important',
+                  cursor: 'unset !important',
+                },
+              })}
+            >
+              Settings
+            </Tabs.Tab>
             <Tabs.Tab value="user-profile" icon={<IconManageAccounts />}>
               User profile
             </Tabs.Tab>
