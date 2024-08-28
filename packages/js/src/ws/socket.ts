@@ -38,6 +38,7 @@ const mapToNotification = ({
   avatar,
   cta,
   tags,
+  data,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
@@ -77,6 +78,7 @@ const mapToNotification = ({
           url: cta.data.url,
         }
       : undefined,
+    data,
   };
 };
 

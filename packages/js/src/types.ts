@@ -102,6 +102,7 @@ export type InboxNotification = {
   redirect?: {
     url: string;
   };
+  data?: Record<string, unknown>;
 };
 
 export type NotificationFilter = {

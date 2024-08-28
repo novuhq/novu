@@ -23,6 +23,7 @@ export interface IMessage {
   _feedId?: string | null;
   _layoutId?: string;
   payload: Record<string, unknown>;
+  data?: Record<string, unknown>;
   actor?: IActor;
   avatar?: string;
   subject?: string;

@@ -18,6 +18,7 @@ const inAppOutputSchema = {
     avatar: { type: 'string', format: 'uri' },
     primaryAction: actionSchema,
     secondaryAction: actionSchema,
+    data: { type: 'object', additionalProperties: true },
   },
   required: ['body'],
   additionalProperties: false,
