@@ -13,7 +13,11 @@ import { splitCssProps } from '../../../styled-system/jsx';
 import { input, inputEditorWidget } from '../../../styled-system/recipes';
 import { AUTOCOMPLETE_OPEN_TAG, VARIABLE_ERROR_MESSAGES } from '../constants';
 import { InputAutocompleteContextProvider } from '../context';
-import { extractErrorCodesFromHtmlContent, getInitContentWithVariableNodeView } from '../utils';
+import {
+  extractErrorCodesFromHtmlContent,
+  getDeprecatedPayloadVariables,
+  getInitContentWithVariableNodeView,
+} from '../utils';
 import { CustomMention } from './customMentionExtension';
 import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
 import { SuggestionListExtension, SuggestionListStorage } from './SuggestionListExtension';
@@ -32,12 +36,12 @@ export const InputEditorWidget = (props: WidgetProps) => {
   const reactRenderer = useRef<ReactRenderer<SuggestionListRef>>(null);
 
   const { variables = [] } = formContext;
-  let [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
+  const [variablesList, variablesSet] = useMemo<[VariableItem[], Set<string>]>(() => {
     const variableDisplayList = variables?.map((variable: string) => {
       return { label: variable, id: variable };
     });
 
-    return [variableDisplayList, new Set(variables)];
+    return [variableDisplayList, new Set([...variables, ...getDeprecatedPayloadVariables(variables)])];
   }, [variables]);
 
   const extensions = useMemo(() => {
@@ -118,17 +122,12 @@ export const InputEditorWidget = (props: WidgetProps) => {
     },
   });
 
+  // keep the suggestion list popover synced with the component state
   useEffect(() => {
     if (editor) {
-      variablesList = variables?.map((variable: string) => {
-        return { label: variable, id: variable };
-      });
-
-      variablesSet = new Set(variables);
-
       editor.storage.SuggestionListStorage.suggestions = variablesList;
     }
-  }, [variables, editor]);
+  }, [variablesList, editor]);
 
   useEffect(() => {
     if (editor) {

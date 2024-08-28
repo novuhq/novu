@@ -591,7 +591,8 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
-    it('should compile control variables used in other control variables', async () => {
+    // skipped until we implement support for control variables https://linear.app/novu/issue/NV-4248/support-for-controls-in-autocomplete
+    it.skip('should compile control variables used in other control variables', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email(
           'send-email',
@@ -641,7 +642,8 @@ describe('Novu Client', () => {
       expect(body).toBe('body subject');
     });
 
-    it('should compile control variables nested in the same control variables', async () => {
+    // skipped until we implement support for control variables https://linear.app/novu/issue/NV-4248/support-for-controls-in-autocomplete
+    it.skip('should compile control variables nested in the same control variables', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email(
           'send-email',

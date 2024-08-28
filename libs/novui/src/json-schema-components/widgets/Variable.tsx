@@ -86,5 +86,5 @@ function getValidatedVariable(text: string = '', possibleVariables: Set<string>)
     return;
   }
 
-  return variableName;
+  return variableContent;
 }

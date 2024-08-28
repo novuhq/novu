@@ -19,6 +19,8 @@ const VARIABLES = [
   'ctrl.c',
   'ctrl.d',
   'ctrl.e',
+  'payload.var',
+  'payload.obj.var',
   'fakeAutocomplete.foo',
   'fakeAutocomplete.bar',
   'fakeAutocomplete.fizz',

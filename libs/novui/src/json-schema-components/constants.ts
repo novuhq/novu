@@ -1,5 +1,8 @@
 export const JSON_SCHEMA_FORM_ID_DELIMITER = '~~~';
 
+// Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
+export const PAYLOAD_NAMESPACE = 'payload';
+
 export const AUTOCOMPLETE_OPEN_TAG = '{{';
 export const AUTOCOMPLETE_CLOSE_TAG = '}}';
 
