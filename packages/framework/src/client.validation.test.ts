@@ -3,6 +3,7 @@ import { Client } from './client';
 import { z } from 'zod';
 import { workflow } from './resources/workflow';
 import { ExecutionStateControlsInvalidError } from './errors';
+import { PostActionEnum } from './constants';
 
 describe('validation', () => {
   let client: Client;
@@ -160,7 +161,7 @@ describe('validation', () => {
 
       try {
         await client.executeWorkflow({
-          action: 'execute',
+          action: PostActionEnum.EXECUTE,
           workflowId: 'zod-validation',
           inputs: {
             foo: '341',
@@ -344,7 +345,7 @@ describe('validation', () => {
 
       try {
         await client.executeWorkflow({
-          action: 'execute',
+          action: PostActionEnum.EXECUTE,
           workflowId: 'json-schema-validation',
           inputs: {
             foo: '341',
