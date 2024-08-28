@@ -4,7 +4,7 @@ const redirectSchema = {
   type: 'object',
   properties: {
     url: { type: 'string' },
-    target: { type: 'string', enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'] },
+    target: { type: 'string', enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'], default: '_blank' },
   },
   required: ['url'],
   additionalProperties: false,
