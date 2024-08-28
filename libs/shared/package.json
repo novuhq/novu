@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "2.0.0-canary.2",
+  "version": "2.0.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
