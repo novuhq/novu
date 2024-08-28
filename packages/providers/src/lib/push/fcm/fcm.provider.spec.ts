@@ -29,7 +29,6 @@ vi.mock(import('firebase-admin/messaging'), async (importOriginal) => {
       return {
         send: vi.fn(),
         sendEach: vi.fn(),
-        sendEachForMulticast: vi.fn(),
         sendAll: vi.fn(),
         sendEachForMulticast,
         sendToDevice: vi.fn(),
