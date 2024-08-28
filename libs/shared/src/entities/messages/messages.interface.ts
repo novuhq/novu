@@ -29,7 +29,7 @@ export interface IMessage {
   subject?: string;
 }
 
-type UrlTarget = '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
+export type UrlTarget = '_self' | '_blank' | '_parent' | '_top' | '_unfencedTop';
 export interface IMessageCTA {
   type: ChannelCTATypeEnum;
   data: {
