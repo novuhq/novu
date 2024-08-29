@@ -11,7 +11,7 @@ export const PACKAGE_JSON = `{
     "react-dom": "^18.2.0",
     "express": "^4.19.2",
     "vite-express": "*",
-    "@novu/framework": "2.0.0-canary.4",
+    "@novu/framework": "2.0.0",
     "@react-email/components": "^0.0.22",
     "tsx": "^4.3.0",
     "typescript": "^5.3.2",
