@@ -20,8 +20,8 @@ import {
 } from '@novu/application-generic';
 
 import { ApiExcludeController } from '@nestjs/swagger';
-import { PreferencesDto } from './dtos/preferences.dto';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
+import { PreferencesActorEnum } from '@novu/dal';
 
 @Controller('/preferences')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -31,7 +31,7 @@ export class PreferencesController {
 
   @Get('/')
   @UseGuards(UserAuthGuard)
-  async get(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string): Promise<PreferencesDto> {
+  async get(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
     return this.getPreferences.execute(
       GetPreferencesCommand.create({
         templateId: workflowId,
@@ -43,7 +43,7 @@ export class PreferencesController {
 
   @Post('/')
   @UseGuards(UserAuthGuard)
-  async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData): Promise<PreferencesDto> {
+  async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
     return this.upsertPreferences.execute(
       UpsertPreferencesCommand.create({
         environmentId: user.environmentId,
@@ -51,6 +51,7 @@ export class PreferencesController {
         userId: user._id,
         preferences: data.preferences,
         templateId: data.workflowId,
+        actor: PreferencesActorEnum.USER,
       })
     );
   }
