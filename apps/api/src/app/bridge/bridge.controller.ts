@@ -15,9 +15,16 @@ import {
 } from '@nestjs/common';
 
 import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
-import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  ExternalApiAccessible,
+  UserAuthGuard,
+  UserSession,
+  WritePreferences,
+  WritePreferencesCommand,
+} from '@novu/application-generic';
 
-import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository, PreferencesActorEnum } from '@novu/dal';
 import { ControlVariablesRepository } from '@novu/dal';
 
 import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
@@ -44,7 +51,8 @@ export class BridgeController {
     private controlVariablesRepository: ControlVariablesRepository,
     private storeControlVariables: StoreControlVariables,
     private previewStep: PreviewStep,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private writePreferencesUsecase: WritePreferences
   ) {}
 
   @Get('/status')
@@ -204,6 +212,26 @@ export class BridgeController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+      })
+    );
+  }
+
+  @Put('/preferences/:workflowId')
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
+  async writePreferences(
+    @Param('workflowId') workflowId: string,
+    @UserSession() user: UserSessionData,
+    @Body() body: WritePreferencesCommand['preferences']
+  ) {
+    return this.writePreferencesUsecase.execute(
+      WritePreferencesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId: workflowId,
+        actor: PreferencesActorEnum.USER,
+        preferences: body,
       })
     );
   }

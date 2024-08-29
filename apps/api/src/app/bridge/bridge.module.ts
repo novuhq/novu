@@ -8,11 +8,13 @@ import {
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
+  WritePreferences,
 } from '@novu/application-generic';
 
 import { BridgeController } from './bridge.controller';
 import { USECASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
+import { PreferencesRepository } from '@novu/dal';
 
 const PROVIDERS = [
   CreateWorkflow,
@@ -22,6 +24,8 @@ const PROVIDERS = [
   DeleteMessageTemplate,
   CreateChange,
   UpdateChange,
+  WritePreferences,
+  PreferencesRepository,
 ];
 
 @Module({

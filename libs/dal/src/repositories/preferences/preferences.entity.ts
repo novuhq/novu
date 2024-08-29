@@ -36,11 +36,11 @@ export class PreferencesEntity {
 
   _environmentId: EnvironmentId;
 
-  _subscriberId: SubscriberId;
+  _subscriberId?: SubscriberId;
 
-  _userId: UserId;
+  _userId?: UserId;
 
-  _templateId: string;
+  _templateId?: string;
 
   actor: PreferencesActorEnum;
 

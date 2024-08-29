@@ -7,11 +7,11 @@ export class WritePreferencesCommand extends EnvironmentCommand {
   @IsDefined()
   readonly preferences: DiscoverWorkflowOutputPreferences;
 
-  readonly subscriberId: string;
+  readonly subscriberId?: string;
 
-  readonly userId: string;
+  readonly userId?: string;
 
-  readonly templateId: string;
+  readonly templateId?: string;
 
   @IsEnum(PreferencesActorEnum)
   readonly actor: PreferencesActorEnum;

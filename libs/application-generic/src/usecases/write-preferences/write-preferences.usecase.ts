@@ -62,6 +62,7 @@ export class WritePreferences {
       {
         $set: {
           preferences: command.preferences,
+          _userId: command.userId,
         },
       }
     );
@@ -78,7 +79,6 @@ export class WritePreferences {
     const found = await this.preferencesRepository.findOne(
       {
         _subscriberId: command.subscriberId,
-        _userId: command.userId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.templateId,
