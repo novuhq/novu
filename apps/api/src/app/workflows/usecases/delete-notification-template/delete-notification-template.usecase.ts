@@ -31,6 +31,7 @@ export class DeleteNotificationTemplate {
     private analyticsService: AnalyticsService
   ) {}
 
+  // eslint-disable-next-line deprecation/deprecation
   async execute(command: DeleteNotificationTemplateCommand) {
     try {
       const notificationTemplate = await this.notificationTemplateRepository.findOne({

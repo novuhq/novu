@@ -10,7 +10,6 @@ import {
 } from 'class-validator';
 import { ChatProviderIdEnum } from '@novu/shared';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function IsNotEmpty(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({

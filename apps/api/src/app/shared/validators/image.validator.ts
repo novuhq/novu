@@ -1,6 +1,5 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function IsImageUrl(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({

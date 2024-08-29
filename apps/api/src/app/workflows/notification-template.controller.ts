@@ -126,6 +126,7 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: UserSessionData, @Param('templateId') templateId: string): Promise<boolean> {
     return this.deleteTemplateByIdUsecase.execute(
+      // eslint-disable-next-line deprecation/deprecation
       DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,

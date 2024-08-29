@@ -1,5 +1,4 @@
 /* eslint-disable no-restricted-imports */
-/* eslint-disable @typescript-eslint/naming-convention */
 
 import { applyDecorators } from '@nestjs/common';
 // eslint-disable-next-line import/no-namespace

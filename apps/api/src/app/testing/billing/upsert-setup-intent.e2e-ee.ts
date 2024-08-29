@@ -8,7 +8,7 @@ describe('Upsert setup intent', () => {
   if (!eeBilling.UpsertSetupIntent) {
     throw new Error("UpsertSetupIntent doesn't exist");
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { UpsertSetupIntent } = eeBilling;
 
   const stubObject = {

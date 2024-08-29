@@ -15,7 +15,7 @@ describe('CORS Configuration', () => {
     it('should allow all origins', () => {
       const callbackSpy = spy();
 
-      // @ts-ignore
+      // @ts-expect-error - corsOptionsDelegate is not typed correctly
       corsOptionsDelegate({ url: '/v1/test' }, callbackSpy);
 
       expect(callbackSpy.calledOnce).to.be.ok;
@@ -43,7 +43,7 @@ describe('CORS Configuration', () => {
       it('should allow only front base url and widget url', () => {
         const callbackSpy = spy();
 
-        // @ts-ignore
+        // @ts-expect-error - corsOptionsDelegate is not typed correctly
         corsOptionsDelegate({ url: '/v1/test' }, callbackSpy);
 
         expect(callbackSpy.calledOnce).to.be.ok;
@@ -58,7 +58,7 @@ describe('CORS Configuration', () => {
       it('widget routes should be wildcarded', () => {
         const callbackSpy = spy();
 
-        // @ts-ignore
+        // @ts-expect-error - corsOptionsDelegate is not typed correctly
         corsOptionsDelegate({ url: '/v1/widgets/test' }, callbackSpy);
 
         expect(callbackSpy.calledOnce).to.be.ok;
@@ -69,7 +69,7 @@ describe('CORS Configuration', () => {
       it('inbox routes should be wildcarded', () => {
         const callbackSpy = spy();
 
-        // @ts-ignore
+        // @ts-expect-error - corsOptionsDelegate is not typed correctly
         corsOptionsDelegate({ url: '/v1/inbox/session' }, callbackSpy);
 
         expect(callbackSpy.calledOnce).to.be.ok;
@@ -81,7 +81,7 @@ describe('CORS Configuration', () => {
         it('should allow all origins for dev environment from pr preview', () => {
           const callbackSpy = spy();
 
-          // @ts-ignore
+          // @ts-expect-error - corsOptionsDelegate is not typed correctly
           corsOptionsDelegate(
             {
               url: '/v1/test',

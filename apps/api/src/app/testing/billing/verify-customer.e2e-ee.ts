@@ -11,7 +11,7 @@ describe('VerifyCustomer', () => {
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { VerifyCustomer } = eeBilling;
 
   const getOrganizationAdminUserStub = {

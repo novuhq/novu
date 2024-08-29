@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import { ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { applyDecorators, Type } from '@nestjs/common';
 import { customResponseDecorators } from './swagger/responses.decorator';

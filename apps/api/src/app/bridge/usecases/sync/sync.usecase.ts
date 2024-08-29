@@ -136,9 +136,11 @@ export class Sync {
               name: workflow.workflowId,
               steps: this.mapSteps(workflow.steps, workflowExist),
               inputs: {
+                // eslint-disable-next-line deprecation/deprecation
                 schema: workflow.controls?.schema || workflow.inputs.schema,
               },
               controls: {
+                // eslint-disable-next-line deprecation/deprecation
                 schema: workflow.controls?.schema || workflow.inputs.schema,
               },
               rawData: workflow,
@@ -177,10 +179,13 @@ export class Sync {
               type: WorkflowTypeEnum.BRIDGE,
               steps: this.mapSteps(workflow.steps),
               /** @deprecated */
+              // eslint-disable-next-line deprecation/deprecation
               inputs: {
+                // eslint-disable-next-line deprecation/deprecation
                 schema: workflow.controls?.schema || workflow.inputs.schema,
               },
               controls: {
+                // eslint-disable-next-line deprecation/deprecation
                 schema: workflow.controls?.schema || workflow.inputs.schema,
               },
               rawData: workflow as unknown as Record<string, unknown>,

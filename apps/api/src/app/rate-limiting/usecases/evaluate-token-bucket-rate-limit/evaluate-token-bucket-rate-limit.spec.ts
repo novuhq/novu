@@ -300,7 +300,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
         const bins = 10;
 
         // Find the maximum duration to scale the histogram
-        const maxDuration = Math.max(...results.map((r) => r.duration));
+        const maxDuration = Math.max(...results.map((result) => result.duration));
 
         // Initialize an array for the histogram bins
         const histogram = Array(bins).fill(0);
@@ -356,9 +356,9 @@ describe('EvaluateTokenBucketRateLimit', () => {
                 const refillPerWindow = (maxTokens * mockProportionRefill) / mockWindowDuration;
 
                 before(async () => {
-                  const cacheService = await inMemoryCacheService.useFactory();
+                  const cacheServiceInitialized = await inMemoryCacheService.useFactory();
                   testContext = {
-                    redis: EvaluateTokenBucketRateLimit.getCacheClient(cacheService),
+                    redis: EvaluateTokenBucketRateLimit.getCacheClient(cacheServiceInitialized),
                   };
 
                   const proms = Array.from({ length: totalRequests }).map(async (_val, index) => {

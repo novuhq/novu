@@ -46,13 +46,17 @@ export class TestingController {
     return await this.createSessionUsecase.execute(command);
   }
 
-  // @Post('/seed')
-  // async seedData(@Body() body: SeedDataBodyDto): Promise<{ password_user: UserEntity }> {
-  //   if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
-  //   const command = SeedDataCommand.create({});
+  /*
+   * @Post('/seed')
+   * async seedData(@Body() body: SeedDataBodyDto): Promise<{ password_user: UserEntity }> {
+   *   if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+   *   const command = SeedDataCommand.create({});
+   */
 
-  //   return await this.seedDataUsecase.execute(command);
-  // }
+  /*
+   *   return await this.seedDataUsecase.execute(command);
+   * }
+   */
 
   @ExternalApiAccessible()
   @UserAuthentication()

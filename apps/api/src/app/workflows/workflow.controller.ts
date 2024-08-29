@@ -131,6 +131,7 @@ export class WorkflowController {
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteWorkflowByIdUsecase.execute(
+      // eslint-disable-next-line deprecation/deprecation
       DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,

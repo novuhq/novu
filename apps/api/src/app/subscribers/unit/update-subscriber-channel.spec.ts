@@ -204,7 +204,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findOne({
+    const updatedSubscriber = await subscriberRepository.findOne({
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
@@ -239,7 +239,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findOne({
+    const updatedSubscriber = await subscriberRepository.findOne({
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
@@ -274,7 +274,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findOne({
+    const updatedSubscriber = await subscriberRepository.findOne({
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
@@ -441,7 +441,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+    const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
     const addedFcmToken = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
 

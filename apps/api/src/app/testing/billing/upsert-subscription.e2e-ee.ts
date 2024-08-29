@@ -9,7 +9,7 @@ describe('UpsertSubscription', () => {
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { UpsertSubscription, GetPrices, UpsertSubscriptionCommand } = eeBilling;
 
   const stripeStub = {

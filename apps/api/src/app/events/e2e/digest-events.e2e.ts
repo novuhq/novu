@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import { expect } from 'chai';
 import { getTime, parseISO } from 'date-fns';
