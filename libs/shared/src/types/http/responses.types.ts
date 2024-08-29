@@ -1,4 +1,4 @@
-// eslint-disable-next-line no-restricted-imports, import/no-namespace
+// eslint-disable-next-line import/no-namespace
 import * as nestSwagger from '@nestjs/swagger';
 
 type NestJsExport = keyof typeof nestSwagger;
