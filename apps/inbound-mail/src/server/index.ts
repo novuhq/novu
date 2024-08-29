@@ -18,7 +18,6 @@ import logger from './logger';
 
 const LOG_CONTEXT = 'Mailin';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 const inboundMailService = new InboundMailService();
