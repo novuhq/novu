@@ -7,11 +7,11 @@ export class UpsertPreferencesCommand extends EnvironmentCommand {
   @IsDefined()
   readonly preferences: DiscoverWorkflowOutputPreferences;
 
-  readonly subscriberId?: string;
+  subscriberId?: string;
 
-  readonly userId?: string;
+  userId?: string;
 
-  readonly templateId?: string;
+  templateId?: string;
 
   @IsEnum(PreferencesActorEnum)
   readonly actor: PreferencesActorEnum;
