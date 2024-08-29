@@ -294,7 +294,7 @@ export class SendMessagePush extends SendMessageBase {
     content: string,
     overrides: object,
     step: IPushOptions['step']
-  ): Promise<{ success: false; error: Error } | { success: true }> {
+  ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
@@ -324,7 +324,7 @@ export class SendMessagePush extends SendMessageBase {
         })
       );
 
-      return { success: true };
+      return { success: true, error: undefined };
     } catch (e) {
       await this.sendErrorStatus(
         message,
