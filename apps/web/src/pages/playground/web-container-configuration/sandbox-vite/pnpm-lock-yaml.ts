@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 export const PNPM_LOCK_YAML = `lockfileVersion: '6.0'
 
 settings:
