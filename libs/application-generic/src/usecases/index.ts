@@ -42,5 +42,5 @@ export * from './workflow';
 export * from './message-template';
 export * from './subscribers';
 export * from './execute-bridge-request';
-export * from './write-preferences';
+export * from './upsert-preferences';
 export * from './get-preferences';

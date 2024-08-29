@@ -8,7 +8,7 @@ import {
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
-  WritePreferences,
+  UpsertPreferences,
 } from '@novu/application-generic';
 
 import { BridgeController } from './bridge.controller';
@@ -24,7 +24,7 @@ const PROVIDERS = [
   DeleteMessageTemplate,
   CreateChange,
   UpdateChange,
-  WritePreferences,
+  UpsertPreferences,
   PreferencesRepository,
 ];
 
