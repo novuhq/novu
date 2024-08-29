@@ -10,3 +10,6 @@ logs
 
 # Misc
 .DS_Store
+
+# Vitest
+tsconfig.vitest-temp.json
