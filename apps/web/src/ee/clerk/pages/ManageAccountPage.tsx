@@ -59,8 +59,11 @@ export default function ManageAccountPage() {
                 color: 'var(--nv-colors-typography-text-primary) !important',
                 fontSize: 'var(--nv-font-sizes-150) !important',
                 lineHeight: 'var(--nv-line-heights-175) !important',
-                opacity: '1 !important',
-                padding: '24px !important',
+                opacity: 'var(--nv-opacity-100) !important',
+                margin: '0 !important',
+                border: '0 !important',
+                padding:
+                  'var(--nv-spacing-paddings-page-horizontal) var(--nv-spacing-paddings-page-vertical) !important',
                 '&:hover': {
                   color: 'var(--nv-colors-typography-text-primary) !important',
                   backgroundColor: 'unset !important',
@@ -123,24 +126,22 @@ export default function ManageAccountPage() {
             </Tabs.Panel>
           )}
           <Tabs.Panel value="billing">
-            <div className={css({ padding: '1.75rem 1.5rem 1.75rem 2rem' })}>
-              <Title
-                marginBottom="150"
-                className={css({
-                  fontFamily: 'var(--nv-fonts-system)',
-                  fontWeight: 'var(--nv-font-weights-strong)',
-                  fontSize: 'var(--nv-font-sizes-125)',
-                  letterSpacing: '0',
-                  textDecoration: 'none',
-                  lineHeight: 'var(--nv-line-heights-175)',
-                })}
-                variant={'page'}
-                color={headerColor}
-              >
-                Billing plans
-              </Title>
-              <BillingPage />
-            </div>
+            <Title
+              marginBottom="150"
+              className={css({
+                fontFamily: 'var(--nv-fonts-system)',
+                fontWeight: 'var(--nv-font-weights-strong)',
+                fontSize: 'var(--nv-font-sizes-125)',
+                letterSpacing: '0',
+                textDecoration: 'none',
+                lineHeight: 'var(--nv-line-heights-175)',
+              })}
+              variant={'page'}
+              color={headerColor}
+            >
+              Billing plans
+            </Title>
+            <BillingPage />
           </Tabs.Panel>
         </Tabs>
       </>

@@ -16,7 +16,12 @@ const CLERK_LOCALIZATION = {
       security: 'Access security',
     },
   },
-
+  organizationProfile: {
+    membersPage: {
+      requestsTab: { autoSuggestions: { headerTitle: '' } },
+      invitationsTab: { autoInvitations: { headerTitle: '' } },
+    },
+  },
   userButton: {
     action__signOut: 'Log out',
     action__signOutAll: 'Log out from all accounts',
@@ -38,12 +43,12 @@ const CLERK_MODAL_ELEMENT = {
     color: 'var(--nv-colors-typography-text-secondary)',
   },
   userPreviewAvatarContainer: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
   },
   userPreviewAvatarBox: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
   },
   userButtonPopoverFooter: {
     borderStyle: 'none',
@@ -64,24 +69,20 @@ const CLERK_MODAL_ELEMENT = {
     borderWidth: '0 !important',
   },
   button__manageAccount: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'var(--nv-colors-surface-panel-section)',
     borderStyle: 'none',
     boxShadow: 'unset !important',
     fontSize: 'var(--nv-font-sizes-75)',
-    borderRadius: '6px',
-    width: '120px !important',
+    borderRadius: 'var(--nv-radii-75)',
     height: '24px',
-    padding: '0px',
   },
   button__signOut: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'var(--nv-colors-surface-panel-section)',
     borderStyle: 'none',
     boxShadow: 'unset !important',
     fontSize: 'var(--nv-font-sizes-75)',
-    borderRadius: '6px',
-    width: '120px !important',
+    borderRadius: 'var(--nv-radii-75)',
     height: '24px',
-    padding: '0px',
   },
   organizationPreviewMainIdentifier: {
     lineHeight: 'var(--nv-line-heights-125)',
@@ -91,13 +92,13 @@ const CLERK_MODAL_ELEMENT = {
     color: 'var(--nv-colors-typography-text-secondary)',
   },
   userButtonPopoverActionButtonIconBox__addAccount: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
     flex: 'none',
   },
   userButtonPopoverActionButtonIcon__addAccount: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
     '& circle': {
       r: 18,
       'stroke-opacity': 0,
@@ -116,24 +117,23 @@ const CLERK_MODAL_ELEMENT = {
     },
   },
   userButtonPopoverActionButtonIconBox__signOutAll: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-icon-24)',
+    height: 'var(--nv-sizes-icon-24)',
+    margin: '0 var(--nv-spacing-margins-icons-icon20-icon20)',
     flex: 'none',
-    gap: 'none',
   },
   userButtonPopoverActionButtonIcon__signOutAll: {
-    width: '24px',
-    height: '24px',
-    //margin: '16px',
+    width: 'var(--nv-sizes-xs)',
+    height: 'var(--nv-sizes-xs)',
   },
   organizationSwitcherPopoverActionButtonIconBox: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
     flex: 'none',
   },
   organizationSwitcherPopoverActionButtonIcon: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
     '& circle': {
       r: 18,
       'stroke-opacity': 0,
@@ -148,7 +148,7 @@ const CLERK_MODAL_ELEMENT = {
     fontSize: 'var(--nv-font-sizes-88)',
     fontWeight: 'var(--nv-font-weights-strong)',
     gap: '12px',
-    padding: '16px 20px 16px 20px',
+    padding: 'var(--nv-spacing-100) var(--nv-spacing-125)',
     '&:hover': {
       color: 'var(--nv-colors-typography-text-main) !important',
     },
@@ -157,8 +157,8 @@ const CLERK_MODAL_ELEMENT = {
     '.cl-organizationPreview': {
       gap: '12px',
       '.cl-organizationPreviewAvatarContainer > .cl-organizationPreviewAvatarBox': {
-        width: '20px',
-        height: '20px',
+        width: 'var(--nv-sizes-icon-20)',
+        height: 'var(--nv-sizes-icon-20)',
       },
     },
   },
@@ -172,8 +172,8 @@ const CLERK_MODAL_ELEMENT = {
   },
 
   organizationPreviewAvatarBox: {
-    width: '40px',
-    height: '40px',
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
   },
 
   modalContent: {
@@ -188,6 +188,13 @@ const CLERK_MODAL_ELEMENT = {
   },
   scrollBox: {
     backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    padding: '0',
+  },
+  pageScrollBox: {
+    padding: '0',
+  },
+  profileSectionItemList__organizationDomains: {
+    display: 'none',
   },
   userButtonPopoverMain: {
     backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
@@ -221,7 +228,7 @@ const CLERK_MODAL_ELEMENT = {
     fontSize: 'var(--nv-font-sizes-88)',
     paddingTop: 'var(--nv-spacing-50)',
     paddingBottom: 'var(--nv-spacing-50)',
-    opacity: '1',
+    opacity: 'var(--nv-opacity-100)',
     color: 'var(--nv-colors-typography-text-secondary)',
     '&.cl-active': {
       color: 'var(--nv-colors-typography-text-main)',
@@ -229,24 +236,24 @@ const CLERK_MODAL_ELEMENT = {
       '& svg': {
         color: 'var(--nv-colors-typography-text-main)',
         fill: 'var(--nv-colors-typography-text-main)',
-        opacity: '1',
+        opacity: 'var(--nv-opacity-100)',
       },
     },
     '&:hover, &:focus, &:active': {
       color: 'var(--nv-colors-typography-text-main)',
       background: 'var(--nv-colors-surface-page)',
-      opacity: '1',
+      opacity: 'var(--nv-opacity-100)',
       '& svg': {
         color: 'var(--nv-colors-typography-text-main)',
         fill: 'var(--nv-colors-typography-text-main)',
-        opacity: '1',
+        opacity: 'var(--nv-opacity-100)',
       },
     },
   },
   navbarButtonIcon: {
     height: 'var(--nv-sizes-125)',
     width: 'var(--nv-sizes-125)',
-    opacity: '1',
+    opacity: 'var(--nv-opacity-100)',
   },
   impersonationFab: {
     backgroundColor: 'var(--nv-colors-surface-page)',

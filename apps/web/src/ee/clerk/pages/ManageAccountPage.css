@@ -1,46 +1,33 @@
 .mantine-Modal-modal {
-  border-radius: 12px;
+  border-radius: var(--nv-radii-150);
   background-color: var(--nv-colors-surface-panel);
-  padding: 0px;
+  padding: 0;
   min-height: 100%;
-  max-height: 100%;
 }
 
 .mantine-Tabs-panel {
-  padding: var(--semantic-paddings-popover-vertical, 24px) var(--semantic-paddings-popover-horisontal, 24px);
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--semantic-margins-layout-PageTitleBottom, 24px);
-  flex: 1 0 0;
-  align-self: stretch;
-  border-radius: 12px;
+  padding: var(--nv-spacing-paddings-page-horizontal) var(--nv-spacing-paddings-page-vertical);
+  border-radius: var(--nv-radii-150);
   background: var(--nv-colors-surface-panel-subsection);
   overflow-y: auto;
   /* TODO: these 2 are wrong, need to calculate based on available parent size */
-  max-height: 807px;
-  min-height: 807px;
+  min-height: 938px;
+  max-height: 938px;
 }
 
 .mantine-Modal-header {
   margin-bottom: 0px;
-  margin-right: 16px;
-  background: var(--nv-colors-surface-panel);
-}
-
-.mantine-Modal-close {
-  margin-right: 12px;
 }
 
 .mantine-Tabs-tabsList {
   border-right: unset;
   background: var(--nv-colors-surface-panel);
-  border-radius: 12px;
-  border-bottom-right-radius: 0px;
+  border-radius: var(--nv-radii-150);
 }
 
 .mantine-Modal-close {
   position: fixed;
-  right: 0px;
+  right: 12px;
   top: 10px;
   z-index: 2;
 }
@@ -50,9 +37,9 @@
   font-family: var(--nv-fonts-system);
   font-size: var(--nv-font-sizes-88);
   color: var(--nv-colors-typography-text-secondary);
-  padding: 8px 10px;
-  margin: 4px;
-  border-radius: 6px;
+  padding: var(--nv-spacing-paddings-components-button-horizontal-xs) var(--nv-spacing-paddings-components-button-horizontal-s);
+  margin: var(--nv-spacing-margins-menu-item-item);
+  border-radius: var(--nv-radii-75);
   min-width: 204px;
 
   &:hover {
@@ -79,5 +66,4 @@
   font-family: inherit;
   font-size: inherit;
   color: inherit;
-
 }
