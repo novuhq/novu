@@ -152,7 +152,6 @@ export const serve = (
            * We also don't know if the current environment has a native
            * `Response` object, so we'll grab that first.
            */
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           const Res = getResponse();
 
           return new Res(body, { status, headers });
