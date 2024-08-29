@@ -1,6 +1,7 @@
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import _import from 'eslint-plugin-import';
 import promise from 'eslint-plugin-promise';
+import unusedImports from 'eslint-plugin-unused-imports';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import prettier from 'eslint-plugin-prettier';
 import tsParser from '@typescript-eslint/parser';
@@ -12,31 +13,25 @@ import { FlatCompat } from '@eslint/eslintrc';
 /**
  * This file was migrated from eslintrc.js to eslint.config.mjs using the following command:
  * `npx @eslint/migrate-config .eslintrc.js`
- * 
- * After better compatability for Eslint Flat Config is present in the Eslint plugin
+ *
+ * After better compatibility for Eslint Flat Config is present in the Eslint plugin
  * ecosystem, we should remove `@eslint/compat` and the `fixupConfigRules` and
  * `fixupPluginRules` functions.
  *
  * @see https://github.com/eslint/eslint/issues/18010
  */
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 const compat = new FlatCompat({
-  baseDirectory: __dirname,
+  baseDirectory: dirname,
   recommendedConfig: js.configs.recommended,
   allConfig: js.configs.all,
 });
 
 export default [
   {
-    ignores: [
-      '**/*.json',
-      '**/jest.config.js',
-      '**/jest.setup.js',
-      '**/node_modules',
-      '**/.DS_Store',
-    ],
+    ignores: ['**/*.json', '**/jest.config.js', '**/jest.setup.js', '**/node_modules', '**/.DS_Store'],
   },
   ...fixupConfigRules(
     compat.extends(
@@ -64,7 +59,7 @@ export default [
 
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: dirname,
       },
     },
 
@@ -203,6 +198,22 @@ export default [
           endOfLine: 'auto',
         },
       ],
+    },
+  },
+  {
+    files: ['packages/framework/**'],
+    plugins: {
+      'unused-imports': fixupPluginRules(unusedImports),
+    },
+    rules: {
+      'max-len': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
+      'import/prefer-default-export': 0,
+      'no-else-return': 0,
+      'sonarjs/prefer-immediate-return': 0,
+      'const-case/uppercase': 0,
+      'unicorn/no-array-reduce': 0,
+      'unused-imports/no-unused-imports': 'error',
     },
   },
 ];

@@ -5,6 +5,7 @@ import { discoverStep } from './discover-step';
 
 export function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type: StepType): CustomStep {
   return async (stepId, resolve, options = {}) => {
+    // eslint-disable-next-line deprecation/deprecation
     const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
     const outputSchema = options?.outputSchema || emptySchema;
 

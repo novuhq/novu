@@ -13,6 +13,7 @@ export function discoverChannelStepFactory(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): ChannelStep<ChannelStepEnum, any, any> {
   return async (stepId, resolve, options = {}) => {
+    // eslint-disable-next-line deprecation/deprecation
     const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
 
     const step: DiscoverStepOutput = {

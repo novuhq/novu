@@ -1,6 +1,7 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
+import {} from './types';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
@@ -383,6 +384,7 @@ export class Client {
       if (
         event.action === 'execute' && // TODO: move this validation to the handler layer
         !event.payload &&
+        // eslint-disable-next-line deprecation/deprecation
         !event.data
       ) {
         throw new ExecutionEventPayloadInvalidError(event.workflowId, {
@@ -452,6 +454,7 @@ export class Client {
     event: Event,
     workflow: DiscoverWorkflowOutput
   ): Promise<Record<string, unknown>> {
+    // eslint-disable-next-line deprecation/deprecation
     let payload = event.payload || event.data;
     if (event.action === 'preview') {
       const mockResult = this.mock(workflow.payload.schema);
@@ -645,9 +648,11 @@ export class Client {
       const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
       const compiledString = await this.templateEngine.render(templateString, {
+        // eslint-disable-next-line deprecation/deprecation
         payload: event.payload || event.data,
         subscriber: event.subscriber,
         // Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
+        // eslint-disable-next-line deprecation/deprecation
         ...(event.payload || event.data),
       });
 
@@ -665,6 +670,7 @@ export class Client {
    * @returns The controls for the step
    */
   private async createStepControls(step: DiscoverStepOutput, event: Event): Promise<Record<string, unknown>> {
+    // eslint-disable-next-line deprecation/deprecation
     const stepControls = event.controls || event.inputs;
 
     const validatedControls = await this.validate(

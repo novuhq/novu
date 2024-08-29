@@ -89,13 +89,16 @@ export function workflow<
        * TODO: Transformation added for backwards compatibility, remove this additional transform after we
        * start using `data.schema` and `control.schema` in UI.
        */
+      // eslint-disable-next-line deprecation/deprecation
       inputSchema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
+      // eslint-disable-next-line deprecation/deprecation
       controlSchema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
       payloadSchema: transformSchema(options.payloadSchema || emptySchema),
     },
     steps: [],
     code: execute.toString(),
     /** @deprecated */
+    // eslint-disable-next-line deprecation/deprecation
     data: {
       schema: transformSchema(options.payloadSchema || emptySchema),
       unknownSchema: options.payloadSchema || emptySchema,
@@ -105,12 +108,17 @@ export function workflow<
       unknownSchema: options.payloadSchema || emptySchema,
     },
     /** @deprecated */
+    // eslint-disable-next-line deprecation/deprecation
     inputs: {
+      // eslint-disable-next-line deprecation/deprecation
       schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
+      // eslint-disable-next-line deprecation/deprecation
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     controls: {
+      // eslint-disable-next-line deprecation/deprecation
       schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
+      // eslint-disable-next-line deprecation/deprecation
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     tags: options.tags || [],
