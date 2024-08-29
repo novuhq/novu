@@ -34,11 +34,8 @@ export default [
       '**/*.json',
       '**/jest.config.js',
       '**/jest.setup.js',
-      '**/.grunt',
-      '**/.lock-wscript',
       '**/node_modules',
       '**/.DS_Store',
-      '**/playground/',
     ],
   },
   ...fixupConfigRules(
