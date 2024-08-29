@@ -15,16 +15,9 @@ import {
 } from '@nestjs/common';
 
 import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
-import {
-  AnalyticsService,
-  ExternalApiAccessible,
-  UserAuthGuard,
-  UserSession,
-  UpsertPreferences,
-  UpsertPreferencesCommand,
-} from '@novu/application-generic';
+import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 
-import { EnvironmentRepository, NotificationTemplateRepository, PreferencesActorEnum } from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlVariablesRepository } from '@novu/dal';
 
 import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
@@ -51,8 +44,7 @@ export class BridgeController {
     private controlVariablesRepository: ControlVariablesRepository,
     private storeControlVariables: StoreControlVariables,
     private previewStep: PreviewStep,
-    private analyticsService: AnalyticsService,
-    private upsertPreferencesUsecase: UpsertPreferences
+    private analyticsService: AnalyticsService
   ) {}
 
   @Get('/status')
@@ -212,26 +204,6 @@ export class BridgeController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-      })
-    );
-  }
-
-  @Put('/preferences/:workflowId')
-  @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
-  async writePreferences(
-    @Param('workflowId') workflowId: string,
-    @UserSession() user: UserSessionData,
-    @Body() body: UpsertPreferencesCommand['preferences']
-  ) {
-    return this.upsertPreferencesUsecase.execute(
-      UpsertPreferencesCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        templateId: workflowId,
-        actor: PreferencesActorEnum.USER,
-        preferences: body,
       })
     );
   }
