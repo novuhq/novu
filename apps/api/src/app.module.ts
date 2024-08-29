@@ -41,6 +41,7 @@ import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { isClerkEnabled } from '@novu/shared';
 import { BridgeModule } from './app/bridge/bridge.module';
+import { PreferencesModule } from './app/preferences';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -100,6 +101,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   ProfilingModule.register(packageJson.name),
   TracingModule.register(packageJson.name, packageJson.version),
   BridgeModule,
+  PreferencesModule,
 ];
 
 const enterpriseModules = enterpriseImports();
