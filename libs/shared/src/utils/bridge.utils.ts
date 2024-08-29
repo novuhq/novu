@@ -1,5 +1,5 @@
 import { ButtonTypeEnum, IMessage, IMessageCTA } from '../entities/messages';
-import { ChannelCTATypeEnum, WorkflowTypeEnum } from '../types';
+import { ChannelCTATypeEnum, Redirect, WorkflowTypeEnum } from '../types';
 
 export const isBridgeWorkflow = (workflowType?: WorkflowTypeEnum): boolean => {
   return workflowType === WorkflowTypeEnum.BRIDGE || workflowType === WorkflowTypeEnum.ECHO;
@@ -19,15 +19,17 @@ type InAppOutput = {
   avatar?: string;
   primaryAction?: {
     label: string;
-    url?: string;
+    redirect?: Redirect;
   };
   secondaryAction?: {
     label: string;
-    url?: string;
+    redirect?: Redirect;
   };
+  data?: Record<string, unknown>;
+  redirect?: Redirect;
 };
 
-type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar'>;
+type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar' | 'data'>;
 
 /**
  * This function maps the V2 InAppOutput to the V1 MessageEntity.
@@ -35,7 +37,10 @@ type InAppMessage = Pick<IMessage, 'subject' | 'content' | 'cta' | 'avatar'>;
 export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
   const cta = {
     type: ChannelCTATypeEnum.REDIRECT,
-    data: {},
+    data: {
+      url: outputs?.redirect?.url,
+      target: outputs?.redirect?.target,
+    },
     action: {
       result: {},
       buttons: [
@@ -44,7 +49,8 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
               {
                 type: ButtonTypeEnum.PRIMARY,
                 content: outputs.primaryAction.label,
-                url: outputs.primaryAction.url,
+                url: outputs.primaryAction.redirect?.url,
+                target: outputs?.primaryAction.redirect?.target,
               },
             ]
           : []),
@@ -53,7 +59,8 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
               {
                 type: ButtonTypeEnum.SECONDARY,
                 content: outputs.secondaryAction.label,
-                url: outputs.secondaryAction.url,
+                url: outputs.secondaryAction.redirect?.url,
+                target: outputs?.secondaryAction.redirect?.target,
               },
             ]
           : []),
@@ -66,5 +73,6 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
     content: outputs?.body || '',
     cta,
     avatar: outputs?.avatar,
+    data: outputs?.data,
   } satisfies InAppMessage;
 };

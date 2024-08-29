@@ -5,6 +5,7 @@ import type { Execute, WorkflowOptions } from './workflow.types';
 import type { Awaitable, Prettify } from './util.types';
 import type { EventTriggerParams, EventTriggerResult } from './event.types';
 import type { WithPassthrough } from './provider.types';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 
@@ -49,6 +50,18 @@ export type DiscoverStepOutput = {
   options: StepOptions;
 };
 
+export type ChannelPreference = {
+  defaultValue: boolean;
+  readOnly: boolean;
+};
+
+export type DiscoverWorkflowOutputPreferences = {
+  workflow: ChannelPreference;
+  channels: {
+    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]: ChannelPreference;
+  };
+};
+
 export type DiscoverWorkflowOutput = {
   workflowId: string;
   execute: Execute<Record<string, unknown>, Record<string, unknown>>;
@@ -73,6 +86,7 @@ export type DiscoverWorkflowOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  preferences: DiscoverWorkflowOutputPreferences;
   tags: string[];
 };
 

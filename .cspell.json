@@ -52,6 +52,7 @@
     "bcast",
     "behaviour",
     "bestguess",
+    "tiptap",
     "binipdisplay",
     "bitauth",
     "bitjson",
@@ -711,7 +712,9 @@
     "Primitivestring",
     "Listofobjects",
     "Nestedobject",
-    "Listoflistofobjects"
+    "Listoflistofobjects",
+    "noopener",
+    "noreferrer"
   ],
   "flagWords": [],
   "patterns": [

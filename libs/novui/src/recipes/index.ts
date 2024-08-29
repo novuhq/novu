@@ -8,5 +8,7 @@ export * from './tabs.recipe';
 export * from './code-block.recipe';
 export * from './loading-overlay.recipe';
 export * from './json-schema-form.recipe';
+export * from './variable-suggestion-list.recipe';
+export * from './input-editor-widget.recipe';
 export * from './toggle.recipe';
 export * from './sidebar.recipe';

@@ -11,6 +11,13 @@ import { AnalyticsEventsEnum } from '../../utils';
 import { GetPreferences } from './get-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
+const mockedWorkflow = {
+  _id: '123',
+  name: 'workflow',
+  triggers: [{ identifier: '123' }],
+  critical: false,
+  tags: [],
+};
 const mockedWorkflowPreference: any = {
   template: {},
 
@@ -46,17 +53,25 @@ const mockedPreferencesResponse: any = [
   {
     level: PreferenceLevelEnum.TEMPLATE,
     workflow: {
-      critical: undefined,
-      id: undefined,
-      name: undefined,
-      tags: undefined,
-      triggers: undefined,
+      id: mockedWorkflow._id,
+      identifier: mockedWorkflow.triggers[0].identifier,
+      name: mockedWorkflow.name,
+      critical: mockedWorkflow.critical,
+      tags: mockedWorkflow.tags,
     },
     ...mockedWorkflowPreference.preference,
   },
 ];
 
-const mockedWorkflow: any = [{}];
+const mockedWorkflows: any = [
+  {
+    _id: '123',
+    name: 'workflow',
+    triggers: [{ identifier: '123' }],
+    critical: false,
+    tags: [],
+  },
+];
 
 describe('GetPreferences', () => {
   let getPreferences: GetPreferences;
@@ -112,7 +127,7 @@ describe('GetPreferences', () => {
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
     getSubscriberGlobalPreferenceMock.execute.resolves(mockedGlobalPreferences);
-    notificationTemplateRepositoryMock.getActiveList.resolves(mockedWorkflow);
+    notificationTemplateRepositoryMock.getActiveList.resolves(mockedWorkflows);
     getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
 
     const result = await getPreferences.execute(command);
@@ -136,7 +151,7 @@ describe('GetPreferences', () => {
         organizationId: command.organizationId,
         subscriberId: command.subscriberId,
         environmentId: command.environmentId,
-        template: mockedWorkflow[0],
+        template: mockedWorkflow,
         subscriber: mockedSubscriber,
       },
     ]);

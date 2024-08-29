@@ -4,7 +4,7 @@ import { useNotificationsInfiniteScroll } from '../../api';
 import { useLocalization, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
-import type { NotificationActionClickHandler, NotificationClickHandler, NotificationMounter } from '../../types';
+import type { NotificationActionClickHandler, NotificationClickHandler, NotificationRenderer } from '../../types';
 import { NewMessagesCta } from './NewMessagesCta';
 import { Notification } from './Notification';
 import { NotificationListSkeleton, NotificationSkeleton } from './NotificationListSkeleton';
@@ -21,13 +21,15 @@ const EmptyNotificationList = () => {
       )}
     >
       <EmptyIcon class={style('notificationListEmptyNoticeIcon')} />
-      <p class={style('notificationListEmptyNotice')}>{t('notifications.emptyNotice')}</p>
+      <p class={style('notificationListEmptyNotice')} data-localization="notifications.emptyNotice">
+        {t('notifications.emptyNotice')}
+      </p>
     </div>
   );
 };
 
 type NotificationListProps = {
-  mountNotification?: NotificationMounter;
+  renderNotification?: NotificationRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -64,7 +66,7 @@ export const NotificationList = (props: NotificationListProps) => {
               {(notification) => (
                 <Notification
                   notification={notification}
-                  mountNotification={props.mountNotification}
+                  renderNotification={props.renderNotification}
                   onNotificationClick={props.onNotificationClick}
                   onPrimaryActionClick={props.onPrimaryActionClick}
                   onSecondaryActionClick={props.onSecondaryActionClick}
