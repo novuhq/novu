@@ -320,7 +320,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
 
     const [timestamp, timestampPayload] = timestampPart.split('=');
-
     const [signatureVersion, signaturePayload] = signaturePart.split('=');
 
     if (Number(timestamp) < Date.now() - SIGNATURE_TIMESTAMP_TOLERANCE) {
