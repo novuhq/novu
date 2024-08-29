@@ -75,6 +75,7 @@ describe('test use of novus node package - Subscribers class', () => {
   test('should unset subscriber channel credentials correctly', async () => {
     mockedAxios.put.mockResolvedValue({});
 
+    // eslint-disable-next-line deprecation/deprecation
     await novu.subscribers.unsetCredentials('test-update-subscriber', 'slack');
 
     expect(mockedAxios.put).toHaveBeenCalled();
