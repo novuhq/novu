@@ -1054,7 +1054,6 @@ describe('Novu Client', () => {
       const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
-          // eslint-disable-next-line @typescript-eslint/no-base-to-string
           await step.email('send-email', async () => ({ body: 'Test: ' + payload.name, subject: 'Subject' }));
         },
         {

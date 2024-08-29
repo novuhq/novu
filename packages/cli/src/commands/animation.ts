@@ -17,13 +17,12 @@ const consoleFunctions = {
   error: console.error.bind(console),
 };
 
-// eslint-disable-next-line guard-for-in,id-length
-for (const k in consoleFunctions) {
+for (const func in consoleFunctions) {
   // eslint-disable-next-line @typescript-eslint/no-loop-func
-  console[k] = function () {
+  console[func] = function () {
     stopLastAnimation();
     // eslint-disable-next-line prefer-rest-params
-    consoleFunctions[k].apply(console, arguments);
+    consoleFunctions[func].apply(console, arguments);
   };
 }
 

@@ -47,7 +47,6 @@ export const serve = (options: ServeHandlerOptions) => {
           return url;
         },
         body: () => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return JSON.parse(
             event.body ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body) : '{}'
           );

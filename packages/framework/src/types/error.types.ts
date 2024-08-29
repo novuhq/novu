@@ -19,7 +19,6 @@ export type IErrorCodeVal = `${Capitalize<string>}Error`;
  * @param testEnum - the Enum to type check
  */
 export function testErrorCodeEnumValidity<TEnum extends Record<IErrorCodeKey, IErrorCodeVal>>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   testEnum: TEnum &
     Record<
       Exclude<keyof TEnum, keyof Record<ToConstantCaseForString<TEnum[keyof TEnum] & string>, TEnum[keyof TEnum]>>,
