@@ -94,6 +94,7 @@ export class ExecuteBridgeJob {
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
       /** @deprecated */
+      // eslint-disable-next-line deprecation/deprecation
       data: payload ?? {},
       payload: payload ?? {},
       inputs: variablesStores ?? {},

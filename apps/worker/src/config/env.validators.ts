@@ -28,7 +28,6 @@ const str32 = makeValidator((variable) => {
  * Add a new validator to this list when you have a new ENV variable.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const envValidators = {
   TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local', 'staging'], default: 'local' }),

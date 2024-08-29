@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
 import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
