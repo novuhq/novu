@@ -400,5 +400,4 @@ jobSchema.index(
   }
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

@@ -78,7 +78,6 @@ workflowOverrideSchema.index(
   { unique: true }
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const WorkflowOverride =
   (mongoose.models.WorkflowOverride as mongoose.Model<WorkflowOverrideDBModel>) ||
   mongoose.model<WorkflowOverrideDBModel>('WorkflowOverride', workflowOverrideSchema);

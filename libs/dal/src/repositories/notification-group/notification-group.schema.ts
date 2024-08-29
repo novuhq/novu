@@ -4,7 +4,6 @@ import { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { NotificationGroupDBModel } from './notification-group.entity';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const NotificationGroupSchema = new Schema<NotificationGroupDBModel>(
   {
     name: Schema.Types.String,
@@ -26,7 +25,6 @@ const NotificationGroupSchema = new Schema<NotificationGroupDBModel>(
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const NotificationGroup =
   (mongoose.models.NotificationGroup as mongoose.Model<NotificationGroupDBModel>) ||
   mongoose.model<NotificationGroupDBModel>('NotificationGroup', NotificationGroupSchema);

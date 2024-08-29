@@ -41,7 +41,6 @@ const controlVariablesSchema = new Schema<ControlVariablesModel>(
 
 controlVariablesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ControlVariables =
   (mongoose.models.ControlVariables as mongoose.Model<ControlVariablesModel>) ||
   mongoose.model<ControlVariablesModel>('controls', controlVariablesSchema) ||

@@ -62,7 +62,6 @@ subscriberPreferenceSchema.index({
   level: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberPreference =
   (mongoose.models.SubscriberPreference as mongoose.Model<SubscriberPreferenceDBModel>) ||
   mongoose.model<SubscriberPreferenceDBModel>('SubscriberPreference', subscriberPreferenceSchema);

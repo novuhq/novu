@@ -30,6 +30,5 @@ const topicSchema = new Schema<TopicDBModel>(
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Topic =
   (mongoose.models.Topic as mongoose.Model<TopicDBModel>) || mongoose.model<TopicDBModel>('Topic', topicSchema);

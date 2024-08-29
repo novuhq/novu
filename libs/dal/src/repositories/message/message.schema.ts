@@ -290,7 +290,6 @@ messageSchema.index({
   createdAt: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||
   mongoose.model<MessageDBModel>('Message', messageSchema);

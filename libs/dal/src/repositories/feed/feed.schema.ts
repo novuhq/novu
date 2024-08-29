@@ -28,6 +28,5 @@ const feedSchema = new Schema<FeedDBModel>(
 
 feedSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Feed =
   (mongoose.models.Feed as mongoose.Model<FeedDBModel>) || mongoose.model<FeedDBModel>('Feed', feedSchema);

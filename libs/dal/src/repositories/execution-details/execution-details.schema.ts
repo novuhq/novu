@@ -115,7 +115,6 @@ executionDetailsSchema.index({
 
 executionDetailsSchema.index({ expireAt: 1 }, getTTLOptions());
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
   (mongoose.models.ExecutionDetails as mongoose.Model<ExecutionDetailsDBModel>) ||
   mongoose.model<ExecutionDetailsDBModel>('ExecutionDetails', executionDetailsSchema);

@@ -159,7 +159,6 @@ notificationSchema.index({
   createdAt: -1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Notification =
   (mongoose.models.Notification as mongoose.Model<NotificationDBModel>) ||
   mongoose.model<NotificationDBModel>('Notification', notificationSchema);

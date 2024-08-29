@@ -69,6 +69,10 @@ export default [
       },
     },
 
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+
     rules: {
       'unused-imports/no-unused-imports': 'off',
       '@typescript-eslint/space-before-blocks': 'off',

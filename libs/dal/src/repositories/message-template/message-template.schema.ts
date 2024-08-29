@@ -98,7 +98,6 @@ messageTemplateSchema.index({
 
 messageTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const MessageTemplate =
   (mongoose.models.MessageTemplate as mongoose.Model<MessageTemplateDBModel>) ||
   mongoose.model<MessageTemplateDBModel>('MessageTemplate', messageTemplateSchema);

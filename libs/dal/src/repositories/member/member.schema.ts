@@ -35,6 +35,5 @@ const memberSchema = new Schema<MemberDBModel>(
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Member =
   (mongoose.models.Member as mongoose.Model<MemberDBModel>) || mongoose.model<MemberDBModel>('Member', memberSchema);

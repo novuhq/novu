@@ -78,7 +78,6 @@ environmentSchema.index({
   _organizationId: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Environment =
   (mongoose.models.Environment as mongoose.Model<EnvironmentDBModel>) ||
   mongoose.model<EnvironmentDBModel>('Environment', environmentSchema);

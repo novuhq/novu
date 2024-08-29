@@ -66,7 +66,6 @@ const organizationSchema = new Schema<OrganizationDBModel>(
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Organization =
   (mongoose.models.Organization as mongoose.Model<OrganizationDBModel>) ||
   mongoose.model<OrganizationDBModel>('Organization', organizationSchema);

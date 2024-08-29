@@ -44,6 +44,5 @@ changeSchema.virtual('user', {
   justOne: true,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Change =
   (mongoose.models.Change as mongoose.Model<ChangeDBModel>) || mongoose.model<ChangeDBModel>('Change', changeSchema);

@@ -104,7 +104,6 @@ integrationSchema.index({
 
 integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Integration =
   (mongoose.models.Integration as mongoose.Model<IntegrationDBModel>) ||
   mongoose.model<IntegrationDBModel>('Integration', integrationSchema);
