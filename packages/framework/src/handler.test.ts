@@ -32,6 +32,7 @@ describe('NovuRequestHandler', () => {
         bridgeUrl: 'http://example.com',
       };
 
+      // eslint-disable-next-line no-unused-vars
       const { workflowId, ...renamedWorkflowId } = { ...triggerEvent, name: triggerEvent.workflowId };
 
       const postMock = vi.fn().mockResolvedValueOnce({

@@ -145,6 +145,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       if (method === HttpMethodEnum.POST) {
         body = await actions.body();
       }
+      // eslint-disable-next-line no-unused-vars
     } catch (error) {
       // NO-OP - body was not provided
     }
@@ -320,6 +321,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
 
     const [timestamp, timestampPayload] = timestampPart.split('=');
+    // eslint-disable-next-line no-unused-vars
     const [signatureVersion, signaturePayload] = signaturePart.split('=');
 
     if (Number(timestamp) < Date.now() - SIGNATURE_TIMESTAMP_TOLERANCE) {

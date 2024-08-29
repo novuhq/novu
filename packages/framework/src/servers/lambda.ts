@@ -1,9 +1,4 @@
-import {
-  type APIGatewayEvent,
-  type APIGatewayProxyEventV2,
-  type APIGatewayProxyResult,
-  type Context,
-} from 'aws-lambda';
+import { type APIGatewayEvent, type APIGatewayProxyEventV2, type APIGatewayProxyResult } from 'aws-lambda';
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName, type Either } from '../types';
 
@@ -26,7 +21,7 @@ export const serve = (options: ServeHandlerOptions) => {
   const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
-    handler: (event: Either<APIGatewayEvent, APIGatewayProxyEventV2>, _context: Context) => {
+    handler: (event: Either<APIGatewayEvent, APIGatewayProxyEventV2>) => {
       const eventIsV2 = ((ev: APIGatewayEvent | APIGatewayProxyEventV2): ev is APIGatewayProxyEventV2 => {
         return (ev as APIGatewayProxyEventV2).version === '2.0';
       })(event);

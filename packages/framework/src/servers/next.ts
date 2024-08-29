@@ -112,6 +112,7 @@ export const serve = (
             if (process.env.NODE_ENV === 'development') {
               protocol = 'http';
             }
+            // eslint-disable-next-line no-unused-vars
           } catch (error) {
             // no-op
           }

@@ -852,7 +852,7 @@ describe('Novu Client', () => {
             additionalProperties: false,
           } as const,
           providers: {
-            sendgrid: async ({ controls, outputs }) => ({
+            sendgrid: async () => ({
               _passthrough: {
                 body: {
                   fooBody: 'barBody',

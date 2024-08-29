@@ -114,7 +114,7 @@ describe('validation', () => {
         workflow('zod-validation', async ({ step }) => {
           await step.email(
             'zod-validation',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -148,7 +148,7 @@ describe('validation', () => {
         workflow('zod-validation', async ({ step }) => {
           await step.email(
             'test-email',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -297,7 +297,7 @@ describe('validation', () => {
         workflow('json-schema-validation', async ({ step }) => {
           await step.email(
             'json-schema-validation',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -331,7 +331,7 @@ describe('validation', () => {
         workflow('json-schema-validation', async ({ step }) => {
           await step.email(
             'test-email',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),

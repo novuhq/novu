@@ -514,6 +514,7 @@ export class Client {
     event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
+    // eslint-disable-next-line no-unused-vars
     outputs: Record<string, unknown>
   ): Record<string, unknown> {
     // eslint-disable-next-line no-console
@@ -765,8 +766,4 @@ export class Client {
 
     return getCodeResult;
   }
-}
-
-function clone<Result>(data: unknown) {
-  return JSON.parse(JSON.stringify(data)) as Result;
 }

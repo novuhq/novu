@@ -31,7 +31,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/*.json', '**/jest.config.js', '**/jest.setup.js', '**/node_modules', '**/.DS_Store'],
+    ignores: ['**/*.json', '**/node_modules', '**/.DS_Store'],
   },
   ...fixupConfigRules(
     compat.extends(
@@ -214,6 +214,7 @@ export default [
       'const-case/uppercase': 0,
       'unicorn/no-array-reduce': 0,
       'unused-imports/no-unused-imports': 'error',
+      'no-unused-vars': 'error',
     },
   },
 ];
