@@ -4,7 +4,6 @@ import { CacheService } from '../cache.service';
 
 const LOG_CONTEXT = 'CachedQueryInterceptor';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function CachedQuery({ builder }: { builder: (...args) => string }) {
   const injectCache = Inject(CacheService);
 

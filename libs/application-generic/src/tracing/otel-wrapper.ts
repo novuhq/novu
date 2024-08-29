@@ -17,42 +17,34 @@ export type OtelDataOrPipe =
   | PipeTransform<any, any>
   | Type<PipeTransform<any, any>>;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelSpan(name?: string, options?: SpanOptions) {
   return Span(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelInstanceCounter(options?: MetricOptions) {
   return setOtelInstanceCounter(options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelUpDownCounter(...dataOrPipes: OtelDataOrPipe[]) {
   return setOtelUpDownCounter(...dataOrPipes);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelHistogram(...dataOrPipes: OtelDataOrPipe[]) {
   return setOtelHistogram(...dataOrPipes);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelObservableGauge(...dataOrPipes: OtelDataOrPipe[]) {
   return setOtelObservableGauge(...dataOrPipes);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelObservableCounter(...dataOrPipes: OtelDataOrPipe[]) {
   return setOtelObservableCounter(...dataOrPipes);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelObservableUpDownCounter(...dataOrPipes: OtelDataOrPipe[]) {
   return setOtelObservableUpDownCounter(...dataOrPipes);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelCounter(...dataOrPipes: OtelDataOrPipe[]) {
   return setOtelCounter(...dataOrPipes);
 }

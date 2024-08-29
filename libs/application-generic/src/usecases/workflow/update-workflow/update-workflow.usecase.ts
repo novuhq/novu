@@ -331,7 +331,7 @@ export class UpdateWorkflow {
           `Something un-expected happened, template couldn't be found`
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const updatedVariants = await this.updateVariants(
         message.variants,
         command,

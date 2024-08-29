@@ -1,7 +1,6 @@
 import { Redis } from 'ioredis';
 import { CachingConfig, ICacheService } from './cache.service';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const MockCacheService = {
   createClient(mockClient?: Partial<Redis>): ICacheService {
     const data = {};

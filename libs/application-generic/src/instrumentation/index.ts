@@ -8,11 +8,9 @@ export function copyMetadata(source: any, target: any): void {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const InstrumentUsecase = (transactionName = ''): any =>
   instrumentationWrapper(transactionName, 'Usecase');
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Instrument = (transactionName = ''): any =>
   instrumentationWrapper(transactionName, 'Function');
 

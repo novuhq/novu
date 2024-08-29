@@ -12,7 +12,6 @@ const DEFAULT_OPTIONS: IOptions = {
   timestamp: true,
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const LogDecorator = (options = DEFAULT_OPTIONS) => {
   return (
     target: any,

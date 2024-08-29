@@ -2,7 +2,6 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { TracingService } from './tracing.service';
 import { OpenTelemetryModule } from 'nestjs-otel';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 const OtelModule = OpenTelemetryModule.forRoot({
   metrics: {
     hostMetrics: true,

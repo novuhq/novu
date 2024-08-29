@@ -4,7 +4,6 @@ import {
   createParamDecorator,
 } from '@nestjs/common';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;
   if (ctx.getType() === 'graphql') {

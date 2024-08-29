@@ -100,7 +100,6 @@ export function getCredentialWithContext(
   return context + '=' + credentialValue;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum CacheInterceptorTypeEnum {
   CACHED = 'cached',
   INVALIDATE = 'invalidate',

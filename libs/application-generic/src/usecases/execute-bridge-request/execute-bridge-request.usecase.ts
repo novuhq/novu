@@ -114,7 +114,6 @@ export class ExecuteBridgeRequest {
             LOG_CONTEXT
           );
           throw new NotFoundException(
-            // eslint-disable-next-line max-len
             `Unable to reach Bridge app. Run npx novu@latest dev in Local mode, or ensure your Bridge app deployment is available.`
           );
         } else {

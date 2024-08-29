@@ -109,7 +109,6 @@ export class BullMqService {
       }),
     };
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const QueueClass = !BullMqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
@@ -135,7 +134,6 @@ export class BullMqService {
     processor?: string | Processor<any, unknown | void, string>,
     workerOptions?: WorkerOptions
   ) {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const WorkerClass = !BullMqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;

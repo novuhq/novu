@@ -25,7 +25,7 @@ type CachedEntityOptions<T_Output> = CachingConfig & {
 };
 
 const LOG_CONTEXT = 'CachedEntityInterceptor';
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function CachedEntity<T_Output = any>({
   builder,
   options,
