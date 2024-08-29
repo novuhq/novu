@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "generate:provider": "pnpm nx g automation:provider",
-    "fix:lint": "eslint src --ext .ts --fix"
+    "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix"
   },
   "dependencies": {
     "@nx/devkit": "^16.10.0"

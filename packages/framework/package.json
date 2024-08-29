@@ -21,7 +21,7 @@
     "test": "vitest --typecheck",
     "test:watch": "vitest --typecheck --watch",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint:fix": "pnpm lint -- --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "build": "tsup",
