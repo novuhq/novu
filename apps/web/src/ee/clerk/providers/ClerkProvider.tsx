@@ -163,7 +163,7 @@ const CLERK_MODAL_ELEMENT = {
     },
   },
   organizationSwitcherPreviewButton: {
-    borderWidth: '0px !important',
+    borderWidth: '0 !important',
     borderStyle: 'none',
   },
   organizationSwitcherPopoverCard: {

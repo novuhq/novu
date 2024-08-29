@@ -49,102 +49,99 @@ export default function ManageAccountPage() {
       }}
       size="90%"
     >
-      <>
-        <Tabs value={tabValue} onTabChange={(value) => navigate(`/manage-account/${value}`)} orientation="vertical">
-          <Tabs.List>
-            <Tabs.Tab
-              disabled
-              value="title"
-              className={css({
+      <Tabs value={tabValue} onTabChange={(value) => navigate(`/manage-account/${value}`)} orientation="vertical">
+        <Tabs.List>
+          <Tabs.Tab
+            disabled
+            value="title"
+            className={css({
+              color: 'var(--nv-colors-typography-text-primary) !important',
+              fontSize: 'var(--nv-font-sizes-150) !important',
+              lineHeight: 'var(--nv-line-heights-175) !important',
+              opacity: 'var(--nv-opacity-100) !important',
+              margin: '0 !important',
+              border: '0 !important',
+              padding: 'var(--nv-spacing-paddings-page-horizontal) var(--nv-spacing-paddings-page-vertical) !important',
+              '&:hover': {
                 color: 'var(--nv-colors-typography-text-primary) !important',
-                fontSize: 'var(--nv-font-sizes-150) !important',
-                lineHeight: 'var(--nv-line-heights-175) !important',
-                opacity: 'var(--nv-opacity-100) !important',
-                margin: '0 !important',
-                border: '0 !important',
-                padding:
-                  'var(--nv-spacing-paddings-page-horizontal) var(--nv-spacing-paddings-page-vertical) !important',
-                '&:hover': {
-                  color: 'var(--nv-colors-typography-text-primary) !important',
-                  backgroundColor: 'unset !important',
-                  borderColor: 'var(--nv-colors-surface-panel) !important',
-                  cursor: 'unset !important',
-                },
-              })}
-            >
-              Settings
-            </Tabs.Tab>
-            <Tabs.Tab value="user-profile" icon={<IconManageAccounts />}>
-              User profile
-            </Tabs.Tab>
-            <Tabs.Tab value="access-security" icon={<IconAdminPanelSettings />}>
-              Access security
-            </Tabs.Tab>
-            <Tabs.Tab value="organization" icon={<IconRoomPreferences />}>
-              Organization
-            </Tabs.Tab>
-            <Tabs.Tab value="team-members" icon={<IconGroups />}>
-              Team members
-            </Tabs.Tab>
-            {!isV2Enabled && (
-              <Tabs.Tab value="branding" icon={<IconLocalActivity />}>
-                Branding
-              </Tabs.Tab>
-            )}
-            <Tabs.Tab value="billing" icon={<IconCreditCard />}>
-              Billing plans
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value="user-profile">
-            <UserProfile appearance={clerkComponentAppearance}>
-              <UserProfile.Page label="account" />
-              <UserProfile.Page label="security" />
-            </UserProfile>
-          </Tabs.Panel>
-          <Tabs.Panel value="access-security">
-            <UserProfile appearance={clerkComponentAppearance}>
-              <UserProfile.Page label="security" />
-              <UserProfile.Page label="account" />
-            </UserProfile>
-          </Tabs.Panel>
-          <Tabs.Panel value="organization">
-            <OrganizationProfile appearance={clerkComponentAppearance}>
-              <OrganizationProfile.Page label="general" />
-              <OrganizationProfile.Page label="members" />
-            </OrganizationProfile>
-          </Tabs.Panel>
-          <Tabs.Panel value="team-members">
-            <OrganizationProfile appearance={clerkComponentAppearance}>
-              <OrganizationProfile.Page label="members" />
-              <OrganizationProfile.Page label="general" />
-            </OrganizationProfile>
-          </Tabs.Panel>
+                backgroundColor: 'unset !important',
+                borderColor: 'var(--nv-colors-surface-panel) !important',
+                cursor: 'unset !important',
+              },
+            })}
+          >
+            Settings
+          </Tabs.Tab>
+          <Tabs.Tab value="user-profile" icon={<IconManageAccounts />}>
+            User profile
+          </Tabs.Tab>
+          <Tabs.Tab value="access-security" icon={<IconAdminPanelSettings />}>
+            Access security
+          </Tabs.Tab>
+          <Tabs.Tab value="organization" icon={<IconRoomPreferences />}>
+            Organization
+          </Tabs.Tab>
+          <Tabs.Tab value="team-members" icon={<IconGroups />}>
+            Team members
+          </Tabs.Tab>
           {!isV2Enabled && (
-            <Tabs.Panel value="branding">
-              <BrandingPage />
-            </Tabs.Panel>
+            <Tabs.Tab value="branding" icon={<IconLocalActivity />}>
+              Branding
+            </Tabs.Tab>
           )}
-          <Tabs.Panel value="billing">
-            <Title
-              marginBottom="150"
-              className={css({
-                fontFamily: 'var(--nv-fonts-system)',
-                fontWeight: 'var(--nv-font-weights-strong)',
-                fontSize: 'var(--nv-font-sizes-125)',
-                letterSpacing: '0',
-                textDecoration: 'none',
-                lineHeight: 'var(--nv-line-heights-175)',
-              })}
-              variant={'page'}
-              color={headerColor}
-            >
-              Billing plans
-            </Title>
-            <BillingPage />
+          <Tabs.Tab value="billing" icon={<IconCreditCard />}>
+            Billing plans
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="user-profile">
+          <UserProfile appearance={clerkComponentAppearance}>
+            <UserProfile.Page label="account" />
+            <UserProfile.Page label="security" />
+          </UserProfile>
+        </Tabs.Panel>
+        <Tabs.Panel value="access-security">
+          <UserProfile appearance={clerkComponentAppearance}>
+            <UserProfile.Page label="security" />
+            <UserProfile.Page label="account" />
+          </UserProfile>
+        </Tabs.Panel>
+        <Tabs.Panel value="organization">
+          <OrganizationProfile appearance={clerkComponentAppearance}>
+            <OrganizationProfile.Page label="general" />
+            <OrganizationProfile.Page label="members" />
+          </OrganizationProfile>
+        </Tabs.Panel>
+        <Tabs.Panel value="team-members">
+          <OrganizationProfile appearance={clerkComponentAppearance}>
+            <OrganizationProfile.Page label="members" />
+            <OrganizationProfile.Page label="general" />
+          </OrganizationProfile>
+        </Tabs.Panel>
+        {!isV2Enabled && (
+          <Tabs.Panel value="branding">
+            <BrandingPage />
           </Tabs.Panel>
-        </Tabs>
-      </>
+        )}
+        <Tabs.Panel value="billing">
+          <Title
+            marginBottom="150"
+            className={css({
+              fontFamily: 'var(--nv-fonts-system)',
+              fontWeight: 'var(--nv-font-weights-strong)',
+              fontSize: 'var(--nv-font-sizes-125)',
+              letterSpacing: '0',
+              textDecoration: 'none',
+              lineHeight: 'var(--nv-line-heights-175)',
+            })}
+            variant={'page'}
+            color={headerColor}
+          >
+            Billing plans
+          </Title>
+          <BillingPage />
+        </Tabs.Panel>
+      </Tabs>
     </Modal>
   );
 }
