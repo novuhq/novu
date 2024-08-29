@@ -20,8 +20,8 @@ import {
   ExternalApiAccessible,
   UserAuthGuard,
   UserSession,
-  WritePreferences,
-  WritePreferencesCommand,
+  UpsertPreferences,
+  UpsertPreferencesCommand,
 } from '@novu/application-generic';
 
 import { EnvironmentRepository, NotificationTemplateRepository, PreferencesActorEnum } from '@novu/dal';
@@ -52,7 +52,7 @@ export class BridgeController {
     private storeControlVariables: StoreControlVariables,
     private previewStep: PreviewStep,
     private analyticsService: AnalyticsService,
-    private writePreferencesUsecase: WritePreferences
+    private upsertPreferencesUsecase: UpsertPreferences
   ) {}
 
   @Get('/status')
@@ -222,10 +222,10 @@ export class BridgeController {
   async writePreferences(
     @Param('workflowId') workflowId: string,
     @UserSession() user: UserSessionData,
-    @Body() body: WritePreferencesCommand['preferences']
+    @Body() body: UpsertPreferencesCommand['preferences']
   ) {
-    return this.writePreferencesUsecase.execute(
-      WritePreferencesCommand.create({
+    return this.upsertPreferencesUsecase.execute(
+      UpsertPreferencesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

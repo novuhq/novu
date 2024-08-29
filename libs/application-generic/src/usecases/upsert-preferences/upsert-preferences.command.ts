@@ -3,7 +3,7 @@ import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
 import { EnvironmentCommand } from '../../commands';
 import { PreferencesActorEnum } from '@novu/dal';
 
-export class WritePreferencesCommand extends EnvironmentCommand {
+export class UpsertPreferencesCommand extends EnvironmentCommand {
   @IsDefined()
   readonly preferences: DiscoverWorkflowOutputPreferences;
 

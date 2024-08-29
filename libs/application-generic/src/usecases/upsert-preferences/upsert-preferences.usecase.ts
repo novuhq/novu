@@ -5,13 +5,13 @@ import {
   PreferencesRepository,
 } from '@novu/dal';
 
-import { WritePreferencesCommand } from './write-preferences.command';
+import { UpsertPreferencesCommand } from './upsert-preferences.command';
 
 @Injectable()
-export class WritePreferences {
+export class UpsertPreferences {
   constructor(private preferencesRepository: PreferencesRepository) {}
 
-  async execute(command: WritePreferencesCommand): Promise<PreferencesEntity> {
+  async execute(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
     const foundId = await this.getPreferencesId(command);
 
     if (foundId) {
@@ -22,7 +22,7 @@ export class WritePreferences {
   }
 
   private async createPreferences(
-    command: WritePreferencesCommand
+    command: UpsertPreferencesCommand
   ): Promise<PreferencesEntity> {
     const isSubscriber = command.actor === PreferencesActorEnum.SUBSCRIBER;
     const isUser = command.actor === PreferencesActorEnum.USER;
@@ -52,7 +52,7 @@ export class WritePreferences {
 
   private async updatePreferences(
     preferencesId: string,
-    command: WritePreferencesCommand
+    command: UpsertPreferencesCommand
   ): Promise<PreferencesEntity> {
     await this.preferencesRepository.update(
       {
@@ -74,7 +74,7 @@ export class WritePreferences {
   }
 
   private async getPreferencesId(
-    command: WritePreferencesCommand
+    command: UpsertPreferencesCommand
   ): Promise<string | undefined> {
     const found = await this.preferencesRepository.findOne(
       {
