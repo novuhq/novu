@@ -3,7 +3,7 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
 import { init, Integrations, Handlers } from '@sentry/node';
@@ -72,7 +72,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
   }
 
-  app.useLogger(app.get(PinoLogger));
+  // app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
   const server = app.getHttpServer();
@@ -90,7 +90,13 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix(`${CONTEXT_PATH}v1`);
+  app.setGlobalPrefix(`${CONTEXT_PATH}`);
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+    prefix: 'v',
+  });
 
   app.use(passport.initialize());
 
