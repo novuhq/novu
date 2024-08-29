@@ -31,6 +31,7 @@ import {
 } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
+
 import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
@@ -54,8 +55,7 @@ export class BridgeController {
     private controlVariablesRepository: ControlVariablesRepository,
     private storeControlVariables: StoreControlVariables,
     private previewStep: PreviewStep,
-    private analyticsService: AnalyticsService,
-    private upsertPreferencesUsecase: UpsertPreferences
+    private analyticsService: AnalyticsService
   ) {}
 
   @Get('/status')
@@ -215,26 +215,6 @@ export class BridgeController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-      })
-    );
-  }
-
-  @Put('/preferences/:workflowId')
-  @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
-  async writePreferences(
-    @Param('workflowId') workflowId: string,
-    @UserSession() user: UserSessionData,
-    @Body() body: UpsertPreferencesCommand['preferences']
-  ) {
-    return this.upsertPreferencesUsecase.execute(
-      UpsertPreferencesCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        templateId: workflowId,
-        actor: PreferencesActorEnum.USER,
-        preferences: body,
       })
     );
   }
