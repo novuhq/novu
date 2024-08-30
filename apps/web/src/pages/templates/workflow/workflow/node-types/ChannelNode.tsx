@@ -2,14 +2,14 @@ import { memo, useEffect, useState } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow, useNodes } from 'react-flow-renderer';
 import { FilterPartTypeEnum } from '@novu/shared';
 
-import { WorkflowNode } from './WorkflowNode';
 import { useParams } from 'react-router-dom';
+import { useFormContext } from 'react-hook-form';
+import { WorkflowNode } from './WorkflowNode';
 import { INode } from '../../../../../components/workflow/types';
 import { useStepSubtitle } from '../../../hooks/useStepSubtitle';
 import { Conditions } from '../../../../../components/conditions';
 import { useFilterPartsList } from '../../../hooks/useFilterPartsList';
 import { IForm } from '../../../components/formTypes';
-import { useFormContext } from 'react-hook-form';
 
 export default memo((node: INode) => {
   const { data, id, dragging } = node;
@@ -58,7 +58,7 @@ export default memo((node: INode) => {
 
   const { active, uuid, name, stepId, filters: conditions } = step;
   const variantsCount = step.variants?.length;
-  const conditionsCount = conditions && conditions.length > 0 ? conditions[0].children?.length ?? 0 : 0;
+  const conditionsCount = conditions && conditions.length > 0 ? (conditions[0].children?.length ?? 0) : 0;
 
   const onConditionsClose = () => setConditionsOpened(false);
 

@@ -112,6 +112,7 @@ export default tsEslint.config(
       'lines-between-class-members': 'off',
       'max-classes-per-file': 'off',
       'react/react-in-jsx-scope': 'off',
+      'no-else-return': 'off',
 
       'max-len': [
         'warn',
@@ -227,7 +228,6 @@ export default tsEslint.config(
       'max-len': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       'import/prefer-default-export': 0,
-      'no-else-return': 0,
       'sonarjs/prefer-immediate-return': 0,
       'const-case/uppercase': 0,
       'unicorn/no-array-reduce': 0,
