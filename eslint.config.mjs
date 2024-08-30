@@ -296,41 +296,8 @@ export default tsEslint.config(
   },
 
   {
-    files: ['libs/design-system/**'],
-    rules: {
-      'func-names': 'off',
-      'react/jsx-props-no-spreading': 'off',
-      'react/no-array-index-key': 'off',
-      'no-empty-pattern': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      'react/no-unescaped-entities': 'off',
-      'react/jsx-closing-bracket-location': 'off',
-      '@typescript-eslint/ban-types': 'off',
-      'react/jsx-wrap-multilines': 'off',
-      'jsx-a11y/anchor-is-valid': 'off',
-      'promise/catch-or-return': 'off',
-      'react/jsx-one-expression-per-line': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      'jsx-a11y/aria-role': 'off',
-      'jsx-a11y/no-static-element-interactions': 'off',
-      'react/require-default-props': 'off',
-      'react/no-danger': 'off',
-      'jsx-a11y/click-events-have-key-events': 'off',
-
-      '@typescript-eslint/naming-convention': [
-        'error',
-        {
-          filter: '_',
-          selector: 'variableLike',
-          leadingUnderscore: 'allow',
-          format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
-        },
-      ],
-    },
-  },
-
-  {
-    files: ['libs/novui/**'],
+    files: ['libs/design-system/**', 'libs/novui/**', 'apps/widget/**', 'apps/web/**'],
+    extends: [pluginCypress.configs.recommended],
     plugins: {
       '@pandacss': panda,
       'react-hooks': fixupPluginRules(reactHooks),
@@ -347,15 +314,14 @@ export default tsEslint.config(
       '@typescript-eslint/ban-types': 'off',
       'react/jsx-wrap-multilines': 'off',
       'jsx-a11y/anchor-is-valid': 'off',
+      'promise/catch-or-return': 'off',
       'react/jsx-one-expression-per-line': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       'jsx-a11y/aria-role': 'off',
       'jsx-a11y/no-static-element-interactions': 'off',
       'react/require-default-props': 'off',
       'react/no-danger': 'off',
       'jsx-a11y/click-events-have-key-events': 'off',
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
 
       '@typescript-eslint/naming-convention': [
         'error',
@@ -368,39 +334,6 @@ export default tsEslint.config(
       ],
 
       '@pandacss/no-config-function-in-source': 'off',
-    },
-  },
-
-  {
-    files: ['apps/widget/**'],
-    extends: [pluginCypress.configs.recommended],
-    rules: {
-      'func-names': 'off',
-      'react/jsx-props-no-spreading': 'off',
-      'react/no-array-index-key': 'off',
-      'no-empty-pattern': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      'react/no-unescaped-entities': 'off',
-      'react/jsx-closing-bracket-location': 'off',
-      '@typescript-eslint/ban-types': 'off',
-      'react/jsx-wrap-multilines': 'off',
-      'jsx-a11y/anchor-is-valid': 'off',
-      'promise/catch-or-return': 'off',
-      'react/jsx-one-expression-per-line': 'off',
-      'jsx-a11y/aria-role': 'off',
-      'jsx-a11y/no-static-element-interactions': 'off',
-      'react/require-default-props': 'off',
-      'react/no-danger': 'off',
-      'jsx-a11y/click-events-have-key-events': 'off',
-      '@typescript-eslint/naming-convention': [
-        'error',
-        {
-          filter: '_',
-          selector: 'variableLike',
-          leadingUnderscore: 'allow',
-          format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
-        },
-      ],
     },
   }
 );
