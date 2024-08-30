@@ -60,7 +60,6 @@ export default tsEslint.config(
   {
     plugins: {
       promise: fixupPluginRules(promise),
-      deprecation: fixupPluginRules(deprecation),
     },
 
     languageOptions: {
@@ -75,7 +74,6 @@ export default tsEslint.config(
     },
 
     rules: {
-      'deprecation/deprecation': 'error',
       'unused-imports/no-unused-imports': 'off',
       '@typescript-eslint/space-before-blocks': 'off',
       '@typescript-eslint/lines-between-class-members': 'off',
@@ -235,6 +233,16 @@ export default tsEslint.config(
   },
 
   {
+    files: ['packages/providers/**'],
+    plugins: {
+      deprecation: fixupPluginRules(deprecation),
+    },
+    rules: {
+      'deprecation/deprecation': 'error',
+    }
+  },
+
+  {
     files: ['apps/api/**'],
     rules: {
       'func-names': 'off',
@@ -281,6 +289,37 @@ export default tsEslint.config(
           ],
         },
       ],
+    },
+  },
+
+  {
+    files: ['libs/design-system/**'],
+    rules: {
+        "func-names": "off",
+        "react/jsx-props-no-spreading": "off",
+        "react/no-array-index-key": "off",
+        "no-empty-pattern": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "react/no-unescaped-entities": "off",
+        "react/jsx-closing-bracket-location": "off",
+        "@typescript-eslint/ban-types": "off",
+        "react/jsx-wrap-multilines": "off",
+        "jsx-a11y/anchor-is-valid": "off",
+        "promise/catch-or-return": "off",
+        "react/jsx-one-expression-per-line": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "jsx-a11y/aria-role": "off",
+        "jsx-a11y/no-static-element-interactions": "off",
+        "react/require-default-props": "off",
+        "react/no-danger": "off",
+        "jsx-a11y/click-events-have-key-events": "off",
+
+        "@typescript-eslint/naming-convention": ["error", {
+            filter: "_",
+            selector: "variableLike",
+            leadingUnderscore: "allow",
+            format: ["PascalCase", "camelCase", "UPPER_CASE"],
+        }],
     },
   }
 );
