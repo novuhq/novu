@@ -68,22 +68,25 @@ const CLERK_MODAL_ELEMENT = {
     borderStyle: 'none',
     borderWidth: '0 !important',
   },
-  button__manageAccount: {
-    backgroundColor: 'var(--nv-colors-surface-panel-section)',
-    borderStyle: 'none',
-    boxShadow: 'unset !important',
-    fontSize: 'var(--nv-font-sizes-75)',
-    borderRadius: 'var(--nv-radii-75)',
-    height: '24px',
-  },
-  button__signOut: {
-    backgroundColor: 'var(--nv-colors-surface-panel-section)',
-    borderStyle: 'none',
-    boxShadow: 'unset !important',
-    fontSize: 'var(--nv-font-sizes-75)',
-    borderRadius: 'var(--nv-radii-75)',
-    height: '24px',
-  },
+  /*
+   * PLAT-146 this should be uncommented when the linked task is done
+   * button__manageAccount: {
+   *   backgroundColor: 'var(--nv-colors-surface-panel-section)',
+   *   borderStyle: 'none',
+   *   boxShadow: 'unset !important',
+   *   fontSize: 'var(--nv-font-sizes-75)',
+   *   borderRadius: 'var(--nv-radii-75)',
+   *   height: '24px',
+   * },
+   * button__signOut: {
+   *   backgroundColor: 'var(--nv-colors-surface-panel-section)',
+   *   borderStyle: 'none',
+   *   boxShadow: 'unset !important',
+   *   fontSize: 'var(--nv-font-sizes-75)',
+   *   borderRadius: 'var(--nv-radii-75)',
+   *   height: '24px',
+   * },
+   */
   organizationPreviewMainIdentifier: {
     lineHeight: 'var(--nv-line-heights-125)',
     color: 'var(--nv-colors-typography-text-main)',
