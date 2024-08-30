@@ -48,8 +48,7 @@ export class UpdatePreferences {
       }
     }
 
-    const userPreference = await this.findPreference(command, subscriber);
-
+    const userPreference = await this.subscriberPreferenceRepository.findOne(this.commonQuery(command, subscriber));
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);
     } else {
@@ -74,7 +73,6 @@ export class UpdatePreferences {
       _workflowId: command.workflowId,
       level: command.level,
       channels: channelObj,
-      __source: 'UpdatePreferences',
     });
 
     const query = this.commonQuery(command, subscriber);
