@@ -322,6 +322,8 @@ export default tsEslint.config(
       'react/require-default-props': 'off',
       'react/no-danger': 'off',
       'jsx-a11y/click-events-have-key-events': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
 
       '@typescript-eslint/naming-convention': [
         'error',
