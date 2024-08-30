@@ -1,7 +1,7 @@
 // Eslint v9.0 and above plugins
 import tsEslint from 'typescript-eslint';
 import jsEslint from '@eslint/js';
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 // Eslint v8.0 and below plugins
 import promise from 'eslint-plugin-promise';
@@ -24,24 +24,6 @@ import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import { FlatCompat } from '@eslint/eslintrc';
 
 const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
-
-
-// import eslintConfigPrettier from "eslint-config-prettier";
-
-// export default tseslint.config(
-//   eslint.configs.recommended,
-//   ...fixupConfigRules(compat.extends("airbnb-base")),
-//   ...fixupConfigRules(compat.extends("airbnb-typescript/base")),
-//   eslintConfigPrettier,
-//   {
-//     languageOptions: {
-//       parserOptions: {
-//         project: true,
-//         tsconfigRootDir: import.meta.dirname,
-//       },
-//     },
-//   },
-// );
 
 export default tsEslint.config(
   /* ******************** RECOMMENDED CONFIG ******************** */
