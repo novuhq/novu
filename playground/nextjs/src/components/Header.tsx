@@ -15,6 +15,7 @@ const LINKS: LinkType[] = [
   { href: '/notifications', label: 'Notifications' },
   { href: '/novu-theme', label: 'Novu Theme' },
   { href: '/custom-popover', label: 'Custom Popover' },
+  { href: '/hooks', label: 'Hooks' },
 ];
 
 const NavLink = ({ href, label }: LinkType) => {
