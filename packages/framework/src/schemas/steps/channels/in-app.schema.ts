@@ -1,10 +1,20 @@
 import { Schema } from '../../../types/schema.types';
 
+const redirectSchema = {
+  type: 'object',
+  properties: {
+    url: { type: 'string', format: 'uri' },
+    target: { type: 'string', enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'], default: '_blank' },
+  },
+  required: ['url'],
+  additionalProperties: false,
+} as const satisfies Schema;
+
 const actionSchema = {
   type: 'object',
   properties: {
     label: { type: 'string' },
-    url: { type: 'string' },
+    redirect: redirectSchema,
   },
   required: ['label'],
   additionalProperties: false,
@@ -18,6 +28,8 @@ const inAppOutputSchema = {
     avatar: { type: 'string', format: 'uri' },
     primaryAction: actionSchema,
     secondaryAction: actionSchema,
+    data: { type: 'object', additionalProperties: true },
+    redirect: redirectSchema,
   },
   required: ['body'],
   additionalProperties: false,

@@ -201,12 +201,15 @@ export class SendMessageInApp extends SendMessageBase {
     const bridgeOutputs = command.bridgeData?.outputs as InAppOutput;
     const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
-    const channelData: Partial<Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags'>> = {
+    const channelData: Partial<
+      Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data'>
+    > = {
       content: (this.storeContent() ? inAppMessage.content || content : null) as string,
       cta: bridgeOutputs ? inAppMessage.cta : step.template.cta,
       subject: inAppMessage.subject,
       avatar: inAppMessage.avatar,
       payload: messagePayload,
+      data: inAppMessage.data,
       tags: command.tags,
     };
 

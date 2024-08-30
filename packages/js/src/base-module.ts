@@ -1,4 +1,3 @@
-import type { ApiService } from '@novu/client';
 import { InboxService } from './api';
 
 import { NovuEventEmitter } from './event-emitter';
@@ -14,7 +13,6 @@ interface CallQueueItem {
 }
 
 export class BaseModule {
-  _apiService: ApiService;
   _inboxService: InboxService;
   _emitter: NovuEventEmitter;
   #callsQueue: CallQueueItem[] = [];

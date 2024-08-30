@@ -15,7 +15,7 @@ import {
 } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
-  payload: ITriggerPayload;
+  payload?: ITriggerPayload;
   overrides?: ITriggerOverrides;
   tenant?: ITriggerTenant;
   transactionId?: string;

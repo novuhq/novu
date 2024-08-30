@@ -23,6 +23,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   readonly channelType: InboxNotification['channelType'];
   readonly tags: InboxNotification['tags'];
   readonly redirect: InboxNotification['redirect'];
+  readonly data?: InboxNotification['data'];
 
   constructor(notification: InboxNotification) {
     this.#emitter = NovuEventEmitter.getInstance();
@@ -43,6 +44,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     this.channelType = notification.channelType;
     this.tags = notification.tags;
     this.redirect = notification.redirect;
+    this.data = notification.data;
   }
 
   read(): Result<Notification> {
