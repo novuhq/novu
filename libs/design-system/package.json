@@ -18,7 +18,7 @@
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
-    "lint": "eslint --ext .ts,.tsx src",
+    "lint": "eslint src",
     "build": "npm run build:cjs && npm run build:esm && npm run build:types",
     "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
     "build:cjs:watch": "cross-env node_modules/.bin/tsc -w -p tsconfig.json",

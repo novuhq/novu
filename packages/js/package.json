@@ -44,7 +44,7 @@
     "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch && pnpm run post:build",
     "post:build": "node scripts/size-limit.mjs",
-    "lint": "eslint --ext .ts,.tsx src",
+    "lint": "eslint src",
     "test": "jest"
   },
   "browserslist": {
