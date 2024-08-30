@@ -87,6 +87,6 @@ export class UpsertPreferences {
       '_id'
     );
 
-    return found._id;
+    return found?._id;
   }
 }
