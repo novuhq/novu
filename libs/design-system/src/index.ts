@@ -14,8 +14,6 @@ export type { ISelectProps } from './select/Select.types';
 export { Switch } from './switch/Switch';
 export * from './table';
 export { Tag } from './tag/Tag';
-export { Title } from './typography/title/Title';
-export { Text } from './typography/text/Text';
 export { Container } from './container/Container';
 export type { IDropdownProps } from './dropdown/Dropdown';
 export { Dropdown } from './dropdown/Dropdown';
