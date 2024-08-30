@@ -27,7 +27,7 @@ export const modalStyles = {
     position: 'fixed !important',
     right: '75 !important',
     top: '[10px] !important',
-    zIndex: '[2] !important',
+    zIndex: 'docked !important',
   }),
 };
 

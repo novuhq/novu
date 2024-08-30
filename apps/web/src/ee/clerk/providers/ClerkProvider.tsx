@@ -108,13 +108,13 @@ const CLERK_MODAL_ELEMENT = {
     },
   },
   userButtonPopoverActionButton__signOutAll: {
-    gap: '12px',
+    gap: 'var(--nv-spacing-75)',
     '&:hover': {
       color: 'var(--nv-colors-typography-text-main)',
     },
   },
   userButtonPopoverActionButton__addAccount: {
-    gap: '12px',
+    gap: 'var(--nv-spacing-75)',
     '&:hover': {
       color: 'var(--nv-colors-typography-text-main)',
     },

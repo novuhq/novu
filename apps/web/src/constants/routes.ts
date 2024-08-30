@@ -80,6 +80,7 @@ export enum ROUTES {
   MANAGE_ACCOUNT_ORGANIZATION = '/manage-account/organization',
   MANAGE_ACCOUNT_TEAM_MEMBERS = '/manage-account/team-members',
   MANAGE_ACCOUNT_BILLING = '/manage-account/billing',
+  MANAGE_ACCOUNT_BRANDING = '/manage-account/branding',
 }
 
 export enum MANAGE_ACCOUNT_ROUTE_SEGMENTS {
