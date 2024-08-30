@@ -1,5 +1,5 @@
-import { Novu } from '../novu';
 import axios from 'axios';
+import { Novu } from '../novu';
 
 const mockConfig = {
   apiKey: '1234',
@@ -55,7 +55,7 @@ describe('test use of novus node package - NotificationGroups class', () => {
       `/notification-groups/1234`,
       {
         name: 'updated name',
-      }
+      },
     );
   });
 
@@ -66,7 +66,7 @@ describe('test use of novus node package - NotificationGroups class', () => {
 
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      `/notification-groups/1234`
+      `/notification-groups/1234`,
     );
   });
 });
