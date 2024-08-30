@@ -37,7 +37,7 @@ const CLERK_MODAL_ELEMENT = {
     color: 'var(--nv-colors-typography-text-main)',
   },
   userPreview: {
-    gap: '12px',
+    gap: 'var(--nv-spacing-75)',
   },
   userPreviewSecondaryIdentifier: {
     color: 'var(--nv-colors-typography-text-secondary)',
@@ -150,7 +150,7 @@ const CLERK_MODAL_ELEMENT = {
     fontFamily: 'var(--nv-fonts-system)',
     fontSize: 'var(--nv-font-sizes-88)',
     fontWeight: 'var(--nv-font-weights-strong)',
-    gap: '12px',
+    gap: 'var(--nv-spacing-75)',
     padding: 'var(--nv-spacing-100) var(--nv-spacing-125)',
     '&:hover': {
       color: 'var(--nv-colors-typography-text-main) !important',
@@ -158,7 +158,7 @@ const CLERK_MODAL_ELEMENT = {
   },
   organizationSwitcherTrigger: {
     '.cl-organizationPreview': {
-      gap: '12px',
+      gap: 'var(--nv-spacing-75)',
       '.cl-organizationPreviewAvatarContainer > .cl-organizationPreviewAvatarBox': {
         width: 'var(--nv-sizes-icon-20)',
         height: 'var(--nv-sizes-icon-20)',
