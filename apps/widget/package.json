@@ -35,7 +35,6 @@
     "babel-plugin-import": "^1.13.3",
     "chroma-js": "^2.4.2",
     "envalid": "^8.0.0",
-    "eslint-plugin-cypress": "^2.15.1",
     "iframe-resizer": "^4.3.1",
     "polished": "^4.1.2",
     "react": "^18.3.1",

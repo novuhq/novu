@@ -3,6 +3,7 @@ import tsEslint from 'typescript-eslint';
 import jsEslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import panda from '@pandacss/eslint-plugin';
+import pluginCypress from 'eslint-plugin-cypress/flat';
 
 // Eslint v8.0 and below plugins
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -367,6 +368,39 @@ export default tsEslint.config(
       ],
 
       '@pandacss/no-config-function-in-source': 'off',
+    },
+  },
+
+  {
+    files: ['apps/widget/**'],
+    extends: [pluginCypress.configs.recommended],
+    rules: {
+      'func-names': 'off',
+      'react/jsx-props-no-spreading': 'off',
+      'react/no-array-index-key': 'off',
+      'no-empty-pattern': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/jsx-closing-bracket-location': 'off',
+      '@typescript-eslint/ban-types': 'off',
+      'react/jsx-wrap-multilines': 'off',
+      'jsx-a11y/anchor-is-valid': 'off',
+      'promise/catch-or-return': 'off',
+      'react/jsx-one-expression-per-line': 'off',
+      'jsx-a11y/aria-role': 'off',
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'react/require-default-props': 'off',
+      'react/no-danger': 'off',
+      'jsx-a11y/click-events-have-key-events': 'off',
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          filter: '_',
+          selector: 'variableLike',
+          leadingUnderscore: 'allow',
+          format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
+        },
+      ],
     },
   }
 );

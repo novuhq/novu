@@ -115,6 +115,7 @@
     "eslint-plugin-chai-expect": "^3.1.0",
     "eslint-plugin-chai-friendly": "^1.0.1",
     "eslint-plugin-const-case": "^1.2.2",
+    "eslint-plugin-cypress": "^3.5.0",
     "eslint-plugin-deprecation": "^3.0.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-functional": "^7.0.2",
