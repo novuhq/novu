@@ -42,9 +42,12 @@ export const serve = (options: ServeHandlerOptions) => {
           return url;
         },
         body: () => {
-          return JSON.parse(
-            event.body ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body) : '{}'
-          );
+          let bodyContent = '{}';
+          if (event.body) {
+            bodyContent = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body;
+          }
+
+          return JSON.parse(bodyContent);
         },
         headers: (key) => event.headers[key],
         queryString: (key) => {

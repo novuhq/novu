@@ -1,6 +1,7 @@
+/* eslint-disable no-param-reassign */
 import { expect, it, describe, beforeEach } from 'vitest';
-import { Client } from './client';
 import { z } from 'zod';
+import { Client } from './client';
 import { workflow } from './resources/workflow';
 import { ExecutionStateControlsInvalidError } from './errors';
 import { PostActionEnum } from './constants';

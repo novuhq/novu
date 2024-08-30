@@ -160,7 +160,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
-      // eslint-disable-next-line no-unused-vars
+
       const testFn = () =>
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
@@ -191,7 +191,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
-      // eslint-disable-next-line no-unused-vars
+
       const testFn = () =>
         testWorkflow.trigger({
           payload: {
@@ -223,7 +223,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
-      // eslint-disable-next-line no-unused-vars
+
       const testFn = () =>
         testWorkflow.trigger({
           // @ts-expect-error - payload is missing from the trigger
@@ -252,7 +252,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
-      // eslint-disable-next-line no-unused-vars
+
       const testFn = () =>
         testWorkflow.trigger({
           to: 'test@test.com',
@@ -267,7 +267,7 @@ describe('workflow function', () => {
       });
 
       // Capture in a test function to avoid throwing execution errors
-      // eslint-disable-next-line no-unused-vars
+
       const testFn = () =>
         testWorkflow.trigger({
           to: 'test@test.com',
@@ -434,6 +434,8 @@ describe('workflow function', () => {
             ok: true,
             json: () => Promise.resolve({ transactionId: mockTransactionId }),
           });
+        } else {
+          throw new Error('Invalid fetch call');
         }
       });
       global.fetch = fetchMock;

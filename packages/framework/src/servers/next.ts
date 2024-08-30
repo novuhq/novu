@@ -2,8 +2,7 @@ import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
-import { type Either } from '../types';
-import { type SupportedFrameworkName } from '../types';
+import { type Either, type SupportedFrameworkName } from '../types';
 import { getResponse } from '../utils';
 
 export const frameworkName: SupportedFrameworkName = 'next';
@@ -112,7 +111,6 @@ export const serve = (
             if (process.env.NODE_ENV === 'development') {
               protocol = 'http';
             }
-            // eslint-disable-next-line no-unused-vars
           } catch (error) {
             // no-op
           }

@@ -32,7 +32,6 @@ describe('NovuRequestHandler', () => {
         bridgeUrl: 'http://example.com',
       };
 
-      // eslint-disable-next-line no-unused-vars
       const { workflowId, ...renamedWorkflowId } = { ...triggerEvent, name: triggerEvent.workflowId };
 
       const postMock = vi.fn().mockResolvedValueOnce({
@@ -54,7 +53,7 @@ describe('NovuRequestHandler', () => {
       const expectedPayload = { body: expectedBody, headers: expectedHeaders, method: expectedMethod };
 
       const calledWithUrl = postMock.mock.calls[0][0];
-      expect(calledWithUrl).toEqual('https://api.novu.co/v1' + '/events/trigger');
+      expect(calledWithUrl).toEqual('https://api.novu.co/v1/events/trigger');
 
       const calledWithBody = postMock.mock.calls[0][1].body;
       // we parse the body in order to compare the objects with more predictable results versus strings
