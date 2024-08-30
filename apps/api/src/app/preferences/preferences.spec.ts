@@ -299,4 +299,79 @@ describe('Preferences', function () {
 
     expect(workflowPreferences.preferences.workflow.readOnly).to.be.true;
   });
+
+  it('should validate preferences', async function () {
+    const preferences = {
+      workflow: {
+        defaultValue: false,
+        readOnly: false,
+      },
+      channels: {
+        in_app: {
+          defaultValue: false,
+          readOnly: false,
+        },
+        sms: {
+          defaultValue: false,
+          readOnly: false,
+        },
+        email: {
+          defaultValue: false,
+          readOnly: false,
+        },
+        push: {
+          defaultValue: false,
+          readOnly: false,
+        },
+        chat: {
+          defaultValue: false,
+          readOnly: false,
+        },
+      },
+    };
+
+    try {
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          preferences,
+          actor: PreferencesActorEnum.WORKFLOW,
+          environmentId: session.environment._id,
+          organizationId: session.organization._id,
+        })
+      );
+      expect(false).to.be.true;
+    } catch (e) {
+      expect(e.message).to.equal('Template id is missing for preferences');
+    }
+
+    try {
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          preferences,
+          actor: PreferencesActorEnum.USER,
+          environmentId: session.environment._id,
+          organizationId: session.organization._id,
+          templateId: workflowId,
+        })
+      );
+      expect(false).to.be.true;
+    } catch (e) {
+      expect(e.message).to.equal('User id is missing for preferences');
+    }
+
+    try {
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          preferences,
+          actor: PreferencesActorEnum.SUBSCRIBER,
+          environmentId: session.environment._id,
+          organizationId: session.organization._id,
+          templateId: workflowId,
+        })
+      );
+      expect(false).to.be.true;
+    } catch (e) {
+      expect(e.message).to.equal('Subscriber id is missing for preferences');
+    }
+  });
 });
