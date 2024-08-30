@@ -10,7 +10,7 @@ import deprecation from 'eslint-plugin-deprecation';
 
 /**
  * Eslint v8 compatibility packages
- * 
+ *
  * This file was migrated from eslintrc.js to eslint.config.mjs using the following command:
  * `npx @eslint/migrate-config .eslintrc.js`
  *
@@ -28,20 +28,32 @@ const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 export default tsEslint.config(
   /* ******************** RECOMMENDED CONFIG ******************** */
   jsEslint.configs.recommended,
-  ...fixupConfigRules(compat.extends(
-    /**
-     * Airbnb is still migrating to Eslint v9.0
-     *
-     * @see https://github.com/iamturns/eslint-config-airbnb-typescript/issues/331
-     */
-    'airbnb-base',
-    'airbnb-typescript',
-  )),
+  ...fixupConfigRules(
+    compat.extends(
+      /**
+       * Airbnb is still migrating to Eslint v9.0
+       *
+       * @see https://github.com/iamturns/eslint-config-airbnb-typescript/issues/331
+       */
+      'airbnb-base',
+      'airbnb-typescript'
+    )
+  ),
   eslintPluginPrettierRecommended, // KEEP PRETTIER CONFIG LAST
 
   /* ******************** IGNORES ******************** */
   {
-    ignores: ['**/dist/**', '**/build/**', '**/node_modules/**', '**/jest.config.js', '**/vitest.config.js']
+    ignores: [
+      '**/dist/**',
+      '**/build/**',
+      '**/node_modules/**',
+      '**/playwright-report/**',
+      '**/styled-system/**',
+      '**/coverage/**',
+      '**/.next/**',
+      '**/.storybook/**',
+      '**/.nx/**',
+    ],
   },
 
   /* ******************** TYPESCRIPT FILES ******************** */
@@ -199,7 +211,8 @@ export default tsEslint.config(
     files: ['**/*.{js,jsx,cjs,mjs}'],
     extends: [tsEslint.configs.disableTypeChecked],
     rules: {
-      "deprecation/deprecation": "off",
+      'deprecation/deprecation': 'off',
+      '@typescript-eslint/no-throw-literal': 'off',
     },
   },
 
