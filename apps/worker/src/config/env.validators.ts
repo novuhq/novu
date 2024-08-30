@@ -15,7 +15,7 @@ export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 const processEnv = process.env as Record<string, string>; // Hold the initial process.env to avoid circular reference
 
 const str32 = makeValidator((variable) => {
-  if (!(typeof variable === 'string') || variable.length != 32) {
+  if (!(typeof variable === 'string') || variable.length !== 32) {
     throw new Error('Expected to be string 32 char long');
   }
 
@@ -62,12 +62,15 @@ export const envValidators = {
   MESSAGE_IN_APP_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS }),
 
   // Feature Flags
-  ...Object.keys(FeatureFlagsKeysEnum).reduce((acc, key) => {
-    return {
-      ...acc,
-      [key as FeatureFlagsKeysEnum]: bool({ default: false }),
-    };
-  }, {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>),
+  ...Object.keys(FeatureFlagsKeysEnum).reduce(
+    (acc, key) => {
+      return {
+        ...acc,
+        [key as FeatureFlagsKeysEnum]: bool({ default: false }),
+      };
+    },
+    {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>
+  ),
 
   // Azure validators
   ...(processEnv.STORAGE_SERVICE === 'AZURE' && {

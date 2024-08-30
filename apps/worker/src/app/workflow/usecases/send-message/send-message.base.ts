@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
@@ -72,6 +73,7 @@ export abstract class SendMessageBase extends SendMessageType {
       });
     }
 
+    // eslint-disable-next-line consistent-return
     return integration;
   }
 
@@ -148,6 +150,7 @@ export abstract class SendMessageBase extends SendMessageType {
     return messageTemplate;
   }
 
+  // eslint-disable-next-line consistent-return
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
@@ -170,8 +173,8 @@ export abstract class SendMessageBase extends SendMessageType {
           fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
-            format: function (value, formatting, lng) {
-              if (value && formatting && !isNaN(Date.parse(value))) {
+            format(value, formatting, lng) {
+              if (value && formatting && !Number.isNaN(Date.parse(value))) {
                 return format(new Date(value), formatting);
               }
 

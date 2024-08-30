@@ -7,7 +7,10 @@ import { AddJob } from '../add-job';
 
 @Injectable()
 export class QueueNextJob {
-  constructor(private jobRepository: JobRepository, @Inject(forwardRef(() => AddJob)) private addJobUsecase: AddJob) {}
+  constructor(
+    private jobRepository: JobRepository,
+    @Inject(forwardRef(() => AddJob)) private addJobUsecase: AddJob
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: QueueNextJobCommand): Promise<JobEntity | undefined> {
@@ -28,6 +31,7 @@ export class QueueNextJob {
       job,
     });
 
+    // eslint-disable-next-line consistent-return
     return job;
   }
 }

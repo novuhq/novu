@@ -193,6 +193,9 @@ export class SendMessage {
         await this.executeStepCustom.execute(sendMessageCommand);
         break;
       }
+      default: {
+        throw new PlatformException(`Unsupported step type: ${stepType}`);
+      }
     }
 
     return { status: 'success' };
@@ -257,7 +260,7 @@ export class SendMessage {
       passedFilters: [],
     });
 
-    const digest = command.job.digest;
+    const { digest } = command.job;
     let timedInfo: any = {};
 
     if (digest && digest.type === DigestTypeEnum.TIMED && digest.timed) {
@@ -315,7 +318,7 @@ export class SendMessage {
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
-    if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
+    if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
     const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
       GetSubscriberGlobalPreferenceCommand.create({
@@ -492,7 +495,7 @@ export class SendMessage {
             isTest: false,
             isRetry: false,
             raw: JSON.stringify({
-              tenantIdentifier: tenantIdentifier,
+              tenantIdentifier,
             }),
           })
         );

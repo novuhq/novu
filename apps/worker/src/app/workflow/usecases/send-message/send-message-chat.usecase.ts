@@ -72,7 +72,7 @@ export class SendMessageChat extends SendMessageBase {
     addBreadcrumb({
       message: 'Sending Chat',
     });
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const { subscriber } = command.compileContext;
@@ -112,7 +112,7 @@ export class SendMessageChat extends SendMessageBase {
         Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
       ) || [];
 
-    const phone = subscriber.phone;
+    const { phone } = subscriber;
     chatChannels.push({
       providerId: ChatProviderIdEnum.WhatsAppBusiness,
       credentials: {
@@ -241,7 +241,7 @@ export class SendMessageChat extends SendMessageBase {
       _messageTemplateId: chatChannel.template?._id,
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
-      chatWebhookUrl: chatWebhookUrl,
+      chatWebhookUrl,
       phone: phoneNumber,
       content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
@@ -372,8 +372,6 @@ export class SendMessageChat extends SendMessageBase {
           }),
         })
       );
-
-      return;
     }
   }
 

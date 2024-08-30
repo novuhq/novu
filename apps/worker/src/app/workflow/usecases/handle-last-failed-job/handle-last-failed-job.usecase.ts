@@ -32,7 +32,6 @@ export class HandleLastFailedJob {
     const job = await this.jobRepository.findOne({ _id: jobId, _environmentId: command.environmentId });
     if (!job) {
       const message = `Job ${jobId} not found when handling the failure of the latest attempt for a backed off job`;
-      // eslint-disable-next-line deprecation/deprecation
       Logger.error(message, new NotFoundError(message), LOG_CONTEXT);
       throw new PlatformException(message);
     }

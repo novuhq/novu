@@ -113,6 +113,7 @@ export default tsEslint.config(
       'max-classes-per-file': 'off',
       'react/react-in-jsx-scope': 'off',
       'no-else-return': 'off',
+      'import/export': 'off',
 
       'max-len': [
         'warn',
@@ -131,7 +132,6 @@ export default tsEslint.config(
             '@novu/shared/*',
             '!@novu/shared/utils',
             '@novu/dal/*',
-            '!import2/good',
             '*../libs/dal/*',
             '*../libs/shared/*',
             '*../libs/stateless/*',

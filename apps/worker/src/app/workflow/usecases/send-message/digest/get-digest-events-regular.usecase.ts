@@ -10,7 +10,7 @@ import { GetDigestEvents } from './get-digest-events.usecase';
 export class GetDigestEventsRegular extends GetDigestEvents {
   @InstrumentUsecase()
   public async execute(command: DigestEventsCommand) {
-    const currentJob = command.currentJob;
+    const { currentJob } = command;
 
     const { digestKey, digestMeta, digestValue } = getJobDigest(currentJob);
     const amount = this.castAmount(digestMeta);
@@ -37,7 +37,7 @@ export class GetDigestEventsRegular extends GetDigestEvents {
   }
 
   private castAmount(digestMeta: IDigestBaseMetadata | undefined): number | undefined {
-    let amount: number | undefined = undefined;
+    let amount: number | undefined;
 
     if (typeof digestMeta?.amount === 'number') {
       amount = digestMeta.amount;
