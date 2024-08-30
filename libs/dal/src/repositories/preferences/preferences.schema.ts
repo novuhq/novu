@@ -100,5 +100,5 @@ preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, ove
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Preferences =
-  (mongoose.models.NotificationTemplate as mongoose.Model<PreferencesDBModel>) ||
+  (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||
   mongoose.model<PreferencesDBModel>('Preferences', preferencesSchema);
