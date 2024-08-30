@@ -4,8 +4,8 @@ import { applyDecorators } from '@nestjs/common';
 // eslint-disable-next-line import/no-namespace
 import * as nestSwagger from '@nestjs/swagger';
 import { ApiResponseOptions } from '@nestjs/swagger';
+import type { ApiResponseDecoratorName } from '@novu/shared';
 import { COMMON_RESPONSE_HEADERS, COMMON_RESPONSES } from '../constants';
-import { ApiResponseDecoratorName } from '@novu/shared';
 import { createReusableHeaders } from './headers.decorator';
 
 const createCustomResponseDecorator = (decoratorName: ApiResponseDecoratorName) => {
@@ -27,9 +27,12 @@ const nestSwaggerResponseExports = Object.keys(nestSwagger).filter(
   (key) => key.match(/^Api([a-zA-Z]+)Response$/) !== null
 ) as Array<ApiResponseDecoratorName>;
 
-export const customResponseDecorators = nestSwaggerResponseExports.reduce((acc, decoratorName) => {
-  return {
-    ...acc,
-    [decoratorName]: createCustomResponseDecorator(decoratorName),
-  };
-}, {} as Record<ApiResponseDecoratorName, (options?: ApiResponseOptions) => ReturnType<typeof applyDecorators>>);
+export const customResponseDecorators = nestSwaggerResponseExports.reduce(
+  (acc, decoratorName) => {
+    return {
+      ...acc,
+      [decoratorName]: createCustomResponseDecorator(decoratorName),
+    };
+  },
+  {} as Record<ApiResponseDecoratorName, (options?: ApiResponseOptions) => ReturnType<typeof applyDecorators>>
+);

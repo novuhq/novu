@@ -1,12 +1,12 @@
 /* eslint-disable max-len */
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
-import { injectDocumentComponents } from './injection';
 import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { injectDocumentComponents } from './injection';
 import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
+
 // Necessary to resolve ESlint errors that surface before metadata generation
-// eslint-disable-next-line import/extensions
 import metadata from '../../../../metadata';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
@@ -117,6 +117,7 @@ if (process.env.NOVU_ENTERPRISE === 'true') {
 export const setupSwagger = async (app: INestApplication) => {
   await SwaggerModule.loadPluginMetadata(metadata);
   const document = injectDocumentComponents(
+    // @ts-expect-error - SwaggerModule.setup is behind in typings
     SwaggerModule.createDocument(app, options.build(), {
       operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
       deepScanRoutes: true,
@@ -126,6 +127,7 @@ export const setupSwagger = async (app: INestApplication) => {
     })
   );
 
+  // @ts-expect-error - SwaggerModule.setup is behind in typings
   SwaggerModule.setup('api', app, {
     ...document,
     info: {
@@ -133,6 +135,7 @@ export const setupSwagger = async (app: INestApplication) => {
       title: `DEPRECATED: ${document.info.title}. Use /openapi.{json,yaml} instead.`,
     },
   });
+  // @ts-expect-error - SwaggerModule.setup is behind in typings
   SwaggerModule.setup('openapi', app, removeEndpointsWithoutApiKey(document), {
     jsonDocumentUrl: 'openapi.json',
     yamlDocumentUrl: 'openapi.yaml',
@@ -141,6 +144,7 @@ export const setupSwagger = async (app: INestApplication) => {
   sdkSetup(app, document);
 };
 function sdkSetup(app: INestApplication, document: OpenAPIObject) {
+  // eslint-disable-next-line no-param-reassign
   document['x-speakeasy-name-override'] = [
     { operationId: '^.*get.*', methodNameOverride: 'retrieve' },
     { operationId: '^.*retrieve.*', methodNameOverride: 'retrieve' },
@@ -150,6 +154,7 @@ function sdkSetup(app: INestApplication, document: OpenAPIObject) {
     { operationId: '^.*delete.*', methodNameOverride: 'delete' },
     { operationId: '^.*remove.*', methodNameOverride: 'delete' },
   ];
+  // eslint-disable-next-line no-param-reassign
   document['x-speakeasy-retries'] = {
     strategy: 'backoff',
     backoff: {
@@ -162,6 +167,7 @@ function sdkSetup(app: INestApplication, document: OpenAPIObject) {
     retryConnectionErrors: true,
   };
 
+  // @ts-expect-error - SwaggerModule.setup is behind in typings
   SwaggerModule.setup('openapi.sdk', app, transformDocument(document), {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',
