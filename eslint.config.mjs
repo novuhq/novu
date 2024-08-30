@@ -114,6 +114,7 @@ export default tsEslint.config(
       'react/react-in-jsx-scope': 'off',
       'no-else-return': 'off',
       'import/export': 'off',
+      'consistent-return': 'off',
 
       'max-len': [
         'warn',

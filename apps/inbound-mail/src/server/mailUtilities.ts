@@ -1,8 +1,9 @@
+/* eslint-disable import/no-import-module-exports */
 import child_process from 'node:child_process';
 import shell from 'shelljs';
-import logger from './logger';
 import path from 'node:path';
 import Spamc from 'spamc';
+import logger from './logger';
 
 const spamc = new Spamc();
 
@@ -25,7 +26,7 @@ if (!shell.which('spamassassin') || !shell.which('spamc')) {
  */
 module.exports = {
   /* @param rawEmail is the full raw mime email as a string. */
-  validateDkim: function (rawEmail, callback) {
+  validateDkim(rawEmail, callback) {
     if (!isPythonAvailable) {
       return callback(null, false);
     }
@@ -38,17 +39,17 @@ module.exports = {
     });
 
     verifyDkim.on('close', function (code) {
-      logger.verbose('closed with return code ' + code);
+      logger.verbose(`closed with return code ${code}`);
 
       /* Convert return code to appropriate boolean. */
-      return callback(null, !!!code);
+      return callback(null, !code);
     });
 
     verifyDkim.stdin.write(rawEmail);
     verifyDkim.stdin.end();
   },
 
-  validateSpf: function (ip, address, host, callback) {
+  validateSpf(ip, address, host, callback) {
     if (!isPythonAvailable) {
       return callback(null, false);
     }
@@ -64,15 +65,15 @@ module.exports = {
         code = err.code;
       }
 
-      logger.verbose('closed with return code ' + code);
+      logger.verbose(`closed with return code ${code}`);
 
       /* Convert return code to appropriate boolean. */
-      return callback(null, !!!code);
+      return callback(null, !code);
     });
   },
 
   /* @param rawEmail is the full raw mime email as a string. */
-  computeSpamScore: function (rawEmail, callback) {
+  computeSpamScore(rawEmail, callback) {
     if (!isSpamcAvailable) {
       return callback(null, 0.0);
     }
