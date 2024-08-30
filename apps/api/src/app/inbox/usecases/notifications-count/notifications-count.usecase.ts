@@ -11,13 +11,16 @@ const MAX_NOTIFICATIONS_COUNT = 99;
 
 @Injectable()
 export class NotificationsCount {
-  constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
+  constructor(
+    private messageRepository: MessageRepository,
+    private subscriberRepository: SubscriberRepository
+  ) {}
 
   @CachedQuery({
     builder: ({ environmentId, subscriberId, ...command }: NotificationsCountCommand) =>
       buildMessageCountKey().cache({
-        environmentId: environmentId,
-        subscriberId: subscriberId,
+        environmentId,
+        subscriberId,
         ...command,
       }),
   })

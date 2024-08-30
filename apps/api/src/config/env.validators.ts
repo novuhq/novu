@@ -55,12 +55,15 @@ export const envValidators = {
   HUBSPOT_PRIVATE_APP_ACCESS_TOKEN: str({ default: undefined }),
 
   // Feature Flags
-  ...Object.keys(FeatureFlagsKeysEnum).reduce((acc, key) => {
-    return {
-      ...acc,
-      [key as FeatureFlagsKeysEnum]: bool({ default: false }),
-    };
-  }, {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>),
+  ...Object.keys(FeatureFlagsKeysEnum).reduce(
+    (acc, key) => {
+      return {
+        ...acc,
+        [key as FeatureFlagsKeysEnum]: bool({ default: false }),
+      };
+    },
+    {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>
+  ),
 
   // Azure validators
   ...(processEnv.STORAGE_SERVICE === 'AZURE' && {

@@ -122,5 +122,7 @@ async function getTenants({
 }
 
 function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }

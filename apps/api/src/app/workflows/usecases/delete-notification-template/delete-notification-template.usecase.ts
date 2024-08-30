@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-
 import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
@@ -13,6 +11,8 @@ import {
   DeleteMessageTemplateCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+
 import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
 
 /**
@@ -31,7 +31,6 @@ export class DeleteNotificationTemplate {
     private analyticsService: AnalyticsService
   ) {}
 
-  // eslint-disable-next-line deprecation/deprecation
   async execute(command: DeleteNotificationTemplateCommand) {
     try {
       const notificationTemplate = await this.notificationTemplateRepository.findOne({
@@ -55,7 +54,7 @@ export class DeleteNotificationTemplate {
             environmentId: command.environmentId,
             userId: command.userId,
             messageTemplateId: step._templateId,
-            parentChangeId: parentChangeId,
+            parentChangeId,
             workflowType: command.type,
           })
         );
@@ -92,7 +91,7 @@ export class DeleteNotificationTemplate {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-          item: item,
+          item,
           type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
           changeId: parentChangeId,
         })

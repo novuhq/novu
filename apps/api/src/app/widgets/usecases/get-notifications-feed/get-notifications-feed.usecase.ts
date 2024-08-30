@@ -27,6 +27,7 @@ export class GetNotificationsFeed {
     }
 
     try {
+      // eslint-disable-next-line consistent-return
       return JSON.parse(Buffer.from(payload, 'base64').toString());
     } catch (e) {
       throw new BadRequestException('Invalid payload, the JSON object should be encoded to base64 string.');
@@ -36,8 +37,8 @@ export class GetNotificationsFeed {
   @CachedQuery({
     builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
       buildFeedKey().cache({
-        environmentId: environmentId,
-        subscriberId: subscriberId,
+        environmentId,
+        subscriberId,
         ...command,
       }),
   })
@@ -51,9 +52,9 @@ export class GetNotificationsFeed {
 
     if (!subscriber) {
       throw new ApiException(
-        'Subscriber not found for this environment with the id: ' +
-          command.subscriberId +
-          '. Make sure to create a subscriber before fetching the feed.'
+        `Subscriber not found for this environment with the id: ${
+          command.subscriberId
+        }. Make sure to create a subscriber before fetching the feed.`
       );
     }
 
@@ -107,8 +108,8 @@ export class GetNotificationsFeed {
 
     return {
       data,
-      totalCount: totalCount,
-      hasMore: hasMore,
+      totalCount,
+      hasMore,
       pageSize: command.limit,
       page: command.page,
     };

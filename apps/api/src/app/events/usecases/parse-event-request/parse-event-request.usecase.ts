@@ -169,6 +169,7 @@ export class ParseEventRequest {
     if (command.payload && Array.isArray(command.payload.attachments)) {
       this.modifyAttachments(command);
       await this.storageHelperService.uploadAttachments(command.payload.attachments);
+      // eslint-disable-next-line no-param-reassign
       command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
@@ -178,6 +179,7 @@ export class ParseEventRequest {
         template,
       })
     );
+    // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
     await this.sendInAppNudgeForTeamMemberInvite(command);
@@ -291,6 +293,7 @@ export class ParseEventRequest {
   }
 
   private modifyAttachments(command: ParseEventRequestCommand): void {
+    // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
 
@@ -304,7 +307,7 @@ export class ParseEventRequest {
   }
 
   private getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
-    const reservedVariables = template.triggers[0].reservedVariables;
+    const { reservedVariables } = template.triggers[0];
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }

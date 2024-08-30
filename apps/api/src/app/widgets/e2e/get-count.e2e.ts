@@ -327,14 +327,14 @@ describe('Count - GET /widget/notifications/count', function () {
 
     await invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: session.environment._id,
       }),
     });
 
     await invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: session.environment._id,
       }),
     });
@@ -370,14 +370,14 @@ describe('Count - GET /widget/notifications/count', function () {
 async function invalidateSeenFeed(invalidateCache: InvalidateCacheService, subscriberId: string, session) {
   await invalidateCache.invalidateQuery({
     key: buildFeedKey().invalidate({
-      subscriberId: subscriberId,
+      subscriberId,
       _environmentId: session.environment._id,
     }),
   });
 
   await invalidateCache.invalidateQuery({
     key: buildMessageCountKey().invalidate({
-      subscriberId: subscriberId,
+      subscriberId,
       _environmentId: session.environment._id,
     }),
   });

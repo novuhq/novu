@@ -8,7 +8,10 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class DeleteTenant {
-  constructor(private tenantRepository: TenantRepository, private getTenantUsecase: GetTenant) {}
+  constructor(
+    private tenantRepository: TenantRepository,
+    private getTenantUsecase: GetTenant
+  ) {}
 
   async execute(command: DeleteTenantCommand) {
     const tenant = await this.getTenantUsecase.execute(

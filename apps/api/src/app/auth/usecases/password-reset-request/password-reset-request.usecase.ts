@@ -5,9 +5,8 @@ import { Novu } from '@novu/node';
 import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
-import { normalizeEmail } from '@novu/shared';
+import { normalizeEmail, PasswordResetFlowEnum } from '@novu/shared';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
-import { PasswordResetFlowEnum } from '@novu/shared';
 
 @Injectable()
 export class PasswordResetRequest {
@@ -15,7 +14,10 @@ export class PasswordResetRequest {
   private MAX_ATTEMPTS_IN_A_DAY = 15;
   private RATE_LIMIT_IN_SECONDS = 60;
   private RATE_LIMIT_IN_HOURS = 24;
-  constructor(private invalidateCache: InvalidateCacheService, private userRepository: UserRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private userRepository: UserRepository
+  ) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);

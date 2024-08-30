@@ -62,7 +62,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
   it('should dispose subscriber relations to topic once he was removed', async () => {
     const subscriberId = '123';
 
-    const subscriber = await subscriberService.createSubscriber({ subscriberId: subscriberId });
+    const subscriber = await subscriberService.createSubscriber({ subscriberId });
     for (let i = 0; i < 50; i++) {
       const firstTopicKey = `topic-key-${i}-trigger-event`;
       const firstTopicName = `topic-name-${i}-trigger-event`;

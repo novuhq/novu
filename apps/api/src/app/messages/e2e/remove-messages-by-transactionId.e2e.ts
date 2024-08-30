@@ -61,12 +61,12 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
 
     await session.awaitRunningJobs(template._id);
 
-    const transactionId = response.data.data.transactionId;
+    const { transactionId } = response.data.data;
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      transactionId: transactionId,
+      transactionId,
     });
 
     expect(messages.length).to.be.greaterThan(0);
@@ -78,7 +78,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
     });
 
     const result = await messageRepository.find({
-      transactionId: transactionId,
+      transactionId,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });
@@ -105,12 +105,12 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
     );
 
     await session.awaitRunningJobs(template._id);
-    const transactionId = response.data.data.transactionId;
+    const { transactionId } = response.data.data;
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      transactionId: transactionId,
+      transactionId,
     });
 
     const emailMessages = messages.filter((message) => message.channel === ChannelTypeEnum.EMAIL);
@@ -122,7 +122,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
     expect(inAppMessagesCount).to.be.greaterThan(0);
 
     await axiosInstance.delete(
-      `${session.serverUrl}/v1/messages/transaction/` + transactionId + '?channel=' + ChannelTypeEnum.EMAIL,
+      `${session.serverUrl}/v1/messages/transaction/${transactionId}?channel=${ChannelTypeEnum.EMAIL}`,
       {
         headers: {
           authorization: `ApiKey ${session.apiKey}`,
@@ -131,7 +131,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
     );
 
     const result = await messageRepository.find({
-      transactionId: transactionId,
+      transactionId,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });

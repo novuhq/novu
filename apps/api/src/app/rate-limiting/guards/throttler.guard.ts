@@ -8,7 +8,6 @@ import {
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
-import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { GetFeatureFlag, GetFeatureFlagCommand, Instrument, PinoLogger } from '@novu/application-generic';
 import {
@@ -20,6 +19,7 @@ import {
   FeatureFlagsKeysEnum,
   UserSessionData,
 } from '@novu/shared';
+import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
@@ -50,13 +50,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * Thin wrapper around the ThrottlerGuard's canActivate method.
    */
   async intercept(context: ExecutionContext, next: CallHandler) {
-    try {
-      await this.canActivate(context);
+    await this.canActivate(context);
 
-      return next.handle();
-    } catch (error) {
-      throw error;
-    }
+    return next.handle();
   }
 
   @Instrument()
@@ -212,7 +208,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const authScheme = req.authScheme;
+    const { authScheme } = req;
 
     return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }

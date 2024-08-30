@@ -60,6 +60,7 @@ export class PromoteNotificationTemplateChange {
       });
 
       if (step.variants && step.variants.length > 0) {
+        // eslint-disable-next-line no-param-reassign
         step.variants = step.variants
           ?.map(mapNewVariantItem)
           .filter((variant): variant is StepVariantEntity => variant !== undefined);
@@ -72,6 +73,7 @@ export class PromoteNotificationTemplateChange {
       }
 
       if (step?._templateId && oldMessage._id) {
+        // eslint-disable-next-line no-param-reassign
         step._templateId = oldMessage._id;
       }
 
@@ -90,6 +92,7 @@ export class PromoteNotificationTemplateChange {
       }
 
       if (step?._templateId && oldMessage._id) {
+        // eslint-disable-next-line no-param-reassign
         step._templateId = oldMessage._id;
       }
 
@@ -167,6 +170,7 @@ export class PromoteNotificationTemplateChange {
         ...(newItem.data ? { data: newItem.data } : {}),
       };
 
+      // eslint-disable-next-line consistent-return
       return this.notificationTemplateRepository.create(newNotificationTemplate as NotificationTemplateEntity);
     }
 
@@ -183,6 +187,7 @@ export class PromoteNotificationTemplateChange {
 
     await this.invalidateNotificationTemplate(item, command.organizationId);
 
+    // eslint-disable-next-line consistent-return
     return await this.notificationTemplateRepository.update(
       {
         _environmentId: command.environmentId,

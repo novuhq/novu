@@ -30,6 +30,7 @@ export class SegmentService {
             const segmentDeviceId = payload.obj.anonymousId;
             mixpanel.register({ $device_id: segmentDeviceId });
             const sessionReplayProperties = mixpanel.get_session_recording_properties();
+            // eslint-disable-next-line no-param-reassign
             payload.obj.properties = {
               ...payload.obj.properties,
               ...sessionReplayProperties,
@@ -84,6 +85,7 @@ export class SegmentService {
     if (this._mixpanelEnabled) {
       const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
+      // eslint-disable-next-line no-param-reassign
       data = {
         ...(data || {}),
         ...sessionReplayProperties,

@@ -253,7 +253,7 @@ export class UpdateVercelConfiguration {
   private mapProjects(projects: any[], newAndUpdatedProjectIds: string[], removedProjectIds: string[]) {
     return projects.reduce<AllMappedProjectData>(
       (acc, curr) => {
-        const id = curr.id;
+        const { id } = curr;
         const vercelEnvs = curr?.env;
         const clientEnv = vercelEnvs?.find((e) => e.key === 'NOVU_CLIENT_APP_ID');
         const secretEnv = vercelEnvs?.find((e) => e.key === 'NOVU_SECRET_KEY');

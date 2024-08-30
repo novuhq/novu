@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import {
   MiddlewareConsumer,
   Module,
@@ -9,6 +10,8 @@ import {
   ForwardReference,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Type } from '@nestjs/common/interfaces/type.interface';
+import { isClerkEnabled } from '@novu/shared';
 import { EnvironmentsModule } from '../environments/environments.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
@@ -16,9 +19,7 @@ import { UserModule } from '../user/user.module';
 import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
-import { Type } from '@nestjs/common/interfaces/type.interface';
 import { EEOrganizationController } from './ee.organization.controller';
-import { isClerkEnabled } from '@novu/shared';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];

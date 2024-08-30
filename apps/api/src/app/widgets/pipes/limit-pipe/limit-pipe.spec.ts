@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { LimitPipe } from './limit-pipe';
 import { Paramtype } from '@nestjs/common/interfaces/features/paramtype.interface';
+import { LimitPipe } from './limit-pipe';
 
 enum MetadataEnum {
   DATA = 'limit',
@@ -48,7 +48,7 @@ describe('LimitPipe', () => {
 
   it('should return undefined input value if optional', () => {
     pipe = new LimitPipe(1, 1000, true);
-    let limit: undefined | null = undefined;
+    let limit: undefined | null;
     let res = pipe.transform(limit, metadata);
     expect(res).to.equal(limit);
 
@@ -59,7 +59,7 @@ describe('LimitPipe', () => {
 
   it('should throw exception if the input value is not optional', () => {
     pipe = new LimitPipe(1, 1000, false);
-    let limit: undefined | null = undefined;
+    let limit: undefined | null;
     expect(() => pipe.transform(limit, metadata)).to.throw(
       `${MetadataEnum.DATA} must be a number conforming to the specified constraints`
     );

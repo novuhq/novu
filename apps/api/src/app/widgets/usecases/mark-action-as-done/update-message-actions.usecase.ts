@@ -41,10 +41,8 @@ export class UpdateMessageActions {
 
     if (!subscriber) {
       throw new ApiException(
-        'Subscriber with the id: ' +
-          command.subscriberId +
-          ' was not found for this environment. ' +
-          'Make sure to create a subscriber before trying to modify it.'
+        `Subscriber with the id: ${command.subscriberId} was not found for this environment. ` +
+          `Make sure to create a subscriber before trying to modify it.`
       );
     }
 
@@ -61,10 +59,8 @@ export class UpdateMessageActions {
 
     if (!modificationResponse.modified) {
       throw new ApiException(
-        'Message with the id: ' +
-          command.messageId +
-          ' was not found for this environment. ' +
-          'Make sure to address correct message before trying to modify it.'
+        `Message with the id: ${command.messageId} was not found for this environment. ` +
+          `Make sure to address correct message before trying to modify it.`
       );
     }
 

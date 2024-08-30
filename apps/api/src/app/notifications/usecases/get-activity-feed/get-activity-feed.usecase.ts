@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, NotificationRepository } from '@novu/dal';
+import { Instrument } from '@novu/application-generic';
 import { ActivitiesResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
-import { Instrument } from '@novu/application-generic';
 
 @Injectable()
 export class GetActivityFeed {

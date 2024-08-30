@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { OrganizationRepository } from '@novu/dal';

@@ -40,6 +40,7 @@ export class VerifyPayload {
     return defaultPayload;
   }
 
+  // eslint-disable-next-line consistent-return
   private checkRequiredDelayPath(delayPath: string, payload: Record<string, unknown>): string | undefined {
     const invalidKey = `${delayPath} (ISO Date)`;
 

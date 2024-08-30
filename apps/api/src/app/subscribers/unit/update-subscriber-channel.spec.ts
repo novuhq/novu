@@ -426,13 +426,13 @@ describe('Update Subscriber channel credentials', function () {
       phone: faker.phone.phoneNumber(),
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      subscriberId: subscriberId,
+      subscriberId,
     });
 
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: session.organization._id,
-        subscriberId: subscriberId,
+        subscriberId,
         environmentId: session.environment._id,
         providerId: PushProviderIdEnum.FCM,
         credentials: { deviceTokens: ['token_1', 'token_1', 'token_1'] },

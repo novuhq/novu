@@ -15,13 +15,13 @@ export function IsNotEmpty(validationOptions?: ValidationOptions) {
     registerDecorator({
       name: 'isNotEmpty',
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName,
       options: validationOptions,
       validator: {
         validate(value: any, args: ValidationArguments) {
           return ![null, undefined, 'null', 'undefined', ''].some((invalidValue) => invalidValue === value);
         },
-        defaultMessage: function (data) {
+        defaultMessage(data) {
           const value = data?.value === '' ? 'empty string' : data?.value;
 
           return `${data?.property} should not be ${value}`;

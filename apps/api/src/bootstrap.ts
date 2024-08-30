@@ -1,25 +1,24 @@
-import './config';
 import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
-const passport = require('passport');
-const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
 import { init, Integrations, Handlers } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
+import { validateEnv, CONTEXT_PATH, corsOptionsDelegate } from './config';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
-import { validateEnv, CONTEXT_PATH } from './config';
 
 import packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { corsOptionsDelegate } from './config';
+
+const passport = require('passport');
+const compression = require('compression');
 
 const extendedBodySizeRoutes = [
   '/v1/events',
@@ -49,7 +48,7 @@ validateEnv();
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
-  let rawBodyBuffer: undefined | ((...args) => void) = undefined;
+  let rawBodyBuffer: undefined | ((...args) => void);
   let nestOptions: Record<string, boolean> = {};
 
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
@@ -89,7 +88,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix(CONTEXT_PATH + 'v1');
+  app.setGlobalPrefix(`${CONTEXT_PATH}v1`);
 
   app.use(passport.initialize());
 

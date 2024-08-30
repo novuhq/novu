@@ -257,7 +257,7 @@ describe('TriggerMulticast', () => {
       organizationId: session.organization._id,
       environmentId: session.environment._id,
       userId: session.user._id,
-      actor: actor,
+      actor,
     }) as any;
 
     await triggerMulticast.execute(command);

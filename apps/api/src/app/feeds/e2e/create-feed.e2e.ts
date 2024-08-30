@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
 import { FeedRepository } from '@novu/dal';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Create A Feed - /feeds (POST)', async () => {
   let session: UserSession;

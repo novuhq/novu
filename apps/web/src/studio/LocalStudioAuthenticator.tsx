@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth, useEnvironment } from '../hooks';

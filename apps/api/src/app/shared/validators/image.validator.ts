@@ -5,7 +5,7 @@ export function IsImageUrl(validationOptions?: ValidationOptions) {
     registerDecorator({
       name: 'isImageUrl',
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName,
       options: validationOptions,
       validator: {
         validate(value: any, args: ValidationArguments) {

@@ -641,6 +641,7 @@ async function insertIntegrationTwice(
   await session.testAgent.post('/v1/integrations').send(payload);
 
   if (createDiffChannels) {
+    // eslint-disable-next-line no-param-reassign
     payload.channel = ChannelTypeEnum.SMS;
   }
 

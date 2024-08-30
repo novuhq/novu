@@ -8,7 +8,10 @@ import { EnvironmentRepository } from '@novu/dal';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly authService: AuthService, private environmentRepository: EnvironmentRepository) {
+  constructor(
+    private readonly authService: AuthService,
+    private environmentRepository: EnvironmentRepository
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.JWT_SECRET,
@@ -18,6 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   @Instrument()
   async validate(req: http.IncomingMessage, session: UserSessionData) {
     // Set the scheme to Bearer, meaning the user is authenticated via a JWT coming from Dashboard
+    // eslint-disable-next-line no-param-reassign
     session.scheme = ApiAuthSchemeEnum.BEARER;
 
     const user = await this.authService.validateUser(session);
@@ -47,6 +51,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       currentEnvironmentId = environmentIdFromHeader;
     }
 
+    // eslint-disable-next-line no-param-reassign
     session.environmentId = currentEnvironmentId;
   }
 }

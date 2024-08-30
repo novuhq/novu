@@ -47,6 +47,7 @@ export class PromoteLayoutChange {
     if (count === 0) {
       await this.layoutRepository.deleteLayout(item._id, command.environmentId, command.organizationId);
 
+      // eslint-disable-next-line consistent-return
       return;
     }
 

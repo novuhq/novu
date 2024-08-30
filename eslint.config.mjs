@@ -249,6 +249,7 @@ export default tsEslint.config(
     files: ['apps/api/**'],
     rules: {
       'func-names': 'off',
+      'no-plusplus': 'off',
       'no-restricted-imports': [
         'error',
         {

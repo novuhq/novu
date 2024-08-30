@@ -1,6 +1,6 @@
-import { corsOptionsDelegate, isPermittedDeployPreviewOrigin } from './cors.config';
 import { spy } from 'sinon';
 import { expect } from 'chai';
+import { corsOptionsDelegate, isPermittedDeployPreviewOrigin } from './cors.config';
 
 describe('CORS Configuration', () => {
   describe('Local Environment', () => {
@@ -25,7 +25,7 @@ describe('CORS Configuration', () => {
   });
 
   (['dev', 'production'] as const).forEach((environment) => {
-    describe(environment + ' Environment CORS Configuration', () => {
+    describe(`${environment} Environment CORS Configuration`, () => {
       beforeEach(() => {
         process.env.NODE_ENV = environment;
 
@@ -86,7 +86,7 @@ describe('CORS Configuration', () => {
             {
               url: '/v1/test',
               headers: {
-                origin: 'https://test--' + process.env.PR_PREVIEW_ROOT_URL,
+                origin: `https://test--${process.env.PR_PREVIEW_ROOT_URL}`,
               },
             },
             callbackSpy
@@ -125,7 +125,7 @@ describe('CORS Configuration', () => {
     it('should return true for origin matching PR_PREVIEW_ROOT_URL', () => {
       process.env.NODE_ENV = 'dev';
       process.env.PR_PREVIEW_ROOT_URL = 'https://pr-preview.com';
-      expect(isPermittedDeployPreviewOrigin('https://netlify-' + 'https://pr-preview.com')).to.be.true;
+      expect(isPermittedDeployPreviewOrigin('https://netlify-https://pr-preview.com')).to.be.true;
     });
   });
 });

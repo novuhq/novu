@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { EvaluateTokenBucketRateLimit } from './evaluate-token-bucket-rate-limit.usecase';
 import { CacheService, cacheService as inMemoryCacheService } from '@novu/application-generic';
-import { SharedModule } from '../../../shared/shared.module';
-import { RateLimitingModule } from '../../rate-limiting.module';
 import { Test } from '@nestjs/testing';
 import sinon from 'sinon';
-import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import { v4 as uuid } from 'uuid';
+import { EvaluateTokenBucketRateLimit } from './evaluate-token-bucket-rate-limit.usecase';
+import { SharedModule } from '../../../shared/shared.module';
+import { RateLimitingModule } from '../../rate-limiting.module';
+import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 
 describe('EvaluateTokenBucketRateLimit', () => {
   let useCase: EvaluateTokenBucketRateLimit;
@@ -388,7 +388,9 @@ describe('EvaluateTokenBucketRateLimit', () => {
                         : mockRepeatId;
 
                     const jitter = Math.floor(Math.random() * maxJitterMs);
-                    await new Promise((resolve) => setTimeout(resolve, jitter));
+                    await new Promise((resolve) => {
+                      setTimeout(resolve, jitter);
+                    });
                     const start = Date.now();
                     const limit = EvaluateTokenBucketRateLimit.tokenBucketLimiter(
                       refillPerWindow,
@@ -412,8 +414,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
 
                   totalTime = endAll - startAll;
                   averageTime = results.reduce((acc, val) => acc + val.duration, 0) / results.length;
-                  variance =
-                    results.reduce((acc, val) => acc + Math.pow(val.duration - averageTime, 2), 0) / results.length;
+                  variance = results.reduce((acc, val) => acc + (val.duration - averageTime) ** 2, 0) / results.length;
                   stdev = Math.sqrt(variance);
                   nthPercentile = results.sort((a, b) => a.duration - b.duration)[
                     Math.floor(results.length * testPercentile)
