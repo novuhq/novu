@@ -42,7 +42,7 @@ import { transformSchema, validateData } from './validators';
 /**
  * We want to respond with a consistent string value for preview
  */
-JSONSchemaFaker.random.shuffle = function () {
+JSONSchemaFaker.random.shuffle = function shuffle() {
   return ['[placeholder]'];
 };
 
