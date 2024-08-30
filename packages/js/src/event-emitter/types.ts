@@ -53,7 +53,7 @@ type NotificationsReadArchivedAllEvents = BaseEvents<
   Notification[]
 >;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', undefined, Preference[]>;
-type PreferencesUpdateEvents = BaseEvents<'preferences.update', UpdatePreferencesArgs, Preference>;
+type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferencesArgs, Preference>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
@@ -82,8 +82,9 @@ export type Events = SessionInitializeEvents &
   NotificationsFetchEvents & {
     'notifications.list.updated': { data: ListNotificationsResponse };
   } & NotificationsFetchCountEvents &
-  PreferencesFetchEvents &
-  PreferencesUpdateEvents &
+  PreferencesFetchEvents & {
+    'preferences.list.updated': { data: Preference[] };
+  } & PreferenceUpdateEvents &
   SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &
@@ -107,5 +108,6 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationsReadAllEvents &
   NotificationsArchivedAllEvents &
   NotificationsReadArchivedAllEvents);
+export type PreferenceEvents = keyof PreferenceUpdateEvents;
 
 export type EventHandler<T = unknown> = (event: T) => void;

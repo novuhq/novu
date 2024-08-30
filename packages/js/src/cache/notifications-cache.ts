@@ -173,6 +173,14 @@ export class NotificationsCache {
     this.#cache.set(getCacheKey(args), data);
   }
 
+  update(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
+    this.set(args, data);
+    const notificationsResponse = this.getAggregated(getFilter(getCacheKey(args)));
+    this.#emitter.emit('notifications.list.updated', {
+      data: notificationsResponse,
+    });
+  }
+
   getAll(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
     if (this.has(args)) {
       return this.getAggregated({ tags: args.tags, read: args.read, archived: args.archived });
