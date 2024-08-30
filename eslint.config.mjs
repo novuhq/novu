@@ -1,16 +1,16 @@
-import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
-import _import from 'eslint-plugin-import';
+// Eslint v9.0 and above plugins
+import tsEslint from 'typescript-eslint';
+import jsEslint from '@eslint/js';
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+
+// Eslint v8.0 and below plugins
 import promise from 'eslint-plugin-promise';
 import unusedImports from 'eslint-plugin-unused-imports';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import prettier from 'eslint-plugin-prettier';
-import tsParser from '@typescript-eslint/parser';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+import deprecation from 'eslint-plugin-deprecation';
 
 /**
+ * Eslint v8 compatibility packages
+ * 
  * This file was migrated from eslintrc.js to eslint.config.mjs using the following command:
  * `npx @eslint/migrate-config .eslintrc.js`
  *
@@ -20,52 +20,59 @@ import { FlatCompat } from '@eslint/eslintrc';
  *
  * @see https://github.com/eslint/eslint/issues/18010
  */
+import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
+import { FlatCompat } from '@eslint/eslintrc';
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
-const compat = new FlatCompat({
-  baseDirectory: dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
+const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
-export default [
+
+// import eslintConfigPrettier from "eslint-config-prettier";
+
+// export default tseslint.config(
+//   eslint.configs.recommended,
+//   ...fixupConfigRules(compat.extends("airbnb-base")),
+//   ...fixupConfigRules(compat.extends("airbnb-typescript/base")),
+//   eslintConfigPrettier,
+//   {
+//     languageOptions: {
+//       parserOptions: {
+//         project: true,
+//         tsconfigRootDir: import.meta.dirname,
+//       },
+//     },
+//   },
+// );
+
+export default tsEslint.config(
+  /* ******************** RECOMMENDED CONFIG ******************** */
+  jsEslint.configs.recommended,
+  ...fixupConfigRules(compat.extends(
+    /**
+     * Airbnb is still migrating to Eslint v9.0
+     *
+     * @see https://github.com/iamturns/eslint-config-airbnb-typescript/issues/331
+     */
+    'airbnb-base',
+    'airbnb-typescript',
+  )),
+  eslintPluginPrettierRecommended, // KEEP PRETTIER CONFIG LAST
+
+  /* ******************** IGNORES ******************** */
   {
-    ignores: ['**/*.json', '**/node_modules', '**/.DS_Store'],
+    ignores: ['**/dist/**', '**/build/**', '**/node_modules/**', '**/jest.config.js', '**/vitest.config.js']
   },
-  ...fixupConfigRules(
-    compat.extends(
-      'airbnb-typescript',
-      'plugin:import/typescript',
-      'plugin:@typescript-eslint/recommended',
-      'prettier',
-      'plugin:prettier/recommended',
-      'plugin:promise/recommended',
-      'plugin:deprecation/recommended'
-    )
-  ),
+
+  /* ******************** TYPESCRIPT FILES ******************** */
   {
     plugins: {
-      import: fixupPluginRules(_import),
       promise: fixupPluginRules(promise),
-      '@typescript-eslint': fixupPluginRules(typescriptEslint),
-      prettier: fixupPluginRules(prettier),
+      deprecation: fixupPluginRules(deprecation),
     },
 
     languageOptions: {
-      parser: tsParser,
-      ecmaVersion: 2020,
-      sourceType: 'module',
-
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: dirname,
-      },
-    },
-
-    settings: {
-      'import/parsers': {
-        '@typescript-eslint/parser': ['.ts', '.tsx'],
+        tsconfigRootDir: import.meta.dirname,
       },
     },
 
@@ -74,6 +81,7 @@ export default [
     },
 
     rules: {
+      'deprecation/deprecation': 'error',
       'unused-imports/no-unused-imports': 'off',
       '@typescript-eslint/space-before-blocks': 'off',
       '@typescript-eslint/lines-between-class-members': 'off',
@@ -86,7 +94,6 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       'react/jsx-closing-bracket-location': 'off',
       '@typescript-eslint/no-var-requires': 'off',
-      'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['off'],
       'mocha/no-mocha-arrows': 'off',
       '@typescript-eslint/default-param-last': 'off',
@@ -205,6 +212,16 @@ export default [
     },
   },
 
+  /* ******************** JAVASCRIPT FILES ******************** */
+  {
+    files: ['**/*.{js,jsx,cjs,mjs}'],
+    extends: [tsEslint.configs.disableTypeChecked],
+    rules: {
+      "deprecation/deprecation": "off",
+    },
+  },
+
+  /* ******************** MONOREPO PACKAGES ******************** */
   {
     files: ['packages/framework/**'],
     plugins: {
@@ -219,7 +236,6 @@ export default [
       'const-case/uppercase': 0,
       'unicorn/no-array-reduce': 0,
       'unused-imports/no-unused-imports': 'error',
-      'no-unused-vars': 'error',
     },
   },
 
@@ -271,5 +287,5 @@ export default [
         },
       ],
     },
-  },
-];
+  }
+);
