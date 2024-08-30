@@ -1,4 +1,9 @@
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  GetSubscriberGlobalPreference,
+  GetSubscriberTemplatePreference,
+  GetSubscriberGlobalPreferenceCommand,
+} from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberPreferenceRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -8,7 +13,7 @@ import { UpdatePreferences } from './update-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
 
-const mockedPreference: any = {
+const mockedSubscriberPreference: any = {
   _id: '123',
   subscriberId: 'test-mockSubscriber',
   level: 'global',
@@ -22,27 +27,51 @@ const mockedPreference: any = {
   },
 };
 
-const mockedWorkflow: any = [{}];
+const mockedGlobalPreference: any = {
+  preference: {
+    enabled: true,
+    channels: {
+      email: true,
+      in_app: true,
+      sms: false,
+      push: false,
+      chat: true,
+    },
+  },
+};
+
+const mockedWorkflow: any = {
+  _id: 'workflow-1',
+  name: 'test-workflow',
+  critical: false,
+  triggers: [{ identifier: 'test-trigger' }],
+  tags: [],
+};
 
 describe('UpdatePreferences', () => {
   let updatePreferences: UpdatePreferences;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
-
   let notificationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
   let subscriberPreferenceRepositoryMock: sinon.SinonStubbedInstance<SubscriberPreferenceRepository>;
+  let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
+  let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
     subscriberPreferenceRepositoryMock = sinon.createStubInstance(SubscriberPreferenceRepository);
+    getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
+    getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
 
     updatePreferences = new UpdatePreferences(
       subscriberPreferenceRepositoryMock as any,
       notificationTemplateRepositoryMock as any,
       subscriberRepositoryMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      getSubscriberGlobalPreferenceMock as any,
+      getSubscriberTemplatePreferenceUsecase as any
     );
   });
 
@@ -100,27 +129,18 @@ describe('UpdatePreferences', () => {
     };
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    subscriberPreferenceRepositoryMock.findOne.onFirstCall().resolves(undefined);
-    subscriberPreferenceRepositoryMock.findOne.onSecondCall().resolves(mockedPreference);
+    subscriberPreferenceRepositoryMock.findOne.resolves(undefined);
+    getSubscriberGlobalPreferenceMock.execute.resolves(mockedGlobalPreference);
 
-    await updatePreferences.execute(command);
+    const result = await updatePreferences.execute(command);
 
-    expect(subscriberPreferenceRepositoryMock.create.calledOnce).to.be.true;
-    expect(subscriberPreferenceRepositoryMock.create.firstCall.args).to.deep.equal([
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _subscriberId: mockedSubscriber._id,
-        enabled: true,
-        channels: {
-          chat: command.chat,
-          email: undefined,
-          sms: undefined,
-          in_app: undefined,
-          push: undefined,
-        },
-        level: command.level,
-      },
+    expect(getSubscriberGlobalPreferenceMock.execute.called).to.be.true;
+    expect(getSubscriberGlobalPreferenceMock.execute.lastCall.args).to.deep.equal([
+      GetSubscriberGlobalPreferenceCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: mockedSubscriber.subscriberId,
+      }),
     ]);
 
     expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
@@ -138,9 +158,13 @@ describe('UpdatePreferences', () => {
           in_app: undefined,
           push: undefined,
         },
-        __source: 'UpdatePreferences',
       },
     ]);
+
+    expect(result).to.deep.equal({
+      level: command.level,
+      ...mockedGlobalPreference.preference,
+    });
   });
 
   it('should update user preference if preference exists', async () => {
@@ -153,25 +177,42 @@ describe('UpdatePreferences', () => {
     };
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    subscriberPreferenceRepositoryMock.findOne.resolves(mockedPreference);
+    subscriberPreferenceRepositoryMock.findOne.resolves(mockedSubscriberPreference);
+    getSubscriberGlobalPreferenceMock.execute.resolves(mockedGlobalPreference);
 
-    await updatePreferences.execute(command);
+    const result = await updatePreferences.execute(command);
 
-    expect(subscriberPreferenceRepositoryMock.create.calledOnce).to.be.false;
-    expect(subscriberPreferenceRepositoryMock.update.calledOnce).to.be.true;
-    expect(subscriberPreferenceRepositoryMock.update.firstCall.args).to.deep.equal([
+    expect(getSubscriberGlobalPreferenceMock.execute.called).to.be.true;
+    expect(getSubscriberGlobalPreferenceMock.execute.lastCall.args).to.deep.equal([
+      GetSubscriberGlobalPreferenceCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: mockedSubscriber.subscriberId,
+      }),
+    ]);
+
+    expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
+      AnalyticsEventsEnum.UPDATE_PREFERENCES,
+      '',
       {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _subscriberId: mockedSubscriber._id,
+        _organization: command.organizationId,
+        _subscriber: mockedSubscriber._id,
         level: command.level,
-      },
-      {
-        $set: {
-          'channels.chat': true,
+        _workflowId: undefined,
+        channels: {
+          chat: true,
+          email: undefined,
+          sms: undefined,
+          in_app: undefined,
+          push: undefined,
         },
       },
     ]);
+
+    expect(result).to.deep.equal({
+      level: command.level,
+      ...mockedGlobalPreference.preference,
+    });
   });
 
   it('should update user preference if preference exists and level is template', async () => {
@@ -186,10 +227,11 @@ describe('UpdatePreferences', () => {
     };
 
     subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    subscriberPreferenceRepositoryMock.findOne.resolves(mockedPreference);
+    subscriberPreferenceRepositoryMock.findOne.resolves(mockedSubscriberPreference);
+    getSubscriberTemplatePreferenceUsecase.execute.resolves({ ...mockedGlobalPreference });
     notificationTemplateRepositoryMock.findById.resolves(mockedWorkflow);
 
-    await updatePreferences.execute(command);
+    const result = await updatePreferences.execute(command);
 
     expect(subscriberPreferenceRepositoryMock.create.calledOnce).to.be.false;
     expect(subscriberPreferenceRepositoryMock.update.calledOnce).to.be.true;
@@ -227,5 +269,17 @@ describe('UpdatePreferences', () => {
         },
       },
     ]);
+
+    expect(result).to.deep.equal({
+      level: command.level,
+      ...mockedGlobalPreference.preference,
+      workflow: {
+        id: mockedWorkflow._id,
+        identifier: mockedWorkflow.triggers[0].identifier,
+        name: mockedWorkflow.name,
+        critical: mockedWorkflow.critical,
+        tags: mockedWorkflow.tags,
+      },
+    });
   });
 });

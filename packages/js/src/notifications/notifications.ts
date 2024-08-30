@@ -36,11 +36,11 @@ import { NotificationsCache } from '../cache';
 export class Notifications extends BaseModule {
   #useCache: boolean;
 
-  readonly #notificationsCache: NotificationsCache;
+  readonly cache: NotificationsCache;
 
   constructor({ useCache }: { useCache: boolean }) {
     super();
-    this.#notificationsCache = new NotificationsCache();
+    this.cache = new NotificationsCache();
     this.#useCache = useCache;
   }
 
@@ -48,9 +48,8 @@ export class Notifications extends BaseModule {
     return this.callWithSession(async () => {
       const args = { limit, ...restOptions };
       try {
-        let data: ListNotificationsResponse | undefined = this.#useCache
-          ? this.#notificationsCache.getAll(args)
-          : undefined;
+        let data: ListNotificationsResponse | undefined = this.#useCache ? this.cache.getAll(args) : undefined;
+        this._emitter.emit('notifications.list.pending', { args, data });
 
         if (!data) {
           const response = await this._inboxService.fetchNotifications({
@@ -65,8 +64,8 @@ export class Notifications extends BaseModule {
           };
 
           if (this.#useCache) {
-            this.#notificationsCache.set(args, data);
-            data = this.#notificationsCache.getAll(args);
+            this.cache.set(args, data);
+            data = this.cache.getAll(args);
           }
         }
 
@@ -215,7 +214,7 @@ export class Notifications extends BaseModule {
       readAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
-        notificationsCache: this.#notificationsCache,
+        notificationsCache: this.cache,
         tags,
       })
     );
@@ -226,7 +225,7 @@ export class Notifications extends BaseModule {
       archiveAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
-        notificationsCache: this.#notificationsCache,
+        notificationsCache: this.cache,
         tags,
       })
     );
@@ -237,7 +236,7 @@ export class Notifications extends BaseModule {
       archiveAllRead({
         emitter: this._emitter,
         inboxService: this._inboxService,
-        notificationsCache: this.#notificationsCache,
+        notificationsCache: this.cache,
         tags,
       })
     );
@@ -245,9 +244,9 @@ export class Notifications extends BaseModule {
 
   clearCache({ filter }: { filter?: NotificationFilter } = {}): void {
     if (filter) {
-      return this.#notificationsCache.clear(filter ?? {});
+      return this.cache.clear(filter ?? {});
     }
 
-    return this.#notificationsCache.clearAll();
+    return this.cache.clearAll();
   }
 }
