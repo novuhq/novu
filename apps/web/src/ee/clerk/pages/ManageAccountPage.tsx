@@ -1,6 +1,4 @@
-import './ManageAccountPage.css';
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
-import { useColorScheme } from '@novu/design-system';
 import { Modal, Tabs } from '@mantine/core';
 import {
   IconAdminPanelSettings,
@@ -17,79 +15,71 @@ import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { BrandingPage } from '../../../pages/brand/BrandingPage';
 import { BillingPage } from '../../billing/pages/BillingPage';
 import { Title } from '@novu/novui';
-import { css } from '@novu/novui/css';
-
-const clerkComponentAppearance = {
-  elements: {
-    navbar: { display: 'none' },
-    navbarMobileMenuRow: { display: 'none !important' },
-    cardBox: {
-      display: 'block',
-      width: '100%',
-      height: '100%',
-      boxShadow: 'none',
-    },
-  },
-};
+import {
+  billingTitle,
+  clerkComponentAppearance,
+  modalStyles,
+  normalTabStyle,
+  tabIconStyle,
+  tabsStyles,
+  titleTab,
+} from './ManageAccountPage.styles';
 
 export default function ManageAccountPage() {
   const navigate = useNavigate();
   const { tabValue } = useParams();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
-  const { colorScheme } = useColorScheme();
-  const headerColor = colorScheme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(33, 33, 38)';
 
   return (
     <Modal
+      classNames={modalStyles}
       opened
       padding={8}
       title={undefined}
       onClose={() => {
         navigate(ROUTES.WORKFLOWS);
       }}
-      size="90%"
     >
-      <Tabs value={tabValue} onTabChange={(value) => navigate(`/manage-account/${value}`)} orientation="vertical">
+      <Tabs
+        classNames={tabsStyles}
+        value={tabValue}
+        onTabChange={(value) => navigate(`/manage-account/${value}`)}
+        orientation="vertical"
+      >
         <Tabs.List>
-          <Tabs.Tab
-            disabled
-            value="title"
-            className={css({
-              color: 'var(--nv-colors-typography-text-primary) !important',
-              fontSize: 'var(--nv-font-sizes-150) !important',
-              lineHeight: 'var(--nv-line-heights-175) !important',
-              opacity: 'var(--nv-opacity-100) !important',
-              margin: '0 !important',
-              border: '0 !important',
-              padding: 'var(--nv-spacing-paddings-page-horizontal) var(--nv-spacing-paddings-page-vertical) !important',
-              '&:hover': {
-                color: 'var(--nv-colors-typography-text-primary) !important',
-                backgroundColor: 'unset !important',
-                borderColor: 'var(--nv-colors-surface-panel) !important',
-                cursor: 'unset !important',
-              },
-            })}
-          >
+          <Tabs.Tab disabled value="title" className={titleTab}>
             Settings
           </Tabs.Tab>
-          <Tabs.Tab value="user-profile" icon={<IconManageAccounts />}>
+          <Tabs.Tab
+            value="user-profile"
+            className={normalTabStyle}
+            icon={<IconManageAccounts className={tabIconStyle} />}
+          >
             User profile
           </Tabs.Tab>
-          <Tabs.Tab value="access-security" icon={<IconAdminPanelSettings />}>
+          <Tabs.Tab
+            value="access-security"
+            className={normalTabStyle}
+            icon={<IconAdminPanelSettings className={tabIconStyle} />}
+          >
             Access security
           </Tabs.Tab>
-          <Tabs.Tab value="organization" icon={<IconRoomPreferences />}>
+          <Tabs.Tab
+            value="organization"
+            className={normalTabStyle}
+            icon={<IconRoomPreferences className={tabIconStyle} />}
+          >
             Organization
           </Tabs.Tab>
-          <Tabs.Tab value="team-members" icon={<IconGroups />}>
+          <Tabs.Tab value="team-members" className={normalTabStyle} icon={<IconGroups className={tabIconStyle} />}>
             Team members
           </Tabs.Tab>
           {!isV2Enabled && (
-            <Tabs.Tab value="branding" icon={<IconLocalActivity />}>
+            <Tabs.Tab value="branding" className={normalTabStyle} icon={<IconLocalActivity className={tabIconStyle} />}>
               Branding
             </Tabs.Tab>
           )}
-          <Tabs.Tab value="billing" icon={<IconCreditCard />}>
+          <Tabs.Tab value="billing" className={normalTabStyle} icon={<IconCreditCard className={tabIconStyle} />}>
             Billing plans
           </Tabs.Tab>
         </Tabs.List>
@@ -124,19 +114,7 @@ export default function ManageAccountPage() {
           </Tabs.Panel>
         )}
         <Tabs.Panel value="billing">
-          <Title
-            marginBottom="150"
-            className={css({
-              fontFamily: 'var(--nv-fonts-system)',
-              fontWeight: 'var(--nv-font-weights-strong)',
-              fontSize: 'var(--nv-font-sizes-125)',
-              letterSpacing: '0',
-              textDecoration: 'none',
-              lineHeight: 'var(--nv-line-heights-175)',
-            })}
-            variant={'page'}
-            color={headerColor}
-          >
+          <Title marginBottom="150" className={billingTitle} variant={'page'}>
             Billing plans
           </Title>
           <BillingPage />
