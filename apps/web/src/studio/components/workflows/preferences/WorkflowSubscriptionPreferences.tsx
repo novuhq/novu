@@ -14,21 +14,12 @@ import { ColorToken } from '@novu/novui/tokens';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Switch } from '@mantine/core';
 import { FC } from 'react';
-
-type PreferenceChannel = ChannelTypeEnum | 'Workflow';
-
-/**
- * This is subject to change based on the data provided by API / framework
- * and Figma designs as they will dictate the controls / state we need available
- */
-type ChannelSubscriptionPreference = {
-  channel: PreferenceChannel;
-  defaultValue: boolean;
-  editable: boolean;
-};
+import { Preference, PreferenceChannel, SubscriptionPreferenceRow } from './types';
+import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
+import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 
 const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannel, IconType> = {
-  Workflow: IconDynamicFeed,
+  workflow: IconDynamicFeed,
   [ChannelTypeEnum.IN_APP]: IconNotificationsNone,
   [ChannelTypeEnum.EMAIL]: IconOutlineMailOutline,
   [ChannelTypeEnum.SMS]: IconOutlineSms,
@@ -36,69 +27,28 @@ const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannel, IconType> = {
   [ChannelTypeEnum.CHAT]: IconOutlineForum,
 };
 
-// FIXME: determine how to bring in types
+const CHANNEL_LABELS_LOOKUP: Record<PreferenceChannel, string> = {
+  ...CHANNEL_TYPE_TO_STRING,
+  workflow: 'Workflow',
+};
+
+// FIXME: determine how to bring in ReactTable types
 const PREFERENCES_COLUMNS = [
   { accessorKey: 'channel', header: 'Channels', cell: ChannelCell },
-  { accessorKey: 'defaultValue', header: 'Default', cell: PreferencesSwitchCell },
-  { accessorKey: 'editable', header: 'Editable', cell: PreferencesSwitchCell },
+  { accessorKey: 'defaultValue', header: 'Default', cell: DefaultValueSwitchCell },
+  { accessorKey: 'readOnly', header: 'Editable', cell: ReadOnlySwitchCell },
 ];
 
-type WorkflowSubscriptionPreferencesProps = {
-  // channelPreferences: Record<PreferenceChannel, ChannelSubscriptionPreference>;
-  // updateChannelPreferences: (prefs: Partial<Record<PreferenceChannel, ChannelSubscriptionPreference>>) => Promise<void>;
+export type WorkflowSubscriptionPreferencesProps = {
+  preferences: SubscriptionPreferenceRow[];
+  updateChannelPreferences: (prefs: Partial<Record<PreferenceChannel, Preference>>) => Promise<void>;
 };
-export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = (props) => {
+export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({ preferences }) => {
+  // FIXME: setup on toggle behaviors
   return (
-    <Table<ChannelSubscriptionPreference>
-      className={tableClassName}
-      columns={PREFERENCES_COLUMNS}
-      data={preferencesData}
-    />
+    <Table<SubscriptionPreferenceRow> className={tableClassName} columns={PREFERENCES_COLUMNS} data={preferences} />
   );
 };
-
-const preferencesData: ChannelSubscriptionPreference[] = [
-  { channel: 'Workflow', defaultValue: true, editable: true },
-  { channel: ChannelTypeEnum.IN_APP, defaultValue: true, editable: false },
-  { channel: ChannelTypeEnum.EMAIL, defaultValue: false, editable: false },
-  { channel: ChannelTypeEnum.SMS, defaultValue: true, editable: true },
-  { channel: ChannelTypeEnum.PUSH, defaultValue: false, editable: false },
-  { channel: ChannelTypeEnum.CHAT, defaultValue: true, editable: true },
-];
-
-const tableClassName = css({
-  '& td': {
-    py: '75',
-  },
-  '& tbody tr': {
-    '&:first-of-type td': {
-      borderBottom: 'solid',
-      borderColor: 'table.header.border',
-      // FIXME: Talk to Design about this. We're using a table but then breaking every rule
-      py: '100',
-    },
-    '&:not(:first-of-type) td': {
-      borderBottom: 'none',
-    },
-  },
-  '& tbody tr td': {
-    height: '[inherit]',
-  },
-  '& tbody tr:last-of-type td': {
-    borderBottom: 'solid',
-  },
-  '& tr td:not(:first-child), & tr th:not(:first-child)': {
-    pr: '0',
-    pl: '175',
-    // FIXME: width for switch columns should be based on content
-    width: '[34px]',
-  },
-  _hover: {
-    '& tbody tr:hover': {
-      bg: '[initial]',
-    },
-  },
-});
 
 function ChannelCell(props) {
   const Icon = CHANNEL_SETTINGS_LOGO_LOOKUP[props.getValue()];
@@ -107,14 +57,17 @@ function ChannelCell(props) {
   const colorToken: ColorToken = props.row.original.defaultValue ? 'typography.text.main' : 'typography.text.secondary';
 
   return (
-    <HStack>
-      {/* {<Icon title="switch-channel-icon" color={token(`colors.${colorToken}`)} />} */}
-      {<Icon title="switch-channel-icon" color={colorToken} />}
-      <Text color={colorToken}>{props.getValue()}</Text>
+    <HStack color={colorToken}>
+      {<Icon title="switch-channel-icon" color={'inherit'} />}
+      <Text color={'inherit'}>{CHANNEL_LABELS_LOOKUP[props.getValue()]}</Text>
     </HStack>
   );
 }
 
-function PreferencesSwitchCell(props) {
+function DefaultValueSwitchCell(props) {
   return <Switch size={'lg'} checked={props.getValue()} />;
+}
+
+function ReadOnlySwitchCell(props) {
+  return <Switch size={'lg'} checked={!props.getValue()} />;
 }
