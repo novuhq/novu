@@ -42,6 +42,7 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       // ensure query has closing characters
       if (!query.endsWith(AUTOCOMPLETE_CLOSE_TAG)) {
         command({ label: `${AUTOCOMPLETE_OPEN_TAG}${query}`, id: '', error: VariableErrorCode.INVALID_SYNTAX });
+
         return;
       }
 
@@ -52,6 +53,7 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       // set error if the variable is not a valid reference
       if (!variablesSet.has(variableName)) {
         command({ label: cleanedQuery, id: '', error: VariableErrorCode.INVALID_NAME });
+
         return;
       }
 
@@ -117,12 +119,12 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
     }));
 
     const handleCommand = (id: string) => {
-      const item = items.find((item) => item.id === id);
-      if (!item) {
+      const foundItem = items.find((item) => item.id === id);
+      if (!foundItem) {
         return;
       }
 
-      command(item);
+      command(foundItem);
     };
 
     return createPortal(

@@ -45,6 +45,7 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
 
           if (variable) {
             updateVariableAttributes(variable);
+
             return;
           }
 
@@ -86,5 +87,6 @@ function getValidatedVariable(text: string = '', possibleVariables: Set<string>)
     return;
   }
 
+  // eslint-disable-next-line consistent-return
   return variableContent;
 }

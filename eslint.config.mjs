@@ -2,8 +2,10 @@
 import tsEslint from 'typescript-eslint';
 import jsEslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import panda from '@pandacss/eslint-plugin';
 
 // Eslint v8.0 and below plugins
+import reactHooks from 'eslint-plugin-react-hooks';
 import promise from 'eslint-plugin-promise';
 import unusedImports from 'eslint-plugin-unused-imports';
 import deprecation from 'eslint-plugin-deprecation';
@@ -239,7 +241,7 @@ export default tsEslint.config(
     },
     rules: {
       'deprecation/deprecation': 'error',
-    }
+    },
   },
 
   {
@@ -295,31 +297,76 @@ export default tsEslint.config(
   {
     files: ['libs/design-system/**'],
     rules: {
-        "func-names": "off",
-        "react/jsx-props-no-spreading": "off",
-        "react/no-array-index-key": "off",
-        "no-empty-pattern": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "react/no-unescaped-entities": "off",
-        "react/jsx-closing-bracket-location": "off",
-        "@typescript-eslint/ban-types": "off",
-        "react/jsx-wrap-multilines": "off",
-        "jsx-a11y/anchor-is-valid": "off",
-        "promise/catch-or-return": "off",
-        "react/jsx-one-expression-per-line": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "jsx-a11y/aria-role": "off",
-        "jsx-a11y/no-static-element-interactions": "off",
-        "react/require-default-props": "off",
-        "react/no-danger": "off",
-        "jsx-a11y/click-events-have-key-events": "off",
+      'func-names': 'off',
+      'react/jsx-props-no-spreading': 'off',
+      'react/no-array-index-key': 'off',
+      'no-empty-pattern': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/jsx-closing-bracket-location': 'off',
+      '@typescript-eslint/ban-types': 'off',
+      'react/jsx-wrap-multilines': 'off',
+      'jsx-a11y/anchor-is-valid': 'off',
+      'promise/catch-or-return': 'off',
+      'react/jsx-one-expression-per-line': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'jsx-a11y/aria-role': 'off',
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'react/require-default-props': 'off',
+      'react/no-danger': 'off',
+      'jsx-a11y/click-events-have-key-events': 'off',
 
-        "@typescript-eslint/naming-convention": ["error", {
-            filter: "_",
-            selector: "variableLike",
-            leadingUnderscore: "allow",
-            format: ["PascalCase", "camelCase", "UPPER_CASE"],
-        }],
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          filter: '_',
+          selector: 'variableLike',
+          leadingUnderscore: 'allow',
+          format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
+        },
+      ],
+    },
+  },
+
+  {
+    files: ['libs/novui/**'],
+    plugins: {
+      '@pandacss': panda,
+      'react-hooks': fixupPluginRules(reactHooks),
+    },
+    rules: {
+      ...panda.configs.recommended.rules,
+      'func-names': 'off',
+      'react/jsx-props-no-spreading': 'off',
+      'react/no-array-index-key': 'off',
+      'no-empty-pattern': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/jsx-closing-bracket-location': 'off',
+      '@typescript-eslint/ban-types': 'off',
+      'react/jsx-wrap-multilines': 'off',
+      'jsx-a11y/anchor-is-valid': 'off',
+      'react/jsx-one-expression-per-line': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'jsx-a11y/aria-role': 'off',
+      'jsx-a11y/no-static-element-interactions': 'off',
+      'react/require-default-props': 'off',
+      'react/no-danger': 'off',
+      'jsx-a11y/click-events-have-key-events': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          filter: '_',
+          selector: 'variableLike',
+          leadingUnderscore: 'allow',
+          format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
+        },
+      ],
+
+      '@pandacss/no-config-function-in-source': 'off',
     },
   }
 );

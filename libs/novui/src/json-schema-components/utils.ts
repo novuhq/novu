@@ -66,9 +66,10 @@ export const extractErrorCodesFromHtmlContent = (htmlContent?: string): Set<stri
 
   const errorCodes = htmlContent
     .match(VARIABLE_HTML_ERROR_STATE_REGEX)
-    ?.map((str) => str.match(/\"(.*)\"/i)?.[0]?.replaceAll('"', ''))
+    ?.map((str) => str.match(/"(.*?)"/i)?.[0]?.replaceAll('"', ''))
     ?.filter((code) => checkIsValidVariableErrorCode(code));
 
+  // eslint-disable-next-line consistent-return
   return errorCodes ? new Set(errorCodes) : undefined;
 };
 
