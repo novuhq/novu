@@ -155,9 +155,7 @@ export function LayoutEditor({
   useEffect(() => {
     try {
       setAst(parse(layoutContent));
-    } catch (e) {
-      return;
-    }
+    } catch (e) {}
   }, [layoutContent]);
 
   async function onSubmitLayout(data) {

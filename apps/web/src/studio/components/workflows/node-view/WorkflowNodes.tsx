@@ -1,5 +1,4 @@
 import { VStack } from '@novu/novui/jsx';
-import { StepNode } from './StepNode';
 import {
   IconOutlineAutoAwesomeMotion,
   IconOutlineAvTimer,
@@ -12,6 +11,7 @@ import {
   IconSize,
   IconType,
 } from '@novu/novui/icons';
+import { StepNode } from './StepNode';
 import { BridgeWorkflowStepType } from '../../../types';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 

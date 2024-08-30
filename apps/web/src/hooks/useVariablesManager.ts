@@ -66,9 +66,7 @@ export const useVariablesManager = (contents: string[]) => {
       if (!isEqual(variableArray, newVariablesArray)) {
         variablesArray.replace(newVariablesArray);
       }
-    } catch (e) {
-      return;
-    }
+    } catch (e) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textContent, variableArray]);
 

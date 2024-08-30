@@ -24,7 +24,6 @@ export function useRedirectURL() {
       url.searchParams.delete(REDIRECT_URL_SEARCH_PARAM);
       history.replaceState({}, '', url.href);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getRedirectURL = useCallback(() => {

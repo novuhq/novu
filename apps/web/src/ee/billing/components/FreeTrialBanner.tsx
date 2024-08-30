@@ -1,14 +1,13 @@
 import { Close, colors, Text, Warning, Button } from '@novu/design-system';
-import { useMantineTheme } from '@mantine/core';
+import { useMantineTheme, Group } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';
-import { Group } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import { useSubscription } from '../hooks/useSubscription';
 import React, { useState, useMemo } from 'react';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { useSubscription } from '../hooks/useSubscription';
 import { WARNING_LIMIT_DAYS, COLOR_WARNING, pluralizeDaysLeft } from '../utils/freeTrial.constants';
 import { ContactSalesModal } from './ContactSalesModal';
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { capitalize } from '../utils/capitalize';
 
 export function FreeTrialBanner() {

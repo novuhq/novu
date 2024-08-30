@@ -2,8 +2,8 @@ import { Grid, UnstyledButton, createStyles, MantineTheme } from '@mantine/core'
 import { colors } from '@novu/design-system';
 
 const useStyles = createStyles<string, { active: boolean; disabled: boolean }>((theme: MantineTheme, _params) => {
-  const active = _params.active;
-  const disabled = _params.disabled;
+  const { active } = _params;
+  const { disabled } = _params;
   const isDark = theme.colorScheme === 'dark';
 
   const border = `1px solid ${isDark ? colors.B30 : colors.B60}`;

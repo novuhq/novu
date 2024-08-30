@@ -1,12 +1,11 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { PageMeta } from '@novu/design-system';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import { QuestionnaireForm } from './components/QuestionnaireForm';
-import { useVercelIntegration } from '../../hooks';
+import { useVercelIntegration, useFeatureFlag } from '../../hooks';
 import SetupLoader from './components/SetupLoader';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../hooks';
 import { HUBSPOT_PORTAL_ID } from '../../config';
 import { HubspotSignupForm } from './components/HubspotSignupForm';
-import { PageMeta } from '@novu/design-system';
 
 const title = 'Tell us more about you';
 

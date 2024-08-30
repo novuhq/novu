@@ -1,8 +1,7 @@
 import { Box, MantineColor, Progress, Text } from '@mantine/core';
 import { colors, Button } from '@novu/design-system';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
 import { useSubscription } from '../hooks/useSubscription';
 import { pluralizeDaysLeft, WARNING_LIMIT_DAYS, COLOR_WARNING } from '../utils/freeTrial.constants';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';

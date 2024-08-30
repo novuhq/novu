@@ -6,13 +6,13 @@ import { Center } from '@novu/novui/jsx';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { showNotification } from '@mantine/notifications';
 import { useWorkflow, useWorkflowTrigger } from '../../../hooks/useBridgeAPI';
 import { When } from '../../../../components/utils/When';
 import { ExecutionDetailsModalWrapper } from '../../../../pages/templates/components/ExecutionDetailsModalWrapper';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { ToSubscriber, WorkflowTestControlsPanel } from './WorkflowTestControlsPanel';
 import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
-import { showNotification } from '@mantine/notifications';
 import { useTemplateFetcher } from '../../../../api/hooks/index';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../StudioStateProvider';
@@ -94,7 +94,7 @@ export const WorkflowsTestPage = () => {
       let response;
       if (isLocalStudio) {
         const bridgeResponse = await trigger({
-          workflowId: workflowId,
+          workflowId,
           to,
           payload,
         });

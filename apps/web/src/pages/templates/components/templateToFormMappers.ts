@@ -9,8 +9,10 @@ import {
   MonthlyTypeEnum,
   IStepVariant,
   NotificationStepDto,
+  StepTypeEnum,
+  ActorTypeEnum,
+  ChannelCTATypeEnum,
 } from '@novu/shared';
-import { StepTypeEnum, ActorTypeEnum, ChannelCTATypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
 
 import type { IForm, IFormStep } from './formTypes';
@@ -56,7 +58,7 @@ const mapToInAppFormStep = (item: INotificationTemplateStep | IStepVariant): IFo
           type: ActorTypeEnum.NONE,
           data: null,
         },
-    enableAvatar: item?.template?.actor?.type && item?.template?.actor.type !== ActorTypeEnum.NONE ? true : false,
+    enableAvatar: !!(item?.template?.actor?.type && item?.template?.actor.type !== ActorTypeEnum.NONE),
     cta: {
       data: item?.template?.cta?.data ?? { url: '' },
       type: ChannelCTATypeEnum.REDIRECT,
@@ -67,7 +69,7 @@ const mapToInAppFormStep = (item: INotificationTemplateStep | IStepVariant): IFo
 
 const mapToDigestFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => {
   const { metadata, template, ...rest } = item;
-  const variants = !!('variants' in item) ? item.variants?.map((variant) => mapToDigestFormStep(variant)) : undefined;
+  const variants = 'variants' in item ? item.variants?.map((variant) => mapToDigestFormStep(variant)) : undefined;
 
   if (!metadata) {
     return {
@@ -142,7 +144,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep | IStepVariant): IF
 
 const mapToDelayFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => {
   const { metadata, template, ...rest } = item;
-  const variants = !!('variants' in item) ? item.variants?.map((variant) => mapToDelayFormStep(variant)) : undefined;
+  const variants = 'variants' in item ? item.variants?.map((variant) => mapToDelayFormStep(variant)) : undefined;
 
   if (!metadata) {
     return {

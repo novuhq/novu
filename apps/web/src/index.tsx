@@ -14,7 +14,7 @@ import '@novu/novui/styles.css';
 
   let FeatureFlagsProvider = ({ children }) => <>{children}</>;
 
-  if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
+  if (LAUNCH_DARKLY_CLIENT_SIDE_ID) {
     FeatureFlagsProvider = await asyncWithLDProvider({
       clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
       reactOptions: {

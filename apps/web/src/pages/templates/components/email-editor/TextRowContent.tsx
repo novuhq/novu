@@ -73,7 +73,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     if (anchorPos > 1) {
       const endContent = data.slice(anchorPos - 2);
 
-      const contentToUse = endContent ? endContent : data;
+      const contentToUse = endContent || data;
       const slicePositions = contentToUse.lastIndexOf('{') + 1;
 
       const currentChar = contentToUse.charAt(slicePositions - 1);

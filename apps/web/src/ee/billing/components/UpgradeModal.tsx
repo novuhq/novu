@@ -1,15 +1,13 @@
 import React, { useEffect } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
-import { Text, Title, colors, errorMessage, successMessage, When } from '@novu/design-system';
-import { PaymentElement } from '@stripe/react-stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+import { Text, Title, colors, errorMessage, successMessage, When, Modal } from '@novu/design-system';
+import { PaymentElement, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js/pure';
-import { Modal } from '@novu/design-system';
-import { UpgradeSubmitButton } from './UpgradeSubmitButton';
 import { useNavigate } from 'react-router-dom';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { UpgradeSubmitButton } from './UpgradeSubmitButton';
 import { STRIPE_CLIENT_KEY } from '../utils/environment';
 import { includedEventQuotaFromApiServiceLevel, pricePerThousandEvents } from '../utils/plan.constants';
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { BillingIntervalControl } from './BillingIntervalControl';
 import { StripeLogo } from './StripeLogo';
 import { useSegment } from '../../../components/providers/SegmentProvider';
@@ -76,8 +74,6 @@ export const UpgradeModal = ({
       }
 
       navigate('/settings/billing', { replace: true });
-
-      return;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

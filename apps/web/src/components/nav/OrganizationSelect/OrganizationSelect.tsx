@@ -73,13 +73,13 @@ export function OrganizationSelect() {
   }, [organizations]);
 
   useEffect(() => {
-    removeItems(['change-org-' + value]);
+    removeItems([`change-org-${value}`]);
     addItem(
       (organizations || [])
         .filter((item) => item._id !== value)
         .map((item) => ({
-          id: 'change-org-' + item._id,
-          title: 'Change org to ' + capitalize(item.name),
+          id: `change-org-${item._id}`,
+          title: `Change org to ${capitalize(item.name)}`,
           onTrigger: () => switchOrganization(item._id),
         }))
     );

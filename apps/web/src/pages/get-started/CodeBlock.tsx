@@ -45,7 +45,7 @@ export function CodeEditor({
       defaultValue={code}
       onChange={(val) => {
         if (readonly) return;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         // setFileText(val!);
       }}
       onMount={(editor, monaco) => {

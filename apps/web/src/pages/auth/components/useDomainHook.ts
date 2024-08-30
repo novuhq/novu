@@ -39,7 +39,7 @@ export function useDomainParser(): { parse: (url: string) => Partial<DomainInfo>
   useEffect(() => {
     import(
       /* webpackIgnore: true */
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore
       // eslint-disable-next-line import/extensions
       'https://unpkg.com/tldts/dist/es6/index.js?module'

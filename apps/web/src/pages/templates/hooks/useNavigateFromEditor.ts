@@ -2,10 +2,10 @@ import { useFormContext } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 
+import { useEffect } from 'react';
 import type { IForm } from '../components/formTypes';
 import { useBasePath } from './useBasePath';
 import { useStepIndex } from './useStepIndex';
-import { useEffect } from 'react';
 
 export const useNavigateFromEditor = (preview = false) => {
   const {

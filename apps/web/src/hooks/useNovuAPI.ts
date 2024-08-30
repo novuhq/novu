@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { get_session_recording_properties } from 'mixpanel-browser';
 import { buildApiHttpClient } from '../api/api.client';
-// eslint-disable-next-line import/no-namespace
-import * as mixpanel from 'mixpanel-browser';
+
 import { useStudioState } from '../studio/StudioStateProvider';
 import { getToken } from '../components/providers/AuthProvider';
 import { useEnvironment } from './useEnvironment';
@@ -53,7 +53,7 @@ export const useTelemetry = () => {
       const mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
-        const sessionReplayProperties = mixpanel.get_session_recording_properties();
+        const sessionReplayProperties = get_session_recording_properties();
 
         data = {
           ...(data || {}),
@@ -61,7 +61,7 @@ export const useTelemetry = () => {
         };
       }
 
-      return mutate({ event: event + ' - [WEB]', data });
+      return mutate({ event: `${event} - [WEB]`, data });
     },
     [mutate]
   );

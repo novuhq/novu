@@ -69,12 +69,12 @@ export const EditorSidebarHeaderActions = ({ preview = false }: { preview?: bool
   const isAddVariantActionAvailable = (isUnderTheStepPath || isUnderVariantsListPath) && !isDelayedStep;
 
   const onAddVariant = () => {
-    const newPath = basePath + `/${channel}/${stepUuid}/variants/create`;
+    const newPath = `${basePath}/${channel}/${stepUuid}/variants/create`;
     navigate(newPath);
   };
 
   const onEdit = () => {
-    const newPath = basePath + `/${channel}/${stepUuid}`;
+    const newPath = `${basePath}/${channel}/${stepUuid}`;
     navigate(newPath);
   };
 
@@ -87,7 +87,7 @@ export const EditorSidebarHeaderActions = ({ preview = false }: { preview?: bool
 
       const variant = makeVariantFromStep(rootStep, { conditions: newConditions });
       append(variant);
-      navigate(basePath + `/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
+      navigate(`${basePath}/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
     } else {
       setValue(`${stepFormPath}.filters`, newConditions, { shouldDirty: true });
     }

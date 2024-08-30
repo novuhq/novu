@@ -1,25 +1,24 @@
-/* eslint-disable max-len */
 import { Prism } from '@mantine/prism';
 import { errorMessage, Tabs } from '@novu/design-system';
 import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
+import { VStack } from '@novu/novui/jsx';
+import { Text, Title } from '@novu/novui';
+import { isAxiosError } from 'axios';
 import { useWorkflowTrigger } from '../../studio/hooks/useBridgeAPI';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { ROUTES } from '../../constants/routes';
-import { VStack } from '@novu/novui/jsx';
 import { Wrapper } from './components/Wrapper';
 // TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
 import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
 import { useStudioState } from '../../studio/StudioStateProvider';
-import { Text, Title } from '@novu/novui';
 import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
 import { PageContainer } from '../../studio/layout';
 import { useTelemetry } from '../../hooks/useNovuAPI';
-import { isAxiosError } from 'axios';
 
 export const StudioOnboardingPreview = () => {
   const [controls, setStepControls] = useState({});
@@ -51,8 +50,8 @@ export const StudioOnboardingPreview = () => {
     {
       workflowId: workflow?.workflowId || '',
       stepId: step?.stepId || '',
-      payload: payload,
-      controls: controls,
+      payload,
+      controls,
     },
     {
       enabled: !!(workflow?.workflowId && step?.stepId),

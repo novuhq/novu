@@ -61,7 +61,7 @@ export const createTranslationMarks = (
       );
 
       decorators.push({
-        range: range,
+        range,
         options: {
           className: 'markerWiggledLine',
           glyphMarginClassName: 'markerGlyphWarning',

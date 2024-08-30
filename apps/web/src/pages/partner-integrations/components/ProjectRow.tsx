@@ -6,8 +6,8 @@ import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstac
 import { IOrganizationEntity } from '@novu/shared';
 
 import { Text, Select, IconOutlineArrowLeft, IconOutlineArrowRight } from '@novu/design-system';
-import { ProjectLinkFormValues } from './LinkProjectContainer';
 import { OrganizationMembershipResource } from '@clerk/types';
+import { ProjectLinkFormValues } from './LinkProjectContainer';
 
 type ProjectDataType = {
   id: string;

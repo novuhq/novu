@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
 import { Accordion, Group, Indicator, Stack, createStyles } from '@mantine/core';
 import { Text, Tooltip, colors } from '@novu/design-system';
-import { useEnvironment } from '../../../../hooks';
 import React, { useState } from 'react';
 import { useFieldArray, useWatch } from 'react-hook-form';
+import { useEnvironment } from '../../../../hooks';
 
 import { CodeBracketOutlined, Warning } from '../../icons';
 import { AccordionRowActionTools } from './AccordionRowActionTools';

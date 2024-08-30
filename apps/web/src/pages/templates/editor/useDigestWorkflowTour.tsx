@@ -50,14 +50,17 @@ export const useDigestWorkflowTour = ({ startTour }: { startTour: () => void }) 
   const { templateId = '' } = useParams<{ templateId: string }>();
   const isTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
 
-  useEffectOnce(() => {
-    // once there are steps select the node with type DIGEST and start the tour
-    const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
-    if (digestStep) {
-      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid);
-      startTour();
-    }
-  }, isTouring && steps.length > 0);
+  useEffectOnce(
+    () => {
+      // once there are steps select the node with type DIGEST and start the tour
+      const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
+      if (digestStep) {
+        navigate(`${basePath}/${StepTypeEnum.DIGEST}/${digestStep?.uuid}`);
+        startTour();
+      }
+    },
+    isTouring && steps.length > 0
+  );
 
   return {
     digestTourSteps: isTouring ? digestTourSteps : [],

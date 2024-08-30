@@ -233,7 +233,7 @@ export function FlowEditor({
       targetHandle: 'b',
       target: newId,
       type,
-      data: { addNewNode: addNewNode, parentId: parentId, childId: newId, readonly: readonly },
+      data: { addNewNode, parentId, childId: newId, readonly },
     };
   }
 

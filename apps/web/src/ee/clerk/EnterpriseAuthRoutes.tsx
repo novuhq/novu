@@ -35,17 +35,20 @@ export const EnterpriseAuthRoutes = () => {
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
 
-  useEffectOnce(() => {
-    if (isSignedIn && isFromVercel) {
-      startVercelSetup();
-    }
-  }, !!(isSignedIn && isFromVercel));
+  useEffectOnce(
+    () => {
+      if (isSignedIn && isFromVercel) {
+        startVercelSetup();
+      }
+    },
+    !!(isSignedIn && isFromVercel)
+  );
 
   return (
     <>
       <Route element={<EnterprisePublicAuthLayout />}>
-        <Route path={ROUTES.AUTH_SIGNUP + '/*'} element={<SignUpPage />} />
-        <Route path={ROUTES.AUTH_LOGIN + '/*'} element={<SignInPage />} />
+        <Route path={`${ROUTES.AUTH_SIGNUP}/*`} element={<SignUpPage />} />
+        <Route path={`${ROUTES.AUTH_LOGIN}/*`} element={<SignInPage />} />
       </Route>
       <Route element={<EnterprisePrivateAuthLayout />}>
         <Route path={ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST} element={<OrganizationListPage />} />

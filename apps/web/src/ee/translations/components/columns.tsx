@@ -13,12 +13,12 @@ import {
   When,
   withCellLoading,
 } from '@novu/design-system';
-import { useAuth, useEnvironment } from '../../../hooks';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FlagMap } from '../icons/flags';
 
-import { useNavigate } from 'react-router-dom';
+import { useAuth, useEnvironment } from '../../../hooks';
 import { ITranslation, useFetchLocales } from '../hooks';
 import { useEditTranslationFileContext } from '../context/useEditTranslationFileContext';
 import { ReuploadIcon, Star, Warning } from '../icons';
@@ -105,7 +105,7 @@ const UpdateCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITransl
     if (!file) return;
     setLocale(isoLanguage);
     setIsTranslationExists(!!translations);
-    const path = !!translations ? 'replace' : 'edit';
+    const path = translations ? 'replace' : 'edit';
 
     await handleFileSelect(file);
     navigate(`/translations/edit/${groupIdentifier}/${isoLanguage}/${path}`);

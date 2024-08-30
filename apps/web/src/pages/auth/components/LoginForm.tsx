@@ -141,7 +141,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
     try {
       const response = await mutateAsync(itemData);
-      const token = (response as any).token;
+      const { token } = response as any;
       await login(token);
 
       if (isFromVercel) {

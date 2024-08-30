@@ -35,7 +35,7 @@ export class SegmentService {
               ...sessionReplayProperties,
             };
           }
-          const userId = payload.obj.userId;
+          const { userId } = payload.obj;
           if (payload.type() === 'identify' && userId) {
             mixpanel.identify(userId);
           }
@@ -91,7 +91,7 @@ export class SegmentService {
     }
 
     await api.post('/v1/telemetry/measure', {
-      event: event + ' - [WEB]',
+      event: `${event} - [WEB]`,
       data,
     });
   }

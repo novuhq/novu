@@ -58,7 +58,7 @@ export const VariantsListSidebarActions = () => {
   const hasNoFilters = (filters && filters?.length === 0) || !filters || isNewVariantCreationUrl;
 
   const onAddVariant = () => {
-    const newPath = basePath + `/${channel}/${stepUuid}/variants/create`;
+    const newPath = `${basePath}/${channel}/${stepUuid}/variants/create`;
     navigate(newPath);
   };
 
@@ -71,7 +71,7 @@ export const VariantsListSidebarActions = () => {
 
       const variant = makeVariantFromStep(rootStep, { conditions: newConditions });
       append(variant);
-      navigate(basePath + `/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
+      navigate(`${basePath}/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
     } else {
       setValue(`${stepFormPath}.filters`, newConditions, { shouldDirty: true });
     }

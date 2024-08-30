@@ -66,12 +66,12 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       lastName,
       email: data.email,
       password: data.password,
-      origin: origin,
+      origin,
       invitationToken,
     };
 
     const response = await mutateAsync(itemData);
-    const token = (response as any).token;
+    const { token } = response as any;
     await login(token);
 
     if (state?.anonymousId && anonymousId) {

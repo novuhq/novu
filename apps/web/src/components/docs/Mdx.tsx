@@ -6,10 +6,10 @@ import { Flex, Grid, GridItem, styled } from '@novu/novui/jsx';
 // eslint-disable-next-line import/no-namespace
 import * as mdxBundler from 'mdx-bundler/client';
 import { useMemo, ReactNode, PropsWithChildren, useEffect } from 'react';
-import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
-import { Highlight } from './Highlight';
 import { Title, Text } from '@novu/novui';
 import { text } from '@novu/novui/recipes';
+import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
+import { Highlight } from './Highlight';
 import { DocsQueryResults } from './useLoadDocs';
 import { DOCS_WRAPPER_ELEMENT_ID } from './Docs';
 import { createGlobals } from './globals';
@@ -18,7 +18,7 @@ const LiText = styled('span', text);
 
 const BaseDocsComponent = ({ children }: { children: ReactNode }) => <div>{children}</div>;
 
-const getMDXComponent = mdxBundler.getMDXComponent;
+const { getMDXComponent } = mdxBundler;
 
 type DocsProps = PropsWithChildren<
   Pick<DocsQueryResults, 'code' | 'mappings'> & {

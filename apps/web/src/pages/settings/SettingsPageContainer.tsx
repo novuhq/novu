@@ -1,7 +1,7 @@
 import { PageContainer, When } from '@novu/design-system';
 import { FC, PropsWithChildren, ReactNode } from 'react';
-import PageHeader from '../../components/layout/components/PageHeader';
 import { css } from '@novu/novui/css';
+import PageHeader from '../../components/layout/components/PageHeader';
 
 export interface ISettingsPageContainerProps {
   // TODO: this should be LocalizedMessage, but PageContainer and PageHeader don't accept it

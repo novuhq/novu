@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
 import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ApiServiceLevelEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
 import { UpgradeModal } from './UpgradeModal';
 import { includedEventQuotaFromApiServiceLevel } from '../utils/plan.constants';

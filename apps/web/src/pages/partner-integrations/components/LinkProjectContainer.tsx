@@ -3,6 +3,8 @@ import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 
+import { Text, colors, Button } from '@novu/design-system';
+import { useOrganizationList } from '@clerk/clerk-react';
 import {
   completeVercelIntegration,
   getVercelConfigurationDetails,
@@ -12,10 +14,8 @@ import {
 import { useVercelParams } from '../../../hooks';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
-import { Text, colors, Button } from '@novu/design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import SetupLoader from '../../auth/components/SetupLoader';
-import { useOrganizationList } from '@clerk/clerk-react';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {

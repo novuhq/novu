@@ -3,9 +3,9 @@ import { ActionButton, errorMessage, IconDelete, IconOutlineFileUpload } from '@
 import { UploadTypesEnum } from '@novu/shared';
 import { useRef } from 'react';
 import { ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
-import { useUploadToStorage } from '../../api/hooks/useUploadToStorage';
 import { css, cx } from '@novu/novui/css';
 import { Stack } from '@novu/novui/jsx';
+import { useUploadToStorage } from '../../api/hooks/useUploadToStorage';
 import { ACCEPTABLE_ORG_IMAGE_TYPES, BRAND_LOGO_SIZE, IBrandFormValues } from './BrandingPage.const';
 import {
   dropzoneOverlayStyles,
@@ -28,7 +28,7 @@ export function BrandLogoUpload({ field, setValue }: BrandLogoUploadProps) {
       setValue('logo', path, { shouldDirty: true });
     },
     onError: (e) => {
-      errorMessage('Failed to upload branding image: ' + e.message);
+      errorMessage(`Failed to upload branding image: ${e.message}`);
     },
   });
 
