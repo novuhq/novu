@@ -11,7 +11,8 @@
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "precommit": "lint-staged",
-    "test": "echo 'skip test in the ci'"
+    "test": "echo 'skip test in the ci'",
+    "lint": "echo 'skip lint in the ci'"
   },
   "author": "",
   "license": "ISC",
