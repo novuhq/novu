@@ -10,7 +10,7 @@ import {
 } from '@novu/novui/icons';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../constants/routes';
+import { MANAGE_ACCOUNT_ROUTE_SEGMENTS, ROUTES } from '../../../constants/routes';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { BrandingPage } from '../../../pages/brand/BrandingPage';
 import { BillingPage } from '../../billing/pages/BillingPage';
@@ -34,7 +34,6 @@ export default function ManageAccountPage() {
     <Modal
       classNames={modalStyles}
       opened
-      padding={8}
       title={undefined}
       onClose={() => {
         navigate(ROUTES.WORKFLOWS);
@@ -43,7 +42,7 @@ export default function ManageAccountPage() {
       <Tabs
         classNames={tabsStyles}
         value={tabValue}
-        onTabChange={(value) => navigate(`/manage-account/${value}`)}
+        onTabChange={(value) => navigate(`${ROUTES.MANAGE_ACCOUNT_SEGMENT}${value}`)}
         orientation="vertical"
       >
         <Tabs.List>
@@ -51,72 +50,82 @@ export default function ManageAccountPage() {
             Settings
           </Tabs.Tab>
           <Tabs.Tab
-            value="user-profile"
+            value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.USER_PROFILE}
             className={normalTabStyle}
             icon={<IconManageAccounts className={tabIconStyle} />}
           >
             User profile
           </Tabs.Tab>
           <Tabs.Tab
-            value="access-security"
+            value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ACCESS_SECURITY}
             className={normalTabStyle}
             icon={<IconAdminPanelSettings className={tabIconStyle} />}
           >
             Access security
           </Tabs.Tab>
           <Tabs.Tab
-            value="organization"
+            value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ORGANIZATION}
             className={normalTabStyle}
             icon={<IconRoomPreferences className={tabIconStyle} />}
           >
             Organization
           </Tabs.Tab>
-          <Tabs.Tab value="team-members" className={normalTabStyle} icon={<IconGroups className={tabIconStyle} />}>
+          <Tabs.Tab
+            value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.TEAM_MEMBERS}
+            className={normalTabStyle}
+            icon={<IconGroups className={tabIconStyle} />}
+          >
             Team members
           </Tabs.Tab>
           {!isV2Enabled && (
-            <Tabs.Tab value="branding" className={normalTabStyle} icon={<IconLocalActivity className={tabIconStyle} />}>
+            <Tabs.Tab
+              value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.BRANDING}
+              className={normalTabStyle}
+              icon={<IconLocalActivity className={tabIconStyle} />}
+            >
               Branding
             </Tabs.Tab>
           )}
-          <Tabs.Tab value="billing" className={normalTabStyle} icon={<IconCreditCard className={tabIconStyle} />}>
+          <Tabs.Tab
+            value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.BILLING}
+            className={normalTabStyle}
+            icon={<IconCreditCard className={tabIconStyle} />}
+          >
             Billing plans
           </Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="user-profile">
+        <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.USER_PROFILE}>
           <UserProfile appearance={clerkComponentAppearance}>
             <UserProfile.Page label="account" />
             <UserProfile.Page label="security" />
           </UserProfile>
         </Tabs.Panel>
-        <Tabs.Panel value="access-security">
+        <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ACCESS_SECURITY}>
           <UserProfile appearance={clerkComponentAppearance}>
             <UserProfile.Page label="security" />
             <UserProfile.Page label="account" />
           </UserProfile>
         </Tabs.Panel>
-        <Tabs.Panel value="organization">
+        <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ORGANIZATION}>
           <OrganizationProfile appearance={clerkComponentAppearance}>
             <OrganizationProfile.Page label="general" />
             <OrganizationProfile.Page label="members" />
           </OrganizationProfile>
         </Tabs.Panel>
-        <Tabs.Panel value="team-members">
+        <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.TEAM_MEMBERS}>
           <OrganizationProfile appearance={clerkComponentAppearance}>
             <OrganizationProfile.Page label="members" />
             <OrganizationProfile.Page label="general" />
           </OrganizationProfile>
         </Tabs.Panel>
         {!isV2Enabled && (
-          <Tabs.Panel value="branding">
+          <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.BRANDING}>
             <BrandingPage />
           </Tabs.Panel>
         )}
-        <Tabs.Panel value="billing">
-          <Title marginBottom="150" className={billingTitle} variant={'page'}>
-            Billing plans
-          </Title>
+        <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.BILLING}>
+          <Title className={billingTitle}>Billing plans</Title>
           <BillingPage />
         </Tabs.Panel>
       </Tabs>
