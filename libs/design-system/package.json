@@ -64,7 +64,6 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.0.3",
     "acorn": "^8.7.1",
-    "eslint-plugin-storybook": "^0.6.13",
     "jsdom": "^24.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -4,6 +4,7 @@ import jsEslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import panda from '@pandacss/eslint-plugin';
 import pluginCypress from 'eslint-plugin-cypress/flat';
+import localRules from 'eslint-plugin-local-rules';
 
 // Eslint v8.0 and below plugins
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -122,7 +123,7 @@ export default tsEslint.config(
         'error',
         {
           props: true,
-          ignorePropertyModificationsFor: ['prev'],
+          ignorePropertyModificationsFor: ['prev', 'acc'], // ignore for Array.reduce
         },
       ],
 
@@ -305,8 +306,15 @@ export default tsEslint.config(
     },
   },
 
+  /* ******************** WEB PACKAGES ******************** */
   {
-    files: ['libs/design-system/**', 'libs/novui/**', 'apps/widget/**', 'apps/web/**'],
+    files: [
+      'libs/design-system/**',
+      'libs/novui/**',
+      'apps/widget/**',
+      'apps/web/**',
+      'packages/notification-center/**',
+    ],
     extends: [pluginCypress.configs.recommended],
     plugins: {
       '@pandacss': panda,
@@ -346,6 +354,29 @@ export default tsEslint.config(
       ],
 
       '@pandacss/no-config-function-in-source': 'off',
+    },
+  },
+
+  /* ******************** INBOX PACKAGES ******************** */
+  {
+    files: ['packages/js/**', 'packages/react/**'],
+    plugins: {
+      'local-rules': localRules,
+    },
+    rules: {
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          filter: '_',
+          selector: 'variableLike',
+          leadingUnderscore: 'allow',
+          format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
+        },
+      ],
+      'local-rules/no-class-without-style': 'error',
+      'id-length': 'off',
+      '@typescript-eslint/no-shadow': 'off',
     },
   }
 );

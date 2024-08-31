@@ -126,6 +126,7 @@
     "eslint-plugin-jest-dom": "^5.4.0",
     "eslint-plugin-json": "^4.0.1",
     "eslint-plugin-jsx-a11y": "^6.9.0",
+    "eslint-plugin-local-rules": "^3.0.2",
     "eslint-plugin-markdown": "^5.1.0",
     "eslint-plugin-mocha": "^10.5.0",
     "eslint-plugin-mocha-cleanup": "^1.11.3",

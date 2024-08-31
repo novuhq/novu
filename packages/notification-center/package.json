@@ -53,7 +53,6 @@
     "acorn": "^8.7.1",
     "babel-loader": "^8.2.4",
     "compression-webpack-plugin": "^10.0.0",
-    "eslint-plugin-storybook": "^0.6.13",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
     "jest-transform-stub": "^2.0.0",
