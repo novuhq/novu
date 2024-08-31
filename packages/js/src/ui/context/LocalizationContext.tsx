@@ -38,7 +38,6 @@ const LocalizationContext = createContext<LocalizationContextType | undefined>(u
 type LocalizationProviderProps = ParentProps & { localization?: Localization };
 
 export const LocalizationProvider = (props: LocalizationProviderProps) => {
-  // eslint-disable-next-line @typescript-eslint/ban-types
   const localization = createMemo<Record<string, string | Function>>(() => {
     const { dynamic, ...localizationObject } = props.localization || {};
 

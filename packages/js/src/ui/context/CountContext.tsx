@@ -32,7 +32,7 @@ export const CountProvider = (props: ParentProps) => {
     }
 
     const newMap = new Map();
-    const counts = data.counts;
+    const { counts } = data;
     for (let i = 0; i < counts.length; i += 1) {
       const tagsKey = createKey(counts[i].filter.tags);
       newMap.set(tagsKey, data?.counts[i].count);

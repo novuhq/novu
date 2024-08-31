@@ -46,6 +46,7 @@ export const Preferences = () => {
     mutate((prev) =>
       prev?.map((preference) => {
         if (preference.workflow?.id === workflowId || (!workflowId && preference.level === PreferenceLevel.GLOBAL)) {
+          // eslint-disable-next-line no-param-reassign
           preference.channels[channel] = enabled;
         }
 

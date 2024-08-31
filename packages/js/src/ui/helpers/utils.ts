@@ -45,7 +45,7 @@ export function cssObjectToString(styles: CSSProperties): string {
 export function createClassAndRuleFromCssString(classNameSet: Set<string>, styles: string) {
   const className = `novu-css-${generateUniqueRandomString(classNameSet, 8)}`;
   const rule = `.${className} { ${styles} }`;
-  //add to set to avoid generating the same class again
+  // add to set to avoid generating the same class again
   classNameSet.add(className);
 
   return { className, rule };
