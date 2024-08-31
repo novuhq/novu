@@ -101,6 +101,7 @@ export const VariantsListSidebarActions = () => {
     setIsDeleteModalOpened(false);
   };
 
+  // eslint-disable-next-line no-nested-ternary
   const conditionAction = isReadonly ? 'View' : hasNoFilters ? 'Add' : 'Edit';
 
   return (

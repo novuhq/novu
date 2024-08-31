@@ -71,6 +71,10 @@ export const UpgradeModal = ({
         case 'requires_payment_method':
           errorMessage('Failed to process payment details. Please try another payment method.');
           break;
+
+        default:
+          console.warn('Unknown setup intent status', setupIntent?.status);
+          break;
       }
 
       navigate('/settings/billing', { replace: true });

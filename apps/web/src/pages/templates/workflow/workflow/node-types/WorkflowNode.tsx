@@ -379,11 +379,9 @@ export function WorkflowNode({
                   }
                   position={isVariant || isVariantRoot ? 'left' : 'right'}
                   title={stepErrorContent || 'Something is missing here'}
-                  content={
-                    `Please specify a ${(stepErrorContent as string)
-                      .replace(/(is|are) missing!/g, '')
-                      .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
-                  }
+                  content={`Please specify a ${(stepErrorContent as string)
+                    .replace(/(is|are) missing!/g, '')
+                    .toLowerCase()} to prevent sending empty notifications.`}
                 />
               )}
           </>

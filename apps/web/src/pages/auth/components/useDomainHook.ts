@@ -44,11 +44,14 @@ export function useDomainParser(): { parse: (url: string) => Partial<DomainInfo>
       // eslint-disable-next-line import/extensions
       'https://unpkg.com/tldts/dist/es6/index.js?module'
     )
+      // eslint-disable-next-line no-return-assign
       .then((mod) => (tldParser.current = mod))
+      // eslint-disable-next-line no-return-assign
       .catch(() => (tldParser.current = null));
   }, []);
 
   const parse = useCallback((url: string) => {
+    // eslint-disable-next-line no-param-reassign
     url = stripProtocol(url);
 
     if (tldParser.current) {

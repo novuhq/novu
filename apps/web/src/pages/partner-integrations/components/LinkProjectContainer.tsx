@@ -127,11 +127,11 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   };
 
   const submitProjectLink = (data: ProjectLinkFormValues) => {
-    const payload = data.projectLinkState.reduce<Record<string, string[]>>((acc, curr) => {
+    const payload = data.projectLinkState.reduce<Record<string, string[]>>((prev, curr) => {
       const { organizationId, projectIds } = curr;
-      acc[organizationId] = projectIds;
+      prev[organizationId] = projectIds;
 
-      return acc;
+      return prev;
     }, {});
 
     if (configurationId) {
@@ -187,6 +187,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
             addMoreProjectRow={addMoreProjectRow}
             disableMoreProjectsBtn={disableMoreProjectsBtn}
             organizationLength={
+              // eslint-disable-next-line no-unsafe-optional-chaining
               organizations && organizations?.length > 0 ? organizations?.length - projectRowCount : 0
             }
           />

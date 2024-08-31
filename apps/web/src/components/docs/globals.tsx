@@ -29,11 +29,13 @@ export const createGlobals = (mappings) => ({
 
       const value = path;
 
-      prev[key] = Object.keys(value).reduce((child: Record<string, any>, name) => {
-        child[name] = () => <ChildDocs path={child[name]} />;
-
-        return child;
-      }, {});
+      prev[key] = Object.keys(value).reduce(
+        (child: Record<string, any>, name) => ({
+          ...child,
+          [name]: () => <ChildDocs path={child[name]} />,
+        }),
+        {}
+      );
 
       return prev;
     },

@@ -34,8 +34,7 @@ function BodyNavigation() {
   const navigate = useNavigate();
   const segment = useSegment();
 
-  // eslint-disable-next-line no-restricted-globals
-  const stepNum = location.pathname === ROUTES.GET_STARTED ? 1 : 2;
+  const stepNum = window.location.pathname === ROUTES.GET_STARTED ? 1 : 2;
 
   function handleClick(step: 'first' | 'second') {
     const eventAction =

@@ -78,7 +78,7 @@ const effects = {
     const chunkSize = Math.max(3, Math.round(str.length * 0.02));
     const chunks = [];
 
-    for (let i = 0, length = str.length; i < length; i++) {
+    for (let i = 0, length = str.length; i < length; i += 1) {
       const skip = Math.round(Math.max(0, (Math.random() - 0.8) * chunkSize));
       chunks.push(str.substring(i, i + skip).replace(/[^\r\n]/g, ' '));
       i += skip;
@@ -107,7 +107,7 @@ const effects = {
     const globalPos = frame % (str.length + depth);
 
     const chars = [];
-    for (let i = 0, length = str.length; i < length; i++) {
+    for (let i = 0, length = str.length; i < length; i += 1) {
       const pos = -(i - globalPos);
       if (pos > 0 && pos <= depth - 1) {
         const shade = (depth - pos) * step;

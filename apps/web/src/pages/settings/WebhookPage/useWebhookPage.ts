@@ -69,7 +69,9 @@ export const useWebhookPage = () => {
   async function handleCheckRecords() {
     try {
       setIsMxRecordRefreshing(true);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000);
+      });
       const record = await validateMxRecord();
 
       if (environment?.dns && record.mxRecordConfigured !== environment.dns.mxRecordConfigured) {

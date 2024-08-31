@@ -82,6 +82,7 @@ export const SetupTimeline = ({
           <Timeline.Item
             bullet={
               <div style={{}}>
+                {/* eslint-disable-next-line no-unsafe-optional-chaining */}
                 <Text>{instructions?.length + 1}</Text>
               </div>
             }

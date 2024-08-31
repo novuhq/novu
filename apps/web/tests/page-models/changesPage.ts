@@ -5,6 +5,7 @@ export class ChangesPage {
 
   static async goTo(page: Page): Promise<ChangesPage> {
     await page.goto('/changes');
+
     return new ChangesPage(page);
   }
 
@@ -32,6 +33,7 @@ export class ChangesPage {
     if (name) {
       return this.page.getByRole('row', { name }).getByTestId('promote-btn');
     }
+
     return this.page.getByTestId('promote-btn').first();
   }
 
@@ -43,6 +45,7 @@ export class ChangesPage {
     if (name) {
       return this.page.getByRole('row', { name }).getByTestId('change-type');
     }
+
     return this.page.getByTestId('change-type');
   }
 
@@ -50,6 +53,7 @@ export class ChangesPage {
     if (name) {
       return this.page.getByRole('row', { name }).getByTestId('change-content');
     }
+
     return this.page.getByTestId('change-content');
   }
 }

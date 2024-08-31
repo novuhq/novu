@@ -134,7 +134,9 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         }
 
         writeOutput('Installed dependencies \n');
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
         writeOutput('Starting Server');
 
         const startServerResponse = await startDevServer();

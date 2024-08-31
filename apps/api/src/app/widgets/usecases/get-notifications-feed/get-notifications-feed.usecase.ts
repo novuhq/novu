@@ -27,7 +27,6 @@ export class GetNotificationsFeed {
     }
 
     try {
-      // eslint-disable-next-line consistent-return
       return JSON.parse(Buffer.from(payload, 'base64').toString());
     } catch (e) {
       throw new BadRequestException('Invalid payload, the JSON object should be encoded to base64 string.');

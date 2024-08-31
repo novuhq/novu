@@ -72,6 +72,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   eligibleProjectOptions.push({
     id: 'infinite-scroll-helper',
+    // eslint-disable-next-line no-nested-ternary
     name: isFetchingNextPage ? 'Fetching projects...' : hasNextPage ? 'Load newer' : 'All projects fetched',
     disabled: true,
     infiniteHelperRef,

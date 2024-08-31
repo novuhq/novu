@@ -32,6 +32,7 @@ export function OnboardingStepsTimeline({ steps, activeGuide }: { steps: any[]; 
             bullet={`${index + 1}`}
             lineVariant="dashed"
             title={step.title}
+            // eslint-disable-next-line no-return-assign
             ref={(el) => ((itemRefs.current[index] as any) = el)}
           >
             <step.content />
@@ -50,7 +51,9 @@ function useStaggeredAnimation(dependencies: any[] = []) {
     // Reset the animation state
     itemRefs.current.forEach((item) => {
       if (item) {
+        // eslint-disable-next-line no-param-reassign
         (item as any).style.opacity = '0';
+        // eslint-disable-next-line no-param-reassign
         (item as any).style.transform = 'translateY(20px)';
       }
     });

@@ -104,7 +104,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
       if (hasOrgs) {
         const firstOrg = clerkUser.organizationMemberships[0].organization;
         setActive({ organization: firstOrg });
-      } else if (!location.href.includes(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST)) {
+      } else if (!window.location.href.includes(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST)) {
         redirectTo({ url: ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST });
       }
     }

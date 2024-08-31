@@ -1,10 +1,10 @@
 import { expect } from '@playwright/test';
+import { faker } from '@faker-js/faker';
 import { test } from './utils/baseTest';
 import { AuthLoginPage } from './page-models/authLoginPage';
 import { PasswordResetPage } from './page-models/passwordResetPage';
 import { SignUpPage } from './page-models/signupPage';
 import { assertPageShowsMessage, initializeSession } from './utils/browser';
-import { faker } from '@faker-js/faker';
 import { createUser, testPassword } from './utils/plugins';
 
 let testUser;

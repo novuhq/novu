@@ -38,6 +38,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
   });
 
   const get = async (url, params = {}) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       const response = await httpClient.get(url, { params });
 
@@ -50,6 +51,7 @@ export function buildBridgeHTTPClient(baseURL: string) {
 
   // POST method
   const post = async (url, data = {}) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       const response = await httpClient.post(url, data);
 
@@ -96,7 +98,9 @@ export function buildBridgeHTTPClient(baseURL: string) {
      * TODO: Use framework shared types
      */
     async trigger({ workflowId, bridgeUrl, to, payload, controls }: TriggerParams): Promise<any> {
+      // eslint-disable-next-line no-param-reassign
       payload = payload || {};
+      // eslint-disable-next-line no-param-reassign
       payload.__source = 'studio-test-workflow';
 
       return post(`${baseURL}?action=trigger&workflowId=${workflowId}`, {

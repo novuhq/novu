@@ -89,6 +89,7 @@ export function TestSendEmail({
         controls,
         to: sendTo,
         bridge,
+        // eslint-disable-next-line no-nested-ternary
         content: bridge
           ? ''
           : template.contentType === 'customHtml'

@@ -32,7 +32,7 @@ export const useUploadTranslations = (
       const formData = new FormData();
       const data = JSON.stringify(locales);
       formData.append('locales', data);
-      for (let i = 0; i < files.length; i++) {
+      for (let i = 0; i < files.length; i += 1) {
         // skip non json files
         if (!files[i].name.endsWith('.json')) {
           continue;

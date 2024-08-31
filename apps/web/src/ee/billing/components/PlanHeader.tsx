@@ -144,7 +144,7 @@ export const PlanHeader = () => {
                   <b style={{ fontSize: 14 }}>$250</b> month package / billed monthly
                 </When>
                 <When truthy={billingInterval === 'year'}>
-                  <b style={{ fontSize: 14 }}>{`\$${(2700).toLocaleString()}`}</b> year package / billed annually
+                  <b style={{ fontSize: 14 }}>{`$${(2700).toLocaleString()}`}</b> year package / billed annually
                 </When>
               </Text>
               <Text size={12} color={isDark ? colors.B80 : colors.B40}>

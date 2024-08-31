@@ -55,6 +55,7 @@ export const useTelemetry = () => {
       if (mixpanelEnabled) {
         const sessionReplayProperties = get_session_recording_properties();
 
+        // eslint-disable-next-line no-param-reassign
         data = {
           ...(data || {}),
           ...sessionReplayProperties,

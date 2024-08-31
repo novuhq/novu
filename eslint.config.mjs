@@ -56,6 +56,9 @@ export default tsEslint.config(
       '**/.next/**',
       '**/.storybook/**',
       '**/.nx/**',
+      '**/config-overrides.js',
+      '**/env-config.js',
+      '**/postcss.config.cjs',
     ],
   },
 
@@ -115,6 +118,13 @@ export default tsEslint.config(
       'no-else-return': 'off',
       'import/export': 'off',
       'consistent-return': 'off',
+      'no-param-reassign': [
+        'error',
+        {
+          props: true,
+          ignorePropertyModificationsFor: ['prev'],
+        },
+      ],
 
       'max-len': [
         'warn',
@@ -214,7 +224,6 @@ export default tsEslint.config(
     files: ['**/*.{js,jsx,cjs,mjs}'],
     extends: [tsEslint.configs.disableTypeChecked],
     rules: {
-      'deprecation/deprecation': 'off',
       '@typescript-eslint/no-throw-literal': 'off',
     },
   },
@@ -250,7 +259,6 @@ export default tsEslint.config(
     files: ['apps/api/**'],
     rules: {
       'func-names': 'off',
-      'no-plusplus': 'off',
       'no-restricted-imports': [
         'error',
         {

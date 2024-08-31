@@ -6,13 +6,12 @@ import { createSearchParams, useNavigate } from 'react-router-dom';
 import { VStack } from '@novu/novui/jsx';
 import { Text, Title } from '@novu/novui';
 import { isAxiosError } from 'axios';
-import { useWorkflowTrigger } from '../../studio/hooks/useBridgeAPI';
+// TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
+import { useWorkflowTrigger, useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { ROUTES } from '../../constants/routes';
 import { Wrapper } from './components/Wrapper';
-// TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
-import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
 import { useStudioState } from '../../studio/StudioStateProvider';
 import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
@@ -73,6 +72,8 @@ export const StudioOnboardingPreview = () => {
       case 'payload':
         setPayload(form.formData);
         break;
+      default:
+        throw new Error('Invalid control type');
     }
   }
 

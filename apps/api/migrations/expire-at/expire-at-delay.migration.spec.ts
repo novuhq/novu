@@ -34,7 +34,7 @@ describe('Create expireAt - TTL support - with pending jobs', function () {
       expireAt: { $exists: false },
     };
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, digestTemplate, newSubscriberIdInAppNotification);
       await sendTrigger(session, delayTemplate, newSubscriberIdInAppNotification);

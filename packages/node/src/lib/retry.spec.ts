@@ -82,8 +82,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
 
     const idempotencyKeys: string[] = [];
 
-    // eslint-disable-next-line no-plusplus
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i += 1) {
       const result = await novu.trigger('fake-workflow', {
         to: { subscriberId: '123' },
         payload: {},

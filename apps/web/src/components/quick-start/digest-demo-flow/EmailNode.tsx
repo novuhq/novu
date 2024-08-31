@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 export function EmailNode({ data, id }: { data: any; id: string }) {
   const { currentUser } = useAuth();
   const { isReadOnly, emailsSentCount } = useDigestDemoFlowContext();
+  // eslint-disable-next-line no-param-reassign
   data.email = currentUser?.email ?? '';
 
   return (

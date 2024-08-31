@@ -104,7 +104,7 @@ const CLERK_OVERRIDE_VARIABLES: Variables = {
   fontSize: 'var(--nv-font-sizes-88)',
 };
 
-const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', location.origin];
+const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
 
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const { colorScheme } = useColorScheme();

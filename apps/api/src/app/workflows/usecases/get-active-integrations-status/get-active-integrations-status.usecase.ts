@@ -26,16 +26,16 @@ export class GetActiveIntegrationsStatus {
   ) {}
 
   async execute(command: GetActiveIntegrationsStatusCommand): Promise<WorkflowResponse[] | WorkflowResponse> {
-    const defaultStateByChannelType = Object.keys(ChannelTypeEnum).reduce((acc, key) => {
+    const defaultStateByChannelType = Object.keys(ChannelTypeEnum).reduce((prev, key) => {
       const channelType = ChannelTypeEnum[key];
 
-      acc[channelType] = { hasActiveIntegrations: false };
+      prev[channelType] = { hasActiveIntegrations: false };
 
       if (channelType === ChannelTypeEnum.EMAIL || channelType === ChannelTypeEnum.SMS) {
-        acc[channelType] = { ...acc[channelType], hasPrimaryIntegrations: false };
+        prev[channelType] = { ...prev[channelType], hasPrimaryIntegrations: false };
       }
 
-      return acc;
+      return prev;
     }, {} as WorkflowChannelsIntegrationStatus);
 
     const activeIntegrations = await this.getActiveIntegrationUsecase.execute(

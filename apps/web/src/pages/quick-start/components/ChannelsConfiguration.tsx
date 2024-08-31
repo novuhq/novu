@@ -103,6 +103,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                     }
                   }}
                 >
+                  {/* eslint-disable-next-line no-nested-ternary */}
                   {isOnboardingExperiment
                     ? 'Send test notification now'
                     : isIntegrationActive

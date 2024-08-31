@@ -7,6 +7,7 @@ export class PasswordResetPage {
 
   static async goTo(page: Page): Promise<PasswordResetPage> {
     await page.goto('/auth/reset/request');
+
     return new PasswordResetPage(page);
   }
 

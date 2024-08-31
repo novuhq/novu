@@ -6,7 +6,7 @@ function isBrowser() {
 
 function autodetectApiRoot() {
   const { origin } = window.location;
-  const matcher = new RegExp(/web|dashboard/);
+  const matcher = /web|dashboard/;
 
   const isValidTargetForReplace = !origin.includes('localhost') && matcher.test(origin);
 
@@ -69,11 +69,11 @@ export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
   window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
 export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce(
-  (acc, key) => {
+  (prev, key) => {
     const defaultValue = 'false';
-    acc[key] = window._env_[key] || process.env[key] || defaultValue;
+    prev[key] = window._env_[key] || process.env[key] || defaultValue;
 
-    return acc;
+    return prev;
   },
   {} as Record<FeatureFlagsKeysEnum, string | undefined>
 );

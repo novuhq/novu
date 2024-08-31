@@ -162,7 +162,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   it('should limit password request to 5 requests per minute', async () => {
     const MAX_ATTEMPTS = 5;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -179,7 +179,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   it('should limit password request to 15 requests per day', async () => {
     const MAX_ATTEMPTS = 5;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -199,7 +199,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -216,7 +216,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   it('should allow user to request password reset after 1 minute block period', async () => {
     const MAX_ATTEMPTS = 5;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -233,7 +233,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -267,7 +267,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });

@@ -463,7 +463,6 @@ export class Client {
     event: Event,
     workflow: DiscoverWorkflowOutput
   ): Promise<Record<string, unknown>> {
-    // eslint-disable-next-line deprecation/deprecation
     let payload = event.payload || event.data;
     if (event.action === 'preview') {
       const mockResult = this.mock(workflow.payload.schema);

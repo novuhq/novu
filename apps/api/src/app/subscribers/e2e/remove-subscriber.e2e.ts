@@ -63,7 +63,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
     const subscriberId = '123';
 
     const subscriber = await subscriberService.createSubscriber({ subscriberId });
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 50; i += 1) {
       const firstTopicKey = `topic-key-${i}-trigger-event`;
       const firstTopicName = `topic-name-${i}-trigger-event`;
       const newTopic = await createTopic(session, firstTopicKey, firstTopicName);

@@ -303,10 +303,10 @@ function diffStrings(a: string, b: string) {
   while (pointer1 < a.length && pointer2 < b.length) {
     if (a[pointer1] !== b[pointer2]) {
       diff += b[pointer2];
-      pointer2++;
+      pointer2 += 1;
     } else {
-      pointer1++;
-      pointer2++;
+      pointer1 += 1;
+      pointer2 += 1;
     }
   }
 

@@ -34,7 +34,7 @@ export const FrameworkTab = ({ className }: { className?: string }) => {
 
   useEffect(() => {
     const tabs = document.getElementsByClassName('nv-terminal-tab');
-    for (let i = 0; i < tabs.length; i++) {
+    for (let i = 0; i < tabs.length; i += 1) {
       const tab = tabs[i];
       tab.addEventListener('click', () => {
         segment.track(`Code snippet tab clicked - [Get Started]`, {

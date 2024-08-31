@@ -60,6 +60,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     const origin = parsedSearchParams.get('origin');
     const anonymousId = parsedSearchParams.get('anonymous_id');
 
+    // eslint-disable-next-line no-unsafe-optional-chaining
     const [firstName, lastName] = data?.fullName.trim().split(' ');
     const itemData = {
       firstName,

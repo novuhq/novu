@@ -132,7 +132,7 @@ export const PreviewStep = ({
     case StepTypeEnum.SMS:
       return <SmsBasePreview content={preview?.outputs?.body} {...props} />;
 
-    case StepTypeEnum.IN_APP:
+    case StepTypeEnum.IN_APP: {
       const inAppMessage = inAppMessageFromBridgeOutputs(preview?.outputs);
 
       return (
@@ -146,6 +146,7 @@ export const PreviewStep = ({
           {...props}
         />
       );
+    }
 
     case StepTypeEnum.CHAT:
       return <ChatBasePreview content={preview?.outputs?.body} {...props} />;

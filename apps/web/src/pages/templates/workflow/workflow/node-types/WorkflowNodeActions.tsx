@@ -119,6 +119,7 @@ export const WorkflowNodeActions = ({
   }
 
   const isDelayedStep = DELAYED_STEPS.includes(channelType);
+  // eslint-disable-next-line no-nested-ternary
   const conditionsAction = isReadOnly
     ? VARIANT_TYPE_TO_VIEW_CONDITIONS[nodeType]
     : conditionsCount > 0

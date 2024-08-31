@@ -17,8 +17,7 @@ import { NavMenuSection } from './NavMenuSection';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 import { When } from '../utils/When';
 
-// TODO: Parentheses were not part of designs, but I believe it's much clearer this way
-const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope})` ?? ''}`;
+const getScopedTitle = (label: string, scope?: string) => `${label} ${scope ? `(${scope})` : ''}`;
 
 export const SettingsNavMenu: React.FC = () => {
   const navigate = useNavigate();
