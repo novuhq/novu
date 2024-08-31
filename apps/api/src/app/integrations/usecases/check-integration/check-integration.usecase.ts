@@ -7,7 +7,6 @@ import { CheckIntegrationCommand } from './check-integration.command';
 export class CheckIntegration {
   constructor(private checkIntegrationEmail: CheckIntegrationEMail) {}
 
-  // eslint-disable-next-line consistent-return
   public async execute(command: CheckIntegrationCommand) {
     try {
       // eslint-disable-next-line default-case

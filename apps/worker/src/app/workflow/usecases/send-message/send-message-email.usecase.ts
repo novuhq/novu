@@ -510,7 +510,6 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  // eslint-disable-next-line consistent-return
   private async getOverrideLayoutId(command: SendMessageCommand) {
     const overrideLayoutIdentifier = command.overrides?.layoutIdentifier;
 

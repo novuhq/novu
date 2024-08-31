@@ -113,7 +113,6 @@ export class ExternalServicesRoute {
     });
   }
 
-  // eslint-disable-next-line consistent-return
   private extractCount(count: unknown): number | undefined {
     if (count === null || count === undefined) return undefined;
 
@@ -133,7 +132,6 @@ export class ExternalServicesRoute {
       return;
     }
 
-    // eslint-disable-next-line consistent-return
     return !!(await this.wsGateway.server.in(command.userId).fetchSockets()).length;
   }
 }

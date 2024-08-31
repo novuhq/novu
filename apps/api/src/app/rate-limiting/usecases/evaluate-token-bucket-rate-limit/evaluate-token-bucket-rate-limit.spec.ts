@@ -308,7 +308,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
         // Populate the histogram bins
         results.forEach((result) => {
           const index = Math.floor((result.duration / maxDuration) * bins);
-          histogram[index < bins ? index : bins - 1]++;
+          histogram[index < bins ? index : bins - 1] += 1;
         });
 
         // Find the maximum bin count to scale the histogram height

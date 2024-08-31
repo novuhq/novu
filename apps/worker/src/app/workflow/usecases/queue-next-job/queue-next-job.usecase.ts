@@ -31,7 +31,6 @@ export class QueueNextJob {
       job,
     });
 
-    // eslint-disable-next-line consistent-return
     return job;
   }
 }

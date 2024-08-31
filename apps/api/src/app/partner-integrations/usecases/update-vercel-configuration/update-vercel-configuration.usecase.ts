@@ -142,16 +142,16 @@ export class UpdateVercelConfiguration {
   ) {
     const { addProjectIds, updateProjectDetails } = projectDetails;
 
-    return envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
+    return envData.reduce<Record<string, MapProjectkeys>>((prev, curr) => {
       const projectIds = projectData[curr._organizationId];
-      acc[curr._organizationId] = {
+      prev[curr._organizationId] = {
         privateKey: curr.apiKeys[0].key,
         clientKey: curr.identifier,
         updateProjectDetails: updateProjectDetails.filter((detail) => projectIds.includes(detail.projectId)),
         addProjectIds: projectIds.filter((id) => addProjectIds.includes(id)),
       };
 
-      return acc;
+      return prev;
     }, {});
   }
 

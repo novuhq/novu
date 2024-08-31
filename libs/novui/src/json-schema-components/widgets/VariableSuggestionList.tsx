@@ -58,8 +58,7 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       }
 
       // happy path -- valid variable reference
-      // eslint-disable-next-line consistent-return
-      return command({ label: cleanedQuery, id: variableName });
+            return command({ label: cleanedQuery, id: variableName });
     };
 
     const options = items?.map((item) => (

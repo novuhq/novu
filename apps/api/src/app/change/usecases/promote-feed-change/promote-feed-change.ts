@@ -1,4 +1,3 @@
-/* eslint-disable consistent-return */
 import { Injectable } from '@nestjs/common';
 import { FeedEntity, FeedRepository } from '@novu/dal';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';

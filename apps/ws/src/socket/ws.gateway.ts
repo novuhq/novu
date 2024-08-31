@@ -86,7 +86,6 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
         return;
       }
 
-      // eslint-disable-next-line consistent-return
       return subscriber;
     } catch (e) {
       /* empty */
@@ -133,7 +132,6 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     return activeSockets?.length || 0;
   }
 
-  // eslint-disable-next-line consistent-return
   private async processConnectionRequest(connection: Socket) {
     const token = this.extractToken(connection);
 

@@ -73,7 +73,6 @@ export abstract class SendMessageBase extends SendMessageType {
       });
     }
 
-    // eslint-disable-next-line consistent-return
     return integration;
   }
 
@@ -150,7 +149,6 @@ export abstract class SendMessageBase extends SendMessageType {
     return messageTemplate;
   }
 
-  // eslint-disable-next-line consistent-return
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {

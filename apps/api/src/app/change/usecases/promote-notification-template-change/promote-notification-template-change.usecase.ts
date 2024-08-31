@@ -170,7 +170,6 @@ export class PromoteNotificationTemplateChange {
         ...(newItem.data ? { data: newItem.data } : {}),
       };
 
-      // eslint-disable-next-line consistent-return
       return this.notificationTemplateRepository.create(newNotificationTemplate as NotificationTemplateEntity);
     }
 
@@ -187,7 +186,6 @@ export class PromoteNotificationTemplateChange {
 
     await this.invalidateNotificationTemplate(item, command.organizationId);
 
-    // eslint-disable-next-line consistent-return
     return await this.notificationTemplateRepository.update(
       {
         _environmentId: command.environmentId,

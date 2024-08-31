@@ -148,7 +148,6 @@ export class ContentTemplatesController {
     );
   }
 
-  // eslint-disable-next-line consistent-return
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {

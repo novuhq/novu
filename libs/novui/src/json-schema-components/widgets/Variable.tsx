@@ -87,6 +87,5 @@ function getValidatedVariable(text: string = '', possibleVariables: Set<string>)
     return;
   }
 
-  // eslint-disable-next-line consistent-return
   return variableContent;
 }

@@ -336,7 +336,7 @@ describe('API Rate Limiting', () => {
                     lastResponse = response;
 
                     if (response.statusCode === 429) {
-                      throttledResponseCount++;
+                      throttledResponseCount += 1;
                     }
                   }
                 }

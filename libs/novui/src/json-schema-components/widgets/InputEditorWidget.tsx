@@ -129,8 +129,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
     }
   }, [variablesList, editor]);
 
-  // eslint-disable-next-line consistent-return
-  useEffect(() => {
+    useEffect(() => {
     if (editor) {
       const output = getInitContentWithVariableNodeView(value?.toString(), variablesSet);
 
