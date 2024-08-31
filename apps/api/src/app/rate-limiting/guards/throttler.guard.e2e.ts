@@ -331,7 +331,7 @@ describe('API Rate Limiting', () => {
 
                 setupTest && (await setupTest(session));
                 for (const { path, count } of requests) {
-                  for (let index = 0; index < count; index++) {
+                  for (let index = 0; index < count; index += 1) {
                     const response = await request(pathPrefix + path);
                     lastResponse = response;
 

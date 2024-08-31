@@ -61,7 +61,7 @@ describe('GetPlatformNotificationUsage', () => {
 
     const organizations: any[] = [];
 
-    for (let index = 0; index < orgCount; index++) {
+    for (let index = 0; index < orgCount; index += 1) {
       const orgSession = new UserSession();
       await orgSession.initialize();
 

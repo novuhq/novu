@@ -32,7 +32,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
   public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<JobEntity[]> {
     const stored: JobEntity[] = [];
-    for (let index = 0; index < jobs.length; index++) {
+    for (let index = 0; index < jobs.length; index += 1) {
       if (index > 0) {
         jobs[index]._parentId = stored[index - 1]._id;
       }
