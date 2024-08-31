@@ -7,6 +7,7 @@
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix",
     "build": "npm run build:cjs && npm run build:esm && npm run build:umd && npm run build:types",
     "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",

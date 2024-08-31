@@ -66,10 +66,10 @@ function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const query = useMemo(() => {
     const foundQuery = stores?.find((i) => i.storeId === storeId)?.query || {};
 
-    return Object.assign({}, foundQuery, { seen: false, limit: 100 });
+    return { ...foundQuery, seen: false, limit: 100 };
   }, [stores]);
   const { data } = useFeedUnseenCount({ query });
-  const unseenCount = query.seen ? 0 : data?.count ?? 0;
+  const unseenCount = query.seen ? 0 : (data?.count ?? 0);
 
   return <UnseenBadge unseenCount={unseenCount} />;
 }

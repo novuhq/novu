@@ -17,7 +17,10 @@ import { useNotifications } from './useNotifications';
 import { queryClient } from '../components/novu-provider/NovuProvider';
 
 const PROMISE_TIMEOUT = 150;
-const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
+const promiseResolveTimeout = (ms: number, arg: unknown = {}) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms, arg);
+  });
 
 const templateId = 'templateId';
 const notificationId = 'notificationId';
@@ -267,8 +270,10 @@ describe('useNotifications', () => {
     const payloads = [props, { ...theChangeObject }];
 
     const wrapper = ({ children }) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const [payload, setPayload] = useState(payloads[0]);
 
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       useEffect(() => {
         const timeout = setTimeout(() => {
           act(() => {

@@ -41,9 +41,7 @@ export function NotificationsListTab() {
     <>
       {!isLoading && notifications?.length === 0 ? (
         <>
-          {emptyState ? (
-            emptyState
-          ) : (
+          {emptyState || (
             <div
               style={{
                 textAlign: 'center',
