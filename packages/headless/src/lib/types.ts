@@ -69,7 +69,7 @@ export type FetchResult<T = unknown> = Pick<
 export type UpdateResult<
   TData = unknown,
   TError = unknown,
-  TVariables = unknown
+  TVariables = unknown,
 > = Pick<
   MutationObserverResult<TData, TError, TVariables>,
   'data' | 'error' | 'status' | 'isLoading' | 'isError'
