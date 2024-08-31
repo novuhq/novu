@@ -41,7 +41,7 @@ test('Should trigger ryver correctly with _passthrough', async () => {
           content: 'chat message _passthrough',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toBeCalledWith('https://google.com/', {

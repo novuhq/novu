@@ -18,7 +18,7 @@ process.on('SIGINT', function () {
 
 let tunnelClient: NtfrTunnel | null = null;
 export const TUNNEL_URL = 'https://novu.sh/api/tunnels';
-const version = packageJson.version;
+const { version } = packageJson;
 
 export async function devCommand(options: DevCommandOptions, anonymousId?: string) {
   await showWelcomeScreen();
@@ -72,7 +72,7 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
     } catch (e) {
       await wait(1000);
     } finally {
-      counter++;
+      counter += 1;
 
       if (counter === 10) {
         endpointSpinner.text = `Bridge Endpoint scan:\t${fullEndpoint}
@@ -90,7 +90,7 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
 async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
   try {
     const res = await (
-      await fetch(configTunnelUrl + '?action=health-check', {
+      await fetch(`${configTunnelUrl}?action=health-check`, {
         method: 'GET',
         headers: {
           accept: 'application/json',

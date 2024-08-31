@@ -22,14 +22,14 @@ export class PushWebhookPushProvider
     private config: {
       hmacSecretKey?: string;
       webhookUrl: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const { subscriber, step, payload, ...rest } = options;
     const data = this.transform(bridgeProviderData, {

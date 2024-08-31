@@ -30,7 +30,7 @@ test('should trigger 46elks api correctly', async () => {
   expect(spy).toHaveBeenCalledWith(
     'https://api.46elks.com/a1/sms',
     `from=${from}&to=${to.replace('+', '%2B')}&message=${content}`,
-    { headers: { Authorization: 'Basic dGVzdF9hY2NvdW50OjEyMzQ1Ng==' } }
+    { headers: { Authorization: 'Basic dGVzdF9hY2NvdW50OjEyMzQ1Ng==' } },
   );
 });
 
@@ -64,13 +64,13 @@ test('should trigger 46elks api correctly', async () => {
           to: '+767777777777',
         },
       },
-    }
+    },
   );
 
   expect(response?.id).toEqual('test_id');
   expect(spy).toHaveBeenCalledWith(
     'https://api.46elks.com/a1/sms',
     `from=${from}&to=${'+767777777777'.replace('+', '%2B')}&message=${content}`,
-    { headers: { Authorization: 'Basic dGVzdF9hY2NvdW50OjEyMzQ1Ng==' } }
+    { headers: { Authorization: 'Basic dGVzdF9hY2NvdW50OjEyMzQ1Ng==' } },
   );
 });

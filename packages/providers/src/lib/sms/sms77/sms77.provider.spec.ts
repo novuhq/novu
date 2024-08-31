@@ -54,7 +54,7 @@ test('should trigger sms77 correctly with _passthrough', async () => {
           json: false,
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

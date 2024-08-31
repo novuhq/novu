@@ -14,8 +14,6 @@ export const MockCacheService = {
       },
       del(key: string) {
         delete data[key];
-
-        return;
       },
       delByPattern(pattern?: string) {
         const preFixSuffixTuple = pattern?.split('*');
@@ -29,8 +27,6 @@ export const MockCacheService = {
           )
             delete data[key];
         }
-
-        return;
       },
       keys(pattern?: string) {
         return Object.keys(data);
@@ -45,7 +41,7 @@ export const MockCacheService = {
         const dataVal = data[key];
         if (dataVal && !Array.isArray(dataVal)) {
           throw new Error(
-            'Wrong operation against a key holding the wrong kind of value'
+            'Wrong operation against a key holding the wrong kind of value',
           );
         }
 
@@ -55,7 +51,7 @@ export const MockCacheService = {
         members.forEach((member) => {
           if (!newVal.has(member)) {
             newVal.add(member);
-            addCount++;
+            addCount += 1;
           }
         });
         data[key] = Array.from(newVal);
@@ -65,7 +61,7 @@ export const MockCacheService = {
       async eval<TData = unknown>(
         script: string,
         keys: string[],
-        args: (string | Buffer | number)[]
+        args: (string | Buffer | number)[],
       ): Promise<TData> {
         return mockClient.eval(script, keys.length, ...keys, ...args) as TData;
       },

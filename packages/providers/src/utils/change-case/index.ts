@@ -20,7 +20,7 @@ const isObject = (object: unknown) =>
   object !== null && typeof object === 'object';
 
 function changeKeysFactory<Options extends IOptions = IOptions>(
-  changeCase: (input: string, options?: IOptions) => string
+  changeCase: (input: string, options?: IOptions) => string,
 ): (object: unknown, options?: Options) => unknown {
   return function changeKeys(object: unknown, options?: Options): unknown {
     const depth = options?.depth || 10000;
@@ -29,12 +29,12 @@ function changeKeysFactory<Options extends IOptions = IOptions>(
 
     if (Array.isArray(object)) {
       return object.map((item) =>
-        changeKeys(item, { ...options, depth: depth - 1 })
+        changeKeys(item, { ...options, depth: depth - 1 }),
       );
     }
 
     const result: Record<string, unknown> = Object.create(
-      Object.getPrototypeOf(object)
+      Object.getPrototypeOf(object),
     );
 
     Object.keys(object as object).forEach((key) => {
@@ -58,7 +58,7 @@ export const dotCase = changeKeysFactory(dotCaseTransformer);
 export const trainCase = changeKeysFactory(trainCaseTransformer);
 export const kebabCase = changeKeysFactory(kebabCaseTransformer);
 export const pascalCase = changeKeysFactory<IPascalCaseOptions>(
-  pascalCaseTransformer
+  pascalCaseTransformer,
 );
 export const pathCase = changeKeysFactory(pathCaseTransformer);
 export const sentenceCase = changeKeysFactory(sentenceCaseTransformer);
