@@ -79,12 +79,9 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(
-      command.environmentId,
-      command.bridgeUrl
-    );
+    const { environment } = await this.isStatelessWorkflowAllowed(command.environmentId, command.bridgeUrl);
 
-    if (statelessWorkflowAllowed && environment) {
+    if (environment) {
       const discoveredWorkflow = await this.queryDiscoverWorkflow(command, environment);
 
       if (!discoveredWorkflow) {
