@@ -5,6 +5,7 @@ import {
   EnvironmentRepository,
   NotificationGroupRepository,
   NotificationTemplateEntity,
+  PreferencesActorEnum,
 } from '@novu/dal';
 import {
   AnalyticsService,
@@ -14,6 +15,8 @@ import {
   UpdateWorkflow,
   UpdateWorkflowCommand,
   ExecuteBridgeRequest,
+  UpsertPreferences,
+  UpsertPreferencesCommand,
 } from '@novu/application-generic';
 import { WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
@@ -32,7 +35,8 @@ export class Sync {
     private notificationGroupRepository: NotificationGroupRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private upsertPreferences: UpsertPreferences
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
@@ -126,8 +130,10 @@ export class Sync {
           workflow.workflowId
         );
 
+        let savedWorkflow: NotificationTemplateEntity | undefined = undefined;
+
         if (workflowExist) {
-          return await this.updateWorkflowUsecase.execute(
+          savedWorkflow = await this.updateWorkflowUsecase.execute(
             UpdateWorkflowCommand.create({
               id: workflowExist._id,
               environmentId: command.environmentId,
@@ -165,7 +171,7 @@ export class Sync {
           }
           const isWorkflowActive = this.castToAnyNotSupportedParam(workflow.options)?.active ?? true;
 
-          return this.createWorkflowUsecase.execute(
+          savedWorkflow = await this.createWorkflowUsecase.execute(
             CreateWorkflowCommand.create({
               notificationGroupId,
               draft: !isWorkflowActive,
@@ -197,6 +203,18 @@ export class Sync {
             })
           );
         }
+
+        await this.upsertPreferences.execute(
+          UpsertPreferencesCommand.create({
+            actor: PreferencesActorEnum.WORKFLOW,
+            environmentId: savedWorkflow._environmentId,
+            organizationId: savedWorkflow._organizationId,
+            templateId: savedWorkflow._id,
+            preferences: workflow.preferences,
+          })
+        );
+
+        return savedWorkflow;
       })
     );
   }
