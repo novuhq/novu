@@ -1,6 +1,5 @@
 import { JSX } from 'solid-js';
 import { ChannelType } from '../../../../types';
-import { useNovu } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { Chat, Email, InApp, Push, Sms } from '../../../icons';
 import { Switch } from './Switch';
@@ -15,7 +14,6 @@ type ChannelRowProps = {
 };
 
 export const ChannelRow = (props: ChannelRowProps) => {
-  const novu = useNovu();
   const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
@@ -23,16 +21,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
       return;
     }
 
-    try {
-      await novu.preferences.update({
-        workflowId: props.workflowId,
-        channelPreferences: { [props.channel]: enabled },
-      });
-
-      props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });
-    } catch (error) {
-      console.error(error);
-    }
+    props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });
   };
 
   const onChange = (checked: boolean) => {
