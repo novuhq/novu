@@ -533,7 +533,6 @@ describe('Topic Trigger Event', () => {
         expect(messages.length).to.equal(2);
         for (const message of messages) {
           const digestKey = message.payload.id;
-          // eslint-disable-next-line @typescript-eslint/no-base-to-string
           expect(message.content).to.equal(`${digestKey} ${digestKey} ${digestKey} `);
         }
       }
