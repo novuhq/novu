@@ -22,8 +22,6 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
       useDefaults: true,
       // https://ajv.js.org/options.html#removeadditional
       removeAdditional: 'failing',
-      // https://ajv.js.org/options.html#allerrors
-      allErrors: true,
     });
     addFormats(this.ajv);
     this.compiledSchemas = new Map();
