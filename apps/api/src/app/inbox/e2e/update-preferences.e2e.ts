@@ -1,4 +1,4 @@
-import { PreferenceLevelEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, PreferenceLevelEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -175,7 +175,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .patch(`/v1/inbox/preferences/${workflow._id}`)
       .send({
         email: true,
-        in_app: true,
+        in_app: false,
         sms: false,
         push: false,
         chat: true,
@@ -183,17 +183,42 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
+    expect(Object.keys(response.body.data.channels).length).to.equal(2);
     expect(response.body.data.channels.email).to.equal(true);
-    expect(response.body.data.channels.in_app).to.equal(true);
-    expect(response.body.data.channels.sms).to.equal(false);
-    expect(response.body.data.channels.push).to.equal(false);
-    expect(response.body.data.channels.chat).to.equal(true);
+    expect(response.body.data.channels.in_app).to.equal(false);
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
   });
 
   it('should update the particular channel sent in the body and return all channels', async function () {
     const workflow = await session.createTemplate({
       noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Welcome to {{organizationName}}' as string,
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+        },
+        {
+          type: StepTypeEnum.EMAIL,
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+        {
+          type: StepTypeEnum.CHAT,
+          content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+        },
+        {
+          type: StepTypeEnum.PUSH,
+          content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+        },
+      ],
     });
 
     const response = await session.testAgent

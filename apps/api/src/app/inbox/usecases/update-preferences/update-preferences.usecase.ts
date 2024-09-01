@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+} from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   NotificationTemplateEntity,
@@ -20,7 +26,9 @@ export class UpdatePreferences {
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private subscriberRepository: SubscriberRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
   ) {}
 
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
@@ -40,35 +48,14 @@ export class UpdatePreferences {
       }
     }
 
-    const userPreference = await this.findPreference(command, subscriber);
-
+    const userPreference = await this.subscriberPreferenceRepository.findOne(this.commonQuery(command, subscriber));
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);
     } else {
       await this.updateUserPreference(command, subscriber);
     }
 
-    const updatedPreference = await this.findPreference(command, subscriber);
-
-    if (!updatedPreference) {
-      throw new NotFoundException(`Preference not found`);
-    }
-
-    return {
-      level: updatedPreference.level,
-      enabled: updatedPreference.enabled,
-      channels: updatedPreference.channels,
-      ...(workflow &&
-        updatedPreference.level === PreferenceLevelEnum.TEMPLATE && {
-          workflow: {
-            id: workflow._id,
-            identifier: workflow.triggers[0].identifier,
-            name: workflow.name,
-            critical: workflow.critical,
-            tags: workflow.tags,
-          },
-        }),
-    };
+    return await this.findPreference(command, subscriber);
   }
 
   private async createUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
@@ -86,7 +73,6 @@ export class UpdatePreferences {
       _workflowId: command.workflowId,
       level: command.level,
       channels: channelObj,
-      __source: 'UpdatePreferences',
     });
 
     const query = this.commonQuery(command, subscriber);
@@ -127,10 +113,53 @@ export class UpdatePreferences {
     });
   }
 
-  private async findPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity) {
-    const query = this.commonQuery(command, subscriber);
+  private async findPreference(
+    command: UpdatePreferencesCommand,
+    subscriber: SubscriberEntity
+  ): Promise<InboxPreference> {
+    if (command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId) {
+      const workflow = await this.notificationTemplateRepository.findById(command.workflowId, command.environmentId);
+      if (!workflow) {
+        throw new NotFoundException(`Workflow with id: ${command.workflowId} is not found`);
+      }
 
-    return await this.subscriberPreferenceRepository.findOne(query);
+      const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
+        GetSubscriberTemplatePreferenceCommand.create({
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          environmentId: command.environmentId,
+          template: workflow,
+          subscriber,
+        })
+      );
+
+      return {
+        level: PreferenceLevelEnum.TEMPLATE,
+        enabled: preference.enabled,
+        channels: preference.channels,
+        workflow: {
+          id: workflow._id,
+          identifier: workflow.triggers[0].identifier,
+          name: workflow.name,
+          critical: workflow.critical,
+          tags: workflow.tags,
+        },
+      };
+    }
+
+    const { preference } = await this.getSubscriberGlobalPreference.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+      })
+    );
+
+    return {
+      level: PreferenceLevelEnum.GLOBAL,
+      enabled: preference.enabled,
+      channels: preference.channels,
+    };
   }
 
   private commonQuery(command: UpdatePreferencesCommand, subscriber: SubscriberEntity) {
