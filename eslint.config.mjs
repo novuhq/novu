@@ -43,7 +43,7 @@ export default tsEslint.config(
       'airbnb-typescript'
     )
   ),
-  eslintPluginPrettierRecommended, // KEEP PRETTIER CONFIG LAST
+  eslintPluginPrettierRecommended, // KEEP PRETTIER CONFIG LAST TO AVOID CONFLICTS
 
   /* ******************** IGNORES ******************** */
   {
@@ -57,9 +57,17 @@ export default tsEslint.config(
       '**/.next/**',
       '**/.storybook/**',
       '**/.nx/**',
-      '**/config-overrides.js',
-      '**/env-config.js',
-      '**/postcss.config.cjs',
+      // '**/config-overrides.js',
+      // '**/env-config.js',
+      // '**/*.config.{js,cjs,mjs}',
+      // '**/iframeResizer.contentWindow.js',
+      // '**/postcss.config.cjs',
+      // '**/react-scanner.config.js',
+      // '**/postcss.config.js',
+      // '**/tailwind.config.js',
+      // '**/jest.config.js',
+      // '**/vitest.config.js',
+      // '**/webpack.config.js',
     ],
   },
 
@@ -72,6 +80,7 @@ export default tsEslint.config(
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -223,10 +232,7 @@ export default tsEslint.config(
   /* ******************** JAVASCRIPT FILES ******************** */
   {
     files: ['**/*.{js,jsx,cjs,mjs}'],
-    extends: [tsEslint.configs.disableTypeChecked],
-    rules: {
-      '@typescript-eslint/no-throw-literal': 'off',
-    },
+    ...tsEslint.configs.disableTypeChecked,
   },
 
   /* ******************** MONOREPO PACKAGES ******************** */
