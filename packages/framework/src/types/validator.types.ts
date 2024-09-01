@@ -6,6 +6,7 @@ export type ValidateFunction<T = unknown> = AjvValidateFunction<T> | ((data: T) 
 
 export type ValidationError = {
   path: string;
+  property: string;
   message: string;
 };
 

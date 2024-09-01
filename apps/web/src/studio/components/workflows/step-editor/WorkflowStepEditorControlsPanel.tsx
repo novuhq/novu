@@ -20,6 +20,7 @@ export type OnChangeType = 'step' | 'payload';
 interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
+  error?: any;
   onChange: (type: OnChangeType, data: any, id?: string) => void;
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
@@ -38,6 +39,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   defaultControls,
   isLoadingSave,
   className,
+  error,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
@@ -106,6 +108,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <JsonSchemaForm
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
+                    errors={error}
                     formData={defaultControls || {}}
                     variables={variables}
                   />
@@ -134,6 +137,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     schema={
                       workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {}
                     }
+                    errors={error}
                     formData={{}}
                   />
                 </When>

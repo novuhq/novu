@@ -22,6 +22,8 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
       useDefaults: true,
       // https://ajv.js.org/options.html#removeadditional
       removeAdditional: 'failing',
+      // https://ajv.js.org/options.html#allerrors
+      allErrors: true,
     });
     addFormats(this.ajv);
     this.compiledSchemas = new Map();
@@ -60,10 +62,16 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     } else {
       return {
         success: false,
-        errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => ({
-          path: err.instancePath,
-          message: err.message as string,
-        })),
+        errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => {
+          const nestedPath = err.instancePath.split('/').join('.');
+          const requiredFieldName = err.params?.missingProperty;
+
+          return {
+            path: err.instancePath,
+            message: err.message as string,
+            property: `${nestedPath}${requiredFieldName ? `.${requiredFieldName}` : ''}`,
+          };
+        }),
       };
     }
   }
