@@ -1,7 +1,8 @@
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
+import { setDynamicLocalization } from '../../../config';
+import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
-import { setDynamicLocalization } from '../../../config';
 import { StringLocalizationKey, useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown, Lock } from '../../../icons';
@@ -13,7 +14,7 @@ import { LoadingScreen } from './LoadingScreen';
 export const Preferences = () => {
   const style = useStyle();
 
-  const { preferences, loading, mutate } = usePreferences();
+  const { preferences, loading } = usePreferences();
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
@@ -34,25 +35,15 @@ export const Preferences = () => {
     }));
   });
 
-  const optimisticUpdate = ({
-    channel,
-    enabled,
-    workflowId,
-  }: {
-    workflowId?: string;
-    channel: ChannelType;
-    enabled: boolean;
-  }) => {
-    mutate((prev) =>
-      prev?.map((preference) => {
-        if (preference.workflow?.id === workflowId || (!workflowId && preference.level === PreferenceLevel.GLOBAL)) {
-          preference.channels[channel] = enabled;
-        }
-
-        return preference;
-      })
-    );
-  };
+  const optimisticUpdate =
+    (preference?: Preference) =>
+    ({ channel, enabled }: { channel: ChannelType; enabled: boolean }) => {
+      preference?.update({
+        channelPreferences: {
+          [channel]: enabled,
+        },
+      });
+    };
 
   return (
     <div
@@ -68,16 +59,15 @@ export const Preferences = () => {
         <PreferencesRow
           localizationKey="preferences.global"
           channels={allPreferences().globalPreference?.channels || {}}
-          onChange={optimisticUpdate}
+          onChange={optimisticUpdate(allPreferences().globalPreference)}
         />
-
         <For each={allPreferences().workflowPreferences}>
           {(preference) => (
             <PreferencesRow
               localizationKey={preference.workflow!.identifier as StringLocalizationKey}
               channels={preference.channels}
               workflowId={preference.workflow?.id}
-              onChange={optimisticUpdate}
+              onChange={optimisticUpdate(preference)}
               isCritical={preference.workflow?.critical}
             />
           )}

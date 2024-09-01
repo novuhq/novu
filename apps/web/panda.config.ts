@@ -38,6 +38,7 @@ export default defineConfig({
       tokens: {
         sizes: {
           onboarding: { value: '880px' },
+          userSettings: { buttonWidth: { value: '204px' } },
         },
       },
       semanticTokens: {

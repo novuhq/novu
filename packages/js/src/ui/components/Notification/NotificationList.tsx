@@ -1,7 +1,7 @@
-import { createMemo, For, JSX, Show } from 'solid-js';
+import { createEffect, createMemo, For, JSX, Show } from 'solid-js';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
-import { useLocalization, useNewMessagesCount } from '../../context';
+import { DEFAULT_LIMIT, useInboxContext, useLocalization, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
 import { EmptyIcon } from '../../icons/EmptyIcon';
 import type { NotificationActionClickHandler, NotificationClickHandler, NotificationRenderer } from '../../types';
@@ -42,7 +42,12 @@ export const NotificationList = (props: NotificationListProps) => {
   const style = useStyle();
   const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
   const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
+  const { setLimit } = useInboxContext();
   let notificationListElement: HTMLDivElement;
+
+  createEffect(() => {
+    setLimit(props.limit || DEFAULT_LIMIT);
+  });
 
   const handleOnNewMessagesClick: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent> = async (e) => {
     e.stopPropagation();
