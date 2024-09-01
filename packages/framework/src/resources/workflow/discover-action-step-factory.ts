@@ -13,7 +13,6 @@ export function discoverActionStepFactory(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): ActionStep<any, any> {
   return async (stepId, resolve, options = {}) => {
-    // eslint-disable-next-line deprecation/deprecation
     const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
 
     discoverStep(targetWorkflow, stepId, {
