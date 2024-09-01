@@ -8,7 +8,6 @@ export const tableClassName = css({
     '&:first-of-type td': {
       borderBottom: 'solid',
       borderColor: 'table.header.border',
-      // FIXME: Talk to Design about this. We're using a table but then breaking every rule
       py: '100',
     },
     '&:not(:first-of-type) td': {
@@ -24,8 +23,7 @@ export const tableClassName = css({
   '& tr td:not(:first-child), & tr th:not(:first-child)': {
     pr: '0',
     pl: '175',
-    // FIXME: width for switch columns should be based on content
-    width: '[34px]',
+    width: '275',
   },
   '& tr td:last-child, & tr th:last-child': {
     pr: '0',

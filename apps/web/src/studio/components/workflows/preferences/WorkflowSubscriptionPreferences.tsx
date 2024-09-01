@@ -44,7 +44,7 @@ export type WorkflowSubscriptionPreferencesProps = {
   updateChannelPreferences: (prefs: Partial<Record<PreferenceChannel, Preference>>) => Promise<void>;
 };
 export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({ preferences }) => {
-  // FIXME: setup on toggle behaviors
+  // TODO: setup on toggle behaviors
   return (
     <Table<SubscriptionPreferenceRow> className={tableClassName} columns={PREFERENCES_COLUMNS} data={preferences} />
   );
@@ -53,7 +53,6 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
 function ChannelCell(props) {
   const Icon = CHANNEL_SETTINGS_LOGO_LOOKUP[props.getValue()];
 
-  // FIXME: clean this up with a recipe & check if text is only white if both are enabled
   const colorToken: ColorToken = props.row.original.defaultValue ? 'typography.text.main' : 'typography.text.secondary';
 
   return (
