@@ -60,10 +60,16 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     } else {
       return {
         success: false,
-        errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => ({
-          path: err.instancePath,
-          message: err.message as string,
-        })),
+        errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => {
+          const nestedPath = err.instancePath.split('/').join('.');
+          const requiredFieldName = err.params?.missingProperty as string;
+
+          return {
+            path: err.instancePath,
+            message: err.message as string,
+            property: `${nestedPath}${requiredFieldName ? `.${requiredFieldName}` : ''}`,
+          };
+        }),
       };
     }
   }

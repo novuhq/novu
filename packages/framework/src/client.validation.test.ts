@@ -185,6 +185,7 @@ describe('validation', () => {
           {
             message: 'Required',
             path: '/baz',
+            property: '.baz',
           },
         ]);
       }
@@ -369,6 +370,7 @@ describe('validation', () => {
           {
             message: "must have required property 'baz'",
             path: '',
+            property: '.baz',
           },
         ]);
       }

@@ -27,6 +27,8 @@ export const WorkflowsStepEditor = ({
   onControlsSave?: () => void;
   isSavingControls?: boolean;
 }) => {
+  const errorData = error && 'response' in error ? error?.response?.data : error;
+
   return (
     <>
       <WorkflowsPanelLayout>
@@ -41,6 +43,7 @@ export const WorkflowsStepEditor = ({
         <WorkflowStepEditorControlsPanel
           source={source}
           step={step}
+          error={errorData?.data}
           workflow={workflow}
           onChange={onControlsChange}
           defaultControls={defaultControls}
