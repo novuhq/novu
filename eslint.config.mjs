@@ -67,14 +67,8 @@ export default tsEslint.config(
       '**/scripts/**',
       '**/jest.setup.js',
       '**/check-ee.mjs',
-      '**/libs/embed/src/shared/**'
-      // '**/postcss.config.cjs',
-      // '**/react-scanner.config.js',
-      // '**/postcss.config.js',
-      // '**/tailwind.config.js',
-      // '**/jest.config.js',
-      // '**/vitest.config.js',
-      // '**/webpack.config.js',
+      '**/libs/embed/src/shared/**',
+      '**/*.stories.*',
     ],
   },
 
