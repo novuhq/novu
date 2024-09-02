@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { FeedDBModel } from './feed.entity';
+
+const mongooseDelete = require('mongoose-delete');
 
 const feedSchema = new Schema<FeedDBModel>(
   {

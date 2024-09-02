@@ -2,9 +2,9 @@ import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
 
-export { Cluster, ClusterOptions };
-
 import { convertStringValues } from './variable-mappers';
+
+export { Cluster, ClusterOptions };
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -48,36 +48,36 @@ export const getMemoryDbClusterProviderConfig =
       port: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_PORT),
       ttl: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_TTL),
       username: convertStringValues(
-        process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME
+        process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME,
       ),
       password: convertStringValues(
-        process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD
+        process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD,
       ),
       connectTimeout: convertStringValues(
-        process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT
+        process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT,
       ),
       keepAlive: convertStringValues(
-        process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE
+        process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE,
       ),
       family: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY),
       keyPrefix: convertStringValues(
-        process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX
+        process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX,
       ),
       tls: (process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
         ? {
             servername: convertStringValues(
-              process.env.MEMORY_DB_CLUSTER_SERVICE_HOST
+              process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
             ),
           }
         : {},
     };
 
-    const host = redisClusterConfig.host;
+    const { host } = redisClusterConfig;
     const port = redisClusterConfig.port
       ? Number(redisClusterConfig.port)
       : undefined;
-    const username = redisClusterConfig.username;
-    const password = redisClusterConfig.password;
+    const { username } = redisClusterConfig;
+    const { password } = redisClusterConfig;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)
       : DEFAULT_CONNECT_TIMEOUT;
@@ -110,7 +110,7 @@ export const getMemoryDbClusterProviderConfig =
   };
 
 export const getMemoryDbCluster = (
-  enableAutoPipelining?: boolean
+  enableAutoPipelining?: boolean,
 ): Cluster | undefined => {
   const { instances, password, username, tls } =
     getMemoryDbClusterProviderConfig();
@@ -139,7 +139,7 @@ export const getMemoryDbCluster = (
   };
 
   Logger.log(
-    `Initializing MemoryDb Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing MemoryDb Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`,
   );
 
   if (instances && instances.length > 0) {

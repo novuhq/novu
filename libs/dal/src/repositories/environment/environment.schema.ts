@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';

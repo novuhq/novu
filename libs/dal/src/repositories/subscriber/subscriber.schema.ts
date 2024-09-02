@@ -1,10 +1,10 @@
-import mongoose from 'mongoose';
-import { IndexOptions, Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import mongoose, { IndexOptions, Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { IndexDefinition } from '../../shared/types';
+
+const mongooseDelete = require('mongoose-delete');
 
 const subscriberSchema = new Schema<SubscriberDBModel>(
   {

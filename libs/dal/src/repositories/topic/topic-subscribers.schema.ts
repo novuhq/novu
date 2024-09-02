@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { TopicSubscribersDBModel } from './topic-subscribers.entity';
 

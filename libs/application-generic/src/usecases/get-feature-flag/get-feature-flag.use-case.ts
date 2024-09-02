@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { GetFeatureFlagCommand } from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services';
-import { prepareBooleanStringFeatureFlag } from '@novu/shared';
 
 @Injectable()
 export class GetFeatureFlag {

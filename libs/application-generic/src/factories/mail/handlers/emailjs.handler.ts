@@ -1,5 +1,4 @@
-import { IEmailJsConfig } from '@novu/providers';
-import { EmailJsProvider } from '@novu/providers';
+import { IEmailJsConfig, EmailJsProvider } from '@novu/providers';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,

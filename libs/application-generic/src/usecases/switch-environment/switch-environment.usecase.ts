@@ -19,7 +19,7 @@ export class SwitchEnvironment {
     private environmentRepository: EnvironmentRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
   ) {}
 
   async execute(command: SwitchEnvironmentCommand) {
@@ -33,7 +33,7 @@ export class SwitchEnvironment {
 
     const member = await this.memberRepository.findMemberByUserId(
       command.organizationId,
-      command.userId
+      command.userId,
     );
     if (!member) throw new NotFoundException('Member is not found');
 
@@ -44,7 +44,7 @@ export class SwitchEnvironment {
       user,
       command.organizationId,
       member,
-      command.newEnvironmentId
+      command.newEnvironmentId,
     );
 
     return token;

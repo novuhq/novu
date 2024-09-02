@@ -129,7 +129,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
     }
   }, [variablesList, editor]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (editor) {
       const output = getInitContentWithVariableNodeView(value?.toString(), variablesSet);
 

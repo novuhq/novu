@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 // eslint-ignore max-len
 import {
   BadRequestException,
@@ -62,21 +63,21 @@ export class UpdateWorkflow {
     private invalidateCache: InvalidateCacheService,
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
   ) {}
 
   async execute(
-    command: UpdateWorkflowCommand
+    command: UpdateWorkflowCommand,
   ): Promise<NotificationTemplateEntity> {
     this.validatePayload(command);
 
     const existingTemplate = await this.notificationTemplateRepository.findById(
       command.id,
-      command.environmentId
+      command.environmentId,
     );
     if (!existingTemplate)
       throw new NotFoundException(
-        `Notification template with id ${command.id} not found`
+        `Notification template with id ${command.id} not found`,
       );
 
     let updatePayload: Partial<NotificationTemplateEntity> = {};
@@ -96,12 +97,12 @@ export class UpdateWorkflow {
       const isExistingIdentifier =
         await this.notificationTemplateRepository.findByTriggerIdentifier(
           command.environmentId,
-          command.identifier
+          command.identifier,
         );
 
       if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
         throw new BadRequestException(
-          `Notification template with identifier ${command.identifier} already exists`
+          `Notification template with identifier ${command.identifier} already exists`,
         );
       } else {
         updatePayload['triggers.0.identifier'] = command.identifier;
@@ -116,7 +117,7 @@ export class UpdateWorkflow {
 
       if (!notificationGroup)
         throw new NotFoundException(
-          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
+          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`,
         );
 
       updatePayload._notificationGroupId = command.notificationGroupId;
@@ -132,7 +133,7 @@ export class UpdateWorkflow {
           {
             _organization: command.organizationId,
             critical: command.critical,
-          }
+          },
         );
       }
     }
@@ -150,7 +151,7 @@ export class UpdateWorkflow {
               _organization: command.organizationId,
               critical: command.critical,
               ...command.preferenceSettings,
-            }
+            },
           );
         }
       }
@@ -161,7 +162,7 @@ export class UpdateWorkflow {
     const parentChangeId: string = await this.changeRepository.getChangeId(
       command.environmentId,
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-      existingTemplate._id
+      existingTemplate._id,
     );
 
     if (command.steps) {
@@ -170,13 +171,13 @@ export class UpdateWorkflow {
       updatePayload.steps = await this.updateMessageTemplates(
         command.steps,
         command,
-        parentChangeId
+        parentChangeId,
       );
 
       await this.deleteRemovedSteps(
         existingTemplate.steps,
         command,
-        parentChangeId
+        parentChangeId,
       );
     }
 
@@ -221,22 +222,22 @@ export class UpdateWorkflow {
       },
       {
         $set: updatePayload,
-      }
+      },
     );
 
     const notificationTemplateWithStepTemplate =
       await this.notificationTemplateRepository.findById(
         command.id,
-        command.environmentId
+        command.environmentId,
       );
     if (!notificationTemplateWithStepTemplate) {
       throw new NotFoundException(
-        `Notification template ${command.id} is not found`
+        `Notification template ${command.id} is not found`,
       );
     }
 
     const notificationTemplate = this.cleanNotificationTemplate(
-      notificationTemplateWithStepTemplate
+      notificationTemplateWithStepTemplate,
     );
 
     if (!isBridgeWorkflow(command.type)) {
@@ -248,7 +249,7 @@ export class UpdateWorkflow {
           type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
           item: notificationTemplate,
           changeId: parentChangeId,
-        })
+        }),
       );
     }
 
@@ -260,7 +261,7 @@ export class UpdateWorkflow {
         steps: command.steps?.length,
         channels: command.steps?.map((i) => i.template?.type),
         critical: command.critical,
-      }
+      },
     );
 
     try {
@@ -273,10 +274,10 @@ export class UpdateWorkflow {
         }
         const service = this.moduleRef.get(
           require('@novu/ee-shared-services')?.TranslationsService,
-          { strict: false }
+          { strict: false },
         );
         const locales = await service.createTranslationAnalytics(
-          notificationTemplateWithStepTemplate
+          notificationTemplateWithStepTemplate,
         );
 
         this.analyticsService.track(
@@ -287,14 +288,14 @@ export class UpdateWorkflow {
             _environment: command.environmentId,
             workflowId: command.id,
             locales,
-          }
+          },
         );
       }
     } catch (e) {
       Logger.error(
         e,
         `Unexpected error while importing enterprise modules`,
-        'TranslationsService'
+        'TranslationsService',
       );
     }
 
@@ -309,7 +310,7 @@ export class UpdateWorkflow {
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
         throw new ApiException(
-          `Variant filters are required, variant name ${variant.name} id ${variant._id}`
+          `Variant filters are required, variant name ${variant.name} id ${variant._id}`,
         );
       }
     }
@@ -318,7 +319,7 @@ export class UpdateWorkflow {
   private async updateMessageTemplates(
     steps: NotificationStep[],
     command: UpdateWorkflowCommand,
-    parentChangeId: string
+    parentChangeId: string,
   ) {
     let parentStepId: string | null = null;
     const templateMessages: NotificationStepEntity[] = [];
@@ -328,14 +329,14 @@ export class UpdateWorkflow {
 
       if (!message.template) {
         throw new ApiException(
-          `Something un-expected happened, template couldn't be found`
+          `Something un-expected happened, template couldn't be found`,
         );
       }
 
       const updatedVariants = await this.updateVariants(
         message.variants,
         command,
-        parentChangeId!
+        parentChangeId!,
       );
 
       const messageTemplatePayload:
@@ -380,13 +381,12 @@ export class UpdateWorkflow {
       const updatedTemplate = messageTemplateExist
         ? await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               templateId: message._templateId!,
               ...messageTemplatePayload,
-            })
+            }),
           )
         : await this.createMessageTemplate.execute(
-            CreateMessageTemplateCommand.create(messageTemplatePayload)
+            CreateMessageTemplateCommand.create(messageTemplatePayload),
           );
 
       messageTemplateId = updatedTemplate._id;
@@ -395,7 +395,7 @@ export class UpdateWorkflow {
         messageTemplateId,
         parentStepId,
         message,
-        updatedVariants
+        updatedVariants,
       );
 
       templateMessages.push(partialNotificationStep as NotificationStepEntity);
@@ -408,7 +408,7 @@ export class UpdateWorkflow {
 
   private updateTriggers(
     updatePayload: Partial<NotificationTemplateEntity>,
-    steps: NotificationStep[]
+    steps: NotificationStep[],
   ): Partial<NotificationTemplateEntity> {
     const updatePayloadResult: Partial<NotificationTemplateEntity> = {
       ...updatePayload,
@@ -436,7 +436,7 @@ export class UpdateWorkflow {
             };
           }),
         };
-      }
+      },
     );
 
     const subscribersVariables =
@@ -456,7 +456,7 @@ export class UpdateWorkflow {
     stepId: string | undefined,
     parentStepId: string | null,
     message: NotificationStep,
-    updatedVariants: StepVariantEntity[]
+    updatedVariants: StepVariantEntity[],
   ) {
     const partialNotificationStep: Partial<NotificationStepEntity> = {
       _id: stepId,
@@ -504,19 +504,18 @@ export class UpdateWorkflow {
   }
 
   private cleanNotificationTemplate(
-    notificationTemplateWithStepTemplate: NotificationTemplateEntity
+    notificationTemplateWithStepTemplate: NotificationTemplateEntity,
   ) {
-    const notificationTemplate = Object.assign(
-      {},
-      notificationTemplateWithStepTemplate
-    );
+    const notificationTemplate = {
+      ...notificationTemplateWithStepTemplate,
+    };
 
     notificationTemplate.steps = notificationTemplateWithStepTemplate.steps.map(
       (step) => {
         const { template, ...rest } = step;
 
         return rest;
-      }
+      },
     );
 
     return notificationTemplate;
@@ -524,7 +523,7 @@ export class UpdateWorkflow {
 
   private getRemovedSteps(
     existingSteps: NotificationStepEntity[],
-    newSteps: NotificationStep[]
+    newSteps: NotificationStep[],
   ) {
     const existingStepsIds = (existingSteps || []).flatMap((step) => [
       step._templateId,
@@ -537,7 +536,7 @@ export class UpdateWorkflow {
     ]);
 
     const removedStepsIds = existingStepsIds.filter(
-      (id) => !newStepsIds.includes(id)
+      (id) => !newStepsIds.includes(id),
     );
 
     return removedStepsIds;
@@ -546,7 +545,7 @@ export class UpdateWorkflow {
   private async updateVariants(
     variants: NotificationStepVariantCommand[] | undefined,
     command: UpdateWorkflowCommand,
-    parentChangeId: string
+    parentChangeId: string,
   ): Promise<StepVariantEntity[]> {
     if (!variants?.length) return [];
 
@@ -556,7 +555,7 @@ export class UpdateWorkflow {
     for (const variant of variants) {
       if (!variant.template)
         throw new ApiException(
-          `Unexpected error: variants message template is missing`
+          `Unexpected error: variants message template is missing`,
         );
 
       const messageTemplatePayload:
@@ -586,18 +585,17 @@ export class UpdateWorkflow {
       const updatedVariant = messageTemplateExist
         ? await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               templateId: variant._templateId!,
               ...messageTemplatePayload,
-            })
+            }),
           )
         : await this.createMessageTemplate.execute(
-            CreateMessageTemplateCommand.create(messageTemplatePayload)
+            CreateMessageTemplateCommand.create(messageTemplatePayload),
           );
 
       if (!updatedVariant._id)
         throw new ApiException(
-          `Unexpected error: variants message template was not created`
+          `Unexpected error: variants message template was not created`,
         );
 
       variantsList.push({
@@ -624,11 +622,11 @@ export class UpdateWorkflow {
   private async deleteRemovedSteps(
     existingSteps: NotificationStepEntity[] | StepVariantEntity[] | undefined,
     command: UpdateWorkflowCommand,
-    parentChangeId: string
+    parentChangeId: string,
   ) {
     const removedStepsIds = this.getRemovedSteps(
       existingSteps || [],
-      command.steps || []
+      command.steps || [],
     );
 
     for (const id of removedStepsIds) {
@@ -638,9 +636,9 @@ export class UpdateWorkflow {
           environmentId: command.environmentId,
           userId: command.userId,
           messageTemplateId: id,
-          parentChangeId: parentChangeId,
+          parentChangeId,
           workflowType: command.type,
-        })
+        }),
       );
     }
   }

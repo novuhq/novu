@@ -10,7 +10,7 @@ describe('Execution Log Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       executionLogQueueService = new ExecutionLogQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await executionLogQueueService.queue.drain();
     });
@@ -35,7 +35,7 @@ describe('Execution Log Queue service', () => {
           'DEFAULT_ATTEMPTS',
           'instance',
           'queue',
-        ])
+        ]),
       );
       expect(executionLogQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(executionLogQueueService.topic).toEqual('execution-logs');
@@ -56,7 +56,7 @@ describe('Execution Log Queue service', () => {
           jobsOpts: {
             removeOnComplete: true,
           },
-        })
+        }),
       );
       expect(executionLogQueueService.queue.opts.prefix).toEqual('bull');
     });
@@ -67,7 +67,7 @@ describe('Execution Log Queue service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       executionLogQueueService = new ExecutionLogQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await executionLogQueueService.queue.obliterate();
     });
@@ -79,7 +79,7 @@ describe('Execution Log Queue service', () => {
 
     it('should have prefix in cluster mode', async () => {
       expect(executionLogQueueService.queue.opts.prefix).toEqual(
-        '{execution-logs}'
+        '{execution-logs}',
       );
     });
   });

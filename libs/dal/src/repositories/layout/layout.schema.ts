@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { LayoutDBModel } from './layout.entity';
 import { schemaOptions } from '../schema-default.options';
+
+const mongooseDelete = require('mongoose-delete');
 
 const layoutSchema = new Schema<LayoutDBModel>(
   {

@@ -62,7 +62,7 @@ describe('Create Subscriber', function () {
         email: 'dima@asdasdas.com',
         firstName: 'ASDAS',
         locale,
-      })
+      }),
     );
 
     expect(result.locale).toEqual(locale);
@@ -81,7 +81,7 @@ describe('Create Subscriber', function () {
         email,
         firstName: 'First Name',
         locale: 'en',
-      })
+      }),
     );
 
     const result = await useCase.execute(
@@ -92,7 +92,7 @@ describe('Create Subscriber', function () {
         email,
         firstName: 'Second Name',
         locale: noLocale,
-      })
+      }),
     );
 
     expect(result.firstName).toEqual('Second Name');

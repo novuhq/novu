@@ -9,6 +9,7 @@ import {
 } from 'nestjs-pino';
 import { storage, Store } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
+
 export * from './LogDecorator';
 
 export function getErrorInterceptor(): NestInterceptor {
@@ -40,10 +41,9 @@ export function getLogLevel() {
   if (loggingLevelArr.indexOf(logLevel) === -1) {
     // eslint-disable-next-line no-console
     console.log(
-      logLevel +
-        'is not a valid log level of ' +
-        loggingLevelArr +
-        '. Reverting to info.',
+      `${logLevel}is not a valid log level of ${
+        loggingLevelArr
+      }. Reverting to info.`,
     );
 
     logLevel = 'info';
@@ -57,17 +57,17 @@ function getLoggingVariables(): ILoggingVariables {
   const env = process.env.NODE_ENV ?? 'local';
 
   // eslint-disable-next-line no-console
-  console.log('Environment: ' + env);
+  console.log(`Environment: ${env}`);
 
   const hostingPlatform = process.env.HOSTING_PLATFORM ?? 'Docker';
 
   // eslint-disable-next-line no-console
-  console.log('Platform: ' + hostingPlatform);
+  console.log(`Platform: ${hostingPlatform}`);
 
   const tenant = process.env.TENANT ?? 'OS';
 
   // eslint-disable-next-line no-console
-  console.log('Tenant: ' + tenant);
+  console.log(`Tenant: ${tenant}`);
 
   return {
     env,
@@ -106,7 +106,7 @@ export function createNestLoggingModuleOptions(
 
   // eslint-disable-next-line no-console
   console.log(
-    'Selected Log Transport ' + (!transport ? 'None' : 'pino-pretty'),
+    `Selected Log Transport ${!transport ? 'None' : 'pino-pretty'}`,
     loggingLevelSet,
   );
 
@@ -126,7 +126,7 @@ export function createNestLoggingModuleOptions(
         platform: values.hostingPlatform,
         tenant: values.tenant,
       },
-      transport: transport,
+      transport,
       autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
     },
   };

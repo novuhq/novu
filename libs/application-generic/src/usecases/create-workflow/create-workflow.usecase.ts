@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import {
   forwardRef,
   Inject,
@@ -166,7 +167,7 @@ export class CreateWorkflow {
     const trigger: INotificationTrigger = {
       type: TriggerTypeEnum.EVENT,
       identifier: `${triggerIdentifier}${
-        !templateCheckIdentifier ? '' : '-' + shortid.generate()
+        !templateCheckIdentifier ? '' : `-${shortid.generate()}`
       }`,
       variables: variables.map((i) => {
         return {
@@ -317,7 +318,7 @@ export class CreateWorkflow {
         ),
         await this.storeVariantSteps({
           variants: step.variants,
-          parentChangeId: parentChangeId,
+          parentChangeId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
@@ -382,9 +383,9 @@ export class CreateWorkflow {
 
       const variantTemplate = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
-          organizationId: organizationId,
-          environmentId: environmentId,
-          userId: userId,
+          organizationId,
+          environmentId,
+          userId,
           type: variant.template.type,
           name: variant.template.name,
           content: variant.template.content,
@@ -437,7 +438,7 @@ export class CreateWorkflow {
       name: command.name,
       tags: command.tags,
       description: command.description,
-      steps: steps,
+      steps,
       notificationGroupId: group._id,
       active: command.active ?? false,
       draft: command.draft ?? true,
@@ -455,7 +456,7 @@ export class CreateWorkflow {
     ) as NotificationStep[];
 
     return steps.map((step) => {
-      const template = step.template;
+      const { template } = step;
       if (template) {
         template.feedId = undefined;
       }
@@ -485,6 +486,7 @@ export class CreateWorkflow {
 
       if (!blueprintFeed) {
         step.template._feedId = undefined;
+        // eslint-disable-next-line no-param-reassign
         steps[i] = step;
         continue;
       }
@@ -517,6 +519,7 @@ export class CreateWorkflow {
       }
 
       step.template._feedId = feedItem._id;
+      // eslint-disable-next-line no-param-reassign
       steps[i] = step;
     }
 

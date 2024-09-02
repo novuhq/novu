@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';

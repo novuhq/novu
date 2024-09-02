@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { TracingService } from './tracing.service';
 import { OpenTelemetryModule } from 'nestjs-otel';
+import { TracingService } from './tracing.service';
 
 const OtelModule = OpenTelemetryModule.forRoot({
   metrics: {
@@ -8,7 +8,7 @@ const OtelModule = OpenTelemetryModule.forRoot({
     apiMetrics: {
       enable: true,
       ignoreRoutes: ['/favicon.ico', '/v1/health-check'],
-      //Records metrics for all URLs, even undefined ones
+      // Records metrics for all URLs, even undefined ones
       ignoreUndefinedRoutes: true,
     },
   },

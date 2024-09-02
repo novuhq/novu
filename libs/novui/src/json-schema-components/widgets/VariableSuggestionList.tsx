@@ -58,7 +58,7 @@ export const VariableSuggestionList = forwardRef<SuggestionListRef, SuggestionLi
       }
 
       // happy path -- valid variable reference
-            return command({ label: cleanedQuery, id: variableName });
+      return command({ label: cleanedQuery, id: variableName });
     };
 
     const options = items?.map((item) => (

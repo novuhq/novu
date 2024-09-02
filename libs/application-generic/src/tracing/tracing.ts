@@ -33,7 +33,7 @@ export function initializeOtelSdk(serviceName: string, version: string) {
       scheduledDelayMillis: 30000,
     }),
     contextManager: new AsyncLocalStorageContextManager(),
-    serviceName: serviceName,
+    serviceName,
     textMapPropagator: new CompositePropagator({
       propagators: [
         new JaegerPropagator(),

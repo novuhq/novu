@@ -1,16 +1,17 @@
-import { Span } from 'nestjs-otel';
-import { TraceService as setTraceService } from 'nestjs-otel';
-import { MetricService as setMetricService } from 'nestjs-otel';
-import { OtelInstanceCounter as setOtelInstanceCounter } from 'nestjs-otel';
-import { OtelUpDownCounter as setOtelUpDownCounter } from 'nestjs-otel';
-import { OtelHistogram as setOtelHistogram } from 'nestjs-otel';
-import { OtelObservableGauge as setOtelObservableGauge } from 'nestjs-otel';
-import { OtelObservableCounter as setOtelObservableCounter } from 'nestjs-otel';
-import { OtelObservableUpDownCounter as setOtelObservableUpDownCounter } from 'nestjs-otel';
-import { OtelCounter as setOtelCounter } from 'nestjs-otel';
+import {
+  Span,
+  TraceService as setTraceService,
+  MetricService as setMetricService,
+  OtelInstanceCounter as setOtelInstanceCounter,
+  OtelUpDownCounter as setOtelUpDownCounter,
+  OtelHistogram as setOtelHistogram,
+  OtelObservableGauge as setOtelObservableGauge,
+  OtelObservableCounter as setOtelObservableCounter,
+  OtelObservableUpDownCounter as setOtelObservableUpDownCounter,
+  OtelCounter as setOtelCounter,
+} from 'nestjs-otel';
 import { MetricOptions, SpanOptions } from '@opentelemetry/api';
-import { Injectable } from '@nestjs/common';
-import { PipeTransform, Type } from '@nestjs/common';
+import { Injectable, PipeTransform, Type } from '@nestjs/common';
 
 export type OtelDataOrPipe =
   | string

@@ -1,6 +1,7 @@
 import { ProjectionType } from 'mongoose';
 import { DigestTypeEnum, IDigestRegularMetadata, StepTypeEnum, DigestCreationResultEnum } from '@novu/shared';
 
+import { sub, isBefore } from 'date-fns';
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
@@ -10,7 +11,6 @@ import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
 import type { EnforceEnvOrOrgIds, IUpdateResult } from '../../types';
 import { DalException } from '../../shared';
-import { sub, isBefore } from 'date-fns';
 
 type JobEntityPopulated = JobEntity & {
   template: NotificationTemplateEntity;
@@ -34,6 +34,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     const stored: JobEntity[] = [];
     for (let index = 0; index < jobs.length; index += 1) {
       if (index > 0) {
+        // eslint-disable-next-line no-param-reassign
         jobs[index]._parentId = stored[index - 1]._id;
       }
 

@@ -48,6 +48,7 @@ export function CachedEntity<T_Output = any>({
       injectLock(target, 'lockService');
     }
 
+    // eslint-disable-next-line no-param-reassign
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled()) {
         return await originalMethod.apply(this, args);
@@ -71,7 +72,7 @@ export function CachedEntity<T_Output = any>({
         Logger.error(
           err,
           `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
 
@@ -86,7 +87,7 @@ export function CachedEntity<T_Output = any>({
           Logger.error(
             err,
             `Failed to acquire lock for key: ${cacheKey} in "method: ${methodName}"`,
-            LOG_CONTEXT
+            LOG_CONTEXT,
           );
           throw new Error(`Failed to acquire lock for key: ${cacheKey}`);
         }
@@ -114,7 +115,7 @@ export function CachedEntity<T_Output = any>({
         Logger.error(
           err,
           `An error has occurred when inserting key: ${cacheKey} in "method: ${methodName}`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } finally {
         if (unlock) {

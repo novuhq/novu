@@ -34,7 +34,7 @@ export function getDelay(numOfRetries, limit = 300): number {
 export function getDelayWithJitter(
   numOfRetries,
   limit = 300,
-  variance = 0.1
+  variance = 0.1,
 ): number {
   const baseDelay = getDelay(numOfRetries, limit);
 

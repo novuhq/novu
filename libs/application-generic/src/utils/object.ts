@@ -4,7 +4,7 @@ const LOG_CONTEXT = 'GetNestedValue';
 
 export function getNestedValue<ObjectType>(
   payload: ObjectType,
-  path?: string
+  path?: string,
 ): ObjectType | undefined {
   if (!path || !payload) {
     return undefined;
@@ -26,7 +26,7 @@ export function getNestedValue<ObjectType>(
     Logger.error(
       error,
       'Failure when parsing digest payload nested key',
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     return undefined;

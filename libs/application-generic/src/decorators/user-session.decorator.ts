@@ -18,7 +18,7 @@ export const UserSession = createParamDecorator((data, ctx) => {
 
   Logger.error(
     'Attempted to access user session without a user in the request. You probably forgot to add the AuthGuard',
-    'UserSession'
+    'UserSession',
   );
   throw new InternalServerErrorException();
 });

@@ -23,7 +23,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
     const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.ELASTICACHE
+      InMemoryProviderEnum.ELASTICACHE,
     );
     const config: IElasticacheClusterProviderConfig = getConfig();
     expect(config.host).toEqual(elasticacheUrl);
@@ -38,7 +38,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
     const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.MEMORY_DB
+      InMemoryProviderEnum.MEMORY_DB,
     );
     const config: IMemoryDbClusterProviderConfig = getConfig();
     expect(config.host).toEqual(memoryDbUrl);
@@ -53,7 +53,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
     const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.ELASTICACHE
+      InMemoryProviderEnum.ELASTICACHE,
     );
     const config: IRedisClusterProviderConfig = getConfig();
     expect(config.host).toEqual(redisClusterUrl);
@@ -68,7 +68,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
     const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.ELASTICACHE
+      InMemoryProviderEnum.ELASTICACHE,
     );
 
     const config: IRedisClusterProviderConfig = getConfig();
@@ -85,7 +85,7 @@ describe('Client and config for cluster', () => {
 
     try {
       const { getConfig } = getClientAndConfigForCluster(
-        InMemoryProviderEnum.ELASTICACHE
+        InMemoryProviderEnum.ELASTICACHE,
       );
 
       fail('should not reach here');
@@ -93,7 +93,7 @@ describe('Client and config for cluster', () => {
       expect(error).toBeInstanceOf(Error);
       const { message } = error as Error;
       expect(message).toEqual(
-        'Provider Elasticache is not properly configured in the environment variables'
+        'Provider Elasticache is not properly configured in the environment variables',
       );
     }
   });
@@ -106,7 +106,7 @@ describe('Client and config for cluster', () => {
 
     try {
       const { getConfig } = getClientAndConfigForCluster(
-        InMemoryProviderEnum.ELASTICACHE
+        InMemoryProviderEnum.ELASTICACHE,
       );
 
       fail('should not reach here');
@@ -114,7 +114,7 @@ describe('Client and config for cluster', () => {
       expect(error).toBeInstanceOf(Error);
       const { message } = error as Error;
       expect(message).toEqual(
-        'Provider Elasticache is not properly configured in the environment variables'
+        'Provider Elasticache is not properly configured in the environment variables',
       );
     }
   });

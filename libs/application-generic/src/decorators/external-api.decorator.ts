@@ -6,6 +6,6 @@ export const API_KEY_SWAGGER_SECURITY_NAME = 'api-key';
 export function ExternalApiAccessible() {
   return applyDecorators(
     SetMetadata('external_api_accessible', true),
-    ApiSecurity(API_KEY_SWAGGER_SECURITY_NAME)
+    ApiSecurity(API_KEY_SWAGGER_SECURITY_NAME),
   );
 }

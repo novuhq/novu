@@ -20,20 +20,18 @@ export class WorkflowOverrideRepository extends BaseRepository<
   }
 
   async getList(options: { skip: number; limit: number }, query: { environmentId: string }) {
-    {
-      const requestQuery: Partial<IWorkflowOverride> = {
-        _environmentId: query.environmentId,
-      };
+    const requestQuery: Partial<IWorkflowOverride> = {
+      _environmentId: query.environmentId,
+    };
 
-      const response = await this.MongooseModel.find(requestQuery)
-        .read('secondaryPreferred')
-        .skip(options.skip || 0)
-        .limit(options.limit || 10)
-        .sort('-createdAt');
+    const response = await this.MongooseModel.find(requestQuery)
+      .read('secondaryPreferred')
+      .skip(options.skip || 0)
+      .limit(options.limit || 10)
+      .sort('-createdAt');
 
-      return {
-        data: this.mapEntities(response),
-      };
-    }
+    return {
+      data: this.mapEntities(response),
+    };
   }
 }

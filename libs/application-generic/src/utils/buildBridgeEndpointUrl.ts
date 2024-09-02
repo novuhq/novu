@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
  */
 export const buildBridgeEndpointUrl = (
   apiKey: string,
-  baseAddress: string
+  baseAddress: string,
 ): string => {
   return `${buildBridgeSubdomain(apiKey)}.${baseAddress}`;
 };

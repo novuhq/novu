@@ -10,7 +10,7 @@ describe('Job metrics Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       activeJobsMetricQueueService = new ActiveJobsMetricQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await activeJobsMetricQueueService.queue.drain();
     });
@@ -35,7 +35,7 @@ describe('Job metrics Queue service', () => {
           'DEFAULT_ATTEMPTS',
           'instance',
           'queue',
-        ])
+        ]),
       );
       expect(activeJobsMetricQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(activeJobsMetricQueueService.topic).toEqual('metric-active-jobs');
@@ -56,7 +56,7 @@ describe('Job metrics Queue service', () => {
           jobsOpts: {
             removeOnComplete: true,
           },
-        })
+        }),
       );
       expect(activeJobsMetricQueueService.queue.opts.prefix).toEqual('bull');
     });
@@ -67,7 +67,7 @@ describe('Job metrics Queue service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       activeJobsMetricQueueService = new ActiveJobsMetricQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await activeJobsMetricQueueService.queue.obliterate();
     });
@@ -79,7 +79,7 @@ describe('Job metrics Queue service', () => {
 
     it('should have prefix in cluster mode', async () => {
       expect(activeJobsMetricQueueService.queue.opts.prefix).toEqual(
-        '{metric-active-jobs}'
+        '{metric-active-jobs}',
       );
     });
   });

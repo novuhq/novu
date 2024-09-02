@@ -34,5 +34,5 @@ export const sensitiveFields = cardFields.concat(
   phoneFields,
   addressFields,
   uuidFields,
-  httpFields
+  httpFields,
 );

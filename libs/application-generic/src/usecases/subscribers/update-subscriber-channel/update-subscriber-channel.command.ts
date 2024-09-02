@@ -10,9 +10,9 @@ import {
   IChannelCredentials,
   PushProviderIdEnum,
 } from '@novu/shared';
+import { SubscriberEntity } from '@novu/dal';
 import { EnvironmentCommand } from '../../../commands';
 import { OAuthHandlerEnum } from '../types';
-import { SubscriberEntity } from '@novu/dal';
 
 export class SubscriberChannel {
   providerId: ChatProviderIdEnum | PushProviderIdEnum;

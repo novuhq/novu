@@ -1,11 +1,11 @@
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 import { MemberEntity, MemberDBModel } from './member.entity';
 import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
 import type { EnforceOrgId } from '../../types/enforce';
 import { IMemberRepository } from './member-repository.interface';
 import { IAddMemberData } from './member.repository';
-import { FilterQuery } from 'mongoose';
 
 type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
 

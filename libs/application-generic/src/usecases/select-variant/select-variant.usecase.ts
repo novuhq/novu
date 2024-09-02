@@ -4,8 +4,10 @@ import { MessageTemplateRepository } from '@novu/dal';
 import { ICondition, IMessageTemplate } from '@novu/shared';
 
 import { SelectVariantCommand } from './select-variant.command';
-import { ConditionsFilter } from '../conditions-filter';
-import { ConditionsFilterCommand } from '../conditions-filter';
+import {
+  ConditionsFilter,
+  ConditionsFilterCommand,
+} from '../conditions-filter';
 import { PlatformException } from '../../utils/exceptions';
 import { IFilterVariables } from '../../utils/filter-processing-details';
 import {
@@ -20,7 +22,7 @@ export class SelectVariant {
   constructor(
     private conditionsFilter: ConditionsFilter,
     private messageTemplateRepository: MessageTemplateRepository,
-    private normalizeVariablesUsecase: NormalizeVariables
+    private normalizeVariablesUsecase: NormalizeVariables,
   ) {}
 
   async execute(command: SelectVariantCommand): Promise<{
@@ -49,7 +51,7 @@ export class SelectVariant {
           step: command.step,
           job: command.job,
           variables: command.filterData,
-        })
+        }),
       );
 
       const { passed, conditions } = await this.conditionsFilter.filter(
@@ -61,7 +63,7 @@ export class SelectVariant {
           step: command.step,
           job: command.job,
           variables,
-        })
+        }),
       );
 
       if (passed) {
@@ -82,7 +84,7 @@ export class SelectVariant {
               conditions,
             },
             errorMessage,
-            LOG_CONTEXT
+            LOG_CONTEXT,
           );
 
           throw new PlatformException(errorMessage);

@@ -111,6 +111,7 @@ export class MemberRepository implements IMemberRepository {
     return this.memberRepository.find(query, select, options);
   }
 
+  // eslint-disable-next-line require-yield
   async *findBatch(
     query: any,
     select?: string | undefined,

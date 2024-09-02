@@ -11,7 +11,7 @@ describe('Inbound Parse Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       inboundParseQueueService = new InboundParseQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await inboundParseQueueService.queue.obliterate();
     });
@@ -32,7 +32,7 @@ describe('Inbound Parse Queue service', () => {
           'DEFAULT_ATTEMPTS',
           'instance',
           'queue',
-        ])
+        ]),
       );
       expect(inboundParseQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(inboundParseQueueService.topic).toEqual('inbound-parse-mail');
@@ -53,7 +53,7 @@ describe('Inbound Parse Queue service', () => {
           jobsOpts: {
             removeOnComplete: true,
           },
-        })
+        }),
       );
       expect(inboundParseQueueService.queue.opts.prefix).toEqual('bull');
     });
@@ -87,7 +87,7 @@ describe('Inbound Parse Queue service', () => {
           name: jobId,
           data: jobData,
           attemptsMade: 0,
-        })
+        }),
       );
     });
 
@@ -127,7 +127,7 @@ describe('Inbound Parse Queue service', () => {
             _userId,
           },
           attemptsMade: 0,
-        })
+        }),
       );
     });
   });
@@ -137,7 +137,7 @@ describe('Inbound Parse Queue service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       inboundParseQueueService = new InboundParseQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await inboundParseQueueService.queue.obliterate();
     });
@@ -149,7 +149,7 @@ describe('Inbound Parse Queue service', () => {
 
     it('should have prefix in cluster mode', async () => {
       expect(inboundParseQueueService.queue.opts.prefix).toEqual(
-        '{inbound-parse-mail}'
+        '{inbound-parse-mail}',
       );
     });
   });

@@ -11,7 +11,7 @@ export function encrypt(text) {
 
   encrypted = Buffer.concat([encrypted, cipher.final()]);
 
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
+  return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
 }
 
 export function decrypt(text) {
@@ -21,7 +21,7 @@ export function decrypt(text) {
   const decipher = createDecipheriv(
     CIPHER_ALGO,
     Buffer.from(ENCRYPTION_KEY),
-    iv
+    iv,
   );
   let decrypted = decipher.update(encryptedText);
 

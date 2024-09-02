@@ -1,10 +1,10 @@
+import { ICredentialsDto } from '@novu/shared';
 import {
   decryptCredentials,
   decryptSecret,
   encryptCredentials,
   encryptSecret,
 } from './encrypt-provider';
-import { ICredentialsDto } from '@novu/shared';
 
 describe('Encrypt provider secrets', function () {
   const novuSubMask = 'nvsk.';

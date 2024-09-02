@@ -6,16 +6,16 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 
+import { IPreferenceChannels } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
-import { IPreferenceChannels } from '@novu/shared';
 
 @Injectable()
 export class GetSubscriberGlobalPreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
   ) {}
 
   async execute(command: GetSubscriberGlobalPreferenceCommand) {
@@ -39,7 +39,7 @@ export class GetSubscriberGlobalPreference {
 
     const subscriberChannelPreference = subscriberPreference?.channels;
     const channels = this.updatePreferenceStateWithDefault(
-      subscriberChannelPreference ?? {}
+      subscriberChannelPreference ?? {},
     );
 
     return {
@@ -66,7 +66,7 @@ export class GetSubscriberGlobalPreference {
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(
       _environmentId,
-      subscriberId
+      subscriberId,
     );
   }
   // adds default state for missing channels

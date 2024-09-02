@@ -107,7 +107,7 @@ export const buildOrganizationScopedKey = ({
  * An example of a service config is the maximum API rate limit.
  */
 export const buildServiceConfigKey = (
-  identifier: ServiceConfigIdentifierEnum
+  identifier: ServiceConfigIdentifierEnum,
 ): string =>
   buildUnscopedKey({
     type: CacheKeyTypeEnum.ENTITY,
