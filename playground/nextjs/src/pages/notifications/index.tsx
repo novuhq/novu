@@ -42,7 +42,12 @@ export default function Home() {
           />
         </Inbox>
       </div>
-      <button onClick={() => setCount((prev) => prev + 1)}>Increment {count}</button>
+      <button
+        className="max-w-40 self-center bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded"
+        onClick={() => setCount((prev) => prev + 1)}
+      >
+        Increment {count}
+      </button>
     </>
   );
 }
