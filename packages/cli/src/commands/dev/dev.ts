@@ -108,7 +108,7 @@ async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
 
 async function createTunnel(localOrigin: string, endpointRoute: string): Promise<string> {
   const originUrl = new URL(localOrigin);
-  const configTunnelUrl = config.getValue(`tunnelUrl-${parseInt(originUrl.port)}`);
+  const configTunnelUrl = config.getValue(`tunnelUrl-${parseInt(originUrl.port, 10)}`);
   const storeUrl = configTunnelUrl ? new URL(configTunnelUrl) : null;
 
   if (storeUrl) {
@@ -137,7 +137,7 @@ async function fetchNewTunnel(originUrl: URL): Promise<URL> {
   });
 
   const { url } = (await response.json()) as LocalTunnelResponse;
-  config.setValue(`tunnelUrl-${parseInt(originUrl.port)}`, url);
+  config.setValue(`tunnelUrl-${parseInt(originUrl.port, 10)}`, url);
 
   return new URL(url);
 }

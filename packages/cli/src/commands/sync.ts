@@ -51,6 +51,6 @@ export function buildSignature(secretKey: string) {
 
 export function buildHmac(secretKey: string, timestamp: number) {
   return createHmac('sha256', secretKey)
-    .update(timestamp + '.' + JSON.stringify({}))
+    .update(`${timestamp}.${JSON.stringify({})}`)
     .digest('hex');
 }
