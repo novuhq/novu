@@ -14,7 +14,7 @@
     "docker:build": "docker buildx build -f ./Dockerfile --load -t novu-widget ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-widget ./../.. --load",
     "prebuild": "rimraf build",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
     "lint": "eslint src",
     "cypress:run": "cypress run",

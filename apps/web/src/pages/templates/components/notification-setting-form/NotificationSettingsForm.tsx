@@ -43,7 +43,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
     },
   });
 
-  function addGroupItem(newGroup: string): undefined {
+  function addGroupItem(newGroup: string) {
     if (newGroup) {
       createNotificationGroup({
         name: newGroup,
@@ -95,6 +95,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
                       getCreateLabel={(newGroup) => (
                         <div data-test-id="submit-category-btn">+ Create group {newGroup}</div>
                       )}
+                      // @ts-expect-error - addGroupItem is not typed correctly
                       onCreate={addGroupItem}
                       placeholder="Attach workflow to group"
                       data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}

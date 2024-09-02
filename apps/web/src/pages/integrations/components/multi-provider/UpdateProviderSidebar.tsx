@@ -147,13 +147,11 @@ export function UpdateProviderSidebar({
     reset({
       name: foundProvider.name ?? foundProvider.displayName,
       identifier: foundProvider.identifier,
-      credentials: foundProvider.credentials.reduce(
-        (prev, credential) => ({
-          ...prev,
-          [credential.key]: credential.value,
-        }),
-        {} as ICredentialsDto
-      ),
+      credentials: foundProvider.credentials.reduce((prev, credential) => {
+        prev[credential.key] = credential.value;
+
+        return prev;
+      }, {} as any),
       conditions: foundProvider.conditions,
       active: foundProvider.active,
     });
