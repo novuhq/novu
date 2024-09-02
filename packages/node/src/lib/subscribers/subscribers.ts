@@ -80,9 +80,9 @@ export class Subscribers extends WithHttp implements ISubscribers {
     });
   }
 
-  async updateOnlineStatus(subscriberId: string, online: boolean) {
+  async updateOnlineStatus(subscriberId: string, isOnline: boolean) {
     return await this.http.patch(`/subscribers/${subscriberId}/online-status`, {
-      online,
+      isOnline,
     });
   }
 
