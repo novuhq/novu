@@ -5,16 +5,34 @@ import {
   PreferencesRepository,
 } from '@novu/dal';
 import { WorkflowOptionsPreferences } from '@novu/framework';
+import { FeatureFlagsKeysEnum, IPreferenceChannels } from '@novu/shared';
 import { deepMerge } from '../../utils';
+import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { GetPreferencesCommand } from './get-preferences.command';
 
 @Injectable()
 export class GetPreferences {
-  constructor(private preferencesRepository: PreferencesRepository) {}
+  constructor(
+    private preferencesRepository: PreferencesRepository,
+    private getFeatureFlag: GetFeatureFlag
+  ) {}
 
   async execute(
     command: GetPreferencesCommand
   ): Promise<WorkflowOptionsPreferences> {
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        userId: 'system',
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
+      })
+    );
+
+    if (!isEnabled) {
+      throw new NotFoundException();
+    }
+
     const items: PreferencesEntity[] = [];
 
     if (command.templateId) {
@@ -73,5 +91,35 @@ export class GetPreferences {
       .map((item) => item.preferences);
 
     return deepMerge(preferences);
+  }
+
+  public async getPreferenceChannels(command: {
+    environmentId: string;
+    organizationId: string;
+    subscriberId: string;
+    templateId?: string;
+  }): Promise<IPreferenceChannels | undefined> {
+    try {
+      const result = await this.execute(
+        GetPreferencesCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          templateId: command.templateId,
+        })
+      );
+
+      return {
+        in_app:
+          result.channels.in_app.defaultValue || result.workflow.defaultValue,
+        sms: result.channels.sms.defaultValue || result.workflow.defaultValue,
+        email:
+          result.channels.email.defaultValue || result.workflow.defaultValue,
+        push: result.channels.push.defaultValue || result.workflow.defaultValue,
+        chat: result.channels.chat.defaultValue || result.workflow.defaultValue,
+      };
+    } catch (e) {
+      return undefined;
+    }
   }
 }

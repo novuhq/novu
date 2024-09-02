@@ -10,12 +10,14 @@ import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-pr
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { IPreferenceChannels } from '@novu/shared';
+import { GetPreferences } from '../get-preferences';
 
 @Injectable()
 export class GetSubscriberGlobalPreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private getPreferences: GetPreferences
   ) {}
 
   async execute(command: GetSubscriberGlobalPreferenceCommand) {
@@ -37,7 +39,12 @@ export class GetSubscriberGlobalPreference {
         level: PreferenceLevelEnum.GLOBAL,
       });
 
-    const subscriberChannelPreference = subscriberPreference?.channels;
+    const subscriberChannelPreference =
+      (await this.getPreferences.getPreferenceChannels({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+      })) || subscriberPreference?.channels;
     const channels = this.updatePreferenceStateWithDefault(
       subscriberChannelPreference ?? {}
     );

@@ -5,6 +5,8 @@ import {
   GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  UpsertPreferences,
+  UpsertPreferencesCommand,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -14,6 +16,8 @@ import {
   SubscriberEntity,
   SubscriberPreferenceRepository,
   SubscriberRepository,
+  SubscriberPreferenceEntity,
+  PreferencesActorEnum,
 } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -28,7 +32,8 @@ export class UpdatePreferences {
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
-    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private upsertPreferences: UpsertPreferences
   ) {}
 
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
@@ -170,5 +175,45 @@ export class UpdatePreferences {
       level: command.level,
       ...(command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId && { _templateId: command.workflowId }),
     };
+  }
+
+  private async storePreferences(item: SubscriberPreferenceEntity) {
+    return await this.upsertPreferences.execute(
+      UpsertPreferencesCommand.create({
+        preferences: {
+          workflow: {
+            defaultValue: item.enabled || true,
+            readOnly: false,
+          },
+          channels: {
+            in_app: {
+              defaultValue: item.channels.in_app || true,
+              readOnly: false,
+            },
+            sms: {
+              defaultValue: item.channels.sms || true,
+              readOnly: false,
+            },
+            email: {
+              defaultValue: item.channels.email || true,
+              readOnly: false,
+            },
+            push: {
+              defaultValue: item.channels.push || true,
+              readOnly: false,
+            },
+            chat: {
+              defaultValue: item.channels.chat || true,
+              readOnly: false,
+            },
+          },
+        },
+        actor: PreferencesActorEnum.SUBSCRIBER,
+        environmentId: item._environmentId,
+        organizationId: item._organizationId,
+        subscriberId: item._subscriberId,
+        templateId: item._templateId,
+      })
+    );
   }
 }
