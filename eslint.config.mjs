@@ -69,6 +69,8 @@ export default tsEslint.config(
       '**/check-ee.mjs',
       '**/libs/embed/src/shared/**',
       '**/*.stories.*',
+      '**/notifications-cache.test.ts',
+      '**/novu.test.ts',
     ],
   },
 
