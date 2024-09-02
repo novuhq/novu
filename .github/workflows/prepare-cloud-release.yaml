@@ -64,17 +64,17 @@ jobs:
       - name: Send commit log to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
-        if: ${{ success() && steps.create-pr.outputs.commit_log != '' }}
+        if: ${{ success() && steps.commit-log.outputs.commit_log != '' }}
         with:
           payload: |
             {
-              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.create-pr.outputs.commit_log}}```",
+              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.commit-log.outputs.commit_log}}```",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.create-pr.outputs.commit_log}}```"
+                    "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.commit-log.outputs.commit_log}}```"
                   }
                 }
               ]
