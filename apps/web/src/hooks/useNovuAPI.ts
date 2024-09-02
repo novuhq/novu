@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { get_session_recording_properties } from 'mixpanel-browser';
+// eslint-disable-next-line import/no-namespace
+import * as mixpanel from 'mixpanel-browser';
 import { buildApiHttpClient } from '../api/api.client';
 
 import { useStudioState } from '../studio/StudioStateProvider';
@@ -53,7 +54,7 @@ export const useTelemetry = () => {
       const mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
-        const sessionReplayProperties = get_session_recording_properties();
+        const sessionReplayProperties = mixpanel.get_session_recording_properties();
 
         // eslint-disable-next-line no-param-reassign
         data = {
