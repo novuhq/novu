@@ -5,6 +5,7 @@ import {
   ThrottlerGuard,
   ThrottlerModuleOptions,
   ThrottlerOptions,
+  ThrottlerRequest,
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
@@ -87,12 +88,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
-  protected async handleRequest(
-    context: ExecutionContext,
-    _limit: number,
-    _ttl: number,
-    throttler: ThrottlerOptions
-  ): Promise<boolean> {
+  protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const ignoreUserAgents = throttler.ignoreUserAgents ?? this.commonOptions.ignoreUserAgents;
     // Return early if the current user agent should be ignored.
