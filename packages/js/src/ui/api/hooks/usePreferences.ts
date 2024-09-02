@@ -1,4 +1,6 @@
-import { createEffect, createResource } from 'solid-js';
+import { createEffect, createResource, onCleanup, onMount } from 'solid-js';
+import { reconcile } from 'solid-js/store';
+import { Preference } from '../../../preferences/preference';
 import { FetchPreferencesArgs } from '../../../preferences/types';
 import { useNovu } from '../../context';
 import { createDelayedLoading } from '../../helpers/createDelayedLoading';
@@ -16,6 +18,20 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
       console.error('Error fetching preferences:', error);
       throw error;
     }
+  });
+
+  onMount(() => {
+    const listener = ({ data }: { data: Preference[] }) => {
+      if (!data) {
+        return;
+      }
+
+      mutate(reconcile(data));
+    };
+
+    novu.on('preferences.list.updated', listener);
+
+    onCleanup(() => novu.off('preferences.list.updated', listener));
   });
 
   createEffect(() => {

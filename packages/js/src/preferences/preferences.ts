@@ -3,19 +3,37 @@ import { updatePreference } from './helpers';
 import { Preference } from './preference';
 import type { UpdatePreferencesArgs } from './types';
 import { Result } from '../types';
+import { PreferencesCache } from '../cache/preferences-cache';
 
 export class Preferences extends BaseModule {
+  #useCache: boolean;
+
+  readonly cache: PreferencesCache;
+
+  constructor({ useCache }: { useCache: boolean }) {
+    super();
+    this.cache = new PreferencesCache();
+    this.#useCache = useCache;
+  }
+
   async list(): Result<Preference[]> {
     return this.callWithSession(async () => {
       try {
-        this._emitter.emit('preferences.list.pending');
+        let data = this.#useCache ? this.cache.getAll() : undefined;
+        this._emitter.emit('preferences.list.pending', { args: undefined, data });
 
-        const response = await this._inboxService.fetchPreferences();
-        const modifiedResponse: Preference[] = response.map((el) => new Preference(el));
+        if (!data) {
+          const response = await this._inboxService.fetchPreferences();
+          data = response.map((el) => new Preference(el));
 
-        this._emitter.emit('preferences.list.resolved', { args: undefined, data: modifiedResponse });
+          if (this.#useCache) {
+            this.cache.set(data);
+          }
+        }
 
-        return { data: modifiedResponse };
+        this._emitter.emit('preferences.list.resolved', { args: undefined, data });
+
+        return { data };
       } catch (error) {
         this._emitter.emit('preferences.list.resolved', { args: undefined, error });
         throw error;

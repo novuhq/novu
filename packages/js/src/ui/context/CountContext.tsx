@@ -1,5 +1,5 @@
 import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
-import { NotificationFilter } from '../../types';
+import { NotificationFilter, Notification } from '../../types';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
 import { useInboxContext } from './InboxContext';
@@ -16,7 +16,7 @@ const CountContext = createContext<CountContextValue>(undefined);
 
 export const CountProvider = (props: ParentProps) => {
   const novu = useNovu();
-  const { tabs } = useInboxContext();
+  const { tabs, filter, limit } = useInboxContext();
   const [totalUnreadCount, setTotalUnreadCount] = createSignal(0);
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
@@ -64,37 +64,52 @@ export const CountProvider = (props: ParentProps) => {
     },
   });
 
+  const updateNewNotificationCountsOrCache = (notification: Notification, tags: string[]) => {
+    const notificationsCache = novu.notifications.cache;
+    const limitValue = limit();
+    const tabFilter = { ...filter(), tags, offset: 0, limit: limitValue };
+    const cachedData = notificationsCache.getAll(tabFilter) || { hasMore: false, filter: tabFilter, notifications: [] };
+    const hasLessThenTenItems = (cachedData?.notifications.length || 0) < limitValue;
+    if (hasLessThenTenItems) {
+      notificationsCache.update(tabFilter, {
+        ...cachedData,
+        notifications: [notification, ...cachedData.notifications],
+      });
+
+      return;
+    }
+
+    setNewNotificationCounts((oldMap) => {
+      const tagsKey = createKey(tags);
+      const newMap = new Map(oldMap);
+      newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
+
+      return newMap;
+    });
+  };
+
   useWebSocketEvent({
     event: 'notifications.notification_received',
-    eventHandler: async (data) => {
-      const notification = data.result;
-      const allTabs = tabs();
+    eventHandler: async ({ result: notification }) => {
+      if (filter().archived) {
+        return;
+      }
 
+      const allTabs = tabs();
       if (allTabs.length > 0) {
         for (let i = 0; i < allTabs.length; i += 1) {
           const tab = allTabs[i];
           const tags = tab.value;
           const allNotifications = tags.length === 0;
-          const includeTags = notification.tags?.every((tag) => tags.includes(tag));
-          if (!allNotifications && !includeTags) {
+          const includesAtLeastOneTag = tags.some((tag) => notification.tags?.includes(tag));
+          if (!allNotifications && !includesAtLeastOneTag) {
             continue;
           }
-          setNewNotificationCounts((oldMap) => {
-            const tagsKey = createKey(tags);
-            const newMap = new Map(oldMap);
-            newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
 
-            return newMap;
-          });
+          updateNewNotificationCountsOrCache(notification, tags);
         }
       } else {
-        setNewNotificationCounts((oldMap) => {
-          const tagsKey = createKey([]);
-          const newMap = new Map(oldMap);
-          newMap.set(tagsKey, (oldMap.get(tagsKey) || 0) + 1);
-
-          return newMap;
-        });
+        updateNewNotificationCountsOrCache(notification, []);
       }
     },
   });

@@ -67,7 +67,6 @@ import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/playground/onboarding/Onboarding';
 import { PlaygroundPage } from './pages/playground/onboarding/PlaygroundPage';
-import { BillingRoutes } from './pages/BillingPages';
 import { StudioStepEditorPage } from './studio/pages/StudioStepEditorPage';
 
 const AuthRoutes = () => {
@@ -152,9 +151,7 @@ export const AppRoutes = () => {
             <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
             <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.SETTINGS} replace />} />
           </Route>
-        ) : (
-          <Route path="/billing" element={<BillingRoutes />} />
-        )}
+        ) : null}
         <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
           <Route path="create" element={<SelectProviderPage />} />
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
