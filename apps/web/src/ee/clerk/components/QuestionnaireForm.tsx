@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
@@ -35,16 +35,9 @@ export function QuestionnaireForm() {
   const navigate = useNavigate();
   const { reloadOrganization } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
-  const { isFromVercel } = useVercelParams();
   const segment = useSegment();
   const location = useLocation();
-  const { initializeWebContainer } = useContainer();
-
-  useEffectOnce(() => {
-    if (isSupported) {
-      initializeWebContainer();
-    }
-  }, isPlaygroundOnboardingEnabled);
+  const [_, setParams] = useSearchParams();
 
   const { mutateAsync: updateOrganizationMutation } = useMutation<{ _id: string }, IResponseError, any>(
     (data: UpdateExternalOrganizationDto) => updateClerkOrgMetadata(data)
@@ -86,23 +79,44 @@ export function QuestionnaireForm() {
       captureException(e);
     }
 
-    if (isFromVercel) {
-      startVercelSetup();
+    const vercelRedirectData = localStorage.getItem('vercel_redirect_data');
 
-      return;
+    if (vercelRedirectData) {
+      const { params, date } = JSON.parse(vercelRedirectData);
+      const last2Days = new Date(date).getTime() + 2 * 24 * 60 * 60 * 1000;
+
+      if (new Date(date).getTime() < last2Days) {
+        const searchParams = new URLSearchParams(window.location.search);
+        const currentParams = new URLSearchParams(params);
+        currentParams.forEach((value, key) => {
+          searchParams.set(key, value);
+        });
+        window.history.replaceState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
+
+        setParams(searchParams);
+
+        await new Promise<void>((resolve) => {
+          setTimeout(async () => {
+            try {
+              await startVercelSetup();
+
+              return;
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.error(e);
+            } finally {
+              localStorage.removeItem('vercel_redirect_data');
+              resolve();
+            }
+          }, 1000);
+        });
+      } else {
+        localStorage.removeItem('vercel_redirect_data');
+      }
     }
 
     if (isV2Enabled) {
-      if (isJobTitleIsTech(data.jobTitle)) {
-        if (isPlaygroundOnboardingEnabled && isSupported) {
-          navigate(ROUTES.DASHBOARD_PLAYGROUND);
-        } else {
-          trackRedirectionToOnboarding();
-          navigate(ROUTES.DASHBOARD_ONBOARDING);
-        }
-      } else {
-        navigate(ROUTES.WORKFLOWS);
-      }
+      navigate(ROUTES.GET_STARTED);
 
       return;
     }

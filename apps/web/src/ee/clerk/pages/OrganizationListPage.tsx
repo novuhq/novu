@@ -1,21 +1,21 @@
 import { OrganizationList } from '@clerk/clerk-react';
+import { PageMeta } from '@novu/design-system';
 import { useEffect } from 'react';
 import AuthLayout from '../../../components/layout/components/AuthLayout';
 import { ROUTES } from '../../../constants/routes';
 import { useRedirectURL } from '../../../hooks/useRedirectURL';
-import { navigateToAuthApplication } from '../../../utils/playground-navigation';
 
 export default function OrganizationListPage() {
   const { setRedirectURL } = useRedirectURL();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setRedirectURL(), []);
+  useEffect(() => {
+    setRedirectURL();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <AuthLayout
-      title="Select or create organization"
-      description="Please select or create an organization to continue."
-    >
+    <AuthLayout>
+      <PageMeta title="Select or create organization" />
       <OrganizationList
         appearance={{
           elements: {
@@ -27,11 +27,7 @@ export default function OrganizationListPage() {
         hidePersonal
         skipInvitationScreen
         afterSelectOrganizationUrl={ROUTES.GET_STARTED}
-        afterCreateOrganizationUrl={() => {
-          navigateToAuthApplication();
-
-          return '';
-        }}
+        afterCreateOrganizationUrl={ROUTES.AUTH_APPLICATION}
       />
     </AuthLayout>
   );

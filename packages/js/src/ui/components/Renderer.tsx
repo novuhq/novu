@@ -10,16 +10,20 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Tab, Appearance, Localization } from '../types';
-import { Bell, Root, Preferences } from './elements';
-import { Inbox } from './Inbox';
-import { NotificationList as Notifications } from './Notification';
+import type { Appearance, Localization, Tab } from '../types';
+import { Bell, Root } from './elements';
+import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
 export const novuComponents = {
   Inbox,
+  // InboxContent, //enable this to also allow the whole inbox content as a component
   Bell,
-  Preferences,
-  Notifications,
+  Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
+    <InboxContent {...props} hideNav={true} initialPage={InboxPage.Notifications} />
+  ),
+  Preferences: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
+    <InboxContent {...props} hideNav={true} initialPage={InboxPage.Preferences} />
+  ),
 };
 
 export type NovuComponent = { name: NovuComponentName; props?: any };
@@ -73,10 +77,25 @@ export const Renderer = (props: RendererProps) => {
               <CountProvider>
                 <For each={[...props.nodes]}>
                   {([node, component]) => {
+                    let portalDivElement: HTMLDivElement;
                     const Component = novuComponents[component.name];
 
+                    onMount(() => {
+                      if (!['Notifications', 'Preferences'].includes(component.name)) return;
+
+                      if (node instanceof HTMLElement) {
+                        node.classList.add('nt-h-full');
+                      }
+                      portalDivElement.classList.add('nt-h-full');
+                    });
+
                     return (
-                      <Portal mount={node}>
+                      <Portal
+                        mount={node}
+                        ref={(el) => {
+                          portalDivElement = el;
+                        }}
+                      >
                         <Root>
                           <Component {...component.props} />
                         </Root>

@@ -1,20 +1,37 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
-import { OrganizationRepository, EnvironmentRepository, MemberRepository, EnvironmentEntity } from '@novu/dal';
+import {
+  EnvironmentRepository,
+  EnvironmentEntity,
+  CommunityOrganizationRepository,
+  MemberRepository,
+  CommunityUserRepository,
+} from '@novu/dal';
 import crypto from 'node:crypto';
 import { Sync } from '../../../bridge/usecases/sync';
 
 @Injectable()
 export class ProcessVercelWebhook {
   constructor(
-    private organizationRepository: OrganizationRepository,
+    private organizationRepository: CommunityOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
-    private memberRepository: MemberRepository
+    private memberRepository: MemberRepository,
+    private communityUserRepository: CommunityUserRepository
   ) {}
 
   async execute(command: ProcessVercelWebhookCommand) {
+    Logger.log(
+      {
+        teamId: command.teamId,
+        projectId: command.projectId,
+        vercelEnvironment: command.vercelEnvironment,
+        deploymentUrl: command.deploymentUrl,
+      },
+      'Processing vercel webhook for ${command.vercelEnvironment}'
+    );
+
     this.verifySignature(command.signatureHeader, command.body);
 
     const url = command.deploymentUrl;
@@ -28,6 +45,18 @@ export class ProcessVercelWebhook {
     );
 
     const organization = organizations[0];
+
+    if (!organization) {
+      Logger.error(
+        {
+          teamId: command.teamId,
+          projectId: command.projectId,
+        },
+        'Organization not found for vercel webhook integration'
+      );
+
+      throw new ApiException('Organization not found');
+    }
 
     let environment: EnvironmentEntity | null;
 
@@ -48,10 +77,19 @@ export class ProcessVercelWebhook {
     }
 
     const orgAdmin = await this.memberRepository.getOrganizationAdminAccount(environment._organizationId);
+    if (!orgAdmin) {
+      throw new ApiException('Organization admin not found');
+    }
+
+    const internalUser = await this.communityUserRepository.findOne({ externalId: orgAdmin?._userId });
+
+    if (!internalUser) {
+      throw new ApiException('User not found');
+    }
 
     await this.syncUsecase.execute({
       organizationId: environment._organizationId,
-      userId: orgAdmin?._userId as string,
+      userId: internalUser?._id as string,
       environmentId: environment._id,
       bridgeUrl: 'https://' + url + '/api/novu',
       source: 'vercel',

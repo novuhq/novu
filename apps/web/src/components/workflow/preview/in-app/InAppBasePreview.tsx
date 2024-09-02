@@ -1,7 +1,10 @@
 import styled from '@emotion/styled';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
+import ContentOld from './Content';
 import { Header } from './Header';
-import Content from './Content';
+import { InboxPreviewContent } from './v2/InboxPreviewContent';
 
 const ContainerStyled = styled.div<{ removePadding: boolean }>`
   width: 27.5rem;
@@ -31,21 +34,29 @@ export const InAppBasePreview = ({
   locales: any[];
   enableAvatar?: boolean;
 }) => {
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+
   return (
     <ContainerStyled removePadding={!showEditOverlay}>
-      <Header
-        selectedLocale={selectedLocale}
-        locales={locales}
-        areLocalesLoading={loading}
-        onLocaleChange={onLocaleChange}
-      />
-      <Content
-        isPreviewLoading={loading}
-        parsedPreviewState={content}
-        templateError={error || ''}
-        showOverlay={showEditOverlay}
-        enableAvatar={enableAvatar}
-      />
+      {isV2Enabled ? (
+        <InboxPreviewContent isPreviewLoading={loading} parsedPreviewState={content} />
+      ) : (
+        <>
+          <Header
+            selectedLocale={selectedLocale}
+            locales={locales}
+            areLocalesLoading={loading}
+            onLocaleChange={onLocaleChange}
+          />
+          <ContentOld
+            isPreviewLoading={loading}
+            parsedPreviewState={content}
+            templateError={error || ''}
+            showOverlay={showEditOverlay}
+            enableAvatar={enableAvatar}
+          />
+        </>
+      )}
     </ContainerStyled>
   );
 };

@@ -39,6 +39,10 @@ export class UserRegistrationBodyDto {
   @IsOptional()
   domain?: string;
 
+  @IsString()
+  @IsOptional()
+  invitationToken?: string;
+
   @IsOptional()
   productUseCases?: ProductUseCases;
 }

@@ -1,6 +1,6 @@
 {
   "name": "@novu/novui",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's Design System & Component Library",
   "types": "./dist/index.d.ts",
@@ -51,8 +51,7 @@
       "require": "./styled-system/jsx/index.js",
       "import": "./styled-system/jsx/index.js"
     },
-    "./styles.css": "./styled-system/styles.css",
-    "./components.css": "./node_modules/@mantine/core/styles.layer.css"
+    "./styles.css": "./src/index.css"
   },
   "scripts": {
     "dev": "pnpm build && pnpm storybook",
@@ -131,13 +130,22 @@
     }
   },
   "dependencies": {
-    "@mantine/code-highlight": "^7.10.2",
-    "@mantine/core": "^7.10.0",
-    "@mantine/hooks": "^7.10.0",
-    "@rjsf/core": "^5.17.1",
-    "@rjsf/utils": "^5.17.1",
+    "@mantine/code-highlight": "^7.12.1",
+    "@mantine/core": "^7.12.1",
+    "@mantine/hooks": "^7.12.1",
+    "@mantine/tiptap": "^7.12.1",
+    "@rjsf/core": "^5.20.0",
+    "@rjsf/utils": "^5.20.0",
     "@rjsf/validator-ajv8": "^5.17.1",
     "@tanstack/react-table": "^8.17.3",
+    "@tiptap/extension-document": "^2.6.6",
+    "@tiptap/extension-history": "^2.6.6",
+    "@tiptap/extension-mention": "^2.6.6",
+    "@tiptap/extension-paragraph": "^2.6.6",
+    "@tiptap/extension-text": "^2.6.6",
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/suggestion": "^2.6.6",
     "react-icons": "^5.0.1"
   }
 }

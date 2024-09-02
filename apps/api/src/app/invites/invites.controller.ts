@@ -18,7 +18,6 @@ import {
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
-import { Roles } from '../auth/framework/roles.decorator';
 import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
 import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
 import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
@@ -76,7 +75,6 @@ export class InvitesController {
   }
 
   @Post('/')
-  @Roles(MemberRoleEnum.ADMIN)
   @UserAuthentication()
   async inviteMember(
     @UserSession() user: UserSessionData,
@@ -97,7 +95,6 @@ export class InvitesController {
   }
 
   @Post('/resend')
-  @Roles(MemberRoleEnum.ADMIN)
   @UserAuthentication()
   async resendInviteMember(
     @UserSession() user: UserSessionData,
@@ -119,7 +116,6 @@ export class InvitesController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @UserAuthentication()
-  @Roles(MemberRoleEnum.ADMIN)
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto

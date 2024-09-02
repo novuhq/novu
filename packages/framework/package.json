@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.0.0-canary.5",
+  "version": "2.0.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,8 +18,8 @@
     "README.md"
   ],
   "scripts": {
-    "test": "vitest",
-    "test:watch": "vitest --watch",
+    "test": "vitest --typecheck",
+    "test:watch": "vitest --typecheck --watch",
     "lint": "eslint src --ext .ts --config .eslintrc.js",
     "lint:fix": "eslint src --ext .ts --fix --config .eslintrc.js",
     "format": "prettier --check --ignore-path .gitignore .",

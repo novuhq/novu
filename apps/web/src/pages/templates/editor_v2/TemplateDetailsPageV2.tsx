@@ -39,7 +39,7 @@ export const TemplateDetailsPageV2 = () => {
 
   return (
     <WorkflowsPageTemplate
-      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'hidden' })}
+      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
       icon={<IconCable size="32" />}
       title={title}
       actions={

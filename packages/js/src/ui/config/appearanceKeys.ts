@@ -42,15 +42,16 @@ export const appearanceKeys = [
   'loading',
 
   //Inbox
+  'inboxContent',
   'inbox__popoverTrigger',
   'inbox__popoverContent',
 
   //Notifications
+  'notificationListContainer',
   'notificationList',
   'notificationListEmptyNoticeContainer',
   'notificationListEmptyNotice',
   'notificationListEmptyNoticeIcon',
-  'notificationListNewNotificationsNoticeContainer',
   'notificationListNewNotificationsNotice__button',
 
   'notification',
@@ -84,8 +85,8 @@ export const appearanceKeys = [
   'inboxStatus__dropdownItem',
   'inboxStatus__dropdownItemLabel',
   'inboxStatus__dropdownItemLabelContainer',
-  'inboxStatus__dropdownItemLeftIcon',
-  'inboxStatus__dropdownItemRightIcon',
+  'inboxStatus__dropdownItemLeft__icon',
+  'inboxStatus__dropdownItemRight__icon',
 
   // More actions
   'moreActionsContainer',
@@ -93,7 +94,8 @@ export const appearanceKeys = [
   'moreActions__dropdownContent',
   'moreActions__dropdownItem',
   'moreActions__dropdownItemLabel',
-  'moreActions__dropdownItemLeftIcon',
+  'moreActions__dropdownItemLeft__icon',
+  'moreActions__dots',
 
   // More tabs
   'moreTabs__button',
@@ -102,12 +104,16 @@ export const appearanceKeys = [
   'moreTabs__dropdownContent',
   'moreTabs__dropdownItem',
   'moreTabs__dropdownItemLabel',
-  'moreTabs__dropdownItemRightIcon',
+  'moreTabs__dropdownItemRight__icon',
 
   //workflow
   'workflowContainer',
   'workflowLabel',
   'workflowLabelContainer',
+  'workflowContainerDisabledNotice',
+  'workflowLabelDisabled__icon',
+  'workflowContainerRight__icon',
+  'workflowArrow__icon',
 
   // channel
   'channelContainer',
@@ -115,6 +121,7 @@ export const appearanceKeys = [
   'channelLabel',
   'channelLabelContainer',
   'channelDescription',
+  'channelName',
   'channelSwitchContainer',
   'channelSwitch',
   'channelSwitchThumb',

@@ -1,13 +1,23 @@
-import { css } from '@novu/novui/css';
-import { Button, Text, Title } from '@novu/novui';
-import { Center, Stack, VStack } from '@novu/novui/jsx';
-import { IconErrorOutline, IconExpandLess, IconExpandMore } from '@novu/novui/icons';
 import { useDisclosure } from '@mantine/hooks';
+import { css } from '@novu/novui/css';
+import { Text } from '@novu/novui';
 import { hstack } from '@novu/novui/patterns';
+import { Center, Stack } from '@novu/novui/jsx';
+import { IconErrorOutline, IconExpandLess, IconExpandMore } from '@novu/novui/icons';
 
 export function ErrorPrettyRender({ error: unparsedError }) {
   const [isExpanded, { toggle }] = useDisclosure();
   const error = 'response' in unparsedError ? unparsedError?.response?.data : unparsedError;
+  /*
+   * TODO: find a way to import ErrorCodeEnum from @novu/framework without transiently importing
+   * types that are not available in the browser, like `crypto`
+   */
+  const isInvalidControlSyntax = error?.code === 'StepControlCompilationFailedError';
+
+  // If invalid syntax of var (e.g. missing closing bracket {{var {{var}), show preview as loading.
+  if (isInvalidControlSyntax) {
+    return null;
+  }
 
   return (
     <Stack

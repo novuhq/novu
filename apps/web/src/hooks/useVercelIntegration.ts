@@ -17,10 +17,10 @@ export function useVercelIntegration() {
 
   const navigate = useNavigate();
 
-  const { mutate, isLoading } = useMutation(vercelIntegrationSetup, {
+  const { mutateAsync, isLoading } = useMutation(vercelIntegrationSetup, {
     onSuccess: () => {
       if (next && configurationId) {
-        navigate(`/partner-integrations/vercel/link-projects?configurationId=${configurationId}&next=${next}`);
+        navigate(`/partner-integrations/vercel/link-projects?configuration_id=${configurationId}&next=${next}`);
       }
     },
     onError: (err: any) => {
@@ -30,12 +30,13 @@ export function useVercelIntegration() {
     },
   });
 
-  const startVercelSetup = useCallback(() => {
+  async function startVercelSetup() {
     if (!canStartSetup || !code || !configurationId) {
       return;
     }
-    mutate({ vercelIntegrationCode: code, configurationId });
-  }, [canStartSetup, code, mutate, configurationId]);
+
+    await mutateAsync({ vercelIntegrationCode: code, configurationId });
+  }
 
   return {
     isLoading,

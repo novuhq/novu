@@ -1,37 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  EnvironmentId,
-  OrganizationId,
-  ChannelTypeEnum,
-  ITemplateVariable,
-  LayoutDescription,
-  LayoutId,
-  LayoutName,
-  LayoutIdentifier,
-  UserId,
-} from '@novu/dal';
+import { ChannelTypeEnum, ITemplateVariable } from '@novu/dal';
 
 export class LayoutDto {
   @ApiPropertyOptional()
-  _id?: LayoutId;
+  _id?: string;
 
   @ApiProperty()
-  _organizationId: OrganizationId;
+  _organizationId: string;
 
   @ApiProperty()
-  _environmentId: EnvironmentId;
+  _environmentId: string;
 
   @ApiProperty()
-  _creatorId: UserId;
+  _creatorId: string;
 
   @ApiProperty()
-  name: LayoutName;
+  name: string;
 
   @ApiProperty()
-  identifier: LayoutIdentifier;
+  identifier: string;
 
   @ApiProperty()
-  description?: LayoutDescription;
+  description?: string;
 
   @ApiProperty()
   channel: ChannelTypeEnum;
