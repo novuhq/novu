@@ -3,14 +3,17 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  NotFoundException,
   Post,
   Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
-import { UserSessionData } from '@novu/shared';
+import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import {
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
   GetPreferences,
   GetPreferencesCommand,
   UpsertPreferences,
@@ -27,11 +30,17 @@ import { PreferencesActorEnum } from '@novu/dal';
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiExcludeController()
 export class PreferencesController {
-  constructor(private upsertPreferences: UpsertPreferences, private getPreferences: GetPreferences) {}
+  constructor(
+    private upsertPreferences: UpsertPreferences,
+    private getPreferences: GetPreferences,
+    private getFeatureFlag: GetFeatureFlag
+  ) {}
 
   @Get('/')
   @UseGuards(UserAuthGuard)
   async get(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
+    await this.verifyPreferencesApiAvailability(user);
+
     return this.getPreferences.execute(
       GetPreferencesCommand.create({
         templateId: workflowId,
@@ -44,6 +53,8 @@ export class PreferencesController {
   @Post('/')
   @UseGuards(UserAuthGuard)
   async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
+    await this.verifyPreferencesApiAvailability(user);
+
     return this.upsertPreferences.execute(
       UpsertPreferencesCommand.create({
         environmentId: user.environmentId,
@@ -54,5 +65,22 @@ export class PreferencesController {
         actor: PreferencesActorEnum.USER,
       })
     );
+  }
+
+  private async verifyPreferencesApiAvailability(user: UserSessionData) {
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
+      })
+    );
+
+    if (isEnabled) {
+      return;
+    }
+
+    throw new NotFoundException();
   }
 }
