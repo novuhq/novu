@@ -7,11 +7,12 @@ import { ChangeModule } from '../change/change.module';
 import { AuthModule } from '../auth/auth.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { WorkflowController } from './workflow.controller';
+import { GetPreferences, UpsertPreferences } from '@novu/application-generic';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
   controllers: [NotificationTemplateController, WorkflowController],
-  providers: [...USE_CASES],
+  providers: [...USE_CASES, GetPreferences, UpsertPreferences],
   exports: [...USE_CASES],
 })
 export class WorkflowModule implements NestModule {
