@@ -19,6 +19,7 @@ import {
   SubscriberPreferenceEntity,
   PreferencesActorEnum,
 } from '@novu/dal';
+import { IPreferenceChannels } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
@@ -138,6 +139,15 @@ export class UpdatePreferences {
         })
       );
 
+      await this.storePreferences({
+        enabled: preference.enabled,
+        channels: preference.channels,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+        templateId: workflow._id,
+      });
+
       return {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: preference.enabled,
@@ -160,6 +170,14 @@ export class UpdatePreferences {
       })
     );
 
+    await this.storePreferences({
+      enabled: preference.enabled,
+      channels: preference.channels,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
+
     return {
       level: PreferenceLevelEnum.GLOBAL,
       enabled: preference.enabled,
@@ -177,7 +195,14 @@ export class UpdatePreferences {
     };
   }
 
-  private async storePreferences(item: SubscriberPreferenceEntity) {
+  private async storePreferences(item: {
+    enabled: boolean;
+    channels: IPreferenceChannels;
+    organizationId: string;
+    subscriberId: string;
+    environmentId: string;
+    templateId?: string;
+  }) {
     return await this.upsertPreferences.execute(
       UpsertPreferencesCommand.create({
         preferences: {
@@ -209,10 +234,10 @@ export class UpdatePreferences {
           },
         },
         actor: PreferencesActorEnum.SUBSCRIBER,
-        environmentId: item._environmentId,
-        organizationId: item._organizationId,
-        subscriberId: item._subscriberId,
-        templateId: item._templateId,
+        environmentId: item.environmentId,
+        organizationId: item.organizationId,
+        subscriberId: item.subscriberId,
+        templateId: item.templateId,
       })
     );
   }
