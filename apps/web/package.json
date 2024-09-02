@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 PORT=4200 react-app-rewired start",
+    "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 DISABLE_ESLINT_PLUGIN=true PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "pnpm panda && cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
     "build:test": "pnpm panda && cross-env REACT_APP_HUBSPOT_EMBED=44416662 REACT_APP_API_URL=http://127.0.0.1:1336 NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",

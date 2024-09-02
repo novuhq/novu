@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "start": "react-app-rewired start",
+    "start": "DISABLE_ESLINT_PLUGIN=true react-app-rewired start",
     "start:dev": "cross-env PORT=4500 pnpm start",
     "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & cross-env PORT=3500 pnpm start",
     "start:test": "pnpm start:shell:test & pnpm start:shell:embed & cross-env NODE_ENV=test REACT_APP_API_URL=http://127.0.0.1:1336 REACT_APP_WS_URL=http://127.0.0.1:1340 PORT=3500 pnpm start",
