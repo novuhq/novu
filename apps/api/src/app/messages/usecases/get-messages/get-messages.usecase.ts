@@ -49,6 +49,7 @@ export class GetMessages {
 
     const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
+      sort: { createdAt: -1 },
       skip: command.page * LIMIT,
     });
 
