@@ -71,6 +71,7 @@ export default tsEslint.config(
       '**/*.stories.*',
       '**/notifications-cache.test.ts',
       '**/novu.test.ts',
+      '**/swagger.controller.ts',
     ],
   },
 
