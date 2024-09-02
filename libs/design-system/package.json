@@ -40,7 +40,7 @@
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",
     "@tanstack/react-query": "^4.20.4",
-    "axios": "^1.3.3",
+    "axios": "^1.6.8",
     "react-helmet-async": "^1.3.0",
     "react-hook-form": "7.43.9",
     "react-icons": "^5.0.1",

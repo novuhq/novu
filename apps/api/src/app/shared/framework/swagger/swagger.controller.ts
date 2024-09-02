@@ -115,7 +115,6 @@ if (process.env.NOVU_ENTERPRISE === 'true') {
 export const setupSwagger = async (app: INestApplication) => {
   await SwaggerModule.loadPluginMetadata(metadata);
   const document = injectDocumentComponents(
-    // @ts-expect-error - SwaggerModule.setup is behind in typings
     SwaggerModule.createDocument(app, options.build(), {
       operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
       deepScanRoutes: true,
@@ -125,7 +124,6 @@ export const setupSwagger = async (app: INestApplication) => {
     })
   );
 
-  // @ts-expect-error - SwaggerModule.setup is behind in typings
   SwaggerModule.setup('api', app, {
     ...document,
     info: {
@@ -133,7 +131,6 @@ export const setupSwagger = async (app: INestApplication) => {
       title: `DEPRECATED: ${document.info.title}. Use /openapi.{json,yaml} instead.`,
     },
   });
-  // @ts-expect-error - SwaggerModule.setup is behind in typings
   SwaggerModule.setup('openapi', app, removeEndpointsWithoutApiKey(document), {
     jsonDocumentUrl: 'openapi.json',
     yamlDocumentUrl: 'openapi.yaml',
@@ -165,7 +162,6 @@ function sdkSetup(app: INestApplication, document: OpenAPIObject) {
     retryConnectionErrors: true,
   };
 
-  // @ts-expect-error - SwaggerModule.setup is behind in typings
   SwaggerModule.setup('openapi.sdk', app, transformDocument(document), {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',

@@ -85,7 +85,7 @@
     "allotment": "^1.20.2",
     "antd": "^4.10.0",
     "autoprefixer": "^9.8.6",
-    "axios": "^1.6.2",
+    "axios": "^1.6.8",
     "babel-plugin-import": "^1.13.3",
     "chart.js": "^3.7.1",
     "crypto-js": "^4.2.0",

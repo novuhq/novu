@@ -22,7 +22,7 @@
     "knip": "^5.11.0",
     "nx": "^16.10.0",
     "ts-jest": "^29.1.0",
-    "typescript": "~5.4.5",
+    "typescript": "4.9.5",
     "verdaccio": "^5.0.4"
   },
   "type": "commonjs",

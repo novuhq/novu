@@ -55,7 +55,7 @@
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^20.14.10",
     "@types/uuid": "^8.3.4",
-    "axios": "^1.6.2",
+    "axios": "^1.6.8",
     "codecov": "^3.5.0",
     "jest": "^29.7.0",
     "nock": "^13.1.3",
