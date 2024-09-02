@@ -10,7 +10,7 @@ import {
   OtelObservableUpDownCounter as setOtelObservableUpDownCounter,
   OtelCounter as setOtelCounter,
 } from 'nestjs-otel';
-import { MetricOptions, SpanOptions } from '@opentelemetry/api';
+import { MetricOptions, SpanOptions, Tracer } from '@opentelemetry/api';
 import { Injectable, PipeTransform, Type } from '@nestjs/common';
 
 export type OtelDataOrPipe =
@@ -26,28 +26,31 @@ export function OtelInstanceCounter(options?: MetricOptions) {
   return setOtelInstanceCounter(options);
 }
 
-export function OtelUpDownCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelUpDownCounter(...dataOrPipes);
+export function OtelUpDownCounter(name: string, options?: MetricOptions) {
+  return setOtelUpDownCounter(name, options);
 }
 
-export function OtelHistogram(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelHistogram(...dataOrPipes);
+export function OtelHistogram(name: string, options?: MetricOptions) {
+  return setOtelHistogram(name, options);
 }
 
-export function OtelObservableGauge(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelObservableGauge(...dataOrPipes);
+export function OtelObservableGauge(name: string, options?: MetricOptions) {
+  return setOtelObservableGauge(name, options);
 }
 
-export function OtelObservableCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelObservableCounter(...dataOrPipes);
+export function OtelObservableCounter(name: string, options?: MetricOptions) {
+  return setOtelObservableCounter(name, options);
 }
 
-export function OtelObservableUpDownCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelObservableUpDownCounter(...dataOrPipes);
+export function OtelObservableUpDownCounter(
+  name: string,
+  options?: MetricOptions,
+) {
+  return setOtelObservableUpDownCounter(name, options);
 }
 
-export function OtelCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelCounter(...dataOrPipes);
+export function OtelCounter(name: string, options?: MetricOptions) {
+  return setOtelCounter(name, options);
 }
 
 @Injectable()
