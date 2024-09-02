@@ -76,7 +76,7 @@ export class SendMessagePush extends SendMessageBase {
       message: 'Sending Push',
     });
 
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
     const { subscriber, step: stepData } = command.compileContext;
 
     const template = await this.processVariants(command);
@@ -130,7 +130,7 @@ export class SendMessagePush extends SendMessageBase {
       return;
     }
 
-    const messagePayload = Object.assign({}, command.payload);
+    const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
     let integrationsWithErrors = 0;
@@ -144,7 +144,7 @@ export class SendMessagePush extends SendMessageBase {
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (!deviceTokens || !integration || isChannelMissingDeviceTokens) {
-        integrationsWithErrors++;
+        integrationsWithErrors += 1;
         continue;
       }
 
@@ -169,7 +169,7 @@ export class SendMessagePush extends SendMessageBase {
         );
 
         if (!result.success) {
-          integrationsWithErrors++;
+          integrationsWithErrors += 1;
 
           Logger.error(
             { jobId: command.jobId },
@@ -281,7 +281,9 @@ export class SendMessagePush extends SendMessageBase {
           ...(contextData?.raw && { raw: contextData.raw }),
         })
       );
-    } catch (error) {}
+    } catch (error) {
+      Logger.error(error, 'Error creating execution details error');
+    }
   }
 
   private async sendMessage(

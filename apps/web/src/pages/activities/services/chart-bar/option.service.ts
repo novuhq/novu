@@ -12,8 +12,10 @@ export function getOptions(this: any, isTriggerSent: boolean, daysCount: number)
 
     onHover: (event, el) => {
       if (el.length > 0) {
+        // eslint-disable-next-line no-param-reassign
         event.native.target.style.cursor = 'pointer';
       } else {
+        // eslint-disable-next-line no-param-reassign
         event.native.target.style.cursor = 'default';
       }
     },

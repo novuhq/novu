@@ -8,7 +8,7 @@ import { GetTenantCommand, GetTenant } from '../get-tenant';
 export class UpdateTenant {
   constructor(
     private tenantRepository: TenantRepository,
-    private getTenantUsecase: GetTenant
+    private getTenantUsecase: GetTenant,
   ) {}
 
   async execute(command: UpdateTenantCommand): Promise<TenantEntity> {
@@ -19,7 +19,7 @@ export class UpdateTenant {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           identifier: command.identifier,
-        })
+        }),
       ));
 
     const updatePayload: Partial<TenantEntity> = {};
@@ -53,10 +53,9 @@ export class UpdateTenant {
       },
       {
         $set: updatePayload,
-      }
+      },
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return (await this.tenantRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -73,12 +72,12 @@ export class UpdateTenant {
   }) {
     const tenantExist = await this.tenantRepository.findOne({
       _environmentId: environmentId,
-      identifier: identifier,
+      identifier,
     });
 
     if (tenantExist) {
       throw new ConflictException(
-        `Tenant with identifier: ${identifier} already exists under environment ${environmentId}`
+        `Tenant with identifier: ${identifier} already exists under environment ${environmentId}`,
       );
     }
   }

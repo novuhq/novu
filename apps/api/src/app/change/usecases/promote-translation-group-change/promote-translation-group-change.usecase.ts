@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 

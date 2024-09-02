@@ -12,7 +12,7 @@ export class GetIsInMemoryClusterModeEnabled extends GetSystemCriticalFlag {
     const fallbackValue = false;
     const defaultValue = this.prepareBooleanStringSystemCriticalFlag(
       value,
-      fallbackValue
+      fallbackValue,
     );
     const key = SystemCriticalFlagsEnum.IS_IN_MEMORY_CLUSTER_MODE_ENABLED;
 

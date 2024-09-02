@@ -3,6 +3,8 @@ import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 
+import { Text, colors, Button } from '@novu/design-system';
+import { useOrganizationList } from '@clerk/clerk-react';
 import {
   completeVercelIntegration,
   getVercelConfigurationDetails,
@@ -12,10 +14,8 @@ import {
 import { useVercelParams } from '../../../hooks';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
-import { Text, colors, Button } from '@novu/design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import SetupLoader from '../../auth/components/SetupLoader';
-import { useOrganizationList } from '@clerk/clerk-react';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {
@@ -127,11 +127,11 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   };
 
   const submitProjectLink = (data: ProjectLinkFormValues) => {
-    const payload = data.projectLinkState.reduce<Record<string, string[]>>((acc, curr) => {
+    const payload = data.projectLinkState.reduce<Record<string, string[]>>((prev, curr) => {
       const { organizationId, projectIds } = curr;
-      acc[organizationId] = projectIds;
+      prev[organizationId] = projectIds;
 
-      return acc;
+      return prev;
     }, {});
 
     if (configurationId) {
@@ -187,6 +187,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
             addMoreProjectRow={addMoreProjectRow}
             disableMoreProjectsBtn={disableMoreProjectsBtn}
             organizationLength={
+              // eslint-disable-next-line no-unsafe-optional-chaining
               organizations && organizations?.length > 0 ? organizations?.length - projectRowCount : 0
             }
           />

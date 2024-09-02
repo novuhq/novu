@@ -23,10 +23,10 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const payloadValue = getPayloadValue(trigger.variables);
 
   const reservedValue = useMemo(() => {
-    return triggerSnippetVariables.reduce((acc, variable) => {
-      acc[variable.type] = getPayloadValue(variable.variables);
+    return triggerSnippetVariables.reduce((prev, variable) => {
+      prev[variable.type] = getPayloadValue(variable.variables);
 
-      return acc;
+      return prev;
     }, {});
   }, [triggerSnippetVariables]);
 

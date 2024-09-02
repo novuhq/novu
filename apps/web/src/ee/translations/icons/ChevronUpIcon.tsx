@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export const ChevronUpIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {

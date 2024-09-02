@@ -3,9 +3,9 @@ import { format, parseISO } from 'date-fns';
 import styled from '@emotion/styled';
 import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 
+import { colors, Text, CheckCircle, ErrorIcon } from '@novu/design-system';
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';
-import { colors, Text, CheckCircle, ErrorIcon } from '@novu/design-system';
 
 const StepName = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};

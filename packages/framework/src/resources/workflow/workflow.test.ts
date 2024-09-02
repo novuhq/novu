@@ -75,9 +75,8 @@ describe('workflow function', () => {
     });
 
     it('should compile when returning undefined for a custom step property that has a default value', async () => {
-      const delayType = undefined;
       workflow('custom-default-test', async ({ step }) => {
-        const data = await step.custom(
+        await step.custom(
           'custom',
           async () => ({
             withDefault: undefined,
@@ -161,6 +160,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
+
       const testFn = () =>
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
@@ -191,6 +191,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
+
       const testFn = () =>
         testWorkflow.trigger({
           payload: {
@@ -204,7 +205,7 @@ describe('workflow function', () => {
     it('should not compile when the payload is not specified and the payloadSchema declares required properties', async () => {
       const testWorkflow = workflow(
         'test-workflow',
-        async ({ step, payload }) => {
+        async ({ step }) => {
           await step.custom('custom', async () => ({
             foo: 'bar',
           }));
@@ -222,6 +223,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
+
       const testFn = () =>
         testWorkflow.trigger({
           // @ts-expect-error - payload is missing from the trigger
@@ -233,7 +235,7 @@ describe('workflow function', () => {
     it('should compile when the payload is not specified and the payloadSchema does not declare required properties', async () => {
       const testWorkflow = workflow(
         'test-workflow',
-        async ({ step, payload }) => {
+        async ({ step }) => {
           await step.custom('custom', async () => ({
             foo: 'bar',
           }));
@@ -250,6 +252,7 @@ describe('workflow function', () => {
       );
 
       // Capture in a test function to avoid throwing execution errors
+
       const testFn = () =>
         testWorkflow.trigger({
           to: 'test@test.com',
@@ -257,13 +260,14 @@ describe('workflow function', () => {
     });
 
     it('should compile when the payload is not specified and the payloadSchema is not specified', async () => {
-      const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.custom('custom', async () => ({
           foo: 'bar',
         }));
       });
 
       // Capture in a test function to avoid throwing execution errors
+
       const testFn = () =>
         testWorkflow.trigger({
           to: 'test@test.com',
@@ -419,7 +423,7 @@ describe('workflow function', () => {
 
       const mockCancelResult = true;
       const mockTransactionId = '123';
-      const fetchMock = vi.fn().mockImplementation((input: string, init) => {
+      const fetchMock = vi.fn().mockImplementation((input: string) => {
         if (input.endsWith(`/events/trigger/${mockTransactionId}`)) {
           return Promise.resolve({
             ok: true,
@@ -430,6 +434,8 @@ describe('workflow function', () => {
             ok: true,
             json: () => Promise.resolve({ transactionId: mockTransactionId }),
           });
+        } else {
+          throw new Error('Invalid fetch call');
         }
       });
       global.fetch = fetchMock;

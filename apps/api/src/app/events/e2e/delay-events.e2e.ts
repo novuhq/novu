@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai';
 import axios from 'axios';
 import { addSeconds, differenceInMilliseconds, subDays } from 'date-fns';

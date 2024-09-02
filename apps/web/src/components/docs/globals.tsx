@@ -17,24 +17,29 @@ const globalOverrides = {
  * child docs as it is not possible to load javascript with child docs.
  */
 export const createGlobals = (mappings) => ({
-  ...Object.keys(mappings).reduce((prev: Record<string, Record<string, any> | any>, key) => {
-    const path = mappings[key];
+  ...Object.keys(mappings).reduce(
+    (prev: Record<string, Record<string, any> | any>, key) => {
+      const path = mappings[key];
 
-    if (typeof path === 'string') {
-      prev[key] = () => <ChildDocs path={path} />;
+      if (typeof path === 'string') {
+        prev[key] = () => <ChildDocs path={path} />;
+
+        return prev;
+      }
+
+      const value = path;
+
+      prev[key] = Object.keys(value).reduce(
+        (child: Record<string, any>, name) => ({
+          ...child,
+          [name]: () => <ChildDocs path={child[name]} />,
+        }),
+        {}
+      );
 
       return prev;
-    }
-
-    const value = path;
-
-    prev[key] = Object.keys(value).reduce((child: Record<string, any>, name) => {
-      child[name] = () => <ChildDocs path={child[name]} />;
-
-      return child;
-    }, {});
-
-    return prev;
-  }, {} as Record<string, Record<string, any> | any>),
+    },
+    {} as Record<string, Record<string, any> | any>
+  ),
   ...globalOverrides,
 });

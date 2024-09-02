@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
-import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 import { nanoid } from 'nanoid';
 import { IChatOptions } from '@novu/stateless';
+import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 
 const mockProviderConfig = {
@@ -45,11 +45,11 @@ test('should trigger whatsapp-business library correctly with simple text messag
       },
       to: options.phoneNumber,
       type: 'text',
-    }
+    },
   );
 
   expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken)
+    expectedHeaders(mockProviderConfig.accessToken),
   );
 
   expect(res.id).toBe(messageId);
@@ -86,11 +86,11 @@ test('should trigger whatsapp-business library correctly with template message',
       template: options.customData.template,
       to: options.phoneNumber,
       type: 'template',
-    }
+    },
   );
 
   expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken)
+    expectedHeaders(mockProviderConfig.accessToken),
   );
 
   expect(res.id).toBe(messageId);
@@ -112,7 +112,7 @@ test('should trigger whatsapp-business library correctly with simple text messag
     _passthrough: {
       body: {
         text: {
-          body: options.content + ' _passthrough',
+          body: `${options.content} _passthrough`,
         },
       },
     },
@@ -125,16 +125,16 @@ test('should trigger whatsapp-business library correctly with simple text messag
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       text: {
-        body: options.content + ' _passthrough',
+        body: `${options.content} _passthrough`,
         preview_url: false,
       },
       to: options.phoneNumber,
       type: 'text',
-    }
+    },
   );
 
   expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken)
+    expectedHeaders(mockProviderConfig.accessToken),
   );
 
   expect(res.id).toBe(messageId);
@@ -187,11 +187,11 @@ test('should trigger whatsapp-business library correctly with template message w
       },
       to: options.phoneNumber,
       type: 'template',
-    }
+    },
   );
 
   expect(axiosMockSpy).toHaveBeenCalledWith(
-    expectedHeaders(mockProviderConfig.accessToken)
+    expectedHeaders(mockProviderConfig.accessToken),
   );
 
   expect(res.id).toBe(messageId);

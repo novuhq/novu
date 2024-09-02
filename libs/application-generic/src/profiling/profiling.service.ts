@@ -16,7 +16,7 @@ export class ProfilingService implements OnModuleInit, OnModuleDestroy {
     @Inject('SERVICE_NAME') private readonly serviceName: string,
     @Inject('PYROSCOPE_URL') private readonly url: string,
     @Inject('IS_CONTINUOUS_PROFILING_ENABLED')
-    private readonly enabled: boolean
+    private readonly enabled: boolean,
   ) {}
 
   async collectCPU() {
@@ -53,7 +53,5 @@ export class ProfilingService implements OnModuleInit, OnModuleDestroy {
     }
 
     Logger.log('Not Initializing Pyroscope');
-
-    return;
   }
 }

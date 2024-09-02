@@ -14,10 +14,10 @@
     "start": "npm run start:dev",
     "start:dev": "npm run watch:build",
     "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
-    "fix:lint": "eslint src --ext .ts --fix",
+    "lint:fix": "eslint src --fix",
     "test": "jest",
     "test:watch": "jest --watch"
   },

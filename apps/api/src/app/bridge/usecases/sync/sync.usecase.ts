@@ -50,7 +50,7 @@ export class Sync {
         retriesLimit: 1,
       })) as DiscoverOutput;
     } catch (error: any) {
-      throw new BadRequestException('Bridge URL is not valid. ' + error.message);
+      throw new BadRequestException(`Bridge URL is not valid. ${error.message}`);
     }
 
     if (!discover) {
@@ -63,7 +63,7 @@ export class Sync {
         _environment: command.environmentId,
         environmentName: environment.name,
         workflowsCount: discover.workflows?.length || 0,
-        localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : false,
+        localEnvironment: !!command.bridgeUrl?.includes('novu.sh'),
         source: command.source,
       });
     }
@@ -167,7 +167,7 @@ export class Sync {
 
           return this.createWorkflowUsecase.execute(
             CreateWorkflowCommand.create({
-              notificationGroupId: notificationGroupId,
+              notificationGroupId,
               draft: !isWorkflowActive,
               environmentId: command.environmentId,
               organizationId: command.organizationId,

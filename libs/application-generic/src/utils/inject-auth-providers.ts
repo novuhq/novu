@@ -28,7 +28,7 @@ import { CreateUser, SwitchOrganization } from '../usecases';
 export function injectCommunityAuthProviders(
   { repositoriesOnly }: { repositoriesOnly?: boolean } = {
     repositoriesOnly: true,
-  }
+  },
 ) {
   const userRepositoryProvider = {
     provide: 'USER_REPOSITORY',
@@ -56,7 +56,7 @@ export function injectCommunityAuthProviders(
       organizationRepository: OrganizationRepository,
       environmentRepository: EnvironmentRepository,
       memberRepository: MemberRepository,
-      switchOrganizationUsecase: SwitchOrganization
+      switchOrganizationUsecase: SwitchOrganization,
     ) => {
       return new CommunityAuthService(
         userRepository,
@@ -67,7 +67,7 @@ export function injectCommunityAuthProviders(
         organizationRepository,
         environmentRepository,
         memberRepository,
-        switchOrganizationUsecase
+        switchOrganizationUsecase,
       );
     },
     inject: [

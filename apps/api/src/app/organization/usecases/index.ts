@@ -1,3 +1,4 @@
+import { isClerkEnabled } from '@novu/shared';
 import { CreateOrganization } from './create-organization/create-organization.usecase';
 import { GetOrganization } from './get-organization/get-organization.usecase';
 import { AddMember } from './membership/add-member/add-member.usecase';
@@ -9,7 +10,6 @@ import { GetOrganizations } from './get-organizations/get-organizations.usecase'
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
 import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
-import { isClerkEnabled } from '@novu/shared';
 
 // TODO: move ee.organization.controller.ts to EE package
 function getEnterpriseUsecases() {

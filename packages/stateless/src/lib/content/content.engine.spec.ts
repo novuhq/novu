@@ -11,7 +11,7 @@ test('should parse basic variables correctly', () => {
       user: {
         lastName: 'test nested',
       },
-    }
+    },
   );
 
   expect(html).toContain('<div> test variable test nested </div>');
@@ -25,7 +25,7 @@ test('should parse loop iterations', () => {
   `,
     {
       items: ['first item', 'second item'],
-    }
+    },
   );
 
   expect(html).toContain('first item');
@@ -40,7 +40,7 @@ test('should parse if statements', () => {
   `,
     {
       flag: true,
-    }
+    },
   );
 
   expect(html).toContain('Content to display');
@@ -51,7 +51,7 @@ test('should parse if statements', () => {
   `,
     {
       flag: false,
-    }
+    },
   );
 
   expect(htmlWithoutContent).not.toContain('second item');

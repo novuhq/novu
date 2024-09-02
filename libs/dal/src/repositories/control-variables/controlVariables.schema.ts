@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { ChangePropsValueType } from '../../types';
 import { schemaOptions } from '../schema-default.options';
-const mongooseDelete = require('mongoose-delete');
 import { ControlVariablesEntity } from './controlVariables.entity';
+
+const mongooseDelete = require('mongoose-delete');
 
 export type ControlVariablesModel = ChangePropsValueType<
   ControlVariablesEntity,
@@ -41,7 +41,6 @@ const controlVariablesSchema = new Schema<ControlVariablesModel>(
 
 controlVariablesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ControlVariables =
   (mongoose.models.ControlVariables as mongoose.Model<ControlVariablesModel>) ||
   mongoose.model<ControlVariablesModel>('controls', controlVariablesSchema) ||

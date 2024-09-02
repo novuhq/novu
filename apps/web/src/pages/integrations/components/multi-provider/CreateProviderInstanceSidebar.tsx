@@ -251,7 +251,7 @@ export function CreateProviderInstanceSidebar({
             <Radio.Group
               styles={inputStyles}
               sx={{
-                ['.mantine-Group-root']: {
+                '.mantine-Group-root': {
                   paddingTop: 0,
                   paddingLeft: '10px',
                 },

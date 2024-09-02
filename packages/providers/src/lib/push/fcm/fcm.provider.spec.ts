@@ -84,7 +84,7 @@ describe.skip('FcmPushProvider', () => {
     });
 
     spy = vi
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-expect-error
       .spyOn(provider.messaging, 'sendEachForMulticast')
       .mockImplementation(async () => {
@@ -110,7 +110,7 @@ describe.skip('FcmPushProvider', () => {
         notification: {
           title: 'Test 1',
         },
-      }
+      },
     );
     expect(app.initializeApp).toHaveBeenCalledTimes(1);
     expect(app.cert).toHaveBeenCalledTimes(1);
@@ -435,7 +435,7 @@ describe.skip('FcmPushProvider', () => {
             sound: 'test_sound',
           },
         });
-      })
+      }),
     );
   });
 
@@ -461,7 +461,7 @@ describe.skip('FcmPushProvider', () => {
             tokens: ['tokens'],
           },
         },
-      }
+      },
     );
     expect(app.initializeApp).toHaveBeenCalledTimes(1);
     expect(app.cert).toHaveBeenCalledTimes(1);

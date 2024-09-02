@@ -3,8 +3,8 @@ import { Skeleton, useMantineColorScheme } from '@mantine/core';
 import { useState } from 'react';
 
 import { colors, IExtendedCellProps, Popover, Text, Star } from '@novu/design-system';
-import type { ITableIntegration } from '../types';
 import { ChannelTypeEnum } from '@novu/shared';
+import type { ITableIntegration } from '../types';
 
 const CellHolder = styled.div`
   display: flex;

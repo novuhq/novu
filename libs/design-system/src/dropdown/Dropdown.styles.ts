@@ -22,7 +22,7 @@ export default createStyles((theme: MantineTheme) => {
       color: `${dark ? theme.white : colors.B40} !important`,
       fontWeight: 400,
       fontSize: '14px',
-      ['&[data-critical]']: { '&:hover': { color: `${colors.error} !important` } },
+      '&[data-critical]': { '&:hover': { color: `${colors.error} !important` } },
     },
     itemHovered: {
       backgroundColor: dark ? colors.B30 : colors.B98,

@@ -48,7 +48,7 @@ describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
     try {
       await deleteTenant({
         session,
-        identifier: identifier,
+        identifier,
       });
 
       throw new Error('');

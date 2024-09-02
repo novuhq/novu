@@ -57,7 +57,7 @@ test(`should trigger Africa's Talking library correctly with _passthrough`, asyn
           to: '+3347063317344',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

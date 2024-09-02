@@ -5,7 +5,6 @@ import { IPaginationParams } from '@novu/shared';
 
 import { Constructor } from '../types';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constructor<IPaginationParams> {
   class PaginationRequest {
     @ApiPropertyOptional({

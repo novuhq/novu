@@ -5,10 +5,10 @@ import {
   ThrottlerGuard,
   ThrottlerModuleOptions,
   ThrottlerOptions,
+  ThrottlerRequest,
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
-import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { GetFeatureFlag, GetFeatureFlagCommand, Instrument } from '@novu/application-generic';
 import {
@@ -20,6 +20,7 @@ import {
   FeatureFlagsKeysEnum,
   UserSessionData,
 } from '@novu/shared';
+import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
@@ -49,13 +50,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * Thin wrapper around the ThrottlerGuard's canActivate method.
    */
   async intercept(context: ExecutionContext, next: CallHandler) {
-    try {
-      await this.canActivate(context);
+    await this.canActivate(context);
 
-      return next.handle();
-    } catch (error) {
-      throw error;
-    }
+    return next.handle();
   }
 
   @Instrument()
@@ -90,12 +87,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
-  protected async handleRequest(
-    context: ExecutionContext,
-    _limit: number,
-    _ttl: number,
-    throttler: ThrottlerOptions
-  ): Promise<boolean> {
+  protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const ignoreUserAgents = throttler.ignoreUserAgents ?? this.commonOptions.ignoreUserAgents;
     // Return early if the current user agent should be ignored.
@@ -199,7 +191,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const authScheme = req.authScheme;
+    const { authScheme } = req;
 
     return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }

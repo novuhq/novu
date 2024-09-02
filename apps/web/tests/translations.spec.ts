@@ -1,7 +1,7 @@
+import path from 'path';
 import { test } from './utils/baseTest';
 import { assertPageShowsMessage, initializeSession, setFeatureFlag } from './utils/browser';
 import { TranslationsPage } from './page-models/translationsPage';
-import path from 'path';
 
 test.describe('Translations', () => {
   test.skip(process.env.NOVU_ENTERPRISE !== 'true', 'Skipping tests for non enterprise variant...');

@@ -17,11 +17,11 @@ import { GetNovuProviderCredentialsCommand } from './get-novu-provider-credentia
 export class GetNovuProviderCredentials {
   constructor(
     private analyticsService: AnalyticsService,
-    protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+    protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
   ) {}
 
   async execute(
-    integration: GetNovuProviderCredentialsCommand
+    integration: GetNovuProviderCredentialsCommand,
   ): Promise<ICredentials> {
     if (
       integration.providerId === EmailProviderIdEnum.Novu ||
@@ -35,7 +35,7 @@ export class GetNovuProviderCredentials {
 
       if (!limit) {
         throw new ConflictException(
-          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exists.`
+          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exists.`,
         );
       }
 
@@ -49,10 +49,10 @@ export class GetNovuProviderCredentials {
             organizationId: integration.organizationId,
             providerId: integration.providerId,
             ...limit,
-          }
+          },
         );
         throw new ConflictException(
-          `Limit for Novu's ${integration.channelType.toLowerCase()} provider was reached.`
+          `Limit for Novu's ${integration.channelType.toLowerCase()} provider was reached.`,
         );
       }
     }
@@ -75,7 +75,7 @@ export class GetNovuProviderCredentials {
     }
 
     throw new NotFoundException(
-      `Credentials for Novu's ${integration.channelType.toLowerCase()} provider could not be found`
+      `Credentials for Novu's ${integration.channelType.toLowerCase()} provider could not be found`,
     );
   }
 }

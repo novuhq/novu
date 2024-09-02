@@ -15,7 +15,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
   steps: [
     {
       title: 'Configure providers',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>
@@ -37,7 +37,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Add a translation group',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
@@ -55,7 +55,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Upload JSON files with languages',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Upload JSON files with multiple languages to the translations group.</StepText>
@@ -65,7 +65,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Update content with translation variables',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>

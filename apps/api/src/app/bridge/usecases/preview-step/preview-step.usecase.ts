@@ -45,14 +45,14 @@ export class PreviewStep {
       if (e?.response?.status === 404) {
         throw new BadRequestException({
           code: BridgeErrorCodeEnum.BRIDGE_ENDPOINT_NOT_FOUND,
-          message: 'Bridge Endpoint Was not found or not accessible. Endpoint: ' + bridgeUrl,
+          message: `Bridge Endpoint Was not found or not accessible. Endpoint: ${bridgeUrl}`,
         });
       }
 
       if (e?.response?.status === 405) {
         throw new BadRequestException({
           code: BridgeErrorCodeEnum.BRIDGE_ENDPOINT_NOT_FOUND,
-          message: 'Bridge Endpoint is not properly configured. : ' + bridgeUrl,
+          message: `Bridge Endpoint is not properly configured. : ${bridgeUrl}`,
         });
       }
 
@@ -67,7 +67,7 @@ export class PreviewStep {
 
       throw new BadRequestException({
         code: BridgeErrorCodeEnum.BRIDGE_UNEXPECTED_RESPONSE,
-        message: 'Un-expected Bridge response: ' + e.message,
+        message: `Un-expected Bridge response: ${e.message}`,
       });
     }
   }
@@ -103,7 +103,7 @@ export class PreviewStep {
   }
 
   private createHmacByApiKey(secret: string, timestamp: number, payload) {
-    const publicKey = timestamp + '.' + JSON.stringify(payload);
+    const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
 
     return createHmac('sha256', decryptApiKey(secret)).update(publicKey).digest('hex');
   }

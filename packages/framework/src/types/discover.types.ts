@@ -1,3 +1,4 @@
+import { ChannelTypeEnum } from '@novu/shared';
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
 import type { JsonSchema, Schema } from './schema.types';
 import type { StepOptions } from './step.types';
@@ -5,7 +6,6 @@ import type { Execute, WorkflowOptions } from './workflow.types';
 import type { Awaitable, Prettify } from './util.types';
 import type { EventTriggerParams, EventTriggerResult } from './event.types';
 import type { WithPassthrough } from './provider.types';
-import { ChannelTypeEnum } from '@novu/shared';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 

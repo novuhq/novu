@@ -11,7 +11,7 @@ describe('WebSockets Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       webSocketsQueueService = new WebSocketsQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -32,7 +32,7 @@ describe('WebSockets Queue service', () => {
           'DEFAULT_ATTEMPTS',
           'instance',
           'queue',
-        ])
+        ]),
       );
       expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
@@ -77,7 +77,7 @@ describe('WebSockets Queue service', () => {
           name: jobId,
           data: jobData,
           attemptsMade: 0,
-        })
+        }),
       );
     });
 
@@ -117,7 +117,7 @@ describe('WebSockets Queue service', () => {
             _userId,
           },
           attemptsMade: 0,
-        })
+        }),
       );
     });
   });
@@ -127,7 +127,7 @@ describe('WebSockets Queue service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       webSocketsQueueService = new WebSocketsQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -139,7 +139,7 @@ describe('WebSockets Queue service', () => {
 
     it('should have prefix in cluster mode', async () => {
       expect(webSocketsQueueService.queue.opts.prefix).toEqual(
-        '{ws_socket_queue}'
+        '{ws_socket_queue}',
       );
     });
   });

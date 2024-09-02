@@ -53,7 +53,7 @@ export const Select = forwardRef((props: SelectProps, ref?: PolymorphicRef<'inpu
     // TODO: replace with our own loader
     <Loader color={token('colors.icon.main')} size={'24'} />
   ) : (
-    icon ?? <IconArrowDropDown title="select-dropdown-icon" size="32" />
+    (icon ?? <IconArrowDropDown title="select-dropdown-icon" size="32" />)
   );
 
   return (

@@ -1,10 +1,10 @@
 import { IResponseError } from '@novu/shared';
-import { regenerateApiKeys } from '../../../api';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
+import { showNotification } from '@mantine/notifications';
 import { useApiKeys } from '../../../hooks';
 
-import { showNotification } from '@mantine/notifications';
+import { regenerateApiKeys } from '../../../api';
 
 export const useRegenerateSecretKeyModal = () => {
   const [isOpen, setModalIsOpen] = useState(false);

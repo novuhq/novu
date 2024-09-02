@@ -13,7 +13,7 @@ export type Awaitable<T> = T | Promise<T>;
  * A type that represents a type that is a prettified version of the original type.
  * The prettified type has all generics removed from intellisense and displays a flat object.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
+
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 /**
@@ -59,8 +59,8 @@ export type PickOptional<T, DEEP extends boolean = true> = {
   [K in keyof T as undefined extends T[K] ? K : never]: DEEP extends false
     ? T[K]
     : T[K] extends Optional<Indexable> // Like above, we must include `undefined` so we can recurse through both nested keys in `{ myKey?: { optionalKey?: object, requiredKey: object }}`
-    ? PickOptional<T[K], DEEP>
-    : T[K];
+      ? PickOptional<T[K], DEEP>
+      : T[K];
 };
 
 /**

@@ -1,6 +1,9 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { SubscriberRepository } from '@novu/dal';
-import { SubscriberEntity, ErrorCodesEnum } from '@novu/dal';
+import {
+  SubscriberRepository,
+  SubscriberEntity,
+  ErrorCodesEnum,
+} from '@novu/dal';
 
 import {
   CachedEntity,
@@ -24,7 +27,7 @@ export class CreateSubscriber {
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private updateSubscriber: UpdateSubscriber,
-    private updateSubscriberChannel: UpdateSubscriberChannel
+    private updateSubscriberChannel: UpdateSubscriberChannel,
   ) {}
 
   async execute(command: CreateSubscriberCommand) {
@@ -56,7 +59,7 @@ export class CreateSubscriber {
           data: command.data,
           subscriber,
           channels: command.channels,
-        })
+        }),
       );
     }
 
@@ -75,7 +78,7 @@ export class CreateSubscriber {
           integrationIdentifier: channel.integrationIdentifier,
           oauthHandler: OAuthHandlerEnum.EXTERNAL,
           isIdempotentOperation: false,
-        })
+        }),
       );
     }
   }
@@ -135,7 +138,7 @@ export class CreateSubscriber {
     return await this.subscriberRepository.findBySubscriberId(
       _environmentId,
       subscriberId,
-      true
+      true,
     );
   }
 }

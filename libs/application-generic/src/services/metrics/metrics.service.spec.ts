@@ -26,7 +26,7 @@ describe('MetricsService', () => {
             newRelicMetricsService: NewRelicMetricsService,
             gcsMetricsService: GCPMetricsService,
             azureMetricsService: AzureMetricsService,
-            awsMetricsService: AwsMetricsService
+            awsMetricsService: AwsMetricsService,
           ) => [
             newRelicMetricsService,
             gcsMetricsService,
@@ -57,13 +57,13 @@ describe('MetricsService', () => {
 
       const spyNewRelic = jest.spyOn(
         NewRelicMetricsService.prototype,
-        'recordMetric'
+        'recordMetric',
       );
       const spyAws = jest.spyOn(AwsMetricsService.prototype, 'recordMetric');
       const spyGcs = jest.spyOn(GCPMetricsService.prototype, 'recordMetric');
       const spyAzure = jest.spyOn(
         AzureMetricsService.prototype,
-        'recordMetric'
+        'recordMetric',
       );
 
       service.recordMetric(metricName, metricValue);
@@ -97,8 +97,9 @@ describe('MetricsService', () => {
 
         expect(
           metricsServices.some(
-            (metricsService) => metricsService instanceof NewRelicMetricsService
-          )
+            (metricsService) =>
+              metricsService instanceof NewRelicMetricsService,
+          ),
         ).toBe(true);
         delete process.env.NEW_RELIC_LICENSE_KEY;
       });
@@ -114,8 +115,8 @@ describe('MetricsService', () => {
 
         expect(
           metricsServices.some(
-            (metricsService) => metricsService instanceof AwsMetricsService
-          )
+            (metricsService) => metricsService instanceof AwsMetricsService,
+          ),
         ).toBe(true);
         delete process.env.METRICS_SERVICE;
         delete process.env.AWS_ACCESS_KEY_ID;
@@ -129,7 +130,7 @@ describe('MetricsService', () => {
         delete process.env.AWS_SECRET_ACCESS_KEY;
         delete process.env.AWS_REGION;
         await expect(createServices()).rejects.toThrow(
-          'Missing AWS credentials'
+          'Missing AWS credentials',
         );
         delete process.env.METRICS_SERVICE;
       });
@@ -142,8 +143,8 @@ describe('MetricsService', () => {
 
         expect(
           metricsServices.some(
-            (metricsService) => metricsService instanceof GCPMetricsService
-          )
+            (metricsService) => metricsService instanceof GCPMetricsService,
+          ),
         ).toBe(true);
         delete process.env.METRICS_SERVICE;
       });
@@ -156,8 +157,8 @@ describe('MetricsService', () => {
 
         expect(
           metricsServices.some(
-            (metricsService) => metricsService instanceof AzureMetricsService
-          )
+            (metricsService) => metricsService instanceof AzureMetricsService,
+          ),
         ).toBe(true);
         delete process.env.METRICS_SERVICE;
       });

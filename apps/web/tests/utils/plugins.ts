@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-restricted-imports
 import {
   DalService,
   IntegrationRepository,
@@ -134,8 +133,7 @@ export async function createNotifications({
   const service = new NotificationsService(token, environmentId);
   const session = new UserSession(process.env.REACT_APP_API_URL);
 
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < count; i += 1) {
     await service.triggerEvent(triggerIdentifier, subId, {});
   }
 
@@ -144,8 +142,9 @@ export async function createNotifications({
   }
 
   while ((await jobsService.standardQueue.getWaitingCount()) || (await jobsService.standardQueue.getActiveCount())) {
-    // eslint-disable-next-line @typescript-eslint/no-loop-func
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
   }
 
   return 'ok';

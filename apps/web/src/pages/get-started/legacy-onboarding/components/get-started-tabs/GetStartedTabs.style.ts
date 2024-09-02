@@ -35,7 +35,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
           color: dark ? colors.white : colors.B40,
         },
       },
-      ['&[data-active]']: {
+      '&[data-active]': {
         width: 'auto',
 
         '&::after': {

@@ -23,11 +23,10 @@ import {
   TemplateDescription,
   useStyles,
 } from './templateStoreStyles';
-import { IBlueprintsGrouped } from '../../../../api/hooks';
+import { IBlueprintsGrouped, useCreateTemplateFromBlueprint } from '../../../../api/hooks';
 import { TriggerNode } from './TriggerNode';
 import { ChannelNode } from './ChannelNode';
 import { FlowEditor } from '../../../../components/workflow';
-import { useCreateTemplateFromBlueprint } from '../../../../api/hooks';
 import { errorMessage } from '../../../../utils/notifications';
 import { parseUrl } from '../../../../utils/routeUtils';
 import { ROUTES } from '../../../../constants/routes';
@@ -87,7 +86,7 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
     });
 
     createTemplateFromBlueprint({
-      blueprint: blueprint,
+      blueprint,
       params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
     });
   };

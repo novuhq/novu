@@ -38,5 +38,5 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
     setLoading(preferences.loading);
   });
 
-  return { preferences: preferences, loading, mutate, refetch };
+  return { preferences, loading, mutate, refetch };
 };

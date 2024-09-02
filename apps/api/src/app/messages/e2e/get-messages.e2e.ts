@@ -122,9 +122,9 @@ describe('Get Message - /messages (GET)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: templateIdentifier,
-        to: { subscriberId: subscriberId, email: 'gg@ff.com' },
+        to: { subscriberId, email: 'gg@ff.com' },
         payload: {},
-        transactionId: transactionId,
+        transactionId,
       },
       {
         headers: {

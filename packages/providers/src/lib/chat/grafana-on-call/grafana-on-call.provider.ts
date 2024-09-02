@@ -25,14 +25,14 @@ export class GrafanaOnCallChatProvider
       imageUrl?: string;
       state?: string;
       externalLink?: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
     const data = this.transform(bridgeProviderData, {
@@ -46,7 +46,7 @@ export class GrafanaOnCallChatProvider
 
     const hasHeaders = data.headers && Object.keys(data.headers).length > 0;
 
-    //response is just string "Ok."
+    // response is just string "Ok."
     const { headers } = await this.axiosInstance.post(
       url.toString(),
       data.body,
@@ -54,7 +54,7 @@ export class GrafanaOnCallChatProvider
         ? {
             headers: data.headers as Record<string, string>,
           }
-        : undefined
+        : undefined,
     );
 
     return {

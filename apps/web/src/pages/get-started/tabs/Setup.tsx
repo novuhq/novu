@@ -1,16 +1,16 @@
-import { NextJSLogo, SvelteLogo, H3Logo, RemixLogo, ExpressLogo, NuxtLogo } from '../Logos';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Code } from '@mantine/core';
+import { HStack } from '@novu/novui/jsx';
+import { css } from '@novu/novui/css';
+import { IconOutlineMenuBook } from '@novu/design-system';
+import { NextJSLogo, SvelteLogo, H3Logo, RemixLogo, ExpressLogo, NuxtLogo } from '../Logos';
 import { OnboardingStepsTimeline } from '../OnboardingSteps';
 import { CodeSnippet } from '../legacy-onboarding/components/CodeSnippet';
 import { useEnvironment } from '../../../hooks/useEnvironment';
 import { CodeEditor } from '../CodeBlock';
 import { TextElement } from '../TextElement';
 import { CardButton, CardButtonGroupWrapper } from './CardsButtonGroup';
-import { HStack } from '@novu/novui/jsx';
-import { css } from '@novu/novui/css';
-import { IconOutlineMenuBook } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export const buildGuides = [

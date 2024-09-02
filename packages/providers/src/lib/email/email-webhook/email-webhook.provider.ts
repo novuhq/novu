@@ -28,7 +28,7 @@ export class EmailWebhookProvider
       webhookUrl: string;
       retryCount?: number;
       retryDelay?: number;
-    }
+    },
   ) {
     super();
     this.config.retryDelay ??= 30 * 1000;
@@ -36,7 +36,7 @@ export class EmailWebhookProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     return {
       success: true,
@@ -47,7 +47,7 @@ export class EmailWebhookProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, options);
     const bodyData = this.createBody(transformedData.body);
@@ -57,7 +57,7 @@ export class EmailWebhookProvider
     for (
       let retries = 0;
       !sent && retries < this.config.retryCount;
-      retries++
+      retries += 1
     ) {
       try {
         await axios.create().post(this.config.webhookUrl, bodyData, {

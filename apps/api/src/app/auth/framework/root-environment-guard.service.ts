@@ -7,7 +7,7 @@ export class RootEnvironmentGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const { user } = request;
 
     const environment = await this.authService.isRootEnvironment(user);
 

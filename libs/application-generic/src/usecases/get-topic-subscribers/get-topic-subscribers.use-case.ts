@@ -5,25 +5,25 @@ import {
   TopicRepository,
 } from '@novu/dal';
 
-import { GetTopicSubscribersCommand } from './get-topic-subscribers.command';
 import { ITopicSubscriber } from '@novu/shared';
+import { GetTopicSubscribersCommand } from './get-topic-subscribers.command';
 
 @Injectable()
 export class GetTopicSubscribersUseCase {
   constructor(
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private topicRepository: TopicRepository
+    private topicRepository: TopicRepository,
   ) {}
 
   async execute(command: GetTopicSubscribersCommand) {
     const topic = await this.topicRepository.findTopicByKey(
       command.topicKey,
       command.organizationId,
-      command.environmentId
+      command.environmentId,
     );
     if (!topic) {
       throw new NotFoundException(
-        `Topic with key ${command.topicKey} not found in current environment`
+        `Topic with key ${command.topicKey} not found in current environment`,
       );
     }
 
@@ -31,12 +31,12 @@ export class GetTopicSubscribersUseCase {
       await this.topicSubscribersRepository.findSubscribersByTopicId(
         command.environmentId,
         command.organizationId,
-        topic._id
+        topic._id,
       );
 
     if (!topicSubscribers) {
       throw new NotFoundException(
-        `Topic id ${command.topicKey} for the organization ${command.organizationId} in the environment ${command.environmentId} has no entity with subscribers`
+        `Topic id ${command.topicKey} for the organization ${command.organizationId} in the environment ${command.environmentId} has no entity with subscribers`,
       );
     }
 
@@ -44,7 +44,7 @@ export class GetTopicSubscribersUseCase {
   }
 
   private mapFromEntity(
-    topicSubscriber: TopicSubscribersEntity
+    topicSubscriber: TopicSubscribersEntity,
   ): ITopicSubscriber {
     return {
       ...topicSubscriber,

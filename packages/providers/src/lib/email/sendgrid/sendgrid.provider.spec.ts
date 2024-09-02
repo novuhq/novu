@@ -163,7 +163,7 @@ test('should get ip pool name from credentials', async () => {
     ...mockNovuMessage,
   });
   expect(sendMock).toHaveBeenCalledWith(
-    expect.objectContaining({ ipPoolName: 'config_ip' })
+    expect.objectContaining({ ipPoolName: 'config_ip' }),
   );
 });
 
@@ -180,6 +180,6 @@ test('should override credentials with mail data', async () => {
     ...{ ipPoolName: 'ip_from_mail_data' },
   });
   expect(sendMock).toHaveBeenCalledWith(
-    expect.objectContaining({ ipPoolName: 'ip_from_mail_data' })
+    expect.objectContaining({ ipPoolName: 'ip_from_mail_data' }),
   );
 });

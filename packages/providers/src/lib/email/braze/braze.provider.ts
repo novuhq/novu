@@ -27,7 +27,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
       apiKey: string;
       apiURL: string;
       appID: string;
-    }
+    },
   ) {
     super();
     this.braze = new Braze(this.config.apiURL, this.config.apiKey);
@@ -35,11 +35,11 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const maildata = await this.createMailData(options);
     const response = await this.braze.messages.send(
-      this.transform(bridgeProviderData, maildata).body
+      this.transform(bridgeProviderData, maildata).body,
     );
 
     return {
@@ -64,7 +64,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   private async createMailData(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<MessagesSendObject> {
     const messageBody: MessagesSendObject = {
       broadcast: false,
@@ -92,10 +92,10 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
           return {
             file_name: attachment.name || 'attachment',
             url: `data:${attachment.mime};base64,${attachment.file.toString(
-              'base64'
+              'base64',
             )}`,
           };
-        }
+        },
       );
     }
 
@@ -103,7 +103,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       const testEmailMessage = await this.createMailData(options);
@@ -126,7 +126,7 @@ export class BrazeEmailProvider extends BaseProvider implements IEmailProvider {
     } catch (error) {
       return {
         success: false,
-        message: 'Integration check error: ' + error.message,
+        message: `Integration check error: ${error.message}`,
         code: CheckIntegrationResponseEnum.FAILED,
       };
     }

@@ -1,11 +1,11 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import mongoose, { Schema } from 'mongoose';
 import { ActorTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
 import { MessageDBModel } from './message.entity';
 import { getTTLOptions } from '../../shared';
+
+const mongooseDelete = require('mongoose-delete');
 
 const messageSchema = new Schema<MessageDBModel>(
   {
@@ -290,7 +290,6 @@ messageSchema.index({
   createdAt: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||
   mongoose.model<MessageDBModel>('Message', messageSchema);

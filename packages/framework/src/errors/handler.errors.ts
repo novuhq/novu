@@ -13,7 +13,6 @@ export class MethodNotAllowedError extends FrameworkError {
 export class InvalidActionError extends BadRequestError {
   code = ErrorCodeEnum.INVALID_ACTION_ERROR;
 
-  // eslint-disable-next-line  @typescript-eslint/ban-types
   constructor(action: string, allowedActions: Object) {
     super(`Invalid query string: \`action\`=\`${action}\`. Please use one of ${enumToPrettyString(allowedActions)}`);
   }

@@ -20,6 +20,15 @@ import {
 import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import {
+  AuthService,
+  buildOauthRedirectUrl,
+  SwitchEnvironment,
+  SwitchEnvironmentCommand,
+  SwitchOrganization,
+  SwitchOrganizationCommand,
+} from '@novu/application-generic';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -32,16 +41,7 @@ import { PasswordResetRequest } from './usecases/password-reset-request/password
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
 import { ApiException } from '../shared/exceptions/api.exception';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
-import {
-  AuthService,
-  buildOauthRedirectUrl,
-  SwitchEnvironment,
-  SwitchEnvironmentCommand,
-  SwitchOrganization,
-  SwitchOrganizationCommand,
-} from '@novu/application-generic';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
 import { UpdatePassword } from './usecases/update-password/update-password.usecase';

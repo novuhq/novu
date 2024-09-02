@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { TenantDBModel } from './tenant.entity';
@@ -62,6 +61,5 @@ tenantSchema.index(
   { unique: true }
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Tenant =
   (mongoose.models.Tenant as mongoose.Model<TenantDBModel>) || mongoose.model<TenantDBModel>('Tenant', tenantSchema);

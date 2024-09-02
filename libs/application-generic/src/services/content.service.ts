@@ -26,7 +26,7 @@ export class ContentService {
       if (!variables.hasOwnProperty(key)) continue;
       modifiedContent = modifiedContent.replace(
         new RegExp(`{{${this.escapeForRegExp(key)}}}`, 'g'),
-        variables[key]
+        variables[key],
       );
     }
 
@@ -68,7 +68,7 @@ export class ContentService {
         ...new Map(
           variables
             .filter((item) => !this.isSystemVariable(item.name))
-            .map((item) => [item.name, item])
+            .map((item) => [item.name, item]),
         ).values(),
       ],
       reservedVariables: [
@@ -92,7 +92,7 @@ export class ContentService {
                 name: item.field,
                 type: TemplateVariableTypeEnum.STRING,
               };
-            }
+            },
           );
 
           return mappedChildren;
@@ -129,7 +129,7 @@ export class ContentService {
   }
 
   extractReservedVariables(
-    variables: IMustacheVariable[]
+    variables: IMustacheVariable[],
   ): ITriggerReservedVariable[] {
     const reservedVariables: ITriggerReservedVariable[] = [];
 
@@ -138,7 +138,7 @@ export class ContentService {
       .map((item) => this.getVariableNamePrefix(item.name));
 
     const triggerContextTypes = Array.from(
-      new Set(reservedVariableTypes)
+      new Set(reservedVariableTypes),
     ) as TriggerContextTypeEnum[];
 
     triggerContextTypes.forEach((variable) => {
@@ -155,14 +155,14 @@ export class ContentService {
     const variables: string[] = [];
 
     const hasSmsMessage = !!messages.find(
-      (i) => i.template?.type === StepTypeEnum.SMS
+      (i) => i.template?.type === StepTypeEnum.SMS,
     );
     if (hasSmsMessage) {
       variables.push('phone');
     }
 
     const hasEmailMessage = !!messages.find(
-      (i) => i.template?.type === StepTypeEnum.EMAIL
+      (i) => i.template?.type === StepTypeEnum.EMAIL,
     );
     if (hasEmailMessage) {
       variables.push('email');
@@ -172,7 +172,7 @@ export class ContentService {
   }
 
   private *messagesTextIterator(
-    messages: NotificationStep[]
+    messages: NotificationStep[],
   ): Generator<string> {
     for (const message of messages) {
       if (!message.template) continue;
@@ -203,7 +203,7 @@ export class ContentService {
 
   private isSystemVariable(variableName: string): boolean {
     return TemplateSystemVariables.includes(
-      this.getVariableNamePrefix(variableName)
+      this.getVariableNamePrefix(variableName),
     );
   }
 
@@ -215,7 +215,7 @@ export class ContentService {
 
   private isReservedVariable(variableName: string): boolean {
     return TriggerReservedVariables.includes(
-      this.getVariableNamePrefix(variableName)
+      this.getVariableNamePrefix(variableName),
     );
   }
 
@@ -225,21 +225,21 @@ export class ContentService {
 
   buildMessageVariables(
     commandPayload: any,
-    subscriberPayload
+    subscriberPayload,
   ): { [key: string]: any } {
     const messageVariables: { [key: string]: any } = { ...commandPayload };
 
     return this.combineObjects(
       messageVariables,
       subscriberPayload,
-      'subscriber'
+      'subscriber',
     );
   }
 
   private combineObjects(
     messageVariables: { [key: string]: any },
     subscriberPayload,
-    subscriberString = ''
+    subscriberString = '',
   ): { [key: string]: any } {
     const newMessageVariables: { [key: string]: any } = { ...messageVariables };
 

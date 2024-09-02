@@ -12,7 +12,7 @@ export const metricsServiceList = {
     newRelicMetricsService: NewRelicMetricsService,
     gcsMetricsService: GCPMetricsService,
     azureMetricsService: AzureMetricsService,
-    awsMetricsService: AwsMetricsService
+    awsMetricsService: AwsMetricsService,
   ) => {
     const allMetricsServices = [
       newRelicMetricsService,
@@ -22,7 +22,7 @@ export const metricsServiceList = {
     ];
 
     const activeMetricsServices = allMetricsServices.filter((service) =>
-      service.isActive(process.env)
+      service.isActive(process.env),
     );
 
     return activeMetricsServices;

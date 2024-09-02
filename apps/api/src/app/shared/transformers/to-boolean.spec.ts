@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { TransformToBoolean } from './to-boolean';
 import { plainToInstance } from 'class-transformer';
+import { TransformToBoolean } from './to-boolean';
 
 function transform(input: { isSomething: any }) {
   return plainToInstance(TestDto, input);

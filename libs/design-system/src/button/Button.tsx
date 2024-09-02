@@ -48,6 +48,7 @@ export const Button = forwardRef<HTMLButtonElement, IButtonProps>(
     buttonRef
   ) => {
     const { classes } = useStyles({ disabled, inherit, variant, pulse });
+    // eslint-disable-next-line no-nested-ternary
     const withIconProps = icon ? (iconPosition === 'left' ? { leftIcon: icon } : { rightIcon: icon }) : {};
 
     return (

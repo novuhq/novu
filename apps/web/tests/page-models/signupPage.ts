@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-restricted-imports
 import { UserEntity } from '@novu/dal';
 import { Page, selectors } from '@playwright/test';
 import { faker } from '@faker-js/faker';

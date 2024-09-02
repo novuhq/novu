@@ -12,6 +12,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
+import { ModuleRef } from '@nestjs/core';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CompleteAndUpdateVercelIntegrationRequestDto } from './dtos/complete-and-update-vercel-integration-request.dto';
 import { SetVercelConfigurationRequestDto } from './dtos/setup-vercel-integration-request.dto';
@@ -27,7 +28,6 @@ import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { ModuleRef } from '@nestjs/core';
 import { ProcessVercelWebhook } from './usecases/process-vercel-webhook/process-vercel-webhook.usecase';
 import { ProcessVercelWebhookCommand } from './usecases/process-vercel-webhook/process-vercel-webhook.command';
 
@@ -86,7 +86,7 @@ export class PartnerIntegrationsController {
   ) {
     return await this.getVercelProjectsUsecase.execute(
       GetVercelProjectsCommand.create({
-        configurationId: configurationId,
+        configurationId,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -121,7 +121,7 @@ export class PartnerIntegrationsController {
     return await this.getVercelConfigurationUsecase.execute(
       GetVercelConfigurationCommand.create({
         userId: user._id,
-        configurationId: configurationId,
+        configurationId,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
       })

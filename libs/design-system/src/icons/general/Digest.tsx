@@ -1,6 +1,5 @@
 import React from 'react';
 
-/* eslint-disable */
 export function Digest(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg

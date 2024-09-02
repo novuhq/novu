@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Badge, Switch } from '@mantine/core';
 
-import { Table } from './Table';
 import { ColumnDef } from '@tanstack/react-table';
+import { Table } from './Table';
 import { Button } from '../Button';
 import { IconOutlineAdd } from '../../icons';
 

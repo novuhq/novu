@@ -27,11 +27,11 @@ export class InMemoryProviderService {
   constructor(
     private provider: InMemoryProviderEnum,
     private isCluster: boolean,
-    private enableAutoPipelining?: boolean
+    private enableAutoPipelining?: boolean,
   ) {
     Logger.log(
       this.descriptiveLogMessage('In-memory provider service initialized'),
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
     this.inMemoryProviderClient = this.buildClient(provider);
   }
@@ -77,17 +77,17 @@ export class InMemoryProviderService {
 
     Logger.warn(
       this.descriptiveLogMessage(
-        `Is being delayed ${times} times up to a total of ${retries}.`
+        `Is being delayed ${times} times up to a total of ${retries}.`,
       ),
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     if (times === retries) {
       Logger.error(
         this.descriptiveLogMessage(
-          'It reached the limit of retries waiting for readiness.'
+          'It reached the limit of retries waiting for readiness.',
         ),
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
   }
@@ -111,7 +111,7 @@ export class InMemoryProviderService {
   public getOptions(): RedisOptions | undefined {
     if (this.inMemoryProviderClient) {
       if (!this.isCluster) {
-        const options: RedisOptions = this.inMemoryProviderClient.options;
+        const { options } = this.inMemoryProviderClient;
 
         return options;
       } else {
@@ -126,7 +126,7 @@ export class InMemoryProviderService {
   private inMemoryClusterProviderSetup(provider): Cluster | undefined {
     Logger.verbose(
       this.descriptiveLogMessage(`In-memory cluster service set up`),
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     const { getConfig, getClient, isClientReady } =
@@ -139,7 +139,7 @@ export class InMemoryProviderService {
     if (!host) {
       Logger.warn(
         this.descriptiveLogMessage(`Missing host for in-memory cluster for`),
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
 
@@ -147,41 +147,41 @@ export class InMemoryProviderService {
     if (host && inMemoryProviderClient) {
       Logger.log(
         this.descriptiveLogMessage(`Connecting to cluster at ${host}`),
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
 
       inMemoryProviderClient.on('connect', () => {
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory cluster connected`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('connecting', () => {
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory cluster connecting`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('reconnecting', () => {
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory cluster reconnecting`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('close', () => {
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory cluster closing`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('end', () => {
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory cluster end`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
@@ -189,23 +189,23 @@ export class InMemoryProviderService {
         Logger.error(
           error,
           this.descriptiveLogMessage(
-            `There has been an error in the In-memory Cluster provider client`
+            `There has been an error in the In-memory Cluster provider client`,
           ),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('ready', () => {
         Logger.log(
           this.descriptiveLogMessage(`In-memory cluster ready`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('wait', () => {
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory cluster waiting`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
@@ -216,7 +216,7 @@ export class InMemoryProviderService {
   private inMemoryProviderSetup(): Redis | undefined {
     Logger.verbose(
       this.descriptiveLogMessage('In-memory service set up'),
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     const { getClient, getConfig, isClientReady } = getClientAndConfig();
@@ -228,7 +228,7 @@ export class InMemoryProviderService {
     if (!host) {
       Logger.warn(
         this.descriptiveLogMessage('Missing host for in-memory provider'),
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
 
@@ -236,20 +236,20 @@ export class InMemoryProviderService {
     if (host && inMemoryProviderClient) {
       Logger.log(
         this.descriptiveLogMessage(`Connecting to ${host}:${port}`),
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
 
       inMemoryProviderClient.on('connect', () => {
         Logger.verbose(
           this.descriptiveLogMessage('REDIS CONNECTED'),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
       inMemoryProviderClient.on('reconnecting', () => {
         Logger.verbose(
           this.descriptiveLogMessage('Redis reconnecting'),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
@@ -265,9 +265,9 @@ export class InMemoryProviderService {
         Logger.error(
           error,
           this.descriptiveLogMessage(
-            'There has been an error in the InMemory provider client'
+            'There has been an error in the InMemory provider client',
           ),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
 
@@ -301,15 +301,15 @@ export class InMemoryProviderService {
         await this.inMemoryProviderClient.quit();
         Logger.verbose(
           this.descriptiveLogMessage(`In-memory provider service shutdown`),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } catch (error) {
         Logger.warn(
           error,
           this.descriptiveLogMessage(
-            `In-memory provider service shutdown has failed`
+            `In-memory provider service shutdown has failed`,
           ),
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
     }

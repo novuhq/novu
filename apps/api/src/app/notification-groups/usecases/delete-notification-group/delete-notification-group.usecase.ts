@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationGroupRepository, DalException } from '@novu/dal';
 import { DeleteNotificationGroupCommand } from './delete-notification-group.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+
 @Injectable()
 export class DeleteNotificationGroup {
   constructor(private notificationGroupRepository: NotificationGroupRepository) {}

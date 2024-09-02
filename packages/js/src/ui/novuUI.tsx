@@ -5,10 +5,9 @@ import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './co
 import { generateRandomString } from './helpers';
 import type { Appearance, BaseNovuProviderProps, Localization, NovuProviderProps, Tab } from './types';
 
-// eslint-disable-next-line
 // @ts-ignore
 const isDev = __DEV__;
-// eslint-disable-next-line
+
 // @ts-ignore
 const version = PACKAGE_VERSION;
 const cssHref = isDev

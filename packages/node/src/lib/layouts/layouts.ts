@@ -1,5 +1,5 @@
-import { LayoutId } from './layout.interface';
 import {
+  LayoutId,
   ILayoutPaginationPayload,
   ILayoutPayload,
   ILayoutUpdatePayload,

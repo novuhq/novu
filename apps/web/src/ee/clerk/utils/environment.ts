@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
 import type {
   UserPublicMetadata as _UserPublicMetadata,
   OrganizationPublicMetadata as _OrganizationPublicMetadata,

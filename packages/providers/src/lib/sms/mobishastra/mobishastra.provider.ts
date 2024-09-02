@@ -23,7 +23,7 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
       password: string;
       language?: string;
       from: string;
-    }
+    },
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -36,7 +36,7 @@ export class MobishastraProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, {
       Sender: options.from || this.config.from,

@@ -28,7 +28,7 @@ export const useSelectStyles = createStyles((theme: MantineTheme, _params, getRe
       top: '5px',
       margin: '2.5px 0px',
       lineHeight: '20px',
-      ['&[data-selected]']: {
+      '&[data-selected]': {
         color: dark ? theme.white : theme.colors.gray[8],
         backgroundColor: dark
           ? theme.fn.lighten(theme.colors.dark[5], 0.1)

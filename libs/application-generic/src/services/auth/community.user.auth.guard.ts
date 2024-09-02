@@ -21,7 +21,7 @@ export class CommunityUserAuthGuard extends AuthGuard([
 ]) {
   constructor(
     private readonly reflector: Reflector,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
   ) {
     super();
   }
@@ -41,10 +41,10 @@ export class CommunityUserAuthGuard extends AuthGuard([
           session: false,
           defaultStrategy: PassportStrategyEnum.JWT,
         };
-      case ApiAuthSchemeEnum.API_KEY:
+      case ApiAuthSchemeEnum.API_KEY: {
         const apiEnabled = this.reflector.get<boolean>(
           'external_api_accessible',
-          context.getHandler()
+          context.getHandler(),
         );
         if (!apiEnabled)
           throw new UnauthorizedException('API endpoint not available');
@@ -53,11 +53,12 @@ export class CommunityUserAuthGuard extends AuthGuard([
           session: false,
           defaultStrategy: PassportStrategyEnum.HEADER_API_KEY,
         };
+      }
       case NONE_AUTH_SCHEME:
         throw new UnauthorizedException('Missing authorization header');
       default:
         throw new UnauthorizedException(
-          `Invalid authentication scheme: "${authScheme}"`
+          `Invalid authentication scheme: "${authScheme}"`,
         );
     }
   }
@@ -67,7 +68,7 @@ export class CommunityUserAuthGuard extends AuthGuard([
     user: IJwtClaims | false,
     info: any,
     context: ExecutionContext,
-    status?: any
+    status?: any,
   ): TUser {
     let handledUser: HandledUser;
     if (typeof user === 'object') {

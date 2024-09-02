@@ -14,7 +14,7 @@ import { ChannelTitle } from './ChannelTitle';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
 const getIntegrationIcon = (colorScheme: string, providerId: string) => {
-  return '/static/images/providers/' + colorScheme + '/square/' + providerId + '.svg';
+  return `/static/images/providers/${colorScheme}/square/${providerId}.svg`;
 };
 
 const ListProvidersContainer = styled.div`

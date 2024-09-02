@@ -30,12 +30,6 @@ import {
   IJob,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
-import { Filter } from '../../utils/filter';
-import {
-  FilterProcessingDetails,
-  IFilterVariables,
-} from '../../utils/filter-processing-details';
-import { ConditionsFilterCommand } from './conditions-filter.command';
 import {
   differenceInDays,
   differenceInHours,
@@ -43,6 +37,12 @@ import {
   parseISO,
 } from 'date-fns';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { Filter } from '../../utils/filter';
+import {
+  FilterProcessingDetails,
+  IFilterVariables,
+} from '../../utils/filter-processing-details';
+import { ConditionsFilterCommand } from './conditions-filter.command';
 import { PlatformException } from '../../utils/exceptions';
 import { createHash } from '../../utils/hmac';
 import { Instrument } from '../../instrumentation';
@@ -72,22 +72,22 @@ export class ConditionsFilter extends Filter {
     private environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => ExecutionLogRoute))
     private executionLogRoute: ExecutionLogRoute,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
   ) {
     super();
   }
 
   public async filter(
-    command: ConditionsFilterCommand
+    command: ConditionsFilterCommand,
   ): Promise<IConditionsFilterResponse> {
-    const variables = command.variables;
+    const { variables } = command;
     const filters = this.extractFilters(command);
 
     if (!filters || !Array.isArray(filters) || filters.length === 0) {
       return {
         passed: true,
         conditions: [],
-        variables: variables,
+        variables,
       };
     }
 
@@ -97,7 +97,7 @@ export class ConditionsFilter extends Filter {
       const filterProcessingDetails = new FilterProcessingDetails();
       filterProcessingDetails.addFilter(filter, variables);
 
-      const children = filter.children;
+      const { children } = filter;
       const noRules =
         !children || (Array.isArray(children) && children.length === 0);
       if (noRules) {
@@ -111,7 +111,7 @@ export class ConditionsFilter extends Filter {
           variables,
           children[0],
           command,
-          filterProcessingDetails
+          filterProcessingDetails,
         );
 
         details.push(filterProcessingDetails);
@@ -123,7 +123,7 @@ export class ConditionsFilter extends Filter {
         filter,
         variables,
         command,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
 
       details.push(filterProcessingDetails);
@@ -135,7 +135,7 @@ export class ConditionsFilter extends Filter {
       .map((detail) => detail.toObject().conditions)
       .reduce(
         (conditionsArray, collection) => [...collection, ...conditionsArray],
-        []
+        [],
       );
 
     return {
@@ -146,11 +146,12 @@ export class ConditionsFilter extends Filter {
   }
 
   private extractFilters(command: ConditionsFilterCommand) {
+    // eslint-disable-next-line no-nested-ternary
     return command.filters?.length
       ? command.filters
       : command.step?.filters?.length
-      ? command.step.filters
-      : [];
+        ? command.step.filters
+        : [];
   }
 
   public static sumFilters(
@@ -159,7 +160,7 @@ export class ConditionsFilter extends Filter {
       failedFilters: string[];
       passedFilters: string[];
     },
-    condition: ICondition
+    condition: ICondition,
   ) {
     let type: string = condition.filter?.toLowerCase();
 
@@ -176,7 +177,7 @@ export class ConditionsFilter extends Filter {
   private async processPreviousStep(
     filter: IPreviousStepFilterPart,
     command: ConditionsFilterCommand,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
       transactionId: command.job.transactionId,
@@ -267,7 +268,7 @@ export class ConditionsFilter extends Filter {
   private async processIsOnline(
     filter: IRealtimeOnlineFilterPart | IOnlineInLastFilterPart,
     command: ConditionsFilterCommand,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): Promise<boolean> {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.job.subscriberId,
@@ -338,7 +339,7 @@ export class ConditionsFilter extends Filter {
   private async getWebhookResponse(
     child: IWebhookFilterPart,
     variables: IFilterVariables,
-    command: ConditionsFilterCommand
+    command: ConditionsFilterCommand,
   ): Promise<Record<string, unknown> | undefined> {
     if (!child.webhookUrl) return undefined;
 
@@ -363,7 +364,7 @@ export class ConditionsFilter extends Filter {
         JSON.stringify({
           message: err.message,
           data: 'Exception while performing webhook request.',
-        })
+        }),
       );
     }
   }
@@ -379,13 +380,13 @@ export class ConditionsFilter extends Filter {
 
     return createHash(
       decryptApiKey(environment.apiKeys[0].key),
-      command.environmentId
+      command.environmentId,
     );
   }
 
   private async buildPayload(
     variables: IFilterVariables,
-    command: ConditionsFilterCommand
+    command: ConditionsFilterCommand,
   ) {
     if (process.env.NODE_ENV === 'test') return variables;
 
@@ -402,7 +403,7 @@ export class ConditionsFilter extends Filter {
     } else {
       payload.subscriber = await this.subscriberRepository.findBySubscriberId(
         command.environmentId,
-        command.job.subscriberId
+        command.job.subscriberId,
       );
     }
 
@@ -424,22 +425,23 @@ export class ConditionsFilter extends Filter {
     variables: IFilterVariables,
     child: FilterParts,
     command: ConditionsFilterCommand,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): Promise<boolean> {
     let passed = false;
 
     if (child.on === FilterPartTypeEnum.WEBHOOK) {
       if (process.env.NODE_ENV === 'test') return true;
+      // eslint-disable-next-line no-param-reassign
       child.value = await this.compileFilter(
         child.value,
         variables,
-        command.job
+        command.job,
       );
       const res = await this.getWebhookResponse(child, variables, command);
       passed = this.processFilterEquality(
         { payload: undefined, webhook: res },
         child,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
     }
 
@@ -448,16 +450,17 @@ export class ConditionsFilter extends Filter {
       child.on === FilterPartTypeEnum.PAYLOAD ||
       child.on === FilterPartTypeEnum.SUBSCRIBER
     ) {
+      // eslint-disable-next-line no-param-reassign
       child.value = await this.compileFilter(
         child.value,
         variables,
-        command.job
+        command.job,
       );
 
       passed = this.processFilterEquality(
         variables,
         child,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
     }
 
@@ -468,7 +471,7 @@ export class ConditionsFilter extends Filter {
       passed = await this.processIsOnline(
         child,
         command,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
     }
 
@@ -476,7 +479,7 @@ export class ConditionsFilter extends Filter {
       passed = await this.processPreviousStep(
         child,
         command,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
     }
 
@@ -486,14 +489,14 @@ export class ConditionsFilter extends Filter {
     filter: StepFilter,
     variables: IFilterVariables,
     command: ConditionsFilterCommand,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): Promise<boolean> {
     if (filter.value === FieldLogicalOperatorEnum.OR) {
       return await this.handleOrFilters(
         filter,
         variables,
         command,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
     }
 
@@ -502,7 +505,7 @@ export class ConditionsFilter extends Filter {
         filter,
         variables,
         command,
-        filterProcessingDetails
+        filterProcessingDetails,
       );
     }
 
@@ -513,19 +516,19 @@ export class ConditionsFilter extends Filter {
     filter: StepFilter,
     variables: IFilterVariables,
     command: ConditionsFilterCommand,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): Promise<boolean> {
     const { webhookFilters, otherFilters } = this.splitFilters(filter);
 
     const matchedOtherFilters = await this.filterAsync(otherFilters, (i) =>
-      this.processFilter(variables, i, command, filterProcessingDetails)
+      this.processFilter(variables, i, command, filterProcessingDetails),
     );
     if (otherFilters.length !== matchedOtherFilters.length) {
       return false;
     }
 
     const matchedWebhookFilters = await this.filterAsync(webhookFilters, (i) =>
-      this.processFilter(variables, i, command, filterProcessingDetails)
+      this.processFilter(variables, i, command, filterProcessingDetails),
     );
 
     return matchedWebhookFilters.length === webhookFilters.length;
@@ -533,11 +536,11 @@ export class ConditionsFilter extends Filter {
 
   private splitFilters(filter: StepFilter) {
     const webhookFilters = filter.children.filter(
-      (childFilter) => childFilter.on === 'webhook'
+      (childFilter) => childFilter.on === 'webhook',
     );
 
     const otherFilters = filter.children.filter(
-      (childFilter) => childFilter.on !== 'webhook'
+      (childFilter) => childFilter.on !== 'webhook',
     );
 
     return { webhookFilters, otherFilters };
@@ -547,26 +550,26 @@ export class ConditionsFilter extends Filter {
     filter: StepFilter,
     variables: IFilterVariables,
     command: ConditionsFilterCommand,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): Promise<boolean> {
     const { webhookFilters, otherFilters } = this.splitFilters(filter);
 
     const foundFilter = await this.findAsync(otherFilters, (i) =>
-      this.processFilter(variables, i, command, filterProcessingDetails)
+      this.processFilter(variables, i, command, filterProcessingDetails),
     );
     if (foundFilter) {
       return true;
     }
 
     return !!(await this.findAsync(webhookFilters, (i) =>
-      this.processFilter(variables, i, command, filterProcessingDetails)
+      this.processFilter(variables, i, command, filterProcessingDetails),
     ));
   }
 
   private async compileFilter(
     value: string,
     variables: IFilterVariables,
-    job: IJob
+    job: IJob,
   ): Promise<string | undefined> {
     try {
       return await this.compileTemplate.execute({
@@ -585,10 +588,8 @@ export class ConditionsFilter extends Filter {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ error: e?.message }),
-        })
+        }),
       );
-
-      return;
     }
   }
 
@@ -616,7 +617,7 @@ export class ConditionsFilter extends Filter {
 const differenceIn = (
   currentDate: Date,
   lastDate: Date,
-  timeOperator: TimeOperatorEnum
+  timeOperator: TimeOperatorEnum,
 ) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
     return differenceInMinutes(currentDate, lastDate);

@@ -1,8 +1,7 @@
-import { createContext } from 'react';
+import { createContext, useCallback, useEffect } from 'react';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
-import { useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { useSegment } from './SegmentProvider';

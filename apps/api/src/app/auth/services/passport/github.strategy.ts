@@ -11,7 +11,7 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
     super({
       clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
       clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
-      callbackURL: process.env.API_ROOT_URL + '/v1/auth/github/callback',
+      callbackURL: `${process.env.API_ROOT_URL}/v1/auth/github/callback`,
       scope: ['user:email'],
       passReqToCallback: true,
       store: {

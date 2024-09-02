@@ -35,11 +35,11 @@ describe('Get Feature Flag', () => {
         process.env[mockKey] = 'true';
 
         const getIsTemplateStoreEnabled = new GetFeatureFlag(
-          new FeatureFlagsService()
+          new FeatureFlagsService(),
         );
 
         const result = await getIsTemplateStoreEnabled.execute(
-          getFeatureFlagCommand
+          getFeatureFlagCommand,
         );
         expect(result).toEqual(true);
       });
@@ -62,11 +62,11 @@ describe('Get Feature Flag', () => {
         process.env[mockKey] = 'false';
 
         const getIsTemplateStoreEnabled = new GetFeatureFlag(
-          new FeatureFlagsService()
+          new FeatureFlagsService(),
         );
 
         const result = await getIsTemplateStoreEnabled.execute(
-          getFeatureFlagCommand
+          getFeatureFlagCommand,
         );
         expect(result).toEqual(true);
       });

@@ -156,7 +156,7 @@ export function LayoutEditor({
     try {
       setAst(parse(layoutContent));
     } catch (e) {
-      return;
+      /* empty */
     }
   }, [layoutContent]);
 

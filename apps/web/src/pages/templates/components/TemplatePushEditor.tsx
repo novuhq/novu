@@ -2,13 +2,13 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { colors, Text, When } from '@novu/design-system';
+import { Flex, Grid, Stack, useMantineTheme } from '@mantine/core';
+import { useState } from 'react';
 import { useEnvironment, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
-import { Flex, Grid, Stack, useMantineTheme } from '@mantine/core';
-import { useState } from 'react';
 import { PushPreview } from '../../../components/workflow/preview';
 import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
 import { CustomCodeEditor } from './CustomCodeEditor';

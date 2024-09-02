@@ -45,6 +45,7 @@ export function Variable({ editor, node, updateAttributes, ...props }: NodeViewP
 
           if (variable) {
             updateVariableAttributes(variable);
+
             return;
           }
 

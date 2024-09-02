@@ -1,8 +1,8 @@
 import { Grid, useMantineTheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select, Tooltip } from '@novu/design-system';
-import { useLayouts } from '../../../../hooks';
 import { useEffect } from 'react';
+import { useLayouts } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useStepFormErrors } from '../../hooks/useStepFormErrors';
 import { When } from '../../../../components/utils/When';

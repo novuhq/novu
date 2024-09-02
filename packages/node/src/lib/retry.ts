@@ -13,7 +13,7 @@ const DEFAULT_WAIT_MAX = 30;
 
 export function makeRetryable(
   axios: AxiosInstance,
-  config?: INovuConfiguration
+  config?: INovuConfiguration,
 ) {
   axios.interceptors.request.use((axiosConfig) => {
     if (
@@ -26,6 +26,7 @@ export function makeRetryable(
         return axiosConfig;
       }
 
+      // eslint-disable-next-line no-param-reassign
       axiosConfig.headers[IDEMPOTENCY_KEY] = uuid();
     }
 
@@ -65,6 +66,7 @@ export function makeRetryable(
         requestConfig.method &&
         NON_IDEMPOTENT_METHODS.includes(requestConfig.method)
       ) {
+        // eslint-disable-next-line no-param-reassign
         requestConfig.headers[IDEMPOTENCY_KEY] = uuid();
       }
     },

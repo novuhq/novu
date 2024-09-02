@@ -98,7 +98,7 @@ const CustomCodeEditorBase = ({
 
         const handle = monaco.languages.registerCompletionItemProvider('handlebars', {
           triggerCharacters: ['{'],
-          provideCompletionItems: function (model, position) {
+          provideCompletionItems(model, position) {
             const word = model.getWordUntilPosition(position);
             const range = {
               startLineNumber: position.lineNumber,
@@ -110,7 +110,7 @@ const CustomCodeEditorBase = ({
             const suggestions = getSuggestions(monaco, range);
 
             return {
-              suggestions: suggestions,
+              suggestions,
             };
           },
         });

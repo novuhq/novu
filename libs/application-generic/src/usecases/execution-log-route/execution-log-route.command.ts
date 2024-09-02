@@ -11,7 +11,7 @@ export class ExecutionLogRouteCommand extends CreateExecutionDetailsCommand {
   readonly userId: string;
 
   static getDetailsFromJob(
-    job: IJob
+    job: IJob,
   ): Pick<
     ExecutionLogRouteCommand,
     | 'environmentId'

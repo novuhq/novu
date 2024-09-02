@@ -28,7 +28,7 @@ export class EnvironmentService {
       ...(parentId && { _parentId: parentId }),
       apiKeys: [
         {
-          key: key,
+          key,
           _userId: userId,
           hash: hashedApiKey,
         },

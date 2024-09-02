@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GetApiRateLimitServiceMaximumConfig } from './get-api-rate-limit-service-maximum-config.usecase';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitServiceMaximumEnvVarFormat,
@@ -9,6 +8,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CacheService, InvalidateCacheService, cacheService as cacheServiceProvider } from '@novu/application-generic';
+import { GetApiRateLimitServiceMaximumConfig } from './get-api-rate-limit-service-maximum-config.usecase';
 
 const mockRateLimitServiceLevel = ApiServiceLevelEnum.FREE;
 const mockRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;

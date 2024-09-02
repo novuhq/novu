@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { NotificationDBModel } from './notification.entity';
@@ -159,7 +158,6 @@ notificationSchema.index({
   createdAt: -1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Notification =
   (mongoose.models.Notification as mongoose.Model<NotificationDBModel>) ||
   mongoose.model<NotificationDBModel>('Notification', notificationSchema);

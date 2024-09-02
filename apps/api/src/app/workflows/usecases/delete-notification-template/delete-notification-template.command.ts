@@ -1,6 +1,6 @@
 import { IsDefined, IsEnum, IsMongoId, IsString } from 'class-validator';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { WorkflowTypeEnum } from '@novu/shared';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 /**
  * @deprecated:

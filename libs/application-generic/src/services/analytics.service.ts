@@ -18,7 +18,10 @@ const LOG_CONTEXT = 'AnalyticsService';
 export class AnalyticsService {
   private segment: Analytics;
   private mixpanel: Mixpanel.Mixpanel;
-  constructor(private segmentToken?: string | null, private batchSize = 100) {}
+  constructor(
+    private segmentToken?: string | null,
+    private batchSize = 100,
+  ) {}
 
   async initialize() {
     if (this.segmentToken) {
@@ -36,7 +39,7 @@ export class AnalyticsService {
   upsertGroup(
     organizationId: string,
     organization: IOrganizationEntity,
-    user: IUser
+    user: IUser,
   ) {
     if (this.segmentEnabled) {
       const traits: Record<string, string | string[]> = {
@@ -61,7 +64,7 @@ export class AnalyticsService {
       this.segment.group({
         userId: user._id as any,
         groupId: organizationId,
-        traits: traits,
+        traits,
       });
     }
   }
@@ -70,7 +73,7 @@ export class AnalyticsService {
     if (this.segmentEnabled) {
       this.segment.alias({
         previousId: distinctId,
-        userId: userId,
+        userId,
       });
     }
   }
@@ -78,7 +81,7 @@ export class AnalyticsService {
   upsertUser(user: IUser, distinctId: string) {
     if (this.segmentEnabled) {
       const githubToken = (user as any).tokens?.find(
-        (token) => token.provider === 'github'
+        (token) => token.provider === 'github',
       );
 
       this.segment.identify({
@@ -86,7 +89,7 @@ export class AnalyticsService {
         traits: {
           firstName: user.firstName,
           lastName: user.lastName,
-          name: ((user.firstName || '') + ' ' + (user.lastName || '')).trim(),
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
@@ -101,7 +104,7 @@ export class AnalyticsService {
   setValue(userId: string, propertyName: string, value: string | number) {
     if (this.segmentEnabled) {
       this.segment.identify({
-        userId: userId,
+        userId,
         traits: {
           [propertyName]: value,
         },
@@ -113,23 +116,23 @@ export class AnalyticsService {
     name: string,
     userId: string,
     data: Record<string, unknown> = {},
-    anonymousId?: string
+    anonymousId?: string,
   ) {
     if (this.segmentEnabled) {
       Logger.log(
-        'Tracking event: ' + name,
+        `Tracking event: ${name}`,
         {
           name,
           data,
           source: 'segment',
         },
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
 
       try {
         this.segment.track({
           anonymousId: userId,
-          userId: userId,
+          userId,
           event: name,
           properties: data,
         });
@@ -141,7 +144,7 @@ export class AnalyticsService {
             message: error.message,
           },
           'There has been an error when tracking',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
     }
@@ -150,17 +153,17 @@ export class AnalyticsService {
   mixpanelTrack(
     name: string,
     userId: string,
-    data: Record<string, unknown> = {}
+    data: Record<string, unknown> = {},
   ) {
     if (this.mixpanelEnabled) {
       Logger.log(
-        'Tracking event: ' + name,
+        `Tracking event: ${name}`,
         {
           name,
           data,
           source: 'mixpanel',
         },
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
 
       try {
@@ -176,7 +179,7 @@ export class AnalyticsService {
             message: error?.message,
           },
           'There has been an error when tracking mixpanel',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
     }
