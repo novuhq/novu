@@ -154,14 +154,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       })
     );
 
-    if (isDryRun) {
-      if (!success) {
-        Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');
-      }
-
-      return true;
-    }
-
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_RESET, secondsToReset);
@@ -177,6 +169,14 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
         apiServiceLevel
       )
     );
+
+    if (isDryRun) {
+      if (!success) {
+        Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');
+      }
+
+      return true;
+    }
 
     if (success) {
       return true;
