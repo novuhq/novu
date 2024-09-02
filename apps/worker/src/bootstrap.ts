@@ -1,3 +1,4 @@
+import './config/env.config';
 import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';

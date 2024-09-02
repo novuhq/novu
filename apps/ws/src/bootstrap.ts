@@ -1,3 +1,4 @@
+import './config/env.config';
 import 'newrelic';
 import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
