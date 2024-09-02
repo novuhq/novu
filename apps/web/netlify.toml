@@ -10,13 +10,25 @@
 
 [[redirects]]
   from = "https://dev.web.novu.co/*"
-  to = "https://dev.dashboard.novu.co/:splat"
+  to = "https://dashboard.novu-staging.co/:splat"
   status = 301
   force = true
 
 [[redirects]]
   from = "http://dev.web.novu.co/*"
-  to = "http://dev.dashboard.novu.co/:splat"
+  to = "http://dashboard.novu-staging.co/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://dev.dashboard.novu.co/*"
+  to = "https://dashboard.novu-staging.co/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://dev.dashboard.novu.co/*"
+  to = "http://dashboard.novu-staging.co/:splat"
   status = 301
   force = true
 
