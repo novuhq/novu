@@ -194,7 +194,7 @@ export class SendMessage {
         break;
       }
       default: {
-        throw new PlatformException(`Unsupported step type: ${stepType}`);
+        break;
       }
     }
 

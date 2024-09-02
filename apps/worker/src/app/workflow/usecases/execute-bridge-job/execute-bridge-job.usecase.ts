@@ -343,7 +343,7 @@ export class ExecuteBridgeJob {
         break;
       }
       default: {
-        throw new PlatformException(`Unsupported step type: ${job.type}`);
+        break;
       }
     }
 
