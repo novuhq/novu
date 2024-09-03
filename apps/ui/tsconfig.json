@@ -19,7 +19,6 @@
     "resolveJsonModule": true,
     "target": "ES2022",
     "strict": true,
-    "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
