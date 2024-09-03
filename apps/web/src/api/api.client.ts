@@ -3,6 +3,7 @@ import { CustomDataType } from '@novu/shared';
 import { API_ROOT } from '../config';
 import { getToken } from '../components/providers/AuthProvider';
 import { getEnvironmentId } from '../components/providers/EnvironmentProvider';
+import { WorkflowChannelPreferences } from '../hooks/useWorkflowChannelPreferences';
 
 interface IOptions {
   absoluteUrl: boolean;
@@ -163,6 +164,14 @@ export function buildApiHttpClient({
       return post(`/v1/bridge/sync?source=studio`, {
         bridgeUrl,
       });
+    },
+
+    async getPreferences(workflowId: string) {
+      return get('/v1/preferences?workflowId=' + workflowId);
+    },
+
+    async upsertPreferences(workflowId: string, preferences: WorkflowChannelPreferences) {
+      return post('/v1/preferences', { workflowId, preferences });
     },
 
     async postTelemetry(event: string, data?: Record<string, unknown>) {

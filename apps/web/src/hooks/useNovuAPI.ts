@@ -7,7 +7,7 @@ import { useStudioState } from '../studio/StudioStateProvider';
 import { getToken } from '../components/providers/AuthProvider';
 import { useEnvironment } from './useEnvironment';
 
-function useNovuAPI() {
+export function useNovuAPI() {
   const { devSecretKey } = useStudioState();
   const { currentEnvironment } = useEnvironment();
   const token = getToken();
