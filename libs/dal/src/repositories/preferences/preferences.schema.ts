@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
+const mongooseDelete = require('mongoose-delete');
 
 const preferencesSchema = new Schema<PreferencesDBModel>(
   {
@@ -96,7 +96,6 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
 
 preferencesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Preferences =
   (mongoose.models.Preferences as mongoose.Model<PreferencesDBModel>) ||
   mongoose.model<PreferencesDBModel>('Preferences', preferencesSchema);
