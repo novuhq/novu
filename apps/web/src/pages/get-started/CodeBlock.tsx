@@ -27,8 +27,6 @@ export function CodeEditor({
 
   const [errorLineNumbers, setErrorLineNumbers] = useState<number[]>([]);
 
-  // const [keys, setKeys] = useState(0);
-
   useEffect(() => {
     if (monacoRef.current === null) {
       return;
@@ -43,11 +41,6 @@ export function CodeEditor({
       theme={isDark ? 'vs-dark' : 'vs'}
       language={language}
       defaultValue={code}
-      onChange={(val) => {
-        if (readonly) return;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        // setFileText(val!);
-      }}
       onMount={(editor, monaco) => {
         const themeName = colorScheme === 'dark' ? 'novu-dark' : 'novu';
         monaco.editor.defineTheme('novu-dark', {
@@ -83,11 +76,6 @@ export function CodeEditor({
         const decorators = editor.createDecorationsCollection([]);
 
         decoratorsRef.current = decorators;
-
-        /*
-         * setKeys(Object.keys(JSON.parse(code ?? '{}')).length);
-         * setFileText(code);
-         */
       }}
       options={{
         minimap: {

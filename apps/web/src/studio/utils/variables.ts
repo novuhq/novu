@@ -9,6 +9,7 @@ export function getSuggestionVariables(schemaObject, namespace: string) {
       }
       if (schemaItem?.type === 'array') {
         // TODO: determine how we should handle dynamic (array-based controls)
+
         return;
       }
 

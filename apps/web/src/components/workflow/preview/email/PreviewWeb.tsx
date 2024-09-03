@@ -215,7 +215,7 @@ export const PreviewWeb = ({
               Issue with rendering email without html
               <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
                     <></>
-                  </Frame>*/}
+                  </Frame> */}
                 </ErrorBoundary>
 
                 {error && error.template?.content && error.template?.content?.message && (

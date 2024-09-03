@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import { expect } from 'chai';
 import {
@@ -14,7 +13,10 @@ import { UserSession, SubscribersService } from '@novu/testing';
 
 const axiosInstance = axios.create();
 
-const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const promiseTimeout = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST)', function () {
   let session: UserSession;

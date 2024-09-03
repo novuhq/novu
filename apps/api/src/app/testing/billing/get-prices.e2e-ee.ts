@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
@@ -8,7 +9,7 @@ describe('GetPrices', () => {
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { GetPrices, GetPricesCommand } = eeBilling;
 
   const stripeStub = {

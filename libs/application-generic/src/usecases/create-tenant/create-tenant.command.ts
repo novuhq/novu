@@ -1,6 +1,6 @@
 import { TenantCustomData } from '@novu/shared';
-import { EnvironmentWithUserCommand } from '../../commands';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class CreateTenantCommand extends EnvironmentWithUserCommand {
   @IsString()

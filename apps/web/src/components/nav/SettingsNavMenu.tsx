@@ -6,19 +6,18 @@ import {
   IconRoomPreferences,
   IconWorkspacePremium,
 } from '@novu/design-system';
+import { useNavigate } from 'react-router-dom';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useAuth } from '../../hooks/useAuth';
 import { ROUTES } from '../../constants/routes';
-import { useNavigate } from 'react-router-dom';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { When } from '../utils/When';
 
-// TODO: Parentheses were not part of designs, but I believe it's much clearer this way
-const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope})` ?? ''}`;
+const getScopedTitle = (label: string, scope?: string) => `${label} ${scope ? `(${scope})` : ''}`;
 
 export const SettingsNavMenu: React.FC = () => {
   const navigate = useNavigate();
@@ -120,7 +119,7 @@ export const SettingsNavMenu: React.FC = () => {
             link={getEnvSettingsRoute(ROUTES.WEBHOOK, BaseEnvironmentEnum.PRODUCTION)}
             testId="side-nav-settings-inbound-webhook-production"
           ></NavMenuLinkButton>
-        </NavMenuToggleButton>*/}
+        </NavMenuToggleButton> */}
       <FreeTrialSidebarWidget />
     </NavMenu>
   );

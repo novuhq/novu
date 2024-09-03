@@ -36,25 +36,25 @@ describe('Bridge Health Check', async () => {
   });
 
   it('should have a status', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/novu?action=health-check');
+    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
 
     expect(result.data.status).to.equal('ok');
   });
 
   it('should have an sdk version', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/novu?action=health-check');
+    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
 
     expect(result.data.sdkVersion).to.be.a('string');
   });
 
   it('should have a framework version', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/novu?action=health-check');
+    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
 
     expect(result.data.frameworkVersion).to.be.a('string');
   });
 
   it('should return the discovered resources', async () => {
-    const result = await axios.get(frameworkClient.serverPath + '/novu?action=health-check');
+    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
 
     expect(result.data.discovered).to.deep.equal({ workflows: 1, steps: 1 });
   });

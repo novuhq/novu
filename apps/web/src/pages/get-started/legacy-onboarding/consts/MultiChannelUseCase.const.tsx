@@ -19,7 +19,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
   steps: [
     {
       title: 'Configure providers',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>
@@ -40,7 +40,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Build a workflow',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Novu has prepared workflow templates. </StepText>
@@ -52,7 +52,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Connect trigger and run test',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <OpenWorkflowButton
@@ -70,7 +70,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Track activity feed',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Discover</StepText>

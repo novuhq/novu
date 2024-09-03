@@ -35,6 +35,7 @@ export interface INotificationTemplate {
   type?: WorkflowTypeEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData?: any;
   data?: NotificationTemplateCustomData;
 }

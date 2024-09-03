@@ -18,7 +18,6 @@ export enum HandlebarHelpersEnum {
   NE = 'ne',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const HandlebarHelpers = {
   [HandlebarHelpersEnum.EQUALS]: { description: 'assert equal' },
   [HandlebarHelpersEnum.TITLECASE]: { description: 'transform to TitleCase' },

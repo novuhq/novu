@@ -12,7 +12,10 @@ interface IGetVercelConfiguration {
 
 @Injectable()
 export class GetVercelProjects {
-  constructor(private httpService: HttpService, private organizationRepository: OrganizationRepository) {}
+  constructor(
+    private httpService: HttpService,
+    private organizationRepository: OrganizationRepository
+  ) {}
 
   async execute(command: GetVercelProjectsCommand) {
     try {

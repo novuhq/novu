@@ -177,7 +177,7 @@ describe('Count - GET /widget/notifications/count', function () {
   });
 
   it('should return unseen count by default limit 100', async function () {
-    for (let i = 0; i < 102; i++) {
+    for (let i = 0; i < 102; i += 1) {
       await messageRepository.create({
         _notificationId: MessageRepository.createObjectId(),
         _environmentId: session.environment._id,
@@ -327,14 +327,14 @@ describe('Count - GET /widget/notifications/count', function () {
 
     await invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: session.environment._id,
       }),
     });
 
     await invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: session.environment._id,
       }),
     });
@@ -370,14 +370,14 @@ describe('Count - GET /widget/notifications/count', function () {
 async function invalidateSeenFeed(invalidateCache: InvalidateCacheService, subscriberId: string, session) {
   await invalidateCache.invalidateQuery({
     key: buildFeedKey().invalidate({
-      subscriberId: subscriberId,
+      subscriberId,
       _environmentId: session.environment._id,
     }),
   });
 
   await invalidateCache.invalidateQuery({
     key: buildMessageCountKey().invalidate({
-      subscriberId: subscriberId,
+      subscriberId,
       _environmentId: session.environment._id,
     }),
   });

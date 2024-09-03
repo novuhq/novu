@@ -1,8 +1,8 @@
+import { ChannelTypeEnum } from '@novu/shared';
 import {
   overridePreferences,
   filteredPreference,
 } from './get-subscriber-template-preference.usecase';
-import { ChannelTypeEnum } from '@novu/shared';
 
 describe('overridePreferences', function () {
   beforeEach(function () {});
@@ -32,7 +32,7 @@ describe('overridePreferences', function () {
         in_app: true,
         chat: true,
         push: true,
-      }
+      },
     );
 
     const expectedPreferenceResult = {
@@ -45,19 +45,19 @@ describe('overridePreferences', function () {
 
     expect(channels).toEqual(expectedPreferenceResult);
     expect(
-      overrides.find((override) => override.channel === 'email').source
+      overrides.find((override) => override.channel === 'email').source,
     ).toEqual('subscriber');
     expect(
-      overrides.find((override) => override.channel === 'sms').source
+      overrides.find((override) => override.channel === 'sms').source,
     ).toEqual('subscriber');
     expect(
-      overrides.find((override) => override.channel === 'in_app').source
+      overrides.find((override) => override.channel === 'in_app').source,
     ).toEqual('template');
     expect(
-      overrides.find((override) => override.channel === 'chat').source
+      overrides.find((override) => override.channel === 'chat').source,
     ).toEqual('template');
     expect(
-      overrides.find((override) => override.channel === 'push').source
+      overrides.find((override) => override.channel === 'push').source,
     ).toEqual('subscriber');
   });
 
@@ -82,7 +82,7 @@ describe('overridePreferences', function () {
         in_app: true,
         chat: true,
         push: true,
-      }
+      },
     );
 
     const expectedPreferenceResult = {
@@ -95,19 +95,19 @@ describe('overridePreferences', function () {
 
     expect(channels).toEqual(expectedPreferenceResult);
     expect(
-      overrides.find((override) => override.channel === 'email').source
+      overrides.find((override) => override.channel === 'email').source,
     ).toEqual('template');
     expect(
-      overrides.find((override) => override.channel === 'sms').source
+      overrides.find((override) => override.channel === 'sms').source,
     ).toEqual('template');
     expect(
-      overrides.find((override) => override.channel === 'in_app').source
+      overrides.find((override) => override.channel === 'in_app').source,
     ).toEqual('template');
     expect(
-      overrides.find((override) => override.channel === 'chat').source
+      overrides.find((override) => override.channel === 'chat').source,
     ).toEqual('template');
     expect(
-      overrides.find((override) => override.channel === 'push').source
+      overrides.find((override) => override.channel === 'push').source,
     ).toEqual('template');
   });
 });

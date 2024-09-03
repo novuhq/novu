@@ -1,3 +1,4 @@
+import { StepTypeEnum } from '@novu/shared';
 import { ROUTES } from '../../../../constants/routes';
 
 import { GetStartedLink, StepDescription, StepText } from './shared';
@@ -5,7 +6,6 @@ import { OnboardingWorkflowRouteEnum, OnboardingUseCase } from './types';
 import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
-import { StepTypeEnum } from '@novu/shared';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-delay';
 
@@ -17,7 +17,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
   steps: [
     {
       title: 'Configure providers',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>
@@ -38,7 +38,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Build a workflow',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Novu pre-built workflow with a delay node. </StepText>
@@ -50,7 +50,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Set-up delay preferences',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Novu has predefined a time interval of 5 minutes. </StepText>
@@ -67,7 +67,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Connect trigger and run test',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <OpenWorkflowButton
@@ -85,7 +85,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Track activity feed',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Discover</StepText>

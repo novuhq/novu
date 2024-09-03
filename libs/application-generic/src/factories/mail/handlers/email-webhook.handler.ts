@@ -5,6 +5,7 @@ import {
 } from '@novu/shared';
 import { EmailWebhookProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
+
 export class EmailWebhookHandler extends BaseHandler {
   constructor() {
     super(EmailProviderIdEnum.EmailWebhook, ChannelTypeEnum.EMAIL);

@@ -19,12 +19,12 @@ export interface IAuthService {
       id: string;
     },
     distinctId: string,
-    additionalContext?: AuthenticateContext
+    additionalContext?: AuthenticateContext,
   ): Promise<{ newUser: boolean; token: string }>;
   refreshToken(userId: string): Promise<string>;
   isAuthenticatedForOrganization(
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<boolean>;
   getUserByApiKey(apiKey: string): Promise<UserSessionData>;
   getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string>;
@@ -33,7 +33,7 @@ export interface IAuthService {
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
-    environmentId?: string
+    environmentId?: string,
   ): Promise<string>;
 
   validateUser(payload: UserSessionData): Promise<UserEntity>;

@@ -8,7 +8,10 @@ import { UpdateJobStatus } from './update-job-status.usecase';
 
 @Injectable()
 export class SetJobAsFailed {
-  constructor(private updateJobStatus: UpdateJobStatus, private jobRepository: JobRepository) {}
+  constructor(
+    private updateJobStatus: UpdateJobStatus,
+    private jobRepository: JobRepository
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: SetJobAsFailedCommand, error: Error): Promise<void> {

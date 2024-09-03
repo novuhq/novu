@@ -60,6 +60,7 @@ export class PromoteNotificationTemplateChange {
       });
 
       if (step.variants && step.variants.length > 0) {
+        // eslint-disable-next-line no-param-reassign
         step.variants = step.variants
           ?.map(mapNewVariantItem)
           .filter((variant): variant is StepVariantEntity => variant !== undefined);
@@ -72,6 +73,7 @@ export class PromoteNotificationTemplateChange {
       }
 
       if (step?._templateId && oldMessage._id) {
+        // eslint-disable-next-line no-param-reassign
         step._templateId = oldMessage._id;
       }
 
@@ -90,6 +92,7 @@ export class PromoteNotificationTemplateChange {
       }
 
       if (step?._templateId && oldMessage._id) {
+        // eslint-disable-next-line no-param-reassign
         step._templateId = oldMessage._id;
       }
 

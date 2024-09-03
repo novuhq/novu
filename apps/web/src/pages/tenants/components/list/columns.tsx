@@ -31,7 +31,7 @@ export const columns: IExtendedColumn<ITenantEntity>[] = [
   {
     accessor: 'createdAt',
     Header: 'Created at',
-    maxWidth: maxWidth,
+    maxWidth,
     Cell: withCellLoading(({ row: { original } }) => {
       return format(new Date(original.createdAt), 'dd/MM/yyyy HH:mm');
     }),
@@ -39,7 +39,7 @@ export const columns: IExtendedColumn<ITenantEntity>[] = [
   {
     accessor: 'updatedAt',
     Header: 'Updated at',
-    maxWidth: maxWidth,
+    maxWidth,
     Cell: withCellLoading(({ row: { original } }) => {
       return format(new Date(original.updatedAt), 'dd/MM/yyyy HH:mm');
     }),

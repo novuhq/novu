@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
@@ -45,8 +46,8 @@ import {
   ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
-import packageJson from '../../../package.json';
 import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
+import packageJson from '../../../package.json';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {

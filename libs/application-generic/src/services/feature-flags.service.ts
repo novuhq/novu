@@ -29,23 +29,23 @@ export class FeatureFlagsService {
     Logger.verbose('Feature Flags service initialized', LOG_CONTEXT);
 
     // TODO: In the future we can replace the object key here for an environment variable
-    const service =
+    const Service =
       featureFlagsProviders[FeatureFlagsProvidersEnum.LAUNCH_DARKLY];
 
-    if (service) {
-      this.service = new service();
+    if (Service) {
+      this.service = new Service();
 
       try {
         await this.service.initialize();
         Logger.log(
           'Feature Flags service has been successfully initialized',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } catch (error) {
         Logger.error(
           'Feature Flags service has failed when initialized',
           error,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
     } else {
@@ -59,20 +59,20 @@ export class FeatureFlagsService {
         await this.service.gracefullyShutdown();
         Logger.log(
           'Feature Flags service has been gracefully shut down',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } catch (error) {
         Logger.error(
           error,
           'Feature Flags service has failed when shut down',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
     }
   }
 
   public async getWithContext<T>(
-    contextualFeatureFlag: IContextualFeatureFlag<T>
+    contextualFeatureFlag: IContextualFeatureFlag<T>,
   ): Promise<T> {
     const { defaultValue, key, environmentId, organizationId, userId } =
       contextualFeatureFlag;
@@ -92,7 +92,7 @@ export class FeatureFlagsService {
    * the Novu Cloud service offerings with the self hosted users.
    */
   public async getGlobal<T>(
-    globalFeatureFlag: IGlobalFeatureFlag<T>
+    globalFeatureFlag: IGlobalFeatureFlag<T>,
   ): Promise<T> {
     const { defaultValue, key } = globalFeatureFlag;
 
@@ -102,7 +102,7 @@ export class FeatureFlagsService {
 
     return (await this.service.getWithAnonymousContext(
       key,
-      defaultValue
+      defaultValue,
     )) satisfies T;
   }
 
@@ -117,7 +117,7 @@ export class FeatureFlagsService {
   public async get<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
-    context: IFeatureFlagContext
+    context: IFeatureFlagContext,
   ): Promise<T> {
     if (!this.isServiceEnabled()) {
       return defaultValue;
@@ -142,19 +142,19 @@ export class FeatureFlagsService {
         return (await this.service.getWithOrganizationContext(
           key,
           defaultValue,
-          context.organizationId
+          context.organizationId,
         )) satisfies T;
       case 'environmentId':
         return (await this.service.getWithEnvironmentContext(
           key,
           defaultValue,
-          context.environmentId
+          context.environmentId,
         )) satisfies T;
       case 'userId':
         return (await this.service.getWithUserContext(
           key,
           defaultValue,
-          context.userId
+          context.userId,
         )) satisfies T;
       default:
         throw new Error('Invalid context target');

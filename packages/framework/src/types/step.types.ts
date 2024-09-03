@@ -9,7 +9,7 @@ import type { Awaitable, Prettify } from './util.types';
 
 export type StepOptions<
   T_ControlSchema extends Schema = Schema,
-  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
 > = {
   /**
    * Skip the step. If the skip function returns true, the step will be skipped.
@@ -60,7 +60,7 @@ export type StepOutput<T_Result> = Promise<T_Result & StepContext>;
 
 export type ActionStep<
   T_Outputs extends Record<string, unknown> = Record<string, unknown>,
-  T_Result extends Record<string, unknown> = Record<string, unknown>
+  T_Result extends Record<string, unknown> = Record<string, unknown>,
 > = <
   /**
    * The schema for the controls of the step.
@@ -69,7 +69,7 @@ export type ActionStep<
   /**
    * The controls for the step.
    */
-  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
 >(
   /**
    * The name of the step. This is used to identify the step in the workflow.
@@ -114,7 +114,7 @@ export type CustomStep = <
   /**
    * The result for the step.
    */
-  T_Result extends T_IntermediaryResult = T_IntermediaryResult
+  T_Result extends T_IntermediaryResult = T_IntermediaryResult,
 >(
   /**
    * The name of the step. This is used to identify the step in the workflow.
@@ -149,7 +149,7 @@ export type ChannelStep<
   /**
    * The result for the step.
    */
-  T_Result extends Record<string, unknown> = Record<string, unknown>
+  T_Result extends Record<string, unknown> = Record<string, unknown>,
 > = <
   /**
    * The schema for the controls of the step.
@@ -158,7 +158,7 @@ export type ChannelStep<
   /**
    * The controls for the step.
    */
-  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
 >(
   /**
    * The name of the step. This is used to identify the step in the workflow.

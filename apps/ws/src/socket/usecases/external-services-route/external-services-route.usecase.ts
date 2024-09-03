@@ -11,7 +11,10 @@ const LOG_CONTEXT = 'ExternalServicesRoute';
 
 @Injectable()
 export class ExternalServicesRoute {
-  constructor(private wsGateway: WSGateway, private messageRepository: MessageRepository) {}
+  constructor(
+    private wsGateway: WSGateway,
+    private messageRepository: MessageRepository
+  ) {}
 
   public async execute(command: ExternalServicesRouteCommand) {
     const isOnline = await this.connectionExist(command);
@@ -74,7 +77,7 @@ export class ExternalServicesRoute {
       );
     }
     const paginationIndication: IUnreadCountPaginationIndication =
-      unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount: unreadCount, hasMore: false };
+      unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
 
     await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
       unreadCount: paginationIndication.unreadCount,
@@ -102,7 +105,7 @@ export class ExternalServicesRoute {
     }
 
     const paginationIndication: IUnseenCountPaginationIndication =
-      unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount: unseenCount, hasMore: false };
+      unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
 
     await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
       unseenCount: paginationIndication.unseenCount,

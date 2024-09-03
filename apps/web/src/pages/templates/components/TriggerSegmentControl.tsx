@@ -8,7 +8,7 @@ export const TriggerSegmentControl = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const value = useMemo(() => {
-    return pathname.replace(basePath + '/', '');
+    return pathname.replace(`${basePath}/`, '');
   }, [pathname, basePath]);
 
   return (
@@ -29,7 +29,7 @@ export const TriggerSegmentControl = () => {
       ]}
       value={value}
       onChange={async (segmentValue) => {
-        navigate(basePath + '/' + segmentValue);
+        navigate(`${basePath}/${segmentValue}`);
       }}
     />
   );

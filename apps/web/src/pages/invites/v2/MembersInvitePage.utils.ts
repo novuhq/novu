@@ -24,5 +24,5 @@ export const buildInviteHref = ({
 };
 
 export const generateInviteLink = (memberToken: string) => {
-  return `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
+  return `${window.location.origin.toString()}${parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken })}`;
 };

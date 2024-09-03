@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest';
-import { APNSPushProvider } from './apns.provider';
 import apn from '@parse/node-apn';
+import { APNSPushProvider } from './apns.provider';
 
 test('should trigger apns library correctly', async () => {
   const mockSend = vi.fn(() => {
@@ -59,7 +59,7 @@ test('should trigger apns library correctly', async () => {
       priority: 10,
       topic: 'bundleId',
     },
-    ['target']
+    ['target'],
   );
 });
 
@@ -112,7 +112,7 @@ test('should trigger apns library correctly with _passthrough', async () => {
           topic: '_passthrough',
         },
       },
-    }
+    },
   );
 
   expect(mockSend).toBeCalledWith(
@@ -131,6 +131,6 @@ test('should trigger apns library correctly with _passthrough', async () => {
       topic: '_passthrough',
       'url-args': ['target'],
     },
-    ['target']
+    ['target'],
   );
 });

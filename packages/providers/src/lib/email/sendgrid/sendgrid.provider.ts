@@ -31,7 +31,7 @@ export class SendgridEmailProvider
       from: string;
       senderName: string;
       ipPoolName?: string;
-    }
+    },
   ) {
     super();
     this.sendgridMail = new MailService();
@@ -40,14 +40,14 @@ export class SendgridEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.sendgridMail.send(
       this.transform<MailDataRequired>(
         bridgeProviderData,
-        mailData as unknown as Record<string, unknown>
-      ).body
+        mailData as unknown as Record<string, unknown>,
+      ).body,
     );
 
     return {
@@ -57,7 +57,7 @@ export class SendgridEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
@@ -87,7 +87,9 @@ export class SendgridEmailProvider
      * deleted below values from customData to avoid passing them
      * in customArgs because customArgs has max limit of 10,000 bytes
      */
+    // eslint-disable-next-line no-param-reassign
     delete options.customData?.dynamicTemplateData;
+    // eslint-disable-next-line no-param-reassign
     delete options.customData?.templateId;
 
     const attachments = options.attachments?.map(
@@ -107,7 +109,7 @@ export class SendgridEmailProvider
         }
 
         return attachmentJson;
-      }
+      },
     );
 
     const mailData: Partial<MailDataRequired> = {
@@ -131,16 +133,16 @@ export class SendgridEmailProvider
         novuSubscriberId: options.notificationDetails?.subscriberId,
         ...options.customData,
       },
-      attachments: attachments,
+      attachments,
       personalizations: [
         {
           to: options.to.map((email) => ({ email })),
           cc: options.cc?.map((ccItem) => ({ email: ccItem })),
           bcc: options.bcc?.map((bccItem) => ({ email: bccItem })),
-          dynamicTemplateData: dynamicTemplateData,
+          dynamicTemplateData,
         },
       ],
-      templateId: templateId,
+      templateId,
       headers: options.headers,
     };
 
@@ -167,9 +169,10 @@ export class SendgridEmailProvider
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.id === identifier);
     }
 
@@ -184,7 +187,7 @@ export class SendgridEmailProvider
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body.id,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -205,6 +208,8 @@ export class SendgridEmailProvider
         return EmailEventStatusEnum.DROPPED;
       case 'delivered':
         return EmailEventStatusEnum.DELIVERED;
+      default:
+        return undefined;
     }
   }
 }

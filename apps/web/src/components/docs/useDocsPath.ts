@@ -20,7 +20,6 @@ export const useDocsPath = (paths: DocsPaths) => {
     return () => {
       setPath('');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, paths]);
 
   return path;

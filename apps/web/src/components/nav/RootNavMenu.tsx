@@ -14,9 +14,11 @@ import {
   IconViewQuilt,
   IconWebhook,
 } from '@novu/novui/icons';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useToggle } from '@mantine/hooks';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
 import { ROUTES } from '../../constants/routes';
-import { useSegment } from '../../components/providers/SegmentProvider';
+import { useSegment } from '../providers/SegmentProvider';
 import { useEnvironment } from '../../hooks/useEnvironment';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useUserOnboardingStatus } from '../../api/hooks/useUserOnboardingStatus';
@@ -32,12 +34,10 @@ import { parseUrl } from '../../utils/routeUtils';
 import { OrganizationSwitcher } from '../../ee/clerk';
 import { IS_EE_AUTH_ENABLED } from '../../config/index';
 import { useFeatureFlag } from '../../hooks/useFeatureFlag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { When } from '../utils/When';
 import { SidebarFooter } from '../layout/components/LocalStudioSidebar/SidebarFooter';
 import { useNavigateToLocalStudio } from '../../studio/hooks/useNavigateToLocalStudio';
 import { OpenLocalStudioModal } from '../../studio/components/OpenLocalStudioModal';
-import { useToggle } from '@mantine/hooks';
 import { OutlineButton } from '../../studio/components/OutlineButton';
 
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });

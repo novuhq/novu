@@ -15,11 +15,11 @@ export abstract class Filter {
   protected processFilterEquality(
     variables: IFilterVariables,
     fieldFilter: IBaseFieldFilterPart,
-    filterProcessingDetails: FilterProcessingDetails
+    filterProcessingDetails: FilterProcessingDetails,
   ): boolean {
     const actualValue = _.get(
       variables,
-      `${fieldFilter.on}.${fieldFilter.field}`
+      `${fieldFilter.on}.${fieldFilter.field}`,
     );
     const filterValue = this.parseValue(actualValue, fieldFilter.value);
     let result = false;
@@ -74,12 +74,14 @@ export abstract class Filter {
       passedFilters: string[];
     },
     condition: ICondition,
-    type?: string
+    type?: string,
   ) {
     if (!type) {
+      // eslint-disable-next-line no-param-reassign
       type = condition.filter;
     }
 
+    // eslint-disable-next-line no-param-reassign
     type = type?.toLowerCase();
 
     if (condition.passed && !summary.passedFilters.includes(type)) {
@@ -114,7 +116,7 @@ export abstract class Filter {
 
   protected async findAsync<T>(
     array: T[],
-    predicate: (t: T) => Promise<boolean>
+    predicate: (t: T) => Promise<boolean>,
   ): Promise<T | undefined> {
     for (const t of array) {
       if (await predicate(t)) {
@@ -127,13 +129,13 @@ export abstract class Filter {
 
   protected async filterAsync<T>(
     arr: T[],
-    callback: (item: T) => Promise<boolean>
+    callback: (item: T) => Promise<boolean>,
   ): Promise<T[]> {
     const fail = Symbol('Filter Async failure');
 
     return (
       await Promise.all(
-        arr.map(async (item) => ((await callback(item)) ? item : fail))
+        arr.map(async (item) => ((await callback(item)) ? item : fail)),
       )
     ).filter((i) => i !== fail) as T[];
   }

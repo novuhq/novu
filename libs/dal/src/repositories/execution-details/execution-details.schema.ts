@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsDBModel } from './execution-details.entity';
@@ -115,7 +114,6 @@ executionDetailsSchema.index({
 
 executionDetailsSchema.index({ expireAt: 1 }, getTTLOptions());
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
   (mongoose.models.ExecutionDetails as mongoose.Model<ExecutionDetailsDBModel>) ||
   mongoose.model<ExecutionDetailsDBModel>('ExecutionDetails', executionDetailsSchema);

@@ -166,7 +166,7 @@ describe('Novu Client', () => {
         }));
 
         await step.digest('timed-digest', async () => ({
-          cron: '0 0-23/1 * * *', //EVERY_HOUR
+          cron: '0 0-23/1 * * *', // EVERY_HOUR
         }));
 
         await step.delay('delay', async () => ({
@@ -179,7 +179,9 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       // wait for discovery to finish
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1);
+      });
 
       const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(2);
@@ -316,7 +318,7 @@ describe('Novu Client', () => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + controls.name,
+                subject: `body static prefix ${controls.name}`,
                 body: controls.name,
               };
             },
@@ -365,7 +367,7 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe('body static prefix John');
     });
 
@@ -472,12 +474,12 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toBe(emailConfiguration.body);
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe(emailConfiguration.subject);
       expect(emailExecutionResult.providers).toEqual({});
-      const metadata = emailExecutionResult.metadata;
+      const { metadata } = emailExecutionResult;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
@@ -508,12 +510,12 @@ describe('Novu Client', () => {
       expect(delayExecutionResult).toBeDefined();
       expect(delayExecutionResult.outputs).toBeDefined();
       if (!delayExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const unit = delayExecutionResult.outputs.unit;
+      const { unit } = delayExecutionResult.outputs;
       expect(unit).toBe(delayConfiguration.unit);
-      const amount = delayExecutionResult.outputs.amount;
+      const { amount } = delayExecutionResult.outputs;
       expect(amount).toBe(delayConfiguration.amount);
       expect(delayExecutionResult.providers).toEqual({});
-      const type = delayExecutionResult.outputs.type;
+      const { type } = delayExecutionResult.outputs;
       expect(type).toBe('regular');
     });
 
@@ -530,7 +532,7 @@ describe('Novu Client', () => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                subject: `body static prefix ${controls.name} ${controls.lastName} ${controls.role}`,
                 body: controls.body,
               };
             },
@@ -584,9 +586,9 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe("body static prefix `default_name` Smith's product manager");
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toContain('cat');
       expect(body).toContain('dog');
     });
@@ -636,9 +638,9 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe('subject');
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toBe('body subject');
     });
 
@@ -687,9 +689,9 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe('subject subject {{controls.subject}}');
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toBe('body');
     });
 
@@ -706,7 +708,7 @@ describe('Novu Client', () => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                subject: `body static prefix ${controls.name} ${controls.lastName} ${controls.role}`,
                 body: controls.body,
               };
             },
@@ -760,9 +762,9 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe("body static prefix `default_name` Smith's product manager");
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toContain('cat');
       expect(body).toContain('dog');
     });
@@ -852,7 +854,7 @@ describe('Novu Client', () => {
             additionalProperties: false,
           } as const,
           providers: {
-            sendgrid: async ({ controls, outputs }) => ({
+            sendgrid: async () => ({
               _passthrough: {
                 body: {
                   fooBody: 'barBody',
@@ -1054,8 +1056,7 @@ describe('Novu Client', () => {
       const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
-          // eslint-disable-next-line @typescript-eslint/no-base-to-string
-          await step.email('send-email', async () => ({ body: 'Test: ' + payload.name, subject: 'Subject' }));
+          await step.email('send-email', async () => ({ body: `Test: ${payload.name}`, subject: 'Subject' }));
         },
         {
           payloadSchema: {
@@ -1114,15 +1115,15 @@ describe('Novu Client', () => {
       expect(executionResult.outputs).toBeDefined();
       if (!executionResult.outputs) throw new Error('executionResult.outputs is undefined');
 
-      const body = executionResult.outputs.body;
+      const { body } = executionResult.outputs;
       expect(body).toBe('Test Body');
 
-      const subject = executionResult.outputs.subject;
+      const { subject } = executionResult.outputs;
       expect(subject).toBe('Subject');
 
       expect(executionResult.providers).toEqual({});
 
-      const metadata = executionResult.metadata;
+      const { metadata } = executionResult;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
@@ -1155,15 +1156,15 @@ describe('Novu Client', () => {
       expect(executionResult.outputs).toBeDefined();
       if (!executionResult.outputs) throw new Error('executionResult.outputs is undefined');
 
-      const body = executionResult.outputs.body;
+      const { body } = executionResult.outputs;
       expect(body).toBe('Test Body');
 
-      const subject = executionResult.outputs.subject;
+      const { subject } = executionResult.outputs;
       expect(subject).toBe('Subject');
 
       expect(executionResult.providers).toEqual({});
 
-      const metadata = executionResult.metadata;
+      const { metadata } = executionResult;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));

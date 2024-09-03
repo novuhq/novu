@@ -12,8 +12,8 @@ const password = 'profile-password';
 const providerOptions = {
   baseUrl,
   from: senderName,
-  username: username,
-  password: password,
+  username,
+  password,
 };
 
 const options = {

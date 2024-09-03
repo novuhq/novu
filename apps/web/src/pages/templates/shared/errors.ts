@@ -35,6 +35,7 @@ export function getSettingsErrors(errors) {
 function findMessages(obj: object): string[] {
   let messages: string[] = [];
 
+  // eslint-disable-next-line guard-for-in
   for (const key in obj) {
     const value = obj[key];
 
@@ -114,7 +115,7 @@ export function formatErrorMessage(errorsArray: string[]): string {
   if (uniqueErrors.length > 1) {
     const combinedErrors = uniqueErrors.map((errMessage) => errMessage.replace(/(Message)|(is missing!)/g, ''));
 
-    return combinedErrors.length ? 'Message ' + combinedErrors.join(' and ') + 'are missing!' : '';
+    return combinedErrors.length ? `Message ${combinedErrors.join(' and ')}are missing!` : '';
   }
 
   return uniqueErrors.join('');

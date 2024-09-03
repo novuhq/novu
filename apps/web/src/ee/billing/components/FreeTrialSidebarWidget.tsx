@@ -1,11 +1,11 @@
 import { Box, MantineColor, Progress, Text } from '@mantine/core';
 import { colors, Button } from '@novu/design-system';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
 import { useSubscription } from '../hooks/useSubscription';
 import { pluralizeDaysLeft, WARNING_LIMIT_DAYS, COLOR_WARNING } from '../utils/freeTrial.constants';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';
+import { ROUTES } from '../../../constants/routes';
 
 export const FreeTrialSidebarWidget = () => {
   const { isFreeTrialActive, daysLeft, daysTotal, hasPaymentMethod } = useSubscription();
@@ -45,7 +45,7 @@ export const FreeTrialSidebarWidget = () => {
       />
       <Button
         onClick={() => {
-          navigate(IS_EE_AUTH_ENABLED ? '/billing' : '/settings/billing');
+          navigate(IS_EE_AUTH_ENABLED ? ROUTES.MANAGE_ACCOUNT_BILLING : ROUTES.BILLING);
         }}
         data-test-id="free-trial-widget-button"
         mt={12}

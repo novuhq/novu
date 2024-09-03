@@ -5,11 +5,11 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { colors, Text, ErrorIcon, WarningIcon, CircleArrowRight } from '@novu/design-system';
+import { Group } from '@mantine/core';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
 import { useEnvironment } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
-import { Group } from '@mantine/core';
 import { useSelectPrimaryIntegrationModal } from '../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 
 type alertType = 'error' | 'warning';
@@ -36,7 +36,7 @@ export function LackIntegrationAlert({
     if (isPrimaryMissing) {
       openSelectPrimaryIntegrationModal({
         environmentId: environment?._id,
-        channelType: channelType,
+        channelType,
         onClose: () => {
           segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
         },
@@ -54,9 +54,8 @@ export function LackIntegrationAlert({
           <AlertIcon color={alertTypeToDoubleArrowColor(type)} alertType={type} />
           <div style={{ flex: 1 }}>
             <Text color={alertTypeToMessageTextColor(type)}>
-              {text
-                ? text
-                : `Please configure or activate a provider instance for the ${stepNames[channelType]} channel to send notifications over this node`}
+              {text ||
+                `Please configure or activate a provider instance for the ${stepNames[channelType]} channel to send notifications over this node`}
             </Text>
           </div>
           <CircleArrowRight color={alertTypeToDoubleArrowColor(type)} />

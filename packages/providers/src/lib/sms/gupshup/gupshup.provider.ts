@@ -19,14 +19,14 @@ export class GupshupSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       userId?: string;
       password?: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform(bridgeProviderData, {
       send_to: options.to,

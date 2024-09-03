@@ -16,6 +16,7 @@ import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
   OtelSpan,
+  Roles,
 } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -24,7 +25,6 @@ import { CreateIntegrationRequestDto } from './dtos/create-integration-request.d
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
-import { Roles } from '@novu/application-generic';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';

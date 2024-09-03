@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import {
   BulkJobOptions,
   ConnectionOptions as RedisConnectionOptions,
@@ -47,7 +48,7 @@ export class BullMqService {
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   constructor(
-    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService,
   ) {}
 
   public get worker(): Worker {
@@ -109,7 +110,6 @@ export class BullMqService {
       }),
     };
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const QueueClass = !BullMqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
@@ -118,7 +118,7 @@ export class BullMqService {
       `Creating queue ${topic}. BullMQ pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
       }`,
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     const prefix = this.generatePrefix(topic);
@@ -133,9 +133,8 @@ export class BullMqService {
   public createWorker(
     topic: JobTopicNameEnum,
     processor?: string | Processor<any, unknown | void, string>,
-    workerOptions?: WorkerOptions
+    workerOptions?: WorkerOptions,
   ) {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const WorkerClass = !BullMqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
@@ -159,7 +158,7 @@ export class BullMqService {
       `Creating worker ${topic}. BullMQ pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
       }`,
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     const prefix = this.generatePrefix(topic);
@@ -175,7 +174,7 @@ export class BullMqService {
     name: string,
     data: BullMqJobData,
     options: JobsOptions = {},
-    groupId?: string
+    groupId?: string,
   ) {
     this._queue.add(name, data, {
       ...options,
@@ -195,7 +194,7 @@ export class BullMqService {
       data: BullMqJobData;
       options?: BulkJobOptions;
       groupId?: string;
-    }[]
+    }[],
   ) {
     const jobs = data.map((job) => {
       const jobOptions = {
@@ -206,7 +205,7 @@ export class BullMqService {
 
       if (BullMqService.pro && job?.groupId) {
         // BulkJobOptions.group is not defined in BullMQ types, it is defined in BullMQ Pro
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
         // @ts-ignore
         jobOptions.group = {
           id: job.groupId,
@@ -289,13 +288,13 @@ export class BullMqService {
         await this._worker.pause(doNotWaitActive);
         Logger.verbose(
           `Worker ${this._worker.name} pause succeeded`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } catch (error) {
         Logger.error(
           error,
           `Worker ${this._worker.name} pause failed`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
 
         throw error;
@@ -309,13 +308,13 @@ export class BullMqService {
         await this._worker.resume();
         Logger.verbose(
           `Worker ${this._worker.name} resume succeeded`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } catch (error) {
         Logger.error(
           error,
           `Worker ${this._worker.name} resume failed`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
 
         throw error;

@@ -37,7 +37,7 @@ test('should trigger rocket-chat library correctly', async () => {
         'x-auth-token': '<your-auth-token>',
         'x-user-id': '<your-user>',
       },
-    }
+    },
   );
 });
 
@@ -73,7 +73,7 @@ test('should trigger rocket-chat library correctly with _passthrough', async () 
           'x-auth-token': '_passthrough',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toHaveBeenCalledWith(
@@ -90,6 +90,6 @@ test('should trigger rocket-chat library correctly with _passthrough', async () 
         'x-auth-token': '_passthrough',
         'x-user-id': '<your-user>',
       },
-    }
+    },
   );
 });

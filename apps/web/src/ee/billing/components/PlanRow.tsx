@@ -49,6 +49,7 @@ export const PlanRow = ({ label, heading = false, free = null, business = null, 
         }}
       >
         <Text
+          // eslint-disable-next-line no-nested-ternary
           color={heading ? (isDark ? colors.white : colors.black) : isDark ? colors.B80 : colors.B60}
           weight={heading ? 'bold' : 'normal'}
         >

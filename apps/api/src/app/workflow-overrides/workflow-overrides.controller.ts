@@ -12,9 +12,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
@@ -103,7 +103,7 @@ export class WorkflowOverridesController {
         userId: user._id,
         active: body.active,
         preferenceSettings: body.preferenceSettings,
-        overrideId: overrideId,
+        overrideId,
       })
     );
   }
@@ -150,7 +150,7 @@ export class WorkflowOverridesController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
-        overrideId: overrideId,
+        overrideId,
       })
     );
   }

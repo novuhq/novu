@@ -95,7 +95,9 @@ export async function interceptIntegrationsRequest({
 }) {
   return page.route('**/v1/integrations', async (route) => {
     const response = await page.request.fetch(route.request());
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 3000);
+    });
     const body = await response.json();
 
     await route.fulfill({

@@ -125,7 +125,7 @@ export class WorkflowEditorPage {
     return new WorkflowEditorPage(page);
   }
   static async goToEditWorkflow(page: Page, templateId: string): Promise<WorkflowEditorPage> {
-    await page.goto('../workflows/edit/' + templateId);
+    await page.goto(`../workflows/edit/${templateId}`);
 
     return new WorkflowEditorPage(page);
   }

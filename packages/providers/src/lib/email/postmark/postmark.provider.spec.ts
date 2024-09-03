@@ -117,7 +117,7 @@ test('should parse postmark webhook', () => {
    * to be less than 5 seconds
    */
   expect(
-    Math.abs(currentDateTimestamp - new Date(date).getTime())
+    Math.abs(currentDateTimestamp - new Date(date).getTime()),
   ).toBeLessThanOrEqual(5000);
 
   expect(result).toStrictEqual({

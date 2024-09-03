@@ -26,7 +26,7 @@ import { ConditionsFilterCommand } from '../conditions-filter';
 export class NormalizeVariables {
   constructor(
     private subscriberRepository: SubscriberRepository,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
   ) {}
 
   public async execute(command: ConditionsFilterCommand) {
@@ -39,15 +39,15 @@ export class NormalizeVariables {
 
     filterVariables.subscriber = await this.fetchSubscriberIfMissing(
       command,
-      combinedFilters
+      combinedFilters,
     );
     filterVariables.tenant = await this.fetchTenantIfMissing(
       command,
-      combinedFilters
+      combinedFilters,
     );
     filterVariables.payload = command.variables?.payload
       ? command.variables?.payload
-      : command.job?.payload ?? undefined;
+      : (command.job?.payload ?? undefined);
 
     filterVariables.step = command.variables?.step ?? undefined;
     filterVariables.actor = command.variables?.actor ?? undefined;
@@ -56,7 +56,7 @@ export class NormalizeVariables {
   }
   private async fetchSubscriberIfMissing(
     command: ConditionsFilterCommand,
-    filters: IMessageFilter[]
+    filters: IMessageFilter[],
   ): Promise<SubscriberEntity | undefined> {
     if (command.variables?.subscriber) {
       return command.variables.subscriber;
@@ -64,7 +64,7 @@ export class NormalizeVariables {
 
     const subscriberFilterExist = filters?.find((filter) => {
       return filter?.children?.find(
-        (item) => item?.on === FilterPartTypeEnum.SUBSCRIBER
+        (item) => item?.on === FilterPartTypeEnum.SUBSCRIBER,
       );
     });
 
@@ -82,7 +82,7 @@ export class NormalizeVariables {
 
   private async fetchTenantIfMissing(
     command: ConditionsFilterCommand,
-    filters: IMessageFilter[]
+    filters: IMessageFilter[],
   ): Promise<TenantEntity | undefined> {
     if (command.variables?.tenant) {
       return command.variables.tenant;
@@ -94,7 +94,7 @@ export class NormalizeVariables {
         : command.job?.tenant?.identifier;
     const tenantFilterExist = filters?.find((filter) => {
       return filter?.children?.find(
-        (item) => item?.on === FilterPartTypeEnum.TENANT
+        (item) => item?.on === FilterPartTypeEnum.TENANT,
       );
     });
 

@@ -16,7 +16,7 @@ export function generateRandomString(length: number): string {
   const characters = 'abcdefghijklmnopqrstuvwxyz';
   let result = '';
   const charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < length; i += 1) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
 
@@ -45,7 +45,7 @@ export function cssObjectToString(styles: CSSProperties): string {
 export function createClassAndRuleFromCssString(classNameSet: Set<string>, styles: string) {
   const className = `novu-css-${generateUniqueRandomString(classNameSet, 8)}`;
   const rule = `.${className} { ${styles} }`;
-  //add to set to avoid generating the same class again
+  // add to set to avoid generating the same class again
   classNameSet.add(className);
 
   return { className, rule };
@@ -60,7 +60,7 @@ export function generateDefaultColor(props: { color: string; key: string; id: st
 
 export function generatesSolidShadesFromColor(props: { color: string; key: string; id: string }) {
   const rules = [];
-  for (let i = 0; i < shades.length; i++) {
+  for (let i = 0; i < shades.length; i += 1) {
     const shade = shades[i];
     const cssVariableSolidRule = `.${props.id} { --nv-${props.key}-${shade}: oklch(from ${props.color} calc(l - ${
       (shade - 500) / 1000
@@ -73,7 +73,7 @@ export function generatesSolidShadesFromColor(props: { color: string; key: strin
 
 export function generatesAlphaShadesFromColor(props: { color: string; key: string; id: string }) {
   const rules = [];
-  for (let i = 0; i < shades.length; i++) {
+  for (let i = 0; i < shades.length; i += 1) {
     const shade = shades[i];
     const cssVariableAlphaRule = `.${props.id} { --nv-${props.key}-${shade}: oklch(from ${props.color} l c h / ${
       shade / 1000

@@ -1,9 +1,9 @@
+import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useStudioState } from './StudioStateProvider';
 import { PrivatePageLayout } from '../components/layout/components/PrivatePageLayout';
 import { LocalStudioPageLayout } from '../components/layout/components/LocalStudioPageLayout';
 import { ROUTES } from '../constants/routes';
-import { Outlet, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
 
 export function StudioPageLayout() {
   const state = useStudioState();

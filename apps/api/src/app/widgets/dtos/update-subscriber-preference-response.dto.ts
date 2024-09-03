@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 import {
   INotificationTrigger,
   INotificationTriggerVariable,
@@ -9,6 +8,7 @@ import {
   TriggerContextTypeEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
+import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 
 class Preference {
   @ApiProperty({

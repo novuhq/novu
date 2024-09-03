@@ -18,7 +18,7 @@ export class ProviderStore {
 
   async addProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
+    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
   ) {
     this.providers[providerId] = provider;
   }
@@ -29,13 +29,13 @@ export class ProviderStore {
 
   async getProviderByInternalId(providerId: string) {
     return (await this.getProviders()).find(
-      (provider) => provider.id === providerId
+      (provider) => provider.id === providerId,
     );
   }
 
   async getProviderByChannel(channel: ChannelTypeEnum) {
     return (await this.getProviders()).find(
-      (provider) => provider.channelType === channel
+      (provider) => provider.channelType === channel,
     );
   }
 

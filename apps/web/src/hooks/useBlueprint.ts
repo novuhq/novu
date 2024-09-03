@@ -22,7 +22,7 @@ export const useBlueprint = () => {
   useEffect(() => {
     if (blueprintId) {
       segment.track('Notification directory CTA clicked', {
-        blueprintId: blueprintId,
+        blueprintId,
       });
       localStorage.setItem('blueprintId', blueprintId);
     }

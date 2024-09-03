@@ -72,7 +72,7 @@ test('should trigger infobip library correctly - SMS', async () => {
           text: 'Hello World _passthrough',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

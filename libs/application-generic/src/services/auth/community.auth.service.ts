@@ -25,6 +25,8 @@ import {
   UserSessionData,
   ISubscriberJwt,
   MemberRoleEnum,
+  ApiAuthSchemeEnum,
+  normalizeEmail,
 } from '@novu/shared';
 
 import { AnalyticsService } from '../analytics.service';
@@ -41,7 +43,6 @@ import {
   buildUserKey,
   CachedEntity,
 } from '../cache';
-import { ApiAuthSchemeEnum, normalizeEmail } from '@novu/shared';
 import { IAuthService } from './auth.service.interface';
 
 @Injectable()
@@ -56,7 +57,7 @@ export class CommunityAuthService implements IAuthService {
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
     @Inject(forwardRef(() => SwitchOrganization))
-    private switchOrganizationUsecase: SwitchOrganization
+    private switchOrganizationUsecase: SwitchOrganization,
   ) {}
 
   public async authenticate(
@@ -71,7 +72,7 @@ export class CommunityAuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    { origin, invitationToken }: AuthenticateContext = {}
+    { origin, invitationToken }: AuthenticateContext = {},
   ) {
     const email = normalizeEmail(profile.email);
     let user = await this.userRepository.findByEmail(email);
@@ -98,7 +99,7 @@ export class CommunityAuthService implements IAuthService {
             accessToken,
             refreshToken,
           },
-        })
+        }),
       );
       newUser = true;
 
@@ -108,7 +109,7 @@ export class CommunityAuthService implements IAuthService {
 
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
-        origin: origin,
+        origin,
         wasInvited: Boolean(invitationToken),
       });
     } else {
@@ -138,13 +139,13 @@ export class CommunityAuthService implements IAuthService {
       avatar_url: string;
       id: string;
     },
-    authProvider: AuthProviderEnum
+    authProvider: AuthProviderEnum,
   ) {
     const withoutUsername = user.tokens.find(
       (token) =>
         token.provider === authProvider &&
         !token.username &&
-        String(token.providerId) === String(profile.id)
+        String(token.providerId) === String(profile.id),
     );
 
     if (withoutUsername) {
@@ -157,9 +158,10 @@ export class CommunityAuthService implements IAuthService {
           $set: {
             'tokens.$.username': profile.login,
           },
-        }
+        },
       );
 
+      // eslint-disable-next-line no-param-reassign
       user = await this.userRepository.findById(user._id);
       if (!user) throw new ApiException('User not found');
     }
@@ -177,11 +179,11 @@ export class CommunityAuthService implements IAuthService {
   @Instrument()
   public async isAuthenticatedForOrganization(
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<boolean> {
     return !!(await this.memberRepository.isMemberOfOrganization(
       organizationId,
-      userId
+      userId,
     ));
   }
 
@@ -208,7 +210,7 @@ export class CommunityAuthService implements IAuthService {
   }
 
   public async getSubscriberWidgetToken(
-    subscriber: SubscriberEntity
+    subscriber: SubscriberEntity,
   ): Promise<string> {
     return this.jwtService.sign(
       {
@@ -224,7 +226,7 @@ export class CommunityAuthService implements IAuthService {
         expiresIn: '15 day',
         issuer: 'novu_api',
         audience: 'widget_user',
-      }
+      },
     );
   }
 
@@ -239,7 +241,7 @@ export class CommunityAuthService implements IAuthService {
         SwitchOrganizationCommand.create({
           newOrganizationId: organizationToSwitch._id,
           userId: user._id,
-        })
+        }),
       );
     }
 
@@ -250,7 +252,7 @@ export class CommunityAuthService implements IAuthService {
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
-    environmentId?: string
+    environmentId?: string,
   ): Promise<string> {
     const roles: MemberRoleEnum[] = [];
     if (member && member.roles) {
@@ -275,7 +277,7 @@ export class CommunityAuthService implements IAuthService {
       {
         expiresIn: '30 days',
         issuer: 'novu_api',
-      }
+      },
     );
   }
 
@@ -292,7 +294,7 @@ export class CommunityAuthService implements IAuthService {
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
       throw new UnauthorizedException(
-        `User ${payload._id} is not a member of organization ${payload.organizationId}`
+        `User ${payload._id} is not a member of organization ${payload.organizationId}`,
       );
     }
 
@@ -300,7 +302,7 @@ export class CommunityAuthService implements IAuthService {
   }
 
   public async validateSubscriber(
-    payload: ISubscriberJwt
+    payload: ISubscriberJwt,
   ): Promise<SubscriberEntity | null> {
     return await this.getSubscriber({
       _environmentId: payload.environmentId,
@@ -344,14 +346,14 @@ export class CommunityAuthService implements IAuthService {
   }): Promise<SubscriberEntity> {
     return await this.subscriberRepository.findBySubscriberId(
       _environmentId,
-      subscriberId
+      subscriberId,
     );
   }
 
   @CachedEntity({
     builder: ({ apiKey }: { apiKey: string }) =>
       buildAuthServiceKey({
-        apiKey: apiKey,
+        apiKey,
       }),
   })
   private async getApiKeyUser({ apiKey }: { apiKey: string }): Promise<{

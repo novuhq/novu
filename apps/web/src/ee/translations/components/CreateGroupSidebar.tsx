@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
-import { api } from '../../../api';
-import { useAuth, useEnvironment } from '../../../hooks';
 import { Group } from '@mantine/core';
 import slugify from 'slugify';
 import { Control, FormProvider, useForm } from 'react-hook-form';
+import { useAuth, useEnvironment } from '../../../hooks';
+import { api } from '../../../api';
 
 import { TranslationFolderIconSmall } from '../icons';
 

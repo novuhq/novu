@@ -1,6 +1,6 @@
-import { Novu } from '../novu';
 import axios from 'axios';
 import { ChannelTypeEnum, FieldLogicalOperatorEnum } from '@novu/shared';
+import { Novu } from '../novu';
 
 const mockConfig = {
   apiKey: '1234',
@@ -84,7 +84,7 @@ describe('test use of novus node package - Integrations class', () => {
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith(
-      `integrations/webhook/provider/emailjs/status`
+      `integrations/webhook/provider/emailjs/status`,
     );
   });
 
@@ -126,7 +126,7 @@ describe('test use of novus node package - Integrations class', () => {
             children: [],
           },
         ],
-      }
+      },
     );
   });
 
@@ -137,7 +137,7 @@ describe('test use of novus node package - Integrations class', () => {
 
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      '/integrations/INTEGRATION_ID'
+      '/integrations/INTEGRATION_ID',
     );
   });
 
@@ -149,7 +149,7 @@ describe('test use of novus node package - Integrations class', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       '/integrations/INTEGRATION_ID/set-primary',
-      {}
+      {},
     );
   });
 

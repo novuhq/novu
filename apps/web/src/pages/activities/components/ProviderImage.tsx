@@ -16,7 +16,7 @@ export const ProviderImage = ({ providerId }: { providerId: string | undefined }
 
   return (
     <Logo
-      src={CONTEXT_PATH + `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`}
+      src={`${CONTEXT_PATH}/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`}
       alt={provider.displayName}
     />
   );

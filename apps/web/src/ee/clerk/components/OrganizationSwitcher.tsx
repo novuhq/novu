@@ -26,7 +26,7 @@ const OrganizationSwitcherAppearance = {
 };
 
 export function OrganizationSwitcher() {
-  const redirectUrl = location.pathname.includes('workflows/edit') ? ROUTES.WORKFLOWS : undefined;
+  const redirectUrl = window.location.pathname.includes('workflows/edit') ? ROUTES.WORKFLOWS : undefined;
 
   return (
     <ClerkOrganizationSwitcher

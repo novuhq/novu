@@ -1,7 +1,5 @@
-import { IconOutlineVisibilityOff } from '@novu/design-system';
+import { IconOutlineVisibilityOff, colors } from '@novu/design-system';
 import styled from '@emotion/styled';
-
-import { colors } from '@novu/design-system';
 
 /** @deprecated */
 export const VisibilityOff = ({ onClick }: { onClick: React.MouseEventHandler<HTMLDivElement> }) => {

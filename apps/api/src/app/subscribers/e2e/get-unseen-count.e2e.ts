@@ -28,10 +28,10 @@ describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET)', functio
     expect(seenCount).to.equal(1);
 
     try {
-      await getUnSeenCount(subscriberId + '111', session.apiKey, { seen: false });
+      await getUnSeenCount(`${subscriberId}111`, session.apiKey, { seen: false });
     } catch (err) {
       expect(err.response.status).to.equals(400);
-      expect(err.response.data.message).to.contain(`Subscriber ${subscriberId + '111'} is not exist in environment`);
+      expect(err.response.data.message).to.contain(`Subscriber ${`${subscriberId}111`} is not exist in environment`);
     }
   });
 });

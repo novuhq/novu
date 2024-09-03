@@ -18,14 +18,14 @@ export class BulkSmsProvider extends BaseProvider implements ISmsProvider {
   constructor(
     private config: {
       apiToken: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       to: options.to,

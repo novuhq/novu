@@ -37,7 +37,7 @@ export const useTabsStyles = createStyles((theme: MantineTheme, withIcon: boolea
           color: dark ? colors.white : colors.B40,
         },
       },
-      ['&[data-active]']: {
+      '&[data-active]': {
         width: 'auto',
 
         [`& .${tabLabel}`]: {

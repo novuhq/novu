@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { LogDBModel } from './log.entity';
@@ -50,5 +49,4 @@ const logSchema = new Schema<LogDBModel>(
 
 logSchema.index({ _environmentId: 1, createdAt: -1 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Log = (mongoose.models.Log as mongoose.Model<LogDBModel>) || mongoose.model<LogDBModel>('Log', logSchema);

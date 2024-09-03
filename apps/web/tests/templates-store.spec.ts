@@ -1,9 +1,9 @@
 import { expect } from '@playwright/test';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { test } from './utils/baseTest';
 import { WorkflowsPage } from './page-models/workflowsPage';
 import { initializeSession, setFeatureFlag } from './utils/browser';
 import { populateBlueprints } from './utils/plugins';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 test.beforeAll(async () => {
   await populateBlueprints();

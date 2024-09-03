@@ -20,7 +20,7 @@ export class GetWorkflowOverrides {
     );
 
     return {
-      data: data,
+      data,
       page: command.page,
       pageSize: command.limit,
       hasMore: data?.length === command.limit,

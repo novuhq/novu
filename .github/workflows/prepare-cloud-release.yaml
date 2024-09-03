@@ -57,24 +57,24 @@ jobs:
         id: commit-log
         if: ${{ success() }}
         run: |
-          echo 'COMMIT_LOG<<EOF' >> $GITHUB_ENV
-          echo $(git log --format="format:%h %s (@%aL)\n" origin/prod..origin/${{steps.output-variables.outputs.branch_name}} | sed "s/\"/'/g") >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          echo 'commit_log<<EOF' >> $GITHUB_OUTPUT
+          echo $(git log --format="format:%h %s (@%aL)\n" origin/prod..origin/${{steps.output-variables.outputs.branch_name}} | sed "s/\"/'/g") >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Send commit log to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
-        if: ${{ success() }}
+        if: ${{ success() && steps.commit-log.outputs.commit_log != '' }}
         with:
           payload: |
             {
-              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{env.COMMIT_LOG}}```",
+              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.commit-log.outputs.commit_log}}```",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{env.COMMIT_LOG}}```"
+                    "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{steps.commit-log.outputs.commit_log}}```"
                   }
                 }
               ]

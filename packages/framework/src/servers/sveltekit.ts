@@ -42,7 +42,6 @@ export const serve = (
         },
         transformResponse: ({ body, headers, status }) => {
           // Handle Response polyfills
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           const Res = getResponse();
 
           return new Res(body, { status, headers });

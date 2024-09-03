@@ -2,8 +2,8 @@ import styled from '@emotion/styled';
 import { ActionIcon, FileButton, Group, Stack } from '@mantine/core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEnvironment } from '../../../../hooks';
 import { Button, colors, Sidebar, Text, Title, Tooltip, Trash, When } from '@novu/design-system';
+import { useEnvironment } from '../../../../hooks';
 
 import { useFetchLocales, useFetchTranslation } from '../../hooks';
 import { useEditTranslationFileContext } from '../../context/useEditTranslationFileContext';
@@ -167,7 +167,7 @@ export function SingleTranslationFileEditSidebar({
     >
       <Wrapper>
         <Stack>
-          {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+          {}
           <FileNameInput currentFileName={isTranslationExists ? fileName! : uploadedFile!.name} readonly={readonly} />
           {mode === 'replace' && isTranslationExists && (
             <FilesDiffSection

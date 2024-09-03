@@ -1,7 +1,7 @@
 import { Handle, Position } from 'react-flow-renderer';
 
-import { NodeStepWithPopover } from './NodeStepWithPopover';
 import { EmailFilled } from '@novu/design-system';
+import { NodeStepWithPopover } from './NodeStepWithPopover';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { useAuth } from '../../../hooks/useAuth';
@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 export function EmailNode({ data, id }: { data: any; id: string }) {
   const { currentUser } = useAuth();
   const { isReadOnly, emailsSentCount } = useDigestDemoFlowContext();
+  // eslint-disable-next-line no-param-reassign
   data.email = currentUser?.email ?? '';
 
   return (

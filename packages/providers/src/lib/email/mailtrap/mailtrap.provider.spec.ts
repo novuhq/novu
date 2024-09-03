@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vitest';
-import { MailtrapEmailProvider } from './mailtrap.provider';
 import { MailtrapClient, SendResponse } from 'mailtrap';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
+import { MailtrapEmailProvider } from './mailtrap.provider';
 
 const mockConfig = {
   apiKey: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',

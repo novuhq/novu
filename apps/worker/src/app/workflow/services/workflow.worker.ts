@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-const nr = require('newrelic');
 import {
   getWorkflowWorkerOptions,
   PinoLogger,
@@ -15,6 +14,8 @@ import {
   IWorkflowDataDto,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+
+const nr = require('newrelic');
 
 const LOG_CONTEXT = 'WorkflowWorker';
 
@@ -35,8 +36,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
 
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IWorkflowDataDto }) => {
-      return await new Promise(async (resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
+      return await new Promise((resolve, reject) => {
         const _this = this;
 
         Logger.verbose(`Job ${data.identifier} is being processed in the new instance workflow worker`, LOG_CONTEXT);
@@ -44,7 +44,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,
           'Trigger Engine',
-          function () {
+          function processTask() {
             const transaction = nr.getTransaction();
 
             storage.run(new Store(PinoLogger.root), () => {

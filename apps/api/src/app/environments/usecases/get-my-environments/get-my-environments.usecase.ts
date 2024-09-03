@@ -25,6 +25,7 @@ export class GetMyEnvironments {
         return this.decryptApiKeys(environment);
       }
       // TODO: For api_v2: Remove the key from the response. This was not done yet as it's a breaking change.
+      // eslint-disable-next-line no-param-reassign
       environment.apiKeys = [];
 
       return environment;

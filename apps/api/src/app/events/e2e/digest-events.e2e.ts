@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import { expect } from 'chai';
 import { getTime, parseISO } from 'date-fns';
@@ -15,7 +14,10 @@ import { UserSession, SubscribersService } from '@novu/testing';
 
 const axiosInstance = axios.create();
 
-const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const promiseTimeout = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', function () {
   let session: UserSession;
@@ -742,12 +744,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await triggerEvent({
       customVar: 'first',
-      nested: { postId: postId },
+      nested: { postId },
     });
 
     await triggerEvent({
       customVar: 'second',
-      nested: { postId: postId },
+      nested: { postId },
     });
 
     await triggerEvent({

@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/no-class-without-style */
 import { ComponentProps, createMemo, JSX, Show } from 'solid-js';
 import { useInboxContext, useUnreadCount } from '../../context';
 import { ClassName, cn, useStyle } from '../../helpers';

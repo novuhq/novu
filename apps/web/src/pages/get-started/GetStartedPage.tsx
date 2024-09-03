@@ -1,15 +1,15 @@
-import { useSegment } from '../../components/providers/SegmentProvider';
 import { useCallback, useEffect } from 'react';
 import { css } from '@novu/novui/css';
 import { Stepper, Group } from '@mantine/core';
 
-import { PageContainer } from '../../studio/layout/PageContainer';
 import { Title, Button } from '@novu/novui';
 import { useLocalStorage } from '@mantine/hooks';
+import { motion } from 'framer-motion';
+import { PageContainer } from '../../studio/layout/PageContainer';
 import { OnboardingStepsTimeline } from './OnboardingSteps';
 import { stepperClassNames } from './GetStartedPage.styles';
 import { onboardingTabs } from './form-tabs.config';
-import { motion } from 'framer-motion';
+import { useSegment } from '../../components/providers/SegmentProvider';
 import { navigatePlayground } from '../../utils';
 import { OutlineButton } from '../../studio/components/OutlineButton';
 import { When } from '../../components/utils/When';

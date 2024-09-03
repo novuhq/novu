@@ -57,7 +57,9 @@ describe('Novu', () => {
       };
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
       // await for session initialization
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
 
       const { data } = await novu.notifications.list({ limit: 10, offset: 0 });
 
@@ -93,7 +95,9 @@ describe('Novu', () => {
       post.mockRejectedValueOnce(expectedError);
       const novu = new Novu({ applicationIdentifier: 'applicationIdentifier', subscriberId: 'subscriberId' });
       // await for session initialization
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
 
       const { error } = await novu.notifications.list(options);
 

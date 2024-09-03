@@ -1,7 +1,7 @@
 import { Grid } from '@mantine/core';
-import { ProviderCard } from './ProviderCard';
 import { Title } from '@novu/design-system';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ProviderCard } from './ProviderCard';
 
 import type { IIntegratedProvider } from '../types';
 import { NovuIntegrationCard } from './NovuIntegrationCard';
@@ -44,8 +44,8 @@ export function ChannelGroup({
                 0,
               connected: true,
               logoFileName: {
-                dark: CONTEXT_PATH + '/static/images/logo-light.webp',
-                light: CONTEXT_PATH + '/static/images/logo.webp',
+                dark: `${CONTEXT_PATH}/static/images/logo-light.webp`,
+                light: `${CONTEXT_PATH}/static/images/logo.webp`,
               },
               betaVersion: false,
               novu: true,
@@ -72,8 +72,8 @@ export function ChannelGroup({
                 0,
               connected: true,
               logoFileName: {
-                dark: CONTEXT_PATH + '/static/images/logo-light.webp',
-                light: CONTEXT_PATH + '/static/images/logo.webp',
+                dark: `${CONTEXT_PATH}/static/images/logo-light.webp`,
+                light: `${CONTEXT_PATH}/static/images/logo.webp`,
               },
               betaVersion: false,
               novu: true,

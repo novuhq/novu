@@ -17,7 +17,7 @@ export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; 
   const layoutId = watch(`${path}.template.layoutId`);
 
   const [previewState, setParsedPreviewState] = useState({
-    subject: subject,
+    subject,
     content: '<html><head></head><body><div></div></body></html>',
   });
   const templateError = useStepFormCombinedErrors();
@@ -37,9 +37,9 @@ export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; 
       if (!content) return;
 
       getEmailPreview({
-        contentType: contentType,
+        contentType,
         content,
-        layoutId: layoutId,
+        layoutId,
         payload: parsePayload(payloadArg),
         subject: subject ?? '',
         locale,

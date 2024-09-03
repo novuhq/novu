@@ -14,7 +14,11 @@ import { v4 as uuid } from 'uuid';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {
-  constructor(private userId: string, private organizationId: string, private environmentId: string) {}
+  constructor(
+    private userId: string,
+    private organizationId: string,
+    private environmentId: string
+  ) {}
 
   private notificationTemplateRepository = new NotificationTemplateRepository();
   private notificationGroupRepository = new NotificationGroupRepository();

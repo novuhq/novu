@@ -22,9 +22,8 @@ export function useRedirectURL() {
       // Clean the URL so that the redirect URL doesn't get used again.
       const url = new URL(window.location.href);
       url.searchParams.delete(REDIRECT_URL_SEARCH_PARAM);
-      history.replaceState({}, '', url.href);
+      window.history.replaceState({}, '', url.href);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getRedirectURL = useCallback(() => {

@@ -1,7 +1,7 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { PrivatePageLayout } from './components/layout/components/PrivatePageLayout';
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
-import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -14,7 +14,14 @@ import { BrandingPage } from './pages/brand/BrandingPage';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
-import { ApiKeysPage, WebhookPage } from './pages/settings/index';
+import {
+  ApiKeysPage,
+  WebhookPage,
+  AccessSecurityPage,
+  BillingPage,
+  TeamPage,
+  UserProfilePage,
+} from './pages/settings/index';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
@@ -47,7 +54,6 @@ import { TranslationRoutes } from './pages/TranslationPages';
 import { StudioOnboarding } from './pages/studio-onboarding/index';
 import { StudioOnboardingPreview } from './pages/studio-onboarding/preview';
 import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
-import { AccessSecurityPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { OrganizationPage } from './pages/settings/organization';
 import { LayoutsPage } from './pages/layouts/LayoutsPage';
@@ -61,7 +67,6 @@ import { novuOnboardedCookie } from './utils/cookies';
 import { EnterprisePrivatePageLayout } from './ee/clerk/components/EnterprisePrivatePageLayout';
 import { OnboardingPage } from './pages/playground/onboarding/Onboarding';
 import { PlaygroundPage } from './pages/playground/onboarding/PlaygroundPage';
-import { BillingRoutes } from './pages/BillingPages';
 import { StudioStepEditorPage } from './studio/pages/StudioStepEditorPage';
 
 const AuthRoutes = () => {
@@ -146,9 +151,7 @@ export const AppRoutes = () => {
             <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
             <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.SETTINGS} replace />} />
           </Route>
-        ) : (
-          <Route path="/billing" element={<BillingRoutes />} />
-        )}
+        ) : null}
         <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
           <Route path="create" element={<SelectProviderPage />} />
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />

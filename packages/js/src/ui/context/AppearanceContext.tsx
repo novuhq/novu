@@ -57,7 +57,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     });
   });
 
-  //handle variables
+  // handle variables
   createEffect(() => {
     const styleEl = styleElement();
 
@@ -75,7 +75,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     );
   });
 
-  //handle elements
+  // handle elements
   createEffect(() => {
     const styleEl = styleElement();
 
@@ -97,7 +97,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     setElementRules(elementsStyleData.map((el) => el.rule));
   });
 
-  //add rules to style element
+  // add rules to style element
   createEffect(() => {
     const styleEl = styleElement();
     if (!styleEl) {

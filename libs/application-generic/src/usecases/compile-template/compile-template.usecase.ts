@@ -29,8 +29,8 @@ function createHandlebarsInstance(i18next: any) {
           returnObjects: false,
         };
 
+        // eslint-disable-next-line no-multi-assign
         const replace = (options.replace = {
-          // eslint-disable-next-line
           // @ts-ignore
           ...this,
           ...options.replace,
@@ -42,20 +42,19 @@ function createHandlebarsInstance(i18next: any) {
           options.defaultValue = fn(replace);
         }
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         return new handlebars.SafeString(i18next.t(key, options));
-      }
+      },
     );
   }
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.EQUALS,
     function (arg1, arg2, options) {
-      // eslint-disable-next-line
       // @ts-expect-error
+      // eslint-disable-next-line eqeqeq
       return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-    }
+    },
   );
 
   handlebars.registerHelper(HandlebarHelpersEnum.TITLECASE, function (value) {
@@ -63,7 +62,7 @@ function createHandlebarsInstance(i18next: any) {
       ?.split(' ')
       .map(
         (letter) =>
-          letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase()
+          letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase(),
       )
       .join(' ');
   });
@@ -80,19 +79,19 @@ function createHandlebarsInstance(i18next: any) {
     HandlebarHelpersEnum.PLURALIZE,
     function (number, single, plural) {
       return number === 1 ? single : plural;
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.DATEFORMAT,
     function (date, dateFormat) {
       // Format date if parameters are valid
-      if (date && dateFormat && !isNaN(Date.parse(date))) {
+      if (date && dateFormat && !Number.isNaN(Date.parse(date))) {
         return format(new Date(date), dateFormat);
       }
 
       return date;
-    }
+    },
   );
 
   handlebars.registerHelper(
@@ -113,11 +112,11 @@ function createHandlebarsInstance(i18next: any) {
 
       const result = [];
       for (const [key, value] of Object.entries(map)) {
-        result.push({ key: key, items: value });
+        result.push({ key, items: value });
       }
 
       return result;
-    }
+    },
   );
 
   handlebars.registerHelper(
@@ -125,14 +124,17 @@ function createHandlebarsInstance(i18next: any) {
     function (array, property) {
       if (!Array.isArray(array)) return '';
 
-      return array
-        .map((item) => {
-          if (item[property]) {
-            return item[property];
-          }
-        })
-        .filter((value, index, self) => self.indexOf(value) === index);
-    }
+      return (
+        array
+          // eslint-disable-next-line array-callback-return
+          .map((item) => {
+            if (item[property]) {
+              return item[property];
+            }
+          })
+          .filter((value, index, self) => self.indexOf(value) === index)
+      );
+    },
   );
 
   handlebars.registerHelper(
@@ -145,16 +147,17 @@ function createHandlebarsInstance(i18next: any) {
         const _x = a[property];
         const _y = b[property];
 
+        // eslint-disable-next-line no-nested-ternary
         return _x < _y ? -1 : _x > _y ? 1 : 0;
       });
-    }
+    },
   );
 
   // based on: https://gist.github.com/DennyLoko/61882bc72176ca74a0f2
   handlebars.registerHelper(
     HandlebarHelpersEnum.NUMBERFORMAT,
     function (number, options) {
-      if (isNaN(number)) {
+      if (Number.isNaN(number)) {
         return number;
       }
 
@@ -164,57 +167,58 @@ function createHandlebarsInstance(i18next: any) {
 
       const value = parseFloat(number);
 
-      const re = '\\d(?=(\\d{3})+' + (decimalLength > 0 ? '\\D' : '$') + ')';
+      const re = `\\d(?=(\\d{3})+${decimalLength > 0 ? '\\D' : '$'})`;
 
+      // eslint-disable-next-line no-bitwise
       const num = value.toFixed(Math.max(0, ~~decimalLength));
 
       return (decimalSep ? num.replace('.', decimalSep) : num).replace(
         new RegExp(re, 'g'),
-        '$&' + thousandsSep
+        `$&${thousandsSep}`,
       );
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.GT,
     function (arg1, arg2, options) {
       return assertResult(arg1 > arg2, options);
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.GTE,
     function (arg1, arg2, options) {
       return assertResult(arg1 >= arg2, options);
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.LT,
     function (arg1, arg2, options) {
       return assertResult(arg1 < arg2, options);
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.LTE,
     function (arg1, arg2, options) {
       return assertResult(arg1 <= arg2, options);
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.EQ,
     function (arg1, arg2, options) {
       return assertResult(arg1 === arg2, options);
-    }
+    },
   );
 
   handlebars.registerHelper(
     HandlebarHelpersEnum.NE,
     function (arg1, arg2, options) {
       return assertResult(arg1 !== arg2, options);
-    }
+    },
   );
 
   return handlebars;
@@ -225,7 +229,7 @@ export class CompileTemplate {
   async execute(
     command: CompileTemplateCommand,
     // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any
+    i18nInstance?: any,
   ): Promise<string> {
     const templateContent = command.template || '';
 
@@ -237,7 +241,7 @@ export class CompileTemplate {
       result = template(command.data, {});
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `Handlebars message content could not be generated ${e}`
+        e?.message || `Handlebars message content could not be generated ${e}`,
       );
     }
 

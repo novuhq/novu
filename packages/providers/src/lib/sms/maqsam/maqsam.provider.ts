@@ -22,7 +22,7 @@ export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
       accessKeyId?: string;
       accessSecret?: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -36,7 +36,7 @@ export class MaqsamSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const maqsamResponse = await this.axiosInstance.request({
       method: 'POST',

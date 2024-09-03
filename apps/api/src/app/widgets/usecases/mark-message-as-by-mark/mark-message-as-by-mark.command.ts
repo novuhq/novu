@@ -1,6 +1,6 @@
 import { IsArray, IsDefined, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { MessagesStatusEnum } from '@novu/shared';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class MarkMessageAsByMarkCommand extends EnvironmentWithSubscriber {
   @IsArray()

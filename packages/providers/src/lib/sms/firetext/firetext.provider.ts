@@ -18,7 +18,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       from?: string;
-    }
+    },
   ) {
     super();
   }
@@ -44,7 +44,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const baseMessage = this.transform<Record<string, string>>(
       bridgeProviderData,
@@ -53,7 +53,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
         to: options.to,
         from: options.from || this.config.from,
         message: options.content,
-      }
+      },
     );
 
     const urlSearchParams = new URLSearchParams(baseMessage.body);
@@ -73,7 +73,7 @@ export class FiretextSmsProvider extends BaseProvider implements ISmsProvider {
 
     return {
       id: messageId,
-      date: date,
+      date,
     };
   }
 }

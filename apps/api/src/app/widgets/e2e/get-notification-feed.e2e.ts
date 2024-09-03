@@ -144,7 +144,7 @@ describe('GET /widget/notifications/feed', function () {
     expect(feed.totalCount).to.be.equal(1);
     expect(feed.hasMore).to.be.equal(false);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i += 1) {
       await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     }
 

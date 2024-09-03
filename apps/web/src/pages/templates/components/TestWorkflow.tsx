@@ -98,10 +98,10 @@ export function TestWorkflow({ trigger }) {
     const to = JSON.parse(toValue);
     const payload = JSON.parse(payloadValue);
     const overrides = JSON.parse(overridesValue);
-    const snippet = snippetValue.reduce((acc, variable) => {
-      acc[variable.type] = JSON.parse(variable.variables);
+    const snippet = snippetValue.reduce((prev, variable) => {
+      prev[variable.type] = JSON.parse(variable.variables);
 
-      return acc;
+      return prev;
     }, {});
 
     try {

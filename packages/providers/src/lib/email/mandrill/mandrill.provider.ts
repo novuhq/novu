@@ -10,8 +10,8 @@ import {
 } from '@novu/stateless';
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
-import { IMandrilInterface, IMandrillSendOptions } from './mandril.interface';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { IMandrilInterface, IMandrillSendOptions } from './mandril.interface';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -40,7 +40,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
       apiKey: string;
       from: string;
       senderName: string;
-    }
+    },
   ) {
     super();
     this.transporter = mailchimp(this.config.apiKey);
@@ -48,7 +48,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const mandrillSendOption = this.transform<IMandrillSendOptions>(
       bridgeProviderData,
@@ -65,7 +65,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
             name: attachment?.name,
           })),
         },
-      }
+      },
     ).body;
 
     const response = await this.transporter.messages.send(mandrillSendOption);
@@ -125,9 +125,10 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item._id === identifier);
     }
 
@@ -142,7 +143,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body._id,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -173,6 +174,8 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
         return EmailEventStatusEnum.DEFERRED;
       case MandrillStatusEnum.DELIVERED:
         return EmailEventStatusEnum.DELIVERED;
+      default:
+        return undefined;
     }
   }
 }
