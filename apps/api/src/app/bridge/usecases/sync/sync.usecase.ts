@@ -130,7 +130,7 @@ export class Sync {
           workflow.workflowId
         );
 
-        let savedWorkflow: NotificationTemplateEntity | undefined = undefined;
+        let savedWorkflow: NotificationTemplateEntity | undefined;
 
         if (workflowExist) {
           savedWorkflow = await this.updateWorkflowUsecase.execute(
