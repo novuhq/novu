@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-
-import { USE_CASES } from './usecases';
-import { InboxController } from './inbox.controller';
-import { SharedModule } from '../shared/shared.module';
-import { AuthModule } from '../auth/auth.module';
-import { SubscribersModule } from '../subscribers/subscribers.module';
-import { IntegrationModule } from '../integrations/integrations.module';
 import { GetPreferences, UpsertPreferences } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
+import { AuthModule } from '../auth/auth.module';
+import { IntegrationModule } from '../integrations/integrations.module';
+import { SharedModule } from '../shared/shared.module';
+import { SubscribersModule } from '../subscribers/subscribers.module';
+import { InboxController } from './inbox.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, SubscribersModule, AuthModule, IntegrationModule],
