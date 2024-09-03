@@ -10,7 +10,6 @@ import { IPreferenceChannels } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
-import { IPreferenceChannels } from '@novu/shared';
 import { GetPreferences } from '../get-preferences';
 
 @Injectable()
