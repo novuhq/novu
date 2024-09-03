@@ -1,7 +1,10 @@
 import { ChannelTypeEnum, IResponseError } from '@novu/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { errorMessage, successMessage } from '../utils/notifications';
+import { useMemo } from 'react';
 import { QueryKeys } from '../api/query.keys';
+import { useDiscover } from '../studio/hooks/useBridgeAPI';
+import { useStudioState } from '../studio/StudioStateProvider';
+import { errorMessage, successMessage } from '../utils/notifications';
 import { useNovuAPI } from './useNovuAPI';
 
 type ChannelPreference = {
@@ -25,14 +28,28 @@ export const useWorkflowChannelPreferences = (
   workflowChannelPreferences: WorkflowChannelPreferences | undefined;
 } => {
   const api = useNovuAPI();
+  const { isLocalStudio } = useStudioState() || {};
+  const { data: discoveryData, isLoading: discoveryLoading } = useDiscover({
+    enabled: isLocalStudio,
+  });
 
   const {
-    data: workflowChannelPreferences,
+    data: cloudData,
     isLoading,
     refetch,
-  } = useQuery<WorkflowChannelPreferences>([QueryKeys.getWorkflowChannelPreferences(workflowId)], () =>
-    api.getPreferences(workflowId as string)
+  } = useQuery<WorkflowChannelPreferences>(
+    [QueryKeys.getWorkflowChannelPreferences(workflowId)],
+    () => api.getPreferences(workflowId as string),
+    { enabled: !isLocalStudio }
   );
+
+  const workflowChannelPreferences = useMemo(() => {
+    if (!isLocalStudio) {
+      return cloudData;
+    }
+
+    return discoveryData?.workflows?.find((workflow) => workflow.workflowId === workflowId)?.preferences;
+  }, [discoveryData, cloudData, isLocalStudio, workflowId]);
 
   const { mutateAsync: createWorkflowChannelPreferences, isLoading: isCreating } = useMutation<
     WorkflowChannelPreferences,
@@ -49,7 +66,7 @@ export const useWorkflowChannelPreferences = (
   });
 
   return {
-    isLoading,
+    isLoading: isLoading || discoveryLoading,
     isCreating,
     createWorkflowChannelPreferences,
     workflowChannelPreferences,
