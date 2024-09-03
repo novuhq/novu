@@ -44,7 +44,8 @@
     "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch && pnpm run post:build",
     "post:build": "node scripts/size-limit.mjs",
-    "lint": "eslint --ext .ts,.tsx src",
+    "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix",
     "test": "jest"
   },
   "browserslist": {
@@ -72,7 +73,6 @@
     "esbuild-plugin-compress": "^1.0.1",
     "esbuild-plugin-inline-import": "^1.0.4",
     "esbuild-plugin-solid": "^0.6.0",
-    "eslint-plugin-local-rules": "^3.0.2",
     "http-server": "^0.13.0",
     "jest": "^29.3.1",
     "postcss": "^8.4.38",

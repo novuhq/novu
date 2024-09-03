@@ -37,7 +37,7 @@
   "scripts": {
     "build:watch": "tsup --watch",
     "build": "tsup",
-    "lint": "eslint --ext .ts,.tsx src"
+    "lint": "eslint src"
   },
   "browserslist": {
     "production": [

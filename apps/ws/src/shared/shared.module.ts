@@ -8,8 +8,8 @@ import {
   QueuesModule,
 } from '@novu/application-generic';
 
-import { SubscriberOnlineService } from './subscriber-online';
 import { JobTopicNameEnum } from '@novu/shared';
+import { SubscriberOnlineService } from './subscriber-online';
 
 const DAL_MODELS = [SubscriberRepository, NotificationRepository, MessageRepository];
 

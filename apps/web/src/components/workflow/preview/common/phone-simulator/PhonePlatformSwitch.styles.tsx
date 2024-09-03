@@ -66,5 +66,6 @@ export const IconHolder = styled.span<{ isSelected: boolean }>`
   height: ${THUMB_HEIGHT}rem;
   transition: color 0.3s ease;
   color: ${({ theme, isSelected }) =>
+    // eslint-disable-next-line no-nested-ternary
     theme.colorScheme === 'dark' ? colors.white : isSelected ? colors.B20 : colors.B60};
 `;

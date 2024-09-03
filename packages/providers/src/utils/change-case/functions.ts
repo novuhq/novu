@@ -53,9 +53,9 @@ export function split(value: string): string[] {
   let end = result.length;
 
   // Trim the delimiter from around the output string.
-  while (result.charAt(start) === '\0') start++;
+  while (result.charAt(start) === '\0') start += 1;
   if (start === end) return [];
-  while (result.charAt(end - 1) === '\0') end--;
+  while (result.charAt(end - 1) === '\0') end -= 1;
 
   return result.slice(start, end).split(/\0/g);
 }
@@ -78,7 +78,7 @@ export function noCaseTransformer(input: string, options?: IOptions): string {
  */
 export function camelCaseTransformer(
   input: string,
-  options?: IPascalCaseOptions
+  options?: IPascalCaseOptions,
 ): string {
   const { prefix, words, suffix } = splitPrefixSuffix(input, options);
   const lower = lowerFactory(options?.locale);
@@ -105,7 +105,7 @@ export function camelCaseTransformer(
  */
 export function pascalCaseTransformer(
   input: string,
-  options?: IPascalCaseOptions
+  options?: IPascalCaseOptions,
 ): string {
   const { prefix, words, suffix } = splitPrefixSuffix(input, options);
   const lower = lowerFactory(options?.locale);
@@ -122,7 +122,7 @@ export function pascalCaseTransformer(
  */
 export function pascalSnakeCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   return capitalCaseTransformer(input, { delimiter: '_', ...options });
 }
@@ -132,7 +132,7 @@ export function pascalSnakeCaseTransformer(
  */
 export function capitalCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   const { prefix, words, suffix } = splitPrefixSuffix(input, options);
   const lower = lowerFactory(options?.locale);
@@ -152,7 +152,7 @@ export function capitalCaseTransformer(
  */
 export function constantCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   const { prefix, words, suffix } = splitPrefixSuffix(input, options);
 
@@ -175,7 +175,7 @@ export function dotCaseTransformer(input: string, options?: IOptions): string {
  */
 export function kebabCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   return noCaseTransformer(input, { delimiter: '-', ...options });
 }
@@ -192,7 +192,7 @@ export function pathCaseTransformer(input: string, options?: IOptions): string {
  */
 export function sentenceCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   const { prefix, words, suffix } = splitPrefixSuffix(input, options);
   const lower = lowerFactory(options?.locale);
@@ -217,7 +217,7 @@ export function sentenceCaseTransformer(
  */
 export function snakeCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   return noCaseTransformer(input, { delimiter: '_', ...options });
 }
@@ -227,7 +227,7 @@ export function snakeCaseTransformer(
  */
 export function trainCaseTransformer(
   input: string,
-  options?: IOptions
+  options?: IOptions,
 ): string {
   return capitalCaseTransformer(input, { delimiter: '-', ...options });
 }
@@ -246,19 +246,19 @@ function upperFactory(locale: Locale): (input: string) => string {
 
 function capitalCaseTransformFactory(
   lower: (input: string) => string,
-  upper: (input: string) => string
+  upper: (input: string) => string,
 ): (word: string) => string {
   return (word: string) => `${upper(word[0])}${lower(word.slice(1))}`;
 }
 
 function pascalCaseTransformFactory(
   lower: (input: string) => string,
-  upper: (input: string) => string
+  upper: (input: string) => string,
 ): (word: string, index: number) => string {
   return (word: string, index: number) => {
     const char0 = word[0];
     const initial =
-      index > 0 && char0 >= '0' && char0 <= '9' ? '_' + char0 : upper(char0);
+      index > 0 && char0 >= '0' && char0 <= '9' ? `_${char0}` : upper(char0);
 
     return initial + lower(word.slice(1));
   };
@@ -266,7 +266,7 @@ function pascalCaseTransformFactory(
 
 function splitPrefixSuffix(
   input: string,
-  options: IOptions = {}
+  options: IOptions = {},
 ): {
   prefix: string;
   words: string[];
@@ -283,7 +283,7 @@ function splitPrefixSuffix(
   while (prefixIndex < input.length) {
     const char = input.charAt(prefixIndex);
     if (!prefixCharacters.includes(char)) break;
-    prefixIndex++;
+    prefixIndex += 1;
   }
 
   while (suffixIndex > prefixIndex) {

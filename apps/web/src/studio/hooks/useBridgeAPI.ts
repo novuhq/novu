@@ -49,14 +49,10 @@ export const useHealthCheck = (options?: any) => {
   const res = useQuery<BridgeStatus>(
     ['bridge-health-check', bridgeURL],
     async () => {
-      try {
-        if (isLocalStudio) {
-          return await bridgeAPI.healthCheck();
-        } else {
-          return await cloudApi.get('/v1/bridge/status');
-        }
-      } catch (error) {
-        throw error;
+      if (isLocalStudio) {
+        return await bridgeAPI.healthCheck();
+      } else {
+        return await cloudApi.get('/v1/bridge/status');
       }
     },
     {

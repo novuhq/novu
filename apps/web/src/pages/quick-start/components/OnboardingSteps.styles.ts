@@ -11,12 +11,12 @@ export default createStyles((theme, _params, getRef) => {
       backgroundColor: `${dark ? colors.B17 : colors.B98} !important`,
       borderRadius: '40px',
       border: 'none',
-      ['&[data-with-child]']: {
+      '&[data-with-child]': {
         color: colors.B60,
         fontSize: '20px',
         fontWeight: 700,
       },
-      ['&[data-active][data-with-child]']: {
+      '&[data-active][data-with-child]': {
         color: 'inherit',
       },
     },
@@ -27,7 +27,7 @@ export default createStyles((theme, _params, getRef) => {
       borderRadius: '7px',
     },
     item: {
-      ['&[data-active]']: {
+      '&[data-active]': {
         [`& .${getRef('itemBullet')}`]: {
           backgroundColor: `${dark ? colors.B20 : colors.BGLight} !important`,
           boxShadow: dark ? shadows.dark : shadows.medium,

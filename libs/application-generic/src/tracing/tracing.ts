@@ -14,7 +14,6 @@ import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-ho
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function initializeOtelSdk(serviceName: string, version: string) {
   return new NodeSDK({
     resource: new Resource({
@@ -34,7 +33,7 @@ export function initializeOtelSdk(serviceName: string, version: string) {
       scheduledDelayMillis: 30000,
     }),
     contextManager: new AsyncLocalStorageContextManager(),
-    serviceName: serviceName,
+    serviceName,
     textMapPropagator: new CompositePropagator({
       propagators: [
         new JaegerPropagator(),

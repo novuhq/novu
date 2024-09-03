@@ -40,7 +40,7 @@ export const TenantsList = ({
           columns={columns}
           data={tenants || []}
           pagination={{
-            pageSize: pageSize,
+            pageSize,
             current: page,
             hasMore,
             minimalPagination: true,

@@ -18,7 +18,7 @@ import { getDefaultBellColors } from '../../../../utils/defaultTheme';
 import { ActionContainer } from './ActionContainer';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
-import { ColorScheme } from '../../../../shared/config/colors';
+import { ColorScheme, colors } from '../../../../shared/config/colors';
 import { shadows } from '../../../../shared/config/shadows';
 import {
   DotsHorizontal,
@@ -33,7 +33,6 @@ import {
   Trash,
   Read,
 } from '../../../../shared/icons';
-import { colors } from '../../../../shared/config/colors';
 import { useStyles } from '../../../../store/styles';
 import { formatRelativeTime } from '../../../../utils/date';
 
@@ -285,7 +284,7 @@ function ActionContainerOrNone({
 
 function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
   const { bellColors } = getDefaultBellColors({
-    colorScheme: colorScheme,
+    colorScheme,
     bellColors: {
       unseenBadgeBackgroundColor: 'transparent',
     },

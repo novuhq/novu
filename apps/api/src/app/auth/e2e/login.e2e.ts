@@ -78,7 +78,7 @@ describe('User login - /auth/login (POST) @skip-in-ee', async () => {
     it('should allow user to log in and reset the failed attempts counter after less than 5 failed attempts within 5 minutes', async () => {
       const SAFE_FAILED_LOGIN_ATTEMPTS = 3;
 
-      for (let i = 0; i < SAFE_FAILED_LOGIN_ATTEMPTS; i++) {
+      for (let i = 0; i < SAFE_FAILED_LOGIN_ATTEMPTS; i += 1) {
         await session.testAgent.post('/v1/auth/login').send({
           email: userCredentials.email,
           password: 'wrong-password',
@@ -108,7 +108,7 @@ describe('User login - /auth/login (POST) @skip-in-ee', async () => {
     it('should block the user account after 5 unsuccessful attempts within 5 minutes', async () => {
       const MAX_LOGIN_ATTEMPTS = 5;
 
-      for (let i = 0; i < MAX_LOGIN_ATTEMPTS; i++) {
+      for (let i = 0; i < MAX_LOGIN_ATTEMPTS; i += 1) {
         await session.testAgent.post('/v1/auth/login').send({
           email: userCredentials.email,
           password: 'wrong-password',
@@ -146,7 +146,7 @@ describe('User login - /auth/login (POST) @skip-in-ee', async () => {
         }
       );
 
-      for (let i = 0; i < MAX_LOGIN_ATTEMPTS - 1; i++) {
+      for (let i = 0; i < MAX_LOGIN_ATTEMPTS - 1; i += 1) {
         const { body } = await session.testAgent.post('/v1/auth/login').send({
           email: session.user.email,
           password: 'wrong-password',

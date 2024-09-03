@@ -29,7 +29,7 @@ export class RingCentralSmsProvider
       isSandBox?: boolean;
       jwtToken?: string;
       from?: string;
-    }
+    },
   ) {
     super();
     const rcSdk = new SDK({
@@ -42,7 +42,7 @@ export class RingCentralSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const bodyParams = this.transform(bridgeProviderData, {
       from: { phoneNumber: options.from || this.config.from },
@@ -73,9 +73,10 @@ export class RingCentralSmsProvider
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.id === identifier);
     }
 
@@ -90,7 +91,7 @@ export class RingCentralSmsProvider
     }
 
     return {
-      status: status,
+      status,
       date: new Date(body.creationTime).toISOString(),
       externalId: body.id,
       attempts: body.smsSendingAttemptsCount
@@ -114,6 +115,8 @@ export class RingCentralSmsProvider
         return SmsEventStatusEnum.FAILED;
       case 'Delivered':
         return SmsEventStatusEnum.DELIVERED;
+      default:
+        return undefined;
     }
   }
 }

@@ -1,12 +1,15 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { FeedRepository, FeedEntity } from '@novu/dal';
-import { CreateFeedCommand } from './create-feed.command';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
+import { CreateFeedCommand } from './create-feed.command';
 
 @Injectable()
 export class CreateFeed {
-  constructor(private feedRepository: FeedRepository, private createChange: CreateChange) {}
+  constructor(
+    private feedRepository: FeedRepository,
+    private createChange: CreateChange
+  ) {}
 
   async execute(command: CreateFeedCommand): Promise<FeedEntity> {
     const feedExist = await this.feedRepository.findOne({

@@ -20,7 +20,7 @@ export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -34,7 +34,7 @@ export class SendchampSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       sender_name: options.from || this.config.from,

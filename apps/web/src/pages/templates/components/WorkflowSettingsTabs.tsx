@@ -10,7 +10,7 @@ export const WorkflowSettingsTabs = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const value = useMemo(() => {
-    return pathname.replace(basePath + '/', '');
+    return pathname.replace(`${basePath}/`, '');
   }, [pathname, basePath]);
 
   return (
@@ -18,7 +18,7 @@ export const WorkflowSettingsTabs = () => {
       orientation="horizontal"
       keepMounted={true}
       onTabChange={(tabValue) => {
-        navigate(basePath + '/' + tabValue);
+        navigate(`${basePath}/${tabValue}`);
       }}
       variant="default"
       value={value}

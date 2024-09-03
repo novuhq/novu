@@ -3,7 +3,6 @@ import { test } from './utils/baseTest';
 import { WorkflowEditorPage } from './page-models/workflowEditorPage';
 import { initializeSession } from './utils/browser';
 import { SessionData } from './utils/plugins';
-import { FeatureFlagsMock } from './utils/featureFlagsMock';
 
 let session: SessionData;
 test.beforeEach(async ({ page }) => {

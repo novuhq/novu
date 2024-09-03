@@ -78,9 +78,9 @@ export class TenantController {
   @ApiOkPaginatedResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenants',
-    description:
-      'Returns a list of tenants, could paginated using the `page` and `limit` query parameter.' +
-      v2TenantsApiDescription,
+    description: `Returns a list of tenants, could paginated using the \`page\` and \`limit\` query parameter.${
+      v2TenantsApiDescription
+    }`,
   })
   @SdkUsePagination()
   async listTenants(
@@ -103,7 +103,7 @@ export class TenantController {
   @ApiResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenant',
-    description: `Get tenant by your internal id used to identify the tenant` + v2TenantsApiDescription,
+    description: `Get tenant by your internal id used to identify the tenant${v2TenantsApiDescription}`,
   })
   @ApiNotFoundResponse({
     description: 'The tenant with the identifier provided does not exist in the database.',
@@ -119,7 +119,7 @@ export class TenantController {
       GetTenantCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        identifier: identifier,
+        identifier,
       })
     );
   }
@@ -129,7 +129,7 @@ export class TenantController {
   @ApiResponse(CreateTenantResponseDto)
   @ApiOperation({
     summary: 'Create tenant',
-    description: 'Create tenant under the current environment' + v2TenantsApiDescription,
+    description: `Create tenant under the current environment${v2TenantsApiDescription}`,
   })
   @ApiConflictResponse({
     description: 'A tenant with the same identifier is already exist.',
@@ -157,7 +157,7 @@ export class TenantController {
   @ApiResponse(UpdateTenantResponseDto)
   @ApiOperation({
     summary: 'Update tenant',
-    description: 'Update tenant by your internal id used to identify the tenant' + v2TenantsApiDescription,
+    description: `Update tenant by your internal id used to identify the tenant${v2TenantsApiDescription}`,
   })
   @ApiNotFoundResponse({
     description: 'The tenant with the identifier provided does not exist in the database.',
@@ -172,7 +172,7 @@ export class TenantController {
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
         userId: user._id,
-        identifier: identifier,
+        identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         name: body.name,
@@ -187,7 +187,7 @@ export class TenantController {
   @UserAuthentication()
   @ApiOperation({
     summary: 'Delete tenant',
-    description: 'Deletes a tenant entity from the Novu platform.' + v2TenantsApiDescription,
+    description: `Deletes a tenant entity from the Novu platform.${v2TenantsApiDescription}`,
   })
   @ApiNoContentResponse({
     description: 'The tenant has been deleted correctly',
@@ -204,7 +204,7 @@ export class TenantController {
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        identifier: identifier,
+        identifier,
       })
     );
   }

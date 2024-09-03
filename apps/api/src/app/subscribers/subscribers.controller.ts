@@ -402,7 +402,7 @@ export class SubscribersController {
   ): Promise<UpdateSubscriberPreferenceResponseDto[]> {
     const command = GetPreferencesByLevelCommand.create({
       organizationId: user.organizationId,
-      subscriberId: subscriberId,
+      subscriberId,
       environmentId: user.environmentId,
       level: PreferenceLevelEnum.TEMPLATE,
     });
@@ -433,7 +433,7 @@ export class SubscribersController {
   ): Promise<GetSubscriberPreferencesResponseDto[]> {
     const command = GetPreferencesByLevelCommand.create({
       organizationId: user.organizationId,
-      subscriberId: subscriberId,
+      subscriberId,
       environmentId: user.environmentId,
       level: parameter,
     });
@@ -459,9 +459,9 @@ export class SubscribersController {
   ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: user.organizationId,
-      subscriberId: subscriberId,
+      subscriberId,
       environmentId: user.environmentId,
-      templateId: templateId,
+      templateId,
       ...(typeof body.enabled === 'boolean' && { enabled: body.enabled }),
       ...(body.channel && { channel: body.channel }),
     });
@@ -485,7 +485,7 @@ export class SubscribersController {
   ) {
     const command = UpdateSubscriberGlobalPreferencesCommand.create({
       organizationId: user.organizationId,
-      subscriberId: subscriberId,
+      subscriberId,
       environmentId: user.environmentId,
       enabled: body.enabled,
       preferences: body.preferences,
@@ -515,7 +515,7 @@ export class SubscribersController {
     const command = GetNotificationsFeedCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
-      subscriberId: subscriberId,
+      subscriberId,
       page: query.page,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
@@ -549,12 +549,13 @@ export class SubscribersController {
     }
 
     if (seen === undefined) {
+      // eslint-disable-next-line no-param-reassign
       seen = false;
     }
 
     const command = GetFeedCountCommand.create({
       organizationId: user.organizationId,
-      subscriberId: subscriberId,
+      subscriberId,
       environmentId: user.environmentId,
       feedId: feedsQuery,
       seen,
@@ -588,7 +589,7 @@ export class SubscribersController {
 
     const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
-      subscriberId: subscriberId,
+      subscriberId,
       environmentId: user.environmentId,
       messageIds,
       mark: body.mark,
@@ -616,7 +617,7 @@ export class SubscribersController {
     return await this.markMessageAsByMarkUsecase.execute(
       MarkMessageAsByMarkCommand.create({
         organizationId: user.organizationId,
-        subscriberId: subscriberId,
+        subscriberId,
         environmentId: user.environmentId,
         messageIds,
         markAs: body.markAs,
@@ -672,7 +673,7 @@ export class SubscribersController {
       UpdateMessageActionsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        subscriberId: subscriberId,
+        subscriberId,
         messageId,
         type,
         payload: body.payload,

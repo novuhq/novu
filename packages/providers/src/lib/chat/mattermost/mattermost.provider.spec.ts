@@ -6,7 +6,7 @@ test('should trigger mattermost library correctly, default channel', async () =>
   const fakePostDefaultChannel = vi.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe(undefined);
 
-    return { headers: { ['x-request-id']: 'default' } };
+    return { headers: { 'x-request-id': 'default' } };
   });
   vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
@@ -33,7 +33,7 @@ test('should trigger mattermost library correctly, override channel', async () =
   const fakePostUserChannel = vi.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe('@username');
 
-    return { headers: { ['x-request-id']: 'username' } };
+    return { headers: { 'x-request-id': 'username' } };
   });
   vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
@@ -62,7 +62,7 @@ test('should trigger mattermost library correctly, default channel with _passthr
   const fakePostDefaultChannel = vi.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe(undefined);
 
-    return { headers: { ['x-request-id']: 'default' } };
+    return { headers: { 'x-request-id': 'default' } };
   });
   vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
@@ -85,7 +85,7 @@ test('should trigger mattermost library correctly, default channel with _passthr
           text: '_passthrough content message',
         },
       },
-    }
+    },
   );
   expect(fakePostDefaultChannel).toHaveBeenCalled();
   expect(fakePostDefaultChannel).toHaveBeenCalledWith(testWebhookUrl, {

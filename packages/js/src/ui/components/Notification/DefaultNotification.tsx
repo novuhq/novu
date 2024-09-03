@@ -23,7 +23,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   const { status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
   const date = createMemo(() => {
-    minutesPassed(); //register as dep
+    minutesPassed(); // register as dep
 
     return formatToRelativeTime({ fromDate: new Date(props.notification.createdAt), locale: locale() });
   });

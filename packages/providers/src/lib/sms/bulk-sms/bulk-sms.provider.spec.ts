@@ -18,7 +18,6 @@ test('should trigger bulk-sms library correctly', async () => {
       {
         id: '67890-90q8',
         date: new Date().toISOString(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       },
     ],
   });
@@ -34,7 +33,7 @@ test('should trigger bulk-sms library correctly', async () => {
         Authorization: 'Basic dGVzdC1rZXk=',
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
 });
 
@@ -44,7 +43,6 @@ test('should trigger bulk-sms library correctly with _passthrough', async () => 
       {
         id: '67890-90q8',
         date: new Date().toISOString(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       },
     ],
   });
@@ -66,6 +64,6 @@ test('should trigger bulk-sms library correctly with _passthrough', async () => 
         Authorization: 'Basic dGVzdC1rZXk=',
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
 });

@@ -8,7 +8,7 @@ test('should trigger infobip library correctly - E-mail', async () => {
   });
 
   const spy = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.infobipClient.channels.email, 'send')
     .mockImplementation(async () => {
@@ -48,7 +48,7 @@ test('should trigger infobip library correctly - E-mail with _passthrough', asyn
   });
 
   const spy = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.infobipClient.channels.email, 'send')
     .mockImplementation(async () => {
@@ -77,7 +77,7 @@ test('should trigger infobip library correctly - E-mail with _passthrough', asyn
           html: '<div>_passthrough</div>',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

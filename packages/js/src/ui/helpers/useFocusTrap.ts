@@ -35,6 +35,7 @@ function createFocusTrap({ element, enabled }: FocusTrapOptions) {
         }
       } else {
         // If Tab is pressed, move focus to the next focusable element
+        // eslint-disable-next-line no-lonely-if
         if (document.activeElement === lastFocusableElement) {
           firstFocusableElement.focus();
           event.preventDefault();

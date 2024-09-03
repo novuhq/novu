@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { SubscriberProcessQueueService } from '../services/queues';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { SubscriberProcessQueueService } from '../services/queues';
 import { QueueHealthIndicator } from './queue-health-indicator.service';
 
 const LOG_CONTEXT = 'SubscriberProcessQueueHealthIndicator';
@@ -12,13 +12,13 @@ const SERVICE_NAME = 'SubscriberProcessQueueService';
 @Injectable()
 export class SubscriberProcessQueueHealthIndicator extends QueueHealthIndicator {
   constructor(
-    private subscriberProcessQueueService: SubscriberProcessQueueService
+    private subscriberProcessQueueService: SubscriberProcessQueueService,
   ) {
     super(
       subscriberProcessQueueService,
       INDICATOR_KEY,
       SERVICE_NAME,
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
   }
 }

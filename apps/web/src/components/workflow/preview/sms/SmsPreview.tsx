@@ -1,9 +1,9 @@
-import { api } from '../../../../api';
-import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
+import { api } from '../../../../api';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
@@ -31,7 +31,7 @@ export const SmsPreview = ({
   const [bridgeContent, setBridgeContent] = useState('');
 
   const { mutateAsync, isLoading: isBridgeLoading } = useMutation(
-    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    (data) => api.post(`/v1/bridge/preview/${formState?.defaultValues?.identifier}/${stepId}`, data),
     {
       onSuccess(data) {
         setBridgeContent(data.outputs.body);

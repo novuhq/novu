@@ -1,6 +1,6 @@
-import { IS_DOCKER_HOSTED } from '../../../config/index';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { IS_DOCKER_HOSTED } from '../../../config/index';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { ControlVariablesForm as Component } from '../../../ee/editor/index';

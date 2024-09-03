@@ -17,7 +17,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
      * Stub is created on Prototype because API and tests use different UserRepository instances.
      */
     stub(CommunityUserRepository.prototype, 'updatePasswordResetToken').callsFake((...args) => {
-      plainToken = args[1];
+      [, plainToken] = args;
       (
         CommunityUserRepository.prototype.updatePasswordResetToken as SinonStubbedMember<
           typeof CommunityUserRepository.prototype.updatePasswordResetToken
@@ -29,7 +29,6 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
 
     const { body } = await session.testAgent.post('/v1/auth/reset/request').send(payload);
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return { body, plainToken: plainToken! };
   };
 
@@ -46,7 +45,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
     expect(body.data.success).to.equal(true);
     const found = await userRepository.findById(session.user._id);
 
-    expect(found.resetToken).to.be.ok;
+    expect(found?.resetToken).to.be.ok;
   });
 
   Object.values(PasswordResetFlowEnum)
@@ -61,7 +60,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
         expect(body.data.success).to.equal(true);
         const found = await userRepository.findById(session.user._id);
 
-        expect(found.resetToken).to.be.ok;
+        expect(found?.resetToken).to.be.ok;
       });
     });
 
@@ -73,7 +72,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
     expect(body.data.success).to.equal(true);
     const found = await userRepository.findById(session.user._id);
 
-    expect(found.resetToken).to.be.ok;
+    expect(found?.resetToken).to.be.ok;
   });
 
   it('should change a password after reset', async () => {
@@ -84,7 +83,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
     expect(body.data.success).to.equal(true);
 
     const found = await userRepository.findById(session.user._id);
-    expect(plainToken).to.not.equal(found.resetToken);
+    expect(plainToken).to.not.equal(found?.resetToken);
 
     const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
       password: 'ASd3ASD$Fdfdf',
@@ -97,7 +96,9 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
      * RLD-68
      * A workaround due to a potential race condition between token reset and new password login
      */
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
 
     const { body: loginBody } = await session.testAgent.post('/v1/auth/login').send({
       email: session.user.email,
@@ -114,8 +115,8 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
 
     const foundUserAfterChange = await userRepository.findById(session.user._id);
 
-    expect(foundUserAfterChange.resetToken).to.not.be.ok;
-    expect(foundUserAfterChange.resetTokenDate).to.not.be.ok;
+    expect(foundUserAfterChange?.resetToken).to.not.be.ok;
+    expect(foundUserAfterChange?.resetTokenDate).to.not.be.ok;
   });
 
   it('should fail to change password for bad token', async () => {
@@ -161,7 +162,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   it('should limit password request to 5 requests per minute', async () => {
     const MAX_ATTEMPTS = 5;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -178,7 +179,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   it('should limit password request to 15 requests per day', async () => {
     const MAX_ATTEMPTS = 5;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -198,7 +199,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -215,7 +216,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   it('should allow user to request password reset after 1 minute block period', async () => {
     const MAX_ATTEMPTS = 5;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -232,7 +233,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -240,7 +241,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       expect(body.data.success).to.equal(true);
       const found = await userRepository.findById(session.user._id);
 
-      expect(found.resetToken).to.be.ok;
+      expect(found?.resetToken).to.be.ok;
     }
   });
 
@@ -266,7 +267,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
         email: session.user.email,
       });
@@ -274,7 +275,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       expect(body.data.success).to.equal(true);
       const found = await userRepository.findById(session.user._id);
 
-      expect(found.resetToken).to.be.ok;
+      expect(found?.resetToken).to.be.ok;
     }
   });
 
@@ -292,7 +293,7 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
       token: plainToken,
     });
 
-    expect(plainToken).to.not.equal(foundUser.resetToken);
+    expect(plainToken).to.not.equal(foundUser?.resetToken);
     expect(resetChange.message[0]).to.contain(
       // eslint-disable-next-line max-len
       'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'

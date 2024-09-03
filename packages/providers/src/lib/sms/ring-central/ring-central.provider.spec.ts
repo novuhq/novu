@@ -11,7 +11,7 @@ test('should trigger ring-central library correctly', async () => {
   });
 
   const spyonLoggedIn = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
     .mockImplementation(async () => {
@@ -19,7 +19,7 @@ test('should trigger ring-central library correctly', async () => {
     });
 
   const spyOnLogin = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'login')
     .mockImplementation(async () => {
@@ -32,7 +32,7 @@ test('should trigger ring-central library correctly', async () => {
     });
 
   const spyOnPost = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
     .mockImplementation(async () => {
@@ -65,7 +65,7 @@ test('should trigger ring-central library correctly', async () => {
       from: { phoneNumber: '+112345' },
       to: [{ phoneNumber: '+176543' }],
       text: 'SMS Content',
-    }
+    },
   );
 });
 
@@ -79,7 +79,7 @@ test('should not login if already logged in', async () => {
   });
 
   const spyonLoggedIn = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
     .mockImplementation(async () => {
@@ -87,7 +87,7 @@ test('should not login if already logged in', async () => {
     });
 
   const spyOnLogin = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'login')
     .mockImplementation(async () => {
@@ -100,7 +100,7 @@ test('should not login if already logged in', async () => {
     });
 
   const spyOnPost = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
     .mockImplementation(async () => {
@@ -132,7 +132,7 @@ test('should not login if already logged in', async () => {
       from: { phoneNumber: '+112345' },
       to: [{ phoneNumber: '+176543' }],
       text: 'SMS Content',
-    }
+    },
   );
 });
 
@@ -146,7 +146,7 @@ test('should only use config.from if options.from is not provided', async () => 
   });
 
   const spyonLoggedIn = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
     .mockImplementation(async () => {
@@ -154,7 +154,7 @@ test('should only use config.from if options.from is not provided', async () => 
     });
 
   const spyOnPost = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
     .mockImplementation(async () => {
@@ -184,7 +184,7 @@ test('should only use config.from if options.from is not provided', async () => 
       from: { phoneNumber: '+112345' },
       to: [{ phoneNumber: '+176543' }],
       text: 'SMS Content',
-    }
+    },
   );
 });
 
@@ -198,7 +198,7 @@ test('should trigger ring-central library correctly with _passthrough', async ()
   });
 
   const spyonLoggedIn = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'loggedIn')
     .mockImplementation(async () => {
@@ -206,7 +206,7 @@ test('should trigger ring-central library correctly with _passthrough', async ()
     });
 
   const spyOnPost = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.rcClient, 'post')
     .mockImplementation(async () => {
@@ -236,7 +236,7 @@ test('should trigger ring-central library correctly with _passthrough', async ()
           text: 'SMS Content _passthrough',
         },
       },
-    }
+    },
   );
 
   expect(spyonLoggedIn).toHaveBeenCalledTimes(1);
@@ -247,6 +247,6 @@ test('should trigger ring-central library correctly with _passthrough', async ()
       from: { phoneNumber: '+112345' },
       to: [{ phoneNumber: '+176543' }],
       text: 'SMS Content _passthrough',
-    }
+    },
   );
 });

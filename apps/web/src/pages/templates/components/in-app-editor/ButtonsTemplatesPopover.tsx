@@ -41,7 +41,7 @@ export function ButtonsTemplatesPopover({
 
   function handleOnButtonChange(buttons: IMessageButton[]) {
     if (buttons) {
-      const newAction = { buttons: buttons, status: MessageActionStatusEnum.PENDING };
+      const newAction = { buttons, status: MessageActionStatusEnum.PENDING };
       onChange(newAction);
     }
   }

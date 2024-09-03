@@ -1,7 +1,7 @@
 import { expect, Locator, Page, selectors } from '@playwright/test';
-import { getSession, ISessionOptions } from './plugins';
 import os from 'node:os';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { getSession, ISessionOptions } from './plugins';
 
 const isMac = os.platform() === 'darwin';
 const modifier = isMac ? 'Meta' : 'Control';
@@ -59,7 +59,7 @@ export async function deleteIndexedDB(page: Page, dbName: string) {
 export async function isDarkTheme(page: Page) {
   // TODO: there should be a more idiomatic way to find out what theme is selected
   const backgroundColor = await page.evaluate(() => {
-    const body = document.body;
+    const { body } = document;
 
     return window.getComputedStyle(body).backgroundColor;
   });

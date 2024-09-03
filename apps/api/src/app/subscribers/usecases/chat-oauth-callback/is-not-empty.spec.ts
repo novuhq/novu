@@ -1,6 +1,6 @@
 import { BaseCommand } from '@novu/application-generic';
-import { IsNotEmpty } from './chat-oauth-callback.command';
 import { expect } from 'chai';
+import { IsNotEmpty } from './chat-oauth-callback.command';
 
 describe('@IsNotEmpty() validator', function () {
   it('should create command with string name', async function () {

@@ -1,9 +1,9 @@
 import { Badge, Text } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../../../api/api.client';
-import { useEnvironment } from '../../../hooks';
 import { Popover } from '@novu/design-system';
 import { useDisclosure } from '@mantine/hooks';
+import { api } from '../../../api/api.client';
+import { useEnvironment } from '../../../hooks';
 import { IS_DOCKER_HOSTED } from '../../../config';
 
 export function BridgeStatus() {

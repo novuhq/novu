@@ -52,7 +52,7 @@ describe('FiretextSmsProvider', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B44123456789&from=testFrom&message=content'
+      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B44123456789&from=testFrom&message=content',
     );
   });
 
@@ -79,11 +79,11 @@ describe('FiretextSmsProvider', () => {
             to: '+24123456789',
           },
         },
-      }
+      },
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B24123456789&from=testFrom&message=content'
+      'https://www.firetext.co.uk/api/sendsms?apiKey=apiKey&to=%2B24123456789&from=testFrom&message=content',
     );
   });
 
@@ -125,7 +125,7 @@ describe('FiretextSmsProvider', () => {
     });
 
     await expect(result).rejects.toThrowError(
-      'Unknown status code: Unknown status message'
+      'Unknown status code: Unknown status message',
     );
   });
 });

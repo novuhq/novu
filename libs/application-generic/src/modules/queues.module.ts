@@ -5,6 +5,7 @@ import {
   Provider,
 } from '@nestjs/common';
 
+import { JobTopicNameEnum } from '@novu/shared';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
@@ -24,7 +25,6 @@ import {
   WorkflowQueueService,
 } from '../services/queues';
 import { ActiveJobsMetricWorkerService } from '../services/workers';
-import { JobTopicNameEnum } from '@novu/shared';
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,
@@ -47,6 +47,7 @@ const BASE_PROVIDERS: Provider[] = [ReadinessService];
 export class QueuesModule implements OnApplicationShutdown {
   static forRoot(entities: JobTopicNameEnum[] = []): DynamicModule {
     if (!entities.length) {
+      // eslint-disable-next-line no-param-reassign
       entities = Object.values(JobTopicNameEnum);
     }
 
@@ -61,7 +62,7 @@ export class QueuesModule implements OnApplicationShutdown {
           tokenList.push(InboundParseQueueService);
           DYNAMIC_PROVIDERS.push(
             InboundParseQueueService,
-            InboundParseQueueServiceHealthIndicator
+            InboundParseQueueServiceHealthIndicator,
           );
           break;
         case JobTopicNameEnum.WORKFLOW:
@@ -69,7 +70,7 @@ export class QueuesModule implements OnApplicationShutdown {
           tokenList.push(WorkflowQueueService);
           DYNAMIC_PROVIDERS.push(
             WorkflowQueueService,
-            WorkflowQueueServiceHealthIndicator
+            WorkflowQueueServiceHealthIndicator,
           );
           break;
         case JobTopicNameEnum.WEB_SOCKETS:
@@ -77,14 +78,14 @@ export class QueuesModule implements OnApplicationShutdown {
           tokenList.push(WebSocketsQueueService);
           DYNAMIC_PROVIDERS.push(
             WebSocketsQueueService,
-            WebSocketsQueueServiceHealthIndicator
+            WebSocketsQueueServiceHealthIndicator,
           );
           break;
         case JobTopicNameEnum.STANDARD:
           tokenList.push(StandardQueueService);
           DYNAMIC_PROVIDERS.push(
             StandardQueueService,
-            StandardQueueServiceHealthIndicator
+            StandardQueueServiceHealthIndicator,
           );
           break;
         case JobTopicNameEnum.PROCESS_SUBSCRIBER:
@@ -92,7 +93,7 @@ export class QueuesModule implements OnApplicationShutdown {
           tokenList.push(SubscriberProcessQueueService);
           DYNAMIC_PROVIDERS.push(
             SubscriberProcessQueueService,
-            SubscriberProcessQueueHealthIndicator
+            SubscriberProcessQueueHealthIndicator,
           );
           break;
         case JobTopicNameEnum.EXECUTION_LOG:
@@ -105,8 +106,10 @@ export class QueuesModule implements OnApplicationShutdown {
           DYNAMIC_PROVIDERS.push(
             ActiveJobsMetricQueueService,
             ActiveJobsMetricQueueServiceHealthIndicator,
-            ActiveJobsMetricWorkerService
+            ActiveJobsMetricWorkerService,
           );
+          break;
+        default:
           break;
       }
     }
@@ -135,7 +138,7 @@ export class QueuesModule implements OnApplicationShutdown {
   }
 
   constructor(
-    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService,
   ) {}
 
   async onApplicationShutdown() {

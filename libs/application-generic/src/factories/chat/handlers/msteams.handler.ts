@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum, ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { BaseChatHandler } from './base.handler';
 import { MsTeamsProvider } from '@novu/providers';
+import { BaseChatHandler } from './base.handler';
 
 export class MSTeamsHandler extends BaseChatHandler {
   constructor() {

@@ -51,7 +51,7 @@ export class MailgunEmailProvider
       domain: string;
       from: string;
       senderName: string;
-    }
+    },
   ) {
     super();
     const mailgun = new Mailgun(formData);
@@ -65,7 +65,7 @@ export class MailgunEmailProvider
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = emailOptions.senderName || this.config.senderName;
     const fromAddress = emailOptions.from || this.config.from;
@@ -90,12 +90,12 @@ export class MailgunEmailProvider
 
     const mailgunMessageData: Partial<MailgunMessageData> = this.transform(
       bridgeProviderData,
-      data
+      data,
     ).body;
 
     const response = await this.mailgunClient.messages.create(
       this.config.domain,
-      mailgunMessageData as MailgunMessageData
+      mailgunMessageData as MailgunMessageData,
     );
 
     return {
@@ -104,7 +104,7 @@ export class MailgunEmailProvider
     };
   }
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     return {
       success: true,

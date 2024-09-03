@@ -22,7 +22,7 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
       from: string;
       username?: string;
       password?: string;
-    }
+    },
   ) {
     super();
     this.apiBaseUrl = `http://${config.host}:${config.port}/cgi-bin`;
@@ -30,9 +30,9 @@ export class KannelSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
-    const url = this.apiBaseUrl + '/sendsms';
+    const url = `${this.apiBaseUrl}/sendsms`;
     const queryParameters = this.transform(bridgeProviderData, {
       username: this.config.username,
       password: this.config.password,

@@ -8,7 +8,7 @@ export interface IJob {
   identifier: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   overrides: Record<string, Record<string, unknown>>;
   step: INotificationTemplateStep;
   tenant?: ITenantDefine;

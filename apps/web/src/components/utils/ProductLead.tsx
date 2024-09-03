@@ -3,8 +3,8 @@ import { useLocalStorage } from '@mantine/hooks';
 import { CSSProperties, ReactNode, useEffect } from 'react';
 import styled from '@emotion/styled';
 
-import { IS_DOCKER_HOSTED } from '../../config';
 import { Button, colors, Text, Calendar, Close } from '@novu/design-system';
+import { IS_DOCKER_HOSTED } from '../../config';
 import { useAuth } from '../../hooks/useAuth';
 import { useSegment } from '../providers/SegmentProvider';
 import { When } from './When';

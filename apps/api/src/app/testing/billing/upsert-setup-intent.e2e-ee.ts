@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
@@ -8,7 +9,7 @@ describe('Upsert setup intent', () => {
   if (!eeBilling.UpsertSetupIntent) {
     throw new Error("UpsertSetupIntent doesn't exist");
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { UpsertSetupIntent } = eeBilling;
 
   const stubObject = {

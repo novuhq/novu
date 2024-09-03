@@ -3,7 +3,9 @@ import { CloudRegionEnum, DashboardUrlEnum } from './enums';
 import { DevCommandOptions } from './types';
 
 export function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function getDefaultOrigin(port: string) {

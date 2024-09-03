@@ -4,10 +4,10 @@ import { useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
 
+import { colors, Text, Button, PageMeta } from '@novu/design-system';
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import { SignUpForm } from './components/SignUpForm';
-import { colors, Text, Button, PageMeta } from '@novu/design-system';
 import { useAuth } from '../../hooks/useAuth';
 import { ROUTES } from '../../constants/routes';
 import { useAcceptInvite } from './components/useAcceptInvite';

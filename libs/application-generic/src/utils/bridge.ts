@@ -16,13 +16,13 @@ export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
 }
 
 export const isTimedDigestOutput = (
-  outputs: DigestOutput | undefined
+  outputs: DigestOutput | undefined,
 ): outputs is DigestTimedOutput => {
   return (outputs as DigestTimedOutput)?.cron != null;
 };
 
 export const isLookBackDigestOutput = (
-  outputs: DigestOutput
+  outputs: DigestOutput,
 ): outputs is DigestRegularOutput => {
   return (
     (outputs as DigestRegularOutput)?.lookBackWindow?.amount != null &&
@@ -31,7 +31,7 @@ export const isLookBackDigestOutput = (
 };
 
 export const isRegularDigestOutput = (
-  outputs: DigestOutput
+  outputs: DigestOutput,
 ): outputs is DigestRegularOutput => {
   return !isTimedDigestOutput(outputs) && !isLookBackDigestOutput(outputs);
 };

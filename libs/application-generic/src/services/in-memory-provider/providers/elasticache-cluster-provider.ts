@@ -2,9 +2,9 @@ import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
 
-export { Cluster, ClusterOptions };
-
 import { convertStringValues } from './variable-mappers';
+
+export { Cluster, ClusterOptions };
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -47,7 +47,7 @@ export const getElasticacheClusterProviderConfig =
       ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
       password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
       connectTimeout: convertStringValues(
-        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
+        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
       ),
       keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
       family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
@@ -55,17 +55,17 @@ export const getElasticacheClusterProviderConfig =
       tls: (process.env.ELASTICACHE_CLUSTER_SERVICE_TLS as ConnectionOptions)
         ? {
             servername: convertStringValues(
-              process.env.ELASTICACHE_CLUSTER_SERVICE_HOST
+              process.env.ELASTICACHE_CLUSTER_SERVICE_HOST,
             ),
           }
         : {},
     };
 
-    const host = redisClusterConfig.host;
+    const { host } = redisClusterConfig;
     const port = redisClusterConfig.port
       ? Number(redisClusterConfig.port)
       : undefined;
-    const password = redisClusterConfig.password;
+    const { password } = redisClusterConfig;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)
       : DEFAULT_CONNECT_TIMEOUT;
@@ -97,7 +97,7 @@ export const getElasticacheClusterProviderConfig =
   };
 
 export const getElasticacheCluster = (
-  enableAutoPipelining?: boolean
+  enableAutoPipelining?: boolean,
 ): Cluster | undefined => {
   const { instances, password, tls } = getElasticacheClusterProviderConfig();
 
@@ -120,7 +120,7 @@ export const getElasticacheCluster = (
   };
 
   Logger.log(
-    `Initializing Elasticache Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing Elasticache Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`,
   );
 
   if (instances && instances.length > 0) {

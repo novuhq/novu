@@ -11,7 +11,7 @@ describe('Workflow Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       workflowQueueService = new WorkflowQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await workflowQueueService.queue.obliterate();
     });
@@ -32,7 +32,7 @@ describe('Workflow Queue service', () => {
           'DEFAULT_ATTEMPTS',
           'instance',
           'queue',
-        ])
+        ]),
       );
       expect(workflowQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(workflowQueueService.topic).toEqual('trigger-handler');
@@ -53,7 +53,7 @@ describe('Workflow Queue service', () => {
           jobsOpts: {
             removeOnComplete: true,
           },
-        })
+        }),
       );
       expect(workflowQueueService.queue.opts.prefix).toEqual('bull');
     });
@@ -88,7 +88,7 @@ describe('Workflow Queue service', () => {
           name: jobId,
           data: jobData,
           attemptsMade: 0,
-        })
+        }),
       );
     });
 
@@ -128,7 +128,7 @@ describe('Workflow Queue service', () => {
             _userId,
           },
           attemptsMade: 0,
-        })
+        }),
       );
     });
   });
@@ -138,7 +138,7 @@ describe('Workflow Queue service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       workflowQueueService = new WorkflowQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await workflowQueueService.queue.obliterate();
     });
@@ -150,7 +150,7 @@ describe('Workflow Queue service', () => {
 
     it('should have prefix in cluster mode', async () => {
       expect(workflowQueueService.queue.opts.prefix).toEqual(
-        '{trigger-handler}'
+        '{trigger-handler}',
       );
     });
   });

@@ -1,5 +1,5 @@
-import { Novu } from './novu';
 import axios from 'axios';
+import { Novu } from './novu';
 
 const mockConfig = {
   secretKey: '1234',

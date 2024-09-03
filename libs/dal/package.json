@@ -29,7 +29,7 @@
     "@faker-js/faker": "^6.0.0",
     "@novu/shared": "workspace:*",
     "aws-sdk": "^2.665.0",
-    "class-transformer": "^0.5.1",
+    "class-transformer": "0.5.1",
     "cross-fetch": "^3.0.4",
     "date-fns": "^2.29.2",
     "event-stream": "^4.0.1",
@@ -38,7 +38,7 @@
     "jsonfile": "^6.0.1",
     "mongoose": "^7.5.0",
     "mongoose-delete": "^1.0.1",
-    "reflect-metadata": "^0.1.13",
+    "reflect-metadata": "0.2.2",
     "superagent-defaults": "^0.1.14",
     "uuid": "^8.3.0"
   },

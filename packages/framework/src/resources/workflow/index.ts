@@ -28,13 +28,13 @@ export function workflow<
   T_ControlSchema extends Schema,
   T_PayloadValidated extends Record<string, unknown> = FromSchema<T_PayloadSchema>,
   T_PayloadUnvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_PayloadSchema>,
-  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>
+  T_Controls extends Record<string, unknown> = FromSchema<T_ControlSchema>,
 >(
   workflowId: string,
   execute: Execute<T_PayloadValidated, T_Controls>,
   workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema>
 ): Workflow<T_PayloadUnvalidated> {
-  const options = workflowOptions ? workflowOptions : {};
+  const options = workflowOptions || {};
 
   const apiClient = initApiClient(process.env.NOVU_SECRET_KEY as string);
 
@@ -169,7 +169,6 @@ export function workflow<
       ),
       custom: discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
     } as never,
-    // eslint-disable-next-line promise/always-return
   }).then(() => {
     prettyPrintDiscovery(newWorkflow);
   });

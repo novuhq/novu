@@ -10,7 +10,10 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
   scope: Scope.REQUEST,
 })
 export class RemoveIntegration {
-  constructor(private invalidateCache: InvalidateCacheService, private integrationRepository: IntegrationRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private integrationRepository: IntegrationRepository
+  ) {}
 
   async execute(command: RemoveIntegrationCommand) {
     try {

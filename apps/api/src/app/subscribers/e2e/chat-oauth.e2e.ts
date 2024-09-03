@@ -121,7 +121,7 @@ describe('ChatOauth - /:subscriberId/credentials/:providerId/:environmentId (GET
 
     const hmacHash = createHash(session.apiKey, userSubscriberId);
 
-    const invalidHmac = hmacHash + '007';
+    const invalidHmac = `${hmacHash}007`;
 
     await expectThrow({
       subscriberId: userSubscriberId,

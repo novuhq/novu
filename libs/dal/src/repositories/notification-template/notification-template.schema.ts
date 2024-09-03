@@ -1,10 +1,10 @@
 import { WorkflowTypeEnum } from '@novu/shared';
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { NotificationTemplateDBModel } from './notification-template.entity';
+
+const mongooseDelete = require('mongoose-delete');
 
 const variantSchemePart = {
   active: {
@@ -265,7 +265,6 @@ notificationTemplateSchema.index({
 
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const NotificationTemplate =
   (mongoose.models.NotificationTemplate as mongoose.Model<NotificationTemplateDBModel>) ||
   mongoose.model<NotificationTemplateDBModel>('NotificationTemplate', notificationTemplateSchema);

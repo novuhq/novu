@@ -2,13 +2,13 @@ import { useCallback, useEffect, useReducer, useState } from 'react';
 import { Group, Modal, ActionIcon, createStyles, MantineTheme } from '@mantine/core';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { useFeatureFlag, useKeyDown } from '../../hooks';
 import { colors, Close } from '@novu/design-system';
+import { Row } from 'react-table';
+import { useFeatureFlag, useKeyDown } from '../../hooks';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import type { IIntegratedProvider, ITableIntegration } from './types';
 import { IntegrationsList } from './IntegrationsList';
-import { Row } from 'react-table';
 import { SelectProviderSidebar } from './components/multi-provider/SelectProviderSidebar';
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
 import { UpdateProviderSidebar as UpdateProviderSidebarOld } from './components/multi-provider/UpdateProviderSidebar';
@@ -82,7 +82,7 @@ export function IntegrationsListModal({
   selectedProvider?: IIntegratedProvider | null;
 }) {
   const [{ integrationIdToEdit, provider, sidebarType, scrollTo }, dispatch] = useReducer(reducer, {
-    sidebarType: !!scrollToProp ? SidebarType.SELECT : undefined,
+    sidebarType: scrollToProp ? SidebarType.SELECT : undefined,
     provider: selectedProvider,
   });
 
@@ -240,7 +240,7 @@ const useModalStyles = createStyles((theme: MantineTheme) => {
       backgroundColor: dark ? theme.fn.rgba(colors.BGDark, 0.8) : theme.fn.rgba(colors.white, 0.7),
 
       '.mantine-Drawer-root': {
-        ['&[data-expanded="true"]']: {
+        '&[data-expanded="true"]': {
           '.mantine-Drawer-drawer': {
             width: '100%',
             borderRadius: 0,

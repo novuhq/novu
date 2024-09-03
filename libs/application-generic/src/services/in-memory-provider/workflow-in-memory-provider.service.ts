@@ -22,7 +22,7 @@ export class WorkflowInMemoryProviderService {
     this.inMemoryProviderService = new InMemoryProviderService(
       provider,
       this.isCluster,
-      false
+      false,
     );
   }
 
@@ -53,9 +53,9 @@ export class WorkflowInMemoryProviderService {
       this.descriptiveLogMessage(
         `Cluster mode ${
           isClusterModeEnabled ? 'is' : 'is not'
-        } enabled for ${LOG_CONTEXT}`
+        } enabled for ${LOG_CONTEXT}`,
       ),
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     return isClusterModeEnabled;

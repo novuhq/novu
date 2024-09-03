@@ -32,7 +32,7 @@ describe('Update All Notifications - /inbox/notifications/{read,archive,read-arc
 
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
     const promises: Array<Promise<unknown>> = [];
-    for (let i = 0; i < times; i++) {
+    for (let i = 0; i < times; i += 1) {
       promises.push(session.triggerEvent(templateToTrigger.triggers[0].identifier, session.subscriberId));
     }
 

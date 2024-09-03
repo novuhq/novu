@@ -1,8 +1,8 @@
+import { ChannelTypeEnum } from '@novu/shared';
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
 import type { Prettify } from './util.types';
 import type { Schema } from './schema.types';
-import { ChannelTypeEnum } from '@novu/shared';
 
 /**
  * The parameters for the workflow function.

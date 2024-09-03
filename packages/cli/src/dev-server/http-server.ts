@@ -1,12 +1,12 @@
 import http from 'node:http';
 import { AddressInfo } from 'net';
 
-import { SERVER_HOST } from '../constants';
 import getPort from 'get-port';
+import { SERVER_HOST } from '../constants';
+import { DevCommandOptions } from '../commands';
 
 export const WELL_KNOWN_ROUTE = '/.well-known/novu';
 export const STUDIO_PATH = '/studio';
-import { DevCommandOptions } from '../commands';
 
 export type DevServerOptions = { tunnelOrigin: string; anonymousId?: string } & Partial<
   Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'dashboardUrl' | 'route'>

@@ -17,7 +17,7 @@ export abstract class QueueHealthIndicator
     private queueService: QueueBaseService,
     private indicatorKey: string,
     private serviceName: string,
-    private logContext: string
+    private logContext: string,
   ) {
     super();
   }
@@ -36,7 +36,7 @@ export abstract class QueueHealthIndicator
 
     throw new HealthCheckError(
       `${this.serviceName} Health is not ready`,
-      result
+      result,
     );
   }
 }

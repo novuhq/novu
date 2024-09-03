@@ -26,14 +26,14 @@ export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
     private config: {
       apiKey: string;
       senderName: string;
-    }
+    },
   ) {
     super();
     this.plunk = new Plunk(this.config.apiKey);
   }
   async checkIntegration(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ICheckIntegrationResponse> {
     try {
       const response: IPlunkResponse = await this.plunk.emails.send({
@@ -59,7 +59,7 @@ export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const response: IPlunkResponse = await this.plunk.emails.send(
       this.transform<SendParams>(bridgeProviderData, {
@@ -68,7 +68,7 @@ export class PlunkEmailProvider extends BaseProvider implements IEmailProvider {
         to: options.to,
         subject: options.subject,
         body: options.html || options.text,
-      }).body
+      }).body,
     );
 
     return {

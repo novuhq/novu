@@ -8,7 +8,10 @@ import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
 
 @Injectable()
 export class UpdateOnBoardingUsecase extends BaseUserProfileUsecase {
-  constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private readonly userRepository: UserRepository
+  ) {
     super();
   }
 

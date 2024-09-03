@@ -12,7 +12,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    */
   async updateOneById(
     overrideId: string,
-    data: IWorkflowOverrideUpdatePayload
+    data: IWorkflowOverrideUpdatePayload,
   ) {
     return await this.http.put(`/workflow-overrides/${overrideId}`, {
       ...data,
@@ -51,7 +51,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    */
   async getOneByTenantIdandWorkflowId(workflowId: string, tenantId: string) {
     return await this.http.get(
-      `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`
+      `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`,
     );
   }
 
@@ -63,13 +63,13 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
   async updateOneByTenantIdandWorkflowId(
     workflowId: string,
     tenantId: string,
-    data: IWorkflowOverrideUpdatePayload
+    data: IWorkflowOverrideUpdatePayload,
   ) {
     return await this.http.put(
       `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`,
       {
         ...data,
-      }
+      },
     );
   }
 

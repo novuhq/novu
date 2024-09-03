@@ -1,13 +1,13 @@
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery } from 'mongoose';
 
+import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 import { SubscriberEntity, SubscriberDBModel } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types';
-import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 type SubscriberDeleteQuery = Pick<SubscriberQuery, 'subscriberId' | '_environmentId'> & EnforceEnvOrOrgIds;

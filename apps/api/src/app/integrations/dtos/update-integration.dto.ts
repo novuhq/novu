@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IUpdateIntegrationBodyDto } from '@novu/shared';
 import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CredentialsDto } from './credentials.dto';
 import { Type } from 'class-transformer';
+import { CredentialsDto } from './credentials.dto';
 import { StepFilter } from '../../shared/dtos/step-filter';
 
 export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {

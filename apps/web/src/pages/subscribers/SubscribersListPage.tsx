@@ -3,10 +3,10 @@ import { format } from 'date-fns';
 import { Code, Button } from '@mantine/core';
 import type { ISubscriber } from '@novu/shared';
 
+import { Table, withCellLoading, IExtendedColumn, ViewportWide, HoverCard } from '@novu/design-system';
 import { useSubscribers } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Table, withCellLoading, IExtendedColumn, ViewportWide, HoverCard } from '@novu/design-system';
 
 const columns: IExtendedColumn<ISubscriber>[] = [
   {
@@ -73,7 +73,7 @@ function SubscribersList() {
         columns={columns}
         data={subscribers || []}
         pagination={{
-          pageSize: pageSize,
+          pageSize,
           current: page,
           hasMore,
           minimalPagination: true,

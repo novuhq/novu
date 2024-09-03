@@ -5,11 +5,11 @@ import { format } from 'date-fns';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
+import { CheckCircle, colors, ErrorIcon, Timer } from '@novu/design-system';
 import { ActivityStep } from './ActivityStep';
 import { DigestedStep } from './DigestedStep';
 
 import { When } from '../../../components/utils/When';
-import { CheckCircle, colors, ErrorIcon, Timer } from '@novu/design-system';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
 import { CopyButton } from './CopyButton';
 
@@ -20,9 +20,9 @@ const checkJobsLength = (item) => {
 };
 
 const getJobsLength = (item) => {
-  let length = item.jobs.length;
+  let { length } = item.jobs;
   if (item._digestedNotificationId) {
-    length = length + 1;
+    length += 1;
   }
 
   return length;

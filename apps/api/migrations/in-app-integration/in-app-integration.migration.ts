@@ -49,13 +49,13 @@ export async function createInAppIntegration() {
           active: true,
         });
 
-        console.log('Created Integration' + response._id);
+        console.log(`Created Integration ${response._id}`);
       }
 
-      console.log('Prococessed environment' + environment._id);
+      console.log(`Prococessed environment ${environment._id}`);
     }
 
-    console.log('Prococessed organization' + organization._id);
+    console.log(`Prococessed organization ${organization._id}`);
   }
 
   // eslint-disable-next-line no-console

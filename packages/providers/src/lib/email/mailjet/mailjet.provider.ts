@@ -38,7 +38,7 @@ export class MailjetEmailProvider
       apiSecret: string;
       from: string;
       senderName: string;
-    }
+    },
   ) {
     super();
     this.mailjetClient = new Client({
@@ -49,7 +49,7 @@ export class MailjetEmailProvider
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.mailjetClient
       .post('send', {
@@ -68,7 +68,7 @@ export class MailjetEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     const send = this.mailjetClient.post('send', {
       version: MAILJET_API_VERSION,
@@ -93,7 +93,7 @@ export class MailjetEmailProvider
 
   private createMailData(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): SendEmailV3_1.Body {
     const message: SendEmailV3_1.Message =
       this.transform<SendEmailV3_1.Message>(bridgeProviderData, {
@@ -135,9 +135,10 @@ export class MailjetEmailProvider
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.MessageID === identifier);
     }
 
@@ -152,7 +153,7 @@ export class MailjetEmailProvider
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body.MessageID,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -177,6 +178,8 @@ export class MailjetEmailProvider
         return EmailEventStatusEnum.SPAM;
       case 'unsub':
         return EmailEventStatusEnum.UNSUBSCRIBED;
+      default:
+        return undefined;
     }
   }
 }

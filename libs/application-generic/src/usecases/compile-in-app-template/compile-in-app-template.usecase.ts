@@ -12,7 +12,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
     protected communityOrganizationRepository: CommunityOrganizationRepository,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
   ) {
     super(communityOrganizationRepository, moduleRef);
   }
@@ -20,7 +20,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
   public async execute(
     command: CompileInAppTemplateCommand,
     // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any
+    i18nInstance?: any,
   ) {
     const organization = await this.getOrganization(command.organizationId);
     const payload = command.payload || {};
@@ -35,7 +35,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
             command.content,
             payload,
             organization,
-            i18nInstance
+            i18nInstance,
           )
         : '';
 
@@ -44,7 +44,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
           command.cta?.data?.url,
           payload,
           organization,
-          i18nInstance
+          i18nInstance,
         );
       }
 
@@ -54,14 +54,14 @@ export class CompileInAppTemplate extends CompileTemplateBase {
             action.content,
             payload,
             organization,
-            i18nInstance
+            i18nInstance,
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
       }
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `In-App Message content could not be generated`
+        e?.message || `In-App Message content could not be generated`,
       );
     }
 
@@ -72,7 +72,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
     content: string,
     payload: any,
     organization: OrganizationEntity | null,
-    i18nInstance: any
+    i18nInstance: any,
   ): Promise<string> {
     return await this.compileTemplate.execute(
       {
@@ -85,7 +85,7 @@ export class CompileInAppTemplate extends CompileTemplateBase {
           },
         },
       },
-      i18nInstance
+      i18nInstance,
     );
   }
 }

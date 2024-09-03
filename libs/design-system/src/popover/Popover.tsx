@@ -62,6 +62,7 @@ export const Popover = ({
           padding: '16px',
           backgroundColor: colorScheme === 'dark' ? colors.B17 : colors.white,
         }}
+        // eslint-disable-next-line no-constant-binary-expression
         sx={{ opacity: `${opacity} !important` ?? 1 }}
       >
         {title && (

@@ -1,5 +1,5 @@
-import { ApiOptions } from '..';
 import type { CustomDataType } from '@novu/shared';
+import { ApiOptions } from '..';
 
 const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_BACKEND_URL = 'https://api.novu.co';
@@ -88,28 +88,24 @@ export class HttpClient {
 
     const queryString = new URLSearchParams(params as any);
 
-    return '?' + queryString.toString();
+    return `?${queryString.toString()}`;
   }
 
   private async doFetch(url: string, options: RequestInit = {}) {
-    try {
-      const response = await fetch(this.backendUrl + url, {
-        ...options,
-        headers: this.headers,
-      });
-      await this.checkResponseStatus(response);
+    const response = await fetch(this.backendUrl + url, {
+      ...options,
+      headers: this.headers,
+    });
+    await this.checkResponseStatus(response);
 
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return response;
   }
 
   private async checkResponseStatus(response: Response) {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        `HTTP error! Status: ${response.status}, Message: ${errorData.message}`
+        `HTTP error! Status: ${response.status}, Message: ${errorData.message}`,
       );
     }
   }

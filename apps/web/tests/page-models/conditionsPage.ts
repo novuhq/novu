@@ -65,6 +65,7 @@ export class ConditionsPage {
 
   async selectConditionOnDropdown(condition: string) {
     await this.getConditionsFormOnDropdown().click();
+
     return this.page.getByRole('option', { name: condition, exact: true }).click();
   }
 
@@ -82,16 +83,19 @@ export class ConditionsPage {
 
   async selectConditionOperatorDropdown(operator: string) {
     await this.getConditionsFormOperatorDropdown().click();
+
     return this.page.getByRole('option', { name: operator, exact: true }).click();
   }
 
   async selectPreviousStepConditionDropdown(step: string) {
     await this.getPreviousStepConditionDropdown().click();
+
     return this.page.getByRole('option', { name: step, exact: true }).click();
   }
 
   async selectPreviousStepTypeDropdown(type: string) {
     await this.getPreviousStepTypeDropdown().click();
+
     return this.page.getByRole('option', { name: type, exact: true }).click();
   }
 

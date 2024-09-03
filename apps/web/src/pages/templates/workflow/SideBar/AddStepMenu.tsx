@@ -1,11 +1,11 @@
 import styled from '@emotion/styled';
 import { Stack, Title } from '@mantine/core';
-import { When } from '../../../../components/utils/When';
 import { colors, DragButton, Tooltip } from '@novu/design-system';
+import { StepTypeEnum } from '@novu/shared';
+import { When } from '../../../../components/utils/When';
 import { useEnvironment } from '../../../../hooks';
 import { channels, NodeTypeEnum } from '../../../../utils/channels';
 import { TOP_ROW_HEIGHT } from '../WorkflowEditor';
-import { StepTypeEnum } from '@novu/shared';
 
 export function AddStepMenu({
   setDragging,

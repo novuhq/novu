@@ -1,5 +1,5 @@
-import { Novu } from '../novu';
 import axios from 'axios';
+import { Novu } from '../novu';
 
 const mockConfig = {
   apiKey: '1234',
@@ -109,7 +109,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
         description: 'new working package',
         steps: [],
         notificationGroupId: 'NOTIFGROUPID',
-      }
+      },
     );
   });
 
@@ -120,7 +120,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
 
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      '/notification-templates/TEMPLATE_I12D'
+      '/notification-templates/TEMPLATE_I12D',
     );
   });
 
@@ -131,7 +131,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith(
-      '/notification-templates/TEMPLATE_ID'
+      '/notification-templates/TEMPLATE_ID',
     );
   });
 
@@ -145,7 +145,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
       '/notification-templates/TEMPLATE_ID/status',
       {
         active: false,
-      }
+      },
     );
   });
 });

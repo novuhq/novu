@@ -51,7 +51,7 @@ export const sanitizeHTML = (html: string): string => {
   }
 
   // Sanitize-html removes the DOCTYPE tag, so we need to add it back.
-  const doctypeRegex = new RegExp('^<!DOCTYPE .*?>');
+  const doctypeRegex = /^<!DOCTYPE .*?>/;
   const doctypeTags = html.match(doctypeRegex);
   const cleanHtml = sanitizeTypes(html, sanitizeOptions);
 
@@ -67,9 +67,15 @@ export const sanitizeHtmlInObject = <T extends Record<string, unknown>>(object: 
     if (typeof value === 'string') {
       acc[key] = sanitizeHTML(value) as T[keyof T];
     } else if (Array.isArray(value)) {
-      acc[key] = value.map((item) =>
-        typeof item === 'string' ? sanitizeHTML(item) : typeof item === 'object' ? sanitizeHtmlInObject(item) : item
-      ) as T[keyof T];
+      acc[key] = value.map((item) => {
+        if (typeof item === 'string') {
+          return sanitizeHTML(item);
+        } else if (typeof item === 'object') {
+          return sanitizeHtmlInObject(item);
+        } else {
+          return item;
+        }
+      }) as T[keyof T];
     } else if (typeof value === 'object' && value !== null) {
       acc[key] = sanitizeHtmlInObject(value as Record<string, unknown>) as T[keyof T];
     } else {

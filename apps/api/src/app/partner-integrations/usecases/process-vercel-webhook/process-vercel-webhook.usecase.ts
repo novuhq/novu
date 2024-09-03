@@ -1,6 +1,4 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import {
   EnvironmentRepository,
   EnvironmentEntity,
@@ -9,6 +7,8 @@ import {
   CommunityUserRepository,
 } from '@novu/dal';
 import crypto from 'node:crypto';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { Sync } from '../../../bridge/usecases/sync';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class ProcessVercelWebhook {
         vercelEnvironment: command.vercelEnvironment,
         deploymentUrl: command.deploymentUrl,
       },
-      'Processing vercel webhook for ${command.vercelEnvironment}'
+      `Processing vercel webhook for ${command.vercelEnvironment}`
     );
 
     this.verifySignature(command.signatureHeader, command.body);
@@ -91,7 +91,7 @@ export class ProcessVercelWebhook {
       organizationId: environment._organizationId,
       userId: internalUser?._id as string,
       environmentId: environment._id,
-      bridgeUrl: 'https://' + url + '/api/novu',
+      bridgeUrl: `https://${url}/api/novu`,
       source: 'vercel',
     });
 

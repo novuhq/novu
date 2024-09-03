@@ -1,5 +1,5 @@
-import { ControlVariables, ControlVariablesModel } from './controlVariables.schema';
 import { SoftDeleteModel } from 'mongoose-delete';
+import { ControlVariables, ControlVariablesModel } from './controlVariables.schema';
 import { ControlVariablesEntity } from './controlVariables.entity';
 import { BaseRepository } from '../base-repository';
 import { EnforceEnvOrOrgIds } from '../../types';

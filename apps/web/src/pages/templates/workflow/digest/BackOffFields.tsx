@@ -1,6 +1,5 @@
-import { Group } from '@mantine/core';
+import { Group, Collapse } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Collapse } from '@mantine/core';
 import { DigestTypeEnum } from '@novu/shared';
 
 import { colors, Input, Switch, Tooltip, inputStyles, Text } from '@novu/design-system';

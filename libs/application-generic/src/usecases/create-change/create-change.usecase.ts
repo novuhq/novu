@@ -12,7 +12,7 @@ export class CreateChange {
     const changes = await this.changeRepository.getEntityChanges(
       command.organizationId,
       command.type,
-      command.item._id
+      command.item._id,
     );
     const aggregatedItem = changes
       .filter((change) => change.enabled)
@@ -34,7 +34,7 @@ export class CreateChange {
         { _environmentId: command.environmentId, _id: command.changeId },
         {
           $set: change,
-        }
+        },
       );
 
       return change;

@@ -29,7 +29,7 @@ export class CacheInMemoryProviderService {
     this.inMemoryProviderService = new InMemoryProviderService(
       provider,
       this.isCluster,
-      enableAutoPipelining
+      enableAutoPipelining,
     );
   }
 
@@ -60,9 +60,9 @@ export class CacheInMemoryProviderService {
       this.descriptiveLogMessage(
         `Cluster mode ${
           isClusterModeEnabled ? 'IS' : 'IS NOT'
-        } enabled for ${LOG_CONTEXT}`
+        } enabled for ${LOG_CONTEXT}`,
       ),
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
 
     return isClusterModeEnabled;

@@ -55,6 +55,7 @@ export class RemoveMessage {
         _id: command.messageId,
       });
 
+      // eslint-disable-next-line prefer-destructuring
       deletedMessage = item[0];
 
       if (!deletedMessage.read) {

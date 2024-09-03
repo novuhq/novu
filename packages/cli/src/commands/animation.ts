@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import chalk from 'chalk';
 import gradient from 'gradient-string';
@@ -7,7 +6,7 @@ import gradient from 'gradient-string';
  * This packages is forked from 'chalk-animation' and modified to work with TypeScript.
  */
 
-const log = console.log;
+const { log } = console;
 let currentAnimation = null;
 
 const consoleFunctions = {
@@ -17,13 +16,12 @@ const consoleFunctions = {
   error: console.error.bind(console),
 };
 
-// eslint-disable-next-line guard-for-in,id-length
-for (const k in consoleFunctions) {
-  // eslint-disable-next-line @typescript-eslint/no-loop-func
-  console[k] = function () {
+// eslint-disable-next-line guard-for-in
+for (const func in consoleFunctions) {
+  console[func] = function () {
     stopLastAnimation();
     // eslint-disable-next-line prefer-rest-params
-    consoleFunctions[k].apply(console, arguments);
+    consoleFunctions[func].apply(console, arguments);
   };
 }
 
@@ -39,6 +37,7 @@ const effects = {
     return gradient(leftColor, rightColor)(str, longHsv);
   },
   pulse(str, frame) {
+    // eslint-disable-next-line no-param-reassign
     frame = (frame % 120) + 1;
     const transition = 20;
     const duration = 15;
@@ -52,6 +51,7 @@ const effects = {
       return chalk.hex(on)(str); // All red
     }
 
+    // eslint-disable-next-line no-param-reassign
     frame = frame >= transition + duration ? 2 * transition + duration - frame : frame; // Revert animation
 
     // eslint-disable-next-line id-length
@@ -79,7 +79,7 @@ const effects = {
     const chunkSize = Math.max(3, Math.round(str.length * 0.02));
     const chunks = [];
 
-    for (let i = 0, length = str.length; i < length; i++) {
+    for (let i = 0, { length } = str; i < length; i += 1) {
       const skip = Math.round(Math.max(0, (Math.random() - 0.8) * chunkSize));
       chunks.push(str.substring(i, i + skip).replace(/[^\r\n]/g, ' '));
       i += skip;
@@ -108,7 +108,7 @@ const effects = {
     const globalPos = frame % (str.length + depth);
 
     const chars = [];
-    for (let i = 0, length = str.length; i < length; i++) {
+    for (let i = 0, { length } = str; i < length; i += 1) {
       const pos = -(i - globalPos);
       if (pos > 0 && pos <= depth - 1) {
         const shade = (depth - pos) * step;
@@ -138,6 +138,7 @@ const effects = {
 function animateString(str, effect, delay, speed) {
   stopLastAnimation();
 
+  // eslint-disable-next-line no-param-reassign
   speed = speed === undefined ? 1 : parseFloat(speed);
   if (!speed || speed <= 0) {
     throw new Error('Expected `speed` to be an number greater than 0');
@@ -150,7 +151,6 @@ function animateString(str, effect, delay, speed) {
     init: false,
     f: 0,
     render() {
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
       if (!this.init) {
         log('\n'.repeat(this.lines - 1));
@@ -164,10 +164,10 @@ function animateString(str, effect, delay, speed) {
       }, delay / speed);
     },
     frame() {
-      this.f++;
+      this.f += 1;
 
       // eslint-disable-next-line @typescript-eslint/no-shadow
-      return '\u001B[' + this.lines + 'F\u001B[G\u001B[2K' + this.text.map((str) => effect(str, this.f)).join('\n');
+      return `\u001B[${this.lines}F\u001B[G\u001B[2K${this.text.map((str) => effect(str, this.f)).join('\n')}`;
     },
     // eslint-disable-next-line @typescript-eslint/no-shadow
     replace(str) {

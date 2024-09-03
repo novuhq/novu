@@ -1,5 +1,5 @@
-import { useSegment } from '../components/providers/SegmentProvider';
 import { useEffect } from 'react';
+import { useSegment } from '../components/providers/SegmentProvider';
 
 type LocationField = keyof Pick<Location, 'href' | 'hash' | 'host' | 'hostname' | 'origin' | 'pathname'>;
 export interface IUsePageViewTrackingProps {

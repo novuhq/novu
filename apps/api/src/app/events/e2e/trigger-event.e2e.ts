@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai';
 import axios, { AxiosResponse } from 'axios';
 import { v4 as uuid } from 'uuid';
@@ -41,14 +40,17 @@ import {
   TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 import { DetailEnum } from '@novu/application-generic';
+import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 
 const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 
-const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const promiseTimeout = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   let session: UserSession;
@@ -1273,7 +1275,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
           transactionId,
           to: [
             { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
-            { subscriberId: subscriberId, email: 'gg@ff.com' },
+            { subscriberId, email: 'gg@ff.com' },
           ],
           payload: {
             email: 'new-test-email@gmail.com',
@@ -1521,7 +1523,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         `${session.serverUrl}${eventTriggerPath}`,
         {
           name: template.triggers[0].identifier,
-          to: [{ subscriberId: subscriber.subscriberId }, { subscriberId: subscriberId, phone: '+972541111111' }],
+          to: [{ subscriberId: subscriber.subscriberId }, { subscriberId, phone: '+972541111111' }],
           payload: {
             organizationName: 'Testing of Organization Name',
           },

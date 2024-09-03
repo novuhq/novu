@@ -18,7 +18,7 @@ export class ExpoPushProvider extends BaseProvider implements IPushProvider {
   constructor(
     private config: {
       accessToken: string;
-    }
+    },
   ) {
     super();
     this.expo = new Expo({ accessToken: this.config.accessToken });
@@ -26,7 +26,7 @@ export class ExpoPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 

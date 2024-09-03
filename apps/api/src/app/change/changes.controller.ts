@@ -1,5 +1,6 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Param, Post, Query, UseInterceptors } from '@nestjs/common';
 import { ApiRateLimitCostEnum, UserSessionData } from '@novu/shared';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApplyChange, ApplyChangeCommand } from './usecases';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
@@ -8,7 +9,6 @@ import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.
 import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangeResponseDto, ChangesResponseDto } from './dtos/change-response.dto';
 import { ChangesRequestDto } from './dtos/change-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -110,7 +110,7 @@ export class ChangesController {
   ): Promise<ChangeResponseDto[]> {
     return this.applyChange.execute(
       ApplyChangeCommand.create({
-        changeId: changeId,
+        changeId,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

@@ -95,7 +95,7 @@ export function WorkflowNode({
   const [disabled, setDisabled] = useState(initDisabled);
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
-  const disabledProp = disabled ? { disabled: disabled } : {};
+  const disabledProp = disabled ? { disabled } : {};
   const isStepRoot = nodeType === 'stepRoot';
   const isVariant = nodeType === 'variant';
   const isVariantRoot = nodeType === 'variantRoot';
@@ -301,11 +301,9 @@ export function WorkflowNode({
                 position={isVariant || isVariantRoot ? 'left' : 'right'}
                 titleIcon={<ProviderMissing />}
                 title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
-                content={
-                  'Please configure or activate a provider instance for the ' +
-                  CHANNEL_TYPE_TO_STRING[channelKey] +
-                  ' channel to send notifications over this node'
-                }
+                content={`Please configure or activate a provider instance for the ${
+                  CHANNEL_TYPE_TO_STRING[channelKey]
+                } channel to send notifications over this node`}
                 actionItem={
                   <Button
                     onClick={() => {
@@ -337,12 +335,10 @@ export function WorkflowNode({
                 position={isVariant || isVariantRoot ? 'left' : 'right'}
                 titleIcon={<ProviderMissing />}
                 title="Select primary provider"
-                content={
-                  'You have multiple provider instances for ' +
-                  CHANNEL_TYPE_TO_STRING[channelKey] +
-                  ` in the ${environment?.name} environment. Please select the primary instance.
-            `
-                }
+                content={`You have multiple provider instances for ${
+                  CHANNEL_TYPE_TO_STRING[channelKey]
+                } in the ${environment?.name} environment. Please select the primary instance.
+            `}
                 actionItem={
                   <Button
                     onClick={() => {
@@ -383,11 +379,9 @@ export function WorkflowNode({
                   }
                   position={isVariant || isVariantRoot ? 'left' : 'right'}
                   title={stepErrorContent || 'Something is missing here'}
-                  content={
-                    `Please specify a ${(stepErrorContent as string)
-                      .replace(/(is|are) missing!/g, '')
-                      .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
-                  }
+                  content={`Please specify a ${(stepErrorContent as string)
+                    .replace(/(is|are) missing!/g, '')
+                    .toLowerCase()} to prevent sending empty notifications.`}
                 />
               )}
           </>
@@ -403,7 +397,7 @@ const IconText = ({
   color,
   label,
   Icon,
-  ['data-test-id']: dataTestId,
+  'data-test-id': dataTestId,
 }: {
   color?: string;
   label: any;

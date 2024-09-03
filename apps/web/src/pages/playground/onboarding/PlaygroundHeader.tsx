@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@novu/novui';
-import { useSegment } from '../../../components/providers/SegmentProvider';
 import { css } from '@novu/novui/css';
-import { navigateToWorkflows } from '../../../utils/playground-navigation';
 import { HStack } from '@novu/novui/jsx';
-import { useStudioState } from '../../../studio/StudioStateProvider';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlayArrow, successMessage, errorMessage, Tooltip } from '@novu/design-system';
+import { useStudioState } from '../../../studio/StudioStateProvider';
+import { navigateToWorkflows } from '../../../utils/playground-navigation';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ExecutionDetailsModalWrapper } from '../../templates/components/ExecutionDetailsModalWrapper';
 
 export function Header({ handleTestClick }: { handleTestClick: () => Promise<any> }) {

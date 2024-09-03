@@ -128,7 +128,7 @@ describe('Get workflows - /workflows (GET)', async () => {
   it('should paginate and filter workflows based on the name', async () => {
     const promises: Promise<NotificationTemplateEntity>[] = [];
     const count = 10;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       promises.push(
         notificationTemplateService.createTemplate({
           name: `Pagination Test ${i}`,
@@ -143,7 +143,7 @@ describe('Get workflows - /workflows (GET)', async () => {
     expect(body.totalCount).to.equal(count);
     expect(body.page).to.equal(0);
     expect(body.pageSize).to.equal(2);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i += 1) {
       expect(body.data[i].name).to.contain('Pagination Test');
     }
   });
@@ -151,7 +151,7 @@ describe('Get workflows - /workflows (GET)', async () => {
   it('should filter workflows based on the name', async () => {
     const promises: Promise<NotificationTemplateEntity>[] = [];
     const count = 10;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       promises.push(
         notificationTemplateService.createTemplate({
           name: `Test Template ${i}`,
@@ -166,7 +166,7 @@ describe('Get workflows - /workflows (GET)', async () => {
     expect(body.totalCount).to.equal(count);
     expect(body.page).to.equal(0);
     expect(body.pageSize).to.equal(100);
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       expect(body.data[i].name).to.contain('Test Template');
     }
   });
@@ -175,7 +175,7 @@ describe('Get workflows - /workflows (GET)', async () => {
     const promises: Promise<NotificationTemplateEntity>[] = [];
     const count = 10;
     const triggerIdentifier = 'test-trigger-identifier';
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       promises.push(
         notificationTemplateService.createTemplate({
           triggers: [{ identifier: `${triggerIdentifier}-${i}`, type: TriggerTypeEnum.EVENT, variables: [] }],
@@ -190,7 +190,7 @@ describe('Get workflows - /workflows (GET)', async () => {
     expect(body.totalCount).to.equal(count);
     expect(body.page).to.equal(0);
     expect(body.pageSize).to.equal(100);
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       expect(body.data[i].triggers[0].identifier).to.contain(`${triggerIdentifier}`);
     }
   });
@@ -198,7 +198,7 @@ describe('Get workflows - /workflows (GET)', async () => {
   it('should filter workflows based on both the name and trigger identifier', async () => {
     const promises: Promise<NotificationTemplateEntity>[] = [];
     const count = 10;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       if (i % 2 === 0) {
         promises.push(
           notificationTemplateService.createTemplate({
