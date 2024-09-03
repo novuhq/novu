@@ -1,37 +1,75 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
-import { ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, getSchemaPath, ApiResponseOptions } from '@nestjs/swagger';
 import { applyDecorators, Type } from '@nestjs/common';
 import { customResponseDecorators } from './swagger/responses.decorator';
 import { COMMON_RESPONSES } from './constants/responses.schema';
 import { DataWrapperDto } from '../dtos/data-wrapper-dto';
 
-export const ApiOkResponse = customResponseDecorators.ApiOkResponse;
-export const ApiCreatedResponse = customResponseDecorators.ApiCreatedResponse;
-export const ApiAcceptedResponse = customResponseDecorators.ApiAcceptedResponse;
-export const ApiNoContentResponse = customResponseDecorators.ApiNoContentResponse;
-export const ApiMovedPermanentlyResponse = customResponseDecorators.ApiMovedPermanentlyResponse;
-export const ApiFoundResponse = customResponseDecorators.ApiFoundResponse;
-export const ApiBadRequestResponse = customResponseDecorators.ApiBadRequestResponse;
-export const ApiUnauthorizedResponse = customResponseDecorators.ApiUnauthorizedResponse;
-export const ApiTooManyRequestsResponse = customResponseDecorators.ApiTooManyRequestsResponse;
-export const ApiNotFoundResponse = customResponseDecorators.ApiNotFoundResponse;
-export const ApiInternalServerErrorResponse = customResponseDecorators.ApiInternalServerErrorResponse;
-export const ApiBadGatewayResponse = customResponseDecorators.ApiBadGatewayResponse;
-export const ApiConflictResponse = customResponseDecorators.ApiConflictResponse;
-export const ApiForbiddenResponse = customResponseDecorators.ApiForbiddenResponse;
-export const ApiGatewayTimeoutResponse = customResponseDecorators.ApiGatewayTimeoutResponse;
-export const ApiGoneResponse = customResponseDecorators.ApiGoneResponse;
-export const ApiMethodNotAllowedResponse = customResponseDecorators.ApiMethodNotAllowedResponse;
-export const ApiNotAcceptableResponse = customResponseDecorators.ApiNotAcceptableResponse;
-export const ApiNotImplementedResponse = customResponseDecorators.ApiNotImplementedResponse;
-export const ApiPreconditionFailedResponse = customResponseDecorators.ApiPreconditionFailedResponse;
-export const ApiPayloadTooLargeResponse = customResponseDecorators.ApiPayloadTooLargeResponse;
-export const ApiRequestTimeoutResponse = customResponseDecorators.ApiRequestTimeoutResponse;
-export const ApiServiceUnavailableResponse = customResponseDecorators.ApiServiceUnavailableResponse;
-export const ApiUnprocessableEntityResponse = customResponseDecorators.ApiUnprocessableEntityResponse;
-export const ApiUnsupportedMediaTypeResponse = customResponseDecorators.ApiUnsupportedMediaTypeResponse;
-export const ApiDefaultResponse = customResponseDecorators.ApiDefaultResponse;
+export const { ApiOkResponse }: { ApiOkResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const { ApiCreatedResponse }: { ApiCreatedResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const { ApiAcceptedResponse }: { ApiAcceptedResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const { ApiNoContentResponse }: { ApiNoContentResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const {
+  ApiMovedPermanentlyResponse,
+}: { ApiMovedPermanentlyResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const { ApiFoundResponse }: { ApiFoundResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const { ApiBadRequestResponse }: { ApiBadRequestResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const {
+  ApiUnauthorizedResponse,
+}: { ApiUnauthorizedResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiTooManyRequestsResponse,
+}: { ApiTooManyRequestsResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const { ApiNotFoundResponse }: { ApiNotFoundResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const {
+  ApiInternalServerErrorResponse,
+}: { ApiInternalServerErrorResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const { ApiBadGatewayResponse }: { ApiBadGatewayResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const { ApiConflictResponse }: { ApiConflictResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const { ApiForbiddenResponse }: { ApiForbiddenResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const {
+  ApiGatewayTimeoutResponse,
+}: { ApiGatewayTimeoutResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const { ApiGoneResponse }: { ApiGoneResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
+export const {
+  ApiMethodNotAllowedResponse,
+}: { ApiMethodNotAllowedResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiNotAcceptableResponse,
+}: { ApiNotAcceptableResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiNotImplementedResponse,
+}: { ApiNotImplementedResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiPreconditionFailedResponse,
+}: { ApiPreconditionFailedResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiPayloadTooLargeResponse,
+}: { ApiPayloadTooLargeResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiRequestTimeoutResponse,
+}: { ApiRequestTimeoutResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiServiceUnavailableResponse,
+}: { ApiServiceUnavailableResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiUnprocessableEntityResponse,
+}: { ApiUnprocessableEntityResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const {
+  ApiUnsupportedMediaTypeResponse,
+}: { ApiUnsupportedMediaTypeResponse: (options?: ApiResponseOptions) => MethodDecorator } = customResponseDecorators;
+export const { ApiDefaultResponse }: { ApiDefaultResponse: (options?: ApiResponseOptions) => MethodDecorator } =
+  customResponseDecorators;
 
 export const ApiResponse = <DataDto extends Type<unknown>>(
   dataDto: DataDto,

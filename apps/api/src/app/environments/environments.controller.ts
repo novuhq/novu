@@ -10,6 +10,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiAuthSchemeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RolesGuard, Roles } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
@@ -19,7 +21,6 @@ import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
-import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -30,7 +31,6 @@ import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.d
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
-import { RolesGuard, Roles } from '@novu/application-generic';
 
 @ApiCommonResponses()
 @Controller('/environments')
@@ -111,7 +111,7 @@ export class EnvironmentsController {
   ) {
     return await this.updateEnvironmentUsecase.execute(
       UpdateEnvironmentCommand.create({
-        environmentId: environmentId,
+        environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         name: payload.name,

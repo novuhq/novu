@@ -2,14 +2,14 @@
 
 import './config/env.config';
 
+import { init } from '@sentry/node';
 import mailin from './server/index';
 import logger from './server/logger';
-import { init } from '@sentry/node';
 import { version } from '../package.json';
 
 const LOG_CONTEXT = 'Main';
 
-const env = process.env;
+const { env } = process;
 
 if (process.env.SENTRY_DSN) {
   init({

@@ -37,7 +37,7 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
       apiKey: string;
       from: string;
       senderName: string;
-    }
+    },
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -47,7 +47,7 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const data: IEmailBody = this.transform<IEmailBody>(bridgeProviderData, {
       from: {
@@ -91,7 +91,7 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
             name: attachment.name,
             content: attachment.file.toString('base64'),
           };
-        }
+        },
       );
     }
 
@@ -106,9 +106,8 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
       data: JSON.stringify(data),
     };
 
-    const response = await this.axiosInstance.request<IEmailResponse>(
-      emailOptions
-    );
+    const response =
+      await this.axiosInstance.request<IEmailResponse>(emailOptions);
 
     return {
       id: response?.data.data?.message_id,
@@ -117,7 +116,7 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     return {
       success: true,
@@ -136,9 +135,10 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.TRANSID === identifier);
     }
 
@@ -153,7 +153,7 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
     }
 
     return {
-      status: status,
+      status,
       date: new Date(body.TIMESTAMP).toISOString(),
       externalId: body.TRANSID,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -179,6 +179,8 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
         return EmailEventStatusEnum.UNSUBSCRIBED;
       case NetCoreStatusEnum.DROPPED:
         return EmailEventStatusEnum.DROPPED;
+      default:
+        return undefined;
     }
   }
 }

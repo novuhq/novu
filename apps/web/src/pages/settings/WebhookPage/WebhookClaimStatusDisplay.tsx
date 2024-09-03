@@ -5,12 +5,12 @@ import {
   IconRefresh,
   When,
 } from '@novu/design-system';
-import { LocalizedMessage } from '../../../types/LocalizedMessage';
 import { FC } from 'react';
-import { IconButton } from '../../../components';
 import { cva } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
 import { SystemStyleObject } from '@novu/novui/types';
+import { IconButton } from '../../../components';
+import { LocalizedMessage } from '../../../types/LocalizedMessage';
 import { Text } from './WebhookPage.shared';
 import { type WebhookClaimStatus } from './WebhookPage.types';
 

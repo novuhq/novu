@@ -43,7 +43,7 @@ const validateAmount = ({
       type: 'number',
       inclusive: true,
       message: 'Hours must be 24 or below',
-      path: path,
+      path,
     });
   }
 
@@ -54,7 +54,7 @@ const validateAmount = ({
       type: 'number',
       inclusive: true,
       message: 'Days must be 31 or below',
-      path: path,
+      path,
     });
   }
 };
@@ -332,8 +332,6 @@ export const schema = z
                   path: ['delayMetadata', 'scheduled', 'delayPath'],
                 });
               }
-
-              return;
             }
           })
       )

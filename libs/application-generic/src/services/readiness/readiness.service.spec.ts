@@ -26,13 +26,13 @@ describe('Readiness Service', () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
     standardQueueService = new StandardQueueService(
-      new WorkflowInMemoryProviderService()
+      new WorkflowInMemoryProviderService(),
     );
     workflowQueueService = new WorkflowQueueService(
-      new WorkflowInMemoryProviderService()
+      new WorkflowInMemoryProviderService(),
     );
     subscriberProcessQueueService = new SubscriberProcessQueueService(
-      new WorkflowInMemoryProviderService()
+      new WorkflowInMemoryProviderService(),
     );
 
     await Promise.all([
@@ -68,7 +68,7 @@ describe('Readiness Service', () => {
           'standardQueueServiceHealthIndicator',
           'workflowQueueServiceHealthIndicator',
           'subscriberProcessQueueHealthIndicator',
-        ])
+        ]),
       );
 
       const areQueuesEnabled = await readinessService.areQueuesEnabled();
@@ -87,14 +87,14 @@ describe('Readiness Service', () => {
 
       const getWorkerProcessor = () => {
         return async ({ data }) => {
-          return await new Promise(async (resolve, reject) => {
-            return resolve(data);
+          return await new Promise((resolve, reject) => {
+            resolve(data);
           });
         };
       };
 
       testWorker = new StandardWorkerService(
-        new BullMqService(new WorkflowInMemoryProviderService())
+        new BullMqService(new WorkflowInMemoryProviderService()),
       );
       await testWorker.initWorker(getWorkerProcessor(), getWorkerOptions());
 

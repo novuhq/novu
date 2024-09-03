@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { ApiRateLimitInterceptor } from './guards';
 
 @Module({

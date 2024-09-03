@@ -1,6 +1,6 @@
 import { IconOutlineVisibility, IconOutlineVisibilityOff, IconRefresh, IconSize, Input } from '@novu/design-system';
-import { IconButton, ClipboardIconButton } from '../../../components/';
 import { Flex } from '@novu/novui/jsx';
+import { IconButton, ClipboardIconButton } from '../../../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegenerationModal';
 import { useEnvironment } from '../../../hooks/useEnvironment';

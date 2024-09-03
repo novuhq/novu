@@ -27,7 +27,7 @@ test('should trigger isend-sms library correctly', async () => {
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith(
     '/api/v3/sms/send',
-    '{"sender_id":"45483533","recipient":"2348055372961","type":"unicode","message":"sms content"}'
+    '{"sender_id":"45483533","recipient":"2348055372961","type":"unicode","message":"sms content"}',
   );
 });
 
@@ -52,6 +52,6 @@ test('should trigger isend-sms library correctly', async () => {
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith(
     '/api/v3/sms/send',
-    '{"sender_id":"55483533","recipient":"2348055372961","type":"unicode","message":"sms content"}'
+    '{"sender_id":"55483533","recipient":"2348055372961","type":"unicode","message":"sms content"}',
   );
 });

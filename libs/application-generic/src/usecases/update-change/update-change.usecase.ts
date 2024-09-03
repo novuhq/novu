@@ -18,7 +18,7 @@ export class UpdateChange {
         $set: {
           _parentId: command.parentChangeId,
         },
-      }
+      },
     );
   }
 }

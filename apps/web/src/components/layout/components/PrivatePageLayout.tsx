@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@sentry/react';
 import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { IntercomProvider } from 'react-use-intercom';
+import { css } from '@novu/novui/css';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT, BRIDGE_ENDPOINTS_LEGACY_VERSIONS, INTERCOM_APP_ID } from '../../../config';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
@@ -11,7 +12,6 @@ import { useEnvironment, useRedirectURL, useRouteScopes } from '../../../hooks';
 import { Sidebar } from '../../nav/Sidebar';
 import { HeaderNav } from './v2/HeaderNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
-import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 import { SampleModeBanner } from './v2/SampleWorkflowsBanner';
 
@@ -56,8 +56,6 @@ export function PrivatePageLayout() {
     if (redirectURL) {
       // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
       window.location.replace(redirectURL);
-
-      return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

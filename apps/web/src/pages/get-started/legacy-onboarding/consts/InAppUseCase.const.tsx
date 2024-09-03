@@ -20,7 +20,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
   steps: [
     {
       title: 'Configure In-App provider',
-      Description: function () {
+      Description() {
         const { integrations } = useGetIntegrationsByChannel({ channelType: ChannelTypeEnum.IN_APP });
 
         const getInAppIntegrationUrl = () => {
@@ -52,7 +52,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Build a workflow',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Novu pre-built a workflow for testing. </StepText>
@@ -64,7 +64,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Connect trigger and run test',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <OpenWorkflowButton
@@ -82,7 +82,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Track activity feed',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Discover</StepText>

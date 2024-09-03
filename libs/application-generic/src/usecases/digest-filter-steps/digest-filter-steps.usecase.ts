@@ -10,9 +10,9 @@ const LOG_CONTEXT = 'DigestFilterSteps';
 @Injectable()
 export class DigestFilterSteps {
   public async execute(
-    command: DigestFilterStepsCommand
+    command: DigestFilterStepsCommand,
   ): Promise<NotificationStepEntity[]> {
-    const steps = command.steps;
+    const { steps } = command;
 
     const triggerStep = this.createTriggerStep(command);
 
@@ -20,7 +20,7 @@ export class DigestFilterSteps {
   }
 
   private createTriggerStep(
-    command: DigestFilterStepsCommand
+    command: DigestFilterStepsCommand,
   ): NotificationStepEntity {
     return {
       template: {

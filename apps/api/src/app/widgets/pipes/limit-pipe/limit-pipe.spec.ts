@@ -1,15 +1,15 @@
 import { expect } from 'chai';
-import { LimitPipe } from './limit-pipe';
 import { Paramtype } from '@nestjs/common/interfaces/features/paramtype.interface';
+import { LimitPipe } from './limit-pipe';
 
-enum METADATA {
+enum MetadataEnum {
   DATA = 'limit',
   TYPE = 'query',
 }
 
 describe('LimitPipe', () => {
   let pipe: LimitPipe;
-  const metadata = { data: METADATA.DATA, type: METADATA.TYPE as Paramtype, metatype: String };
+  const metadata = { data: MetadataEnum.DATA, type: MetadataEnum.TYPE as Paramtype, metatype: String };
 
   beforeEach(() => {
     pipe = new LimitPipe(1, 1000);
@@ -35,20 +35,20 @@ describe('LimitPipe', () => {
 
   it('should throw exception when the limit is lower then the min threshold', () => {
     let limit = -1;
-    expect(() => pipe.transform(limit, metadata)).to.throw(`${METADATA.DATA} must not be less than 1`);
+    expect(() => pipe.transform(limit, metadata)).to.throw(`${MetadataEnum.DATA} must not be less than 1`);
 
     limit = 0;
-    expect(() => pipe.transform(limit, metadata)).to.throw(`${METADATA.DATA} must not be less than 1`);
+    expect(() => pipe.transform(limit, metadata)).to.throw(`${MetadataEnum.DATA} must not be less than 1`);
   });
 
   it('should throw exception when the limit is higher then the limit ', () => {
-    let limit = 1001;
-    expect(() => pipe.transform(limit, metadata)).to.throw(`${METADATA.DATA} must not be greater than 1000`);
+    const limit = 1001;
+    expect(() => pipe.transform(limit, metadata)).to.throw(`${MetadataEnum.DATA} must not be greater than 1000`);
   });
 
   it('should return undefined input value if optional', () => {
     pipe = new LimitPipe(1, 1000, true);
-    let limit: undefined | null = undefined;
+    let limit: undefined | null;
     let res = pipe.transform(limit, metadata);
     expect(res).to.equal(limit);
 
@@ -59,18 +59,18 @@ describe('LimitPipe', () => {
 
   it('should throw exception if the input value is not optional', () => {
     pipe = new LimitPipe(1, 1000, false);
-    let limit: undefined | null = undefined;
+    let limit: undefined | null;
     expect(() => pipe.transform(limit, metadata)).to.throw(
-      `${METADATA.DATA} must be a number conforming to the specified constraints`
+      `${MetadataEnum.DATA} must be a number conforming to the specified constraints`
     );
 
     expect(() => pipe.transform(limit, metadata)).to.throw(
-      `${METADATA.DATA} must be a number conforming to the specified constraints`
+      `${MetadataEnum.DATA} must be a number conforming to the specified constraints`
     );
 
     limit = null;
     expect(() => pipe.transform(limit, metadata)).to.throw(
-      `${METADATA.DATA} must be a number conforming to the specified constraints`
+      `${MetadataEnum.DATA} must be a number conforming to the specified constraints`
     );
   });
 
@@ -78,7 +78,7 @@ describe('LimitPipe', () => {
     pipe = new LimitPipe(1, 1000);
     const limit = undefined;
     expect(() => pipe.transform(limit, metadata)).to.throw(
-      `${METADATA.DATA} must be a number conforming to the specified constraints`
+      `${MetadataEnum.DATA} must be a number conforming to the specified constraints`
     );
   });
 });

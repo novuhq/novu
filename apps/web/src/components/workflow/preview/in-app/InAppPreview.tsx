@@ -2,6 +2,8 @@ import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import { Button, colors, inputStyles, When } from '@novu/design-system';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
+import { IMessageButton, inAppMessageFromBridgeOutputs } from '@novu/shared';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { usePreviewInAppTemplate } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
@@ -9,11 +11,9 @@ import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplat
 import { useProcessVariables } from '../../../../hooks';
 import { api } from '../../../../api';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
-import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { InAppBasePreview } from './InAppBasePreview';
-import { IMessageButton, inAppMessageFromBridgeOutputs } from '@novu/shared';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
@@ -42,7 +42,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   });
 
   const { mutateAsync, isLoading: isBridgeLoading } = useMutation(
-    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    (data) => api.post(`/v1/bridge/preview/${formState?.defaultValues?.identifier}/${stepId}`, data),
     {
       onSuccess(data) {
         const inAppMessage = inAppMessageFromBridgeOutputs(data.outputs);

@@ -1,4 +1,3 @@
-/* eslint-disable */
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export function getPkgManager(): PackageManager {

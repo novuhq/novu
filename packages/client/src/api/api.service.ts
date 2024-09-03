@@ -47,7 +47,7 @@ export class ApiService {
 
   private removeNullUndefined(obj) {
     return Object.fromEntries(
-      Object.entries(obj).filter(([_, value]) => value != null)
+      Object.entries(obj).filter(([_, value]) => value != null),
     );
   }
 
@@ -67,7 +67,7 @@ export class ApiService {
     messageId: string,
     executedType: `${ButtonTypeEnum}`,
     status: `${MessageActionStatusEnum}`,
-    payload?: Record<string, unknown>
+    payload?: Record<string, unknown>,
   ): Promise<INotificationDto> {
     return await this.httpClient.post(
       `/widgets/messages/${messageId}/actions/${executedType}`,
@@ -75,7 +75,7 @@ export class ApiService {
         executedType,
         status,
         payload,
-      }
+      },
     );
   }
 
@@ -84,7 +84,7 @@ export class ApiService {
    */
   async markMessageAs(
     messageId: string | string[],
-    mark: { seen?: boolean; read?: boolean }
+    mark: { seen?: boolean; read?: boolean },
   ): Promise<any> {
     const markPayload =
       mark.seen === undefined && mark.read === undefined
@@ -116,7 +116,7 @@ export class ApiService {
 
   async removeMessages(messageIds: string[]): Promise<any> {
     return await this.httpClient.post(`/widgets/messages/bulk/delete`, {
-      messageIds: messageIds,
+      messageIds,
     });
   }
 
@@ -142,7 +142,7 @@ export class ApiService {
 
   async getNotificationsList(
     page: number,
-    { payload, ...rest }: IStoreQuery = {}
+    { payload, ...rest }: IStoreQuery = {},
   ): Promise<IPaginatedResponse<INotificationDto>> {
     const payloadString = payload ? btoa(JSON.stringify(payload)) : undefined;
 
@@ -152,25 +152,25 @@ export class ApiService {
         page,
         ...(payloadString && { payload: payloadString }),
         ...rest,
-      }
+      },
     );
   }
 
   async initializeSession(
     appId: string,
     subscriberId: string,
-    hmacHash = null
+    hmacHash = null,
   ): Promise<ISessionDto> {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
-      subscriberId: subscriberId,
+      subscriberId,
       hmacHash,
     });
   }
 
   async postUsageLog(
     name: string,
-    payload: { [key: string]: string | boolean | undefined }
+    payload: { [key: string]: string | boolean | undefined },
   ) {
     return await this.httpClient.post('/widgets/usage/log', {
       name: `[Widget] - ${name}`,
@@ -179,27 +179,27 @@ export class ApiService {
   }
 
   async getUnseenCount(
-    query: IUnseenCountQuery = {}
+    query: IUnseenCountQuery = {},
   ): Promise<{ count: number }> {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
-      this.removeNullUndefined(query) as unknown as CustomDataType
+      this.removeNullUndefined(query) as unknown as CustomDataType,
     );
   }
 
   async getUnreadCount(
-    query: IUnreadCountQuery = {}
+    query: IUnreadCountQuery = {},
   ): Promise<{ count: number }> {
     return await this.httpClient.get(
       '/widgets/notifications/unread',
-      this.removeNullUndefined(query) as unknown as CustomDataType
+      this.removeNullUndefined(query) as unknown as CustomDataType,
     );
   }
 
   async getTabCount(query: ITabCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/count',
-      query as unknown as CustomDataType
+      query as unknown as CustomDataType,
     );
   }
 
@@ -232,7 +232,7 @@ export class ApiService {
   async updateSubscriberPreference(
     templateId: string,
     channelType: string,
-    enabled: boolean
+    enabled: boolean,
   ): Promise<IUserPreferenceSettings> {
     return await this.httpClient.patch(`/widgets/preferences/${templateId}`, {
       channel: { type: channelType, enabled },
@@ -241,7 +241,7 @@ export class ApiService {
 
   async updateSubscriberGlobalPreference(
     preferences: { channelType: string; enabled: boolean }[],
-    enabled?: boolean
+    enabled?: boolean,
   ): Promise<IUserPreferenceSettings> {
     return await this.httpClient.patch(`/widgets/preferences`, {
       preferences: preferences.map((preference) => ({

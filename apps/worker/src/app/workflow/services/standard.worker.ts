@@ -1,4 +1,3 @@
-const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
@@ -26,6 +25,8 @@ import {
   HandleLastFailedJobCommand,
   HandleLastFailedJob,
 } from '../usecases';
+
+const nr = require('newrelic');
 
 const LOG_CONTEXT = 'StandardWorker';
 
@@ -71,14 +72,14 @@ export class StandardWorker extends StandardWorkerService {
       const message = data.payload?.message;
 
       if (!message) {
-        throw new Error('Job data is missing required fields' + JSON.stringify(data));
+        throw new Error(`Job data is missing required fields${JSON.stringify(data)}`);
       }
 
       return {
         environmentId: message._environmentId,
         jobId: message._jobId,
         organizationId: message._organizationId,
-        userId: userId,
+        userId,
       };
     }
 
@@ -96,14 +97,13 @@ export class StandardWorker extends StandardWorkerService {
 
       Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
-      return await new Promise(async (resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
+      return await new Promise((resolve, reject) => {
         const _this = this;
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE,
           'Trigger Engine',
-          function () {
+          function processTask() {
             const transaction = nr.getTransaction();
 
             storage.run(new Store(PinoLogger.root), () => {
@@ -135,8 +135,8 @@ export class StandardWorker extends StandardWorkerService {
     try {
       const minimalData = this.extractMinimalJobData(job.data);
       jobId = minimalData.jobId;
-      const environmentId = minimalData.environmentId;
-      const userId = minimalData.userId;
+      const { environmentId } = minimalData;
+      const { userId } = minimalData;
 
       await this.setJobAsCompleted.execute(
         SetJobAsCommand.create({

@@ -49,9 +49,9 @@ export const ExecutionDetailsWebhookFeedback = ({ executionDetails }) => {
 
       if (webhookStatus) {
         Object.keys(mappedWebhookStatuses).forEach((key) => {
-          const status = mappedWebhookStatuses[key].status;
-          const icon = mappedWebhookStatuses[key].icon;
-          const label = mappedWebhookStatuses[key].label;
+          const { status } = mappedWebhookStatuses[key];
+          const { icon } = mappedWebhookStatuses[key];
+          const { label } = mappedWebhookStatuses[key];
           if (status.includes(webhookStatus.toLowerCase())) {
             icons.push(<WebhookFeedback icon={icon} text={label} timeStamp={detail?.updatedAt} />);
           }

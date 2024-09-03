@@ -31,7 +31,10 @@ describe('TimedDigestDelayService', () => {
         });
 
         expect(result).toEqual(
-          differenceInMilliseconds(new Date('2023-05-04T12:01:00Z'), new Date())
+          differenceInMilliseconds(
+            new Date('2023-05-04T12:01:00Z'),
+            new Date(),
+          ),
         );
       });
 
@@ -42,7 +45,10 @@ describe('TimedDigestDelayService', () => {
         });
 
         expect(result).toEqual(
-          differenceInMilliseconds(new Date('2023-05-04T12:07:00Z'), new Date())
+          differenceInMilliseconds(
+            new Date('2023-05-04T12:07:00Z'),
+            new Date(),
+          ),
         );
       });
     });
@@ -55,7 +61,10 @@ describe('TimedDigestDelayService', () => {
         });
 
         expect(result).toEqual(
-          differenceInMilliseconds(new Date('2023-05-04T13:00:00Z'), new Date())
+          differenceInMilliseconds(
+            new Date('2023-05-04T13:00:00Z'),
+            new Date(),
+          ),
         );
       });
 
@@ -66,7 +75,10 @@ describe('TimedDigestDelayService', () => {
         });
 
         expect(result).toEqual(
-          differenceInMilliseconds(new Date('2023-05-04T22:00:00Z'), new Date())
+          differenceInMilliseconds(
+            new Date('2023-05-04T22:00:00Z'),
+            new Date(),
+          ),
         );
       });
     });
@@ -86,8 +98,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-05T01:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -105,8 +117,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-08T01:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
     });
@@ -126,8 +138,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-04T09:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -145,8 +157,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-18T09:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -165,8 +177,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-01T09:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -185,8 +197,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-03T09:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
     });
@@ -206,8 +218,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-03T12:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -225,8 +237,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-08-03T12:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -245,8 +257,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-01T12:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -265,8 +277,8 @@ describe('TimedDigestDelayService', () => {
         expect(result).toEqual(
           differenceInMilliseconds(
             new Date('2023-05-15T12:00:00.000Z'),
-            new Date()
-          )
+            new Date(),
+          ),
         );
       });
 
@@ -287,8 +299,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-01T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -307,8 +319,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-02T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -328,8 +340,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-30T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
         });
@@ -351,8 +363,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-07-03T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -372,8 +384,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-07-04T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -393,8 +405,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-07-31T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
         });
@@ -416,8 +428,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-03T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -437,8 +449,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-04T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -458,8 +470,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-25T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
         });
@@ -481,8 +493,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-07T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -502,8 +514,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-11T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
 
@@ -523,8 +535,8 @@ describe('TimedDigestDelayService', () => {
             expect(result).toEqual(
               differenceInMilliseconds(
                 new Date('2023-06-24T12:00:00.000Z'),
-                new Date()
-              )
+                new Date(),
+              ),
             );
           });
         });

@@ -6,13 +6,10 @@ import type {
 } from '@novu/shared';
 import { ConditionalPartial, PickRequiredKeys } from './util.types';
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 type EventPayload = ITriggerPayload & {};
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 type Actor = TriggerRecipientSubscriber & {};
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 type Recipients = TriggerRecipientsPayload & {};
 
 export type EventTriggerResult = {

@@ -17,7 +17,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(
       data.webhookUrl,
@@ -25,7 +25,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
         text: data.content,
         blocks: data.blocks,
         ...(data.customData || {}),
-      }).body
+      }).body,
     );
 
     return {

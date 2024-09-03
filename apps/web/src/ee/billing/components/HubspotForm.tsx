@@ -17,7 +17,7 @@ declare global {
  */
 export type HubspotFormProps<
   TProperties extends Record<string, string>,
-  TKey extends keyof TProperties & string = keyof TProperties & string
+  TKey extends keyof TProperties & string = keyof TProperties & string,
 > = {
   /**
    * The Hubspot form ID. This can be found in the Hubspot form embed snippet.
@@ -97,7 +97,9 @@ const StyledHubspotForm = styled.div<{ isDark: boolean }>`
       border: 1px solid ${({ isDark }) => (isDark ? colors.B20 : colors.B80)};
       box-sizing: border-box;
       display: block;
-      font-family: Lato, sans serif;
+      font-family:
+        Lato,
+        sans serif;
       font-size: 14px;
       height: 42px;
       line-height: 40px;
@@ -127,7 +129,9 @@ const StyledHubspotForm = styled.div<{ isDark: boolean }>`
       box-sizing: border-box;
       cursor: pointer;
       display: inline-block;
-      font-family: Lato, sans serif;
+      font-family:
+        Lato,
+        sans serif;
       font-size: 14px;
       font-weight: 600;
       height: 42px;

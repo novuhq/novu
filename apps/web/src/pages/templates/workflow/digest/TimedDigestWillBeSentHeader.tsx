@@ -38,16 +38,17 @@ const getOrdinal = (num: string | number) => {
   if (typeof num === 'string') {
     const res = parseInt(num, 10);
 
-    if (isNaN(res)) {
+    if (Number.isNaN(res)) {
       return num;
     }
+    // eslint-disable-next-line no-param-reassign
     num = res;
   }
   const ord = ['st', 'nd', 'rd'];
   const exceptions = [11, 12, 13];
   let nth = ord[(num % 10) - 1];
 
-  if (ord[(num % 10) - 1] == undefined || exceptions.includes(num % 100)) {
+  if (ord[(num % 10) - 1] === undefined || exceptions.includes(num % 100)) {
     nth = 'th';
   }
 
@@ -64,7 +65,7 @@ export const TimedDigestWillBeSentHeader = ({ path, isHighlight = true }: { path
   const { watch } = useFormContext();
 
   const unit = watch(`${path}.digestMetadata.timed.unit`);
-  if (unit == DigestUnitEnum.MINUTES) {
+  if (unit === DigestUnitEnum.MINUTES) {
     const amount = watch(`${path}.digestMetadata.timed.minutes.amount`);
 
     return (
@@ -74,7 +75,7 @@ export const TimedDigestWillBeSentHeader = ({ path, isHighlight = true }: { path
     );
   }
 
-  if (unit == DigestUnitEnum.HOURS) {
+  if (unit === DigestUnitEnum.HOURS) {
     const amount = watch(`${path}.digestMetadata.timed.hours.amount`);
 
     return (

@@ -49,7 +49,7 @@ describe('Idempotency Test', async () => {
         .expect(201);
       const cacheKey = `test-${session.organization._id}-${key}`;
       session.testServer?.getHttpServer();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+
       const cacheVal = JSON.stringify(JSON.parse(await cacheService?.get(cacheKey)!).data);
       expect(JSON.stringify(body)).to.eq(cacheVal);
       const { body: bodyDupe, headers: headerDupe } = await session.testAgent
@@ -74,7 +74,7 @@ describe('Idempotency Test', async () => {
         .expect(201);
       const cacheKey = `test-${session.organization._id}-${key}`;
       session.testServer?.getHttpServer();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+
       const cacheVal = JSON.stringify(JSON.parse(await cacheService?.get(cacheKey)!).data);
       expect(JSON.stringify(body)).to.eq(cacheVal);
       const { body: bodyDupe, headers: headerDupe } = await session.testAgent

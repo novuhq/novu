@@ -36,8 +36,8 @@ export class GetNotificationsFeed {
   @CachedQuery({
     builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
       buildFeedKey().cache({
-        environmentId: environmentId,
-        subscriberId: subscriberId,
+        environmentId,
+        subscriberId,
         ...command,
       }),
   })
@@ -51,9 +51,9 @@ export class GetNotificationsFeed {
 
     if (!subscriber) {
       throw new ApiException(
-        'Subscriber not found for this environment with the id: ' +
-          command.subscriberId +
-          '. Make sure to create a subscriber before fetching the feed.'
+        `Subscriber not found for this environment with the id: ${
+          command.subscriberId
+        }. Make sure to create a subscriber before fetching the feed.`
       );
     }
 
@@ -107,8 +107,8 @@ export class GetNotificationsFeed {
 
     return {
       data,
-      totalCount: totalCount,
-      hasMore: hasMore,
+      totalCount,
+      hasMore,
       pageSize: command.limit,
       page: command.page,
     };

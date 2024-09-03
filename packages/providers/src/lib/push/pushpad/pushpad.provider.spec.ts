@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest';
-import { PushpadPushProvider } from './pushpad.provider';
 import Pushpad from 'pushpad';
+import { PushpadPushProvider } from './pushpad.provider';
 
 test('should trigger pushpad library correctly', async () => {
   const spy = vi.spyOn(Pushpad, 'Notification').mockImplementation(() => {
@@ -8,7 +8,6 @@ test('should trigger pushpad library correctly', async () => {
       deliverTo: vi.fn((target, callback) => {
         callback(null, { id: 12345 });
       }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
   });
 
@@ -44,7 +43,6 @@ test('should trigger pushpad library correctly with _passthrough', async () => {
       deliverTo: vi.fn((target, callback) => {
         callback(null, { id: 12345 });
       }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
   });
 
@@ -72,7 +70,7 @@ test('should trigger pushpad library correctly with _passthrough', async () => {
           title: 'Test passthrough',
         },
       },
-    }
+    },
   );
 
   expect(result.id).toBe('12345');

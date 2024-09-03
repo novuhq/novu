@@ -1,9 +1,9 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
+import { UserSessionData } from '@novu/shared';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserSessionData } from '@novu/shared';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
 import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
@@ -46,7 +46,7 @@ export class MessagesController {
     @UserSession() user: UserSessionData,
     @Query() query: GetMessagesRequestDto
   ): Promise<MessagesResponseDto> {
-    let transactionIdQuery: string[] | undefined = undefined;
+    let transactionIdQuery: string[] | undefined;
     if (query.transactionId) {
       transactionIdQuery = Array.isArray(query.transactionId) ? query.transactionId : [query.transactionId];
     }
@@ -106,7 +106,7 @@ export class MessagesController {
       RemoveMessagesByTransactionIdCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        transactionId: transactionId,
+        transactionId,
         channel: query.channel,
       })
     );

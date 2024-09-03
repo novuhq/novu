@@ -151,8 +151,8 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean; selected: boolea
     return selected
       ? `
            background: ${dark ? getGradient(colors.B20) : getGradient(colors.BGLight)} padding-box, ${
-          colors.vertical
-        } border-box;
+             colors.vertical
+           } border-box;
       `
       : undefined;
   }};

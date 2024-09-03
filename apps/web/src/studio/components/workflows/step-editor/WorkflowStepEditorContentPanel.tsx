@@ -4,6 +4,7 @@ import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
 import { ButtonTypeEnum, inAppMessageFromBridgeOutputs, StepTypeEnum } from '@novu/shared';
+import { css } from '@novu/novui/css';
 import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../../hooks';
 import {
@@ -13,7 +14,6 @@ import {
   SmsBasePreview,
 } from '../../../../components/workflow/preview';
 import { MobileSimulator } from '../../../../components/workflow/preview/common';
-import { css } from '@novu/novui/css';
 import { ErrorPrettyRender } from '../../../../components/workflow/preview/ErrorPrettyRender';
 
 interface IWorkflowStepEditorContentPanelProps {
@@ -132,7 +132,7 @@ export const PreviewStep = ({
     case StepTypeEnum.SMS:
       return <SmsBasePreview content={preview?.outputs?.body} {...props} />;
 
-    case StepTypeEnum.IN_APP:
+    case StepTypeEnum.IN_APP: {
       const inAppMessage = inAppMessageFromBridgeOutputs(preview?.outputs);
 
       return (
@@ -146,6 +146,7 @@ export const PreviewStep = ({
           {...props}
         />
       );
+    }
 
     case StepTypeEnum.CHAT:
       return <ChatBasePreview content={preview?.outputs?.body} {...props} />;

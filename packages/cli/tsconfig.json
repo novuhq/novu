@@ -16,5 +16,5 @@
     "types": ["node"]
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts", "src/commands/init/templates"]
+  "exclude": ["node_modules", "src/commands/init/templates"]
 }

@@ -3,8 +3,7 @@ import { MantineProvider, MantineThemeOverride } from '@mantine/core';
 import { css } from '@emotion/css';
 
 import { Layout } from './layout/Layout';
-import { useNovuTheme } from '../../../hooks';
-import { useFetchOrganization } from '../../../hooks';
+import { useNovuTheme, useFetchOrganization } from '../../../hooks';
 
 export function AppContent() {
   const { theme, common } = useNovuTheme();

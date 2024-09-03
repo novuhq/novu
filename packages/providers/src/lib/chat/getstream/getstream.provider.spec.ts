@@ -50,7 +50,7 @@ test('should trigger getstream correctly with _passthrough', async () => {
           'X-API-KEY': 'test1',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toHaveBeenCalledWith('https://www.google.com/', {

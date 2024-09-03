@@ -31,7 +31,8 @@ type PolymorphicComponent = <C extends React.ElementType = CodeBlockElement>(
  * Issues:
  * - switching between color modes and maintaining readable code
  * - no line numbers are built-in to Highlight JS
- **/
+ *
+ */
 export const CodeBlock: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = CodeBlockElement>(props: CodeBlockProps<C>, ref?: PolymorphicRef<C>) => {
     const [variantProps, codeBlockProps] = codeBlock.splitVariantProps(props);

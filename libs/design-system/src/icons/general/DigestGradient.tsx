@@ -2,7 +2,6 @@ import React from 'react';
 
 import { ISvgPropsInterface } from '../interfaces/svg-props.interface';
 
-/* eslint-disable */
 export function DigestGradient({ width = '30', height = '31', ...props }: ISvgPropsInterface) {
   return (
     <svg width={30} height={31} viewBox={`0 0 30 31`} fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

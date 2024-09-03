@@ -26,7 +26,7 @@ export class WhatsappBusinessChatProvider
     private config: {
       accessToken: string;
       phoneNumberIdentification: string;
-    }
+    },
   ) {
     super();
     this.axiosClient = Axios.create({
@@ -39,16 +39,16 @@ export class WhatsappBusinessChatProvider
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(
       bridgeProviderData,
-      this.defineMessagePayload(options)
+      this.defineMessagePayload(options),
     ).body;
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
-      this.baseUrl + this.config.phoneNumberIdentification + '/messages',
-      payload
+      `${this.baseUrl + this.config.phoneNumberIdentification}/messages`,
+      payload,
     );
 
     return {
@@ -64,7 +64,7 @@ export class WhatsappBusinessChatProvider
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to: options.phoneNumber,
-      type: type,
+      type,
     };
 
     if (type === WhatsAppMessageTypeEnum.TEMPLATE) {

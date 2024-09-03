@@ -24,7 +24,7 @@ export function NovuProviderBase({ onClose, senderInformation, channel }: NovuPr
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const logoSrc = isDark ? CONTEXT_PATH + '/static/images/logo-light.webp' : CONTEXT_PATH + '/static/images/logo.webp';
+  const logoSrc = isDark ? `${CONTEXT_PATH}/static/images/logo-light.webp` : `${CONTEXT_PATH}/static/images/logo.webp`;
 
   const unit = channel === ChannelTypeEnum.EMAIL ? 'emails' : 'messages';
 

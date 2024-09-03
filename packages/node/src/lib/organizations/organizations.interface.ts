@@ -6,7 +6,7 @@ export interface IOrganizations {
   removeMember(memberId: string);
   updateMemberRole(
     memberId: string,
-    payload: IOrganizationUpdateMemberRolePayload
+    payload: IOrganizationUpdateMemberRolePayload,
   );
   getMembers();
   updateBranding(payload: IOrganizationBrandingPayload);

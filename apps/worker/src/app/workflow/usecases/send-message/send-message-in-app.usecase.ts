@@ -95,7 +95,7 @@ export class SendMessageInApp extends SendMessageBase {
       return;
     }
 
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
     if (!step.template) throw new PlatformException('Template not found');
 
     let content = '';
@@ -144,7 +144,7 @@ export class SendMessageInApp extends SendMessageBase {
       return;
     }
 
-    const messagePayload = Object.assign({}, command.payload);
+    const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
     let oldMessage: MessageEntity | null = null;

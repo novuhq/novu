@@ -4,6 +4,7 @@ export function openInNewTab(url: string) {
 
 export function validateURL(url: string, msg = 'The provided URL is invalid'): asserts url {
   try {
+    // eslint-disable-next-line no-new
     new URL(url || '');
   } catch (err) {
     throw new Error(msg);
@@ -18,6 +19,7 @@ export function assertProtocol(url: URL | string | null) {
   }
 
   if (typeof url === 'string') {
+    // eslint-disable-next-line no-param-reassign
     url = new URL(url);
   }
 

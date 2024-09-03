@@ -1,14 +1,13 @@
-import { Divider } from '@mantine/core';
+import { Divider, Button as MantineButton } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Button as MantineButton } from '@mantine/core';
 
 import { colors, GitHub, Text } from '@novu/design-system';
 
+import { PropsWithChildren } from 'react';
 import { When } from '../../../components/utils/When';
 import { IS_DOCKER_HOSTED } from '../../../config';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 import { useVercelParams } from '../../../hooks';
-import { PropsWithChildren } from 'react';
 
 export function OAuth({
   invitationToken,

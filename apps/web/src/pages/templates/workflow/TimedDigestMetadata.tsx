@@ -25,6 +25,8 @@ const convertUnitToLabel = (unit: DigestUnitEnum) => {
       return 'week';
     case DigestUnitEnum.MONTHS:
       return 'month';
+    default:
+      throw new Error('Invalid unit');
   }
 };
 

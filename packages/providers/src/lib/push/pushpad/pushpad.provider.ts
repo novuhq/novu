@@ -20,7 +20,7 @@ export class PushpadPushProvider extends BaseProvider implements IPushProvider {
     private config: {
       apiKey: string;
       appId: string;
-    }
+    },
   ) {
     super();
     this.pushpad = new Pushpad.Pushpad({
@@ -31,7 +31,7 @@ export class PushpadPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const notification = this.buildNotification(options, bridgeProviderData);
 
@@ -53,14 +53,14 @@ export class PushpadPushProvider extends BaseProvider implements IPushProvider {
 
   private buildNotification(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>,
   ): Pushpad.Notification {
     return new Pushpad.Notification(
       this.transform(bridgeProviderData, {
         project: this.pushpad,
         body: options.content,
         title: options.title,
-      }).body
+      }).body,
     );
   }
 }

@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { FeedDBModel } from './feed.entity';
+
+const mongooseDelete = require('mongoose-delete');
 
 const feedSchema = new Schema<FeedDBModel>(
   {
@@ -28,6 +28,5 @@ const feedSchema = new Schema<FeedDBModel>(
 
 feedSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Feed =
   (mongoose.models.Feed as mongoose.Model<FeedDBModel>) || mongoose.model<FeedDBModel>('Feed', feedSchema);

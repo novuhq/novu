@@ -4,7 +4,7 @@
  * meaning you would have `bar foo__bar` in the dom
  */
 export const appearanceKeys = [
-  //Primitives
+  // Primitives
   'button',
 
   'popoverContent',
@@ -31,7 +31,7 @@ export const appearanceKeys = [
   'tabsTrigger',
   'dots',
 
-  //General
+  // General
   'root',
   'bellIcon',
   'bellContainer',
@@ -41,12 +41,12 @@ export const appearanceKeys = [
   'inboxHeader',
   'loading',
 
-  //Inbox
+  // Inbox
   'inboxContent',
   'inbox__popoverTrigger',
   'inbox__popoverContent',
 
-  //Notifications
+  // Notifications
   'notificationListContainer',
   'notificationList',
   'notificationListEmptyNoticeContainer',
@@ -78,7 +78,7 @@ export const appearanceKeys = [
   'notificationsTabsTriggerLabel',
   'notificationsTabsTriggerCount',
 
-  //Inbox status
+  // Inbox status
   'inboxStatus__title',
   'inboxStatus__dropdownTrigger',
   'inboxStatus__dropdownContent',
@@ -106,7 +106,7 @@ export const appearanceKeys = [
   'moreTabs__dropdownItemLabel',
   'moreTabs__dropdownItemRight__icon',
 
-  //workflow
+  // workflow
   'workflowContainer',
   'workflowLabel',
   'workflowLabelContainer',
@@ -126,11 +126,11 @@ export const appearanceKeys = [
   'channelSwitch',
   'channelSwitchThumb',
 
-  //Preferences Header
+  // Preferences Header
   'preferencesHeader',
   'preferencesHeader__back__button',
   'preferencesHeader__title',
 
-  //Preferences Loading
+  // Preferences Loading
   'preferencesLoadingContainer',
 ] as const;

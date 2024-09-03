@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+
 export class SimpletextingSmsProvider
   extends BaseProvider
   implements ISmsProvider
@@ -21,14 +22,14 @@ export class SimpletextingSmsProvider
     private config: {
       apiKey: string;
       accountPhone: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       contactPhone: options.to,

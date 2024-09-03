@@ -3,6 +3,7 @@ import type { ClerkProp } from '@clerk/clerk-react';
 import { normalizeEmail } from '@novu/shared';
 import { api } from '../../../api/api.client';
 
+// eslint-disable-next-line import/no-mutable-exports
 export let clerk: Clerk;
 
 type BuildClerkOptions = {

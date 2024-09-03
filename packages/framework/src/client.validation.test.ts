@@ -1,6 +1,7 @@
+/* eslint-disable no-param-reassign */
 import { expect, it, describe, beforeEach } from 'vitest';
-import { Client } from './client';
 import { z } from 'zod';
+import { Client } from './client';
 import { workflow } from './resources/workflow';
 import { ExecutionStateControlsInvalidError } from './errors';
 import { PostActionEnum } from './constants';
@@ -114,7 +115,7 @@ describe('validation', () => {
         workflow('zod-validation', async ({ step }) => {
           await step.email(
             'zod-validation',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -148,7 +149,7 @@ describe('validation', () => {
         workflow('zod-validation', async ({ step }) => {
           await step.email(
             'test-email',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -178,7 +179,6 @@ describe('validation', () => {
       } catch (error) {
         expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
         expect((error as ExecutionStateControlsInvalidError).message).to.equal(
-          // eslint-disable-next-line max-len
           'Workflow with id: `zod-validation` has an invalid state. Step with id: `test-email` has invalid `controls`. Please provide the correct step controls.'
         );
         expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([
@@ -298,7 +298,7 @@ describe('validation', () => {
         workflow('json-schema-validation', async ({ step }) => {
           await step.email(
             'json-schema-validation',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -332,7 +332,7 @@ describe('validation', () => {
         workflow('json-schema-validation', async ({ step }) => {
           await step.email(
             'test-email',
-            async (controls) => ({
+            async () => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
@@ -362,7 +362,6 @@ describe('validation', () => {
       } catch (error) {
         expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
         expect((error as ExecutionStateControlsInvalidError).message).to.equal(
-          // eslint-disable-next-line max-len
           'Workflow with id: `json-schema-validation` has an invalid state. Step with id: `test-email` has invalid `controls`. Please provide the correct step controls.'
         );
         expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([

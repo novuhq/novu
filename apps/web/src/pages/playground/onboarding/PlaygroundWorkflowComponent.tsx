@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { css, cx } from '@novu/novui/css';
 
+import { HStack, VStack } from '@novu/novui/jsx';
 import { BrowserScreenWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { When } from '../../../components/utils/When';
-import { HStack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
 import { useBridgeAPI } from '../../../studio/hooks/useBridgeAPI';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';

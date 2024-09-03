@@ -11,7 +11,6 @@ describe('Error Codes', () => {
   });
 });
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * IErrorCodeKey tests
  */
@@ -35,7 +34,6 @@ const invalidErrorCodeValSuffix: IErrorCodeVal = 'SomethingIssue';
 
 // @ts-expect-error - Not PascalCase
 const invalidErrorCodeValCase: IErrorCodeVal = 'somethingError';
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /**
  * testErrorCodeEnumValidity Tests

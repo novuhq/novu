@@ -21,6 +21,8 @@ import {
 } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
+import { css } from '@novu/novui/css';
+import { Button } from '@novu/novui';
 import {
   useTemplates,
   useEnvironment,
@@ -44,8 +46,6 @@ import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
 import { GetStartedPageV2 } from '../../studio/components/GetStartedPageV2/index';
-import { css } from '@novu/novui/css';
-import { Button } from '@novu/novui';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -76,6 +76,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
             position="top"
           >
             <div>
+              {/* eslint-disable-next-line no-nested-ternary */}
               {original.workflowIntegrationStatus?.hasActiveIntegrations &&
               original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
                 !original.bridge ? (

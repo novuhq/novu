@@ -4,12 +4,12 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useIntercom } from 'react-use-intercom';
+import { ArrowButton, colors, Text, Discord } from '@novu/design-system';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { INTERCOM_APP_ID } from '../../../config';
 import { ROUTES } from '../../../constants/routes';
-import { ArrowButton, colors, Text, Discord } from '@novu/design-system';
 import { useEffectOnce } from '../../../hooks';
 import { discordInviteUrl, notificationCenterDocsUrl, OnBoardingAnalyticsEnum } from '../consts';
 import { currentOnboardingStep } from './route/store';
@@ -36,6 +36,7 @@ export function QuickStartWrapper({
   const navigate = useNavigate();
 
   if (framework) {
+    // eslint-disable-next-line no-param-reassign
     title = getFrameworkTitle(framework);
   }
 

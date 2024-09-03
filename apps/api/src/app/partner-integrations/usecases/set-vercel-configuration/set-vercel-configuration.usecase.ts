@@ -1,10 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
+import { OrganizationRepository, PartnerTypeEnum, IPartnerConfiguration } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SetupVercelConfigurationResponseDto } from '../../dtos/setup-vercel-integration-response.dto';
 import { SetVercelConfigurationCommand } from './set-vercel-configuration.command';
-import { OrganizationRepository, PartnerTypeEnum, IPartnerConfiguration } from '@novu/dal';
 
 @Injectable()
 export class SetVercelConfiguration {
@@ -60,7 +60,7 @@ export class SetVercelConfiguration {
         })
       );
 
-      const data = response.data;
+      const { data } = response;
 
       return {
         accessToken: data.access_token,

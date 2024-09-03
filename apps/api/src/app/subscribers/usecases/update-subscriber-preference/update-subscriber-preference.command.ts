@@ -1,5 +1,5 @@
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { IsBoolean, IsDefined, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { ChannelPreference } from '../../../shared/dtos/channel-preference';
 
 export class UpdateSubscriberPreferenceCommand extends EnvironmentWithSubscriber {

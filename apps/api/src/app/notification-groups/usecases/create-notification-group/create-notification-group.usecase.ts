@@ -7,7 +7,10 @@ import { CreateNotificationGroupCommand } from './create-notification-group.comm
 
 @Injectable()
 export class CreateNotificationGroup {
-  constructor(private notificationGroupRepository: NotificationGroupRepository, private createChange: CreateChange) {}
+  constructor(
+    private notificationGroupRepository: NotificationGroupRepository,
+    private createChange: CreateChange
+  ) {}
 
   async execute(command: CreateNotificationGroupCommand): Promise<NotificationGroupEntity> {
     const group = await this.notificationGroupRepository.findOne({

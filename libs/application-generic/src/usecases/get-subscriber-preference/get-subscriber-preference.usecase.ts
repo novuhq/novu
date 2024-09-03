@@ -18,22 +18,22 @@ export class GetSubscriberPreference {
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
   ) {}
 
   async execute(
-    command: GetSubscriberPreferenceCommand
+    command: GetSubscriberPreferenceCommand,
   ): Promise<ISubscriberPreferenceResponse[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
-      command.subscriberId
+      command.subscriberId,
     );
 
     const templateList =
       await this.notificationTemplateRepository.getActiveList(
         command.organizationId,
         command.environmentId,
-        true
+        true,
       );
 
     this.analyticsService.mixpanelTrack(
@@ -42,7 +42,7 @@ export class GetSubscriberPreference {
       {
         _organization: command.organizationId,
         templatesSize: templateList.length,
-      }
+      },
     );
 
     return await Promise.all(
@@ -54,9 +54,9 @@ export class GetSubscriberPreference {
             environmentId: command.environmentId,
             template,
             subscriber,
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
   }
 }

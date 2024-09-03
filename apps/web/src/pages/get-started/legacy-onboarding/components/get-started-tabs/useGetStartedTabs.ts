@@ -21,7 +21,7 @@ export const useGetStartedTabs = () => {
 
   const currentTab = (params.get(TAB_SEARCH_PARAM_NAME) as OnboardingUseCasesTabsEnum) ?? DEFAULT_TAB;
   const setTab = (tab: OnboardingUseCasesTabsEnum) => {
-    segment.track('Tab click - [Get Started]', { tab: tab });
+    segment.track('Tab click - [Get Started]', { tab });
 
     params.set(TAB_SEARCH_PARAM_NAME, tab);
 

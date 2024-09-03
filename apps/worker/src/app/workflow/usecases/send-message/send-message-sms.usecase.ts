@@ -75,7 +75,7 @@ export class SendMessageSms extends SendMessageBase {
       message: 'Sending SMS',
     });
 
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
 
     if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
@@ -145,7 +145,7 @@ export class SendMessageSms extends SendMessageBase {
       ...(command.overrides[integration?.providerId] || {}),
     };
 
-    const messagePayload = Object.assign({}, command.payload);
+    const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
@@ -259,8 +259,6 @@ export class SendMessageSms extends SendMessageBase {
           isRetry: false,
         })
       );
-
-      return;
     }
   }
 

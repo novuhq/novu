@@ -77,7 +77,7 @@ export class SendMessageEmail extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    let integration: IntegrationEntity | undefined = undefined;
+    let integration: IntegrationEntity | undefined;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
@@ -107,7 +107,7 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
 
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
@@ -151,11 +151,10 @@ export class SendMessageEmail extends SendMessageBase {
       step.template = template;
     }
 
-    const overrides: Record<string, any> = Object.assign(
-      {},
-      command.overrides.email || {},
-      command.overrides[integration?.providerId] || {}
-    );
+    const overrides: Record<string, any> = {
+      ...(command.overrides.email || {}),
+      ...(command.overrides[integration?.providerId] || {}),
+    };
     const bridgeOutputs = command.bridgeData?.outputs;
 
     let html;
@@ -173,7 +172,7 @@ export class SendMessageEmail extends SendMessageBase {
       payload: this.getCompilePayload(command.compileContext),
     };
 
-    const messagePayload = Object.assign({}, command.payload);
+    const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
@@ -296,7 +295,7 @@ export class SendMessageEmail extends SendMessageBase {
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject: subject,
+        subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
@@ -333,7 +332,7 @@ export class SendMessageEmail extends SendMessageBase {
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          messageId: messageId,
+          messageId,
           detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.WARNING,
@@ -354,16 +353,17 @@ export class SendMessageEmail extends SendMessageBase {
       return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);
     } else {
       const detailEnum =
+        // eslint-disable-next-line no-nested-ternary
         !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
           ? DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION
           : !environment.dns?.mxRecordConfigured
-          ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
-          : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
+            ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
+            : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          messageId: messageId,
+          messageId,
           detail: detailEnum,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.WARNING,
@@ -431,8 +431,6 @@ export class SendMessageEmail extends SendMessageBase {
           isRetry: false,
         })
       );
-
-      return;
     }
   }
 
@@ -493,6 +491,7 @@ export class SendMessageEmail extends SendMessageBase {
        * TODO: Handle this at the handler level globally
        */
       if (error?.isAxiosError && error.response) {
+        // eslint-disable-next-line no-ex-assign
         error = error.response;
       }
 
@@ -508,8 +507,6 @@ export class SendMessageEmail extends SendMessageBase {
           raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
         })
       );
-
-      return;
     }
   }
 

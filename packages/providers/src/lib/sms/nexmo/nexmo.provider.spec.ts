@@ -9,7 +9,7 @@ test('should trigger nexmo library correctly', async () => {
   });
 
   const spy = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.vonageClient.sms, 'send')
     .mockImplementation(async () => {
@@ -51,7 +51,7 @@ test('should trigger nexmo library correctly with _passthrough', async () => {
   });
 
   const spy = vi
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     .spyOn(provider.vonageClient.sms, 'send')
     .mockImplementation(async () => {
@@ -83,7 +83,7 @@ test('should trigger nexmo library correctly with _passthrough', async () => {
           from: '+212345',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

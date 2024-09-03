@@ -2,8 +2,7 @@ import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
-import { type Either } from '../types';
-import { type SupportedFrameworkName } from '../types';
+import { type Either, type SupportedFrameworkName } from '../types';
 import { getResponse } from '../utils';
 
 export const frameworkName: SupportedFrameworkName = 'next';
@@ -152,7 +151,6 @@ export const serve = (
            * We also don't know if the current environment has a native
            * `Response` object, so we'll grab that first.
            */
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           const Res = getResponse();
 
           return new Res(body, { status, headers });

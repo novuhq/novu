@@ -55,7 +55,7 @@ export default createStyles((theme: MantineTheme, { withSelection }: { withSelec
       '& tbody tr:last-of-type td': {
         borderBottom: `1px solid ${dark ? colors.B20 : colors.B98}`,
       },
-      ['&[data-hover]']: {
+      '&[data-hover]': {
         '& tbody tr:hover': {
           backgroundColor: dark ? colors.B20 : colors.B98,
         },

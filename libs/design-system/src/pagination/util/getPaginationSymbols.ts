@@ -147,7 +147,8 @@ function getWindowStart({
 } & TInPaginationRangeParams) {
   if (isInRangeOfLastPage) {
     return totalPageCount - windowSize;
-  } else if (isInRangeOfFirstPage) {
+  }
+  if (isInRangeOfFirstPage) {
     return FIRST_PAGE_NUMBER + 1;
   }
   const windowOffset = Math.ceil(windowSize / 2) - 1;

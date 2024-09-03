@@ -15,8 +15,8 @@ import {
   MessageTemplateContentType,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { EnvironmentWithUserCommand } from '../../../commands';
 import { JsonSchema } from '@novu/framework';
+import { EnvironmentWithUserCommand } from '../../../commands';
 
 export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()

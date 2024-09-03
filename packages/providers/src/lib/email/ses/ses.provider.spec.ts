@@ -129,7 +129,7 @@ test('should trigger ses library correctly with _passthrough', async () => {
 
   expect(spy).toHaveBeenCalled();
   expect(emailContent.includes('Subject: test subject _passthrough')).toBe(
-    true
+    true,
   );
   expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
 });
@@ -185,7 +185,7 @@ describe('parseEventBody', () => {
     const provider = new SESEmailProvider(mockConfig);
     const messageId = provider.parseEventBody(
       { event: 'not-real-event' },
-      'test'
+      'test',
     );
     expect(messageId).toBeUndefined();
   });

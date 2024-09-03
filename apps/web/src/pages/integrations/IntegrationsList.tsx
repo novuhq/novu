@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import { Row } from 'react-table';
 import { ChannelTypeEnum } from '@novu/shared';
 
+import { Table, Text, withCellLoading, IExtendedColumn } from '@novu/design-system';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Table, Text, withCellLoading, IExtendedColumn } from '@novu/design-system';
 import { useEnvironment, useIntegrations } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { IntegrationNameCell } from './components/IntegrationNameCell';

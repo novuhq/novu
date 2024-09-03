@@ -2,13 +2,13 @@ import styled from '@emotion/styled';
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 
+import { Button, ArrowLeft, ArrowLeftGradient, Label } from '@novu/design-system';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 
 import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { DigestDemoFlow } from '../../../components';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
-import { Button, ArrowLeft, ArrowLeftGradient, Label } from '@novu/design-system';
 import { NavButton } from '../components/NavButton';
 import useStyles from '../components/OnboardingSteps.styles';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';

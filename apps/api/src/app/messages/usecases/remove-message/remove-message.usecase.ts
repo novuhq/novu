@@ -7,7 +7,10 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class RemoveMessage {
-  constructor(private invalidateCache: InvalidateCacheService, private messageRepository: MessageRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private messageRepository: MessageRepository
+  ) {}
 
   async execute(command: RemoveMessageCommand) {
     const message = await this.messageRepository.findMessageById({

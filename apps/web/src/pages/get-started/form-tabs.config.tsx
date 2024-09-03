@@ -1,6 +1,6 @@
 import { IconLaptopMac, IconOutlineCloudUpload, IconGroup } from '@novu/novui/icons';
-import { SetupTab } from './tabs/Setup';
 import { css } from '@novu/novui/css';
+import { SetupTab } from './tabs/Setup';
 import { DeployTab } from './tabs/Deploy';
 import { collaborateSteps } from './tabs/Collaborate';
 

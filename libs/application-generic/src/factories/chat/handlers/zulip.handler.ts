@@ -1,7 +1,7 @@
 import { ICredentials, ChatProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { BaseChatHandler } from './base.handler';
 import { ZulipProvider } from '@novu/providers';
+import { BaseChatHandler } from './base.handler';
 
 export class ZulipHandler extends BaseChatHandler {
   constructor() {

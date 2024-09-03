@@ -57,7 +57,7 @@ describe('Delete Message - /messages/:messageId (DELETE)', function () {
 
     const message = messages[0];
 
-    await axiosInstance.delete(`${session.serverUrl}/v1/messages/` + message._id, {
+    await axiosInstance.delete(`${session.serverUrl}/v1/messages/${message._id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },

@@ -1,5 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { ResendEmailProvider } from './resend.provider';
+
 const mockConfig = {
   apiKey: 'this-api-key-from-resend',
   from: 'test@test.com',

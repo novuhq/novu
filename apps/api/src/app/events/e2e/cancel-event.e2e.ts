@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import { expect } from 'chai';
 import {
@@ -205,7 +204,9 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     const trigger1 = await triggerEvent({
       customVar: 'trigger_1_data',
     });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
     const trigger2 = await triggerEvent({
       customVar: 'trigger_2_data',
     });
@@ -288,7 +289,9 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     const trigger1 = await triggerEvent({
       customVar: 'trigger_1_data',
     });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
     const trigger2 = await triggerEvent({
       customVar: 'trigger_2_data',
     });
@@ -380,7 +383,9 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     const trigger1 = await triggerEvent({
       customVar: 'trigger_1_data',
     });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
     const trigger2 = await triggerEvent({
       customVar: 'trigger_2_data',
     });
@@ -486,7 +491,9 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
     const trigger1 = await triggerEvent({
       customVar: 'trigger_1_data',
     });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
     const trigger2 = await triggerEvent({
       customVar: 'trigger_2_data',
     });

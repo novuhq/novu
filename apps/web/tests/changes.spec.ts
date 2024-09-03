@@ -7,7 +7,6 @@ import { WorkflowsPage } from './page-models/workflowsPage';
 
 import { initializeSession } from './utils/browser';
 import { SessionData } from './utils/plugins';
-import { FeatureFlagsMock } from './utils/featureFlagsMock';
 
 let session: SessionData;
 test.beforeEach(async ({ page }) => {

@@ -22,7 +22,7 @@ export class QueryService {
     TError = unknown,
     TData = TQueryFnData,
     TQueryData = TQueryFnData,
-    TQueryKey extends QueryKey = QueryKey
+    TQueryKey extends QueryKey = QueryKey,
   >({
     options,
     listener,
@@ -48,20 +48,20 @@ export class QueryService {
     TData = unknown,
     TError = unknown,
     TVariables = void,
-    TContext = unknown
+    TContext = unknown,
   >({
     options,
     listener,
   }: {
     options: MutationObserverOptions<TData, TError, TVariables, TContext>;
     listener: (
-      result: MutationObserverResult<TData, TError, TVariables, TContext>
+      result: MutationObserverResult<TData, TError, TVariables, TContext>,
     ) => void;
   }) {
     const defaultedOptions = this.queryClient.defaultMutationOptions(options);
     const mutationObserver = new MutationObserver(
       this.queryClient,
-      defaultedOptions
+      defaultedOptions,
     );
     const result = mutationObserver.getCurrentResult();
     const unsubscribe = mutationObserver.subscribe(listener);

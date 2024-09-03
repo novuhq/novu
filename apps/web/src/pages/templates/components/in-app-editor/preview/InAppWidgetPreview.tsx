@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { formatDistanceToNow, subMinutes } from 'date-fns';
 import { IMessageAction } from '@novu/shared';
 
+import { colors, shadows, Text, Title } from '@novu/design-system';
 import { ActionBlockContainer } from './ActionBlockContainer';
 import AvatarContainer from './AvatarContainer';
 
-import { colors, shadows, Text, Title } from '@novu/design-system';
 import { ButtonsTemplatesPopover } from '../ButtonsTemplatesPopover';
 
 function minutesAgo(num: number): string {

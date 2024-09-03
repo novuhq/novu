@@ -128,7 +128,7 @@ describe('Get activity feed - /notifications (GET)', async () => {
     await session.triggerEvent(
       template.triggers[0].identifier,
       {
-        subscriberId: subscriberId,
+        subscriberId,
       },
       {
         firstName: 'Test',
@@ -145,7 +145,7 @@ describe('Get activity feed - /notifications (GET)', async () => {
   });
 
   it('should filter by subscriberId', async function () {
-    const subscriberIdToCreate = SubscriberRepository.createObjectId() + 'some-test';
+    const subscriberIdToCreate = `${SubscriberRepository.createObjectId()}some-test`;
 
     await session.triggerEvent(
       template.triggers[0].identifier,
@@ -175,7 +175,7 @@ describe('Get activity feed - /notifications (GET)', async () => {
     await session.triggerEvent(
       template.triggers[0].identifier,
       {
-        subscriberId: subscriberId,
+        subscriberId,
       },
       {
         firstName: 'Test',

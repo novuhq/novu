@@ -44,7 +44,7 @@ async function clearIntegrationCollection() {
 }
 
 async function seedIntegrationCollection(secureValue: any, amount: number) {
-  for (let i = 0; i < amount; i++) {
+  for (let i = 0; i < amount; i += 1) {
     await integrationRepository._model.collection.insertOne({
       providerId: 'apns',
       channel: 'push',

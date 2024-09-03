@@ -26,7 +26,7 @@ test('should trigger termii library correctly', async () => {
     expect.any(String),
     expect.objectContaining({
       body: '{"to":"+2347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}',
-    })
+    }),
   );
 });
 
@@ -53,13 +53,13 @@ test('should trigger termii library correctly with _passthrough', async () => {
           to: '+3347063317344',
         },
       },
-    }
+    },
   );
 
   expect(fetchMock).toHaveBeenCalledWith(
     expect.any(String),
     expect.objectContaining({
       body: '{"to":"+3347063317344","from":"TermiiTest","sms":"Your otp code is 32901","type":"plain","channel":"generic","api_key":"SG."}',
-    })
+    }),
   );
 });

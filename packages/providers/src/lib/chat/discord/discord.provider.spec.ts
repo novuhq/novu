@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { expect, test, vi } from 'vitest';
 
 import { axiosSpy } from '../../../utils/test/spy-axios';
@@ -45,7 +44,7 @@ test('should trigger Discord provider correctly with _passthrough', async () => 
           content: 'passthrough content',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toHaveBeenCalledWith('https://www.google.com/?wait=true', {

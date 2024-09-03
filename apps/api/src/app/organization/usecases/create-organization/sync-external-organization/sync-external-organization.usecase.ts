@@ -1,7 +1,9 @@
+/* eslint-disable global-require */
 import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
+import { ModuleRef } from '@nestjs/core';
 import { CreateEnvironmentCommand } from '../../../../environments/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments/usecases/create-environment/create-environment.usecase';
 import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
@@ -10,7 +12,6 @@ import { GetOrganization } from '../../get-organization/get-organization.usecase
 import { ApiException } from '../../../../shared/exceptions/api.exception';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
-import { ModuleRef } from '@nestjs/core';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth

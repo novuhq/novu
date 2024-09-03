@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { BulkCreateSubscribersCommand } from './bulk-create-subscribers.command';
 import { SubscriberRepository } from '@novu/dal';
+import { BulkCreateSubscribersCommand } from './bulk-create-subscribers.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()

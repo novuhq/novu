@@ -1,5 +1,5 @@
-import { Novu } from '../novu';
 import axios from 'axios';
+import { Novu } from '../novu';
 
 const mockConfig = {
   apiKey: '1234',
@@ -137,12 +137,12 @@ describe('Novu Node.js package - Topics class', () => {
 
     const result = await novu.topics.getSubscriber(
       topicKey,
-      externalSubscriberId
+      externalSubscriberId,
     );
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith(
-      `/topics/${topicKey}/subscribers/${externalSubscriberId}`
+      `/topics/${topicKey}/subscribers/${externalSubscriberId}`,
     );
     expect(result).toStrictEqual(mockedResponse);
   });
@@ -231,7 +231,7 @@ describe('Novu Node.js package - Topics class', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       `/topics/${topicId}/subscribers`,
-      { subscribers }
+      { subscribers },
     );
     expect(result).toStrictEqual(mockedResponse);
   });
@@ -249,7 +249,7 @@ describe('Novu Node.js package - Topics class', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       `/topics/${topicId}/subscribers/removal`,
-      { subscribers }
+      { subscribers },
     );
     expect(result).toStrictEqual({});
   });

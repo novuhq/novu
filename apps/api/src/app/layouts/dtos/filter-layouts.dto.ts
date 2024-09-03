@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
-import { LayoutDto } from './layout.dto';
 import { Transform } from 'class-transformer';
 import { OrderByEnum } from '@novu/shared';
+import { LayoutDto } from './layout.dto';
 
 export class FilterLayoutsRequestDto {
   @Transform(({ value }) => Number(value))

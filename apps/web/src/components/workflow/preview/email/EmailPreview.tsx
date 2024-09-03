@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Button, colors, inputStyles } from '@novu/design-system';
 
+import { useMutation } from '@tanstack/react-query';
 import { useActiveIntegrations, useProcessVariables } from '../../../../hooks';
 import type { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
@@ -14,7 +15,6 @@ import { PreviewWeb } from './PreviewWeb';
 import { api } from '../../../../api';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
-import { useMutation } from '@tanstack/react-query';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
@@ -60,22 +60,19 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   });
 
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
-    api.put('/v1/bridge/controls/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
+    api.put(`/v1/bridge/controls/${formState?.defaultValues?.identifier}/${stepId}`, { variables: data })
   );
 
   const {
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation(
-    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
-    {
-      onSuccess(data) {
-        setBridgeContent(data.outputs.body);
-        setBridgeSubject(data.outputs.subject);
-      },
-    }
-  );
+  } = useMutation((data) => api.post(`/v1/bridge/preview/${formState?.defaultValues?.identifier}/${stepId}`, data), {
+    onSuccess(data) {
+      setBridgeContent(data.outputs.body);
+      setBridgeSubject(data.outputs.subject);
+    },
+  });
 
   const { getEmailPreview, previewContent, subject, isPreviewContentLoading } = usePreviewEmailTemplate({
     locale: selectedLocale,
