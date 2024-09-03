@@ -15,16 +15,12 @@ import {
 import { VStack } from '@novu/novui/jsx';
 import { vstack } from '@novu/novui/patterns';
 import { FC, PropsWithChildren } from 'react';
-import { useDocsModal } from '../../../../components/docs/useDocsModal';
 
 type IWorkflowFloatingMenuProps = CoreProps;
 
 export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className }) => {
-  const { Component: DocsModal, setPath, toggle } = useDocsModal();
-
   const handleClick = (pathToSet: string) => () => {
-    setPath(`sdks/framework/typescript/steps/${pathToSet}`);
-    toggle();
+    window.open(`https://docs.novu.co/sdks/framework/typescript/steps/${pathToSet}`, '_blank');
   };
 
   return (
@@ -33,49 +29,48 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
         <WorkflowFloatingMenuSection title="Actions">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAutoAwesomeMotion}
-            tooltipLabel="Add a Digest step to your workflow"
+            tooltipLabel="Click to open the Digest step documentation"
             onClick={handleClick('digest')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAvTimer}
-            tooltipLabel="Add a Delay step to your workflow"
+            tooltipLabel="Click to open the Delay step documentation"
             onClick={handleClick('delay')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineBolt}
-            tooltipLabel="Add a Custom step to your workflow"
+            tooltipLabel="Click to open the Custom step documentation"
             onClick={handleClick('custom')}
           />
         </WorkflowFloatingMenuSection>
         <WorkflowFloatingMenuSection title="Channels">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineNotifications}
-            tooltipLabel="Add an In-app step to your workflow"
+            tooltipLabel="Click to open the In-app step documentation"
             onClick={handleClick('inbox')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineEmail}
-            tooltipLabel="Add an Email step to your workflow"
+            tooltipLabel="Click to open the Email step documentation"
             onClick={handleClick('email')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineSms}
-            tooltipLabel="Add an SMS step to your workflow"
+            tooltipLabel="Click to open the SMS step documentation"
             onClick={handleClick('sms')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineMobileFriendly}
-            tooltipLabel="Add a Push step to your workflow"
+            tooltipLabel="Click to open the Push step documentation"
             onClick={handleClick('push')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineForum}
-            tooltipLabel="Add a Chat step to your workflow"
+            tooltipLabel="Click to open the Chat step documentation"
             onClick={handleClick('chat')}
           />
         </WorkflowFloatingMenuSection>
       </menu>
-      <DocsModal />
     </>
   );
 };
