@@ -49,9 +49,7 @@ type RendererProps = {
 };
 
 export const Renderer = (props: RendererProps) => {
-  const nodes = createMemo(() => {
-    return Array.from(props.nodes.keys());
-  });
+  const nodes = () => [...props.nodes.keys()];
 
   onMount(() => {
     const id = 'novu-default-css';
@@ -81,7 +79,7 @@ export const Renderer = (props: RendererProps) => {
               <CountProvider>
                 <For each={nodes()}>
                   {(node) => {
-                    const novuComponent = createMemo(() => props.nodes.get(node)!);
+                    const novuComponent = () => props.nodes.get(node)!;
                     let portalDivElement: HTMLDivElement;
                     const Component = novuComponents[novuComponent().name];
 
