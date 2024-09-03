@@ -41,9 +41,7 @@ export function getLogLevel() {
   if (loggingLevelArr.indexOf(logLevel) === -1) {
     // eslint-disable-next-line no-console
     console.log(
-      `${logLevel}is not a valid log level of ${
-        loggingLevelArr
-      }. Reverting to info.`,
+      `${logLevel}is not a valid log level of ${loggingLevelArr}. Reverting to info.`
     );
 
     logLevel = 'info';
@@ -78,7 +76,7 @@ function getLoggingVariables(): ILoggingVariables {
 }
 
 export function createNestLoggingModuleOptions(
-  settings: ILoggerSettings,
+  settings: ILoggerSettings
 ): Params {
   const values = getLoggingVariables();
 
@@ -90,11 +88,11 @@ export function createNestLoggingModuleOptions(
   const baseArrayWildCards = '*[*].';
   for (let i = 1; i <= 6; i += 1) {
     redactFields = redactFields.concat(
-      sensitiveFields.map((val) => baseWildCards.repeat(i) + val),
+      sensitiveFields.map((val) => baseWildCards.repeat(i) + val)
     );
 
     redactFields = redactFields.concat(
-      sensitiveFields.map((val) => baseArrayWildCards.repeat(i) + val),
+      sensitiveFields.map((val) => baseArrayWildCards.repeat(i) + val)
     );
   }
 
@@ -107,7 +105,7 @@ export function createNestLoggingModuleOptions(
   // eslint-disable-next-line no-console
   console.log(
     `Selected Log Transport ${!transport ? 'None' : 'pino-pretty'}`,
-    loggingLevelSet,
+    loggingLevelSet
   );
 
   return {
@@ -128,6 +126,21 @@ export function createNestLoggingModuleOptions(
       },
       transport,
       autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
+      /**
+       * These custom props are only added to 'request completed' and 'request errored' logs.
+       * Logs generated during request processing won't have these props by default.
+       * To include these or any other custom props in mid-request logs,
+       * use `PinoLogger.assign(<props>)` explicitly before logging.
+       */
+      customProps: (req: any, res: any) => ({
+        user: {
+          userId: req?.user?._id || null,
+          environmentId: req?.user?.environmentId || null,
+          organizationId: req?.user?.organizationId || null,
+        },
+        authScheme: req?.authScheme,
+        rateLimitPolicy: res?.rateLimitPolicy,
+      }),
     },
   };
 }
