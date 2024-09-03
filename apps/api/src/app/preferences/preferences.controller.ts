@@ -9,8 +9,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-
-import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import {
   GetFeatureFlag,
   GetFeatureFlagCommand,
@@ -21,10 +19,10 @@ import {
   UserAuthGuard,
   UserSession,
 } from '@novu/application-generic';
-
+import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 import { PreferencesActorEnum } from '@novu/dal';
+import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
 @Controller('/preferences')
 @UseInterceptors(ClassSerializerInterceptor)

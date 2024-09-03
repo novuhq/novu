@@ -1,11 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
-
 import { GetPreferences, UpsertPreferences, UpsertPreferencesCommand } from '@novu/application-generic';
-import { PreferencesModule } from './preferences.module';
 import { PreferencesActorEnum, PreferencesRepository } from '@novu/dal';
-import { AuthModule } from '../auth/auth.module';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { AuthModule } from '../auth/auth.module';
+import { PreferencesModule } from './preferences.module';
 
 describe('Preferences', function () {
   let getPreferences: GetPreferences;
@@ -157,7 +156,7 @@ describe('Preferences', function () {
           actor: PreferencesActorEnum.SUBSCRIBER,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
-          subscriberId: subscriberId,
+          subscriberId,
         })
       );
 
@@ -204,7 +203,7 @@ describe('Preferences', function () {
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
-          subscriberId: subscriberId,
+          subscriberId,
         })
       );
 
@@ -718,7 +717,7 @@ describe('Preferences', function () {
         })
       );
 
-      const { body } = await session.testAgent.get('/v1/preferences?workflowId=' + workflowId).send();
+      const { body } = await session.testAgent.get(`/v1/preferences?workflowId=${workflowId}`).send();
 
       expect(body.data).to.deep.equal({
         workflow: {
