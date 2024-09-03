@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { OrganizationRepository } from '@novu/dal';
@@ -11,7 +12,7 @@ describe('VerifyCustomer', () => {
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { VerifyCustomer } = eeBilling;
 
   const getOrganizationAdminUserStub = {

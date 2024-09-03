@@ -14,24 +14,24 @@ export class SwitchOrganization {
   constructor(
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
   ) {}
 
   async execute(command: SwitchOrganizationCommand) {
     const isAuthenticated =
       await this.authService.isAuthenticatedForOrganization(
         command.userId,
-        command.newOrganizationId
+        command.newOrganizationId,
       );
     if (!isAuthenticated) {
       throw new UnauthorizedException(
-        `Not authorized for organization ${command.newOrganizationId}`
+        `Not authorized for organization ${command.newOrganizationId}`,
       );
     }
 
     const member = await this.memberRepository.findMemberByUserId(
       command.newOrganizationId,
-      command.userId
+      command.userId,
     );
     if (!member) throw new ApiException('Member not found');
 
@@ -41,7 +41,7 @@ export class SwitchOrganization {
     const token = await this.authService.getSignedToken(
       user,
       command.newOrganizationId,
-      member
+      member,
     );
 
     return token;

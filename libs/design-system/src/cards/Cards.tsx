@@ -105,7 +105,9 @@ const StyledCard = styled.button<{ dark: boolean }>`
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
 
   &:disabled {
     cursor: not-allowed;

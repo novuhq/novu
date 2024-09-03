@@ -14,19 +14,19 @@ import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 export class ProcessSubscriber {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
   ) {}
 
   @InstrumentUsecase()
   public async execute(
-    command: ProcessSubscriberCommand
+    command: ProcessSubscriberCommand,
   ): Promise<SubscriberEntity | undefined> {
     const { environmentId, organizationId, subscriber } = command;
 
     const subscriberEntity = await this.getSubscriber(
       environmentId,
       organizationId,
-      subscriber
+      subscriber,
     );
 
     if (subscriberEntity === null) {
@@ -39,7 +39,7 @@ export class ProcessSubscriber {
   private async getSubscriber(
     environmentId: string,
     organizationId: string,
-    subscriberPayload: ISubscribersDefine
+    subscriberPayload: ISubscribersDefine,
   ): Promise<SubscriberEntity> {
     const subscriber = await this.getSubscriberBySubscriberId({
       _environmentId: environmentId,
@@ -50,7 +50,7 @@ export class ProcessSubscriber {
       environmentId,
       organizationId,
       subscriberPayload,
-      subscriber
+      subscriber,
     );
   }
 
@@ -59,7 +59,7 @@ export class ProcessSubscriber {
     organizationId: string,
     subscriberPayload,
     // TODO: Getting rid of this null would be amazing
-    subscriber?: SubscriberEntity | null
+    subscriber?: SubscriberEntity | null,
   ): Promise<SubscriberEntity> {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
@@ -75,7 +75,7 @@ export class ProcessSubscriber {
         subscriber: subscriber ?? undefined,
         data: subscriberPayload?.data,
         channels: subscriberPayload?.channels,
-      })
+      }),
     );
   }
 
@@ -96,7 +96,7 @@ export class ProcessSubscriber {
     return await this.subscriberRepository.findBySubscriberId(
       _environmentId,
       subscriberId,
-      true
+      true,
     );
   }
 }

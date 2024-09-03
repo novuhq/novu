@@ -20,8 +20,8 @@ export class GetNotifications {
   @CachedQuery({
     builder: ({ environmentId, subscriberId, ...command }: GetNotificationsCommand) =>
       buildFeedKey().cache({
-        environmentId: environmentId,
-        subscriberId: subscriberId,
+        environmentId,
+        subscriberId,
         ...command,
       }),
   })

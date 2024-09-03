@@ -1,4 +1,4 @@
-import { For, onCleanup, onMount } from 'solid-js';
+import { createMemo, For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
 import type { NovuOptions } from '../../types';
@@ -49,6 +49,8 @@ type RendererProps = {
 };
 
 export const Renderer = (props: RendererProps) => {
+  const nodes = () => [...props.nodes.keys()];
+
   onMount(() => {
     const id = 'novu-default-css';
     const el = document.getElementById(id);
@@ -75,13 +77,14 @@ export const Renderer = (props: RendererProps) => {
           <FocusManagerProvider>
             <InboxProvider tabs={props.tabs}>
               <CountProvider>
-                <For each={[...props.nodes]}>
-                  {([node, component]) => {
+                <For each={nodes()}>
+                  {(node) => {
+                    const novuComponent = () => props.nodes.get(node)!;
                     let portalDivElement: HTMLDivElement;
-                    const Component = novuComponents[component.name];
+                    const Component = novuComponents[novuComponent().name];
 
                     onMount(() => {
-                      if (!['Notifications', 'Preferences'].includes(component.name)) return;
+                      if (!['Notifications', 'Preferences'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
                         node.classList.add('nt-h-full');
@@ -97,7 +100,7 @@ export const Renderer = (props: RendererProps) => {
                         }}
                       >
                         <Root>
-                          <Component {...component.props} />
+                          <Component {...novuComponent().props} />
                         </Root>
                       </Portal>
                     );

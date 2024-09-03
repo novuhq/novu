@@ -1,12 +1,12 @@
-import './config';
+import './config/env.config';
 import 'newrelic';
 import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { init } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
 
-import { AppModule } from './app.module';
 import { CONTEXT_PATH, validateEnv } from './config';
+import { AppModule } from './app.module';
 import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
 
 import { version } from '../package.json';

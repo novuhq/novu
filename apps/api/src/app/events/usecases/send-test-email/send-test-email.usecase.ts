@@ -3,7 +3,6 @@ import { addBreadcrumb } from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 
-import { SendTestEmailCommand } from './send-test-email.command';
 import {
   AnalyticsService,
   ApiException,
@@ -15,6 +14,7 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
+import { SendTestEmailCommand } from './send-test-email.command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 
 @Injectable()
@@ -127,8 +127,6 @@ export class SendTestEmail {
       };
 
       await this.sendMessage(integration, mailData, mailFactory, command, bridgeProviderData);
-
-      return;
     }
   }
 
@@ -157,6 +155,7 @@ export class SendTestEmail {
 
   private getSystemVariables(variableType: 'subscriber' | 'step' | 'branding', command: SendTestEmailCommand) {
     const variables = {};
+    // eslint-disable-next-line guard-for-in
     for (const variable in command.payload) {
       const [type, names] = variable.includes('.') ? variable.split('.') : variable;
       if (type === variableType) {

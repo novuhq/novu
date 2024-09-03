@@ -1,6 +1,7 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
+import {} from './types';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
@@ -41,7 +42,7 @@ import { transformSchema, validateData } from './validators';
 /**
  * We want to respond with a consistent string value for preview
  */
-JSONSchemaFaker.random.shuffle = function () {
+JSONSchemaFaker.random.shuffle = function shuffle() {
   return ['[placeholder]'];
 };
 
@@ -74,7 +75,7 @@ export class Client {
   private buildOptions(providedOptions?: ClientOptions) {
     const builtConfiguration: { secretKey?: string; strictAuthentication: boolean } = {
       secretKey: undefined,
-      strictAuthentication: isRuntimeInDevelopment() ? false : true,
+      strictAuthentication: !isRuntimeInDevelopment(),
     };
 
     builtConfiguration.secretKey =
@@ -175,12 +176,15 @@ export class Client {
         case 'event':
           this.throwInvalidEvent(dataType, workflowId, result.errors);
 
+        // eslint-disable-next-line no-fallthrough
         case 'step':
           this.throwInvalidStep(stepId, dataType, workflowId, result.errors);
 
+        // eslint-disable-next-line no-fallthrough
         case 'provider':
           this.throwInvalidProvider(stepId, providerId, dataType, workflowId, result.errors);
 
+        // eslint-disable-next-line no-fallthrough
         default:
           throw new Error(`Invalid component: '${component}'`);
       }
@@ -343,7 +347,12 @@ export class Client {
       [PostActionEnum.PREVIEW]: 'Previewing',
     };
 
-    const actionMessage = actionMessages[event.action];
+    const actionMessage = (() => {
+      if (event.action === 'execute') return 'Executed';
+      if (event.action === 'preview') return 'Previewed';
+
+      return 'Invalid action';
+    })();
     const actionMessageFormatted = `${actionMessage} workflowId:`;
     // eslint-disable-next-line no-console
     console.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
@@ -426,6 +435,7 @@ export class Client {
 
     const emoji = executionError ? EMOJI.ERROR : EMOJI.SUCCESS;
     const resultMessage =
+      // eslint-disable-next-line no-nested-ternary
       event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
     // eslint-disable-next-line no-console
     console.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
@@ -473,6 +483,7 @@ export class Client {
   private prettyPrintExecute(event: Event, duration: number, error?: Error): void {
     const successPrefix = error ? EMOJI.ERROR : EMOJI.SUCCESS;
     const actionMessage =
+      // eslint-disable-next-line no-nested-ternary
       event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
@@ -492,25 +503,29 @@ export class Client {
     step: DiscoverStepOutput,
     outputs: Record<string, unknown>
   ): Promise<Record<string, WithPassthrough<Record<string, unknown>>>> {
-    return step.providers.reduce(async (acc, provider) => {
-      const result = await acc;
-      const previewProviderHandler = this.previewProvider.bind(this);
-      const executeProviderHandler = this.executeProvider.bind(this);
-      const handler = event.action === 'preview' ? previewProviderHandler : executeProviderHandler;
+    return step.providers.reduce(
+      async (acc, provider) => {
+        const result = await acc;
+        const previewProviderHandler = this.previewProvider.bind(this);
+        const executeProviderHandler = this.executeProvider.bind(this);
+        const handler = event.action === 'preview' ? previewProviderHandler : executeProviderHandler;
 
-      const providerResult = await handler(event, step, provider, outputs);
+        const providerResult = await handler(event, step, provider, outputs);
 
-      return {
-        ...result,
-        [provider.type]: providerResult,
-      };
-    }, Promise.resolve({} as Record<string, WithPassthrough<Record<string, unknown>>>));
+        return {
+          ...result,
+          [provider.type]: providerResult,
+        };
+      },
+      Promise.resolve({} as Record<string, WithPassthrough<Record<string, unknown>>>)
+    );
   }
 
   private previewProvider(
     event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
+
     outputs: Record<string, unknown>
   ): Record<string, unknown> {
     // eslint-disable-next-line no-console
@@ -759,8 +774,4 @@ export class Client {
 
     return getCodeResult;
   }
-}
-
-function clone<Result>(data: unknown) {
-  return JSON.parse(JSON.stringify(data)) as Result;
 }

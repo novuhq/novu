@@ -1,5 +1,5 @@
-import { initializeSession } from './utils/browser';
 import { expect } from '@playwright/test';
+import { initializeSession } from './utils/browser';
 import { test } from './utils/baseTest';
 import { SidebarPage } from './page-models/sidebarPage';
 

@@ -24,6 +24,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 
     clonedCredentials?.forEach((cred) => {
       if (cred.key === 'serviceAccount') {
+        // eslint-disable-next-line no-param-reassign
         cred.value = serviceAccount;
       }
     });
@@ -51,6 +52,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
       ) {
         clonedCredentials.forEach((credential) => {
           if (credential.type === 'boolean' || credential.type === 'switch') {
+            // eslint-disable-next-line no-param-reassign
             credential.value = integrationItem.credentials[credential.key];
 
             return;

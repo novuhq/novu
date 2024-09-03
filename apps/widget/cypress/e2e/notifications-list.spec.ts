@@ -197,7 +197,7 @@ describe('Notifications List', function () {
     scrollToBottom();
     cy.getByTestId('notification-list-item').should('have.length', 26);
 
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < 21; i += 1) {
       cy.getByTestId('notification-list-item').contains(`John ${i}`).should('exist');
     }
   });

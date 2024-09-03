@@ -6,7 +6,7 @@ test('should trigger grafana-on-call library correctly', async () => {
   const date = new Date();
 
   const { mockPost } = axiosSpy({
-    headers: { ['Date']: date },
+    headers: { Date: date },
   });
 
   const provider = new GrafanaOnCallChatProvider({
@@ -35,7 +35,7 @@ test('should trigger grafana-on-call library correctly', async () => {
       title: 'title',
       message: testContent,
     },
-    undefined
+    undefined,
   );
   expect(res).toEqual({ id: expect.any(String), date: date.toISOString() });
 });
@@ -44,7 +44,7 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
   const date = new Date();
 
   const { mockPost } = axiosSpy({
-    headers: { ['Date']: date },
+    headers: { Date: date },
   });
 
   const provider = new GrafanaOnCallChatProvider({
@@ -71,7 +71,7 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
           'Content-Type': 'application/json',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toHaveBeenCalled();
@@ -89,7 +89,7 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
       headers: {
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
   expect(res).toEqual({ id: expect.any(String), date: date.toISOString() });
 });

@@ -19,14 +19,14 @@ export class EazySmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey: string;
       channelId: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       message: {
@@ -46,7 +46,7 @@ export class EazySmsProvider extends BaseProvider implements ISmsProvider {
             'Content-Type': 'application/json',
             ...payload.headers,
           },
-        }
+        },
       );
 
     return {

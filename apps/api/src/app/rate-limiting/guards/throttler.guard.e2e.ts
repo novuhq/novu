@@ -49,14 +49,14 @@ describe('API Rate Limiting', () => {
     describe('Feature Flag', () => {
       it('should set rate limit headers when the Feature Flag is enabled', async () => {
         process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
-        const response = await request(pathPrefix + '/no-category-no-cost');
+        const response = await request(`${pathPrefix}/no-category-no-cost`);
 
         expect(response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT.toLowerCase()]).to.exist;
       });
 
       it('should NOT set rate limit headers when the Feature Flag is disabled', async () => {
         process.env.IS_API_RATE_LIMITING_ENABLED = 'false';
-        const response = await request(pathPrefix + '/no-category-no-cost');
+        const response = await request(`${pathPrefix}/no-category-no-cost`);
 
         expect(response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT.toLowerCase()]).not.to.exist;
       });
@@ -64,19 +64,19 @@ describe('API Rate Limiting', () => {
 
     describe('Allowed Authentication Security Schemes', () => {
       it('should set rate limit headers when ApiKey security scheme is used to authenticate', async () => {
-        const response = await request(pathPrefix + '/no-category-no-cost', `ApiKey ${session.apiKey}`);
+        const response = await request(`${pathPrefix}/no-category-no-cost`, `ApiKey ${session.apiKey}`);
 
         expect(response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT.toLowerCase()]).to.exist;
       });
 
       it('should NOT set rate limit headers when a Bearer security scheme is used to authenticate', async () => {
-        const response = await request(pathPrefix + '/no-category-no-cost', session.token);
+        const response = await request(`${pathPrefix}/no-category-no-cost`, session.token);
 
         expect(response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT.toLowerCase()]).not.to.exist;
       });
 
       it('should NOT set rate limit headers when NO authorization header is present', async () => {
-        const response = await request(pathPrefix + '/no-category-no-cost', '');
+        const response = await request(`${pathPrefix}/no-category-no-cost`, '');
 
         expect(response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT.toLowerCase()]).not.to.exist;
       });
@@ -101,7 +101,7 @@ describe('API Rate Limiting', () => {
 
       testParams.forEach(({ name, expectedRegex }) => {
         it(`should include the ${name} parameter`, async () => {
-          const response = await request(pathPrefix + '/no-category-no-cost');
+          const response = await request(`${pathPrefix}/no-category-no-cost`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.match(new RegExp(expectedRegex));
@@ -109,7 +109,7 @@ describe('API Rate Limiting', () => {
       });
 
       it('should separate the params with a semicolon', async () => {
-        const response = await request(pathPrefix + '/no-category-no-cost');
+        const response = await request(`${pathPrefix}/no-category-no-cost`);
         const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
         expect(policyHeader.split(';')).to.have.lengthOf(testParams.length);
@@ -121,14 +121,14 @@ describe('API Rate Limiting', () => {
         const controllerPathPrefix = '/v1/rate-limiting';
 
         it('should use the global category for an endpoint WITHOUT category decorator', async () => {
-          const response = await request(controllerPathPrefix + '/no-category-no-cost');
+          const response = await request(`${controllerPathPrefix}/no-category-no-cost`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.contain(`category="${ApiRateLimitCategoryEnum.GLOBAL}"`);
         });
 
         it('should use the single cost for an endpoint WITHOUT cost decorator', async () => {
-          const response = await request(controllerPathPrefix + '/no-category-no-cost');
+          const response = await request(`${controllerPathPrefix}/no-category-no-cost`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.contain(`cost="${ApiRateLimitCostEnum.SINGLE}"`);
@@ -139,28 +139,28 @@ describe('API Rate Limiting', () => {
         const controllerPathPrefix = '/v1/rate-limiting-trigger-bulk';
 
         it('should use the category decorator defined on the controller for an endpoint WITHOUT category decorator', async () => {
-          const response = await request(controllerPathPrefix + '/no-category-no-cost-override');
+          const response = await request(`${controllerPathPrefix}/no-category-no-cost-override`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.contain(`category="${ApiRateLimitCategoryEnum.TRIGGER}"`);
         });
 
         it('should use the cost decorator defined on the controller for an endpoint WITHOUT cost decorator', async () => {
-          const response = await request(controllerPathPrefix + '/no-category-no-cost-override');
+          const response = await request(`${controllerPathPrefix}/no-category-no-cost-override`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.contain(`cost="${ApiRateLimitCostEnum.BULK}"`);
         });
 
         it('should override the cost decorator defined on the controller for an endpoint WITH cost decorator', async () => {
-          const response = await request(controllerPathPrefix + '/no-category-single-cost-override');
+          const response = await request(`${controllerPathPrefix}/no-category-single-cost-override`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.contain(`cost="${ApiRateLimitCostEnum.SINGLE}"`);
         });
 
         it('should override the category decorator defined on the controller for an endpoint WITH category decorator', async () => {
-          const response = await request(controllerPathPrefix + '/global-category-no-cost-override');
+          const response = await request(`${controllerPathPrefix}/global-category-no-cost-override`);
           const policyHeader = response.headers[HttpResponseHeaderKeysEnum.RATELIMIT_POLICY.toLowerCase()];
 
           expect(policyHeader).to.contain(`category="${ApiRateLimitCategoryEnum.GLOBAL}"`);
@@ -331,12 +331,12 @@ describe('API Rate Limiting', () => {
 
                 setupTest && (await setupTest(session));
                 for (const { path, count } of requests) {
-                  for (let index = 0; index < count; index++) {
+                  for (let index = 0; index < count; index += 1) {
                     const response = await request(pathPrefix + path);
                     lastResponse = response;
 
                     if (response.statusCode === 429) {
-                      throttledResponseCount++;
+                      throttledResponseCount += 1;
                     }
                   }
                 }

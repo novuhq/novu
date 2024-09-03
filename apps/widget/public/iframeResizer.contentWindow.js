@@ -820,7 +820,7 @@
       Side = capitalizeFirstLetter(side),
       timer = getNow();
 
-    for (var i = 0; i < elementsLength; i++) {
+    for (var i = 0; i < elementsLength; i += 1) {
       elVal = elements[i].getBoundingClientRect()[side] + getComputedStyle('margin' + Side, elements[i]);
       if (elVal > maxVal) {
         maxVal = elVal;

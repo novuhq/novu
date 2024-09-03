@@ -4,7 +4,7 @@ import Content from './Content';
 export function PushPreview({
   showLoading = false,
   showOverlay = true,
-  controlVariables: controlVariables,
+  controlVariables,
 }: {
   showLoading?: boolean;
   showOverlay?: boolean;

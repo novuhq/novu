@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useEnvironment } from '../useEnvironment';
 import { useActiveIntegrations } from './useActiveIntegrations';
 import { useIntegrationLimit } from './useIntegrationLimit';
+
 type UseHasActiveIntegrationsProps = {
   filterByEnv?: boolean;
   channelType?: ChannelTypeEnum;

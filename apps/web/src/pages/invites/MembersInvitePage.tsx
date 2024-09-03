@@ -7,6 +7,7 @@ import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
 import type { IResponseError } from '@novu/shared';
 
+import { Button, Input, Invite, UserAccess } from '@novu/design-system';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import {
@@ -17,7 +18,6 @@ import {
   resendInviteMember,
 } from '../../api/organization';
 import { MembersTable } from './components/MembersTable';
-import { Button, Input, Invite, UserAccess } from '@novu/design-system';
 import { useAuth } from '../../hooks/useAuth';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes';
@@ -147,7 +147,7 @@ export function MembersInvitePage() {
   };
 
   const generateInviteLink = (memberToken: string) => {
-    return `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
+    return `${window.location.origin.toString()}${parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken })}`;
   };
 
   function getInviteMemberByLinkDiv(inviteHref: string, currentMember) {

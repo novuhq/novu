@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
   EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
@@ -34,14 +33,17 @@ describe('select variant', function () {
       // @ts-ignore
       new ConditionsFilter(),
       new MessageTemplateRepository(),
-      new NormalizeVariables(new SubscriberRepository(), new TenantRepository())
+      new NormalizeVariables(
+        new SubscriberRepository(),
+        new TenantRepository(),
+      ),
     );
     jest.clearAllMocks();
   });
 
   it('should select the variant', async function () {
     const variant = await selectVariantUsecase.execute(
-      command as unknown as SelectVariantCommand
+      command as unknown as SelectVariantCommand,
     );
 
     expect(variant.messageTemplate.content).toEqual(testVariant.content);
@@ -54,18 +56,18 @@ describe('select variant', function () {
     commandWithoutVariants.step.variants = [];
 
     const stepVariant = await selectVariantUsecase.execute(
-      commandWithoutVariants as unknown as SelectVariantCommand
+      commandWithoutVariants as unknown as SelectVariantCommand,
     );
 
     expect(stepVariant.conditions).toBeUndefined();
     expect(stepVariant.messageTemplate.content).toEqual(
-      commandWithoutVariants.step.template.content
+      commandWithoutVariants.step.template.content,
     );
     expect(stepVariant.messageTemplate.subject).toEqual(
-      commandWithoutVariants.step.template.subject
+      commandWithoutVariants.step.template.subject,
     );
     expect(stepVariant.messageTemplate._id).toEqual(
-      commandWithoutVariants.step.template._id
+      commandWithoutVariants.step.template._id,
     );
   });
 
@@ -74,18 +76,18 @@ describe('select variant', function () {
     commandWithoutFilterData.filterData = {} as any;
 
     const stepVariant = await selectVariantUsecase.execute(
-      commandWithoutFilterData as unknown as SelectVariantCommand
+      commandWithoutFilterData as unknown as SelectVariantCommand,
     );
 
     expect(stepVariant.conditions).toBeUndefined();
     expect(stepVariant.messageTemplate.content).toEqual(
-      commandWithoutFilterData.step.template.content
+      commandWithoutFilterData.step.template.content,
     );
     expect(stepVariant.messageTemplate.subject).toEqual(
-      commandWithoutFilterData.step.template.subject
+      commandWithoutFilterData.step.template.subject,
     );
     expect(stepVariant.messageTemplate._id).toEqual(
-      commandWithoutFilterData.step.template._id
+      commandWithoutFilterData.step.template._id,
     );
   });
 
@@ -93,23 +95,24 @@ describe('select variant', function () {
     const commandWithoutFilterData = { ...command };
     commandWithoutFilterData.filterData = {} as any;
 
-    commandWithoutFilterData.step.variants.map((variant) => {
+    commandWithoutFilterData.step.variants.forEach((variant) => {
+      // eslint-disable-next-line no-param-reassign
       variant.filters = [];
     });
 
     const stepVariant = await selectVariantUsecase.execute(
-      commandWithoutFilterData as unknown as SelectVariantCommand
+      commandWithoutFilterData as unknown as SelectVariantCommand,
     );
 
     expect(stepVariant.conditions).toBeUndefined();
     expect(stepVariant.messageTemplate.content).toEqual(
-      commandWithoutFilterData.step.template.content
+      commandWithoutFilterData.step.template.content,
     );
     expect(stepVariant.messageTemplate.subject).toEqual(
-      commandWithoutFilterData.step.template.subject
+      commandWithoutFilterData.step.template.subject,
     );
     expect(stepVariant.messageTemplate._id).toEqual(
-      commandWithoutFilterData.step.template._id
+      commandWithoutFilterData.step.template._id,
     );
   });
 });

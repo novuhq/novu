@@ -3,10 +3,10 @@ import { css } from '@novu/novui/css';
 import { Flex, Grid, VStack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { PropsWithChildren, ReactNode } from 'react';
+import { Title, Text } from '@novu/novui';
 import { DocsQueryResults } from './useLoadDocs';
 import { useFrameworkTerminalScript } from '../../hooks/useFrameworkTerminalScript';
 import { When } from '../utils/When';
-import { Title, Text } from '@novu/novui';
 import { Mdx } from './Mdx';
 
 export const DOCS_WRAPPER_ELEMENT_ID = 'embedded-docs';

@@ -10,8 +10,8 @@ import {
   SNSClient,
 } from '@aws-sdk/client-sns';
 
-import { SNSConfig } from './sns.config';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { SNSConfig } from './sns.config';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -34,7 +34,7 @@ export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const { to, content } = options;
 
@@ -42,7 +42,7 @@ export class SNSSmsProvider extends BaseProvider implements ISmsProvider {
       this.transform<PublishCommandInput>(bridgeProviderData, {
         PhoneNumber: to,
         Message: content,
-      }).body
+      }).body,
     );
 
     const snsResponse = await this.client.send(publish);

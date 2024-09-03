@@ -12,7 +12,7 @@ export class NodemailerHandler extends BaseHandler {
   }
   buildProvider(credentials: ICredentials, from?: string) {
     this.provider = new NodemailerProvider({
-      from: from,
+      from,
       host: credentials.host,
       port: Number(credentials.port),
       secure: credentials.secure,

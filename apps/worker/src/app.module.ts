@@ -2,10 +2,10 @@ import { DynamicModule, HttpException, Module, Logger, Provider, Type, ForwardRe
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 
+import { ProfilingModule } from '@novu/application-generic';
 import { SharedModule } from './app/shared/shared.module';
 import { HealthModule } from './app/health/health.module';
 import { WorkflowModule } from './app/workflow/workflow.module';
-import { ProfilingModule } from '@novu/application-generic';
 import packageJson from '../package.json';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [

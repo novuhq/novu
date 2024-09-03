@@ -20,17 +20,17 @@ export class UpdateSubscriber {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
-    private updateSubscriberChannel: UpdateSubscriberChannel
+    private updateSubscriberChannel: UpdateSubscriberChannel,
   ) {}
 
   public async execute(
-    command: UpdateSubscriberCommand
+    command: UpdateSubscriberCommand,
   ): Promise<SubscriberEntity> {
     const foundSubscriber = command.subscriber
       ? command.subscriber
       : await this.subscriberRepository.findBySubscriberId(
           command.environmentId,
-          command.subscriberId
+          command.subscriberId,
         );
 
     if (!foundSubscriber) {
@@ -91,7 +91,7 @@ export class UpdateSubscriber {
       },
       {
         $set: updatePayload,
-      }
+      },
     );
 
     return {
@@ -102,7 +102,7 @@ export class UpdateSubscriber {
 
   private async updateSubscriberChannels(
     command: UpdateSubscriberCommand,
-    foundSubscriber: SubscriberEntity
+    foundSubscriber: SubscriberEntity,
   ) {
     for (const channel of command.channels) {
       await this.updateSubscriberChannel.execute(
@@ -116,7 +116,7 @@ export class UpdateSubscriber {
           integrationIdentifier: channel.integrationIdentifier,
           oauthHandler: OAuthHandlerEnum.EXTERNAL,
           isIdempotentOperation: false,
-        })
+        }),
       );
     }
   }

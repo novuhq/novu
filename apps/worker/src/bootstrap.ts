@@ -1,4 +1,4 @@
-import './config';
+import './config/env.config';
 import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';
@@ -8,9 +8,9 @@ import bodyParser from 'body-parser';
 import { init, Integrations, Handlers } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
+import { validateEnv, CONTEXT_PATH } from './config';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
-import { validateEnv, CONTEXT_PATH } from './config';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
 import packageJson from '../package.json';
 
@@ -49,7 +49,7 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.use(helmet());
 
-  app.setGlobalPrefix(CONTEXT_PATH + 'v1');
+  app.setGlobalPrefix(`${CONTEXT_PATH}v1`);
 
   app.useGlobalPipes(
     new ValidationPipe({

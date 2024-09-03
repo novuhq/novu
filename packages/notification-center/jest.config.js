@@ -4,4 +4,5 @@ module.exports = {
   transform: {
     '.+\\.(css|styl|less|sass|scss|png|jpg|webp|ttf|woff|woff2|svg)$': 'jest-transform-stub',
   },
+  testPathIgnorePatterns: ['dist']
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Center, Loader, useMantineTheme } from '@mantine/core';
+import { colors } from '@novu/design-system';
 import { PlanRow } from './PlanRow';
 import { PlanHeader } from './PlanHeader';
 import { PlanWrapper } from './PlanWrapper';
@@ -7,7 +8,6 @@ import { planList } from '../utils/planList';
 import { PlanFooter } from './PlanFooter';
 import { FreeTrialPlanWidget } from './FreeTrialPlanWidget';
 import { useSubscriptionContext } from './SubscriptionProvider';
-import { colors } from '@novu/design-system';
 
 export const Plan = () => {
   const { colorScheme } = useMantineTheme();

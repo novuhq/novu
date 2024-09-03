@@ -1,8 +1,8 @@
 import { Controller, useFormContext } from 'react-hook-form';
-import { StepSettings } from '../../workflow/SideBar/StepSettings';
-import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useState } from 'react';
 import { Grid, Stack } from '@mantine/core';
+import { StepSettings } from '../../workflow/SideBar/StepSettings';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { ControlVariablesForm } from '../ControlVariablesForm';
 
 export function TemplateCustomEditor() {

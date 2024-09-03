@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -38,9 +38,9 @@
     }
   },
   "dependencies": {
-    "@nestjs/swagger": "^7.1.8",
+    "@nestjs/swagger": "7.4.0",
     "class-transformer": "0.5.1",
-    "class-validator": "0.14.0"
+    "class-validator": "0.14.1"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",

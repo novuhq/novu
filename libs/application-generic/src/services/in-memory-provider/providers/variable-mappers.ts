@@ -6,7 +6,7 @@
  * temporarily while we find a better solution
  */
 export const convertStringValues = (
-  value: string
+  value: string,
 ): string | null | undefined => {
   if (value === 'undefined') {
     return undefined;

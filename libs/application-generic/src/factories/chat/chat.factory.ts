@@ -1,6 +1,6 @@
+import { IntegrationEntity } from '@novu/dal';
 import { IChatFactory, IChatHandler } from './interfaces';
 import { SlackHandler } from './handlers/slack.handler';
-import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
@@ -28,7 +28,7 @@ export class ChatFactory implements IChatFactory {
   getHandler(integration: IntegrationEntity) {
     const handler =
       this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(integration.providerId, integration.channel)
+        handlerItem.canHandle(integration.providerId, integration.channel),
       ) ?? null;
 
     if (!handler) return null;

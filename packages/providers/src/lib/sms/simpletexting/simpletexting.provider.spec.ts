@@ -34,7 +34,7 @@ test('should trigger SimpletextingSmsProvider library correctly', async () => {
         'Content-Type': 'application/json',
         Authorization: `Bearer <YOUR_SIMPLETEXTING_APIKEY>`,
       },
-    }
+    },
   );
 
   expect(response).toHaveProperty('id');
@@ -62,7 +62,7 @@ test('should trigger SimpletextingSmsProvider library correctly with _passthroug
           contactPhone: '+22345678902',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toHaveBeenCalled();
@@ -80,7 +80,7 @@ test('should trigger SimpletextingSmsProvider library correctly with _passthroug
         'Content-Type': 'application/json',
         Authorization: `Bearer <YOUR_SIMPLETEXTING_APIKEY>`,
       },
-    }
+    },
   );
 
   expect(response).toHaveProperty('id');

@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { TopicSubscribersDBModel } from './topic-subscribers.entity';
 
@@ -41,7 +40,6 @@ const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
   schemaOptions
 );
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const TopicSubscribers =
   (mongoose.models.TopicSubscribers as mongoose.Model<TopicSubscribersDBModel>) ||
   mongoose.model<TopicSubscribersDBModel>('TopicSubscribers', topicSubscribersSchema);

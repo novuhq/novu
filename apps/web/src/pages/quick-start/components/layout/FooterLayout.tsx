@@ -3,8 +3,8 @@ import styled from '@emotion/styled';
 
 import { colors, DotsNavigation } from '@novu/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
 import { Grid } from '@mantine/core';
+import { ROUTES } from '../../../../constants/routes';
 
 interface IFooterLayoutProps {
   leftSide: React.ReactNode;

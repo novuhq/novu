@@ -28,13 +28,11 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET)', fun
     expect(notificationsFeedResponse.pageSize).to.equal(5);
 
     try {
-      await getNotificationsFeed(subscriberId + '111', session.apiKey, { seen: false, limit: 5 });
+      await getNotificationsFeed(`${subscriberId}111`, session.apiKey, { seen: false, limit: 5 });
     } catch (err) {
       expect(err.response.status).to.equals(400);
       expect(err.response.data.message).to.contain(
-        `Subscriber not found for this environment with the id: ${
-          subscriberId + '111'
-        }. Make sure to create a subscriber before fetching the feed.`
+        `Subscriber not found for this environment with the id: ${`${subscriberId}111`}. Make sure to create a subscriber before fetching the feed.`
       );
     }
   });

@@ -13,6 +13,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { OrderByEnum, OrderDirectionEnum, UserSessionData } from '@novu/shared';
+import { GetLayoutCommand, GetLayoutUseCase, OtelSpan } from '@novu/application-generic';
 import {
   ApiBadRequestResponse,
   ApiCommonResponses,
@@ -22,8 +24,6 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { OrderByEnum, OrderDirectionEnum, UserSessionData } from '@novu/shared';
-import { GetLayoutCommand, GetLayoutUseCase, OtelSpan } from '@novu/application-generic';
 
 import {
   CreateLayoutRequestDto,
@@ -92,7 +92,7 @@ export class LayoutsController {
       })
     );
 
-    Logger.verbose('Created new Layout' + layout._id);
+    Logger.verbose(`Created new Layout${layout._id}`);
 
     return {
       _id: layout._id,

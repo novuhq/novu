@@ -18,7 +18,7 @@ export function EmailCustomCodeEditor({
 }) {
   const { readonly } = useEnvironment();
   addCompleter({
-    getCompletions: function (editor, session, pos, prefix, callback) {
+    getCompletions(editor, session, pos, prefix, callback) {
       const systemVars = Object.keys(SystemVariablesWithTypes)
         .map((name) => {
           const type = SystemVariablesWithTypes[name];

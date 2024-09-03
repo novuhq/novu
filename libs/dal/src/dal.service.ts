@@ -1,5 +1,4 @@
-import { Connection, ConnectOptions } from 'mongoose';
-import mongoose from 'mongoose';
+import mongoose, { Connection, ConnectOptions } from 'mongoose';
 
 export class DalService {
   connection: Connection;

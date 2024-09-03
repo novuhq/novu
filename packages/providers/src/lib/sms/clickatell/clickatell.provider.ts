@@ -22,14 +22,14 @@ export class ClickatellSmsProvider
     private config: {
       apiKey?: string;
       isTwoWayIntegration?: boolean;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const url = 'https://platform.clickatell.com/messages';
 

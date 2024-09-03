@@ -278,7 +278,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
       ],
     };
     const { body } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(update);
-    const steps = body.data.steps;
+    const { steps } = body.data;
 
     expect(steps[0].template?.contentType).to.equal('customHtml');
     expect(steps[0].template?.content).to.equal('');
@@ -350,7 +350,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
 
     const { body: updated } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(updateData);
 
-    const steps = updated.data.steps;
+    const { steps } = updated.data;
 
     expect(steps[0]._parentId).to.equal(null);
     expect(steps[0].template.preheader).to.equal('updated preheader');

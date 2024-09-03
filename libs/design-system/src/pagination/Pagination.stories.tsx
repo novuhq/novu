@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import Pagination, { IPaginationProps } from './Pagination';
 import { useArgs } from '@storybook/client-api';
+import { Pagination, IPaginationProps } from './Pagination';
 
 export default {
   title: 'Components/Pagination',

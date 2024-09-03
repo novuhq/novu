@@ -185,8 +185,6 @@ export class NotificationsCache {
     if (this.has(args)) {
       return this.getAggregated({ tags: args.tags, read: args.read, archived: args.archived });
     }
-
-    return;
   }
 
   /**

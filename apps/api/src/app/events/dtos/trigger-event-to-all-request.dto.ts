@@ -25,7 +25,7 @@ export class TriggerEventToAllRequestDto {
     },
   })
   @IsObject()
-  payload: Record<string, unknown>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',

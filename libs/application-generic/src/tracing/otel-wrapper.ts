@@ -1,60 +1,56 @@
-import { Span } from 'nestjs-otel';
-import { TraceService as setTraceService } from 'nestjs-otel';
-import { MetricService as setMetricService } from 'nestjs-otel';
-import { OtelInstanceCounter as setOtelInstanceCounter } from 'nestjs-otel';
-import { OtelUpDownCounter as setOtelUpDownCounter } from 'nestjs-otel';
-import { OtelHistogram as setOtelHistogram } from 'nestjs-otel';
-import { OtelObservableGauge as setOtelObservableGauge } from 'nestjs-otel';
-import { OtelObservableCounter as setOtelObservableCounter } from 'nestjs-otel';
-import { OtelObservableUpDownCounter as setOtelObservableUpDownCounter } from 'nestjs-otel';
-import { OtelCounter as setOtelCounter } from 'nestjs-otel';
-import { MetricOptions, SpanOptions } from '@opentelemetry/api';
-import { Injectable } from '@nestjs/common';
-import { PipeTransform, Type } from '@nestjs/common';
+import {
+  Span,
+  TraceService as setTraceService,
+  MetricService as setMetricService,
+  OtelInstanceCounter as setOtelInstanceCounter,
+  OtelUpDownCounter as setOtelUpDownCounter,
+  OtelHistogram as setOtelHistogram,
+  OtelObservableGauge as setOtelObservableGauge,
+  OtelObservableCounter as setOtelObservableCounter,
+  OtelObservableUpDownCounter as setOtelObservableUpDownCounter,
+  OtelCounter as setOtelCounter,
+} from 'nestjs-otel';
+import { MetricOptions, SpanOptions, Tracer } from '@opentelemetry/api';
+import { Injectable, PipeTransform, Type } from '@nestjs/common';
 
 export type OtelDataOrPipe =
   | string
   | PipeTransform<any, any>
   | Type<PipeTransform<any, any>>;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelSpan(name?: string, options?: SpanOptions) {
   return Span(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function OtelInstanceCounter(options?: MetricOptions) {
   return setOtelInstanceCounter(options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function OtelUpDownCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelUpDownCounter(...dataOrPipes);
+export function OtelUpDownCounter(name: string, options?: MetricOptions) {
+  return setOtelUpDownCounter(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function OtelHistogram(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelHistogram(...dataOrPipes);
+export function OtelHistogram(name: string, options?: MetricOptions) {
+  return setOtelHistogram(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function OtelObservableGauge(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelObservableGauge(...dataOrPipes);
+export function OtelObservableGauge(name: string, options?: MetricOptions) {
+  return setOtelObservableGauge(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function OtelObservableCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelObservableCounter(...dataOrPipes);
+export function OtelObservableCounter(name: string, options?: MetricOptions) {
+  return setOtelObservableCounter(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function OtelObservableUpDownCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelObservableUpDownCounter(...dataOrPipes);
+export function OtelObservableUpDownCounter(
+  name: string,
+  options?: MetricOptions,
+) {
+  return setOtelObservableUpDownCounter(name, options);
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function OtelCounter(...dataOrPipes: OtelDataOrPipe[]) {
-  return setOtelCounter(...dataOrPipes);
+export function OtelCounter(name: string, options?: MetricOptions) {
+  return setOtelCounter(name, options);
 }
 
 @Injectable()

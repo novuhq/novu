@@ -59,13 +59,13 @@ export const UserProfileForm: FC<IUserProfileFormProps> = ({ currentUser }) => {
       reset(makeFormData(newUserData));
     },
     onError: (e) => {
-      errorMessage('Failed to update profile: ' + e.message);
+      errorMessage(`Failed to update profile: ${e.message}`);
     },
   });
 
   const { uploadToStorage, isLoading: isUploadingImage } = useUploadToStorage({
     onError: (e) => {
-      errorMessage('Failed to upload profile image: ' + e.message);
+      errorMessage(`Failed to upload profile image: ${e.message}`);
     },
   });
 

@@ -129,8 +129,8 @@ export class TimedDigestDelayService {
     ordinal,
     ordinalValue,
   }: ITimedConfig) {
-    let byweekday: Weekday[] | undefined = undefined;
-    let bymonthday: number | number[] | undefined = undefined;
+    let byweekday: Weekday[] | undefined;
+    let bymonthday: number | number[] | undefined;
 
     if (monthlyType === MonthlyTypeEnum.EACH) {
       byweekday = weekDays?.map((el) => DAY_OF_WEEK_TO_RRULE_DAY[el]);
@@ -167,7 +167,7 @@ export class TimedDigestDelayService {
   private static getUntilDate(
     dateStart: Date,
     unit: DigestUnitEnum,
-    amount: number
+    amount: number,
   ): Date {
     switch (unit) {
       case DigestUnitEnum.MINUTES:

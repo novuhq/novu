@@ -8,7 +8,7 @@ describe('Compute Job Wait Duration Service', function () {
     it('should convert seconds to milliseconds', function () {
       const result = (computeJobWaitDurationService as any).toMilliseconds(
         5,
-        DigestUnitEnum.SECONDS
+        DigestUnitEnum.SECONDS,
       );
       expect(result).toEqual(5000);
     });
@@ -16,7 +16,7 @@ describe('Compute Job Wait Duration Service', function () {
     it('should convert minutes to milliseconds', function () {
       const result = (computeJobWaitDurationService as any).toMilliseconds(
         5,
-        DigestUnitEnum.MINUTES
+        DigestUnitEnum.MINUTES,
       );
       expect(result).toEqual(300000);
     });
@@ -24,7 +24,7 @@ describe('Compute Job Wait Duration Service', function () {
     it('should convert hours to milliseconds', function () {
       const result = (computeJobWaitDurationService as any).toMilliseconds(
         5,
-        DigestUnitEnum.HOURS
+        DigestUnitEnum.HOURS,
       );
       expect(result).toEqual(18000000);
     });
@@ -32,7 +32,7 @@ describe('Compute Job Wait Duration Service', function () {
     it('should convert days to milliseconds', function () {
       const result = (computeJobWaitDurationService as any).toMilliseconds(
         1,
-        DigestUnitEnum.DAYS
+        DigestUnitEnum.DAYS,
       );
       expect(result).toEqual(86400000);
     });

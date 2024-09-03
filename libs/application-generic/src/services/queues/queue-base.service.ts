@@ -19,7 +19,7 @@ export class QueueBaseService {
 
   constructor(
     public readonly topic: JobTopicNameEnum,
-    private bullMqService: BullMqService
+    private bullMqService: BullMqService,
   ) {
     this.instance = bullMqService;
   }
@@ -82,7 +82,7 @@ export class QueueBaseService {
 
     Logger.log(
       `Shutting down the ${this.topic} queue service has finished`,
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
   }
 
@@ -97,7 +97,7 @@ export class QueueBaseService {
       params.name,
       params.data,
       jobOptions,
-      params.groupId
+      params.groupId,
     );
   }
 

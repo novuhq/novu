@@ -1,6 +1,6 @@
-import { Novu } from '../novu';
 import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Novu } from '../novu';
 
 const mockConfig = {
   apiKey: '1234',
@@ -81,7 +81,7 @@ describe('test use of novus node package - Environments class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/environments/api-keys/regenerate'
+      '/environments/api-keys/regenerate',
     );
   });
 });

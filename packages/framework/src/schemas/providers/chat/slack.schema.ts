@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { Schema } from '../../../types/schema.types';
 
 /**

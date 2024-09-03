@@ -2,7 +2,7 @@
  * This is the only location where this import is allowed. We add setting contextual data
  * to every test context before execution.
  */
-// eslint-disable-next-line no-restricted-imports
+
 import { test as baseTest } from '@playwright/test';
 
 export const test = baseTest.extend({

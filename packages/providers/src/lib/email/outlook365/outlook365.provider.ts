@@ -22,7 +22,7 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       from: string;
       senderName: string;
       password: string;
-    }
+    },
   ) {
     super();
     this.transports = nodemailer.createTransport({
@@ -42,11 +42,11 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const info = await this.transports.sendMail(
-      this.transform(bridgeProviderData, mailData).body
+      this.transform(bridgeProviderData, mailData).body,
     );
 
     return {
@@ -56,7 +56,7 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);

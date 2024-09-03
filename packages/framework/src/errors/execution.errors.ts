@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
 import { BadRequestError, FrameworkError } from './base.errors';
 

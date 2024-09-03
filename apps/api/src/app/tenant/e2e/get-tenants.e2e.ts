@@ -14,7 +14,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
   });
 
   it('should get the newly created tenants', async function () {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       await tenantRepository.create({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -39,7 +39,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
   });
 
   it('should get second page of tenants', async function () {
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 9; i += 1) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
@@ -64,7 +64,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
   });
 
   it('should get tenants by pagination', async function () {
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 14; i += 1) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
@@ -122,5 +122,7 @@ async function getTenants({
 }
 
 function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }

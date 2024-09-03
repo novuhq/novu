@@ -4,12 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFormContext } from 'react-hook-form';
 import type { IResponseError, INotificationTrigger } from '@novu/shared';
 
-import { api } from '../../../../api/api.client';
 import { Input, Select, Switch, Tooltip, Check, Copy, When } from '@novu/design-system';
+import { useParams } from 'react-router-dom';
+import { api } from '../../../../api/api.client';
 import { useEnvironment, useNotificationGroup } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
-import { useParams } from 'react-router-dom';
 import { useStatusChangeControllerHook } from '../useStatusChangeController';
 
 export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationTrigger }) => {
@@ -43,7 +43,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
     },
   });
 
-  function addGroupItem(newGroup: string): undefined {
+  function addGroupItem(newGroup: string) {
     if (newGroup) {
       createNotificationGroup({
         name: newGroup,
@@ -51,12 +51,8 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
         setTimeout(() => {
           setValue('notificationGroupId', response._id);
         }, 0);
-
-        return;
       });
     }
-
-    return;
   }
 
   return (
@@ -99,6 +95,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
                       getCreateLabel={(newGroup) => (
                         <div data-test-id="submit-category-btn">+ Create group {newGroup}</div>
                       )}
+                      // @ts-expect-error - addGroupItem is not typed correctly
                       onCreate={addGroupItem}
                       placeholder="Attach workflow to group"
                       data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}

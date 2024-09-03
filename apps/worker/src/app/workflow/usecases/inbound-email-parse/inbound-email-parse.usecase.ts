@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { InboundEmailParseCommand } from './inbound-email-parse.command';
 import {
   JobEntity,
   JobRepository,
@@ -11,6 +10,7 @@ import {
 import axios from 'axios';
 import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
 import { StepTypeEnum } from '@novu/shared';
+import { InboundEmailParseCommand } from './inbound-email-parse.command';
 
 const LOG_CONTEXT = 'InboundEmailParse';
 
@@ -52,7 +52,7 @@ export class InboundEmailParse {
 
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),
-      transactionId: transactionId,
+      transactionId,
       payload: job.payload,
       templateIdentifier: job.identifier,
       template,

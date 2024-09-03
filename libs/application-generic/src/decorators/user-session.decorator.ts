@@ -4,7 +4,6 @@ import {
   createParamDecorator,
 } from '@nestjs/common';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;
   if (ctx.getType() === 'graphql') {
@@ -19,7 +18,7 @@ export const UserSession = createParamDecorator((data, ctx) => {
 
   Logger.error(
     'Attempted to access user session without a user in the request. You probably forgot to add the AuthGuard',
-    'UserSession'
+    'UserSession',
   );
   throw new InternalServerErrorException();
 });

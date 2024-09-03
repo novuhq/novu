@@ -34,8 +34,6 @@ export function OrganizationLogo({ logoUrl }: Partial<FormValues>) {
     const isValidFileType = !!MIME_TYPE_TO_FILE_EXTENSION[fileExtension];
     if (!isValidFileType) {
       errorMessage(`Invalid file type: ${fileExtension}. Please upload a PNG or JPEG file.`);
-
-      return;
     }
   }
 

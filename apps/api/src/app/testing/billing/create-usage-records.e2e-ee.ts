@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { expect } from 'chai';

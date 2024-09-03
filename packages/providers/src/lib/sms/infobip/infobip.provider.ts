@@ -21,7 +21,7 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
       baseUrl?: string;
       apiKey?: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.infobipClient = new Infobip({
@@ -33,7 +33,7 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.sms.send({
       messages: [

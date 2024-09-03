@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { expect } from '@playwright/test';
-import { test } from './utils/baseTest';
 import os from 'node:os';
+import { test } from './utils/baseTest';
 import { ChangesPage } from './page-models/changesPage';
 import { NodeEmailEditorPageModal } from './page-models/nodeEmailEditorPageModal';
 import { NodeInAppEditingModalPageModel } from './page-models/nodeInAppEditingModalPageModel';
@@ -10,7 +10,6 @@ import { WorkflowEditorPage } from './page-models/workflowEditorPage';
 import { WorkflowsPage } from './page-models/workflowsPage';
 import { initializeSession, waitForNetworkIdle } from './utils/browser';
 import { ChannelType } from './utils/ChannelType';
-import { FeatureFlagsMock } from './utils/featureFlagsMock';
 import { SessionData } from './utils/plugins';
 
 const isMac = os.platform() === 'darwin';

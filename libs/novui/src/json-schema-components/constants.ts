@@ -20,7 +20,7 @@ export const INVALID_VARIABLE_REGEX = new RegExp(
   'g'
 );
 
-export const VARIABLE_HTML_ERROR_STATE_REGEX = /data-error=\"([A-Z_])+\"/gi;
+export const VARIABLE_HTML_ERROR_STATE_REGEX = /data-error="([A-Z_])+"/gi;
 
 export enum VariableErrorCode {
   INVALID_SYNTAX = 'INVALID_SYNTAX',

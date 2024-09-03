@@ -1,7 +1,6 @@
 import { ProductUseCases } from '../../dto';
-import { ApiServiceLevelEnum } from '../organization';
+import { ApiServiceLevelEnum, JobTitleEnum } from '../organization';
 import { IServicesHashes } from '../../entities/user';
-import { JobTitleEnum } from '../organization';
 
 export type OrganizationPublicMetadata = {
   externalOrgId?: string;

@@ -8,8 +8,8 @@ import {
   FilterPartTypeEnum,
   StepTypeEnum,
   TriggerContextTypeEnum,
+  INotificationTemplateStep,
 } from '@novu/shared';
-import { INotificationTemplateStep } from '@novu/shared';
 import { ContentService } from '@novu/application-generic';
 
 describe('ContentService', function () {

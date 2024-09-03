@@ -49,7 +49,7 @@ export async function run() {
       console.log('------');
       console.log(`Found ${integrations.length} active integrations for the ${channel} channel`);
 
-      for (let i = 0; i < integrations.length; i++) {
+      for (let i = 0; i < integrations.length; i += 1) {
         const integration = integrations[i];
         const payload = {
           primary: i === 0,
@@ -77,7 +77,7 @@ export async function run() {
       console.log('------');
       console.log(`Found ${inactiveIntegrations.length} inactive integrations for the ${channel} channel`);
 
-      for (let i = 0; i < inactiveIntegrations.length; i++) {
+      for (let i = 0; i < inactiveIntegrations.length; i += 1) {
         const integration = inactiveIntegrations[i];
         const payload = {
           primary: false,
@@ -106,7 +106,7 @@ export async function run() {
       console.log('------');
       console.log(`Found ${integrations.length} integrations for the ${channel} channel`);
 
-      for (let i = 0; i < integrations.length; i++) {
+      for (let i = 0; i < integrations.length; i += 1) {
         const integration = integrations[i];
         const payload = {
           primary: false,

@@ -8,7 +8,10 @@ import { UpdatePasswordCommand } from './update-password.command';
 
 @Injectable()
 export class UpdatePassword {
-  constructor(private invalidateCache: InvalidateCacheService, private userRepository: UserRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private userRepository: UserRepository
+  ) {}
 
   async execute(command: UpdatePasswordCommand) {
     if (command.newPassword !== command.confirmPassword) {

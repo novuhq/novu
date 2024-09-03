@@ -19,14 +19,14 @@ export class RocketChatProvider extends BaseProvider implements IChatProvider {
     private config: {
       token: string;
       user: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const roomId = options.channel;
     const payload = {
@@ -47,8 +47,8 @@ export class RocketChatProvider extends BaseProvider implements IChatProvider {
       baseURL,
       transformedData.body,
       {
-        headers: headers,
-      }
+        headers,
+      },
     );
 
     return {
