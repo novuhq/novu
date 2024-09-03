@@ -13,6 +13,8 @@
   "dependencies": {
     "@mantine/core": "^7.12.2",
     "@mantine/hooks": "^7.12.2",
+    "@novu/api": "0.0.1-alpha.10",
+    "@novu/react": "workspace:*",
     "@remix-run/node": "^2.11.2",
     "@remix-run/react": "^2.11.2",
     "@remix-run/serve": "^2.11.2",
