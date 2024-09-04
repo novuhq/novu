@@ -1,4 +1,4 @@
-import { AppShell as MantineAppShell, Flex, Group } from '@mantine/core';
+import { AppShell as MantineAppShell, Avatar, Flex, Group } from '@mantine/core';
 import { NovuInbox } from '../navigation/inbox';
 import { Navigation } from './navigation';
 import { NavigationBreadcrumbs } from './breadcrumbs';
@@ -29,8 +29,9 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </Flex>
           <Group justify="space-between" w={`calc(100% - ${NAV_WIDTH}px)`}>
             <NavigationBreadcrumbs />
-            <Group>
+            <Group gap="xs">
               <NovuInbox />
+              <Avatar size="sm" />
             </Group>
           </Group>
         </Group>
