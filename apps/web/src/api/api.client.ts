@@ -161,6 +161,14 @@ export function buildApiHttpClient({
       });
     },
 
+    async getPreferences(workflowId: string) {
+      return get('/v1/preferences?workflowId=' + workflowId);
+    },
+
+    async upsertPreferences(workflowId: string, preferences: any) {
+      return post('/v1/preferences', { workflowId, preferences });
+    },
+
     async postTelemetry(event: string, data?: Record<string, unknown>) {
       return post('/v1/telemetry/measure', {
         event,
