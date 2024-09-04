@@ -15,10 +15,10 @@ export function NavigationBreadcrumbs() {
           {matches
             // @ts-expect-error - need to figure out how to type this
             .filter((match) => match.handle && match.handle.breadcrumb)
-            .map((match, index) => (
+            .map((match, index) =>
               // @ts-expect-error - need to figure out how to type this
-              <Anchor key={index}>{match.handle.breadcrumb(match)}</Anchor>
-            ))}
+              match.handle.breadcrumb(match)
+            )}
         </Breadcrumbs>
       </Group>
     </>

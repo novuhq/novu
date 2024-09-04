@@ -5,7 +5,7 @@ import { api } from '@/app/hooks/api.hook';
 
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
-  breadcrumb: () => <Anchor href="/workflows">Workflows</Anchor>,
+  breadcrumb: () => [<Anchor href="/workflows">Workflows</Anchor>],
 };
 
 export async function loader() {
@@ -35,7 +35,9 @@ export default function WorkflowsRoute() {
 
   const rows = data.workflows.data.map((workflow) => (
     <Table.Tr key={workflow.id}>
-      <Table.Td>{workflow.name}</Table.Td>
+      <Table.Td>
+        <Anchor href={`/workflows/${workflow._id}`}>{workflow.name}</Anchor>
+      </Table.Td>
       <Table.Td>
         <Group gap={2}>
           {[...new Set(workflow.steps.map((step) => step.template.type))].map((type) => (

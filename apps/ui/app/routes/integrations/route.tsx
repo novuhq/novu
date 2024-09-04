@@ -5,7 +5,7 @@ import { api, getEnvironments } from '@/app/hooks/api.hook';
 
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
-  breadcrumb: () => <Anchor href="/integrations">Integrations</Anchor>,
+  breadcrumb: () => [<Anchor href="/integrations">Integrations</Anchor>],
 };
 
 export async function loader() {
