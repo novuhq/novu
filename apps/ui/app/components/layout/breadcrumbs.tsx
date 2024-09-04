@@ -1,4 +1,4 @@
-import { Breadcrumbs, Anchor, Text, Group, Select } from '@mantine/core';
+import { Breadcrumbs, Text, Group, Select } from '@mantine/core';
 import { useMatches } from '@remix-run/react';
 
 const Separator = () => <Text c="dimmed">/</Text>;
