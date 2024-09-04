@@ -303,7 +303,7 @@ describe('Preferences', function () {
       expect(workflowPreferences.preferences.workflow.readOnly).to.be.true;
     });
 
-    it('should validate preferences', async function () {
+    describe('Validate preferences', async function () {
       const preferences = {
         workflow: {
           defaultValue: false,
@@ -333,49 +333,55 @@ describe('Preferences', function () {
         },
       };
 
-      try {
-        await upsertPreferences.execute(
-          UpsertPreferencesCommand.create({
-            preferences,
-            actor: PreferencesActorEnum.WORKFLOW,
-            environmentId: session.environment._id,
-            organizationId: session.organization._id,
-          })
-        );
-        expect(false).to.be.true;
-      } catch (e) {
-        expect(e.message).to.equal('Template id is missing for preferences');
-      }
+      it('should validate template id is missing', async function () {
+        try {
+          await upsertPreferences.execute(
+            UpsertPreferencesCommand.create({
+              preferences,
+              actor: PreferencesActorEnum.WORKFLOW,
+              environmentId: session.environment._id,
+              organizationId: session.organization._id,
+            })
+          );
+          expect(false).to.be.true;
+        } catch (e) {
+          expect(e.message).to.equal('Template id is missing for preferences');
+        }
+      });
 
-      try {
-        await upsertPreferences.execute(
-          UpsertPreferencesCommand.create({
-            preferences,
-            actor: PreferencesActorEnum.USER,
-            environmentId: session.environment._id,
-            organizationId: session.organization._id,
-            templateId: workflowId,
-          })
-        );
-        expect(false).to.be.true;
-      } catch (e) {
-        expect(e.message).to.equal('User id is missing for preferences');
-      }
+      it('should validate user id is missing', async function () {
+        try {
+          await upsertPreferences.execute(
+            UpsertPreferencesCommand.create({
+              preferences,
+              actor: PreferencesActorEnum.USER,
+              environmentId: session.environment._id,
+              organizationId: session.organization._id,
+              templateId: workflowId,
+            })
+          );
+          expect(false).to.be.true;
+        } catch (e) {
+          expect(e.message).to.equal('User id is missing for preferences');
+        }
+      });
 
-      try {
-        await upsertPreferences.execute(
-          UpsertPreferencesCommand.create({
-            preferences,
-            actor: PreferencesActorEnum.SUBSCRIBER,
-            environmentId: session.environment._id,
-            organizationId: session.organization._id,
-            templateId: workflowId,
-          })
-        );
-        expect(false).to.be.true;
-      } catch (e) {
-        expect(e.message).to.equal('Subscriber id is missing for preferences');
-      }
+      it('should validate subscriber id is missing', async function () {
+        try {
+          await upsertPreferences.execute(
+            UpsertPreferencesCommand.create({
+              preferences,
+              actor: PreferencesActorEnum.SUBSCRIBER,
+              environmentId: session.environment._id,
+              organizationId: session.organization._id,
+              templateId: workflowId,
+            })
+          );
+          expect(false).to.be.true;
+        } catch (e) {
+          expect(e.message).to.equal('Subscriber id is missing for preferences');
+        }
+      });
     });
   });
 
