@@ -7,13 +7,13 @@ import { api } from '@/app/hooks/api.hook';
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
   breadcrumb: (match) => {
-    const step = match.data.workflow.data.steps.find((step) => step.id === match.params.stepId);
+    const step = match.data.workflow.data.steps.find((step) => step.name === match.params.stepName);
 
     return [
       <Anchor href="/workflows">Workflows</Anchor>,
       <Anchor href={`/workflows/${match.data.workflow.data.id}`}>{match.data.workflow.data.name}</Anchor>,
-      match.params.stepId ? (
-        <Anchor href={`/workflows/${match.data.workflow.data.id}/steps/${step.id}`}>{step.template.name}</Anchor>
+      match.params.stepName ? (
+        <Anchor href={`/workflows/${match.data.workflow.data.id}/steps/${step.name}`}>{step.name}</Anchor>
       ) : null,
     ];
   },
@@ -43,7 +43,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function WorkflowRoute() {
   const data = useLoaderData<typeof loader>();
   const params = useParams();
-  const step = data.workflow.data.steps.find((step) => step.id === params.stepId);
+  const step = data.workflow.data.steps.find((step) => step.name === params.stepName);
 
   return (
     <Stack>
@@ -59,7 +59,7 @@ export default function WorkflowRoute() {
         <Stack align="center">
           {/* @ts-expect-error - need to figure out how to type this */}
           {data.workflow.data.steps.map((step) => (
-            <Link to={`/workflows/${data.workflow.data.id}/steps/${step.id}`}>
+            <Link to={`/workflows/${data.workflow.data.id}/steps/${step.name}`}>
               <Group key={step.id} bg="gray" p="md" w="200px">
                 <Pill>{step.template.type}</Pill>
                 <Text>{step.template.name}</Text>
