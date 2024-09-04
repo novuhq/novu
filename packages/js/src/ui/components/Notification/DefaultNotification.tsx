@@ -1,7 +1,7 @@
 import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
-import { ActionTypeEnum } from '../../../types';
+import { ActionTypeEnum, Redirect } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, DEFAULT_REFERRER, DEFAULT_TARGET, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
@@ -20,7 +20,7 @@ type DefaultNotificationProps = {
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
-  const { status } = useInboxContext();
+  const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
   const date = createMemo(() => {
     minutesPassed(); // register as dep
@@ -36,6 +36,15 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     return () => clearInterval(interval);
   });
 
+  const handleUrlNavigation = (url?: string, target?: Redirect['target']) => {
+    const isRelativeUrl = url?.startsWith('/');
+    if (url && !isRelativeUrl) {
+      window.open(url, target, DEFAULT_REFERRER);
+    } else if (url && isRelativeUrl) {
+      navigate(url);
+    }
+  };
+
   const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -45,10 +54,10 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     }
 
     props.onNotificationClick?.(props.notification);
-    if (props.notification.redirect?.url) {
-      const target = props.notification.redirect?.target || DEFAULT_TARGET;
-      window.open(props.notification.redirect?.url, target, DEFAULT_REFERRER);
-    }
+
+    const url = props.notification.redirect?.url;
+    const target = props.notification.redirect?.target || DEFAULT_TARGET;
+    handleUrlNavigation(url, target);
   };
 
   const handleActionButtonClick = (action: ActionTypeEnum, e: MouseEvent) => {
@@ -57,18 +66,19 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     if (action === ActionTypeEnum.PRIMARY) {
       props.notification.completePrimary();
       props.onPrimaryActionClick?.(props.notification);
-      if (props.notification.primaryAction?.redirect?.url) {
-        const target = props.notification.primaryAction?.redirect?.target || DEFAULT_TARGET;
-        window.open(props.notification.primaryAction?.redirect?.url, target, DEFAULT_REFERRER);
-      }
+
+      handleUrlNavigation(
+        props.notification.primaryAction?.redirect?.url,
+        props.notification.primaryAction?.redirect?.target || DEFAULT_TARGET
+      );
     } else {
       props.notification.completeSecondary();
       props.onSecondaryActionClick?.(props.notification);
 
-      if (props.notification.secondaryAction?.redirect?.url) {
-        const target = props.notification.secondaryAction?.redirect?.target || DEFAULT_TARGET;
-        window.open(props.notification.secondaryAction?.redirect?.url, target, DEFAULT_REFERRER);
-      }
+      handleUrlNavigation(
+        props.notification.secondaryAction?.redirect?.url,
+        props.notification.secondaryAction?.redirect?.target || DEFAULT_TARGET
+      );
     }
   };
 
