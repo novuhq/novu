@@ -1,7 +1,5 @@
 import { Novu } from '@novu/api';
 
-console.log({ ENV: import.meta.env });
-
 export const api = new Novu({
   apiKey: `ApiKey ${process.env.NOVU_SECRET_KEY}`,
 });

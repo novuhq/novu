@@ -25,9 +25,9 @@ export async function loader() {
   });
 }
 
-export default function SubscribersRoute() {
+export default function WorkflowsRoute() {
   const data = useLoaderData<typeof loader>();
-  console.log({ data });
+
   const rows = data.workflows.data.map((workflow) => (
     <Table.Tr key={workflow.id}>
       <Table.Td>{workflow.name}</Table.Td>

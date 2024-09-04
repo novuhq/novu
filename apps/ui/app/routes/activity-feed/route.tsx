@@ -33,7 +33,6 @@ export async function loader() {
 
 export default function ActivityFeedRoute() {
   const data = useLoaderData<typeof loader>();
-  console.log({ data });
 
   const rows = data.notifications.data.map((notification) => (
     <Table.Tr key={notification.id}>
