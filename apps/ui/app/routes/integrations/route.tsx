@@ -1,7 +1,12 @@
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { Table } from '@mantine/core';
+import { Anchor, Table } from '@mantine/core';
 import { api, getEnvironments } from '@/app/hooks/api.hook';
+
+// Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
+export const handle = {
+  breadcrumb: () => <Anchor href="/integrations">Integrations</Anchor>,
+};
 
 export async function loader() {
   const environments = await getEnvironments();

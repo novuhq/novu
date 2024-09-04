@@ -1,10 +1,12 @@
 import { AppShell as MantineAppShell, Flex, Group } from '@mantine/core';
 import { NovuInbox } from '../navigation/inbox';
 import { Navigation } from './navigation';
+import { NavigationBreadcrumbs } from './breadcrumbs';
 
 const NAV_WIDTH = 204;
 const HEADER_HEIGHT = 40;
-const HEADER_PADDING = 10;
+const HEADER_PADDING_LEFT = 20;
+const HEADER_PADDING_ALL = 4;
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -18,14 +20,19 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           mobile: false,
         },
       }}
-      padding={HEADER_PADDING}
+      padding={HEADER_PADDING_LEFT}
     >
-      <MantineAppShell.Header p={4} pl={20}>
-        <Group justify="space-between">
-          <Flex w={NAV_WIDTH - HEADER_PADDING}>Organization</Flex>
-          <Flex>
-            <NovuInbox />
+      <MantineAppShell.Header p={HEADER_PADDING_ALL}>
+        <Group>
+          <Flex w={NAV_WIDTH - HEADER_PADDING_LEFT} pl={HEADER_PADDING_LEFT}>
+            Organization
           </Flex>
+          <Group justify="space-between" w={`calc(100% - ${NAV_WIDTH}px)`}>
+            <NavigationBreadcrumbs />
+            <Group>
+              <NovuInbox />
+            </Group>
+          </Group>
         </Group>
       </MantineAppShell.Header>
 
