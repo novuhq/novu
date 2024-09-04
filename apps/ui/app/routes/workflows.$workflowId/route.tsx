@@ -1,8 +1,8 @@
-import { Anchor, Button, Group, Pill, Stack, Tabs, TagsInput, Text, TextInput, Title } from '@mantine/core';
+import { Anchor, Button, Group, Stack, Tabs, TagsInput, Text, TextInput, Title } from '@mantine/core';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet, useLoaderData, useParams } from '@remix-run/react';
-import React from 'react';
 import { api } from '@/app/hooks/api.hook';
+import { StepIcon } from '@/app/components/icons/step-icon';
 
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
@@ -59,15 +59,15 @@ export default function WorkflowRoute() {
         <Stack align="center">
           {/* @ts-expect-error - need to figure out how to type this */}
           {data.workflow.data.steps.map((step) => (
-            <Link to={`/workflows/${data.workflow.data.id}/steps/${step.name}`}>
-              <Group key={step.id} bg="gray" p="md" w="200px">
-                <Pill>{step.template.type}</Pill>
+            <Link key={step.id} to={`/workflows/${data.workflow.data.id}/steps/${step.name}`}>
+              <Group bg="gray" p="md" w="200px">
+                <StepIcon type={step.template.type} />
                 <Text>{step.template.name}</Text>
               </Group>
             </Link>
           ))}
         </Stack>
-        {step && <Outlet context={step} />}
+        {step && <Outlet context={{ step, workflowId: data.workflow.data.id }} />}
         {!step && (
           <Tabs defaultValue="general">
             <Tabs.List>

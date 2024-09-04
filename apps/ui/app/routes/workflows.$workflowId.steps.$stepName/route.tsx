@@ -1,6 +1,8 @@
-import React from 'react';
-import { Button, Group, Stack, Tabs, Text, Title } from '@mantine/core';
-import { useOutletContext } from '@remix-run/react';
+import { ActionIcon, Group, Stack, Tabs, Text, Title } from '@mantine/core';
+import { Link, useOutletContext } from '@remix-run/react';
+// TODO: fix icon exports in Novui
+import { IconArrowForwardIos, IconOutlineDeleteOutline } from '@novu/novui/icons';
+import { StepIcon } from '../../components/icons/step-icon';
 
 export default function WorkflowStepRoute() {
   const data = useOutletContext();
@@ -9,17 +11,27 @@ export default function WorkflowStepRoute() {
   return (
     <Stack h="600" bg="pink" p="md">
       <Group justify="space-between">
-        <Title order={3}>{data.name}</Title>
         <Group>
-          <Button>Delete</Button>
+          <Link to={`/workflows/${data.workflowId}`}>
+            <ActionIcon>
+              <IconArrowForwardIos />
+            </ActionIcon>
+          </Link>
+          <StepIcon type={data.step.template.type} />
+          <Title order={3}>{data.step.name}</Title>
+        </Group>
+        <Group>
+          <ActionIcon>
+            <IconOutlineDeleteOutline />
+          </ActionIcon>
         </Group>
       </Group>
       <Group justify="space-between" grow>
-        <Stack align="center">
-          <Text>{data.name}</Text>
-          <Text>{data.template.type}</Text>
+        <Stack align="center" bg="grape">
+          <Text>{data.step.name}</Text>
+          <Text>{data.step.template.type}</Text>
         </Stack>
-        <Tabs defaultValue="controls">
+        <Tabs defaultValue="controls" bg="grape">
           <Tabs.List>
             <Tabs.Tab value="controls">Controls</Tabs.Tab>
             <Tabs.Tab value="payload">Payload</Tabs.Tab>

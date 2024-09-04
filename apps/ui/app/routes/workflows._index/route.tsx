@@ -2,6 +2,7 @@ import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { Table, Pill, Group, Anchor } from '@mantine/core';
 import { api } from '@/app/hooks/api.hook';
+import { StepIcon } from '../../components/icons/step-icon';
 
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
@@ -42,7 +43,7 @@ export default function WorkflowsRoute() {
         <Group gap={2}>
           {[...new Set(workflow.steps.map((step) => step.template.type))].map((type) => (
             // @ts-expect-error - Template type is not typed
-            <Pill key={type}>{type}</Pill>
+            <StepIcon key={type} type={type} />
           ))}
         </Group>
       </Table.Td>
