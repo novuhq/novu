@@ -41,9 +41,7 @@ export function getLogLevel() {
   if (loggingLevelArr.indexOf(logLevel) === -1) {
     // eslint-disable-next-line no-console
     console.log(
-      `${logLevel}is not a valid log level of ${
-        loggingLevelArr
-      }. Reverting to info.`,
+      `${logLevel}is not a valid log level of ${loggingLevelArr}. Reverting to info.`,
     );
 
     logLevel = 'info';
@@ -128,6 +126,21 @@ export function createNestLoggingModuleOptions(
       },
       transport,
       autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
+      /**
+       * These custom props are only added to 'request completed' and 'request errored' logs.
+       * Logs generated during request processing won't have these props by default.
+       * To include these or any other custom props in mid-request logs,
+       * use `PinoLogger.assign(<props>)` explicitly before logging.
+       */
+      customProps: (req: any, res: any) => ({
+        user: {
+          userId: req?.user?._id || null,
+          environmentId: req?.user?.environmentId || null,
+          organizationId: req?.user?.organizationId || null,
+        },
+        authScheme: req?.authScheme,
+        rateLimitPolicy: res?.rateLimitPolicy,
+      }),
     },
   };
 }
