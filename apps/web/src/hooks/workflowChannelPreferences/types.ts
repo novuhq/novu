@@ -7,7 +7,5 @@ type ChannelPreference = {
 
 export type WorkflowChannelPreferences = {
   workflow: ChannelPreference;
-  channels: {
-    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]: ChannelPreference;
-  };
+  channels: Record<ChannelTypeEnum, ChannelPreference>;
 };
