@@ -41,7 +41,7 @@ export function getLogLevel() {
   if (loggingLevelArr.indexOf(logLevel) === -1) {
     // eslint-disable-next-line no-console
     console.log(
-      `${logLevel}is not a valid log level of ${loggingLevelArr}. Reverting to info.`
+      `${logLevel}is not a valid log level of ${loggingLevelArr}. Reverting to info.`,
     );
 
     logLevel = 'info';
@@ -76,7 +76,7 @@ function getLoggingVariables(): ILoggingVariables {
 }
 
 export function createNestLoggingModuleOptions(
-  settings: ILoggerSettings
+  settings: ILoggerSettings,
 ): Params {
   const values = getLoggingVariables();
 
@@ -88,11 +88,11 @@ export function createNestLoggingModuleOptions(
   const baseArrayWildCards = '*[*].';
   for (let i = 1; i <= 6; i += 1) {
     redactFields = redactFields.concat(
-      sensitiveFields.map((val) => baseWildCards.repeat(i) + val)
+      sensitiveFields.map((val) => baseWildCards.repeat(i) + val),
     );
 
     redactFields = redactFields.concat(
-      sensitiveFields.map((val) => baseArrayWildCards.repeat(i) + val)
+      sensitiveFields.map((val) => baseArrayWildCards.repeat(i) + val),
     );
   }
 
@@ -105,7 +105,7 @@ export function createNestLoggingModuleOptions(
   // eslint-disable-next-line no-console
   console.log(
     `Selected Log Transport ${!transport ? 'None' : 'pino-pretty'}`,
-    loggingLevelSet
+    loggingLevelSet,
   );
 
   return {
