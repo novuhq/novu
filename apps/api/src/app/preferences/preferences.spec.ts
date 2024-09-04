@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { GetPreferences, UpsertPreferences, UpsertPreferencesCommand } from '@novu/application-generic';
 import { PreferencesActorEnum, PreferencesRepository } from '@novu/dal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { AuthModule } from '../auth/auth.module';
@@ -14,6 +15,8 @@ describe('Preferences', function () {
   let session: UserSession;
 
   beforeEach(async () => {
+    // @ts-ignore
+    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
     const moduleRef = await Test.createTestingModule({
       imports: [PreferencesModule, AuthModule],
       providers: [],
