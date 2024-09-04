@@ -1,28 +1,30 @@
-import { useNotifications } from '@novu/react';
-import { useState, useEffect } from 'react';
+import { useNotifications, usePreferences } from '@novu/react';
 
 export default function HooksPage() {
-  const { data, archiveAll, refetch, fetchMore, hasMore } = useNotifications();
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    notifications,
+    isLoading: isLoadingNotifications,
+    archiveAll,
+    refetch,
+    fetchMore,
+    hasMore,
+  } = useNotifications();
+  const { preferences, isLoading: isLoadingPreferences } = usePreferences();
+  console.log(preferences);
 
-  useEffect(() => {
-    if (data) {
-      setIsLoading(false);
-    }
-  }, [data]);
-
-  if (isLoading) {
-    return <div>Loading notifications...</div>;
+  if (isLoadingNotifications || isLoadingPreferences) {
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="flex flex-col gap-8">
+      <h1>Notifications</h1>
       <div className="flex flex-col gap-2">
         <button onClick={archiveAll}>Archive all</button>
         <button onClick={refetch}>Refetch</button>
       </div>
       <ul>
-        {data?.map((notification) => {
+        {notifications?.map((notification) => {
           return (
             <li key={notification.id} className="flex flex-col gap-3">
               <p>{notification.id}</p>
