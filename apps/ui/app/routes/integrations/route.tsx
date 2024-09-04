@@ -40,7 +40,7 @@ export default function IntegrationsRoute() {
 
   // @ts-expect-error - Integrations response DTO is incorrectly typed
   const rows = data.integrations.data.map((integration) => (
-    <Table.Tr key={integration.id}>
+    <Table.Tr key={integration._id}>
       <Table.Td>{integration.name}</Table.Td>
       <Table.Td>{integration.name}</Table.Td>
       <Table.Td>{integration.channel}</Table.Td>

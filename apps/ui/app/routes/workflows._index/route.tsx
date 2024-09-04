@@ -34,7 +34,7 @@ export default function WorkflowsRoute() {
   const data = useLoaderData<typeof loader>();
 
   const rows = data.workflows.data.map((workflow) => (
-    <Table.Tr key={workflow.id}>
+    <Table.Tr key={workflow._id}>
       <Table.Td>
         <Anchor href={`/workflows/${workflow._id}`}>{workflow.name}</Anchor>
       </Table.Td>
