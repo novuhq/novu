@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import {
   EnvironmentRepository,
@@ -110,16 +109,16 @@ describe('select integration', function () {
     new ExecutionLogRoute(
       new CreateExecutionDetails(new ExecutionDetailsRepository()),
       new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
-      new GetFeatureFlag(new FeatureFlagsService())
+      new GetFeatureFlag(new FeatureFlagsService()),
     ),
-    new CompileTemplate()
+    new CompileTemplate(),
   );
   beforeEach(async function () {
     // @ts-ignore
     useCase = new SelectIntegration(
       integrationRepository,
       conditionsFilter,
-      new TenantRepository()
+      new TenantRepository(),
     );
     jest.clearAllMocks();
   });
@@ -132,7 +131,7 @@ describe('select integration', function () {
         organizationId: 'organizationId',
         userId: 'userId',
         filterData: {},
-      })
+      }),
     );
 
     expect(integration).not.toBeNull();
@@ -149,7 +148,7 @@ describe('select integration', function () {
         organizationId: 'organizationId',
         userId: 'userId',
         filterData: {},
-      })
+      }),
     );
 
     expect(integration).not.toBeNull();
@@ -181,7 +180,7 @@ describe('select integration', function () {
           organizationId,
           userId,
           filterData: {},
-        })
+        }),
       );
 
       expect(findOneMock).toHaveBeenCalledWith(
@@ -195,8 +194,8 @@ describe('select integration', function () {
           }),
         },
         undefined,
-        { query: { sort: { createdAt: -1 } } }
+        { query: { sort: { createdAt: -1 } } },
       );
-    }
+    },
   );
 });

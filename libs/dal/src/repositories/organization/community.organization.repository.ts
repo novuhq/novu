@@ -1,8 +1,8 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { CommunityMemberRepository } from '../member';
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { IOrganizationRepository } from './organization-repository.interface';
 
 export class CommunityOrganizationRepository

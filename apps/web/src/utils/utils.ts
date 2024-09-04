@@ -27,7 +27,7 @@ export function parsePayload(payload: string) {
   }
 }
 
-const DOUBLE_QUOTE_REGEX = /^\"(.*)\"$/;
+const DOUBLE_QUOTE_REGEX = /^"(.*)"$/;
 export function cleanDoubleQuotedString(str?: string | null) {
   if (!str) {
     return str;

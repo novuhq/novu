@@ -18,14 +18,14 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       username: string;
       apiKey: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       to: options.to,
@@ -39,11 +39,11 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
       {
         headers: {
           Authorization: `Basic ${Buffer.from(
-            `${this.config.username}:${this.config.apiKey}`
+            `${this.config.username}:${this.config.apiKey}`,
           ).toString('base64')}`,
           ...data.headers,
         },
-      }
+      },
     );
 
     return {

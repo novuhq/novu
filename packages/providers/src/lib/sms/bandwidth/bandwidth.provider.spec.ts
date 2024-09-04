@@ -65,7 +65,7 @@ test('should trigger BandwidthSmsProvider library correctly with _passthrough', 
           from: '+2234567890',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

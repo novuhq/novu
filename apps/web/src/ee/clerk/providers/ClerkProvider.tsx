@@ -1,11 +1,11 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
 import { ClerkProp, ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { useColorScheme } from '@novu/design-system';
 import { dark } from '@clerk/themes';
-import { buildClerk } from './clerk-singleton';
 import { Variables } from '@clerk/types';
+import { buildClerk } from './clerk-singleton';
+import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
 
 const CLERK_LOCALIZATION = {
   userProfile: {
@@ -268,7 +268,7 @@ const CLERK_OVERRIDE_VARIABLES: Variables = {
   fontSize: 'var(--nv-font-sizes-88)',
 };
 
-const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', location.origin];
+const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
 
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const { colorScheme } = useColorScheme();

@@ -1,4 +1,3 @@
-const nr = require('newrelic');
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
@@ -10,13 +9,18 @@ import { IDestroy } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 
+const nr = require('newrelic');
+
 const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
   private isShutdown = false;
 
-  constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
+  constructor(
+    private jwtService: JwtService,
+    private subscriberOnlineService: SubscriberOnlineService
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -24,14 +28,13 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   async handleDisconnect(connection: Socket) {
     Logger.log(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
     return new Promise((resolve, reject) => {
       nr.startBackgroundTransaction(
         ObservabilityBackgroundTransactionEnum.WS_SOCKET_HANDLE_DISCONNECT,
         'WS Service',
-        function () {
+        function processTask() {
           const transaction = nr.getTransaction();
 
           _this
@@ -49,14 +52,13 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   async handleConnection(connection: Socket) {
     Logger.log(`New connection received from ${connection.id}`, LOG_CONTEXT);
 
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
     return new Promise((resolve, reject) => {
       nr.startBackgroundTransaction(
         ObservabilityBackgroundTransactionEnum.WS_SOCKET_SOCKET_CONNECTION,
         'WS Service',
-        function () {
+        function processTask() {
           const transaction = nr.getTransaction();
 
           _this
@@ -86,7 +88,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
       return subscriber;
     } catch (e) {
-      return;
+      /* empty */
     }
   }
 

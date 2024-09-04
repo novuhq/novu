@@ -149,8 +149,6 @@ describe('GetApiRateLimitMaximum', async () => {
       });
 
       it('should return the api service level set on organization when apiServiceLevel IS set on organization', async () => {
-        const mockApiServiceLevel = ApiServiceLevelEnum.FREE;
-
         const [, apiServiceLevel] = await useCase.execute(
           GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,

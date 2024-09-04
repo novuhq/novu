@@ -23,7 +23,7 @@ export class PusherBeamsPushProvider
     private config: {
       instanceId: string;
       secretKey: string;
-    }
+    },
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -37,7 +37,7 @@ export class PusherBeamsPushProvider
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
     const payload = this.transform(bridgeProviderData, {
@@ -48,9 +48,9 @@ export class PusherBeamsPushProvider
             title: options.title,
             body: options.content,
           },
-          badge: badge,
+          badge,
           category: overrides.categoryId,
-          sound: sound,
+          sound,
         },
       },
       fcm: {
@@ -61,7 +61,7 @@ export class PusherBeamsPushProvider
           click_action: overrides.clickAction,
           color: overrides.color,
           icon: overrides.icon,
-          sound: sound,
+          sound,
           tag: overrides.tag,
         },
         data: options.payload,

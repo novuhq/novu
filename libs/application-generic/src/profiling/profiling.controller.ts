@@ -8,7 +8,7 @@ import { ProfilingService } from './profiling.service';
 export class HealthController {
   constructor(
     private logger: PinoLogger,
-    private pyroscope: ProfilingService
+    private pyroscope: ProfilingService,
   ) {}
 
   @Get('/profile')

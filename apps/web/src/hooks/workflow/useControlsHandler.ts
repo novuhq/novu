@@ -43,6 +43,8 @@ export function useControlsHandler(
       case 'payload':
         setPayload(form.formData);
         break;
+      default:
+        throw new Error('Invalid control type');
     }
   };
 

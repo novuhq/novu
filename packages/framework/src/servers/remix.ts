@@ -39,7 +39,6 @@ export const serve = (
         url: () => new URL(req.url, `https://${req.headers.get('host') || ''}`),
         transformResponse: ({ body, status, headers }): Response => {
           // Handle Response polyfills
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           const Res = getResponse();
 
           return new Res(body, {

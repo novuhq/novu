@@ -6,10 +6,13 @@ export const createTranslationMarks = (newValue: string | undefined, variables: 
   }
 
   try {
+    // eslint-disable-next-line global-require
     const module = require('@novu/ee-translation-web');
 
     return module.createTranslationMarks(newValue, variables);
-  } catch (e) {}
+  } catch (e) {
+    /* empty */
+  }
 
   return [];
 };

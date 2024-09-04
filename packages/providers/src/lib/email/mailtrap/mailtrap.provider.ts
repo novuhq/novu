@@ -24,7 +24,7 @@ export class MailtrapEmailProvider
     private config: {
       apiKey: string;
       from: string;
-    }
+    },
   ) {
     super();
     this.mailtrapClient = new MailtrapClient({
@@ -33,7 +33,7 @@ export class MailtrapEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       const result = await this.sendWithMailtrap(options);
@@ -54,7 +54,7 @@ export class MailtrapEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.sendWithMailtrap(options, bridgeProviderData);
 
@@ -66,7 +66,7 @@ export class MailtrapEmailProvider
 
   private sendWithMailtrap(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ) {
     return this.mailtrapClient.send(
       this.transform<Mail>(bridgeProviderData, {
@@ -82,7 +82,7 @@ export class MailtrapEmailProvider
           content: attachment.file,
           type: attachment.mime,
         })),
-      }).body
+      }).body,
     );
   }
 

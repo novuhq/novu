@@ -44,7 +44,7 @@ export const buildParentScopedKeyById = ({
   identifier: string;
 }): string =>
   prefixWrapper(
-    `${type}:${keyEntity}:${parentIdPrefix}=${parentId}:${identifierPrefix}=${identifier}`
+    `${type}:${keyEntity}:${parentIdPrefix}=${parentId}:${identifierPrefix}=${identifier}`,
   );
 
 /**

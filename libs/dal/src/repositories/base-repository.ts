@@ -21,7 +21,10 @@ import { DalException } from '../shared';
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   public _model: Model<T_DBModel>;
 
-  constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
+  constructor(
+    protected MongooseModel: Model<T_DBModel>,
+    protected entity: ClassConstructor<T_MappedEntity>
+  ) {
     this._model = MongooseModel;
   }
 
@@ -247,6 +250,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async create(data: FilterQuery<T_DBModel> & T_Enforcement, options: IOptions = {}): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
+      // eslint-disable-next-line no-param-reassign
       data = { ...data, expireAt };
     }
     const newEntity = new this.MongooseModel(data);

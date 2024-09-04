@@ -38,17 +38,17 @@ export class FortySixElksSmsProvider
       user?: string;
       password?: string;
       from?: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const authKey = Buffer.from(
-      this.config.user + ':' + this.config.password
+      `${this.config.user}:${this.config.password}`,
     ).toString('base64');
 
     const transformedData = this.transform<Record<string, string>>(
@@ -57,7 +57,7 @@ export class FortySixElksSmsProvider
         from: options.from || this.config.from,
         to: options.to,
         message: options.content,
-      }
+      },
     );
 
     const data = new URLSearchParams(transformedData.body).toString();
@@ -66,7 +66,7 @@ export class FortySixElksSmsProvider
       .create()
       .post('https://api.46elks.com/a1/sms', data, {
         headers: {
-          Authorization: 'Basic ' + authKey,
+          Authorization: `Basic ${authKey}`,
           ...transformedData.headers,
         },
       });

@@ -4,15 +4,20 @@ import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
 import { captureException } from '@sentry/react';
-import { FeatureFlagsKeysEnum, IResponseError, UpdateExternalOrganizationDto } from '@novu/shared';
-import { JobTitleEnum, jobTitleToLabelMapper } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  IResponseError,
+  UpdateExternalOrganizationDto,
+  JobTitleEnum,
+  jobTitleToLabelMapper,
+} from '@novu/shared';
 import { Button, inputStyles, Select } from '@novu/design-system';
 
+import styled from '@emotion/styled/macro';
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFeatureFlag, useVercelIntegration, useVercelParams, useEffectOnce, useContainer } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
-import styled from '@emotion/styled/macro';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
@@ -99,8 +104,6 @@ export function QuestionnaireForm() {
           setTimeout(async () => {
             try {
               await startVercelSetup();
-
-              return;
             } catch (e) {
               // eslint-disable-next-line no-console
               console.error(e);

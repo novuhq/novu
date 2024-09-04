@@ -10,13 +10,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
 import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetNotificationGroup } from './usecases/get-notification-group/get-notification-group.usecase';

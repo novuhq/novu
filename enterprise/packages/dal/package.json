@@ -11,9 +11,8 @@
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "precommit": "lint-staged",
-    "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "lint:fix": "pnpm lint -- --fix"
+    "lint": "echo 'skip lint in the ci'"
   },
   "author": "",
   "license": "ISC",
@@ -27,8 +26,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
-    "@typescript-eslint/parser": "^4.14.2",
-    "eslint-plugin-prettier": "^4.2.1",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"

@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
-import { ThemeProvider } from '../ThemeProvider';
 import { MemoryRouter } from 'react-router-dom';
+import { ThemeProvider } from '../ThemeProvider';
 
 export function TestWrapper({ children }) {
   return (

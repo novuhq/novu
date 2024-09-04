@@ -21,7 +21,9 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
     ButtonTemplates: { AddButton },
   } = registry.templates;
   const uiOptions = getUiOptions(uiSchema);
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   const ArrayFieldItemTemplate = getTemplate('ArrayFieldItemTemplate', registry, uiOptions);
 
   const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });

@@ -11,7 +11,7 @@ export class CompileStepTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
     protected communityOrganizationRepository: CommunityOrganizationRepository,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
   ) {
     super(communityOrganizationRepository, moduleRef);
   }
@@ -19,31 +19,31 @@ export class CompileStepTemplate extends CompileTemplateBase {
   public async execute(
     command: CompileStepTemplateCommand,
     // we need i18nInstance outside the command on order to avoid command serialization on it.
-    i18nInstance?: any
+    i18nInstance?: any,
   ) {
     const payload = command.payload || {};
 
     let content = '';
 
-    let title: string | undefined = undefined;
+    let title: string | undefined;
 
     try {
       content = await this.compileStepTemplate(
         command.content,
         payload,
-        i18nInstance
+        i18nInstance,
       );
 
       if (command.title) {
         title = await this.compileStepTemplate(
           command.title,
           payload,
-          i18nInstance
+          i18nInstance,
         );
       }
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `Compile step content failed to generate`
+        e?.message || `Compile step content failed to generate`,
       );
     }
 
@@ -53,7 +53,7 @@ export class CompileStepTemplate extends CompileTemplateBase {
   private async compileStepTemplate(
     content: string,
     payload: any,
-    i18nInstance?: any
+    i18nInstance?: any,
   ): Promise<string> {
     return await this.compileTemplate.execute(
       {
@@ -62,7 +62,7 @@ export class CompileStepTemplate extends CompileTemplateBase {
           ...payload,
         },
       },
-      i18nInstance
+      i18nInstance,
     );
   }
 }

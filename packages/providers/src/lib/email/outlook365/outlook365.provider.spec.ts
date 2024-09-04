@@ -3,11 +3,10 @@ import {
   CheckIntegrationResponseEnum,
   ICheckIntegrationResponse,
 } from '@novu/stateless';
-import { Outlook365Provider } from './outlook365.provider';
 import nodemailer from 'nodemailer';
+import { Outlook365Provider } from './outlook365.provider';
 
 const sendMailMock = vi.fn().mockReturnValue(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return {
     messageId: 'message-id',
   } as any;

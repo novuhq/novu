@@ -9,9 +9,9 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
-import { SESConfig } from './ses.config';
 import nodemailer from 'nodemailer';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { SESConfig } from './ses.config';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -45,7 +45,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       bcc,
       replyTo,
     },
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
@@ -65,7 +65,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         cc,
         bcc,
         replyTo,
-      }).body
+      }).body,
     );
   }
 
@@ -82,16 +82,16 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       replyTo,
       senderName,
     }: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail(
       {
         from: from || this.config.from,
         senderName: senderName || this.config.senderName,
-        to: to,
-        subject: subject,
-        html: html,
-        text: text,
+        to,
+        subject,
+        html,
+        text,
         attachments: attachments?.map((attachment) => ({
           filename: attachment?.name,
           content: attachment.file,
@@ -101,7 +101,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         bcc,
         replyTo,
       },
-      bridgeProviderData
+      bridgeProviderData,
     );
 
     return {
@@ -120,9 +120,10 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.mail.messageId === identifier);
     }
 
@@ -137,7 +138,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     }
 
     return {
-      status: status,
+      status,
       date: new Date(body.mail.timestamp).toISOString(),
       externalId: body.mail.messageId,
       row: body,
@@ -166,6 +167,8 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         return EmailEventStatusEnum.CLICKED;
       case 'DeliveryDelay':
         return EmailEventStatusEnum.DELAYED;
+      default:
+        return undefined;
     }
   }
 

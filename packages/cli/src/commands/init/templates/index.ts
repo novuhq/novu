@@ -1,12 +1,11 @@
-import { install } from "../helpers/install";
-import { copy } from "../helpers/copy";
-
 import { async as glob } from "fast-glob";
 import os from "os";
 import fs from "fs/promises";
 import path from "path";
 import { cyan, bold } from "picocolors";
 import { Sema } from "async-sema";
+import { copy } from "../helpers/copy";
+import { install } from "../helpers/install";
 
 import {
   GetTemplateFileArgs,
@@ -52,7 +51,7 @@ export const installTemplate = async ({
   if (!eslint) copySource.push("!eslintrc.json");
   if (!template.includes("react")) {
     copySource.push(
-      mode == "ts" ? "tailwind.config.ts" : "!tailwind.config.js",
+      mode === "ts" ? "tailwind.config.ts" : "!tailwind.config.js",
       "!postcss.config.cjs",
     );
   }
@@ -111,9 +110,10 @@ export const installTemplate = async ({
         if ((await fs.stat(filePath)).isFile()) {
           await fs.writeFile(
             filePath,
-            (
-              await fs.readFile(filePath, "utf8")
-            ).replace(`@/`, `${importAlias.replace(/\*/g, "")}`),
+            (await fs.readFile(filePath, "utf8")).replace(
+              `@/`,
+              `${importAlias.replace(/\*/g, "")}`,
+            ),
           );
         }
         writeSema.release();
@@ -146,9 +146,7 @@ export const installTemplate = async ({
 
     await fs.writeFile(
       indexPageFile,
-      (
-        await fs.readFile(indexPageFile, "utf8")
-      ).replace(
+      (await fs.readFile(indexPageFile, "utf8")).replace(
         isAppTemplate ? "app/page" : "pages/index",
         isAppTemplate ? "src/app/page" : "src/pages/index",
       ),
@@ -161,9 +159,7 @@ export const installTemplate = async ({
       );
       await fs.writeFile(
         tailwindConfigFile,
-        (
-          await fs.readFile(tailwindConfigFile, "utf8")
-        ).replace(
+        (await fs.readFile(tailwindConfigFile, "utf8")).replace(
           /\.\/(\w+)\/\*\*\/\*\.\{js,ts,jsx,tsx,mdx\}/g,
           "./src/$1/**/*.{js,ts,jsx,tsx,mdx}",
         ),
@@ -265,11 +261,13 @@ export const installTemplate = async ({
   );
 
   console.log("\nInstalling dependencies:");
+  // eslint-disable-next-line guard-for-in
   for (const dependency in packageJson.dependencies)
     console.log(`- ${cyan(dependency)}`);
 
   if (devDeps) {
     console.log("\nInstalling devDependencies:");
+    // eslint-disable-next-line guard-for-in
     for (const dependency in packageJson.devDependencies)
       console.log(`- ${cyan(dependency)}`);
   }

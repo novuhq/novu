@@ -1,7 +1,7 @@
 import { ApiResponseOptions } from '@nestjs/swagger';
+import { ApiResponseDecoratorName, HttpResponseHeaderKeysEnum } from '@novu/shared';
 import { THROTTLED_EXCEPTION_MESSAGE } from '../../../rate-limiting/guards';
 import { createReusableHeaders } from '../swagger';
-import { ApiResponseDecoratorName, HttpResponseHeaderKeysEnum } from '@novu/shared';
 
 export const COMMON_RESPONSES: Partial<Record<ApiResponseDecoratorName, ApiResponseOptions>> = {
   ApiConflictResponse: {

@@ -1,10 +1,11 @@
 import styled from '@emotion/styled';
 import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
+import { colors, shadows, Text } from '@novu/design-system';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { getApiKeys } from '../../../api/environment';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
-import { colors, shadows, Text } from '@novu/design-system';
 import { useEnvironment, useFeatureFlag } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
@@ -18,7 +19,6 @@ import {
 } from '../consts';
 import { QueryKeys } from '../../../api/query.keys';
 import { useInAppActivated } from '../../../api/hooks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export const SetupTimeline = ({
   framework,
@@ -47,6 +47,7 @@ export const SetupTimeline = ({
     <Stack align="center" sx={{ width: '100%' }} data-test-id="setup-timeline">
       <TimelineWrapper isDark={isDark}>
         <Timeline
+          // eslint-disable-next-line no-unsafe-optional-chaining
           active={instructions?.length + 1}
           bulletSize={40}
           lineWidth={2}
@@ -81,6 +82,7 @@ export const SetupTimeline = ({
           <Timeline.Item
             bullet={
               <div style={{}}>
+                {/* eslint-disable-next-line no-unsafe-optional-chaining */}
                 <Text>{instructions?.length + 1}</Text>
               </div>
             }

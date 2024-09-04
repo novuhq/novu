@@ -4,7 +4,6 @@ import { UserSession } from '@novu/application-generic';
 
 export { UserSession };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberSession = createParamDecorator((data, ctx) => {
   let req;
   if (ctx.getType() === 'graphql') {

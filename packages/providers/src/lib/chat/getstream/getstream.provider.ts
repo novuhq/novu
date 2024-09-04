@@ -21,7 +21,7 @@ export class GetstreamChatProvider
   constructor(
     private config: {
       apiKey: string;
-    }
+    },
   ) {
     super();
     this.config = config;
@@ -29,7 +29,7 @@ export class GetstreamChatProvider
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, {
       text: data.content,

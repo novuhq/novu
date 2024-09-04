@@ -40,19 +40,22 @@ module.exports = (on, config) => {
       const service = new NotificationsService(token, environmentId);
       const session = new UserSession(config.env.API_URL);
 
-      // eslint-disable-next-line no-plusplus
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < count; i += 1) {
         const num = enumerate ? ` ${i}` : '';
         await service.triggerEvent(triggerIdentifier, subscriberId, {
           firstName: `John${num}`,
         });
         if (ordered) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+          });
         }
       }
 
       if (organizationId) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => {
+          setTimeout(resolve, 500);
+        });
         await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
       }
 
@@ -63,6 +66,7 @@ module.exports = (on, config) => {
       const dal = new DalService();
       await dal.connect('mongodb://127.0.0.1:27017/novu-test');
       await dal.destroy();
+
       return true;
     },
 
@@ -121,6 +125,7 @@ module.exports = (on, config) => {
       environment: EnvironmentEntity;
     }): Promise<{ matched: number; modified: number }> {
       const service = new EnvironmentService();
+
       return await service.enableEnvironmentHmac(environment);
     },
   });

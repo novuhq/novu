@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { CommunityOrganizationRepository, CommunityUserRepository, CommunityMemberRepository } from '@novu/dal';
 import { isClerkEnabled } from '@novu/shared';
 
@@ -17,6 +18,8 @@ export function getEERepository<T>(className: 'OrganizationRepository' | 'Member
         return getEEMemberRepository();
       case 'UserRepository':
         return getEEUserRepository();
+      default:
+        throw new Error('Invalid repository name');
     }
   }
 
@@ -27,32 +30,34 @@ export function getEERepository<T>(className: 'OrganizationRepository' | 'Member
       return new CommunityMemberRepository() as T;
     case 'UserRepository':
       return new CommunityUserRepository() as T;
+    default:
+      throw new Error('Invalid repository name');
   }
 }
 
 function getEEUserRepository() {
   // nx-ignore-next-line
   const enterpriseModule = require('@novu/ee-auth');
-  const enterpriseUserRepository = enterpriseModule?.EEUserRepository;
-  const clerkClientMock = enterpriseModule?.ClerkClientMock;
+  const EnterpriseUserRepository = enterpriseModule?.EEUserRepository;
+  const ClerkClientMock = enterpriseModule?.ClerkClientMock;
 
-  return new enterpriseUserRepository(new CommunityUserRepository(), new clerkClientMock());
+  return new EnterpriseUserRepository(new CommunityUserRepository(), new ClerkClientMock());
 }
 
 function getEEOrganizationRepository() {
   // nx-ignore-next-line
   const enterpriseModule = require('@novu/ee-auth');
-  const enterpriseOrganizationRepository = enterpriseModule?.EEOrganizationRepository;
-  const clerkClientMock = enterpriseModule?.ClerkClientMock;
+  const EEOrganizationRepository = enterpriseModule?.EEOrganizationRepository;
+  const ClerkClientMock = enterpriseModule?.ClerkClientMock;
 
-  return new enterpriseOrganizationRepository(new CommunityOrganizationRepository(), new clerkClientMock());
+  return new EEOrganizationRepository(new CommunityOrganizationRepository(), new ClerkClientMock());
 }
 
 function getEEMemberRepository() {
   // nx-ignore-next-line
   const enterpriseModule = require('@novu/ee-auth');
-  const enterpriseMemberRepository = enterpriseModule?.EEMemberRepository;
-  const clerkClientMock = enterpriseModule?.ClerkClientMock;
+  const EEMemberRepository = enterpriseModule?.EEMemberRepository;
+  const ClerkClientMock = enterpriseModule?.ClerkClientMock;
 
-  return new enterpriseMemberRepository(new CommunityOrganizationRepository(), new clerkClientMock());
+  return new EEMemberRepository(new CommunityOrganizationRepository(), new ClerkClientMock());
 }

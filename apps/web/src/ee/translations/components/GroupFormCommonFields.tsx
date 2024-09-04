@@ -62,7 +62,6 @@ export const GroupFormCommonFields = ({
       />
       <Controller
         rules={{
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           validate: (value) => value.includes(currentOrganization!.defaultLocale!) || 'Default locale must be included',
         }}
         render={({ field, fieldState }) => (

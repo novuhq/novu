@@ -9,7 +9,6 @@ interface IGradientDotProps {
   height?: string;
 }
 
-/* eslint-disable */
 export function GradientDot(props: IGradientDotProps) {
   const color = props.colors.unseenBadgeColor;
   const regularColor = typeof color === 'string';

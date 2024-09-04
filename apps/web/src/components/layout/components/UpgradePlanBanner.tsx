@@ -1,5 +1,5 @@
-import { IS_DOCKER_HOSTED } from '../../../config';
 import { FC } from 'react';
+import { IS_DOCKER_HOSTED } from '../../../config';
 import { UpgradePlanBanner as Component } from '../../../ee/billing';
 
 export function UpgradePlanBanner({ FeatureActivatedBanner }: { FeatureActivatedBanner: FC }) {

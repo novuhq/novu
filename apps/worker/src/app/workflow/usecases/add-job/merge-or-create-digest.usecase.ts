@@ -85,7 +85,7 @@ export class MergeOrCreateDigest {
     const regularDigestMeta = digestMeta as IDigestRegularMetadata | undefined;
     if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
       const err = new Error();
-      const stack = err.stack;
+      const { stack } = err;
       throw new ApiException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
     }
 

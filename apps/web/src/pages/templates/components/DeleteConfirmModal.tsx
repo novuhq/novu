@@ -25,7 +25,7 @@ export function DeleteConfirmModal({
   cancelButtonText?: string;
 }) {
   const theme = useMantineTheme();
-  const targetText = target ? ' ' + target : '';
+  const targetText = target ? ` ${target}` : '';
 
   return (
     <>
@@ -47,7 +47,7 @@ export function DeleteConfirmModal({
             paddingTop: '180px',
           },
         }}
-        title={<Title size={2}>{title ? title : `Delete${targetText}`}</Title>}
+        title={<Title size={2}>{title || `Delete${targetText}`}</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
@@ -67,7 +67,7 @@ export function DeleteConfirmModal({
               {error}
             </Alert>
           )}
-          <Text>{description ? description : `Would you like to delete this${targetText}?`}</Text>
+          <Text>{description || `Would you like to delete this${targetText}?`}</Text>
           <Group position="right">
             <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
               {cancelButtonText}

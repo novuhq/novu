@@ -14,7 +14,7 @@ export const buildFeedKey = () => {
     command: Record<string, unknown> & {
       environmentId: string;
       subscriberId: string;
-    }
+    },
   ): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
@@ -51,7 +51,7 @@ export const buildMessageCountKey = () => {
     command: Record<string, unknown> & {
       environmentId: string;
       subscriberId: string;
-    }
+    },
   ): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
@@ -85,7 +85,7 @@ export const buildMessageCountKey = () => {
 
 export const buildIntegrationKey = () => {
   const cache = (
-    command: Record<string, unknown> & { _organizationId: string }
+    command: Record<string, unknown> & { _organizationId: string },
   ): string =>
     buildQueryByOrganizationKey({
       type: CacheKeyTypeEnum.QUERY,

@@ -1,7 +1,6 @@
 import { Step } from 'react-joyride';
 import { useParams } from 'react-router-dom';
-import { useAuth } from '../../../hooks';
-import { useEffectOnce } from '../../../hooks';
+import { useAuth, useEffectOnce } from '../../../hooks';
 import { useTourStorage } from '../hooks/useTourStorage';
 import { StartFromScratchTourTooltip } from './StartFromScratchTourTooltip';
 

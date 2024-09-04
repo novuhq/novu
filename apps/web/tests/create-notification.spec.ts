@@ -288,7 +288,7 @@ async function assertCodeSnippetStructureIncludingVariables(
   expect(codeSnippet).toContain('customVariable:');
 }
 async function createEmptyEmailNodes(workflowEditorPage: WorkflowEditorPage, total: number) {
-  for (let i = 0; i < total; i++) {
+  for (let i = 0; i < total; i += 1) {
     await workflowEditorPage.buttonAdd().last().click({ force: true });
     await workflowEditorPage.addEmailNode().click();
   }
@@ -314,11 +314,11 @@ async function assertTestDataSaved(workflowEditorPage: WorkflowEditorPage, page:
 async function createDigestNodeAndFillWithTestData(workflowEditorPage: WorkflowEditorPage, digestData: DigestTestData) {
   const digest = await workflowEditorPage.addAndEditDigestNode();
   await digest.digestSendOptionsAccordionSwitch().click();
-  await digest.timeAmount().fill(digestData.timeAmount + '');
+  await digest.timeAmount().fill(`${digestData.timeAmount}`);
   await digest.chooseTimeUnitFromDropdown(digest, digestData.timeUnit);
   await digest.digestSendOptionsAccordionSwitch().click();
   await digest.onlyFrequentEventsSwitch().click({ force: true });
-  await digest.backoffAmount().fill(digestData.backoffAmount + '');
+  await digest.backoffAmount().fill(`${digestData.backoffAmount}`);
   await digest.chooseTimeUnitBackOffFromDropDown(digest, digestData.timeUnitBackoff);
   await digest.digestGroupByOptions().click();
   await digest.batchKey().fill(digestData.batchKey);
@@ -339,9 +339,9 @@ function removeSuffix(digestData: TimeUnit) {
 async function assertSettingsSaved(workflowEditorPage: WorkflowEditorPage, digestData: DigestTestData) {
   const digest = await workflowEditorPage.getNodeSettings(ChannelType.DIGEST);
   await digest.digestSendOptionsAccordionSwitch().click();
-  expect(await digest.timeAmount().inputValue()).toBe(digestData.timeAmount + '');
+  expect(await digest.timeAmount().inputValue()).toBe(`${digestData.timeAmount}`);
   expect(await digest.batchKey().inputValue()).toBe(digestData.batchKey);
-  expect(await digest.backoffAmount().inputValue()).toBe(digestData.backoffAmount + '');
+  expect(await digest.backoffAmount().inputValue()).toBe(`${digestData.backoffAmount}`);
   expect(await digest.timeUnit().inputValue()).toBe(digestData.timeUnit);
   expect(await digest.timeUnitBackoff().inputValue()).toBe(digestData.timeUnitBackoff);
   await expect(workflowEditorPage.getNodeSubtitle(ChannelType.DIGEST, 0)).toContainText(

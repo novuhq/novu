@@ -14,6 +14,7 @@ describe('env.utils', () => {
       // @ts-expect-error - incorrect Response types
       global.Response = undefined;
       const response = getResponse();
+      // eslint-disable-next-line global-require
       expect(response).toBe(require('cross-fetch').Response);
     });
   });

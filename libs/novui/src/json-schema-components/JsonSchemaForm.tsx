@@ -16,8 +16,8 @@ import { InputWidget } from './widgets/InputWidget';
 import { TextareaWidget } from './widgets/TextareaWidget';
 
 const WIDGETS: RegistryWidgetsType = {
-  CheckboxWidget: CheckboxWidget,
-  SelectWidget: SelectWidget,
+  CheckboxWidget,
+  SelectWidget,
   TextWidget: InputEditorWidget,
   URLWidget: InputEditorWidget,
   EmailWidget: InputEditorWidget,
@@ -25,8 +25,8 @@ const WIDGETS: RegistryWidgetsType = {
 
 /** @deprecated TODO: delete after Autocomplete is fully released */
 const LEGACY_WIDGETS: RegistryWidgetsType = {
-  CheckboxWidget: CheckboxWidget,
-  SelectWidget: SelectWidget,
+  CheckboxWidget,
+  SelectWidget,
   TextWidget: TextareaWidget,
   URLWidget: InputWidget,
   EmailWidget: InputWidget,

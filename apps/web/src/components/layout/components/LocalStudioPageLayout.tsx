@@ -1,16 +1,16 @@
 import { ErrorBoundary } from '@sentry/react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';
+import { WithLoadingSkeleton } from '@novu/novui';
+import { Box } from '@novu/novui/jsx';
+import { useEffect } from 'react';
 import { LocalStudioHeader } from './LocalStudioHeader/LocalStudioHeader';
 import { LocalStudioSidebar } from './LocalStudioSidebar';
 import { isStudioOnboardingRoute } from '../../../studio/utils/routing';
 import { AppShell } from './AppShell';
 import { ContentShell } from './ContentShell';
-import { WithLoadingSkeleton } from '@novu/novui';
 import { WorkflowsDetailPage } from '../../../studio/components/workflows/index';
-import { Box } from '@novu/novui/jsx';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
-import { useEffect } from 'react';
 import { useStudioState } from '../../../studio/hooks';
 import { useSegment } from '../../providers/SegmentProvider';
 

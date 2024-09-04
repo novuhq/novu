@@ -202,7 +202,7 @@ export function LayoutList() {
             data={layouts || []}
             onRowClick={onRowClick}
             pagination={{
-              pageSize: pageSize,
+              pageSize,
               current: page,
               total: totalCount,
               onPageChange: handleTableChange,

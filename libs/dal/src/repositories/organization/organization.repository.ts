@@ -1,7 +1,7 @@
-import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { IOrganizationRepository } from './organization-repository.interface';
 import { Inject } from '@nestjs/common';
+import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
+import { IOrganizationRepository } from './organization-repository.interface';
 
 export class OrganizationRepository implements IOrganizationRepository {
   constructor(@Inject('ORGANIZATION_REPOSITORY') private organizationRepository: IOrganizationRepository) {}
@@ -70,6 +70,7 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.find(query, select, options);
   }
 
+  // eslint-disable-next-line require-yield
   async *findBatch(
     query: any,
     select?: string | undefined,

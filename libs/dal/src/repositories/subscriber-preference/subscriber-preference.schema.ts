@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { PreferenceLevelEnum, SubscriberPreferenceDBModel } from './subscriber-preference.entity';
@@ -62,7 +61,6 @@ subscriberPreferenceSchema.index({
   level: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberPreference =
   (mongoose.models.SubscriberPreference as mongoose.Model<SubscriberPreferenceDBModel>) ||
   mongoose.model<SubscriberPreferenceDBModel>('SubscriberPreference', subscriberPreferenceSchema);

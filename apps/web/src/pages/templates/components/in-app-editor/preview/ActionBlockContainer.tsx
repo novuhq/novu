@@ -55,6 +55,7 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
   const buttonStyle = dark ? darkButtonStyle : lightButtonStyle;
 
   function handleOnButtonContentChange(data: any, buttonIndex: number) {
+    // eslint-disable-next-line no-unsafe-optional-chaining
     const currentButtonsValue = props?.value?.buttons ? [...props?.value?.buttons] : [];
 
     if (currentButtonsValue) {

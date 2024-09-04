@@ -21,14 +21,14 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       from?: string;
-    }
+    },
   ) {
     super();
   }
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform<SmsParams>(bridgeProviderData, {
       to: options.to,
@@ -52,7 +52,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
       referrerPolicy: undefined,
       signal: undefined,
       method: 'POST',
-      headers: headers,
+      headers,
       body: JSON.stringify(params.body),
     };
 
@@ -74,9 +74,10 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.message_id === identifier);
     }
 
@@ -91,7 +92,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body.message_id,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -109,6 +110,8 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
         return SmsEventStatusEnum.FAILED;
       case 'Delivered':
         return SmsEventStatusEnum.DELIVERED;
+      default:
+        return undefined;
     }
   }
 }

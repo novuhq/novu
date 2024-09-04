@@ -32,8 +32,8 @@ export const CountProvider = (props: ParentProps) => {
     }
 
     const newMap = new Map();
-    const counts = data.counts;
-    for (let i = 0; i < counts.length; i++) {
+    const { counts } = data;
+    for (let i = 0; i < counts.length; i += 1) {
       const tagsKey = createKey(counts[i].filter.tags);
       newMap.set(tagsKey, data?.counts[i].count);
     }
@@ -97,7 +97,7 @@ export const CountProvider = (props: ParentProps) => {
 
       const allTabs = tabs();
       if (allTabs.length > 0) {
-        for (let i = 0; i < allTabs.length; i++) {
+        for (let i = 0; i < allTabs.length; i += 1) {
           const tab = allTabs[i];
           const tags = tab.value;
           const allNotifications = tags.length === 0;

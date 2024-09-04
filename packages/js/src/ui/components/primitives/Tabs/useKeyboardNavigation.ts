@@ -39,7 +39,7 @@ export const useKeyboardNavigation = ({
       const tabElements = Array.from<HTMLButtonElement>(tabsContainer()?.querySelectorAll('[role="tab"]') ?? []);
       const tabIds = tabElements.map((tab) => tab.id);
       const currentIndex = tabIds.indexOf(activeTab());
-      const length = tabIds.length;
+      const { length } = tabIds;
       let activeIndex = currentIndex;
       let newTab = activeTab();
       if (event.key === 'ArrowLeft') {

@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
-import { BaseSmsHandler } from './base.handler';
 import { GupshupSmsProvider } from '@novu/providers';
+import { BaseSmsHandler } from './base.handler';
 
 export class GupshupSmsHandler extends BaseSmsHandler {
   constructor() {

@@ -2,7 +2,7 @@ import { Select, IconConstruction, IconRocketLaunch } from '@novu/design-system'
 
 import { css } from '@novu/novui/css';
 import { navSelectStyles } from '../NavSelect.styles';
-import { useEnvironment } from '../../../components/providers/EnvironmentProvider';
+import { useEnvironment } from '../../providers/EnvironmentProvider';
 import { BaseEnvironmentEnum } from '../../../constants/BaseEnvironmentEnum';
 
 export function EnvironmentSelect() {

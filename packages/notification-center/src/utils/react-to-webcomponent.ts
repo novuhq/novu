@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment, multiline-comment-style */
+/* eslint-disable multiline-comment-style */
 /**
  * The code was taken from the following repository: https://github.com/bitovi/react-to-webcomponent
  * and improved to support rendering React through Web Components in the AngularJS app
@@ -65,13 +65,14 @@ const moveUpdateToNextTick = (fn: () => void) => {
 
 const define = {
   // Creates a getter/setter that re-renders every time a property is set.
-  expand: function (receiver: object, key: string, value: unknown) {
+  expand(receiver: object, key: string, value: unknown) {
     Object.defineProperty(receiver, key, {
       enumerable: true,
-      get: function () {
+      get() {
         return value;
       },
-      set: function (newValue) {
+      set(newValue) {
+        // eslint-disable-next-line no-param-reassign
         value = newValue;
         moveUpdateToNextTick(() => this[renderSymbol]());
       },
@@ -95,7 +96,7 @@ interface R2WCOptions {
  * @param {String?} options.shadow - Shadow DOM mode as either open or closed.
  * @param {Object|Array?} options.props - Array of camelCasedProps to watch as Strings or { [camelCasedProp]: String | Number | Boolean | Function | Object | Array }
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
 export default function (
   ReactComponent: React.FunctionComponent<any> | React.ComponentClass<any>,
   options: R2WCOptions = {}
@@ -108,6 +109,7 @@ export default function (
   const propAttrMap = {}; // @TODO: add option to specify for asymmetric mapping (eg "className" from "class")
   const attrPropMap = {}; // cached inverse of propAttrMap
   if (!options.props) {
+    // eslint-disable-next-line no-param-reassign
     options.props = ReactComponent.propTypes ? Object.keys(ReactComponent.propTypes) : [];
   }
   const propKeys = Array.isArray(options.props) ? options.props.slice() : Object.keys(options.props);
@@ -143,12 +145,12 @@ export default function (
 
   // But have that prototype be wrapped in a proxy.
   const proxyPrototype = new Proxy(targetPrototype, {
-    has: function (target, key) {
+    has(target, key) {
       return key in propTypes || key in targetPrototype;
     },
 
     // when any undefined property is set, create a getter/setter that re-renders
-    set: function (target, key, value, receiver) {
+    set(target, key, value, receiver) {
       if (rendering) {
         renderAddedProperties[key] = true;
       }
@@ -162,7 +164,7 @@ export default function (
       return true;
     },
     // makes sure the property looks writable
-    getOwnPropertyDescriptor: function (target, key) {
+    getOwnPropertyDescriptor(target, key) {
       const own = Reflect.getOwnPropertyDescriptor(target, key);
       if (own) {
         return own;
@@ -237,26 +239,33 @@ export default function (
       case 'ref':
       case Function:
         if (!newValue && propTypes[propertyName] === 'ref') {
+          // eslint-disable-next-line no-param-reassign
           newValue = React.createRef();
           break;
         }
         if (typeof window !== 'undefined') {
+          // eslint-disable-next-line no-param-reassign
           newValue = window[newValue] || newValue;
         } else if (typeof global !== 'undefined') {
+          // eslint-disable-next-line no-param-reassign
           newValue = global[newValue] || newValue;
         }
         if (typeof newValue === 'function') {
+          // eslint-disable-next-line no-param-reassign
           newValue = newValue.bind(this); // this = instance of the WebComponent / HTMLElement
         }
         break;
       case Number:
+        // eslint-disable-next-line no-param-reassign
         newValue = parseFloat(newValue);
         break;
       case Boolean:
+        // eslint-disable-next-line no-param-reassign
         newValue = /^[ty1-9]/i.test(newValue);
         break;
       case Object:
       case Array:
+        // eslint-disable-next-line no-param-reassign
         newValue = JSON.parse(newValue);
         break;
       case String:

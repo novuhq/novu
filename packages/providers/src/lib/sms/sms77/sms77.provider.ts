@@ -20,7 +20,7 @@ export class Sms77SmsProvider extends BaseProvider implements ISmsProvider {
     private config: {
       apiKey?: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.sms77Client = new Sms77Client(config.apiKey, 'Novu');
@@ -28,7 +28,7 @@ export class Sms77SmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const params: SmsParams = this.transform<SmsParams>(bridgeProviderData, {
       from: options.from || this.config.from,

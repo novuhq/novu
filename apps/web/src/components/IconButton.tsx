@@ -1,8 +1,8 @@
 import { ComponentProps, PropsWithChildren } from 'react';
 import { Tooltip, Button, IButtonProps } from '@novu/design-system';
 
-import { useHover } from '../hooks';
 import { css, cx } from '@novu/novui/css';
+import { useHover } from '../hooks';
 
 // Mantine styles take precedence over Panda :(, so have to use !important
 const iconButtonStyles = css({
@@ -64,7 +64,7 @@ export const IconButton: React.FC<PropsWithChildren<IIconButtonProps>> = ({
 }) => {
   const { isHovered, ...elementProps } = useHover();
 
-  return !!tooltipProps ? (
+  return tooltipProps ? (
     <Tooltip opened={isHovered} {...tooltipProps}>
       <Button {...elementProps} {...buttonProps} className={cx(iconButtonStyles, className)}>
         {!buttonProps.loading ? children : null}

@@ -68,7 +68,7 @@ export const getClientAndConfig = (): {
 };
 
 export const getClientAndConfigForCluster = (
-  providerId: InMemoryProviderEnum
+  providerId: InMemoryProviderEnum,
 ): {
   getClient: (enableAutoPipelining?: boolean) => Cluster | undefined;
   getConfig: () => InMemoryProviderConfig;

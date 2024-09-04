@@ -7,7 +7,7 @@ export abstract class BaseSmsHandler implements ISmsHandler {
 
   protected constructor(
     private providerId: SmsProviderIdEnum,
-    private channelType: string
+    private channelType: string,
   ) {}
 
   getProvider(): ISmsProvider {
@@ -21,7 +21,7 @@ export abstract class BaseSmsHandler implements ISmsHandler {
   async send(options: ISmsOptions) {
     if (process.env.NODE_ENV === 'test') {
       throw new Error(
-        'Currently 3rd-party packages test are not support on test env'
+        'Currently 3rd-party packages test are not support on test env',
       );
     }
 

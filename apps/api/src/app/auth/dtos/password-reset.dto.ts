@@ -1,5 +1,6 @@
 import { IsDefined, MinLength, Matches, MaxLength, IsUUID, IsEmail } from 'class-validator';
 import { passwordConstraints } from '@novu/shared';
+
 export class PasswordResetBodyDto {
   @IsDefined()
   @MinLength(passwordConstraints.minLength)

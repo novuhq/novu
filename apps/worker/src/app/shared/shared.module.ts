@@ -52,14 +52,15 @@ import {
   ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
+import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
 import packageJson from '../../../package.json';
 import { CreateLog } from './logs';
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';
 import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
+    // eslint-disable-next-line global-require
     const eeAuthPackage = require('@novu/ee-auth');
 
     return eeAuthPackage.injectEEAuthProviders();

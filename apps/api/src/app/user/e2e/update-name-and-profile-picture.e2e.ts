@@ -18,7 +18,7 @@ describe('Update user name and profile picture - /users/profile (PUT) @skip-in-e
       .send({
         firstName: 'John',
         lastName: 'Doe',
-        profilePicture: profilePicture,
+        profilePicture,
       })
       .expect(processTestAgentExpectedStatusCode(200));
 

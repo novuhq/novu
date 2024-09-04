@@ -5,14 +5,13 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-
 import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
-import { useAuth } from '../../../hooks';
+import { Bolt, Button, Settings } from '@novu/design-system';
+import { useAuth, useEnvironment } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
-import { Bolt, Button, Settings } from '@novu/design-system';
-import { useEnvironment } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
@@ -85,9 +84,9 @@ const WorkflowEditor = () => {
           variantUuid: step.uuid,
         });
       } else if (node.type === NodeType.CHANNEL) {
-        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}/preview`);
+        navigate(`${basePath}/${channelType}/${step?.uuid ?? ''}/preview`);
       } else if (node.type === NodeType.TRIGGER) {
-        navigate(basePath + '/test-workflow');
+        navigate(`${basePath}/test-workflow`);
       }
     },
     [navigate, basePath, navigateToVariantPreview]
@@ -95,7 +94,7 @@ const WorkflowEditor = () => {
 
   const onEdit: IFlowEditorProps['onEdit'] = (_, node) => {
     if (node.type === NodeType.CHANNEL) {
-      navigate(basePath + `/${node.data.channelType}/${node.data.step?.uuid ?? ''}`);
+      navigate(`${basePath}/${node.data.channelType}/${node.data.step?.uuid ?? ''}`);
     }
   };
 
@@ -103,7 +102,7 @@ const WorkflowEditor = () => {
     const channelStep = steps.find((step) => step.uuid === uuid);
 
     if (channelStep) {
-      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/create`);
+      navigate(`${basePath}/${channelStep.template.type}/${uuid}/variants/create`);
     }
   };
 
@@ -199,7 +198,7 @@ const WorkflowEditor = () => {
                 <UpdateButton />
                 <Button
                   onClick={() => {
-                    navigate(basePath + '/snippet');
+                    navigate(`${basePath}/snippet`);
                   }}
                   data-test-id="get-snippet-btn"
                 >
@@ -287,9 +286,9 @@ const WorkflowEditor = () => {
                             experiment_id: '2024-w9-onb',
                             _organization: currentOrganization?._id,
                           });
-                          navigate(basePath + '/test-workflow');
+                          navigate(`${basePath}/test-workflow`);
                         } else {
-                          navigate(basePath + '/snippet');
+                          navigate(`${basePath}/snippet`);
                         }
                       }}
                       data-test-id="get-snippet-btn"

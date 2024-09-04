@@ -1,14 +1,13 @@
 import { useClipboard } from '@mantine/hooks';
 import { successMessage, errorMessage } from '@novu/design-system';
 import { IResponseError, checkIsResponseError } from '@novu/shared';
-import { MAIL_SERVER_DOMAIN } from '../../../config';
-import { useEnvironment } from '../../../hooks';
-import { updateDnsSettings } from '../../../api';
 import { useMutation } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { MAIL_SERVER_DOMAIN } from '../../../config';
+import { useEnvironment, useEffectOnce } from '../../../hooks';
+import { updateDnsSettings } from '../../../api';
 import { validateMxRecord } from '../../../api/inbound-parse';
-import { useEffectOnce } from '../../../hooks';
 import { getWebhookClaimStatusFromEnvironment } from './getWebhookClaimStatusFromEnvironment';
 import { WebhookClaimStatus } from './WebhookPage.types';
 
@@ -70,7 +69,9 @@ export const useWebhookPage = () => {
   async function handleCheckRecords() {
     try {
       setIsMxRecordRefreshing(true);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000);
+      });
       const record = await validateMxRecord();
 
       if (environment?.dns && record.mxRecordConfigured !== environment.dns.mxRecordConfigured) {

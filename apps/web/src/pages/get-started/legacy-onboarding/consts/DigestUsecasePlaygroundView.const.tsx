@@ -16,7 +16,7 @@ export const DigestPlaygroundView: OnboardingUseCase = {
   steps: [
     {
       title: 'Set digest interval',
-      Description: function () {
+      Description() {
         const [time, setTime] = useState<number>(10);
 
         return (
@@ -30,7 +30,7 @@ export const DigestPlaygroundView: OnboardingUseCase = {
 
     {
       title: 'Run trigger multiple times',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Click the button multiple times to generate a few notifications.</StepText>
@@ -43,7 +43,7 @@ export const DigestPlaygroundView: OnboardingUseCase = {
     },
     {
       title: 'Check your email once the time is up',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Find a message from Novu in your email once the time is up.</StepText>
@@ -55,7 +55,7 @@ export const DigestPlaygroundView: OnboardingUseCase = {
   Demo: () => <>Digest Playground</>,
   type: OnboardingUseCasesTabsEnum.DIGEST,
   useCaseLink: '',
-  BottomSection: function () {
+  BottomSection() {
     return (
       <StyledLink href="#">
         <Flex gap={'0.5rem'}>

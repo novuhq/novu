@@ -77,7 +77,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       ],
     };
 
-    const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
 
     const integration = data.find((i) => i.primary && i.channel === 'email');
 
@@ -113,7 +113,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       ],
     };
 
-    const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const { data } = (await session.testAgent.get(`/v1/integrations`)).body;
 
     const integration = data.find((i) => i.primary && i.channel === 'email');
 

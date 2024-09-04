@@ -54,7 +54,7 @@ export const InputEditorWidget = (props: WidgetProps) => {
       CustomMention().configure({
         suggestion: {
           items: ({ editor, query }) => {
-            const suggestions = (editor.storage.SuggestionListStorage as SuggestionListStorage).suggestions;
+            const { suggestions } = editor.storage.SuggestionListStorage as SuggestionListStorage;
 
             return suggestions?.filter((item) => item.label.toLowerCase().includes(query.toLowerCase().trim()));
           },
@@ -65,21 +65,21 @@ export const InputEditorWidget = (props: WidgetProps) => {
           allowedPrefixes: null,
           render() {
             return {
-              onStart: (props) => {
+              onStart: (onStartProps) => {
                 reactRenderer.current = new ReactRenderer(VariableSuggestionList, {
-                  props,
-                  editor: props.editor,
+                  props: onStartProps,
+                  editor: onStartProps.editor,
                 });
               },
-              onUpdate(props) {
-                reactRenderer.current?.updateProps(props);
+              onUpdate(onUpdateProps) {
+                reactRenderer.current?.updateProps(onUpdateProps);
               },
-              onKeyDown(props) {
+              onKeyDown(onKeyDownProps) {
                 if (!reactRenderer.current?.ref) {
                   return false;
                 }
 
-                return reactRenderer.current?.ref.onKeyDown(props);
+                return reactRenderer.current?.ref.onKeyDown(onKeyDownProps);
               },
               onExit() {
                 reactRenderer.current?.destroy();
@@ -117,8 +117,8 @@ export const InputEditorWidget = (props: WidgetProps) => {
     onBlur: () => {
       reactRenderer.current?.ref?.blur();
     },
-    onUpdate: ({ editor }) => {
-      handleEditorUpdateWithValidation({ editor });
+    onUpdate: ({ editor: editorInstance }) => {
+      handleEditorUpdateWithValidation({ editor: editorInstance });
     },
   });
 

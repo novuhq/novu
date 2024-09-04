@@ -8,7 +8,7 @@ export class EventsDistributedLockService {
 
   public async applyLock<T>(
     settings: ILockOptions,
-    handler: () => Promise<T>
+    handler: () => Promise<T>,
   ): Promise<T> {
     return await this.distributedLockService.applyLock(settings, handler);
   }

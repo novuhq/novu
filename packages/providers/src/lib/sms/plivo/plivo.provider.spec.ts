@@ -40,7 +40,7 @@ describe('PlivoSmsProvider', () => {
       '+187654',
       'Test',
       undefined,
-      undefined
+      undefined,
     );
   });
 
@@ -62,7 +62,7 @@ describe('PlivoSmsProvider', () => {
             dst: '+287654',
           },
         },
-      }
+      },
     );
 
     expect(createMock).toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe('PlivoSmsProvider', () => {
       '+287654',
       'Test',
       undefined,
-      undefined
+      undefined,
     );
   });
 });

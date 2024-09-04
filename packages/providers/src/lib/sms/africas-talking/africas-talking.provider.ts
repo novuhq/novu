@@ -23,7 +23,7 @@ export class AfricasTalkingSmsProvider
       apiKey: string;
       username: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.africasTalkingClient = new AfricasTalking({
@@ -34,14 +34,14 @@ export class AfricasTalkingSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.africasTalkingClient.send(
       this.transform(bridgeProviderData, {
         from: options.from || this.config.from,
         to: options.to,
         message: options.content,
-      }).body
+      }).body,
     );
 
     return {

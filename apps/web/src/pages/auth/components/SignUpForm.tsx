@@ -60,18 +60,19 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     const origin = parsedSearchParams.get('origin');
     const anonymousId = parsedSearchParams.get('anonymous_id');
 
+    // eslint-disable-next-line no-unsafe-optional-chaining
     const [firstName, lastName] = data?.fullName.trim().split(' ');
     const itemData = {
       firstName,
       lastName,
       email: data.email,
       password: data.password,
-      origin: origin,
+      origin,
       invitationToken,
     };
 
     const response = await mutateAsync(itemData);
-    const token = (response as any).token;
+    const { token } = response as any;
     await login(token);
 
     if (state?.anonymousId && anonymousId) {

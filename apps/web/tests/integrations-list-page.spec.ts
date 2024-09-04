@@ -510,7 +510,7 @@ test('should remove as primary when adding conditions', async ({ page }) => {
   await page.goto('/integrations');
   await expect(page).toHaveURL(/\/integrations/);
 
-  await clickOnListRow(page, new RegExp(`SendGrid.*Development`));
+  await clickOnListRow(page, /SendGrid.*Development/);
 
   const headerAddConditions = page.getByTestId('header-add-conditions-btn');
   await headerAddConditions.click();
@@ -653,7 +653,7 @@ test('should remove conditions when set to primary', async ({ page }) => {
   const sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 
-  await clickOnListRow(page, new RegExp(`Mailjet Integration.*Development`));
+  await clickOnListRow(page, /Mailjet Integration.*Development/);
 });
 
 test('should update the mailjet integration', async ({ page }) => {
@@ -891,7 +891,7 @@ test('should show the Novu in-app integration', async ({ page }) => {
   await page.goto('/integrations');
   await expect(page).toHaveURL(/\/integrations/);
 
-  await clickOnListRow(page, new RegExp(`Novu Inbox.*Development`));
+  await clickOnListRow(page, /Novu Inbox.*Development/);
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar');
   await expect(updateProviderSidebar).toBeVisible();
@@ -949,7 +949,7 @@ test('should show the Novu in-app integration - React guide', async ({ page }) =
   await page.goto('/integrations');
   await expect(page).toHaveURL(/\/integrations/);
 
-  await clickOnListRow(page, new RegExp(`Novu Inbox.*Development`));
+  await clickOnListRow(page, /Novu Inbox.*Development/);
 
   let updateProviderSidebar = page.getByTestId('update-provider-sidebar');
   await expect(updateProviderSidebar).toBeVisible();
@@ -978,6 +978,7 @@ test('should show the Novu Email integration sidebar', async ({ page }) => {
     page,
     modifyBody: (body) => {
       const [firstIntegration] = body.data;
+      // eslint-disable-next-line no-param-reassign
       body.data = [
         {
           _id: EmailProviderIdEnum.Novu,
@@ -999,7 +1000,7 @@ test('should show the Novu Email integration sidebar', async ({ page }) => {
   await expect(page).toHaveURL(/\/integrations/);
   await integrationsPromise;
 
-  await clickOnListRow(page, new RegExp(`Novu Email.*Development`));
+  await clickOnListRow(page, /Novu Email.*Development/);
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar-novu');
   await expect(updateProviderSidebar).toContainText('Test Provider');
@@ -1039,6 +1040,7 @@ test('should show the Novu SMS integration sidebar', async ({ page }) => {
     page,
     modifyBody: (body) => {
       const [firstIntegration] = body.data;
+      // eslint-disable-next-line no-param-reassign
       body.data = [
         {
           _id: SmsProviderIdEnum.Novu,
@@ -1060,7 +1062,7 @@ test('should show the Novu SMS integration sidebar', async ({ page }) => {
   await expect(page).toHaveURL(/\/integrations/);
   await integrationsPromise;
 
-  await clickOnListRow(page, new RegExp(`Novu SMS.*Development`));
+  await clickOnListRow(page, /Novu SMS.*Development/);
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar-novu');
   await expect(updateProviderSidebar).toContainText('Test Provider');

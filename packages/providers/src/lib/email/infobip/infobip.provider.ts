@@ -26,7 +26,7 @@ export class InfobipEmailProvider
       baseUrl: string;
       apiKey: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.infobipClient = new Infobip({
@@ -37,7 +37,7 @@ export class InfobipEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       await this.infobipClient.channels.email.send({
@@ -64,7 +64,7 @@ export class InfobipEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.email.send(
       this.transform(bridgeProviderData, {
@@ -73,7 +73,7 @@ export class InfobipEmailProvider
         subject: options.subject,
         text: options.text,
         html: options.html,
-      }).body
+      }).body,
     );
     const { messageId } = infobipResponse.data.messages.pop();
 

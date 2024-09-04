@@ -15,7 +15,7 @@ export const useStyle = () => {
   const styleFuncMemo = createMemo(() => (appearanceKey: AppearanceKey, className?: string) => {
     const appearanceKeyParts = appearanceKey.split('__');
     let finalAppearanceKeys: (keyof Elements)[] = [];
-    for (let i = 0; i < appearanceKeyParts.length; i++) {
+    for (let i = 0; i < appearanceKeyParts.length; i += 1) {
       const accumulated = appearanceKeyParts.slice(i).join('__');
       if (appearanceKeys.includes(accumulated as keyof Elements)) {
         finalAppearanceKeys.push(accumulated as keyof Elements);
@@ -47,7 +47,7 @@ export const useStyle = () => {
       .join(' ');
 
     const appearanceClassnames = [];
-    for (let i = 0; i < finalAppearanceKeys.length; i++) {
+    for (let i = 0; i < finalAppearanceKeys.length; i += 1) {
       if (typeof appearance.elements?.[finalAppearanceKeys[i]] === 'string') {
         appearanceClassnames.push(appearance.elements?.[finalAppearanceKeys[i]]);
       }

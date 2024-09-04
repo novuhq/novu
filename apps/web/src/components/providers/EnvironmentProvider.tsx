@@ -121,7 +121,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       }
 
       // if we are in a specific workflow detail when switching the env, redirect to workflows
-      if (location.pathname.includes('workflows/edit')) {
+      if (window.location.pathname.includes('workflows/edit')) {
         navigate(ROUTES.WORKFLOWS);
       }
     },

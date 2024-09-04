@@ -12,7 +12,7 @@ export const toConstantCase = (str: string): string =>
  * @param _enum The enum
  * @returns A pretty string
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
+
 export const enumToPrettyString = <T extends Object>(_enum: T): string =>
   Object.values(_enum)
     .map((method) => `\`${method}\``)

@@ -36,30 +36,28 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
         experiment_id: '2024-w9-onb',
         _organization: currentOrganization?._id,
       });
-    } else {
-      if (integrationActive) {
-        let providerId = getActiveIntegration(integrations, channel)?.providerId;
+    } else if (integrationActive) {
+      let providerId = getActiveIntegration(integrations, channel)?.providerId;
 
-        if (channel.type === ChannelTypeEnum.EMAIL && !providerId) {
-          providerId = InAppProviderIdEnum.Novu;
-        }
-
-        segment.track(OnBoardingAnalyticsEnum.UPDATE_PROVIDER_CLICK, {
-          channel: channel.type,
-          provider: providerId,
-        });
-      } else {
-        segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK, {
-          channel: channel.type,
-        });
+      if (channel.type === ChannelTypeEnum.EMAIL && !providerId) {
+        providerId = InAppProviderIdEnum.Novu;
       }
+
+      segment.track(OnBoardingAnalyticsEnum.UPDATE_PROVIDER_CLICK, {
+        channel: channel.type,
+        provider: providerId,
+      });
+    } else {
+      segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK, {
+        channel: channel.type,
+      });
     }
   }
 
   return (
     <Grid style={{ maxWidth: '850px' }}>
       {quickStartChannels.map((channel, index) => {
-        const Icon = channel.Icon;
+        const { Icon } = channel;
         let isIntegrationActive = !!getActiveIntegration(integrations, channel);
         if (channel.type === ChannelTypeEnum.EMAIL) {
           isIntegrationActive = isIntegrationActive || !isLimitReached;
@@ -105,11 +103,12 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                     }
                   }}
                 >
+                  {/* eslint-disable-next-line no-nested-ternary */}
                   {isOnboardingExperiment
                     ? 'Send test notification now'
                     : isIntegrationActive
-                    ? 'Change Provider'
-                    : `Configure ${channel.displayName}`}
+                      ? 'Change Provider'
+                      : `Configure ${channel.displayName}`}
                 </StyledButton>
               </ChannelCard>
             </Container>

@@ -7,7 +7,10 @@ import { GetActivityCommand } from './get-activity.command';
 
 @Injectable()
 export class GetActivity {
-  constructor(private notificationRepository: NotificationRepository, private analyticsService: AnalyticsService) {}
+  constructor(
+    private notificationRepository: NotificationRepository,
+    private analyticsService: AnalyticsService
+  ) {}
 
   async execute(command: GetActivityCommand): Promise<ActivityNotificationResponseDto> {
     this.analyticsService.track('Get Activity Feed Item - [Activity Feed]', command.userId, {

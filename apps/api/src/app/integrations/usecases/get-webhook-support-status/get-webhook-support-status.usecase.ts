@@ -41,7 +41,7 @@ export class GetWebhookSupportStatus {
   }
 
   private async getIntegration(command: GetWebhookSupportStatusCommand) {
-    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const { providerOrIntegrationId } = command;
     const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
 
     const query: IntegrationQuery = {

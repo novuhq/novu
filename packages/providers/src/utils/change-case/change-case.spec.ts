@@ -9,6 +9,7 @@ import {
   snakeCase,
   trainCase,
 } from './index';
+
 const stubPrimitiveObject = {
   primitiveString: 'string',
   primitiveNumber: 1,

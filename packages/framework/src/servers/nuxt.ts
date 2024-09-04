@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { getHeader, getQuery, H3Event, readBody, send, setHeaders } from 'h3';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
@@ -6,11 +5,14 @@ import { type SupportedFrameworkName } from '../types';
 
 export const frameworkName: SupportedFrameworkName = 'nuxt';
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const serve = (options: ServeHandlerOptions) => {
   const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
+    /*
+     * TODO: Fix this
+     */
+    // @ts-expect-error - Request type is not correct
     handler: (event: H3Event) => ({
       queryString: (key) => String(getQuery(event)[key]),
       body: () => readBody(event),

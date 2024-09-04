@@ -33,7 +33,7 @@ test('should trigger MessageBird correctly', async () => {
       recipients: ['+176543'],
       body: 'Test SMS Content',
     },
-    expect.any(Function)
+    expect.any(Function),
   );
 });
 
@@ -75,6 +75,6 @@ test('should trigger MessageBird correctly with _passthrough', async () => {
       recipients: ['+176543'],
       body: 'Test SMS Content',
     },
-    expect.any(Function)
+    expect.any(Function),
   );
 });

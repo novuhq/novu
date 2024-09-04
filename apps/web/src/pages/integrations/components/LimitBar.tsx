@@ -2,8 +2,8 @@ import styled from '@emotion/styled/macro';
 import { Stack, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Link } from 'react-router-dom';
-import { When } from '../../../components/utils/When';
 import { colors, Text } from '@novu/design-system';
+import { When } from '../../../components/utils/When';
 
 const WARNING_LIMIT = {
   [ChannelTypeEnum.EMAIL]: 50,

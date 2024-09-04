@@ -14,7 +14,7 @@ describe('Delete Notification Group - /notification-groups/:id (DELETE)', async 
       name: 'Test delete group',
     });
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     const getResult = await session.testAgent.get(`/v1/notification-groups/${id}`);
 
@@ -39,7 +39,7 @@ describe('Delete Notification Group - /notification-groups/:id (DELETE)', async 
       name: 'Test name',
     });
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     await session.testAgent.delete(`/v1/notification-groups/${id}`);
 

@@ -8,11 +8,13 @@ import {
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
-import { ConditionsFilter } from '../conditions-filter';
+import {
+  ConditionsFilter,
+  ConditionsFilterCommand,
+} from '../conditions-filter';
 import { CachedQuery } from '../../services/cache/interceptors/cached-query.interceptor';
 import { buildIntegrationKey } from '../../services/cache/key-builders/queries';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
-import { ConditionsFilterCommand } from '../conditions-filter';
 import {
   NormalizeVariables,
   NormalizeVariablesCommand,
@@ -26,7 +28,7 @@ export class SelectIntegration {
     private integrationRepository: IntegrationRepository,
     protected conditionsFilter: ConditionsFilter,
     private tenantRepository: TenantRepository,
-    private normalizeVariablesUsecase: NormalizeVariables
+    private normalizeVariablesUsecase: NormalizeVariables,
   ) {}
 
   @CachedQuery({
@@ -37,7 +39,7 @@ export class SelectIntegration {
       }),
   })
   async execute(
-    command: SelectIntegrationCommand
+    command: SelectIntegrationCommand,
   ): Promise<IntegrationEntity | undefined> {
     let integration: IntegrationEntity | null =
       await this.getPrimaryIntegration(command);
@@ -77,7 +79,7 @@ export class SelectIntegration {
             variables: {
               tenant,
             },
-          })
+          }),
         );
 
         const { passed } = await this.conditionsFilter.filter(
@@ -87,7 +89,7 @@ export class SelectIntegration {
             organizationId: command.organizationId,
             userId: command.userId,
             variables,
-          })
+          }),
         );
 
         if (passed) {
@@ -105,10 +107,10 @@ export class SelectIntegration {
   }
 
   private async getPrimaryIntegration(
-    command: SelectIntegrationCommand
+    command: SelectIntegrationCommand,
   ): Promise<IntegrationEntity | null> {
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(
-      command.channelType
+      command.channelType,
     );
 
     const query: Partial<IntegrationEntity> & { _organizationId: string } =
@@ -128,7 +130,7 @@ export class SelectIntegration {
 
   private getIntegrationQuery(
     command: SelectIntegrationCommand,
-    isChannelSupportsPrimary = false
+    isChannelSupportsPrimary = false,
   ) {
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
       _organizationId: command.organizationId,

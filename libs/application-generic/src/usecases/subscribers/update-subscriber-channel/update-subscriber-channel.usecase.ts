@@ -24,7 +24,7 @@ export class UpdateSubscriberChannel {
     private subscriberRepository: SubscriberRepository,
     private integrationRepository: IntegrationRepository,
     @Inject(forwardRef(() => AnalyticsService))
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
   ) {}
 
   async execute(command: UpdateSubscriberChannelCommand) {
@@ -32,7 +32,7 @@ export class UpdateSubscriberChannel {
       command.subscriber ??
       (await this.subscriberRepository.findBySubscriberId(
         command.environmentId,
-        command.subscriberId
+        command.subscriberId,
       ));
 
     if (!foundSubscriber) {
@@ -53,12 +53,12 @@ export class UpdateSubscriberChannel {
       undefined,
       {
         query: { sort: { createdAt: -1 } },
-      }
+      },
     );
 
     if (!foundIntegration) {
       throw new ApiException(
-        `Subscribers environment (${command.environmentId}) do not have active ${command.providerId} integration.`
+        `Subscribers environment (${command.environmentId}) do not have active ${command.providerId} integration.`,
       );
     }
     const updatePayload = this.createUpdatePayload(command);
@@ -66,7 +66,7 @@ export class UpdateSubscriberChannel {
     const existingChannel = foundSubscriber?.channels?.find(
       (subscriberChannel) =>
         subscriberChannel.providerId === command.providerId &&
-        subscriberChannel._integrationId === foundIntegration._id
+        subscriberChannel._integrationId === foundIntegration._id,
     );
 
     if (existingChannel) {
@@ -75,14 +75,14 @@ export class UpdateSubscriberChannel {
         existingChannel,
         updatePayload,
         foundSubscriber,
-        command.isIdempotentOperation
+        command.isIdempotentOperation,
       );
     } else {
       await this.addChannelToSubscriber(
         updatePayload,
         foundIntegration,
         command,
-        foundSubscriber
+        foundSubscriber,
       );
     }
 
@@ -94,12 +94,12 @@ export class UpdateSubscriberChannel {
         _organization: command.organizationId,
         oauthHandler: command.oauthHandler,
         _subscriberId: foundSubscriber._id,
-      }
+      },
     );
 
     return (await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
-      command.subscriberId
+      command.subscriberId,
     )) as SubscriberEntity;
   }
 
@@ -107,9 +107,11 @@ export class UpdateSubscriberChannel {
     updatePayload: Partial<IChannelSettings>,
     foundIntegration,
     command: UpdateSubscriberChannelCommand,
-    foundSubscriber
+    foundSubscriber,
   ) {
+    // eslint-disable-next-line no-param-reassign
     updatePayload._integrationId = foundIntegration._id;
+    // eslint-disable-next-line no-param-reassign
     updatePayload.providerId = command.providerId;
 
     await this.invalidateCache.invalidateByKey({
@@ -125,7 +127,7 @@ export class UpdateSubscriberChannel {
         $push: {
           channels: updatePayload,
         },
-      }
+      },
     );
   }
 
@@ -134,11 +136,11 @@ export class UpdateSubscriberChannel {
     existingChannel: IChannelSettings,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber: SubscriberEntity,
-    isIdempotentOperation: boolean
+    isIdempotentOperation: boolean,
   ) {
     const equal = isEqual(
       existingChannel.credentials,
-      updatePayload.credentials
+      updatePayload.credentials,
     );
 
     if (equal) {
@@ -151,12 +153,12 @@ export class UpdateSubscriberChannel {
       if (isIdempotentOperation) {
         deviceTokens = this.unionDeviceTokens(
           [],
-          updatePayload.credentials.deviceTokens
+          updatePayload.credentials.deviceTokens,
         );
       } else {
         deviceTokens = this.unionDeviceTokens(
           existingChannel.credentials.deviceTokens ?? [],
-          updatePayload.credentials.deviceTokens
+          updatePayload.credentials.deviceTokens,
         );
       }
     }
@@ -171,7 +173,7 @@ export class UpdateSubscriberChannel {
     const mappedChannel: IChannelSettings = this.mapChannel(
       updatePayload,
       existingChannel,
-      deviceTokens
+      deviceTokens,
     );
 
     await this.subscriberRepository.update(
@@ -180,14 +182,14 @@ export class UpdateSubscriberChannel {
         _id: foundSubscriber,
         'channels._integrationId': existingChannel._integrationId,
       },
-      { $set: { 'channels.$': mappedChannel } }
+      { $set: { 'channels.$': mappedChannel } },
     );
   }
 
   private mapChannel(
     updatePayload: Partial<IChannelSettings>,
     existingChannel: IChannelSettings,
-    deviceTokens: string[]
+    deviceTokens: string[],
   ): IChannelSettings {
     return {
       _integrationId:
@@ -203,7 +205,7 @@ export class UpdateSubscriberChannel {
 
   private unionDeviceTokens(
     existingDeviceTokens: string[],
-    updateDeviceTokens: string[]
+    updateDeviceTokens: string[],
   ): string[] {
     // in order to not have breaking change we will support [] update
     if (updateDeviceTokens?.length === 0) return [];

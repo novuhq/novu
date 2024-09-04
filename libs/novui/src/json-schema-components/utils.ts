@@ -66,7 +66,7 @@ export const extractErrorCodesFromHtmlContent = (htmlContent?: string): Set<stri
 
   const errorCodes = htmlContent
     .match(VARIABLE_HTML_ERROR_STATE_REGEX)
-    ?.map((str) => str.match(/\"(.*)\"/i)?.[0]?.replaceAll('"', ''))
+    ?.map((str) => str.match(/"(.*?)"/i)?.[0]?.replaceAll('"', ''))
     ?.filter((code) => checkIsValidVariableErrorCode(code));
 
   return errorCodes ? new Set(errorCodes) : undefined;

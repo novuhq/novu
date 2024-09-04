@@ -4,8 +4,8 @@ import '../../src/config';
 import { UserRepository, SubscriberRepository, MemberRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
 
-import { AppModule } from '../../src/app.module';
 import { normalizeEmail } from '@novu/shared';
+import { AppModule } from '../../src/app.module';
 
 export async function run() {
   console.log('Migration Normalize Users Email\n');
@@ -35,7 +35,7 @@ export async function run() {
         const sameEmailUser = await userRepository.findByEmail(normalizedEmail);
         if (sameEmailUser) {
           console.log(`--> Found the user ${sameEmailUser._id} with the same email "${sameEmailUser.email}"`);
-          sameEmailUsersCount++;
+          sameEmailUsersCount += 1;
           sameEmailUsersIds.push(sameEmailUser._id);
         }
 
@@ -50,7 +50,7 @@ export async function run() {
           }
         );
 
-        normalizedEmailsCount++;
+        normalizedEmailsCount += 1;
       }
     }
   }

@@ -37,7 +37,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
 
     const blueprintById = (await session.testAgent.get(`/v1/blueprints/${blueprint._id}`).send()).body.data;
 
-    //validate that fetched blueprint by id is the same as from the initial allBlueprints fetch
+    // validate that fetched blueprint by id is the same as from the initial allBlueprints fetch
     expect(blueprintById.isBlueprint).to.equal(true);
     expect(blueprint.name).to.equal(blueprintById.name);
     expect(blueprint.description).to.equal(blueprintById.description);
@@ -68,7 +68,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
 
     const test = await session.testAgent.get(`/v1/blueprints/${blueprint.triggers[0].identifier}`).send();
 
-    //validate that fetched blueprint by trigger identifier is the same as from the initial allBlueprints fetch
+    // validate that fetched blueprint by trigger identifier is the same as from the initial allBlueprints fetch
     expect(blueprintById.isBlueprint).to.equal(true);
     expect(blueprint.name).to.equal(blueprintById.name);
     expect(blueprint.description).to.equal(blueprintById.description);

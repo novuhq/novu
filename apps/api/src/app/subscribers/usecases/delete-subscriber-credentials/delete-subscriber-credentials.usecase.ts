@@ -43,7 +43,7 @@ export class DeleteSubscriberCredentials {
   ) {
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: environmentId,
       }),
     });

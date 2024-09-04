@@ -24,7 +24,7 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
       accountSid?: string;
       authToken?: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.twilioClient = new Twilio(config.accountSid, config.authToken);
@@ -32,14 +32,14 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const twilioResponse = await this.twilioClient.messages.create(
       this.transform<MessageListInstanceCreateOptions>(bridgeProviderData, {
         body: options.content,
         to: options.to,
         from: options.from || this.config.from,
-      }).body
+      }).body,
     );
 
     return {
@@ -58,9 +58,10 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.MessageSid === identifier);
     }
 
@@ -75,7 +76,7 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body.MessageSid,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -100,6 +101,8 @@ export class TwilioSmsProvider extends BaseProvider implements ISmsProvider {
         return SmsEventStatusEnum.DELIVERED;
       case 'undelivered':
         return SmsEventStatusEnum.UNDELIVERED;
+      default:
+        return undefined;
     }
   }
 }

@@ -1,8 +1,8 @@
 import { FC } from 'react';
-import { useAuth } from '../../../hooks/useAuth';
 import { css } from '@novu/novui/css';
 import { styled } from '@novu/novui/jsx';
 import { title } from '@novu/novui/recipes';
+import { useAuth } from '../../../hooks/useAuth';
 import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { UserProfileForm } from './UserProfileForm';
