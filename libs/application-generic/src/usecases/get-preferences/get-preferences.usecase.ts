@@ -53,7 +53,7 @@ export class GetPreferences {
 
     /*
      * Order is important here because we like the workflowPreferences (that comes from the bridge)
-     * to be ovrriden by any other preferences and then we have preferences defined in dashboard and
+     * to be overridden by any other preferences and then we have preferences defined in dashboard and
      * then subscribers global preferences and the once that should be used if it says other then anything before it
      * we use subscribers workflow preferences
      */
