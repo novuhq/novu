@@ -49,6 +49,10 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   useEffect(() => {
+    setAfter(undefined);
+    setHasMore(false);
+    fetchNotifications();
+
     on('notifications.list.updated', sync);
     on('notifications.list.pending', sync);
     on('notifications.list.resolved', sync);
@@ -78,12 +82,6 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     setIsLoading(false);
     setIsFetching(false);
   };
-
-  useEffect(() => {
-    setAfter(undefined);
-    setHasMore(false);
-    fetchNotifications();
-  }, [tags, read, archived]);
 
   const refetch = () => {
     resetState();
