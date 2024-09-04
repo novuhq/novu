@@ -1,7 +1,6 @@
 import React from 'react';
-import { Anchor, Button, Group, Stack, Tabs, Text, Title } from '@mantine/core';
-import { useOutletContext, useParams } from '@remix-run/react';
-import { loader } from '../workflows.$workflowId/route';
+import { Button, Group, Stack, Tabs, Text, Title } from '@mantine/core';
+import { useOutletContext } from '@remix-run/react';
 
 export default function WorkflowStepRoute() {
   const data = useOutletContext();
