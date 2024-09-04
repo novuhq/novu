@@ -7,13 +7,13 @@ import { api } from '@/app/hooks/api.hook';
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
   breadcrumb: (match) => {
+    const step = match.data.workflow.data.steps.find((step) => step.id === match.params.stepId);
+
     return [
       <Anchor href="/workflows">Workflows</Anchor>,
       <Anchor href={`/workflows/${match.data.workflow.data.id}`}>{match.data.workflow.data.name}</Anchor>,
       match.params.stepId ? (
-        <Anchor href={`/workflows/${match.data.workflow.data.id}/steps/${match.params.stepId}`}>
-          {match.params.stepId}
-        </Anchor>
+        <Anchor href={`/workflows/${match.data.workflow.data.id}/steps/${step.id}`}>{step.template.name}</Anchor>
       ) : null,
     ];
   },
