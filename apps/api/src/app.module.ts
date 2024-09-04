@@ -1,10 +1,12 @@
+/* eslint-disable global-require */
 import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
-import packageJson from '../package.json';
 import { ProfilingModule, TracingModule } from '@novu/application-generic';
+import { isClerkEnabled } from '@novu/shared';
+import packageJson from '../package.json';
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
 import { AuthModule } from './app/auth/auth.module';
@@ -39,7 +41,6 @@ import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
-import { isClerkEnabled } from '@novu/shared';
 import { BridgeModule } from './app/bridge/bridge.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {

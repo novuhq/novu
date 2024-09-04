@@ -22,13 +22,13 @@ export class ZulipProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     await this.axiosInstance.post(
       data.webhookUrl,
       this.transform(bridgeProviderData, {
         text: data.content,
-      }).body
+      }).body,
     );
 
     return {

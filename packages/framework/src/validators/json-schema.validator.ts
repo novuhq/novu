@@ -41,7 +41,7 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
   async validate<
     T_Schema extends JsonSchema = JsonSchema,
     T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
-    T_Validated = FromSchema<T_Schema>
+    T_Validated = FromSchema<T_Schema>,
   >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
     let validateFn = this.compiledSchemas.get(schema);
 

@@ -37,8 +37,7 @@ export function MembersTable({
   }
 
   function onCopyInviteLinkClick(currentMemberToken: any): void {
-    const inviteLink =
-      `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: currentMemberToken });
+    const inviteLink = `${window.location.origin.toString()}${parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: currentMemberToken })}`;
     clipboardInviteLink.copy(inviteLink);
   }
 
@@ -54,7 +53,7 @@ export function MembersTable({
 
       {members?.map((member, index: number) => {
         return (
-          <MemberRowWrapper key={member._id} data-test-id={'member-row-' + member._id}>
+          <MemberRowWrapper key={member._id} data-test-id={`member-row-${member._id}`}>
             <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
               {capitalize((member.user?.firstName || '')[0])} {capitalize((member.user?.lastName || '')[0])}
             </Avatar>

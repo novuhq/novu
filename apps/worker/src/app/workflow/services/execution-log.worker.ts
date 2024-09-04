@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-const nr = require('newrelic');
 import {
   getExecutionLogWorkerOptions,
   PinoLogger,
@@ -14,6 +13,9 @@ import {
   IExecutionLogJobDataDto,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+
+const nr = require('newrelic');
+
 const LOG_CONTEXT = 'ExecutionLogWorker';
 
 @Injectable()
@@ -32,8 +34,7 @@ export class ExecutionLogWorker extends ExecutionLogWorkerService {
 
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: IExecutionLogJobDataDto }) => {
-      return await new Promise(async (resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
+      return await new Promise((resolve, reject) => {
         const _this = this;
 
         Logger.verbose(`Job ${data.jobId} is being inserted into execution details collection`, LOG_CONTEXT);
@@ -41,7 +42,7 @@ export class ExecutionLogWorker extends ExecutionLogWorkerService {
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.EXECUTION_LOG_QUEUE,
           'Trigger Engine',
-          function () {
+          function processTask() {
             const transaction = nr.getTransaction();
 
             storage.run(new Store(PinoLogger.root), () => {

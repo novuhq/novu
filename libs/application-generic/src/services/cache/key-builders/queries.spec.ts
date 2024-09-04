@@ -29,7 +29,7 @@ describe('Key builder for queries', () => {
         buildFeedKey().invalidate({
           subscriberId,
           _environmentId: environmentId,
-        })
+        }),
       ).toEqual(expectedKey);
     });
   });
@@ -58,7 +58,7 @@ describe('Key builder for queries', () => {
         buildMessageCountKey().invalidate({
           subscriberId,
           _environmentId: environmentId,
-        })
+        }),
       ).toEqual(expectedKey);
     });
   });

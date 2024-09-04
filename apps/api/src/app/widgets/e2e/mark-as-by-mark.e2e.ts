@@ -185,7 +185,7 @@ async function getSubscriber(
 ): Promise<SubscriberEntity> {
   const subscriberRes = await subscriberRepository.findOne({
     _environmentId: session.environment._id,
-    subscriberId: subscriberId,
+    subscriberId,
   });
 
   if (!subscriberRes) {

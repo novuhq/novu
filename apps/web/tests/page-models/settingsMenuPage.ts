@@ -12,6 +12,7 @@ export class SettingsMenuPage {
   }
   async clickBrandLink() {
     await this.getBrandingLinkLocator().click();
+
     return new BrandPage(this.page);
   }
   public getBrandingLinkLocator() {

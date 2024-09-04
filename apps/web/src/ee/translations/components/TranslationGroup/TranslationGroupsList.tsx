@@ -121,7 +121,7 @@ export function TranslationGroupsList({
         data={data || []}
         onRowClick={onRowClick}
         pagination={{
-          pageSize: pageSize,
+          pageSize,
           current: page,
           total: totalCount,
           onPageChange: handlePageChange,

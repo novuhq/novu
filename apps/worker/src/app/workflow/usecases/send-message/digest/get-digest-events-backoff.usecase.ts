@@ -10,7 +10,7 @@ import { GetDigestEvents } from './get-digest-events.usecase';
 export class GetDigestEventsBackoff extends GetDigestEvents {
   @InstrumentUsecase()
   public async execute(command: DigestEventsCommand) {
-    const currentJob = command.currentJob;
+    const { currentJob } = command;
 
     const { digestKey, digestMeta, digestValue } = getJobDigest(currentJob);
 

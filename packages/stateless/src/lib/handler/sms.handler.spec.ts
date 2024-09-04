@@ -17,7 +17,7 @@ test('send sms should call the provider method correctly', async () => {
       channel: ChannelTypeEnum.SMS,
       template: `Name: {{firstName}}`,
     },
-    provider
+    provider,
   );
 
   await smsHandler.send({
@@ -33,7 +33,7 @@ test('send sms should call the provider method correctly', async () => {
       content: 'Name: test name',
       to: '+1333322214',
     },
-    {}
+    {},
   );
   spy.mockRestore();
 });
@@ -56,7 +56,7 @@ test('send sms should template method correctly', async () => {
       channel: ChannelTypeEnum.SMS,
       template: spyTemplateFunction,
     },
-    provider
+    provider,
   );
 
   await smsHandler.send({
@@ -90,7 +90,7 @@ test('send should handle attachments correctly', async () => {
       channel: ChannelTypeEnum.SMS as ChannelTypeEnum,
       template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
     },
-    provider
+    provider,
   );
 
   await smsHandler.send({

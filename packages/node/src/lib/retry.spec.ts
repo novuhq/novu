@@ -82,7 +82,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
 
     const idempotencyKeys: string[] = [];
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i += 1) {
       const result = await novu.trigger('fake-workflow', {
         to: { subscriberId: '123' },
         payload: {},
@@ -168,7 +168,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
       await expect(novu.topics.list({})).rejects.toMatchObject({
         response: { status },
       });
-    }
+    },
   );
 
   it('should retry on various errors until it reach successful response', async () => {
@@ -222,7 +222,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
       (status) => {
         const err = new HttpError(status);
         expect(defaultRetryCondition(err as AxiosError)).toEqual(false);
-      }
+      },
     );
 
     test.each<number>(RETRYABLE_HTTP_CODES)(
@@ -230,7 +230,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
       (status) => {
         const err = new HttpError(status);
         expect(defaultRetryCondition(err as AxiosError)).toEqual(true);
-      }
+      },
     );
 
     it('should return true when HTTP status is 500', () => {

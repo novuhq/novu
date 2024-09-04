@@ -7,7 +7,10 @@ import { ApiException } from '../../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class ChangeMemberRole {
-  constructor(private organizationRepository: OrganizationRepository, private memberRepository: MemberRepository) {}
+  constructor(
+    private organizationRepository: OrganizationRepository,
+    private memberRepository: MemberRepository
+  ) {}
 
   async execute(command: ChangeMemberRoleCommand) {
     if (![MemberRoleEnum.MEMBER, MemberRoleEnum.ADMIN].includes(command.role)) {

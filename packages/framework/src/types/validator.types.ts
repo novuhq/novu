@@ -24,7 +24,7 @@ export type ValidateResult<T> =
 export interface Validator<T_Schema extends Schema = Schema> {
   validate: <
     T_Unvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_Schema>,
-    T_Validated extends Record<string, unknown> = FromSchema<T_Schema>
+    T_Validated extends Record<string, unknown> = FromSchema<T_Schema>,
   >(
     data: T_Unvalidated,
     schema: T_Schema

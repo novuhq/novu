@@ -24,7 +24,7 @@ export class StorageHelperService {
         await this.storageService.uploadFile(
           attachment.storagePath,
           attachment.file,
-          attachment.mime
+          attachment.mime,
         );
       }
     });
@@ -39,7 +39,7 @@ export class StorageHelperService {
     for (const attachment of attachments) {
       try {
         attachment.file = await this.storageService.getFile(
-          attachment.storagePath
+          attachment.storagePath,
         );
       } catch (error: any) {
         if (

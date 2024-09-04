@@ -9,7 +9,6 @@ import {
   STEP_TYPE_TO_CHANNEL_TYPE,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import {
   AnalyticsService,
   ApiException,
@@ -23,6 +22,7 @@ import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
 } from '@novu/application-generic';
+import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
@@ -64,7 +64,7 @@ export class SubscriberJobBound {
       this.mapBridgeWorkflow(command) ??
       (await this.getNotificationTemplate({
         _id: templateId,
-        environmentId: environmentId,
+        environmentId,
       }));
 
     if (!template) {
@@ -222,6 +222,7 @@ export class SubscriberJobBound {
   ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
     const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
 
+    // eslint-disable-next-line no-unsafe-optional-chaining
     for (const step of template?.steps) {
       const type = step.template?.type;
       if (!type) continue;

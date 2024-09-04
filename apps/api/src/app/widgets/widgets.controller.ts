@@ -148,6 +148,7 @@ export class WidgetsController {
     const feedsQuery = this.toArray(feedId);
 
     if (seen === undefined) {
+      // eslint-disable-next-line no-param-reassign
       seen = false;
     }
 
@@ -174,6 +175,7 @@ export class WidgetsController {
     const feedsQuery = this.toArray(feedId);
 
     if (read === undefined) {
+      // eslint-disable-next-line no-param-reassign
       read = false;
     }
 
@@ -199,6 +201,7 @@ export class WidgetsController {
     const feedsQuery = this.toArray(query.feedIdentifier);
 
     if (query.seen === undefined && query.read === undefined) {
+      // eslint-disable-next-line no-param-reassign
       query.seen = false;
     }
 
@@ -209,7 +212,7 @@ export class WidgetsController {
       feedId: feedsQuery,
       seen: query.seen,
       read: query.read,
-      limit: limit,
+      limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);
@@ -280,7 +283,7 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      messageId: messageId,
+      messageId,
     });
 
     return await this.removeMessageUsecase.execute(command);
@@ -443,7 +446,7 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      templateId: templateId,
+      templateId,
       channel: body.channel,
       enabled: body.enabled,
     });
@@ -486,7 +489,7 @@ export class WidgetsController {
   }
 
   private toArray(param: string[] | string | undefined): string[] | undefined {
-    let paramArray: string[] | undefined = undefined;
+    let paramArray: string[] | undefined;
 
     if (param) {
       paramArray = Array.isArray(param) ? param : String(param).split(',');

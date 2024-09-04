@@ -1,4 +1,5 @@
 import { JSX } from 'solid-js';
+
 export const Novu = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="12" fill="none" viewBox="0 0 13 12" {...props}>

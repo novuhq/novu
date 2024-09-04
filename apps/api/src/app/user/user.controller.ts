@@ -1,12 +1,12 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Logger, Put, UseInterceptors } from '@nestjs/common';
 import { UserSessionData } from '@novu/shared';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
 import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
@@ -44,7 +44,7 @@ export class UsersController {
   @ExternalApiAccessible()
   async getMyProfile(@UserSession() user: UserSessionData): Promise<UserResponseDto> {
     Logger.verbose('Getting User');
-    Logger.debug('User id: ' + user._id);
+    Logger.debug(`User id: ${user._id}`);
     Logger.verbose('Creating GetMyProfileCommand');
 
     const command = GetMyProfileCommand.create({

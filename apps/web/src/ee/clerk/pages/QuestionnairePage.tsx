@@ -1,6 +1,6 @@
-import { useVercelIntegration, useFeatureFlag } from '../../../hooks';
 import { PageMeta } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useVercelIntegration, useFeatureFlag } from '../../../hooks';
 import AuthLayout from '../../../components/layout/components/AuthLayout';
 import SetupLoader from '../../../pages/auth/components/SetupLoader';
 import { HUBSPOT_PORTAL_ID } from '../../../config/index';

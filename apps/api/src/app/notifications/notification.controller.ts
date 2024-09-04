@@ -139,7 +139,7 @@ export class NotificationsController {
   ): Promise<ActivityNotificationResponseDto> {
     return this.getActivityUsecase.execute(
       GetActivityCommand.create({
-        notificationId: notificationId,
+        notificationId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,

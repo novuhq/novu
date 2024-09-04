@@ -2,10 +2,10 @@ import { cyan, green, red, bold } from 'picocolors';
 import path from 'path';
 import prompts from 'prompts';
 import type { InitialReturnValue } from 'prompts';
+import fs from 'fs';
 import { createApp } from './create-app';
 import { validateNpmName } from './helpers/validate-pkg';
 import { isFolderEmpty } from './helpers/is-folder-empty';
-import fs from 'fs';
 import { AnalyticService } from '../../services/analytics.service';
 
 const analytics = new AnalyticService();
@@ -34,14 +34,14 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   if (anonymousId) {
     analytics.track({
       identity: {
-        anonymousId: anonymousId,
+        anonymousId,
       },
       data: {},
       event: 'Run Novu Init Command',
     });
   }
 
-  let projectPath = program.projectPath;
+  let { projectPath } = program;
 
   if (typeof projectPath === 'string') {
     projectPath = projectPath.trim();
@@ -61,7 +61,7 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return 'Invalid project name: ' + (validation as any).problems[0];
+        return `Invalid project name: ${(validation as any).problems[0]}`;
       },
     });
 
@@ -96,10 +96,11 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   let userId: string;
   // if no secret key is supplied set to empty string
   if (!program.secretKey) {
+    // eslint-disable-next-line no-param-reassign
     program.secretKey = '';
   } else {
     try {
-      const response = await fetch(program.apiUrl + '/v1/users/me', {
+      const response = await fetch(`${program.apiUrl}/v1/users/me`, {
         headers: {
           Authorization: `ApiKey ${program.secretKey}`,
         },

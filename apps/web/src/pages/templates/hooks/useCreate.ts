@@ -1,8 +1,8 @@
-import { mapFormToCreateNotificationTemplate } from '../components/templateToFormMappers';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IForm } from '../components/formTypes';
 import { INotificationTrigger } from '@novu/shared';
+import { IForm } from '../components/formTypes';
+import { mapFormToCreateNotificationTemplate } from '../components/templateToFormMappers';
 import { useTemplateController } from '../components/useTemplateController';
 import { TemplateCreationSourceEnum } from '../shared';
 

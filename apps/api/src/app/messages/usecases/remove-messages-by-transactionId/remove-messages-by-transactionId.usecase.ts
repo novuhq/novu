@@ -5,7 +5,10 @@ import { RemoveMessagesByTransactionIdCommand } from './remove-messages-by-trans
 
 @Injectable()
 export class RemoveMessagesByTransactionId {
-  constructor(private messageRepository: MessageRepository, private invalidateCache: InvalidateCacheService) {}
+  constructor(
+    private messageRepository: MessageRepository,
+    private invalidateCache: InvalidateCacheService
+  ) {}
 
   async execute(command: RemoveMessagesByTransactionIdCommand) {
     const messages = await this.messageRepository.findMessagesByTransactionId({

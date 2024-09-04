@@ -24,7 +24,7 @@ export class OneSignalPushProvider
     private config: {
       appId: string;
       apiKey: string;
-    }
+    },
   ) {
     super();
     this.axiosInstance = axios.create({
@@ -34,7 +34,7 @@ export class OneSignalPushProvider
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
@@ -69,7 +69,7 @@ export class OneSignalPushProvider
     };
 
     const res = await this.axiosInstance.request<{ id: string }>(
-      notificationOptions
+      notificationOptions,
     );
 
     return {

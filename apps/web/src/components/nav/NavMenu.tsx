@@ -1,9 +1,9 @@
 import { IconArrowBack } from '@novu/design-system';
-import { LocalizedMessage } from '../../types/LocalizedMessage';
 import { FC, MouseEventHandler } from 'react';
 import { css, cx } from '@novu/novui/css';
 import { Flex, styled, VStack } from '@novu/novui/jsx';
 import { title as titleRecipe } from '@novu/novui/recipes';
+import { LocalizedMessage } from '../../types/LocalizedMessage';
 
 const iconButtonStyles = css({
   display: 'inline-flex',

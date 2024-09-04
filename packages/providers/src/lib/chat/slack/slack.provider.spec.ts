@@ -40,7 +40,7 @@ test('should trigger Slack correctly with _passthrough', async () => {
           text: 'chat message _passthrough',
         },
       },
-    }
+    },
   );
 
   expect(mockPost).toBeCalledWith('webhookUrl', {

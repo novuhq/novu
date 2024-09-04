@@ -28,9 +28,8 @@ import {
   CommunityOrganizationRepository,
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
-import { CreateWorkflowRequestDto } from '../dto';
-
 import axios from 'axios';
+import { CreateWorkflowRequestDto } from '../dto';
 
 describe('Create Workflow - /workflows (POST)', async () => {
   let session: UserSession;

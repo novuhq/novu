@@ -22,7 +22,7 @@ test('should trigger Twilio correctly', async () => {
     },
     {
       ApplicationSid: 'test',
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();
@@ -60,7 +60,7 @@ test('should trigger Twilio correctly with _passthrough', async () => {
           body: 'SMS Content _passthrough',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

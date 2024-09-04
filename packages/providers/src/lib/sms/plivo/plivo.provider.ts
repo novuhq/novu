@@ -23,7 +23,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
       accountSid?: string;
       authToken?: string;
       from?: string;
-    }
+    },
   ) {
     super();
     this.plivoClient = new PlivoClient(config.accountSid, config.authToken);
@@ -31,7 +31,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, {
       src: options.from || this.config.from,
@@ -43,7 +43,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
       transformedData.body.dst,
       transformedData.body.text as string,
       transformedData.body.optionalParams as object,
-      transformedData.body.powerpackUUID as string
+      transformedData.body.powerpackUUID as string,
     );
 
     return {
@@ -62,9 +62,10 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.messageUuid === identifier);
     }
 
@@ -79,7 +80,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body.messageUuid,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -102,6 +103,8 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
         return SmsEventStatusEnum.DELIVERED;
       case 'rejected':
         return SmsEventStatusEnum.REJECTED;
+      default:
+        return undefined;
     }
   }
 }

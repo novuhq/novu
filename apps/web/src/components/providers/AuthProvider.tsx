@@ -46,7 +46,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return <EnterpriseAuthProvider>{children}</EnterpriseAuthProvider>;
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   return <CommunityAuthProvider>{children}</CommunityAuthProvider>;
 };
 
@@ -55,7 +54,7 @@ export const useAuth = () => {
   const value = useContext(context);
 
   if (!value) {
-    throw new Error('useAuth must be used within ' + context.displayName);
+    throw new Error(`useAuth must be used within ${context.displayName}`);
   }
 
   return value;

@@ -2,12 +2,12 @@ import { FunctionComponent } from 'react';
 import { Group, Input, InputWrapperProps, Text } from '@mantine/core';
 import { useFormContext, Controller } from 'react-hook-form';
 
-import { useEnvironment } from '../../../../hooks';
 import { Checkbox, colors, Switch } from '@novu/design-system';
+import { ChannelTypeEnum } from '@novu/shared';
+import { useEnvironment } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 import { LabelWithTooltip } from '../../workflow/LabelWithTooltip';
 import { ChannelTitle } from '../ChannelTitle';
-import { ChannelTypeEnum } from '@novu/shared';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 
 export function TemplatePreference() {

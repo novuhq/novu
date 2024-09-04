@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 test('should be able to delete a step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await expect(workflowEditorPage.getAllNodes()).toHaveCount(4);
@@ -32,14 +32,14 @@ test('should be able to delete a step', async ({ page }) => {
   await expect(workflowEditorPage.getAllNodes().nth(1)).toContainText('Email');
 
   await workflowEditorPage.submitTemplateBtn().click();
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
   await expect(workflowEditorPage.getAllNodes()).toHaveCount(3);
 });
 
 test('should show add step in sidebar after delete', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await expect(workflowEditorPage.getAllNodes()).toHaveCount(4);
@@ -57,7 +57,7 @@ test('should show add step in sidebar after delete', async ({ page }) => {
 test('should show add step in sidebar after a delete of a step with side settings ', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.addChannelToWorkflow(ChannelType.DIGEST);
@@ -76,14 +76,14 @@ test('should show add step in sidebar after a delete of a step with side setting
 test('should keep steps order on reload', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   const smsModalPage = await workflowEditorPage.addAndEditInSmsNode();
   await smsModalPage.fillSmsBody('new content for sms');
   await smsModalPage.nodeSettingsUpdateButton().click();
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   await expect(workflowEditorPage.getAllNodes()).toHaveCount(5);
   await expect(workflowEditorPage.getAllNodes().nth(0)).toContainText('Workflow trigger');
@@ -95,7 +95,7 @@ test('should keep steps order on reload', async ({ page }) => {
 test('should be able to disable step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -114,7 +114,7 @@ test('should be able to disable step', async ({ page }) => {
 test('should be able to toggle ShouldStopOnFailSwitch', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -133,7 +133,7 @@ test('should be able to toggle ShouldStopOnFailSwitch', async ({ page }) => {
 test('should be able to add filters to a digest step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   const digestModalPage = await workflowEditorPage.addAndEditDigestNode();
@@ -142,7 +142,7 @@ test('should be able to add filters to a digest step', async ({ page }) => {
 
   await expect(digestModalPage.getEditorSidebarEditConditionsButton()).toHaveText('1');
   await digestModalPage.nodeSettingsUpdateButton().click();
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
   await workflowEditorPage.clickWorkflowNode(ChannelType.DIGEST);
   await expect(digestModalPage.getEditorSidebarEditConditionsButton()).toContainText('1');
 });
@@ -150,7 +150,7 @@ test('should be able to add filters to a digest step', async ({ page }) => {
 test('should be able to add filters to a delay step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   const delayModalPage = await workflowEditorPage.addAndEditDelayNode();
@@ -159,7 +159,7 @@ test('should be able to add filters to a delay step', async ({ page }) => {
 
   await expect(delayModalPage.getEditorSidebarEditConditionsButton()).toHaveText('1');
   await delayModalPage.nodeSettingsUpdateButton().click();
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
   await workflowEditorPage.clickWorkflowNode(ChannelType.DELAY);
   await expect(delayModalPage.getEditorSidebarEditConditionsButton()).toContainText('1');
 });
@@ -167,7 +167,7 @@ test('should be able to add filters to a delay step', async ({ page }) => {
 test('should be able to add filters to a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -182,7 +182,7 @@ test('should be able to add filters to a particular step', async ({ page }) => {
 test('should be able to add read/seen filters to a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.EMAIL);
@@ -197,7 +197,7 @@ test('should be able to add read/seen filters to a particular step', async ({ pa
 test('should be able to not add read/seen filters to first step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -212,7 +212,7 @@ test('should be able to not add read/seen filters to first step', async ({ page 
 test('should be able to remove filters for a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -232,7 +232,7 @@ test('should be able to remove filters for a particular step', async ({ page }) 
 test('should be able to add webhook filter for a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -246,7 +246,7 @@ test('should be able to add webhook filter for a particular step', async ({ page
 test('should be able to add online right now filter for a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -260,7 +260,7 @@ test('should be able to add online right now filter for a particular step', asyn
 test('should be able to add online in the last X time period filter for a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);
@@ -274,7 +274,7 @@ test('should be able to add online in the last X time period filter for a partic
 test('should be able to add multiple filters to a particular step', async ({ page }) => {
   const template = session.templates[0];
 
-  await page.goto('/workflows/edit/' + template._id);
+  await page.goto(`/workflows/edit/${template._id}`);
 
   const workflowEditorPage = new WorkflowEditorPage(page);
   await workflowEditorPage.clickWorkflowNode(ChannelType.IN_APP);

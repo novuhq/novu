@@ -1,3 +1,4 @@
+import { StepTypeEnum } from '@novu/shared';
 import { ROUTES } from '../../../../constants/routes';
 import { GetStartedAnimation } from '../components/GetStartedAnimation';
 
@@ -7,7 +8,6 @@ import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { DigestPlaygroundView } from './DigestUsecasePlaygroundView.const';
 import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
-import { StepTypeEnum } from '@novu/shared';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
@@ -20,7 +20,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
   steps: [
     {
       title: 'Configure providers',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>
@@ -42,7 +42,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
 
     {
       title: 'Build a workflow',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Novu pre-built workflow with a digest node. </StepText>
@@ -54,7 +54,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Set-up a digest preferences',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Novu pre-defined preferences for the digest node. </StepText>
@@ -71,7 +71,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Connect trigger and run test',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <OpenWorkflowButton
@@ -91,7 +91,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     },
     {
       title: 'Track activity feed',
-      Description: function () {
+      Description() {
         return (
           <StepDescription>
             <StepText>Discover</StepText>

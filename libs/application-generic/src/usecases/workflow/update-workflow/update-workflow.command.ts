@@ -15,9 +15,9 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 
+import { JsonSchema } from '@novu/framework';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { NotificationStep } from '../..';
-import { JsonSchema } from '@novu/framework';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()

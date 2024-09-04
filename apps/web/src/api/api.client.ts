@@ -19,7 +19,6 @@ export const api = {
         return response.data?.data;
       })
       .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -31,7 +30,6 @@ export const api = {
       })
       .then((response) => response.data)
       .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -42,7 +40,6 @@ export const api = {
       })
       .then((response) => response.data?.data)
       .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -51,7 +48,6 @@ export const api = {
       .post(`${API_ROOT}${url}`, payload, { params, headers: getHeaders() })
       .then((response) => response.data?.data)
       .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -62,7 +58,6 @@ export const api = {
       })
       .then((response) => response.data?.data)
       .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -74,7 +69,6 @@ export const api = {
       })
       .then((response) => response.data?.data)
       .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
@@ -125,6 +119,7 @@ export function buildApiHttpClient({
   });
 
   const get = async (url, params?: Record<string, string | string[] | number>) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       const response = await httpClient.get(url, { params });
 
@@ -136,6 +131,7 @@ export function buildApiHttpClient({
   };
 
   const post = async (url, data = {}) => {
+    // eslint-disable-next-line no-useless-catch
     try {
       const response = await httpClient.post(url, data);
 

@@ -1,6 +1,6 @@
 import { EdgeProps, getBezierEdgeCenter, getBezierPath } from 'react-flow-renderer';
-import AddNode from '../node-types/AddNode';
 import styled from '@emotion/styled';
+import AddNode from '../node-types/AddNode';
 
 const foreignObjectSize = 30;
 
@@ -53,11 +53,11 @@ export function AddNodeEdge({
         <div>
           <AddNode
             data={{
-              parentId: parentId,
-              addNewNode: addNewNode,
+              parentId,
+              addNewNode,
               showDropZone: false,
-              childId: childId,
-              readonly: readonly,
+              childId,
+              readonly,
             }}
           />
         </div>

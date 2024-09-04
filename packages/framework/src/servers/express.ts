@@ -34,6 +34,10 @@ export const serve = (options: ServeHandlerOptions): any => {
   const novuHandler = new NovuRequestHandler({
     frameworkName,
     ...options,
+    /*
+     * TODO: Fix this
+     */
+    // @ts-expect-error - Request type is not correct
     handler: (incomingRequest: Either<VercelRequest, Request>, response: Either<Response, VercelResponse>) => ({
       body: () => incomingRequest.body,
       headers: (key) => {

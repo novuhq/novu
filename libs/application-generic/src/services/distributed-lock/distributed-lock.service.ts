@@ -22,7 +22,7 @@ export class DistributedLockService {
   public shuttingDown = false;
 
   constructor(
-    private cacheInMemoryProviderService: CacheInMemoryProviderService
+    private cacheInMemoryProviderService: CacheInMemoryProviderService,
   ) {}
 
   async initialize(): Promise<void> {
@@ -37,7 +37,7 @@ export class DistributedLockService {
       retryCount: 50,
       retryDelay: 100,
       retryJitter: 200,
-    }
+    },
   ): void {
     if (this.distributedLock) {
       return;
@@ -66,7 +66,7 @@ export class DistributedLockService {
         Logger.error(
           error,
           'There has been an error in the Distributed Lock service',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       });
     }
@@ -100,7 +100,7 @@ export class DistributedLockService {
         } catch (error: any) {
           Logger.verbose(
             `Error quitting redlock: ${error.message}`,
-            LOG_CONTEXT
+            LOG_CONTEXT,
           );
         } finally {
           this.shuttingDown = false;
@@ -136,7 +136,7 @@ export class DistributedLockService {
   public buildResourceWithPrefix(resource: string): string {
     const resourceParts = resource.split(':');
     const environmentResourceIndex = resourceParts.findIndex(
-      (el) => el === 'environment'
+      (el) => el === 'environment',
     );
 
     if (environmentResourceIndex === -1) {
@@ -150,7 +150,7 @@ export class DistributedLockService {
 
   public async applyLock<T>(
     { resource, ttl }: ILockOptions,
-    handler: () => Promise<T>
+    handler: () => Promise<T>,
   ): Promise<T> {
     if (!this.isDistributedLockEnabled()) {
       return await handler();
@@ -168,7 +168,7 @@ export class DistributedLockService {
     try {
       Logger.debug(
         `Lock ${resourceWithPrefix} for ${handler.name}`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
 
       const result = await handler();
@@ -178,7 +178,7 @@ export class DistributedLockService {
       await releaseLock();
       Logger.debug(
         `Lock ${resourceWithPrefix} released for ${handler.name}`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
   }
@@ -186,13 +186,13 @@ export class DistributedLockService {
   public async lock(
     resource: string,
     ttl: number,
-    settings: { retryCount: number } = this.distributedLock.settings
+    settings: { retryCount: number } = this.distributedLock.settings,
   ): Promise<() => Promise<void>> {
     try {
       const acquiredLock = await this.distributedLock.acquire(
         [resource],
         ttl,
-        settings
+        settings,
       );
       Logger.verbose(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
 
@@ -200,7 +200,7 @@ export class DistributedLockService {
     } catch (error: any) {
       Logger.verbose(
         `Lock ${resource} threw an error: ${error.message}`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
       throw error;
     }
@@ -213,13 +213,13 @@ export class DistributedLockService {
       try {
         Logger.debug(
           `Lock ${resource} counter at ${this.lockCounter[resource]}`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
         await lock.release();
       } catch (error: any) {
         Logger.error(
           `Releasing lock ${resource} threw an error: ${error.message}`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } finally {
         this.decreaseLockCounter(resource);
@@ -229,7 +229,7 @@ export class DistributedLockService {
 
   private increaseLockCounter(resource: string): void {
     if (this.lockCounter[resource]) {
-      this.lockCounter[resource]++;
+      this.lockCounter[resource] += 1;
 
       return;
     }
@@ -237,6 +237,6 @@ export class DistributedLockService {
   }
 
   private decreaseLockCounter(resource: string): void {
-    this.lockCounter[resource]--;
+    this.lockCounter[resource] -= 1;
   }
 }

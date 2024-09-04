@@ -34,10 +34,10 @@ export type FromSchemaUnvalidated<T extends Schema> =
   T extends JSONSchema
     ? JsonSchemaInfer<T, { keepDefaultedPropertiesOptional: true }>
     : // ZodSchema
-    T extends zod.ZodSchema
-    ? zod.input<T>
-    : // All schema types exhausted.
-      never;
+      T extends zod.ZodSchema
+      ? zod.input<T>
+      : // All schema types exhausted.
+        never;
 
 /**
  * Infer the type of a Schema for validated data.
@@ -61,7 +61,7 @@ export type FromSchema<T extends Schema> =
   T extends JSONSchema
     ? JsonSchemaInfer<T>
     : // ZodSchema
-    T extends zod.ZodSchema
-    ? zod.infer<T>
-    : // All schema types exhausted.
-      never;
+      T extends zod.ZodSchema
+      ? zod.infer<T>
+      : // All schema types exhausted.
+        never;

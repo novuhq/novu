@@ -1,10 +1,11 @@
+/* eslint-disable global-require */
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
+import { ModuleRef } from '@nestjs/core';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class PromoteTranslationChange {

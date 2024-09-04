@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
 import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ApiServiceLevelEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
 import { UpgradeModal } from './UpgradeModal';
 import { includedEventQuotaFromApiServiceLevel } from '../utils/plan.constants';
@@ -144,7 +144,7 @@ export const PlanHeader = () => {
                   <b style={{ fontSize: 14 }}>$250</b> month package / billed monthly
                 </When>
                 <When truthy={billingInterval === 'year'}>
-                  <b style={{ fontSize: 14 }}>{`\$${(2700).toLocaleString()}`}</b> year package / billed annually
+                  <b style={{ fontSize: 14 }}>{`$${(2700).toLocaleString()}`}</b> year package / billed annually
                 </When>
               </Text>
               <Text size={12} color={isDark ? colors.B80 : colors.B40}>

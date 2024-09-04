@@ -19,11 +19,11 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 
+import { JSONSchema } from 'json-schema-to-ts';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
-import { JSONSchema } from 'json-schema-to-ts';
 
 export class NotificationTemplateEntity implements INotificationTemplate {
   _id: string;

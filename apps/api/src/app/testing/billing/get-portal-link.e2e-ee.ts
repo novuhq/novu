@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
 

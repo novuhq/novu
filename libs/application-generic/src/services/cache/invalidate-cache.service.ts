@@ -22,7 +22,7 @@ export class InvalidateCacheService {
       Logger.error(
         err,
         `An error has occurred when deleting "key: ${key}",`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
   }
@@ -40,22 +40,22 @@ export class InvalidateCacheService {
       Logger.error(
         err,
         `An error has occurred when deleting by query "key: ${key}",`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
   }
 
   private async clearByPattern(
     storeKeyPrefix: CacheKeyPrefixEnum,
-    credentials: Record<string, unknown>
+    credentials: Record<string, unknown>,
   ): Promise<unknown | undefined> {
-    Logger.verbose('Removing keys with prefix: ' + storeKeyPrefix);
-    Logger.debug('storeKeyPrefix is: ' + storeKeyPrefix);
+    Logger.verbose(`Removing keys with prefix: ${storeKeyPrefix}`);
+    Logger.debug(`storeKeyPrefix is: ${storeKeyPrefix}`);
 
     const cacheKey = buildKey(
       storeKeyPrefix,
       credentials,
-      CacheInterceptorTypeEnum.INVALIDATE
+      CacheInterceptorTypeEnum.INVALIDATE,
     );
 
     if (!cacheKey) {
@@ -74,7 +74,7 @@ export class InvalidateCacheService {
       Logger.error(
         err,
         `An error has occurred when clearing by pattern "key: ${cacheKey}",`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
   }

@@ -164,14 +164,14 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
 
     await invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: session.environment._id,
       }),
     });
 
     await invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
-        subscriberId: subscriberId,
+        subscriberId,
         _environmentId: session.environment._id,
       }),
     });

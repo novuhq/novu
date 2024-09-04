@@ -70,7 +70,7 @@ export class AddJob {
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
     Logger.verbose('Getting Job', LOG_CONTEXT);
-    const job = command.job;
+    const { job } = command;
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
 
     if (!job) {
@@ -100,10 +100,10 @@ export class AddJob {
   }
 
   private async executeDeferredJob(command: AddJobCommand): Promise<void> {
-    const job = command.job;
+    const { job } = command;
 
     let digestAmount: number | undefined;
-    let delayAmount: number | undefined = undefined;
+    let delayAmount: number | undefined;
 
     const variables = await this.normalizeVariablesUsecase.execute(
       NormalizeVariablesCommand.create({
@@ -112,7 +112,7 @@ export class AddJob {
         organizationId: command.organizationId,
         userId: command.userId,
         step: job.step,
-        job: job,
+        job,
       })
     );
 
@@ -161,7 +161,7 @@ export class AddJob {
   }
 
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<void> {
-    const job = command.job;
+    const { job } = command;
 
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
@@ -321,12 +321,14 @@ export class AddJob {
     }
 
     // Update the job digest directly to avoid an extra database call
+    // eslint-disable-next-line no-param-reassign
     command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
 
     const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse);
 
     validateDigest(job);
 
+    // eslint-disable-next-line no-param-reassign
     digestAmount =
       bridgeAmount ??
       this.computeJobWaitDurationService.calculateDelay({
@@ -372,8 +374,6 @@ export class AddJob {
 
   private handleDigestMerged() {
     Logger.log('Digest was merged, queueing next job', LOG_CONTEXT);
-
-    return;
   }
 
   private async handleDigestSkip(command: AddJobCommand, job) {
@@ -393,8 +393,6 @@ export class AddJob {
       jobId: nextJobToSchedule._id,
       job: nextJobToSchedule,
     });
-
-    return;
   }
 
   private getExecutionDelayAmount(
@@ -402,7 +400,7 @@ export class AddJob {
     digestAmount: number | undefined,
     delayAmount: undefined | number
   ) {
-    return (filtered ? 0 : digestAmount ?? delayAmount) ?? 0;
+    return (filtered ? 0 : (digestAmount ?? delayAmount)) ?? 0;
   }
 
   public async queueJob(job: JobEntity, delay: number) {
@@ -431,16 +429,17 @@ export class AddJob {
       name: job._id,
       data: jobData,
       groupId: job._organizationId,
-      options: options,
+      options,
     });
 
     if (delay) {
       const logMessage =
+        // eslint-disable-next-line no-nested-ternary
         job.type === StepTypeEnum.DELAY
           ? 'Delay is active, Creating execution details'
           : job.type === StepTypeEnum.DIGEST
-          ? 'Digest is active, Creating execution details'
-          : 'Unexpected job type, Creating execution details';
+            ? 'Digest is active, Creating execution details'
+            : 'Unexpected job type, Creating execution details';
 
       Logger.verbose(logMessage, LOG_CONTEXT);
 

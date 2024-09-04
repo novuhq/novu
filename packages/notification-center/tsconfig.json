@@ -18,5 +18,5 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "."
   },
-  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
+  "exclude": ["node_modules", "**/node_modules/*"]
 }

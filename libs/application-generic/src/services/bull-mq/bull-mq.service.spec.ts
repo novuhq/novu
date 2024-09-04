@@ -69,7 +69,7 @@ describe('BullMQ Service', () => {
       bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
       const queue = bullMqService.createQueue(
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-        {}
+        {},
       );
       expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
@@ -81,7 +81,7 @@ describe('BullMQ Service', () => {
       bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
       const queue = bullMqService.createQueue(
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-        {}
+        {},
       );
       expect(queue.opts.prefix).toEqual('bull');
     });
@@ -93,7 +93,7 @@ describe('BullMQ Service', () => {
       bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
       const queue = bullMqService.createQueue(
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-        {}
+        {},
       );
       expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });

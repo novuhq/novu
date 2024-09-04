@@ -64,7 +64,7 @@ test('should trigger Kannel SMS axios request correctly with _passthrough', asyn
           from: '1000',
         },
       },
-    }
+    },
   );
 
   expect(fakeGet).toHaveBeenCalled();

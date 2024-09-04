@@ -43,7 +43,7 @@ contexts.forEach((context: Context) => {
 
     beforeEach(async () => {
       bridgeServer = new BridgeServer();
-      bridge = context.isStateful ? undefined : { url: bridgeServer.serverPath + '/novu' };
+      bridge = context.isStateful ? undefined : { url: `${bridgeServer.serverPath}/novu` };
       session = new UserSession();
       await session.initialize();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
@@ -55,7 +55,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
-      const workflowId = `hello-world-${context.name + '-' + uuidv4()}`;
+      const workflowId = `hello-world-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -63,8 +63,8 @@ contexts.forEach((context: Context) => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'This is an email subject ' + controls.name,
-                body: 'Body result ' + payload.name,
+                subject: `This is an email subject ${controls.name}`,
+                body: `Body result ${payload.name}`,
               };
             },
             {
@@ -81,7 +81,7 @@ contexts.forEach((context: Context) => {
             'send-in-app',
             async (controls) => {
               return {
-                body: 'in-app result ' + payload.name,
+                body: `in-app result ${payload.name}`,
               };
             },
             {
@@ -98,7 +98,7 @@ contexts.forEach((context: Context) => {
             'send-sms',
             async (controls) => {
               return {
-                body: 'sms result ' + payload.name,
+                body: `sms result ${payload.name}`,
               };
             },
             {
@@ -155,7 +155,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should skip by static value [${context.name}]`, async () => {
-      const workflowIdSkipByStatic = `skip-by-static-value-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowIdSkipByStatic = `skip-by-static-value-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowIdSkipByStatic,
         async ({ step, payload }) => {
@@ -163,8 +163,8 @@ contexts.forEach((context: Context) => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'This is an email subject ' + controls.name,
-                body: 'Body result ' + payload.name,
+                subject: `This is an email subject ${controls.name}`,
+                body: `Body result ${payload.name}`,
               };
             },
             {
@@ -218,7 +218,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should skip by variable default value [${context.name}]`, async () => {
-      const workflowIdSkipByVariable = `skip-by-variable-default-value-${context.name + '-' + uuidv4()}`;
+      const workflowIdSkipByVariable = `skip-by-variable-default-value-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowIdSkipByVariable,
         async ({ step, payload }) => {
@@ -226,8 +226,8 @@ contexts.forEach((context: Context) => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'This is an email subject ' + controls.name,
-                body: 'Body result ' + payload.name,
+                subject: `This is an email subject ${controls.name}`,
+                body: `Body result ${payload.name}`,
               };
             },
             {
@@ -282,7 +282,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should have execution detail errors for invalid trigger payload [${context.name}]`, async () => {
-      const workflowId = `missing-payload-name-${context.name + '-' + uuidv4()}`;
+      const workflowId = `missing-payload-name-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -348,7 +348,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should use custom step [${context.name}]`, async () => {
-      const workflowId = `with-custom-step-${context.name + '-' + uuidv4()}`;
+      const workflowId = `with-custom-step-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(workflowId, async ({ step }) => {
         const resInApp = await step.inApp('send-in-app', async () => {
           return {
@@ -414,7 +414,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with digest [${context.name}]`, async () => {
-      const workflowId = `digest-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowId = `digest-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step }) => {
@@ -486,7 +486,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with delay [${context.name}]`, async () => {
-      const workflowId = `delay-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowId = `delay-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step }) => {
@@ -520,7 +520,7 @@ contexts.forEach((context: Context) => {
           await step.sms(
             'send-sms',
             async () => {
-              const duration = delayResponse.duration;
+              const { duration } = delayResponse;
 
               return {
                 body: `people waited for ${duration} seconds`,
@@ -567,7 +567,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with control default and payload data [${context.name}]`, async () => {
-      const workflowId = `default-payload-params-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowId = `default-payload-params-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -575,7 +575,7 @@ contexts.forEach((context: Context) => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'prefix ' + controls.name,
+                subject: `prefix ${controls.name}`,
                 body: 'Body result',
               };
             },
@@ -623,7 +623,7 @@ contexts.forEach((context: Context) => {
       expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
     });
     it(`should trigger the bridge workflow with control default and payload data [${context.name}] - with backwards compatability for payload variable`, async () => {
-      const workflowId = `default-payload-params-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowId = `default-payload-params-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -631,7 +631,7 @@ contexts.forEach((context: Context) => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'prefix ' + controls.name,
+                subject: `prefix ${controls.name}`,
                 body: 'Body result',
               };
             },
@@ -680,7 +680,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should trigger the bridge workflow with control variables [${context.name}]`, async () => {
-      const workflowId = `control-variables-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowId = `control-variables-workflow-${`${context.name}-${uuidv4()}`}`;
       const stepId = 'send-email';
       const newWorkflow = workflow(
         workflowId,
@@ -689,7 +689,7 @@ contexts.forEach((context: Context) => {
             stepId,
             async (controls) => {
               return {
-                subject: 'email subject ' + controls.name,
+                subject: `email subject ${controls.name}`,
                 body: 'Body result',
               };
             },
@@ -738,7 +738,7 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should store 2 in-app messages for a single notification event [${context.name}]`, async () => {
-      const workflowId = `double-in-app-workflow-${context.name + '-' + uuidv4()}`;
+      const workflowId = `double-in-app-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(workflowId, async ({ step }) => {
         await step.inApp('send-in-app1', () => ({ body: 'Hello there 1' }));
         await step.inApp('send-in-app2', () => ({ body: 'Hello there 2' }));
@@ -775,7 +775,7 @@ async function syncWorkflow(
   bridgeServer: BridgeServer
 ) {
   await session.testAgent.post(`/v1/bridge/sync`).send({
-    bridgeUrl: bridgeServer.serverPath + '/novu',
+    bridgeUrl: `${bridgeServer.serverPath}/novu`,
   });
 
   const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowIdentifier);
@@ -823,7 +823,7 @@ async function discoverAndSyncBridge(
   bridgeServer?: BridgeServer
 ) {
   const discoverResponse = await session.testAgent.post(`/v1/bridge/sync`).send({
-    bridgeUrl: bridgeServer?.serverPath + '/novu',
+    bridgeUrl: `${bridgeServer?.serverPath}/novu`,
   });
 
   if (!workflowsRepository || !workflowIdentifier) {

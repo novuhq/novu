@@ -1,9 +1,4 @@
-import {
-  type APIGatewayEvent,
-  type APIGatewayProxyEventV2,
-  type APIGatewayProxyResult,
-  type Context,
-} from 'aws-lambda';
+import { type APIGatewayEvent, type APIGatewayProxyEventV2, type APIGatewayProxyResult } from 'aws-lambda';
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName, type Either } from '../types';
 
@@ -26,7 +21,7 @@ export const serve = (options: ServeHandlerOptions) => {
   const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
-    handler: (event: Either<APIGatewayEvent, APIGatewayProxyEventV2>, _context: Context) => {
+    handler: (event: Either<APIGatewayEvent, APIGatewayProxyEventV2>) => {
       const eventIsV2 = ((ev: APIGatewayEvent | APIGatewayProxyEventV2): ev is APIGatewayProxyEventV2 => {
         return (ev as APIGatewayProxyEventV2).version === '2.0';
       })(event);
@@ -47,10 +42,12 @@ export const serve = (options: ServeHandlerOptions) => {
           return url;
         },
         body: () => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return JSON.parse(
-            event.body ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body) : '{}'
-          );
+          let bodyContent = '{}';
+          if (event.body) {
+            bodyContent = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body;
+          }
+
+          return JSON.parse(bodyContent);
         },
         headers: (key) => event.headers[key],
         queryString: (key) => {

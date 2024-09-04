@@ -22,7 +22,7 @@ describe('Encrypt Old Credentials', function () {
       active: false,
     };
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 2; i += 1) {
       await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,

@@ -60,7 +60,7 @@ test('should trigger Telnyx correctly with _passthrough', async () => {
           from: 'TelynxTest1',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

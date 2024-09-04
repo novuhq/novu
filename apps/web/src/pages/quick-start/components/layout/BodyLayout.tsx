@@ -34,7 +34,7 @@ function BodyNavigation() {
   const navigate = useNavigate();
   const segment = useSegment();
 
-  const stepNum = location.pathname === ROUTES.GET_STARTED ? 1 : 2;
+  const stepNum = window.location.pathname === ROUTES.GET_STARTED ? 1 : 2;
 
   function handleClick(step: 'first' | 'second') {
     const eventAction =
@@ -54,7 +54,7 @@ function BodyNavigation() {
         styles={{
           itemBullet: {
             marginTop: `${BULLET_TOP_MARGIN}px`,
-            ['&[data-active][data-with-child]']: {
+            '&[data-active][data-with-child]': {
               color: 'inherit',
             },
           },
@@ -107,7 +107,9 @@ const TimelineText = styled.div<{ active: boolean }>`
   font-weight: 700;
   line-height: 1.4;
   padding: 12px;
-  transition: margin-left 0.3s ease, padding 0.3s ease;
+  transition:
+    margin-left 0.3s ease,
+    padding 0.3s ease;
   border-radius: 8px;
   cursor: pointer;
 

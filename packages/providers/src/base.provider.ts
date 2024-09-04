@@ -57,10 +57,10 @@ export abstract class BaseProvider {
   protected transform<
     T_Output = Record<string, unknown>,
     T_Input = Record<string, unknown>,
-    T_Data = Record<string, unknown>
+    T_Data = Record<string, unknown>,
   >(
     bridgeProviderData: WithPassthrough<T_Input>,
-    triggerProviderData: T_Data
+    triggerProviderData: T_Data,
   ): MergedPassthrough<T_Output> {
     const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
 
@@ -115,7 +115,7 @@ export abstract class BaseProvider {
    * @returns The transformed data, with the keys transformed to the desired casing.
    */
   private casingTransform(
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ): Record<string, unknown> {
     let casing = camelCase;
 

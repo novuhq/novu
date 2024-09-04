@@ -8,13 +8,13 @@ export class GetSystemCriticalFlag {
   protected log<T>(key: SystemCriticalFlagsEnum, value: T): void {
     Logger.log(
       `System critical flag ${key} is set with value ${JSON.stringify(value)}`,
-      LOG_CONTEXT
+      LOG_CONTEXT,
     );
   }
 
   protected prepareBooleanStringSystemCriticalFlag(
     value: string | undefined,
-    defaultValue: boolean
+    defaultValue: boolean,
   ): boolean {
     if (!value) {
       return defaultValue;

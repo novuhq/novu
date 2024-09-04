@@ -1,8 +1,8 @@
 import { Injectable, ExecutionContext, Inject } from '@nestjs/common';
 import { IAuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { Observable } from 'rxjs';
-import { Instrument } from '../../instrumentation';
 import { UserSessionData } from '@novu/shared';
+import { Instrument } from '../../instrumentation';
 
 @Injectable()
 export class UserAuthGuard {
@@ -10,7 +10,7 @@ export class UserAuthGuard {
 
   @Instrument()
   canActivate(
-    context: ExecutionContext
+    context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     return this.authGuard.canActivate(context);
   }
@@ -24,7 +24,7 @@ export class UserAuthGuard {
     user: UserSessionData | false,
     info: any,
     context: ExecutionContext,
-    status?: any
+    status?: any,
   ): TUser {
     return this.authGuard.handleRequest(err, user, info, context, status);
   }

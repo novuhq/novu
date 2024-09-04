@@ -11,7 +11,7 @@ export class ZodValidator implements Validator<ZodSchema> {
   async validate<
     T_Schema extends ZodSchema = ZodSchema,
     T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
-    T_Validated = FromSchema<T_Schema>
+    T_Validated = FromSchema<T_Schema>,
   >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
     const result = schema.safeParse(data);
     if (result.success) {

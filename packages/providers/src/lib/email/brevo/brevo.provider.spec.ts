@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
-import { BrevoEmailProvider } from './brevo.provider';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { BrevoEmailProvider } from './brevo.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 
 const mockConfig = {
@@ -160,7 +160,7 @@ describe('parseEventBody', () => {
     const provider = new BrevoEmailProvider(mockConfig);
     const messageId = provider.parseEventBody(
       { event: 'not-real-event' },
-      'test'
+      'test',
     );
     expect(messageId).toBeUndefined();
   });

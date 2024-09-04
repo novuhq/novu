@@ -9,7 +9,7 @@ const jsonSchemaValidator = new JsonSchemaValidator();
 export const validateData = async <
   T_Schema extends Schema = Schema,
   T_Unvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_Schema>,
-  T_Validated extends Record<string, unknown> = FromSchema<T_Schema>
+  T_Validated extends Record<string, unknown> = FromSchema<T_Schema>,
 >(
   schema: T_Schema,
   data: T_Unvalidated

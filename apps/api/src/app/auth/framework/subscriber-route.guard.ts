@@ -6,7 +6,10 @@ import { PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class SubscriberRouteGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector, private readonly logger: PinoLogger) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly logger: PinoLogger
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const subscriberRouteGuard = this.reflector.get<string[]>('subscriberRouteGuard', context.getHandler());

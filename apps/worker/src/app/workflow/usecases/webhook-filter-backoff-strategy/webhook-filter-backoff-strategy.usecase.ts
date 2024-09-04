@@ -32,6 +32,6 @@ export class WebhookFilterBackoffStrategy {
       );
     }
 
-    return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
+    return Math.round(Math.random() * 2 ** attemptsMade * 1000);
   }
 }

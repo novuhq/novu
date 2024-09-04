@@ -15,7 +15,7 @@ describe('Update seen/read', function () {
     await session.initialize();
     template = await createTemplate(session);
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 7; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
     }
@@ -23,7 +23,7 @@ describe('Update seen/read', function () {
 
     await messageRepository.update({}, { $unset: { read: 1 } });
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
     }

@@ -1,10 +1,10 @@
-import { api } from '../../../api/index';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
-import { ControlVariables } from './ControlVariables';
 import { useDebouncedState, useDisclosure } from '@mantine/hooks';
 import { Accordion, Code, Group } from '@mantine/core';
 import { Button, Text } from '@novu/design-system';
+import { ControlVariables } from './ControlVariables';
+import { api } from '../../../api/index';
 
 export const ControlVariablesForm = ({ schema, payloadSchema, formData, onChange }) => {
   const [value, setValue] = useDebouncedState<any>({}, 500);
@@ -15,7 +15,7 @@ export const ControlVariablesForm = ({ schema, payloadSchema, formData, onChange
   );
 
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
-    api.put('/v1/bridge/controls/' + formData?.workflowId + '/' + formData.stepId, { variables: data })
+    api.put(`/v1/bridge/controls/${formData?.workflowId}/${formData.stepId}`, { variables: data })
   );
 
   useEffect(() => {

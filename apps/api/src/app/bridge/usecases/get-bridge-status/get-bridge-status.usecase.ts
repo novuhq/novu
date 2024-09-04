@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { GetBridgeStatusCommand } from './get-bridge-status.command';
 import axios from 'axios';
 import { HealthCheck } from '@novu/framework';
+import { GetBridgeStatusCommand } from './get-bridge-status.command';
 
 const axiosInstance = axios.create();
 
@@ -18,7 +18,7 @@ export class GetBridgeStatus {
 
       return response.data;
     } catch (err: any) {
-      throw new BadRequestException('Bridge is not accessible. ' + err.message);
+      throw new BadRequestException(`Bridge is not accessible. ${err.message}`);
     }
   }
 }

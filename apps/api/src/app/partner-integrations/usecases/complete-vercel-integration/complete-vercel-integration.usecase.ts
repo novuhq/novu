@@ -143,9 +143,9 @@ export class CompleteVercelIntegration {
       }
 
       await this.syncUsecase.execute({
-        organizationId: organizationId,
+        organizationId,
         userId: internalUser?._id as string,
-        environmentId: environmentId,
+        environmentId,
         bridgeUrl: fullBridgeUrl,
         source: 'vercel',
       });

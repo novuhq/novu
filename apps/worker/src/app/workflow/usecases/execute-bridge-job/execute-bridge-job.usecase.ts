@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { ControlVariablesRepository, NotificationTemplateEntity } from '@novu/dal';
+import {
+  ControlVariablesRepository,
+  NotificationTemplateEntity,
+  EnvironmentRepository,
+  JobRepository,
+  NotificationTemplateRepository,
+  MessageRepository,
+  JobEntity,
+} from '@novu/dal';
 import {
   ControlVariablesLevelEnum,
   ExecutionDetailsSourceEnum,
@@ -8,16 +16,8 @@ import {
   JobStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import {
-  EnvironmentRepository,
-  JobRepository,
-  NotificationTemplateRepository,
-  MessageRepository,
-  JobEntity,
-} from '@novu/dal';
 import { Event, State, PostActionEnum, ExecuteOutput } from '@novu/framework';
 
-import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -25,6 +25,8 @@ import {
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
 } from '@novu/application-generic';
+import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
+import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'ExecuteBridgeJob';
 
@@ -80,7 +82,7 @@ export class ExecuteBridgeJob {
     }
 
     if (!environment?.echo?.url && isStateful) {
-      throw new Error('Bridge URL is not set for environment id: ' + environment._id);
+      throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
     const { subscriber, payload: originalPayload } = command.variables || {};
@@ -338,6 +340,9 @@ export class ExecuteBridgeJob {
             lastReadDate: message.lastReadDate || null,
           };
         }
+        break;
+      }
+      default: {
         break;
       }
     }

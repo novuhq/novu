@@ -12,7 +12,7 @@ export abstract class BasePushHandler implements IPushHandler {
 
   protected constructor(
     private providerId: PushProviderIdEnum,
-    private channelType: string
+    private channelType: string,
   ) {}
 
   canHandle(providerId: string, channelType: ChannelTypeEnum) {
@@ -22,7 +22,7 @@ export abstract class BasePushHandler implements IPushHandler {
   async send(options: IPushOptions) {
     if (process.env.NODE_ENV === 'test') {
       throw new Error(
-        'Currently 3rd-party packages test are not support on test env'
+        'Currently 3rd-party packages test are not support on test env',
       );
     }
 

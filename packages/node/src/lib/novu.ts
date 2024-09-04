@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { getEnvVariable } from '@novu/shared/utils';
-import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
+import { Subscribers } from './subscribers/subscribers';
 import { Changes } from './changes/changes';
 import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
@@ -50,15 +50,14 @@ export class Novu extends EventEmitter {
     let config: INovuConfiguration | undefined;
 
     if (arguments.length === 2) {
-      secretKey = args[0];
-      config = args[1];
+      [secretKey, config] = args;
     } else if (arguments.length === 1) {
       if (typeof args[0] === 'object') {
         const { secretKey: key, ...rest } = args[0];
         secretKey = key;
         config = rest;
       } else {
-        secretKey = args[0];
+        [secretKey] = args;
       }
     } else {
       secretKey =
@@ -67,7 +66,7 @@ export class Novu extends EventEmitter {
 
     if (!secretKey) {
       throw new Error(
-        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass a secretKey to new Novu(secretKey) constructor.'
+        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass a secretKey to new Novu(secretKey) constructor.',
       );
     }
 
@@ -122,6 +121,6 @@ export class Novu extends EventEmitter {
 
     return config?.backendUrl.includes('novu.co/v')
       ? config?.backendUrl
-      : config?.backendUrl + `/${novuApiVersion}`;
+      : `${config?.backendUrl}/${novuApiVersion}`;
   }
 }

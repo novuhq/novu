@@ -1,12 +1,10 @@
 /* eslint-disable max-len */
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
-import { injectDocumentComponents } from './injection';
 import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { injectDocumentComponents } from './injection';
 import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
-// Necessary to resolve ESlint errors that surface before metadata generation
-// eslint-disable-next-line import/extensions
 import metadata from '../../../../metadata';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
@@ -141,6 +139,7 @@ export const setupSwagger = async (app: INestApplication) => {
   sdkSetup(app, document);
 };
 function sdkSetup(app: INestApplication, document: OpenAPIObject) {
+  // eslint-disable-next-line no-param-reassign
   document['x-speakeasy-name-override'] = [
     { operationId: '^.*get.*', methodNameOverride: 'retrieve' },
     { operationId: '^.*retrieve.*', methodNameOverride: 'retrieve' },
@@ -150,6 +149,7 @@ function sdkSetup(app: INestApplication, document: OpenAPIObject) {
     { operationId: '^.*delete.*', methodNameOverride: 'delete' },
     { operationId: '^.*remove.*', methodNameOverride: 'delete' },
   ];
+  // eslint-disable-next-line no-param-reassign
   document['x-speakeasy-retries'] = {
     strategy: 'backoff',
     backoff: {

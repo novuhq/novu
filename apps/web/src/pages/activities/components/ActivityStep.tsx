@@ -45,7 +45,7 @@ const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
 };
 
 export const ActivityStep = ({ job, span = 4, isOld }) => {
-  const status = job.status;
+  const { status } = job;
   const theme = useMantineTheme();
 
   return (

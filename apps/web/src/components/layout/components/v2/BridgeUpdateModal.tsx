@@ -49,7 +49,9 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
       const result = { isValid: response.status === 'ok' };
 
       return result;
-    } catch {}
+    } catch {
+      /* empty */
+    }
 
     return { isValid: false };
   };

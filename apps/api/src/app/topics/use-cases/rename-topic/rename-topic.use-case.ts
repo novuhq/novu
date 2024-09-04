@@ -9,7 +9,10 @@ import { ExternalSubscriberId } from '../../types';
 
 @Injectable()
 export class RenameTopicUseCase {
-  constructor(private getTopicUseCase: GetTopicUseCase, private topicRepository: TopicRepository) {}
+  constructor(
+    private getTopicUseCase: GetTopicUseCase,
+    private topicRepository: TopicRepository
+  ) {}
 
   async execute(command: RenameTopicCommand): Promise<TopicDto> {
     const topic = await this.getTopicUseCase.execute(command);

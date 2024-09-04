@@ -10,7 +10,7 @@ describe('Standard Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       standardQueueService = new StandardQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await standardQueueService.queue.obliterate();
     });
@@ -31,7 +31,7 @@ describe('Standard Queue service', () => {
           'DEFAULT_ATTEMPTS',
           'instance',
           'queue',
-        ])
+        ]),
       );
       expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(standardQueueService.topic).toEqual('standard');
@@ -52,7 +52,7 @@ describe('Standard Queue service', () => {
           jobsOpts: {
             removeOnComplete: true,
           },
-        })
+        }),
       );
       expect(standardQueueService.queue.opts.prefix).toEqual('bull');
     });
@@ -88,7 +88,7 @@ describe('Standard Queue service', () => {
           name: jobId,
           data: jobData,
           attemptsMade: 0,
-        })
+        }),
       );
     });
 
@@ -128,7 +128,7 @@ describe('Standard Queue service', () => {
             _userId,
           },
           attemptsMade: 0,
-        })
+        }),
       );
     });
   });
@@ -138,7 +138,7 @@ describe('Standard Queue service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       standardQueueService = new StandardQueueService(
-        new WorkflowInMemoryProviderService()
+        new WorkflowInMemoryProviderService(),
       );
       await standardQueueService.queue.obliterate();
     });

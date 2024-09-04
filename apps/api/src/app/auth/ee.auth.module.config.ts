@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import {
   AuthService,
   SwitchEnvironment,
@@ -6,8 +7,8 @@ import {
   cacheService,
   RolesGuard,
 } from '@novu/application-generic';
-import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
+import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { OrganizationModule } from '../organization/organization.module';

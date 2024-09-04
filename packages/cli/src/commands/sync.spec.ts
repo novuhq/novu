@@ -35,7 +35,7 @@ describe('sync command', () => {
       const expectBackendUrl = `${apiUrl}/v1/bridge/sync?source=cli`;
       expect(syncRestCallSpy).toHaveBeenCalledWith(
         expectBackendUrl,
-        expect.objectContaining({ bridgeUrl: bridgeUrl }),
+        expect.objectContaining({ bridgeUrl }),
         expect.objectContaining({ headers: { Authorization: expect.any(String), 'Content-Type': 'application/json' } })
       );
       expect(response).toEqual(syncData);
@@ -86,7 +86,9 @@ describe('sync command', () => {
       const signature1 = buildSignature(secretKey);
 
       // make sure we have different timestamps
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
 
       const signature2 = buildSignature(secretKey);
 

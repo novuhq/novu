@@ -4,7 +4,7 @@ import { GupshupSmsProvider } from './gupshup.provider';
 
 test('should trigger gupshup library correctly', async () => {
   const { mockPost: spy } = axiosSpy({
-    data: 'success | sent | ' + Math.ceil(Math.random() * 100),
+    data: `success | sent | ${Math.ceil(Math.random() * 100)}`,
   });
 
   const provider = new GupshupSmsProvider({
@@ -31,13 +31,13 @@ test('should trigger gupshup library correctly', async () => {
       send_to: '+2347063317344',
       userid: '1',
       v: '1.1',
-    }
+    },
   );
 });
 
 test('should trigger gupshup library correctly with _passthrough', async () => {
   const { mockPost: spy } = axiosSpy({
-    data: 'success | sent | ' + Math.ceil(Math.random() * 100),
+    data: `success | sent | ${Math.ceil(Math.random() * 100)}`,
   });
 
   const provider = new GupshupSmsProvider({
@@ -57,7 +57,7 @@ test('should trigger gupshup library correctly with _passthrough', async () => {
           send_to: '+3347063317344',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();
@@ -73,6 +73,6 @@ test('should trigger gupshup library correctly with _passthrough', async () => {
       send_to: '+3347063317344',
       userid: '1',
       v: '1.1',
-    }
+    },
   );
 });

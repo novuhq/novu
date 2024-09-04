@@ -32,7 +32,7 @@ describe('Create expireAt - TTL support', function () {
       expireAt: { $exists: false },
     };
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
     }
@@ -43,7 +43,7 @@ describe('Create expireAt - TTL support', function () {
     await jobRepository.update({ _environmentId: session.environment._id }, { $unset: { expireAt: 1 } });
     await executionDetailsRepository.update({ _environmentId: session.environment._id }, { $unset: { expireAt: 1 } });
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
     }

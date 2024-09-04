@@ -16,7 +16,7 @@ describe('Get Notification Group - /notification-groups/:id (GET)', async () => 
   it('should get the notification group by id', async function () {
     const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send(testTemplate);
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     const { body } = await session.testAgent.get(`/v1/notification-groups/${id}`);
 
@@ -30,7 +30,7 @@ describe('Get Notification Group - /notification-groups/:id (GET)', async () => 
   it('should get 404 when notification group is not present with the requested id', async function () {
     const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send(testTemplate);
 
-    const id = postNotificationGroup1.body.data.id;
+    const { id } = postNotificationGroup1.body.data;
 
     await session.testAgent.delete(`/v1/notification-groups/${id}`);
 

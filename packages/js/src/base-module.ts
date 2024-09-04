@@ -54,7 +54,7 @@ export class BaseModule {
       });
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.#callsQueue.push({ fn, resolve, reject });
     });
   }

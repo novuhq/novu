@@ -66,7 +66,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
 
         webContainerInstance.on('server-ready', (port, url) => {
           segment.track('Sandbox bridge app is ready - [Playground]');
-          setSandboxBridgeAddress(url + ':' + port);
+          setSandboxBridgeAddress(`${url}:${port}`);
 
           window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
         });
@@ -75,11 +75,11 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
       segment.track('Error booting web container - [Playground]', {
         section: 'boot',
         message: error.message,
-        error: error,
+        error,
       });
 
       captureException(error);
-      writeOutput('\nError booting web container: ' + error.message);
+      writeOutput(`\nError booting web container: ${error.message}`);
       writeOutput(error);
     }
   }
@@ -90,7 +90,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
       try {
         webContainer.on('server-ready', (port, url) => {
           segment.track('Sandbox bridge app is ready - [Playground]');
-          setSandboxBridgeAddress(url + ':' + port);
+          setSandboxBridgeAddress(`${url}:${port}`);
 
           window.dispatchEvent(new CustomEvent('webcontainer:serverReady'));
         });
@@ -134,7 +134,9 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         }
 
         writeOutput('Installed dependencies \n');
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
         writeOutput('Starting Server');
 
         const startServerResponse = await startDevServer();
@@ -147,7 +149,7 @@ export const ContainerProvider: FCWithChildren = ({ children }) => {
         segment.track('Error booting web container - [Playground]', {
           section: 'install',
           message: error.message,
-          error: error,
+          error,
         });
         captureException(error);
         writeOutput(error);

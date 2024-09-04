@@ -20,7 +20,7 @@ describe('Create translation group - /translations/groups (POST)', async () => {
     });
 
     let group = result.body.data;
-    const id = group.id;
+    const { id } = group;
 
     expect(group.name).to.eq('test');
     expect(group.identifier).to.eq('test');
@@ -53,7 +53,7 @@ describe('Create translation group - /translations/groups (POST)', async () => {
     });
 
     let group = result.body.data;
-    const id = group.id;
+    const { id } = group;
 
     expect(group.name).to.eq('test');
     expect(group.identifier).to.eq('test');

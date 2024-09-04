@@ -1,8 +1,8 @@
 import { Accordion, createStyles } from '@mantine/core';
 
+import { colors } from '@novu/design-system';
 import { ExecutionDetailsStepContent } from './ExecutionDetailsStepContent';
 import { ExecutionDetailsStepHeader } from './ExecutionDetailsStepHeader';
-import { colors } from '@novu/design-system';
 
 const useStyles = createStyles((theme) => ({
   control: {
@@ -21,7 +21,7 @@ const useStyles = createStyles((theme) => ({
     color: `${colors.B80}`,
     padding: '0',
 
-    ['&[data-active]']: {
+    '&[data-active]': {
       border: `1px solid ${theme.colorScheme === 'dark' ? colors.B60 : colors.B70}`,
     },
   },

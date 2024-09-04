@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button, LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
 
-import { ActivityItem } from './ActivityItem';
 import { colors, ChevronLeft, ChevronRight } from '@novu/design-system';
+import { ActivityItem } from './ActivityItem';
 
 export type Data = Record<string, any>;
 
@@ -48,6 +48,7 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
           <Button
             variant="outline"
             disabled={pagination?.current === 0 || loading}
+            // eslint-disable-next-line no-unsafe-optional-chaining
             onClick={() => onPageChange(pagination?.current - 1)}
           >
             <ChevronLeft />
@@ -55,6 +56,7 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
           <Button
             variant="outline"
             disabled={!pagination?.hasMore || loading}
+            // eslint-disable-next-line no-unsafe-optional-chaining
             onClick={() => onPageChange(pagination?.current + 1)}
           >
             <ChevronRight />

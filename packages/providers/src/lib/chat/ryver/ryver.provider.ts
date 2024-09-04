@@ -17,14 +17,14 @@ export class RyverChatProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     options: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const url = new URL(options.webhookUrl);
     const response = await this.axiosInstance.post(
       url.toString(),
       this.transform(bridgeProviderData, {
         content: options.content,
-      }).body
+      }).body,
     );
 
     return {

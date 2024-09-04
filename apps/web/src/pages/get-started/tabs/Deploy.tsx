@@ -1,7 +1,7 @@
-import { GitHubLogo, VercelLogo, NetlifyLogo } from '../Logos';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { IconCode } from '@novu/novui/icons';
+import { GitHubLogo, VercelLogo, NetlifyLogo } from '../Logos';
 
 import { OnboardingStepsTimeline } from '../OnboardingSteps';
 import { CodeSnippet } from '../legacy-onboarding/components/CodeSnippet';

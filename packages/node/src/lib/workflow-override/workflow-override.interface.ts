@@ -9,7 +9,7 @@ export interface IWorkflowOverrides {
   updateOneByTenantIdandWorkflowId(
     workflowId: string,
     tenantId: string,
-    data: IWorkflowOverrideUpdatePayload
+    data: IWorkflowOverrideUpdatePayload,
   );
   delete(overrideId: string);
 }

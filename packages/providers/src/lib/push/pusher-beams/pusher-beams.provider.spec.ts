@@ -30,7 +30,6 @@ test('should trigger pusher-beams library correctly', async () => {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   expect(provider.axiosInstance).toBeDefined();
   expect(spy).toHaveBeenCalled();
@@ -103,10 +102,9 @@ test('should trigger pusher-beams library correctly with _passthrough', async ()
           users: ['tester1'],
         },
       },
-    }
+    },
   );
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   expect(provider.axiosInstance).toBeDefined();
   expect(spy).toHaveBeenCalled();

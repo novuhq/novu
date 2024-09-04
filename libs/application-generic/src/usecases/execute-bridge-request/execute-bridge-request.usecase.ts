@@ -3,15 +3,15 @@ import got, { OptionsOfTextResponseBody, RequestError } from 'got';
 import { createHmac } from 'crypto';
 
 import {
-  ExecuteBridgeRequestCommand,
-  ExecuteBridgeRequestDto,
-} from './execute-bridge-request.command';
-import {
   PostActionEnum,
   HttpHeaderKeysEnum,
   HttpQueryKeysEnum,
   GetActionEnum,
 } from '@novu/framework';
+import {
+  ExecuteBridgeRequestCommand,
+  ExecuteBridgeRequestDto,
+} from './execute-bridge-request.command';
 import { decryptApiKey } from '../../encryption';
 
 export const DEFAULT_TIMEOUT = 15_000; // 15 seconds
@@ -36,7 +36,7 @@ type TunnelResponseError = {
 @Injectable()
 export class ExecuteBridgeRequest {
   async execute<T extends PostActionEnum | GetActionEnum>(
-    command: ExecuteBridgeRequestCommand
+    command: ExecuteBridgeRequestCommand,
   ): Promise<ExecuteBridgeRequestDto<T>> {
     const retriesLimit = command.retriesLimit || DEFAULT_RETRIES_LIMIT;
     const bridgeActionUrl = new URL(command.bridgeUrl);
@@ -59,7 +59,7 @@ export class ExecuteBridgeRequest {
             return 0;
           }
 
-          return Math.pow(2, attemptCount) * 1000;
+          return 2 ** attemptCount * 1000;
         },
         statusCodes: RETRYABLE_HTTP_CODES,
         errorCodes: [
@@ -83,11 +83,11 @@ export class ExecuteBridgeRequest {
     const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacByApiKey(
       command.apiKey,
       timestamp,
-      command.event || {}
+      command.event || {},
     )}`;
 
     const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(
-      command.action as PostActionEnum
+      command.action as PostActionEnum,
     )
       ? got.post
       : got.get;
@@ -111,19 +111,18 @@ export class ExecuteBridgeRequest {
           const tunnelBody = body as TunnelResponseError;
           Logger.error(
             `Could not establish tunnel connection for \`${url}\`. Error: \`${tunnelBody.message}\``,
-            LOG_CONTEXT
+            LOG_CONTEXT,
           );
           throw new NotFoundException(
-            // eslint-disable-next-line max-len
-            `Unable to reach Bridge app. Run npx novu@latest dev in Local mode, or ensure your Bridge app deployment is available.`
+            `Unable to reach Bridge app. Run npx novu@latest dev in Local mode, or ensure your Bridge app deployment is available.`,
           );
         } else {
           // Handle unknown bridge request errors
           Logger.error(
             `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
-              body
+              body,
             )}\``,
-            LOG_CONTEXT
+            LOG_CONTEXT,
           );
           throw error;
         }
@@ -132,7 +131,7 @@ export class ExecuteBridgeRequest {
         Logger.error(
           `Unknown bridge error calling \`${url}\``,
           error,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
         throw error;
       }
@@ -140,7 +139,7 @@ export class ExecuteBridgeRequest {
   }
 
   private createHmacByApiKey(secret: string, timestamp: number, payload: any) {
-    const publicKey = timestamp + '.' + JSON.stringify(payload);
+    const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
 
     return createHmac('sha256', decryptApiKey(secret))
       .update(publicKey)

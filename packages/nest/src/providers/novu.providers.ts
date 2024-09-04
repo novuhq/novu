@@ -40,7 +40,7 @@ export function createNovuProviders(options: INovuOptions): Provider[] {
 }
 
 export function createAsyncNovuProviders(
-  options: INovuModuleAsyncOptions
+  options: INovuModuleAsyncOptions,
 ): Provider[] {
   if (options.useFactory) {
     return [

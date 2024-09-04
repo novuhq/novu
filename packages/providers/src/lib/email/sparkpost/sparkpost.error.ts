@@ -9,7 +9,10 @@ export interface ISparkPostErrorResponse {
 export class SparkPostError extends Error implements ISparkPostErrorResponse {
   readonly errors: ISparkPostErrorResponse['errors'];
 
-  constructor(response: ISparkPostErrorResponse, readonly statusCode: number) {
+  constructor(
+    response: ISparkPostErrorResponse,
+    readonly statusCode: number,
+  ) {
     super();
     this.errors = response.errors;
   }
