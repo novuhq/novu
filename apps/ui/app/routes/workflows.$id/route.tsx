@@ -27,7 +27,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     method: 'GET',
   });
 
-  const workflow = (await response.json()) as Awaited<ReturnType<typeof api.workflows.get>>;
+  const workflow = (await response.json()) as Awaited<ReturnType<typeof api.workflows.retrieve>>;
 
   return json({
     workflow,
