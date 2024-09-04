@@ -6,8 +6,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   UpsertPreferences,
-  UpsertSubscriberWorkflowPerferencesCommand,
-  UpsertSubscriberGlobalPerferencesCommand,
+  UpsertSubscriberWorkflowPreferencesCommand,
+  UpsertSubscriberGlobalPreferencesCommand,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -234,8 +234,8 @@ export class UpdatePreferences {
     };
 
     if (item.templateId) {
-      return await this.upsertPreferences.upsertSubscriberWorkflowPerferences(
-        UpsertSubscriberWorkflowPerferencesCommand.create({
+      return await this.upsertPreferences.upsertSubscriberWorkflowPreferences(
+        UpsertSubscriberWorkflowPreferencesCommand.create({
           environmentId: item.environmentId,
           organizationId: item.organizationId,
           subscriberId: item.subscriberId,
@@ -245,8 +245,8 @@ export class UpdatePreferences {
       );
     }
 
-    return await this.upsertPreferences.upsertSubscriberGlobalPerferences(
-      UpsertSubscriberGlobalPerferencesCommand.create({
+    return await this.upsertPreferences.upsertSubscriberGlobalPreferences(
+      UpsertSubscriberGlobalPreferencesCommand.create({
         preferences,
         environmentId: item.environmentId,
         organizationId: item.organizationId,

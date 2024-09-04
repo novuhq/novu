@@ -17,7 +17,7 @@ import {
   UpsertPreferences,
   UserAuthGuard,
   UserSession,
-  UpsertUserWorkflowPerferencesCommand,
+  UpsertUserWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
@@ -52,8 +52,8 @@ export class PreferencesController {
   async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
     await this.verifyPreferencesApiAvailability(user);
 
-    return this.upsertPreferences.upsertUserWorkflowPerferences(
-      UpsertUserWorkflowPerferencesCommand.create({
+    return this.upsertPreferences.upsertUserWorkflowPreferences(
+      UpsertUserWorkflowPreferencesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

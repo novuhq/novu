@@ -6,17 +6,17 @@ import {
   PreferencesTypeEnum,
 } from '@novu/dal';
 import { UpsertPreferencesCommand } from './upsert-preferences.command';
-import { UpsertWorkflowPerferencesCommand } from './upsert-workflow-perferences.command';
-import { UpsertSubscriberGlobalPerferencesCommand } from './upsert-subscriber-global-perferences.command';
-import { UpsertSubscriberWorkflowPerferencesCommand } from './upsert-subscriber-workflow-perferences.command';
-import { UpsertUserWorkflowPerferencesCommand } from './upsert-user-workflow-perferences.command';
+import { UpsertWorkflowPreferencesCommand } from './upsert-workflow-preferences.command';
+import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
+import { UpsertSubscriberWorkflowPreferencesCommand } from './upsert-subscriber-workflow-preferences.command';
+import { UpsertUserWorkflowPreferencesCommand } from './upsert-user-workflow-preferences.command';
 
 @Injectable()
 export class UpsertPreferences {
   constructor(private preferencesRepository: PreferencesRepository) {}
 
-  public async upsertWorkflowPerferences(
-    command: UpsertWorkflowPerferencesCommand,
+  public async upsertWorkflowPreferences(
+    command: UpsertWorkflowPreferencesCommand,
   ) {
     return this.upsert({
       templateId: command.templateId,
@@ -28,8 +28,8 @@ export class UpsertPreferences {
     });
   }
 
-  public async upsertSubscriberGlobalPerferences(
-    command: UpsertSubscriberGlobalPerferencesCommand,
+  public async upsertSubscriberGlobalPreferences(
+    command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
     return this.upsert({
       subscriberId: command.subscriberId,
@@ -41,8 +41,8 @@ export class UpsertPreferences {
     });
   }
 
-  public async upsertSubscriberWorkflowPerferences(
-    command: UpsertSubscriberWorkflowPerferencesCommand,
+  public async upsertSubscriberWorkflowPreferences(
+    command: UpsertSubscriberWorkflowPreferencesCommand,
   ) {
     return this.upsert({
       subscriberId: command.subscriberId,
@@ -55,8 +55,8 @@ export class UpsertPreferences {
     });
   }
 
-  public async upsertUserWorkflowPerferences(
-    command: UpsertUserWorkflowPerferencesCommand,
+  public async upsertUserWorkflowPreferences(
+    command: UpsertUserWorkflowPreferencesCommand,
   ) {
     return this.upsert({
       userId: command.userId,
