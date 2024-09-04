@@ -1,4 +1,4 @@
-import { Breadcrumbs, Anchor, Text, Group } from '@mantine/core';
+import { Breadcrumbs, Anchor, Text, Group, Select } from '@mantine/core';
 import { useMatches } from '@remix-run/react';
 
 const Separator = () => <Text c="dimmed">/</Text>;
@@ -11,7 +11,14 @@ export function NavigationBreadcrumbs() {
       <Group gap="xs">
         <Separator />
         <Breadcrumbs separator={<Separator />}>
-          <Anchor href="/">Development</Anchor>
+          <Select
+            variant="unstyled"
+            data={['Development', 'Production']}
+            value={'Development'}
+            onChange={() => {
+              // TODO: implement environment switching logic
+            }}
+          />
           {matches
             // @ts-expect-error - need to figure out how to type this
             .filter((match) => match.handle && match.handle.breadcrumb)
