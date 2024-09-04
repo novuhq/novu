@@ -37,5 +37,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function WorkflowRoute() {
   const data = useLoaderData<typeof loader>();
 
+  console.log({ data });
+
   return <div>{JSON.stringify(data)}</div>;
 }
