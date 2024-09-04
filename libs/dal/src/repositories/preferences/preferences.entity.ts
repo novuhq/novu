@@ -15,6 +15,13 @@ type WorkflowOptionsPreferences = {
   channels: Record<ChannelTypeEnum, PreferenceOptions>;
 };
 
+export enum PreferencesTypeEnum {
+  SUBSCRIBER_GLOBAL = 'SUBSCRIBER_GLOBAL',
+  SUBSCRIBER_WORKFLOW = 'SUBSCRIBER_WORKFLOW',
+  USER_WORKFLOW = 'USER_WORKFLOW',
+  CODE_FIRST_WORKFLOW = 'CODE_FIRST_WORKFLOW',
+}
+
 export enum PreferencesActorEnum {
   USER = 'USER',
   SUBSCRIBER = 'SUBSCRIBER',
@@ -40,6 +47,8 @@ export class PreferencesEntity {
   _templateId?: string;
 
   actor: PreferencesActorEnum;
+
+  type: PreferencesTypeEnum;
 
   preferences: WorkflowOptionsPreferences;
 }

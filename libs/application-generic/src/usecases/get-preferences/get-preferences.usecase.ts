@@ -3,6 +3,7 @@ import {
   PreferencesActorEnum,
   PreferencesEntity,
   PreferencesRepository,
+  PreferencesTypeEnum,
 } from '@novu/dal';
 import { WorkflowOptionsPreferences } from '@novu/framework';
 import { FeatureFlagsKeysEnum, IPreferenceChannels } from '@novu/shared';
@@ -105,25 +106,27 @@ export class GetPreferences {
   ) {
     return items.find(
       (item) =>
-        item.actor === PreferencesActorEnum.SUBSCRIBER &&
+        item.type === PreferencesTypeEnum.SUBSCRIBER_WORKFLOW &&
         item._templateId == templateId,
     );
   }
 
   private getSubscriberGlobalPreferences(items: PreferencesEntity[]) {
     return items.find(
-      (item) =>
-        item.actor === PreferencesActorEnum.SUBSCRIBER &&
-        item._templateId === undefined,
+      (item) => item.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     );
   }
 
   private getUserPreferences(items: PreferencesEntity[]) {
-    return items.find((item) => item.actor === PreferencesActorEnum.USER);
+    return items.find(
+      (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
+    );
   }
 
   private getWorkflowPreferences(items: PreferencesEntity[]) {
-    return items.find((item) => item.actor === PreferencesActorEnum.WORKFLOW);
+    return items.find(
+      (item) => item.type === PreferencesTypeEnum.CODE_FIRST_WORKFLOW,
+    );
   }
 
   private async getPreferencesFromDb(command: GetPreferencesCommand) {

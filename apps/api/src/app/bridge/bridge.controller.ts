@@ -15,20 +15,8 @@ import {
 } from '@nestjs/common';
 
 import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
-import {
-  AnalyticsService,
-  ExternalApiAccessible,
-  UserAuthGuard,
-  UserSession,
-  UpsertPreferences,
-  UpsertPreferencesCommand,
-} from '@novu/application-generic';
-import {
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  ControlVariablesRepository,
-  PreferencesActorEnum,
-} from '@novu/dal';
+import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
+import { EnvironmentRepository, NotificationTemplateRepository, ControlVariablesRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
 

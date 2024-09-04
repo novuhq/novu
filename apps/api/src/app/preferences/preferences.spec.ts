@@ -1,5 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { GetPreferences, UpsertPreferences, UpsertPreferencesCommand } from '@novu/application-generic';
+import {
+  GetPreferences,
+  UpsertPreferences,
+  UpsertSubscriberGlobalPerferencesCommand,
+  UpsertSubscriberWorkflowPerferencesCommand,
+  UpsertUserWorkflowPerferencesCommand,
+  UpsertWorkflowPerferencesCommand,
+} from '@novu/application-generic';
 import { PreferencesActorEnum, PreferencesRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -33,8 +40,8 @@ describe('Preferences', function () {
 
   describe('Upsert preferences', function () {
     it('should create workflow preferences', async function () {
-      const workflowPreferences = await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      const workflowPreferences = await upsertPreferences.upsertWorkflowPerferences(
+        UpsertWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -63,7 +70,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.WORKFLOW,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -79,8 +85,8 @@ describe('Preferences', function () {
     });
 
     it('should create user workflow preferences', async function () {
-      const userPreferences = await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      const userPreferences = await upsertPreferences.upsertUserWorkflowPerferences(
+        UpsertUserWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -109,7 +115,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.USER,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -126,8 +131,8 @@ describe('Preferences', function () {
     });
 
     it('should create global subscriber preferences', async function () {
-      const subscriberGlobalPreferences = await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      const subscriberGlobalPreferences = await upsertPreferences.upsertSubscriberGlobalPerferences(
+        UpsertSubscriberGlobalPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -156,7 +161,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.SUBSCRIBER,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           subscriberId,
@@ -172,8 +176,8 @@ describe('Preferences', function () {
     });
 
     it('should create subscriber workflow preferences', async function () {
-      const subscriberWorkflowPreferences = await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      const subscriberWorkflowPreferences = await upsertPreferences.upsertSubscriberWorkflowPerferences(
+        UpsertSubscriberWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -202,7 +206,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.SUBSCRIBER,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -219,8 +222,8 @@ describe('Preferences', function () {
     });
 
     it('should update preferences', async function () {
-      let workflowPreferences = await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      let workflowPreferences = await upsertPreferences.upsertWorkflowPerferences(
+        UpsertWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -249,7 +252,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.WORKFLOW,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -263,8 +265,8 @@ describe('Preferences', function () {
       expect(workflowPreferences._subscriberId).to.be.undefined;
       expect(workflowPreferences.actor).to.equal(PreferencesActorEnum.WORKFLOW);
 
-      workflowPreferences = await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      workflowPreferences = await upsertPreferences.upsertWorkflowPerferences(
+        UpsertWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -293,7 +295,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.WORKFLOW,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -302,94 +303,13 @@ describe('Preferences', function () {
 
       expect(workflowPreferences.preferences.workflow.readOnly).to.be.true;
     });
-
-    describe('Validate preferences', async function () {
-      const preferences = {
-        workflow: {
-          defaultValue: false,
-          readOnly: false,
-        },
-        channels: {
-          in_app: {
-            defaultValue: false,
-            readOnly: false,
-          },
-          sms: {
-            defaultValue: false,
-            readOnly: false,
-          },
-          email: {
-            defaultValue: false,
-            readOnly: false,
-          },
-          push: {
-            defaultValue: false,
-            readOnly: false,
-          },
-          chat: {
-            defaultValue: false,
-            readOnly: false,
-          },
-        },
-      };
-
-      it('should validate template id is missing', async function () {
-        try {
-          await upsertPreferences.execute(
-            UpsertPreferencesCommand.create({
-              preferences,
-              actor: PreferencesActorEnum.WORKFLOW,
-              environmentId: session.environment._id,
-              organizationId: session.organization._id,
-            })
-          );
-          expect(false).to.be.true;
-        } catch (e) {
-          expect(e.message).to.equal('Template id is missing for preferences');
-        }
-      });
-
-      it('should validate user id is missing', async function () {
-        try {
-          await upsertPreferences.execute(
-            UpsertPreferencesCommand.create({
-              preferences,
-              actor: PreferencesActorEnum.USER,
-              environmentId: session.environment._id,
-              organizationId: session.organization._id,
-              templateId: workflowId,
-            })
-          );
-          expect(false).to.be.true;
-        } catch (e) {
-          expect(e.message).to.equal('User id is missing for preferences');
-        }
-      });
-
-      it('should validate subscriber id is missing', async function () {
-        try {
-          await upsertPreferences.execute(
-            UpsertPreferencesCommand.create({
-              preferences,
-              actor: PreferencesActorEnum.SUBSCRIBER,
-              environmentId: session.environment._id,
-              organizationId: session.organization._id,
-              templateId: workflowId,
-            })
-          );
-          expect(false).to.be.true;
-        } catch (e) {
-          expect(e.message).to.equal('Subscriber id is missing for preferences');
-        }
-      });
-    });
   });
 
   describe('Get preferences', function () {
     it('should merge preferences when get preferences', async function () {
       // Workflow preferences
-      await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      await upsertPreferences.upsertWorkflowPerferences(
+        UpsertWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -418,7 +338,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.WORKFLOW,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -461,8 +380,8 @@ describe('Preferences', function () {
       });
 
       // User Workflow preferences
-      await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      await upsertPreferences.upsertUserWorkflowPerferences(
+        UpsertUserWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -491,7 +410,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.WORKFLOW,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -535,8 +453,8 @@ describe('Preferences', function () {
       });
 
       // Subscriber global preferences
-      await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      await upsertPreferences.upsertSubscriberGlobalPerferences(
+        UpsertSubscriberGlobalPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -565,7 +483,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.SUBSCRIBER,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           subscriberId,
@@ -609,8 +526,8 @@ describe('Preferences', function () {
       });
 
       // Subscriber Workflow preferences
-      await upsertPreferences.execute(
-        UpsertPreferencesCommand.create({
+      await upsertPreferences.upsertSubscriberWorkflowPerferences(
+        UpsertSubscriberWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -639,7 +556,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.SUBSCRIBER,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
@@ -687,10 +603,10 @@ describe('Preferences', function () {
 
   describe('Preferences endpoints', function () {
     it('should get preferences', async function () {
-      const useCase = session.testServer?.getService(UpsertPreferences);
+      const useCase: UpsertPreferences = session.testServer?.getService(UpsertPreferences);
 
-      await useCase.execute(
-        UpsertPreferencesCommand.create({
+      await useCase.upsertWorkflowPerferences(
+        UpsertWorkflowPerferencesCommand.create({
           preferences: {
             workflow: {
               defaultValue: false,
@@ -719,7 +635,6 @@ describe('Preferences', function () {
               },
             },
           },
-          actor: PreferencesActorEnum.WORKFLOW,
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,

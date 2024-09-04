@@ -15,13 +15,12 @@ import {
   GetPreferences,
   GetPreferencesCommand,
   UpsertPreferences,
-  UpsertPreferencesCommand,
   UserAuthGuard,
   UserSession,
+  UpsertUserWorkflowPerferencesCommand,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { PreferencesActorEnum } from '@novu/dal';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
 @Controller('/preferences')
@@ -53,14 +52,13 @@ export class PreferencesController {
   async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
     await this.verifyPreferencesApiAvailability(user);
 
-    return this.upsertPreferences.execute(
-      UpsertPreferencesCommand.create({
+    return this.upsertPreferences.upsertUserWorkflowPerferences(
+      UpsertUserWorkflowPerferencesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         preferences: data.preferences,
         templateId: data.workflowId,
-        actor: PreferencesActorEnum.USER,
       })
     );
   }

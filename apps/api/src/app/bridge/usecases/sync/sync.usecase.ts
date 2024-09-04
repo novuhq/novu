@@ -16,7 +16,7 @@ import {
   UpdateWorkflowCommand,
   ExecuteBridgeRequest,
   UpsertPreferences,
-  UpsertPreferencesCommand,
+  UpsertWorkflowPerferencesCommand,
 } from '@novu/application-generic';
 import { WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
@@ -204,9 +204,8 @@ export class Sync {
           );
         }
 
-        await this.upsertPreferences.execute(
-          UpsertPreferencesCommand.create({
-            actor: PreferencesActorEnum.WORKFLOW,
+        await this.upsertPreferences.upsertWorkflowPerferences(
+          UpsertWorkflowPerferencesCommand.create({
             environmentId: savedWorkflow._environmentId,
             organizationId: savedWorkflow._organizationId,
             templateId: savedWorkflow._id,

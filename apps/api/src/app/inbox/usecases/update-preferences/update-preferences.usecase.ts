@@ -6,7 +6,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   UpsertPreferences,
-  UpsertPreferencesCommand,
+  UpsertSubscriberWorkflowPerferencesCommand,
+  UpsertSubscriberGlobalPerferencesCommand,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -16,8 +17,6 @@ import {
   SubscriberEntity,
   SubscriberPreferenceRepository,
   SubscriberRepository,
-  SubscriberPreferenceEntity,
-  PreferencesActorEnum,
 } from '@novu/dal';
 import { IPreferenceChannels } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -205,41 +204,53 @@ export class UpdatePreferences {
     environmentId: string;
     templateId?: string;
   }) {
-    return await this.upsertPreferences.execute(
-      UpsertPreferencesCommand.create({
-        preferences: {
-          workflow: {
-            defaultValue: item.enabled || PREFERENCE_DEFAULT_VALUE,
-            readOnly: false,
-          },
-          channels: {
-            in_app: {
-              defaultValue: item.channels.in_app || PREFERENCE_DEFAULT_VALUE,
-              readOnly: false,
-            },
-            sms: {
-              defaultValue: item.channels.sms || PREFERENCE_DEFAULT_VALUE,
-              readOnly: false,
-            },
-            email: {
-              defaultValue: item.channels.email || PREFERENCE_DEFAULT_VALUE,
-              readOnly: false,
-            },
-            push: {
-              defaultValue: item.channels.push || PREFERENCE_DEFAULT_VALUE,
-              readOnly: false,
-            },
-            chat: {
-              defaultValue: item.channels.chat || PREFERENCE_DEFAULT_VALUE,
-              readOnly: false,
-            },
-          },
+    const preferences = {
+      workflow: {
+        defaultValue: item.enabled || PREFERENCE_DEFAULT_VALUE,
+        readOnly: false,
+      },
+      channels: {
+        in_app: {
+          defaultValue: item.channels.in_app || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
         },
-        actor: PreferencesActorEnum.SUBSCRIBER,
+        sms: {
+          defaultValue: item.channels.sms || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        email: {
+          defaultValue: item.channels.email || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        push: {
+          defaultValue: item.channels.push || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        chat: {
+          defaultValue: item.channels.chat || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+      },
+    };
+
+    if (item.templateId) {
+      return await this.upsertPreferences.upsertSubscriberWorkflowPerferences(
+        UpsertSubscriberWorkflowPerferencesCommand.create({
+          environmentId: item.environmentId,
+          organizationId: item.organizationId,
+          subscriberId: item.subscriberId,
+          templateId: item.templateId,
+          preferences,
+        })
+      );
+    }
+
+    return await this.upsertPreferences.upsertSubscriberGlobalPerferences(
+      UpsertSubscriberGlobalPerferencesCommand.create({
+        preferences,
         environmentId: item.environmentId,
         organizationId: item.organizationId,
         subscriberId: item.subscriberId,
-        templateId: item.templateId,
       })
     );
   }

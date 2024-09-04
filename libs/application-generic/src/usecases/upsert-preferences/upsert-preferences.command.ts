@@ -1,7 +1,7 @@
 import { IsDefined, IsEnum } from 'class-validator';
 import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
 import { EnvironmentCommand } from '../../commands';
-import { PreferencesActorEnum } from '@novu/dal';
+import { PreferencesActorEnum, PreferencesTypeEnum } from '@novu/dal';
 
 export class UpsertPreferencesCommand extends EnvironmentCommand {
   @IsDefined()
@@ -15,4 +15,7 @@ export class UpsertPreferencesCommand extends EnvironmentCommand {
 
   @IsEnum(PreferencesActorEnum)
   readonly actor: PreferencesActorEnum;
+
+  @IsEnum(PreferencesTypeEnum)
+  readonly type: PreferencesTypeEnum;
 }

@@ -1,17 +1,77 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   PreferencesActorEnum,
   PreferencesEntity,
   PreferencesRepository,
+  PreferencesTypeEnum,
 } from '@novu/dal';
-
 import { UpsertPreferencesCommand } from './upsert-preferences.command';
+import { UpsertWorkflowPerferencesCommand } from './upsert-workflow-perferences.command';
+import { UpsertSubscriberGlobalPerferencesCommand } from './upsert-subscriber-global-perferences.command';
+import { UpsertSubscriberWorkflowPerferencesCommand } from './upsert-subscriber-workflow-perferences.command';
+import { UpsertUserWorkflowPerferencesCommand } from './upsert-user-workflow-perferences.command';
 
 @Injectable()
 export class UpsertPreferences {
   constructor(private preferencesRepository: PreferencesRepository) {}
 
-  async execute(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
+  public async upsertWorkflowPerferences(
+    command: UpsertWorkflowPerferencesCommand,
+  ) {
+    return this.upsert({
+      templateId: command.templateId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      actor: PreferencesActorEnum.WORKFLOW,
+      preferences: command.preferences,
+      type: PreferencesTypeEnum.CODE_FIRST_WORKFLOW,
+    });
+  }
+
+  public async upsertSubscriberGlobalPerferences(
+    command: UpsertSubscriberGlobalPerferencesCommand,
+  ) {
+    return this.upsert({
+      subscriberId: command.subscriberId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      actor: PreferencesActorEnum.SUBSCRIBER,
+      preferences: command.preferences,
+      type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+    });
+  }
+
+  public async upsertSubscriberWorkflowPerferences(
+    command: UpsertSubscriberWorkflowPerferencesCommand,
+  ) {
+    return this.upsert({
+      subscriberId: command.subscriberId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      actor: PreferencesActorEnum.SUBSCRIBER,
+      preferences: command.preferences,
+      templateId: command.templateId,
+      type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+    });
+  }
+
+  public async upsertUserWorkflowPerferences(
+    command: UpsertUserWorkflowPerferencesCommand,
+  ) {
+    return this.upsert({
+      userId: command.userId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      actor: PreferencesActorEnum.USER,
+      preferences: command.preferences,
+      templateId: command.templateId,
+      type: PreferencesTypeEnum.USER_WORKFLOW,
+    });
+  }
+
+  private async upsert(
+    command: UpsertPreferencesCommand,
+  ): Promise<PreferencesEntity> {
     const foundId = await this.getPreferencesId(command);
 
     if (foundId) {
@@ -22,23 +82,8 @@ export class UpsertPreferences {
   }
 
   private async createPreferences(
-    command: UpsertPreferencesCommand
+    command: UpsertPreferencesCommand,
   ): Promise<PreferencesEntity> {
-    const isSubscriber = command.actor === PreferencesActorEnum.SUBSCRIBER;
-    const isUser = command.actor === PreferencesActorEnum.USER;
-
-    if (!isSubscriber && !command.templateId) {
-      throw new BadRequestException('Template id is missing for preferences');
-    }
-
-    if (isSubscriber && !command.subscriberId) {
-      throw new BadRequestException('Subscriber id is missing for preferences');
-    }
-
-    if (isUser && !command.userId) {
-      throw new BadRequestException('User id is missing for preferences');
-    }
-
     return await this.preferencesRepository.create({
       _subscriberId: command.subscriberId,
       _userId: command.userId,
@@ -47,12 +92,13 @@ export class UpsertPreferences {
       _templateId: command.templateId,
       actor: command.actor,
       preferences: command.preferences,
+      type: command.type,
     });
   }
 
   private async updatePreferences(
     preferencesId: string,
-    command: UpsertPreferencesCommand
+    command: UpsertPreferencesCommand,
   ): Promise<PreferencesEntity> {
     await this.preferencesRepository.update(
       {
@@ -64,7 +110,7 @@ export class UpsertPreferences {
           preferences: command.preferences,
           _userId: command.userId,
         },
-      }
+      },
     );
 
     return await this.preferencesRepository.findOne({
@@ -74,7 +120,7 @@ export class UpsertPreferences {
   }
 
   private async getPreferencesId(
-    command: UpsertPreferencesCommand
+    command: UpsertPreferencesCommand,
   ): Promise<string | undefined> {
     const found = await this.preferencesRepository.findOne(
       {
@@ -83,8 +129,9 @@ export class UpsertPreferences {
         _organizationId: command.organizationId,
         _templateId: command.templateId,
         actor: command.actor,
+        type: command.type,
       },
-      '_id'
+      '_id',
     );
 
     return found?._id;
