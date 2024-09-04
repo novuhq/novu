@@ -1,14 +1,46 @@
-import { Schema } from '../../../types/schema.types';
+import { ExtendedJsonSchema, Schema } from '../../../types/schema.types';
+
+const ABSOLUTE_AND_RELATIVE_URL_REGEX = '^(?!mailto:)(?:(https?):\\/\\/[^\\s/$.?#].[^\\s]*)|^(\\/[^\\s]*)$';
 
 const redirectSchema = {
   type: 'object',
   properties: {
-    url: { type: 'string', format: 'uri' },
-    target: { type: 'string', enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'], default: '_blank' },
+    url: {
+      type: 'string',
+      pattern: ABSOLUTE_AND_RELATIVE_URL_REGEX,
+      errorMessage: 'The URL must be an absolute URL (excluding mailto) or a relative URL starting with /.',
+    },
+    target: {
+      type: 'string',
+      enum: ['_self', '_blank', '_parent', '_top', '_unfencedTop'],
+      default: '_blank',
+      errorMessage: 'The target must be one of _self, _blank, _parent, _top, or _unfencedTop.',
+    },
+  },
+  if: {
+    properties: {
+      url: {
+        pattern: '^/', // Check if url starts with a slash (relative path)
+      },
+    },
+  },
+  then: {
+    properties: {
+      target: {
+        default: '_self',
+      },
+    },
+  },
+  else: {
+    properties: {
+      target: {
+        default: '_blank',
+      },
+    },
   },
   required: ['url'],
   additionalProperties: false,
-} as const satisfies Schema;
+} as const satisfies ExtendedJsonSchema;
 
 const actionSchema = {
   type: 'object',

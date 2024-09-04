@@ -1,7 +1,13 @@
-import type { JSONSchema, FromSchema as JsonSchemaInfer } from 'json-schema-to-ts';
+import type {
+  ExtendedJSONSchema,
+  JSONSchemaExtension,
+  JSONSchema,
+  FromSchema as JsonSchemaInfer,
+} from 'json-schema-to-ts';
 import zod from 'zod';
 
 export type JsonSchema = JSONSchema;
+export type ExtendedJsonSchema<T extends JSONSchemaExtension = JSONSchemaExtension> = ExtendedJSONSchema<T>;
 
 /**
  * A schema used to validate a JSON object.
