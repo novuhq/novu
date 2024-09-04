@@ -12,11 +12,11 @@ import { Table, Text } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { ColorToken } from '@novu/novui/tokens';
 import { ChannelTypeEnum } from '@novu/shared';
-import { Switch } from '@mantine/core';
 import { FC } from 'react';
 import { Preference, PreferenceChannel, SubscriptionPreferenceRow } from './types';
 import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
+import { Switch } from '@novu/design-system';
 
 const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannel, IconType> = {
   workflow: IconDynamicFeed,
@@ -64,9 +64,9 @@ function ChannelCell(props) {
 }
 
 function DefaultValueSwitchCell(props) {
-  return <Switch size={'lg'} checked={props.getValue()} />;
+  return <Switch checked={props.getValue()} />;
 }
 
 function ReadOnlySwitchCell(props) {
-  return <Switch size={'lg'} checked={!props.getValue()} />;
+  return <Switch checked={!props.getValue()} />;
 }

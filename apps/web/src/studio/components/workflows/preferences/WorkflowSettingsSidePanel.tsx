@@ -4,6 +4,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Sidebar } from '@novu/design-system';
 import { Preference, PreferenceChannel, SubscriptionPreferenceRow } from './types';
 import { WorkflowSettingsSidePanelContent } from './WorkflowSettingsSidePanelContent';
+import { Title } from '@novu/novui';
 
 const MOCK_DATA: SubscriptionPreferenceRow[] = [
   { channel: 'workflow', defaultValue: true, readOnly: false },
@@ -14,14 +15,15 @@ const MOCK_DATA: SubscriptionPreferenceRow[] = [
   { channel: ChannelTypeEnum.CHAT, defaultValue: true, readOnly: false },
 ];
 
-type WorkflowSettingsSidePanelProps = {};
-export const WorkflowSettingsSidePanel: FC<WorkflowSettingsSidePanelProps> = () => {
+type WorkflowSettingsSidePanelProps = { onClose: () => void };
+
+export const WorkflowSettingsSidePanel: FC<WorkflowSettingsSidePanelProps> = ({ onClose }) => {
   const updateChannelPreferences = (prefs: Partial<Record<PreferenceChannel, Preference>>) => {
     return Promise.resolve();
   };
 
   return (
-    <Sidebar isOpened onClose={() => {}}>
+    <Sidebar customHeader={<Title variant="section">Workflow settings</Title>} isOpened onClose={onClose}>
       <WorkflowSettingsSidePanelContent preferences={MOCK_DATA} updateChannelPreferences={updateChannelPreferences} />
     </Sidebar>
   );
