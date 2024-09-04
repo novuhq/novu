@@ -8,9 +8,11 @@ import { SubscribersModule } from '../subscribers/subscribers.module';
 import { InboxController } from './inbox.controller';
 import { USE_CASES } from './usecases';
 
+const EXTERNAL_USE_CASES = [GetPreferences, UpsertPreferences, PreferencesRepository];
+
 @Module({
   imports: [SharedModule, SubscribersModule, AuthModule, IntegrationModule],
-  providers: [...USE_CASES, GetPreferences, UpsertPreferences, PreferencesRepository],
+  providers: [...USE_CASES, ...EXTERNAL_USE_CASES],
   exports: [...USE_CASES],
   controllers: [InboxController],
 })

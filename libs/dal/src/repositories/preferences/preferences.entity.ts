@@ -5,17 +5,14 @@ import type { SubscriberId } from '../subscriber';
 import { UserId } from '../user';
 import { ChangePropsValueType } from '../../types';
 
+type PreferenceOptions = {
+  defaultValue: boolean;
+  readOnly: boolean;
+};
+
 type WorkflowOptionsPreferences = {
-  workflow: {
-    defaultValue: boolean;
-    readOnly: boolean;
-  };
-  channels: {
-    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]?: {
-      defaultValue: boolean;
-      readOnly: boolean;
-    };
-  };
+  workflow: PreferenceOptions;
+  channels: Record<ChannelTypeEnum, PreferenceOptions>;
 };
 
 export enum PreferencesActorEnum {

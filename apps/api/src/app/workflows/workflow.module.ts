@@ -10,10 +10,12 @@ import { NotificationTemplateController } from './notification-template.controll
 import { USE_CASES } from './usecases';
 import { WorkflowController } from './workflow.controller';
 
+const EXTERNAL_USE_CASES = [GetPreferences, UpsertPreferences, PreferencesRepository];
+
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
   controllers: [NotificationTemplateController, WorkflowController],
-  providers: [...USE_CASES, GetPreferences, UpsertPreferences, PreferencesRepository],
+  providers: [...USE_CASES, ...EXTERNAL_USE_CASES],
   exports: [...USE_CASES],
 })
 export class WorkflowModule implements NestModule {

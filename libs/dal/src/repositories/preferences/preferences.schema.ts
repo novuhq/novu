@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
+import { ChannelTypeEnum } from '@novu/shared';
 
 const mongooseDelete = require('mongoose-delete');
 
@@ -39,7 +40,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
         },
       },
       channels: {
-        email: {
+        [ChannelTypeEnum.EMAIL]: {
           defaultValue: {
             type: Schema.Types.Boolean,
             default: true,
@@ -49,7 +50,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             default: false,
           },
         },
-        sms: {
+        [ChannelTypeEnum.SMS]: {
           defaultValue: {
             type: Schema.Types.Boolean,
             default: true,
@@ -59,7 +60,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             default: false,
           },
         },
-        in_app: {
+        [ChannelTypeEnum.IN_APP]: {
           defaultValue: {
             type: Schema.Types.Boolean,
             default: true,
@@ -69,7 +70,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             default: false,
           },
         },
-        chat: {
+        [ChannelTypeEnum.CHAT]: {
           defaultValue: {
             type: Schema.Types.Boolean,
             default: true,
@@ -79,7 +80,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             default: false,
           },
         },
-        push: {
+        [ChannelTypeEnum.PUSH]: {
           defaultValue: {
             type: Schema.Types.Boolean,
             default: true,

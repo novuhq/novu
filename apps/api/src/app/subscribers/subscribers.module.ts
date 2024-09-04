@@ -8,10 +8,12 @@ import { WidgetsModule } from '../widgets/widgets.module';
 import { SubscribersController } from './subscribers.controller';
 import { USE_CASES } from './usecases';
 
+const EXTERNAL_USE_CASES = [GetPreferences, UpsertPreferences, PreferencesRepository];
+
 @Module({
   imports: [SharedModule, AuthModule, TerminusModule, forwardRef(() => WidgetsModule)],
   controllers: [SubscribersController],
-  providers: [...USE_CASES, GetPreferences, UpsertPreferences, PreferencesRepository],
+  providers: [...USE_CASES, ...EXTERNAL_USE_CASES],
   exports: [...USE_CASES],
 })
 export class SubscribersModule {}

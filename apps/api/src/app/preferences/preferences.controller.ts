@@ -75,10 +75,8 @@ export class PreferencesController {
       })
     );
 
-    if (isEnabled) {
-      return;
+    if (!isEnabled) {
+      throw new NotFoundException();
     }
-
-    throw new NotFoundException();
   }
 }

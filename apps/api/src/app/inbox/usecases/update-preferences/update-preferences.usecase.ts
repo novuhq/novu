@@ -25,6 +25,8 @@ import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
+const PREFERENCE_DEFAULT_VALUE = true;
+
 @Injectable()
 export class UpdatePreferences {
   constructor(
@@ -207,28 +209,28 @@ export class UpdatePreferences {
       UpsertPreferencesCommand.create({
         preferences: {
           workflow: {
-            defaultValue: item.enabled || true,
+            defaultValue: item.enabled || PREFERENCE_DEFAULT_VALUE,
             readOnly: false,
           },
           channels: {
             in_app: {
-              defaultValue: item.channels.in_app || true,
+              defaultValue: item.channels.in_app || PREFERENCE_DEFAULT_VALUE,
               readOnly: false,
             },
             sms: {
-              defaultValue: item.channels.sms || true,
+              defaultValue: item.channels.sms || PREFERENCE_DEFAULT_VALUE,
               readOnly: false,
             },
             email: {
-              defaultValue: item.channels.email || true,
+              defaultValue: item.channels.email || PREFERENCE_DEFAULT_VALUE,
               readOnly: false,
             },
             push: {
-              defaultValue: item.channels.push || true,
+              defaultValue: item.channels.push || PREFERENCE_DEFAULT_VALUE,
               readOnly: false,
             },
             chat: {
-              defaultValue: item.channels.chat || true,
+              defaultValue: item.channels.chat || PREFERENCE_DEFAULT_VALUE,
               readOnly: false,
             },
           },

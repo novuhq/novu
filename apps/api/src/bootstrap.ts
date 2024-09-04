@@ -90,13 +90,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix(`${CONTEXT_PATH}`);
-
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-    prefix: 'v',
-  });
+  app.setGlobalPrefix(`${CONTEXT_PATH}v1`);
 
   app.use(passport.initialize());
 

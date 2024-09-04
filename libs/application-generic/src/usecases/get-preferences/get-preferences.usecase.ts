@@ -14,11 +14,11 @@ import { GetPreferencesCommand } from './get-preferences.command';
 export class GetPreferences {
   constructor(
     private preferencesRepository: PreferencesRepository,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
   ) {}
 
   async execute(
-    command: GetPreferencesCommand
+    command: GetPreferencesCommand,
   ): Promise<WorkflowOptionsPreferences> {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
@@ -26,61 +26,37 @@ export class GetPreferences {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      })
+      }),
     );
 
     if (!isEnabled) {
       throw new NotFoundException();
     }
 
-    const items: PreferencesEntity[] = [];
-
-    if (command.templateId) {
-      const workflowPreferences = await this.preferencesRepository.find({
-        _templateId: command.templateId,
-        _environmentId: command.environmentId,
-        actor: {
-          $ne: PreferencesActorEnum.SUBSCRIBER,
-        },
-      });
-
-      items.push(...workflowPreferences);
-    }
-
-    if (command.subscriberId) {
-      const subscriberPreferences = await this.preferencesRepository.find({
-        _subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-        actor: PreferencesActorEnum.SUBSCRIBER,
-      });
-
-      items.push(...subscriberPreferences);
-    }
+    const items = await this.getPreferencesFromDb(command);
 
     if (items.length === 0) {
       throw new NotFoundException('We could not find any preferences');
     }
 
-    const workflowPreferences = items.find(
-      (item) => item.actor === PreferencesActorEnum.WORKFLOW
+    const workflowPreferences = this.getWorkflowPreferences(items);
+
+    const userPreferences = this.getUserPreferences(items);
+
+    const subscriberGlobalPreferences =
+      this.getSubscriberGlobalPreferences(items);
+
+    const subscriberWorkflowPreferences = this.getSubscriberWorkflowPreferences(
+      items,
+      command.templateId,
     );
 
-    const userPreferences = items.find(
-      (item) => item.actor === PreferencesActorEnum.USER
-    );
-
-    const subscriberGlobalPreferences = items.find(
-      (item) =>
-        item.actor === PreferencesActorEnum.SUBSCRIBER &&
-        item._templateId === undefined
-    );
-
-    const subscriberWorkflowPreferences = items.find(
-      (item) =>
-        item.actor === PreferencesActorEnum.SUBSCRIBER &&
-        item._templateId == command.templateId
-    );
-
+    /*
+     * Order is important here becase we like the workflowPreferences (that comes from the bridge)
+     * to be ovrriden by any other preferences and then we have preferences defined in dashboard and
+     * then subscribers global preferences and the once that should be used if it says other then anything before it
+     * we use subscribers workflow preferences
+     */
     const preferences = [
       workflowPreferences,
       userPreferences,
@@ -106,7 +82,7 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
-        })
+        }),
       );
 
       return {
@@ -121,5 +97,60 @@ export class GetPreferences {
     } catch (e) {
       return undefined;
     }
+  }
+
+  private getSubscriberWorkflowPreferences(
+    items: PreferencesEntity[],
+    templateId: string,
+  ) {
+    return items.find(
+      (item) =>
+        item.actor === PreferencesActorEnum.SUBSCRIBER &&
+        item._templateId == templateId,
+    );
+  }
+
+  private getSubscriberGlobalPreferences(items: PreferencesEntity[]) {
+    return items.find(
+      (item) =>
+        item.actor === PreferencesActorEnum.SUBSCRIBER &&
+        item._templateId === undefined,
+    );
+  }
+
+  private getUserPreferences(items: PreferencesEntity[]) {
+    return items.find((item) => item.actor === PreferencesActorEnum.USER);
+  }
+
+  private getWorkflowPreferences(items: PreferencesEntity[]) {
+    return items.find((item) => item.actor === PreferencesActorEnum.WORKFLOW);
+  }
+
+  private async getPreferencesFromDb(command: GetPreferencesCommand) {
+    const items: PreferencesEntity[] = [];
+
+    if (command.templateId) {
+      const workflowPreferences = await this.preferencesRepository.find({
+        _templateId: command.templateId,
+        _environmentId: command.environmentId,
+        actor: {
+          $ne: PreferencesActorEnum.SUBSCRIBER,
+        },
+      });
+
+      items.push(...workflowPreferences);
+    }
+
+    if (command.subscriberId) {
+      const subscriberPreferences = await this.preferencesRepository.find({
+        _subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+        actor: PreferencesActorEnum.SUBSCRIBER,
+      });
+
+      items.push(...subscriberPreferences);
+    }
+
+    return items;
   }
 }
