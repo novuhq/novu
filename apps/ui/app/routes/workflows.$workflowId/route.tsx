@@ -46,9 +46,9 @@ export default function WorkflowRoute() {
   const step = data.workflow.data.steps.find((step) => step.name === params.stepName);
 
   return (
-    <Stack>
+    <Stack bg="green" p="sm">
       <Group justify="space-between">
-        <Title>{data.workflow.data.name}</Title>
+        <Title order={2}>{data.workflow.data.name}</Title>
         <Group>
           <Button>Save</Button>
           <Button>Test</Button>

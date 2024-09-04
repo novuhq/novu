@@ -20,7 +20,6 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           mobile: false,
         },
       }}
-      padding={HEADER_PADDING_LEFT}
     >
       <MantineAppShell.Header p={HEADER_PADDING_ALL}>
         <Group>
@@ -41,7 +40,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         <Navigation />
       </MantineAppShell.Navbar>
 
-      <MantineAppShell.Main>{children}</MantineAppShell.Main>
+      <MantineAppShell.Main bg="yellow">{children}</MantineAppShell.Main>
     </MantineAppShell>
   );
 };
