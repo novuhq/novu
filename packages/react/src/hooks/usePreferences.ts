@@ -1,6 +1,6 @@
 import { NovuError, Preference } from '@novu/js';
 import { useEffect, useState } from 'react';
-import { useNovu } from '../index';
+import { useNovu } from '../components/NovuProvider';
 
 type UsePreferencesProps = {
   onSuccess?: (data: Preference[]) => void;

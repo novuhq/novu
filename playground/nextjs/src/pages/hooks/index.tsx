@@ -1,4 +1,4 @@
-import { useNotifications, usePreferences } from '@novu/react';
+import { useNotifications, usePreferences, useCounts } from '@novu/react';
 
 export default function HooksPage() {
   const {
@@ -10,7 +10,9 @@ export default function HooksPage() {
     hasMore,
   } = useNotifications();
   const { preferences, isLoading: isLoadingPreferences } = usePreferences();
+  const counts = useCounts({ filters: [{}] });
   console.log(preferences);
+  console.log(counts);
 
   if (isLoadingNotifications || isLoadingPreferences) {
     return <div>Loading...</div>;
@@ -23,10 +25,10 @@ export default function HooksPage() {
         <button onClick={archiveAll}>Archive all</button>
         <button onClick={refetch}>Refetch</button>
       </div>
-      <ul>
+      <ul className="flex flex-col gap-4">
         {notifications?.map((notification) => {
           return (
-            <li key={notification.id} className="flex flex-col gap-3">
+            <li key={notification.id} className="flex flex-col">
               <p>{notification.id}</p>
               <p>Created at: {new Date(notification.createdAt).toLocaleString()}</p>
             </li>
