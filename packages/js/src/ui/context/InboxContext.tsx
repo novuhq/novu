@@ -1,4 +1,4 @@
-import { Accessor, createContext, createEffect, createSignal, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createEffect, createSignal, ParentProps, Setter, useContext } from 'solid-js';
 import { NotificationFilter } from '../../types';
 import { NotificationStatus, Tab } from '../types';
 
@@ -11,6 +11,8 @@ type InboxContextType = {
   tabs: Accessor<Array<Tab>>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
+  isOpened: Accessor<boolean>;
+  setIsOpened: Setter<boolean>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ type InboxProviderProps = ParentProps<{
 }>;
 
 export const InboxProvider = (props: InboxProviderProps) => {
+  const [isOpened, setIsOpened] = createSignal<boolean>(false);
   const [tabs, setTabs] = createSignal<Array<Tab>>(props.tabs);
   const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
   const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD_READ);
@@ -70,6 +73,8 @@ export const InboxProvider = (props: InboxProviderProps) => {
         setActiveTab: setNewActiveTab,
         limit,
         setLimit,
+        isOpened,
+        setIsOpened,
       }}
     >
       {props.children}

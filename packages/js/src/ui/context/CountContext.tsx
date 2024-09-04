@@ -18,7 +18,7 @@ const CountContext = createContext<CountContextValue>(undefined);
 
 export const CountProvider = (props: ParentProps) => {
   const novu = useNovu();
-  const { tabs, filter, limit } = useInboxContext();
+  const { isOpened, tabs, filter, limit } = useInboxContext();
   const [totalUnreadCount, setTotalUnreadCount] = createSignal(0);
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
@@ -70,6 +70,11 @@ export const CountProvider = (props: ParentProps) => {
     const notificationsCache = novu.notifications.cache;
     const limitValue = limit();
     const tabFilter = { ...filter(), tags, offset: 0, limit: limitValue };
+    const hasEmptyCache = !notificationsCache.has(tabFilter);
+    if (!isOpened() && hasEmptyCache) {
+      return;
+    }
+
     const cachedData = notificationsCache.getAll(tabFilter) || { hasMore: false, filter: tabFilter, notifications: [] };
     const hasLessThenMinAmount = (cachedData?.notifications.length || 0) < MIN_AMOUNT_OF_NOTIFICATIONS;
     if (hasLessThenMinAmount) {

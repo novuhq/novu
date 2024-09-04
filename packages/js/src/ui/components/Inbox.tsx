@@ -89,9 +89,11 @@ export const InboxContent = (props: InboxContentProps) => {
 
 export const Inbox = (props: InboxProps) => {
   const style = useStyle();
+  const { isOpened, setIsOpened } = useInboxContext();
+  const isOpen = () => props?.open ?? isOpened();
 
   return (
-    <Popover.Root open={props?.open}>
+    <Popover.Root open={isOpen()} onOpenChange={setIsOpened}>
       <Popover.Trigger
         asChild={(triggerProps) => (
           <Button class={style('inbox__popoverTrigger')} variant="ghost" size="icon" {...triggerProps}>

@@ -1,13 +1,13 @@
 import { autoUpdate, flip, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
-import { useUncontrolledState } from '../../../helpers';
 
 type PopoverRootProps = {
   open?: boolean;
   children?: JSX.Element;
   fallbackPlacements?: Placement[];
   placement?: Placement;
+  onOpenChange: Setter<boolean>;
 };
 
 type PopoverContextValue = {
@@ -24,6 +24,9 @@ type PopoverContextValue = {
 const PopoverContext = createContext<PopoverContextValue | undefined>(undefined);
 
 export function PopoverRoot(props: PopoverRootProps) {
+  const [uncontrolledIsOpen, setUncontrolledIsOpen] = createSignal(props.open ?? false);
+  const onOpenChange = () => props.onOpenChange ?? setUncontrolledIsOpen;
+  const open = () => props.open ?? uncontrolledIsOpen();
   const [reference, setReference] = createSignal<HTMLElement | null>(null);
   const [floating, setFloating] = createSignal<HTMLElement | null>(null);
 
@@ -39,17 +42,12 @@ export function PopoverRoot(props: PopoverRootProps) {
     ],
   });
 
-  const [isOpen, setIsOpen] = useUncontrolledState({
-    value: props.open,
-    fallbackValue: false,
-  });
-
   const onClose = () => {
-    setIsOpen(false);
+    onOpenChange()(false);
   };
 
   const onToggle = () => {
-    setIsOpen((prev) => !prev);
+    onOpenChange()((prev) => !prev);
   };
 
   return (
@@ -61,7 +59,7 @@ export function PopoverRoot(props: PopoverRootProps) {
         setReference,
         floating,
         setFloating,
-        open: isOpen,
+        open,
         floatingStyles: () => ({
           position: position.strategy,
           top: `${position.y ?? 0}px`,
