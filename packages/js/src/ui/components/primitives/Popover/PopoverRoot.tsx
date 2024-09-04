@@ -7,7 +7,7 @@ type PopoverRootProps = {
   children?: JSX.Element;
   fallbackPlacements?: Placement[];
   placement?: Placement;
-  onOpenChange: Setter<boolean>;
+  onOpenChange?: Setter<boolean>;
 };
 
 type PopoverContextValue = {
