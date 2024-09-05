@@ -76,7 +76,7 @@ export const WorkflowsDetailPage = () => {
           right: '50',
         })}
       />
-      {isPanelOpen && <WorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
+      {isPanelOpen && <WorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} workflowId={currentWorkflowId} />}
     </WorkflowsPageTemplate>
   );
 };

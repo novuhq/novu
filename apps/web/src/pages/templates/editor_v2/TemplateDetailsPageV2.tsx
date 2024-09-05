@@ -1,7 +1,10 @@
 import { css, cx } from '@novu/novui/css';
-import { IconCable, IconPlayArrow } from '@novu/novui/icons';
+import { IconCable, IconPlayArrow, IconSettings } from '@novu/novui/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { IconButton } from '@novu/novui';
+import { HStack } from '@novu/novui/jsx';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
 import { useTemplateController } from '../components/useTemplateController';
 import { parseUrl } from '../../../utils/routeUtils';
@@ -11,12 +14,18 @@ import { WorkflowNodes } from '../../../studio/components/workflows/node-view/Wo
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
+import { WorkflowSettingsSidePanel } from '../../../studio/components/workflows/preferences/WorkflowSettingsSidePanel';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const track = useTelemetry();
+  const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
   const { template: workflow } = useTemplateController(templateId);
+
+  // TODO: this is a temporary solution while we scaffold the components, and should be replaced w/ modal manager
+  const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
 
   const title = workflow?.name || '';
   const navigate = useNavigate();
@@ -43,11 +52,12 @@ export const TemplateDetailsPageV2 = () => {
       icon={<IconCable size="32" />}
       title={title}
       actions={
-        <>
+        <HStack gap="75">
           <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
             Test workflow
           </OutlineButton>
-        </>
+          {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={() => setPanelOpen(true)} />}
+        </HStack>
       }
     >
       <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
@@ -86,6 +96,7 @@ export const TemplateDetailsPageV2 = () => {
           right: '50',
         })}
       />
+      {isPanelOpen && <WorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} workflowId={templateId} />}
     </WorkflowsPageTemplate>
   );
 };
