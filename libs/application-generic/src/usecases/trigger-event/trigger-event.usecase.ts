@@ -8,6 +8,7 @@ import {
   NotificationTemplateRepository,
   SubscriberEntity,
   NotificationTemplateEntity,
+  EnvironmentRepository,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -57,6 +58,7 @@ export class TriggerEvent {
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
+    private environmentRepository: EnvironmentRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
@@ -144,12 +146,21 @@ export class TriggerEvent {
         );
       }
 
+      const environment = await this.environmentRepository.findOne({
+        _id: environmentId,
+      });
+
+      if (!environment) {
+        throw new ApiException('Environment not found');
+      }
+
       switch (mappedCommand.addressingType) {
         case AddressingTypeEnum.MULTICAST: {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
+              environmentName: environment.name,
               template:
                 storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
@@ -162,6 +173,7 @@ export class TriggerEvent {
             TriggerBroadcastCommand.create({
               ...mappedCommand,
               actor: actorProcessed,
+              environmentName: environment.name,
               template:
                 storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
@@ -175,6 +187,7 @@ export class TriggerEvent {
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
+              environmentName: environment.name,
               template:
                 storedWorkflow ||
                 (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
@@ -184,7 +197,6 @@ export class TriggerEvent {
         }
       }
     } catch (e) {
-      Logger.error(e);
       Logger.error(
         {
           transactionId: command.transactionId,

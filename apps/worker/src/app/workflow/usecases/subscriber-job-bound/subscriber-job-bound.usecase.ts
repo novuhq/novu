@@ -18,7 +18,6 @@ import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscr
 import {
   AnalyticsService,
   ApiException,
-  buildEnvironmentById,
   buildNotificationTemplateKey,
   CachedEntity,
   CreateNotificationJobs,
@@ -65,6 +64,7 @@ export class SubscriberJobBound {
       identifier,
       _subscriberSource,
       requestCategory,
+      environmentName,
     } = command;
 
     const template =
@@ -82,11 +82,6 @@ export class SubscriberJobBound {
 
     await this.validateSubscriberIdProperty(subscriber);
 
-    const environment = await this.getEnvironment(environmentId);
-    if (!environment) {
-      throw new ApiException(`Environment with id ${environmentId} was not found`);
-    }
-
     /**
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
      */
@@ -102,7 +97,7 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
-      environmentName: environment.name,
+      environmentName,
       statelessWorkflow: !!command.bridge?.url,
     });
 
@@ -256,12 +251,5 @@ export class SubscriberJobBound {
     }
 
     return providers;
-  }
-
-  @CachedEntity({
-    builder: (environmentId: string) => buildEnvironmentById({ environmentId }),
-  })
-  private async getEnvironment(environmentId: string) {
-    return await this.environmentRepository.findOne({ _id: environmentId });
   }
 }

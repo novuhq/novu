@@ -265,6 +265,7 @@ export const mapSubscribersToJobs = (
           url: command.bridgeUrl,
           workflow: command.bridgeWorkflow,
         },
+        environmentName: command.environmentName,
       },
       groupId: command.organizationId,
     };
