@@ -8,7 +8,8 @@ const redirectSchema = {
     url: {
       type: 'string',
       pattern: ABSOLUTE_AND_RELATIVE_URL_REGEX,
-      errorMessage: 'The URL must be an absolute URL (excluding mailto) or a relative URL starting with /.',
+      errorMessage:
+        'The url field must be a relative URL starting with "/" or an absolute URL starting with "https" or "http".',
     },
     target: {
       type: 'string',
