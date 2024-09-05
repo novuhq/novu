@@ -72,7 +72,7 @@ function ChannelCell(props) {
   const colorToken: ColorToken = props.row.original.defaultValue ? 'typography.text.main' : 'typography.text.secondary';
 
   return (
-    <HStack color={colorToken}>
+    <HStack color={colorToken} opacity={props.row.original.disabled ? 'disabled' : undefined}>
       {<Icon title="switch-channel-icon" color={'inherit'} />}
       <Text color={'inherit'}>{CHANNEL_LABELS_LOOKUP[props.getValue()]}</Text>
     </HStack>
