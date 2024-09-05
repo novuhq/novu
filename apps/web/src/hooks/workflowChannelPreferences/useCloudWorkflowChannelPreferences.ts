@@ -3,7 +3,7 @@ import { QueryKeys } from '../../api/query.keys';
 import { useNovuAPI } from '../useNovuAPI';
 import { WorkflowChannelPreferences } from './types';
 
-export const useWorkflowChannelPreferences = (
+export const useCloudWorkflowChannelPreferences = (
   workflowId: string
 ): {
   isLoading: boolean;

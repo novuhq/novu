@@ -162,7 +162,7 @@ export function buildApiHttpClient({
     },
 
     async getPreferences(workflowId: string) {
-      return get('/v1/preferences?workflowId=' + workflowId);
+      return get(`/v1/preferences?workflowId=${workflowId}`);
     },
 
     async upsertPreferences(workflowId: string, preferences: any) {

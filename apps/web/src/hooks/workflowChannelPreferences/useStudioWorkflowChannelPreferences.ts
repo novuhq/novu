@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useDiscover } from '../../studio/hooks/useBridgeAPI';
 import { WorkflowChannelPreferences } from './types';
 
-export const useWorkflowChannelPreferences = (
+export const useStudioWorkflowChannelPreferences = (
   workflowId: string
 ): {
   isLoading: boolean;
