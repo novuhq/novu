@@ -1,11 +1,5 @@
 import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import {
-  IntegrationEntity,
-  IntegrationQuery,
-  IntegrationRepository,
-  MemberRepository,
-  MessageRepository,
-} from '@novu/dal';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, providers } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 import {
@@ -33,13 +27,12 @@ export class Webhook {
   constructor(
     private createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
-    private memberRepository: MemberRepository,
     private messageRepository: MessageRepository,
     private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
-    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const { providerOrIntegrationId } = command;
     const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
     const channel: ChannelTypeEnum = command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS;
 
@@ -61,15 +54,12 @@ export class Webhook {
       throw new ApiException(`Integration ${integration._id} doesn't have credentials set up`);
     }
 
-    const member = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    if (member) {
-      this.analyticsService.track('[Webhook] - Provider Webhook called', member._userId, {
-        _organization: command.organizationId,
-        _environmentId: command.environmentId,
-        providerId: integration.providerId,
-        channel,
-      });
-    }
+    this.analyticsService.track('[Webhook] - Provider Webhook called', '', {
+      _organization: command.organizationId,
+      _environmentId: command.environmentId,
+      providerId: integration.providerId,
+      channel,
+    });
 
     this.createProvider(integration, command.type);
 
@@ -79,15 +69,13 @@ export class Webhook {
 
     const events = await this.parseEvents(command, integration.providerId, channel);
 
-    if (member) {
-      this.analyticsService.track('[Webhook] - Provider Webhook events parsed', member._userId, {
-        _organization: command.organizationId,
-        _environmentId: command.environmentId,
-        providerId: integration.providerId,
-        channel,
-        events,
-      });
-    }
+    this.analyticsService.track('[Webhook] - Provider Webhook events parsed', '', {
+      _organization: command.organizationId,
+      _environmentId: command.environmentId,
+      providerId: integration.providerId,
+      channel,
+      events,
+    });
 
     return events;
   }
@@ -97,7 +85,7 @@ export class Webhook {
     providerId: string,
     channel: ChannelTypeEnum
   ): Promise<IWebhookResult[]> {
-    const body = command.body;
+    const { body } = command;
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
@@ -153,7 +141,7 @@ export class Webhook {
       message,
       webhook: {
         ...command,
-        providerId: providerId,
+        providerId,
       },
       webhookEvent: parsedEvent,
       channel,

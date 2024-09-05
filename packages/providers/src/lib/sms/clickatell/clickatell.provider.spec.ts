@@ -23,7 +23,7 @@ test('should trigger clickatellSmsProvider library correctly', async () => {
   expect(spy).toHaveBeenCalledWith(
     'https://platform.clickatell.com/messages',
     { binary: true, content: 'Test', to: ['+2347089736898'] },
-    { headers: { Authorization: '<clickatell-api-key>' } }
+    { headers: { Authorization: '<clickatell-api-key>' } },
   );
 });
 
@@ -49,7 +49,7 @@ test('should trigger clickatellSmsProvider library correctly with _passthrough',
           binary: false,
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();
@@ -57,6 +57,6 @@ test('should trigger clickatellSmsProvider library correctly with _passthrough',
   expect(spy).toHaveBeenCalledWith(
     'https://platform.clickatell.com/messages',
     { binary: false, content: 'Test', to: ['+2347089736898'] },
-    { headers: { Authorization: '<clickatell-api-key>' } }
+    { headers: { Authorization: '<clickatell-api-key>' } },
   );
 });

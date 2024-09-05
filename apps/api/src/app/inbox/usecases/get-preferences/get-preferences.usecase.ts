@@ -7,8 +7,9 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
-import { ISubscriberPreferences, PreferenceLevelEnum } from '@novu/shared';
+import { PreferenceLevelEnum } from '@novu/shared';
 import { AnalyticsEventsEnum } from '../../utils';
+import { InboxPreference } from '../../utils/types';
 import { GetPreferencesCommand } from './get-preferences.command';
 
 @Injectable()
@@ -21,7 +22,7 @@ export class GetPreferences {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: GetPreferencesCommand): Promise<ISubscriberPreferences[]> {
+  async execute(command: GetPreferencesCommand): Promise<InboxPreference[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
@@ -68,12 +69,12 @@ export class GetPreferences {
           level: PreferenceLevelEnum.TEMPLATE,
           workflow: {
             id: workflow._id,
+            identifier: workflow.triggers[0].identifier,
             name: workflow.name,
             critical: workflow.critical,
             tags: workflow.tags,
-            triggers: workflow.triggers,
           },
-        };
+        } satisfies InboxPreference;
       })
     );
 

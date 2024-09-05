@@ -30,7 +30,7 @@ test('should trigger eazy-sms library correctly', async () => {
         Authorization: 'Bearer test-key',
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
 });
 
@@ -58,6 +58,6 @@ test('should trigger eazy-sms library correctly with _passthrough', async () => 
         Authorization: 'Bearer test-key',
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
 });

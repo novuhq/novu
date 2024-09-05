@@ -68,7 +68,7 @@ describe('Get Integrations - /integrations (GET)', function () {
     const activeEmailIntegrations = activeIntegrations
       .filter(
         (integration) =>
-          integration.channel == ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
+          integration.channel === ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
       )
       .filter((integration) => integration.providerId !== EmailProviderIdEnum.Novu);
 

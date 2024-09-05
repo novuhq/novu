@@ -12,7 +12,10 @@ interface IGetVercelConfiguration {
 
 @Injectable()
 export class GetVercelProjects {
-  constructor(private httpService: HttpService, private organizationRepository: OrganizationRepository) {}
+  constructor(
+    private httpService: HttpService,
+    private organizationRepository: OrganizationRepository
+  ) {}
 
   async execute(command: GetVercelProjectsCommand) {
     try {
@@ -62,7 +65,7 @@ export class GetVercelProjects {
     }
 
     const response = await lastValueFrom(
-      this.httpService.get(`${process.env.VERCEL_BASE_URL}/v4/projects${queryParams ? `?${queryParams}` : ''}`, {
+      this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects${queryParams ? `?${queryParams}` : ''}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

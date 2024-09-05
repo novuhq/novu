@@ -4,10 +4,10 @@ import { useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
 
+import { colors, Text, Button, PageMeta } from '@novu/design-system';
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import { SignUpForm } from './components/SignUpForm';
-import { colors, Text, Button } from '@novu/design-system';
 import { useAuth } from '../../hooks/useAuth';
 import { ROUTES } from '../../constants/routes';
 import { useAcceptInvite } from './components/useAcceptInvite';
@@ -66,24 +66,22 @@ export default function InvitationPage() {
    * before the next rendering cycle that will actually redirect the next page. We will tackle this in a separate PR.
    */
   if (currentUser) {
+    const title = 'Accept invite';
+
     return (
-      <AuthLayout
-        title="Active Session!"
-        customDescription={
-          <Center inline mb={40} mt={20}>
-            <Text size="lg" color={colors.B60}>
-              {isLoggedInAsInvitedUser && isAcceptingInvite ? (
-                <p>Accepting invitation...</p>
-              ) : (
-                <p>
-                  The invitation is not valid for user with email ${currentUser.email}. Please log in with the right
-                  user.
-                </p>
-              )}
-            </Text>
-          </Center>
-        }
-      >
+      <AuthLayout title={title}>
+        <PageMeta title={title} />
+        <Center inline mb={40} mt={20}>
+          <Text size="lg" color={colors.B60}>
+            {isLoggedInAsInvitedUser && isAcceptingInvite ? (
+              <p>Accepting invitation...</p>
+            ) : (
+              <p>
+                The invitation is not valid for user with email ${currentUser.email}. Please log in with the right user.
+              </p>
+            )}
+          </Text>
+        </Center>
         <Button data-test-id="success-screen-reset" onClick={() => logout()} inherit>
           Log out
         </Button>
@@ -99,31 +97,30 @@ export default function InvitationPage() {
     );
   }
 
+  const title = existingUserId ? 'Sign In & Accept Invite' : 'Get Started';
+
   return (
-    <AuthLayout
-      title={existingUserId ? 'Sign In & Accept Invite' : 'Get Started'}
-      customDescription={
-        inviterFirstName && organizationName ? (
-          <Center inline mb={60} mt={20} data-test-id="invitation-description">
-            <Text size="lg" mr={4} color={colors.B60}>
-              {"You've been invited by "}
-            </Text>
-            <Text size="lg" weight="bold" mr={4}>
-              {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
-            </Text>
-            <Text size="lg" mr={4} color={colors.B60}>
-              {' to join '}
-            </Text>
-            <Text size="lg" weight="bold">
-              {organizationName}
-            </Text>
-            <Text size="lg" color={colors.B60}>
-              .
-            </Text>
-          </Center>
-        ) : undefined
-      }
-    >
+    <AuthLayout title={title}>
+      <PageMeta title={title} />
+      inviterFirstName && organizationName && (
+      <Center inline mb={60} mt={20} data-test-id="invitation-description">
+        <Text size="lg" mr={4} color={colors.B60}>
+          {"You've been invited by "}
+        </Text>
+        <Text size="lg" weight="bold" mr={4}>
+          {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
+        </Text>
+        <Text size="lg" mr={4} color={colors.B60}>
+          {' to join '}
+        </Text>
+        <Text size="lg" weight="bold">
+          {organizationName}
+        </Text>
+        <Text size="lg" color={colors.B60}>
+          .
+        </Text>
+      </Center>
+      )
       <Form email={data?.email} invitationToken={invitationToken} />
     </AuthLayout>
   );

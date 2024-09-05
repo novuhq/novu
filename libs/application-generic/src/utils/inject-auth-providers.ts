@@ -10,6 +10,7 @@ import {
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
+import { PinoLogger } from '../logging';
 import {
   AnalyticsService,
   CommunityAuthService,
@@ -27,7 +28,7 @@ import { CreateUser, SwitchOrganization } from '../usecases';
 export function injectCommunityAuthProviders(
   { repositoriesOnly }: { repositoriesOnly?: boolean } = {
     repositoriesOnly: true,
-  }
+  },
 ) {
   const userRepositoryProvider = {
     provide: 'USER_REPOSITORY',
@@ -55,7 +56,7 @@ export function injectCommunityAuthProviders(
       organizationRepository: OrganizationRepository,
       environmentRepository: EnvironmentRepository,
       memberRepository: MemberRepository,
-      switchOrganizationUsecase: SwitchOrganization
+      switchOrganizationUsecase: SwitchOrganization,
     ) => {
       return new CommunityAuthService(
         userRepository,
@@ -66,7 +67,7 @@ export function injectCommunityAuthProviders(
         organizationRepository,
         environmentRepository,
         memberRepository,
-        switchOrganizationUsecase
+        switchOrganizationUsecase,
       );
     },
     inject: [
@@ -84,10 +85,10 @@ export function injectCommunityAuthProviders(
 
   const userAuthGuardProvider = {
     provide: 'USER_AUTH_GUARD',
-    useFactory: (reflector: Reflector) => {
-      return new CommunityUserAuthGuard(reflector);
+    useFactory: (reflector: Reflector, logger: PinoLogger) => {
+      return new CommunityUserAuthGuard(reflector, logger);
     },
-    inject: [Reflector],
+    inject: [Reflector, PinoLogger],
   };
 
   if (repositoriesOnly) {

@@ -1,11 +1,11 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
 import { ClerkProp, ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { useColorScheme } from '@novu/design-system';
 import { dark } from '@clerk/themes';
-import { buildClerk } from './clerk-singleton';
 import { Variables } from '@clerk/types';
+import { buildClerk } from './clerk-singleton';
+import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '../../../config/index';
 
 const CLERK_LOCALIZATION = {
   userProfile: {
@@ -16,13 +16,169 @@ const CLERK_LOCALIZATION = {
       security: 'Access security',
     },
   },
-
+  organizationProfile: {
+    membersPage: {
+      requestsTab: { autoSuggestions: { headerTitle: '' } },
+      invitationsTab: { autoInvitations: { headerTitle: '' } },
+    },
+  },
   userButton: {
-    action__signOut: 'Log Out',
+    action__signOut: 'Log out',
+    action__signOutAll: 'Log out from all accounts',
+    action__manageAccount: 'Settings',
   },
 };
 
 const CLERK_MODAL_ELEMENT = {
+  organizationSwitcherPopoverMain: { backgroundColor: 'var(--nv-colors-surface-panel-subsection)' },
+  userPreviewMainIdentifier: {
+    fontWeight: 'var(--nv-font-weights-strong)',
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+  },
+  userPreview: {
+    gap: 'var(--nv-spacing-75)',
+  },
+  userPreviewSecondaryIdentifier: {
+    color: 'var(--nv-colors-typography-text-secondary)',
+  },
+  userPreviewAvatarContainer: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+  },
+  userPreviewAvatarBox: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+  },
+  userButtonPopoverFooter: {
+    borderStyle: 'none',
+    borderWidth: '0 !important',
+    background: 'inherit',
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection) !important',
+  },
+  userButtonPopoverCard: {
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    borderStyle: 'none',
+    borderWidth: '0 !important',
+  },
+  userButtonPopoverActionButton: {
+    fontWeight: 'var(--nv-font-weights-strong)',
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+    borderStyle: 'none',
+    borderWidth: '0 !important',
+  },
+  /*
+   * PLAT-146 this should be uncommented when the linked task is done
+   * button__manageAccount: {
+   *   backgroundColor: 'var(--nv-colors-surface-panel-section)',
+   *   borderStyle: 'none',
+   *   boxShadow: 'unset !important',
+   *   fontSize: 'var(--nv-font-sizes-75)',
+   *   borderRadius: 'var(--nv-radii-75)',
+   *   height: '24px',
+   * },
+   * button__signOut: {
+   *   backgroundColor: 'var(--nv-colors-surface-panel-section)',
+   *   borderStyle: 'none',
+   *   boxShadow: 'unset !important',
+   *   fontSize: 'var(--nv-font-sizes-75)',
+   *   borderRadius: 'var(--nv-radii-75)',
+   *   height: '24px',
+   * },
+   */
+  organizationPreviewMainIdentifier: {
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+  },
+  organizationPreviewSecondaryIdentifier: {
+    color: 'var(--nv-colors-typography-text-secondary)',
+  },
+  userButtonPopoverActionButtonIconBox__addAccount: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+    flex: 'none',
+  },
+  userButtonPopoverActionButtonIcon__addAccount: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+    '& circle': {
+      r: 18,
+      'stroke-opacity': 0,
+    },
+  },
+  userButtonPopoverActionButton__signOutAll: {
+    gap: 'var(--nv-spacing-75)',
+    '&:hover': {
+      color: 'var(--nv-colors-typography-text-main)',
+    },
+  },
+  userButtonPopoverActionButton__addAccount: {
+    gap: 'var(--nv-spacing-75)',
+    '&:hover': {
+      color: 'var(--nv-colors-typography-text-main)',
+    },
+  },
+  userButtonPopoverActionButtonIconBox__signOutAll: {
+    width: 'var(--nv-sizes-icon-24)',
+    height: 'var(--nv-sizes-icon-24)',
+    margin: '0 var(--nv-spacing-margins-icons-icon20-icon20)',
+    flex: 'none',
+  },
+  userButtonPopoverActionButtonIcon__signOutAll: {
+    width: 'var(--nv-sizes-xs)',
+    height: 'var(--nv-sizes-xs)',
+  },
+  organizationSwitcherPopoverActionButtonIconBox: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+    flex: 'none',
+  },
+  organizationSwitcherPopoverActionButtonIcon: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+    '& circle': {
+      r: 18,
+      'stroke-opacity': 0,
+    },
+  },
+  organizationSwitcherPopoverActionButton: {
+    borderWidth: '0 !important',
+    borderStyle: 'none',
+    lineHeight: 'var(--nv-line-heights-125)',
+    color: 'var(--nv-colors-typography-text-main)',
+    fontFamily: 'var(--nv-fonts-system)',
+    fontSize: 'var(--nv-font-sizes-88)',
+    fontWeight: 'var(--nv-font-weights-strong)',
+    gap: 'var(--nv-spacing-75)',
+    padding: 'var(--nv-spacing-100) var(--nv-spacing-125)',
+    '&:hover': {
+      color: 'var(--nv-colors-typography-text-main) !important',
+    },
+  },
+  organizationSwitcherTrigger: {
+    '.cl-organizationPreview': {
+      gap: 'var(--nv-spacing-75)',
+      '.cl-organizationPreviewAvatarContainer > .cl-organizationPreviewAvatarBox': {
+        width: 'var(--nv-sizes-icon-20)',
+        height: 'var(--nv-sizes-icon-20)',
+      },
+    },
+  },
+  organizationSwitcherPreviewButton: {
+    borderWidth: '0 !important',
+    borderStyle: 'none',
+  },
+  organizationSwitcherPopoverCard: {
+    borderWidth: '0',
+    borderStyle: 'none',
+  },
+
+  organizationPreviewAvatarBox: {
+    width: 'var(--nv-sizes-m)',
+    height: 'var(--nv-sizes-m)',
+  },
+
   modalContent: {
     width: '80rem',
     display: 'block',
@@ -34,10 +190,18 @@ const CLERK_MODAL_ELEMENT = {
     width: '100%',
   },
   scrollBox: {
-    backgroundColor: 'var(--nv-colors-surface-page)',
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    padding: '0',
+  },
+  pageScrollBox: {
+    padding: '0',
+  },
+  profileSectionItemList__organizationDomains: {
+    display: 'none',
   },
   userButtonPopoverMain: {
-    backgroundColor: 'var(--nv-colors-surface-page)',
+    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    boxShadow: 'unset !important',
   },
   rootBox: {
     width: 'auto',
@@ -67,7 +231,7 @@ const CLERK_MODAL_ELEMENT = {
     fontSize: 'var(--nv-font-sizes-88)',
     paddingTop: 'var(--nv-spacing-50)',
     paddingBottom: 'var(--nv-spacing-50)',
-    opacity: '1',
+    opacity: 'var(--nv-opacity-100)',
     color: 'var(--nv-colors-typography-text-secondary)',
     '&.cl-active': {
       color: 'var(--nv-colors-typography-text-main)',
@@ -75,24 +239,24 @@ const CLERK_MODAL_ELEMENT = {
       '& svg': {
         color: 'var(--nv-colors-typography-text-main)',
         fill: 'var(--nv-colors-typography-text-main)',
-        opacity: '1',
+        opacity: 'var(--nv-opacity-100)',
       },
     },
     '&:hover, &:focus, &:active': {
       color: 'var(--nv-colors-typography-text-main)',
       background: 'var(--nv-colors-surface-page)',
-      opacity: '1',
+      opacity: 'var(--nv-opacity-100)',
       '& svg': {
         color: 'var(--nv-colors-typography-text-main)',
         fill: 'var(--nv-colors-typography-text-main)',
-        opacity: '1',
+        opacity: 'var(--nv-opacity-100)',
       },
     },
   },
   navbarButtonIcon: {
     height: 'var(--nv-sizes-125)',
     width: 'var(--nv-sizes-125)',
-    opacity: '1',
+    opacity: 'var(--nv-opacity-100)',
   },
   impersonationFab: {
     backgroundColor: 'var(--nv-colors-surface-page)',
@@ -104,7 +268,7 @@ const CLERK_OVERRIDE_VARIABLES: Variables = {
   fontSize: 'var(--nv-font-sizes-88)',
 };
 
-const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', location.origin];
+const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
 
 export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const { colorScheme } = useColorScheme();

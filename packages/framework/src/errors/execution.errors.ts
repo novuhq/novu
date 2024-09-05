@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
 import { BadRequestError, FrameworkError } from './base.errors';
 
@@ -59,6 +58,17 @@ export class ExecutionStateResultInvalidError extends BadRequestError {
   constructor(workflowId: string, stepId: string, data: unknown) {
     super(
       `Workflow with id: \`${workflowId}\` has an invalid state. Step with id: \`${stepId}\` has invalid result. Please provide the correct step result.`
+    );
+    this.data = data;
+  }
+}
+
+export class StepControlCompilationFailedError extends BadRequestError {
+  code = ErrorCodeEnum.STEP_CONTROL_COMPILATION_FAILED_ERROR;
+
+  constructor(workflowId: string, stepId: string, data: unknown) {
+    super(
+      `Workflow with id: \`${workflowId}\` has invalid controls syntax in step with id: \`${stepId}\`. Please correct step control syntax.`
     );
     this.data = data;
   }

@@ -5,4 +5,5 @@ export type Subscriber = {
   email?: string;
   phone?: string;
   avatar?: string;
+  locale?: string;
 };

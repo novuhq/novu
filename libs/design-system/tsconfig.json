@@ -18,12 +18,5 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "."
   },
-  "exclude": [
-    "src/**/*.test.*",
-    "src/**/*.stories.*",
-    "src/*.test.*",
-    "node_modules",
-    "**/node_modules/*",
-    "setup-tests.ts"
-  ]
+  "exclude": ["node_modules", "src/**/*.stories.*"]
 }

@@ -44,7 +44,7 @@ export default createStyles(
             color: novuTheme.header?.fontColor,
           },
         },
-        ['&[data-active]']: {
+        '&[data-active]': {
           width: 'auto',
           [`.mantine-Badge-root`]: {
             background: novuTheme.header?.badgeColor,

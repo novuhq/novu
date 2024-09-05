@@ -1,9 +1,9 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
-import { StepTypeEnum, WorkflowTypeEnum } from '@novu/shared';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { WorkflowTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
+import { BridgeServer } from '../../../../e2e/bridge.server';
 
 describe('Bridge Sync - /bridge/sync (POST)', async () => {
   let session: UserSession;
@@ -16,14 +16,6 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
       type: 'object',
       properties: {
         showButton: { type: 'boolean', default: true },
-      },
-    },
-  };
-  const outputPostPayload = {
-    schema: {
-      type: 'object',
-      properties: {
-        username: { type: 'string', default: 'firstName' },
       },
     },
   };
@@ -65,8 +57,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
           'send-email',
           async (controls) => {
             return {
-              subject: 'This is an email subject ' + controls.name,
-              body: 'Body result ' + payload.name,
+              subject: `This is an email subject ${controls.name}`,
+              body: `Body result ${payload.name}`,
             };
           },
           {
@@ -91,6 +83,42 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
       }
     );
     await bridgeServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+    expect(result.body.data?.length).to.equal(1);
+
+    const workflowsCount = await workflowsRepository.find({ _environmentId: session.environment._id });
+    const workflowData = await workflowsRepository.findById(result.body.data[0]._id, session.environment._id);
+
+    expect(workflowData).to.be.ok;
+    if (!workflowData) {
+      throw new Error('Workflow not found');
+    }
+
+    expect(workflowsCount.length).to.equal(1);
+
+    expect(workflowData.name).to.equal(workflowId);
+    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
+    expect(workflowData.rawData.workflowId).to.equal(workflowId);
+    expect(workflowData.triggers[0].identifier).to.equal(workflowId);
+
+    expect(workflowData.steps.length).to.equal(1);
+    expect(workflowData.steps[0].stepId).to.equal('send-email');
+    expect(workflowData.steps[0].uuid).to.equal('send-email');
+    expect(workflowData.steps[0].template?.name).to.equal('send-email');
+  });
+
+  it('should create a workflow identified by a space-separated identifier', async () => {
+    const workflowId = 'My Workflow';
+    const spaceSeparatedIdWorkflow = workflow(workflowId, async ({ step }) => {
+      await step.email('send-email', () => ({
+        subject: 'Welcome!',
+        body: 'Hello there',
+      }));
+    });
+    await bridgeServer.start({ workflows: [spaceSeparatedIdWorkflow] });
 
     const result = await session.testAgent.post(`/v1/bridge/sync`).send({
       bridgeUrl: bridgeServer.serverPath,
@@ -182,8 +210,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
           'send-email',
           async (controls) => {
             return {
-              subject: 'This is an email subject ' + controls.name,
-              body: 'Body result ' + payload.name,
+              subject: `This is an email subject ${controls.name}`,
+              body: `Body result ${payload.name}`,
             };
           },
           {
@@ -224,8 +252,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
           'send-email-2',
           async (controls) => {
             return {
-              subject: 'This is an email subject ' + controls.name,
-              body: 'Body result ' + payload.name,
+              subject: `This is an email subject ${controls.name}`,
+              body: `Body result ${payload.name}`,
             };
           },
           {

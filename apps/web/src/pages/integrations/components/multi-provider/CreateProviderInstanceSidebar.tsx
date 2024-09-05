@@ -118,7 +118,7 @@ export function CreateProviderInstanceSidebar({
         channel: selectedChannel,
         name: data.name,
         credentials: {},
-        active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
+        active: true,
         check: false,
         conditions,
         _environmentId: environmentId,
@@ -130,7 +130,7 @@ export function CreateProviderInstanceSidebar({
         name: data.name,
         environmentId,
       });
-      successMessage('Instance configuration is created');
+      successMessage('Integration was created');
       onIntegrationCreated(integrationId ?? '');
 
       queryClient.refetchQueries({
@@ -251,7 +251,7 @@ export function CreateProviderInstanceSidebar({
             <Radio.Group
               styles={inputStyles}
               sx={{
-                ['.mantine-Group-root']: {
+                '.mantine-Group-root': {
                   paddingTop: 0,
                   paddingLeft: '10px',
                 },

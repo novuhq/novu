@@ -6,9 +6,9 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import { IEmailJsConfig } from './emailjs.config';
 import type { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { IEmailJsConfig } from './emailjs.config';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -25,7 +25,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
   private async ensureClientInitialized() {
     if (!this.client) {
       const { host, port, secure: ssl, user, password } = this.config;
-      // eslint-disable-next-line @typescript-eslint/naming-convention
+
       const { SMTPClient: EmailJsClient } = await import('emailjs');
       this.client = new EmailJsClient({
         host,
@@ -39,7 +39,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
 
   async sendMessage(
     emailOptions: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     await this.ensureClientInitialized();
 
@@ -57,16 +57,14 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
       headers['reply-to'] = emailOptions.replyTo;
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { Message: EmailJsMessage } = await import('emailjs');
     const sent = await this.client?.sendAsync(
       new EmailJsMessage(
-        this.transform(bridgeProviderData, headers).body as Message['header']
-      )
+        this.transform(bridgeProviderData, headers).body as Message['header'],
+      ),
     );
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       id: sent.header['message-id']!,
       date: sent.header.date,
     };
@@ -89,7 +87,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     return {
       success: true,

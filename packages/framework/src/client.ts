@@ -1,9 +1,11 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
+import {} from './types';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
+  StepControlCompilationFailedError,
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
   ExecutionProviderOutputInvalidError,
@@ -35,13 +37,12 @@ import type {
 } from './types';
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, sanitizeHtmlInObject } from './utils';
-import { cloneData } from './utils/clone.utils';
 import { transformSchema, validateData } from './validators';
 
 /**
  * We want to respond with a consistent string value for preview
  */
-JSONSchemaFaker.random.shuffle = function () {
+JSONSchemaFaker.random.shuffle = function shuffle() {
   return ['[placeholder]'];
 };
 
@@ -74,7 +75,7 @@ export class Client {
   private buildOptions(providedOptions?: ClientOptions) {
     const builtConfiguration: { secretKey?: string; strictAuthentication: boolean } = {
       secretKey: undefined,
-      strictAuthentication: isRuntimeInDevelopment() ? false : true,
+      strictAuthentication: !isRuntimeInDevelopment(),
     };
 
     builtConfiguration.secretKey =
@@ -175,12 +176,15 @@ export class Client {
         case 'event':
           this.throwInvalidEvent(dataType, workflowId, result.errors);
 
+        // eslint-disable-next-line no-fallthrough
         case 'step':
           this.throwInvalidStep(stepId, dataType, workflowId, result.errors);
 
+        // eslint-disable-next-line no-fallthrough
         case 'provider':
           this.throwInvalidProvider(stepId, providerId, dataType, workflowId, result.errors);
 
+        // eslint-disable-next-line no-fallthrough
         default:
           throw new Error(`Invalid component: '${component}'`);
       }
@@ -261,14 +265,23 @@ export class Client {
   ): ActionStep<T_Outputs, T_Result> {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
-      const eventClone = cloneData(event);
-      const controls = await this.createStepControls(step, eventClone);
+      const controls = await this.createStepControls(step, event);
       const isPreview = event.action === 'preview';
 
       if (!isPreview && (await this.shouldSkip(options?.skip as typeof step.options.skip, controls))) {
-        const skippedResult: Omit<ExecuteOutput, 'metadata'> = { options: { skip: true }, outputs: {}, providers: {} };
-        setResult(skippedResult);
+        if (stepId === event.stepId) {
+          // Only set the result when the step is the current step.
+          setResult({
+            options: { skip: true },
+            outputs: {},
+            providers: {},
+          });
+        }
 
+        /*
+         * Return an empty object for results when a step is skipped.
+         * TODO: fix typings when `skip` is specified to return `Partial<T_Result>`
+         */
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return {} as any;
       }
@@ -334,7 +347,12 @@ export class Client {
       [PostActionEnum.PREVIEW]: 'Previewing',
     };
 
-    const actionMessage = actionMessages[event.action];
+    const actionMessage = (() => {
+      if (event.action === 'execute') return 'Executed';
+      if (event.action === 'preview') return 'Previewed';
+
+      return 'Invalid action';
+    })();
     const actionMessageFormatted = `${actionMessage} workflowId:`;
     // eslint-disable-next-line no-console
     console.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
@@ -347,13 +365,25 @@ export class Client {
       providers: {},
       options: { skip: false },
     };
-    let resolveEarlyExit: (value?: unknown) => void;
-    const earlyExitPromise = new Promise((resolve) => {
-      resolveEarlyExit = resolve;
-    });
 
+    let concludeExecution: (value?: unknown) => void;
+    const concludeExecutionPromise = new Promise((resolve) => {
+      concludeExecution = resolve;
+    });
+    /**
+     * Set the result of the workflow execution.
+     *
+     * In order to exit evaluation of the Workflow's `execute` method when the specified
+     * `stepId` is reached, we need to `Promise.race` the `concludeExecutionPromise` with the
+     * `workflow.execute` method. By resolving the `concludeExecutionPromise` when setting the result,
+     * we can ensure that the `workflow.execute` method is not evaluated after the `stepId` is reached.
+     *
+     * This function should only be called once per workflow execution.
+     *
+     * @param stepResult The result of the workflow execution.
+     */
     const setResult = (stepResult: Omit<ExecuteOutput, 'metadata'>): void => {
-      resolveEarlyExit();
+      concludeExecution();
       result = stepResult;
     };
 
@@ -375,7 +405,7 @@ export class Client {
         payload: executionData,
       };
       await Promise.race([
-        earlyExitPromise,
+        concludeExecutionPromise,
         workflow.execute({
           payload: executionData,
           environment: {},
@@ -401,10 +431,11 @@ export class Client {
 
     const elapsedSeconds = endTime[0];
     const elapsedNanoseconds = endTime[1];
-    const elapsedTimeInMilliseconds = elapsedSeconds * 1000 + elapsedNanoseconds / 1_000_000;
+    const elapsedTimeInMilliseconds = elapsedSeconds * 1_000 + elapsedNanoseconds / 1_000_000;
 
     const emoji = executionError ? EMOJI.ERROR : EMOJI.SUCCESS;
     const resultMessage =
+      // eslint-disable-next-line no-nested-ternary
       event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
     // eslint-disable-next-line no-console
     console.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
@@ -452,6 +483,7 @@ export class Client {
   private prettyPrintExecute(event: Event, duration: number, error?: Error): void {
     const successPrefix = error ? EMOJI.ERROR : EMOJI.SUCCESS;
     const actionMessage =
+      // eslint-disable-next-line no-nested-ternary
       event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
@@ -471,25 +503,29 @@ export class Client {
     step: DiscoverStepOutput,
     outputs: Record<string, unknown>
   ): Promise<Record<string, WithPassthrough<Record<string, unknown>>>> {
-    return step.providers.reduce(async (acc, provider) => {
-      const result = await acc;
-      const previewProviderHandler = this.previewProvider.bind(this);
-      const executeProviderHandler = this.executeProvider.bind(this);
-      const handler = event.action === 'preview' ? previewProviderHandler : executeProviderHandler;
+    return step.providers.reduce(
+      async (acc, provider) => {
+        const result = await acc;
+        const previewProviderHandler = this.previewProvider.bind(this);
+        const executeProviderHandler = this.executeProvider.bind(this);
+        const handler = event.action === 'preview' ? previewProviderHandler : executeProviderHandler;
 
-      const providerResult = await handler(event, step, provider, outputs);
+        const providerResult = await handler(event, step, provider, outputs);
 
-      return {
-        ...result,
-        [provider.type]: providerResult,
-      };
-    }, Promise.resolve({} as Record<string, WithPassthrough<Record<string, unknown>>>));
+        return {
+          ...result,
+          [provider.type]: providerResult,
+        };
+      },
+      Promise.resolve({} as Record<string, WithPassthrough<Record<string, unknown>>>)
+    );
   }
 
   private previewProvider(
     event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
+
     outputs: Record<string, unknown>
   ): Record<string, unknown> {
     // eslint-disable-next-line no-console
@@ -589,7 +625,7 @@ export class Client {
         const result = event.state.find((state) => state.stepId === step.stepId);
 
         if (result) {
-          const validatedResult = await this.validate(
+          const validatedOutput = await this.validate(
             result.outputs,
             step.results.unknownSchema,
             'step',
@@ -603,8 +639,8 @@ export class Client {
           });
 
           return {
-            outputs: validatedResult,
-            providers: await this.executeProviders(event, step, validatedResult),
+            outputs: validatedOutput,
+            providers: await this.executeProviders(event, step, validatedOutput),
           };
         } else {
           throw new ExecutionStateCorruptError(event.workflowId, step.stepId);
@@ -620,14 +656,20 @@ export class Client {
   }
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
-    const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
+    try {
+      const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
-    const compiledString = await this.templateEngine.render(templateString, {
-      ...(event.payload || event.data),
-      subscriber: event.subscriber,
-    });
+      const compiledString = await this.templateEngine.render(templateString, {
+        payload: event.payload || event.data,
+        subscriber: event.subscriber,
+        // Backwards compatibility, for allowing usage of variables without namespace (e.g. `{{name}}` instead of `{{payload.name}}`)
+        ...(event.payload || event.data),
+      });
 
-    return JSON.parse(compiledString);
+      return JSON.parse(compiledString);
+    } catch (error) {
+      throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
+    }
   }
 
   /**
@@ -732,8 +774,4 @@ export class Client {
 
     return getCodeResult;
   }
-}
-
-function clone<Result>(data: unknown) {
-  return JSON.parse(JSON.stringify(data)) as Result;
 }

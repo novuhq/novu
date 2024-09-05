@@ -1,6 +1,6 @@
 {
   "name": "@novu/nest",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0",
   "description": "A nestjs wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -19,9 +19,9 @@
     "build:module": "tsc -p tsconfig.module.json",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
-    "fix:lint": "eslint src --ext .ts --fix",
+    "lint:fix": "eslint src --fix",
     "test": "run-s test:*",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
     "test:unit": "echo \"No unit tests\"",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
@@ -35,7 +35,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@nestjs/common": "10.2.2",
+    "@nestjs/common": "10.4.1",
     "@novu/stateless": "workspace:*"
   },
   "devDependencies": {

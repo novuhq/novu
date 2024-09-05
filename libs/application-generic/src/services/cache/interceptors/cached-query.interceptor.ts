@@ -4,7 +4,6 @@ import { CacheService } from '../cache.service';
 
 const LOG_CONTEXT = 'CachedQueryInterceptor';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export function CachedQuery({ builder }: { builder: (...args) => string }) {
   const injectCache = Inject(CacheService);
 
@@ -13,6 +12,7 @@ export function CachedQuery({ builder }: { builder: (...args) => string }) {
     const methodName = key;
     injectCache(target, 'cacheService');
 
+    // eslint-disable-next-line no-param-reassign
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled())
         return await originalMethod.apply(this, args);
@@ -34,7 +34,7 @@ export function CachedQuery({ builder }: { builder: (...args) => string }) {
         Logger.error(
           err,
           `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
 
@@ -46,7 +46,7 @@ export function CachedQuery({ builder }: { builder: (...args) => string }) {
         Logger.error(
           err,
           `An error has occurred when inserting key: ${cacheKey} in method: ${methodName}`,
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       }
 

@@ -10,11 +10,11 @@ const LOG_CONTEXT = 'ActiveJobsMetricWorkerService';
 @Injectable()
 export class ActiveJobsMetricWorkerService extends WorkerBaseService {
   constructor(
-    private workflowInMemoryProvider: WorkflowInMemoryProviderService
+    private workflowInMemoryProvider: WorkflowInMemoryProviderService,
   ) {
     super(
       JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-      new BullMqService(workflowInMemoryProvider)
+      new BullMqService(workflowInMemoryProvider),
     );
   }
 }

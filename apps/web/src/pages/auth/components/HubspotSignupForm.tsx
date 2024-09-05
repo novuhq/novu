@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useMantineColorScheme } from '@mantine/core';
 
-import { FeatureFlagsKeysEnum, ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
-import { JobTitleEnum } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  ICreateOrganizationDto,
+  IResponseError,
+  ProductUseCases,
+  JobTitleEnum,
+} from '@novu/shared';
+import { successMessage } from '@novu/design-system';
 import { useAuth, useFeatureFlag, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { HubspotForm } from '../../../ee/billing/components/HubspotForm';
@@ -13,7 +19,6 @@ import { api } from '../../../api/api.client';
 import { ROUTES } from '../../../constants/routes';
 import { HUBSPOT_FORM_IDS } from '../../../constants/hubspotForms';
 import SetupLoader from './SetupLoader';
-import { successMessage } from '@novu/design-system';
 
 export function HubspotSignupForm() {
   const [loading, setLoading] = useState<boolean>();
@@ -37,8 +42,6 @@ export function HubspotSignupForm() {
       if (currentOrganization) {
         if (isFromVercel) {
           startVercelSetup();
-
-          return;
         }
       }
     }
@@ -54,7 +57,7 @@ export function HubspotSignupForm() {
     // TODO: Move this into useAuth
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
-    login(organizationResponseToken, isV2Enabled ? ROUTES.WORKFLOWS + '?onboarding=true' : ROUTES.GET_STARTED);
+    login(organizationResponseToken, isV2Enabled ? `${ROUTES.WORKFLOWS}?onboarding=true` : ROUTES.GET_STARTED);
   }
 
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -74,7 +77,7 @@ export function HubspotSignupForm() {
 
       return;
     }
-    navigate(isV2Enabled ? ROUTES.WORKFLOWS + '?onboarding=true' : ROUTES.GET_STARTED);
+    navigate(isV2Enabled ? `${ROUTES.WORKFLOWS}?onboarding=true` : ROUTES.GET_STARTED);
   };
 
   if (!currentUser || loading) {

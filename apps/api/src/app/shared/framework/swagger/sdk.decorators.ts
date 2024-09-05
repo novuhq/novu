@@ -6,7 +6,7 @@ import { ApiExtension } from '@nestjs/swagger';
  * @param {string} methodName - The name of the method.
  * @returns {Decorator} The decorator to be used on the method.
  */
-//eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function SdkMethodName(methodName: string) {
   return applyDecorators(ApiExtension('x-speakeasy-name-override', methodName));
 }
@@ -16,7 +16,7 @@ export function SdkMethodName(methodName: string) {
  * @param {string} methodName - The name of the group.
  * @returns {Decorator} The decorator to be used on the method.
  */
-//eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function SdkGroupName(methodName: string) {
   return applyDecorators(ApiExtension('x-speakeasy-group', methodName));
 }
@@ -26,7 +26,7 @@ export function SdkGroupName(methodName: string) {
  * @param {string} methodName - The name of the method.
  * @returns {Decorator} The decorator to be used on the method.
  */
-//eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function SdkIgnorePath(methodName: string) {
   return applyDecorators(ApiExtension('x-speakeasy-ignore', 'true'));
 }
@@ -38,7 +38,7 @@ export function SdkIgnorePath(methodName: string) {
  * @param {number} position - The position of the example.
  * @returns {Decorator} The decorator to be used on the method.
  */
-//eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function SdkUsageExample(title?: string, description?: string, position?: number) {
   return applyDecorators(ApiExtension('x-speakeasy-usage-example', { title, description, position }));
 }
@@ -48,7 +48,7 @@ export function SdkUsageExample(title?: string, description?: string, position?:
  * @param {number} maxParamsBeforeCollapseToObject - The maximum number of parameters before they are collapsed into an object.
  * @returns {Decorator} The decorator to be used on the method.
  */
-//eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function SdkMethodMaxParamsOverride(maxParamsBeforeCollapseToObject?: number) {
   return applyDecorators(ApiExtension('x-speakeasy-max-method-params', maxParamsBeforeCollapseToObject));
 }
@@ -58,7 +58,7 @@ export function SdkMethodMaxParamsOverride(maxParamsBeforeCollapseToObject?: num
  * @param {string} override - The override for the limit parameter.
  * @returns {Decorator} The decorator to be used on the method.
  */
-//eslint-disable-next-line @typescript-eslint/naming-convention
+
 export function SdkUsePagination(override?: string) {
   return applyDecorators(
     ApiExtension('x-speakeasy-pagination', {

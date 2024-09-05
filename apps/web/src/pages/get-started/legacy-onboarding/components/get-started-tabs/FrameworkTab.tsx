@@ -1,13 +1,13 @@
-import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { css, cx } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
-import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
-import { AdditionInformationLink } from '../AdditionInformationLink';
-import { CodeSnippet } from '../CodeSnippet';
 import { text, title } from '@novu/novui/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 import { useEffect } from 'react';
 import { useMantineTheme } from '@mantine/core';
+import { CodeSnippet } from '../CodeSnippet';
+import { AdditionInformationLink } from '../AdditionInformationLink';
+import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
+import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { useFrameworkTerminalScript } from '../../../../../hooks/useFrameworkTerminalScript';
 
 const link = 'https://docs.novu.co/framework/quickstart';
@@ -34,7 +34,7 @@ export const FrameworkTab = ({ className }: { className?: string }) => {
 
   useEffect(() => {
     const tabs = document.getElementsByClassName('nv-terminal-tab');
-    for (let i = 0; i < tabs.length; i++) {
+    for (let i = 0; i < tabs.length; i += 1) {
       const tab = tabs[i];
       tab.addEventListener('click', () => {
         segment.track(`Code snippet tab clicked - [Get Started]`, {

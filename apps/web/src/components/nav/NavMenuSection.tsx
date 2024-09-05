@@ -1,8 +1,8 @@
 import { FC } from 'react';
 import { styled, Stack } from '@novu/novui/jsx';
 import { text } from '@novu/novui/recipes';
-import { LocalizedMessage } from '../../types/LocalizedMessage';
 import { css } from '@novu/novui/css';
+import { LocalizedMessage } from '../../types/LocalizedMessage';
 
 interface INavMenuSectionProps {
   title?: LocalizedMessage;

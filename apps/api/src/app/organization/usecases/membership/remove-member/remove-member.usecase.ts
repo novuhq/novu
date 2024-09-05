@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { OrganizationRepository, MemberRepository, EnvironmentRepository } from '@novu/dal';
+import { MemberRepository, EnvironmentRepository } from '@novu/dal';
 import { RemoveMemberCommand } from './remove-member.command';
 import { ApiException } from '../../../../shared/exceptions/api.exception';
 
@@ -8,7 +8,6 @@ import { ApiException } from '../../../../shared/exceptions/api.exception';
 })
 export class RemoveMember {
   constructor(
-    private organizationRepository: OrganizationRepository,
     private memberRepository: MemberRepository,
     private environmentRepository: EnvironmentRepository
   ) {}

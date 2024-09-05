@@ -27,7 +27,7 @@ export interface IFilePath {
 export abstract class StorageService {
   abstract getSignedUrl(
     key: string,
-    contentType: string
+    contentType: string,
   ): Promise<{
     signedUrl: string;
     path: string;
@@ -36,7 +36,7 @@ export abstract class StorageService {
   abstract uploadFile(
     key: string,
     file: Buffer,
-    contentType: string
+    contentType: string,
   ): Promise<PutObjectCommandOutput>;
   abstract getFile(key: string): Promise<Buffer>;
   abstract deleteFile(key: string): Promise<void>;
@@ -60,7 +60,7 @@ export class S3StorageService implements StorageService {
   async uploadFile(
     key: string,
     file: Buffer,
-    contentType: string
+    contentType: string,
   ): Promise<PutObjectCommandOutput> {
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
@@ -126,7 +126,7 @@ export class GCSStorageService implements StorageService {
   async uploadFile(
     key: string,
     file: Buffer,
-    contentType: string
+    contentType: string,
   ): Promise<PutObjectCommandOutput> {
     if (!process.env.GCS_BUCKET_NAME)
       throw new Error('GCS_BUCKET_NAME is not defined as env variable');
@@ -195,24 +195,24 @@ export class GCSStorageService implements StorageService {
 export class AzureBlobStorageService implements StorageService {
   private sharedKeyCredential = new StorageSharedKeyCredential(
     process.env.AZURE_ACCOUNT_NAME as string,
-    process.env.AZURE_ACCOUNT_KEY as string
+    process.env.AZURE_ACCOUNT_KEY as string,
   );
   private blobServiceClient = new BlobServiceClient(
     process.env.AZURE_HOST_NAME ||
       `https://${process.env.AZURE_ACCOUNT_NAME}.blob.core.windows.net`,
-    this.sharedKeyCredential
+    this.sharedKeyCredential,
   );
 
   async uploadFile(
     key: string,
     file: Buffer,
-    contentType: string
+    contentType: string,
   ): Promise<PutObjectCommandOutput> {
     if (!process.env.AZURE_CONTAINER_NAME)
       throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
 
     const containerClient = this.blobServiceClient.getContainerClient(
-      process.env.AZURE_CONTAINER_NAME
+      process.env.AZURE_CONTAINER_NAME,
     );
     const blockBlobClient = containerClient.getBlockBlobClient(key);
 
@@ -228,7 +228,7 @@ export class AzureBlobStorageService implements StorageService {
       throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
 
     const containerClient = this.blobServiceClient.getContainerClient(
-      process.env.AZURE_CONTAINER_NAME
+      process.env.AZURE_CONTAINER_NAME,
     );
     const blockBlobClient = containerClient.getBlockBlobClient(key);
 
@@ -247,7 +247,7 @@ export class AzureBlobStorageService implements StorageService {
       throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
 
     const containerClient = this.blobServiceClient.getContainerClient(
-      process.env.AZURE_CONTAINER_NAME
+      process.env.AZURE_CONTAINER_NAME,
     );
     const blockBlobClient = containerClient.getBlockBlobClient(key);
     blockBlobClient.delete();
@@ -267,9 +267,9 @@ export class AzureBlobStorageService implements StorageService {
         startsOn: new Date(),
         expiresOn: new Date(new Date().valueOf() + 60 * 60 * 1000), // 60 minutes
         protocol: SASProtocol.HttpsAndHttp,
-        contentType: contentType,
+        contentType,
       },
-      this.sharedKeyCredential
+      this.sharedKeyCredential,
     ).toString();
 
     const signedUrl = `${blobClient.url}?${blobSAS}`;
@@ -283,7 +283,7 @@ export class AzureBlobStorageService implements StorageService {
     return {
       signedUrl,
       path,
-      additionalHeaders: additionalHeaders,
+      additionalHeaders,
     };
   }
 }

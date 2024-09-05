@@ -22,7 +22,7 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const payload: IMattermostPayload = { text: data.content };
 
@@ -31,7 +31,7 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
     }
     const response = await this.axiosInstance.post(
       data.webhookUrl,
-      this.transform(bridgeProviderData, payload).body
+      this.transform(bridgeProviderData, payload).body,
     );
 
     return {

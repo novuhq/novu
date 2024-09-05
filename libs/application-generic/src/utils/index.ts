@@ -10,3 +10,4 @@ export * from './object';
 export * from './bridge';
 export * from './subscriber';
 export * from './variants';
+export * from './deepmerge';

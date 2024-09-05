@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Patch, Query, UseGua
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { SubscriberEntity } from '@novu/dal';
-import { ISubscriberPreferences, MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
+import { MessageActionStatusEnum, PreferenceLevelEnum } from '@novu/shared';
 
 import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
@@ -18,7 +18,7 @@ import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-
 import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
 import { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
 import { NotificationsCountCommand } from './usecases/notifications-count/notifications-count.command';
-import { InboxNotification } from './utils/types';
+import type { InboxNotification, InboxPreference } from './utils/types';
 import { MarkNotificationAsCommand } from './usecases/mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from './usecases/mark-notification-as/mark-notification-as.usecase';
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
@@ -225,7 +225,7 @@ export class InboxController {
   async updateGlobalPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: UpdatePreferencesRequestDto
-  ): Promise<ISubscriberPreferences> {
+  ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -247,7 +247,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('workflowId') workflowId: string,
     @Body() body: UpdatePreferencesRequestDto
-  ): Promise<ISubscriberPreferences> {
+  ): Promise<InboxPreference> {
     return await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,

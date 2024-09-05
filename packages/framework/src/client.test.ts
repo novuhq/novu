@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeEach } from 'vitest';
+import { expect, it, describe, beforeEach, vi } from 'vitest';
 
 import { Client } from './client';
 import {
@@ -8,9 +8,8 @@ import {
   WorkflowNotFoundError,
 } from './errors';
 import { workflow } from './resources';
-import { Event, Step, FromSchema } from './types';
-import { delayOutputSchema, channelStepSchemas } from './schemas';
-import { FRAMEWORK_VERSION, SDK_VERSION, ChannelStepEnum, PostActionEnum } from './constants';
+import { Event, Step } from './types';
+import { FRAMEWORK_VERSION, SDK_VERSION, PostActionEnum } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -167,7 +166,7 @@ describe('Novu Client', () => {
         }));
 
         await step.digest('timed-digest', async () => ({
-          cron: '0 0-23/1 * * *', //EVERY_HOUR
+          cron: '0 0-23/1 * * *', // EVERY_HOUR
         }));
 
         await step.delay('delay', async () => ({
@@ -180,7 +179,9 @@ describe('Novu Client', () => {
       client.addWorkflows([newWorkflow]);
 
       // wait for discovery to finish
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1);
+      });
 
       const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(2);
@@ -273,7 +274,7 @@ describe('Novu Client', () => {
           }),
           {
             providers: {
-              slack: async ({ controls }) => {
+              slack: async () => {
                 return {
                   blocks: [
                     {
@@ -317,7 +318,7 @@ describe('Novu Client', () => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + controls.name,
+                subject: `body static prefix ${controls.name}`,
                 body: controls.name,
               };
             },
@@ -325,7 +326,7 @@ describe('Novu Client', () => {
               controlSchema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string', default: '{{name}}' },
+                  name: { type: 'string', default: '{{payload.name}}' },
                 },
                 required: [],
                 additionalProperties: false,
@@ -366,7 +367,7 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe('body static prefix John');
     });
 
@@ -444,11 +445,11 @@ describe('Novu Client', () => {
 
   describe('executeWorkflow method', () => {
     it('should execute workflow successfully when action is execute and payload is provided', async () => {
-      const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
-      const emailConfiguration: FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.EMAIL]['output']> = {
+      const delayConfiguration = { unit: 'seconds', amount: 1 } as const;
+      const emailConfiguration = {
         body: 'Test Body',
         subject: 'Subject',
-      };
+      } as const;
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => emailConfiguration);
         await step.delay('delay', async () => delayConfiguration);
@@ -473,12 +474,12 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toBe(emailConfiguration.body);
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe(emailConfiguration.subject);
       expect(emailExecutionResult.providers).toEqual({});
-      const metadata = emailExecutionResult.metadata;
+      const { metadata } = emailExecutionResult;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
@@ -509,16 +510,192 @@ describe('Novu Client', () => {
       expect(delayExecutionResult).toBeDefined();
       expect(delayExecutionResult.outputs).toBeDefined();
       if (!delayExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const unit = delayExecutionResult.outputs.unit;
+      const { unit } = delayExecutionResult.outputs;
       expect(unit).toBe(delayConfiguration.unit);
-      const amount = delayExecutionResult.outputs.amount;
+      const { amount } = delayExecutionResult.outputs;
       expect(amount).toBe(delayConfiguration.amount);
       expect(delayExecutionResult.providers).toEqual({});
-      const type = delayExecutionResult.outputs.type;
-      expect(type).toBe(delayConfiguration.type);
+      const { type } = delayExecutionResult.outputs;
+      expect(type).toBe('regular');
     });
 
     it('should compile default control variable', async () => {
+      const bodyTemplate = `
+{% for element in payload.elements %}
+  {{ element }}
+{% endfor %}`;
+
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => {
+              return {
+                subject: `body static prefix ${controls.name} ${controls.lastName} ${controls.role}`,
+                body: controls.body,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: '{{payload.name}}' },
+                  lastName: { type: 'string', default: '{{subscriber.lastName}}' },
+                  role: { type: 'string', default: '{{payload.role}}' },
+                  body: { type: 'string', default: bodyTemplate },
+                },
+                required: [],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: '`default_name`' },
+              role: { type: 'string' },
+              elements: { type: 'array' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: { role: 'product manager', elements: ['cat', 'dog'] },
+        payload: { role: 'product manager', elements: ['cat', 'dog'] },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {
+          lastName: "Smith's",
+        },
+        state: [],
+        inputs: {},
+        controls: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const { subject } = emailExecutionResult.outputs;
+      expect(subject).toBe("body static prefix `default_name` Smith's product manager");
+      const { body } = emailExecutionResult.outputs;
+      expect(body).toContain('cat');
+      expect(body).toContain('dog');
+    });
+
+    // skipped until we implement support for control variables https://linear.app/novu/issue/NV-4248/support-for-controls-in-autocomplete
+    it.skip('should compile control variables used in other control variables', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email(
+          'send-email',
+          async (controls) => ({
+            body: controls.body,
+            subject: controls.subject,
+          }),
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                body: { type: 'string' },
+                subject: { type: 'string' },
+              },
+              required: ['body', 'subject'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: {},
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: 'body {{controls.subject}}',
+          subject: 'subject',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const { subject } = emailExecutionResult.outputs;
+      expect(subject).toBe('subject');
+      const { body } = emailExecutionResult.outputs;
+      expect(body).toBe('body subject');
+    });
+
+    // skipped until we implement support for control variables https://linear.app/novu/issue/NV-4248/support-for-controls-in-autocomplete
+    it.skip('should compile control variables nested in the same control variables', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email(
+          'send-email',
+          async (controls) => ({
+            body: controls.body,
+            subject: controls.subject,
+          }),
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                body: { type: 'string' },
+                subject: { type: 'string' },
+              },
+              required: ['body', 'subject'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: {},
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: 'body',
+          subject: 'subject {{controls.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const { subject } = emailExecutionResult.outputs;
+      expect(subject).toBe('subject subject {{controls.subject}}');
+      const { body } = emailExecutionResult.outputs;
+      expect(body).toBe('body');
+    });
+
+    it('should compile default control variable with backwards compatability for payload variables', async () => {
       const bodyTemplate = `
 {% for element in elements %}
   {{ element }}
@@ -531,7 +708,7 @@ describe('Novu Client', () => {
             'send-email',
             async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                subject: `body static prefix ${controls.name} ${controls.lastName} ${controls.role}`,
                 body: controls.body,
               };
             },
@@ -585,9 +762,9 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const subject = emailExecutionResult.outputs.subject;
+      const { subject } = emailExecutionResult.outputs;
       expect(subject).toBe("body static prefix `default_name` Smith's product manager");
-      const body = emailExecutionResult.outputs.body;
+      const { body } = emailExecutionResult.outputs;
       expect(body).toContain('cat');
       expect(body).toContain('dog');
     });
@@ -677,7 +854,7 @@ describe('Novu Client', () => {
             additionalProperties: false,
           } as const,
           providers: {
-            sendgrid: async ({ controls, outputs }) => ({
+            sendgrid: async () => ({
               _passthrough: {
                 body: {
                   fooBody: 'barBody',
@@ -783,12 +960,103 @@ describe('Novu Client', () => {
       });
     });
 
+    it('should evaluate code in the provided stepId', async () => {
+      const mockFn = vi.fn();
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('active-step-id', async () => {
+          mockFn();
+
+          return { body: 'Test Body', subject: 'Subject' };
+        });
+        await step.email('inactive-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }));
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'active-step-id',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await client.executeWorkflow(event);
+
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT evaluate code in steps after the provided stepId', async () => {
+      const mockFn = vi.fn();
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('active-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }));
+        await step.email('inactive-step-id', async () => {
+          mockFn();
+
+          return { body: 'Test Body', subject: 'Subject' };
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'active-step-id',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await client.executeWorkflow(event);
+
+      expect(mockFn).toHaveBeenCalledTimes(0);
+    });
+
+    it('should evaluate code in steps after a skipped step', async () => {
+      const mockFn = vi.fn();
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('skipped-step-id', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          skip: () => true,
+        });
+        await step.email('active-step-id', async () => {
+          mockFn();
+
+          return { body: 'Test Body', subject: 'Subject' };
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'active-step-id',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await client.executeWorkflow(event);
+
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
     it('should preview with mocked payload during preview', async () => {
       const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
-          // eslint-disable-next-line @typescript-eslint/no-base-to-string
-          await step.email('send-email', async () => ({ body: 'Test: ' + payload.name, subject: 'Subject' }));
+          await step.email('send-email', async () => ({ body: `Test: ${payload.name}`, subject: 'Subject' }));
         },
         {
           payloadSchema: {
@@ -847,15 +1115,15 @@ describe('Novu Client', () => {
       expect(executionResult.outputs).toBeDefined();
       if (!executionResult.outputs) throw new Error('executionResult.outputs is undefined');
 
-      const body = executionResult.outputs.body;
+      const { body } = executionResult.outputs;
       expect(body).toBe('Test Body');
 
-      const subject = executionResult.outputs.subject;
+      const { subject } = executionResult.outputs;
       expect(subject).toBe('Subject');
 
       expect(executionResult.providers).toEqual({});
 
-      const metadata = executionResult.metadata;
+      const { metadata } = executionResult;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
@@ -888,15 +1156,15 @@ describe('Novu Client', () => {
       expect(executionResult.outputs).toBeDefined();
       if (!executionResult.outputs) throw new Error('executionResult.outputs is undefined');
 
-      const body = executionResult.outputs.body;
+      const { body } = executionResult.outputs;
       expect(body).toBe('Test Body');
 
-      const subject = executionResult.outputs.subject;
+      const { subject } = executionResult.outputs;
       expect(subject).toBe('Subject');
 
       expect(executionResult.providers).toEqual({});
 
-      const metadata = executionResult.metadata;
+      const { metadata } = executionResult;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));

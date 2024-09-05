@@ -88,9 +88,9 @@ export async function createTenant({
   return await axiosInstance.post(
     `${session.serverUrl}/v1/tenants`,
     {
-      identifier: identifier,
-      name: name,
-      data: data,
+      identifier,
+      name,
+      data,
     },
     {
       headers: {

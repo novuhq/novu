@@ -204,7 +204,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findOne({
+    const updatedSubscriber = await subscriberRepository.findOne({
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
@@ -239,7 +239,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findOne({
+    const updatedSubscriber = await subscriberRepository.findOne({
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
@@ -274,7 +274,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findOne({
+    const updatedSubscriber = await subscriberRepository.findOne({
       _id: subscriber._id,
       _environmentId: subscriber._environmentId,
     });
@@ -426,13 +426,13 @@ describe('Update Subscriber channel credentials', function () {
       phone: faker.phone.phoneNumber(),
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      subscriberId: subscriberId,
+      subscriberId,
     });
 
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: session.organization._id,
-        subscriberId: subscriberId,
+        subscriberId,
         environmentId: session.environment._id,
         providerId: PushProviderIdEnum.FCM,
         credentials: { deviceTokens: ['token_1', 'token_1', 'token_1'] },
@@ -441,7 +441,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+    const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
     const addedFcmToken = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
 

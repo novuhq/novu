@@ -71,10 +71,6 @@ export abstract class WorkflowBaseSidePanelPage extends BasePage {
 }
 
 export class WorkflowSettingsSidePanel extends WorkflowBaseSidePanelPage {
-  constructor(page: Page) {
-    super(page);
-  }
-
   public getTitleLocator() {
     return this.page.getByTestId('title');
   }

@@ -79,12 +79,9 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(
-      command.environmentId,
-      command.bridgeUrl
-    );
+    const { environment } = await this.isStatelessWorkflowAllowed(command.environmentId, command.bridgeUrl);
 
-    if (statelessWorkflowAllowed && environment) {
+    if (environment) {
       const discoveredWorkflow = await this.queryDiscoverWorkflow(command, environment);
 
       if (!discoveredWorkflow) {
@@ -169,6 +166,7 @@ export class ParseEventRequest {
     if (command.payload && Array.isArray(command.payload.attachments)) {
       this.modifyAttachments(command);
       await this.storageHelperService.uploadAttachments(command.payload.attachments);
+      // eslint-disable-next-line no-param-reassign
       command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
@@ -178,6 +176,7 @@ export class ParseEventRequest {
         template,
       })
     );
+    // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
     await this.sendInAppNudgeForTeamMemberInvite(command);
@@ -291,6 +290,7 @@ export class ParseEventRequest {
   }
 
   private modifyAttachments(command: ParseEventRequestCommand): void {
+    // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
 
@@ -304,7 +304,7 @@ export class ParseEventRequest {
   }
 
   private getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
-    const reservedVariables = template.triggers[0].reservedVariables;
+    const { reservedVariables } = template.triggers[0];
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }

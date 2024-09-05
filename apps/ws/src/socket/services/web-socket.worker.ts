@@ -1,4 +1,3 @@
-const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
@@ -10,8 +9,10 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
-import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
+
+const nr = require('newrelic');
 
 const LOG_CONTEXT = 'WebSocketWorker';
 
@@ -29,7 +30,6 @@ export class WebSocketWorker extends WebSocketsWorkerService {
   private getWorkerProcessor() {
     return async (job) => {
       return new Promise((resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
         Logger.log(`Job ${job.id} / ${job.data.event} is being processed WebSocketWorker`, LOG_CONTEXT);

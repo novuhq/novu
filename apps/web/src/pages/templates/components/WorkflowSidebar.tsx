@@ -1,8 +1,7 @@
 import { ReactNode } from 'react';
-import { Title } from '@mantine/core';
+import { Title, useMantineColorScheme } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { colors, Sidebar } from '@novu/design-system';
-import { useMantineColorScheme } from '@mantine/core';
 
 import { useBasePath } from '../hooks/useBasePath';
 

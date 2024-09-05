@@ -17,7 +17,7 @@ export class ExecutionLogRoute {
     private createExecutionDetails: CreateExecutionDetails,
     @Inject(forwardRef(() => ExecutionLogQueueService))
     private executionLogQueueService: ExecutionLogQueueService,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
   ) {}
 
   async execute(command: ExecutionLogRouteCommand) {
@@ -27,7 +27,7 @@ export class ExecutionLogRoute {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-      })
+      }),
     );
 
     switch (isEnabled) {
@@ -47,7 +47,7 @@ export class ExecutionLogRoute {
       }
       case false: {
         await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create(command)
+          CreateExecutionDetailsCommand.create(command),
         );
         break;
       }

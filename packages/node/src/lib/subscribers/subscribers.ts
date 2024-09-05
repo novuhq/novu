@@ -3,8 +3,9 @@ import {
   ButtonTypeEnum,
   IChannelCredentials,
   ISubscribersDefine,
+  MessagesStatusEnum,
+  PreferenceLevelEnum,
 } from '@novu/shared';
-import { MessagesStatusEnum, PreferenceLevelEnum } from '@novu/shared';
 import {
   IGetSubscriberNotificationFeedParams,
   IMarkFields,
@@ -53,7 +54,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
     subscriberId: string,
     providerId: string,
     credentials: IChannelCredentials,
-    integrationIdentifier?: string
+    integrationIdentifier?: string,
   ) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
@@ -66,7 +67,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async deleteCredentials(subscriberId: string, providerId: string) {
     return await this.http.delete(
-      `/subscribers/${subscriberId}/credentials/${providerId}`
+      `/subscribers/${subscriberId}/credentials/${providerId}`,
     );
   }
 
@@ -96,32 +97,32 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async getGlobalPreference(subscriberId: string) {
     return await this.http.get(
-      `/subscribers/${subscriberId}/preferences/${PreferenceLevelEnum.GLOBAL}`
+      `/subscribers/${subscriberId}/preferences/${PreferenceLevelEnum.GLOBAL}`,
     );
   }
 
   async getPreferenceByLevel(subscriberId: string, level: PreferenceLevelEnum) {
     return await this.http.get(
-      `/subscribers/${subscriberId}/preferences/${level}`
+      `/subscribers/${subscriberId}/preferences/${level}`,
     );
   }
 
   async updatePreference(
     subscriberId: string,
     templateId: string,
-    data: IUpdateSubscriberPreferencePayload
+    data: IUpdateSubscriberPreferencePayload,
   ) {
     return await this.http.patch(
       `/subscribers/${subscriberId}/preferences/${templateId}`,
       {
         ...data,
-      }
+      },
     );
   }
 
   async updateGlobalPreference(
     subscriberId: string,
-    data: IUpdateSubscriberGlobalPreferencePayload
+    data: IUpdateSubscriberGlobalPreferencePayload,
   ) {
     return await this.http.patch(`/subscribers/${subscriberId}/preferences`, {
       ...data,
@@ -130,7 +131,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async getNotificationsFeed(
     subscriberId: string,
-    { payload, ...rest }: IGetSubscriberNotificationFeedParams = {}
+    { payload, ...rest }: IGetSubscriberNotificationFeedParams = {},
   ) {
     const payloadString = payload
       ? Buffer.from(JSON.stringify(payload)).toString('base64')
@@ -143,7 +144,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
           payload: payloadString,
           ...rest,
         },
-      }
+      },
     );
   }
 
@@ -154,7 +155,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
         params: {
           seen,
         },
-      }
+      },
     );
   }
 
@@ -167,7 +168,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
       {
         messageId,
         mark: { seen: true },
-      }
+      },
     );
   }
 
@@ -180,32 +181,32 @@ export class Subscribers extends WithHttp implements ISubscribers {
       {
         messageId,
         mark: { read: true },
-      }
+      },
     );
   }
 
   async markMessageAs(
     subscriberId: string,
     messageId: string,
-    mark: IMarkFields
+    mark: IMarkFields,
   ) {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/markAs`,
       {
         messageId,
         mark,
-      }
+      },
     );
   }
 
   async markAllMessagesAs(
     subscriberId: string,
     markAs: MessagesStatusEnum,
-    feedIdentifier?: string | string[]
+    feedIdentifier?: string | string[],
   ): Promise<AxiosResponse<{ data: number }>> {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/mark-all`,
-      { markAs, feedIdentifier }
+      { markAs, feedIdentifier },
     );
   }
 
@@ -213,14 +214,14 @@ export class Subscribers extends WithHttp implements ISubscribers {
     subscriberId: string,
     messageId: string,
     type: ButtonTypeEnum,
-    data: IMarkMessageActionFields
+    data: IMarkMessageActionFields,
   ) {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/${messageId}/actions/${type}`,
       {
         status: data.status,
         ...(data?.payload && { payload: data.payload }),
-      }
+      },
     );
   }
 }

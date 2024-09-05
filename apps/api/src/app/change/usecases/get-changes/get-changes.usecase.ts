@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { Injectable, Logger } from '@nestjs/common';
 import {
   ChangeEntity,
@@ -9,10 +10,10 @@ import {
   LayoutRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ModuleRef } from '@nestjs/core';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ModuleRef } from '@nestjs/core';
 
 interface IViewEntity {
   templateName: string;
@@ -83,7 +84,7 @@ export class GetChanges {
       return list;
     }, Promise.resolve([]));
 
-    return { data: changes, totalCount: totalCount, page: command.page, pageSize: command.limit };
+    return { data: changes, totalCount, page: command.page, pageSize: command.limit };
   }
 
   private async getTemplateDataForMessageTemplate(
@@ -127,6 +128,7 @@ export class GetChanges {
         _id: entityId,
         _environmentId: environmentId,
       });
+      // eslint-disable-next-line prefer-destructuring
       item = items[0];
     }
 
@@ -221,6 +223,7 @@ export class GetChanges {
 
     if (!item) {
       const items = await this.feedRepository.findDeleted({ _id: entityId, _environmentId: environmentId });
+      // eslint-disable-next-line prefer-destructuring
       item = items[0];
       if (!item) {
         Logger.error(`Could not find feed for id ${entityId}`);

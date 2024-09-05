@@ -4,19 +4,21 @@ import { CSSProperties, forwardRef, useContext } from 'react';
 import { Button, IButtonProps } from '../button/Button';
 import { colors } from '../config';
 import { IPaginationContext, PaginationContext } from './PaginationContext';
+
 export type TPageButtonClickHandler = (ctx: IPaginationContext) => void;
 
 type StylingProps = Pick<IControlButtonProps, 'isCurrentPage'>;
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): string => {
+  // eslint-disable-next-line no-nested-ternary
   return theme.colorScheme === 'dark'
     ? isCurrentPage
       ? colors.white
       : colors.B60
     : isCurrentPage
-    ? colors.BGDark // TODO: speak with Design -- this is bad, we should not be using a "BG" color for font
-    : colors.B60;
+      ? colors.BGDark // TODO: speak with Design -- this is bad, we should not be using a "BG" color for font
+      : colors.B60;
 };
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
@@ -26,6 +28,7 @@ const getFontWeight = ({ theme, isCurrentPage }: { theme: any } & StylingProps):
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getBackgroundColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): CSSProperties['fontWeight'] => {
+  // eslint-disable-next-line no-nested-ternary
   return isCurrentPage ? (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight) : 'none';
 };
 

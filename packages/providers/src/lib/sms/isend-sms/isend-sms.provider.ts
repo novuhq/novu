@@ -45,7 +45,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
       apiToken: string;
       from?: string;
       contentType?: ISendSmsData['sms_type'];
-    }
+    },
   ) {
     super();
     this.Instance = axios.create({
@@ -60,7 +60,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.transform(bridgeProviderData, {
       sender_id: options.from ?? this.config.from,
@@ -71,7 +71,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
 
     const response = await this.Instance.post<ISendSmsResponse>(
       '/api/v3/sms/send',
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
 
     if (['success', 'error'].includes(response.data.status)) {
@@ -82,7 +82,7 @@ export class ISendSmsProvider extends BaseProvider implements ISmsProvider {
         };
       else
         throw new Error(
-          response.data.message ?? 'Unexpected response while sending the SMS!'
+          response.data.message ?? 'Unexpected response while sending the SMS!',
         );
     } else throw new Error('Something went wrong while sending the SMS!');
   }

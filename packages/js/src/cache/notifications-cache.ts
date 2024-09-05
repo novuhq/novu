@@ -140,10 +140,6 @@ export class NotificationsCache {
       });
     };
 
-  private has(args: ListNotificationsArgs): boolean {
-    return this.#cache.get(getCacheKey(args)) !== undefined;
-  }
-
   private getAggregated(filter: NotificationFilter): ListNotificationsResponse {
     const cacheKeys = this.#cache.keys().filter((key) => {
       const parsedFilter = getFilter(key);
@@ -169,16 +165,26 @@ export class NotificationsCache {
       );
   }
 
+  has(args: ListNotificationsArgs): boolean {
+    return this.#cache.get(getCacheKey(args)) !== undefined;
+  }
+
   set(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
     this.#cache.set(getCacheKey(args), data);
+  }
+
+  update(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
+    this.set(args, data);
+    const notificationsResponse = this.getAggregated(getFilter(getCacheKey(args)));
+    this.#emitter.emit('notifications.list.updated', {
+      data: notificationsResponse,
+    });
   }
 
   getAll(args: ListNotificationsArgs): ListNotificationsResponse | undefined {
     if (this.has(args)) {
       return this.getAggregated({ tags: args.tags, read: args.read, archived: args.archived });
     }
-
-    return;
   }
 
   /**

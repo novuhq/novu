@@ -21,7 +21,7 @@ export class DiscordProvider extends BaseProvider implements IChatProvider {
 
   async sendMessage(
     data: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     // Setting the wait parameter with the URL API to respect user parameters
     const url = new URL(data.webhookUrl);
@@ -31,7 +31,7 @@ export class DiscordProvider extends BaseProvider implements IChatProvider {
       this.transform(bridgeProviderData, {
         content: data.content,
         ...(data.customData || {}),
-      }).body
+      }).body,
     );
 
     return {

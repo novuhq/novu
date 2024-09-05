@@ -26,7 +26,7 @@ export class PostmarkEmailProvider
     private config: {
       apiKey: string;
       from: string;
-    }
+    },
   ) {
     super();
     this.client = new ServerClient(this.config.apiKey);
@@ -34,14 +34,14 @@ export class PostmarkEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const mailData = this.createMailData(options);
     const response = await this.client.sendEmail(
       this.transform<Message>(
         bridgeProviderData,
-        mailData as unknown as Record<string, unknown>
-      ).body
+        mailData as unknown as Record<string, unknown>,
+      ).body,
     );
 
     return {
@@ -51,7 +51,7 @@ export class PostmarkEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       const mailData = this.createMailData(options);
@@ -93,8 +93,8 @@ export class PostmarkEmailProvider
           new Models.Attachment(
             attachment.name,
             attachment.file.toString('base64'),
-            attachment.mime
-          )
+            attachment.mime,
+          ),
       ),
     };
 
@@ -115,9 +115,10 @@ export class PostmarkEmailProvider
 
   parseEventBody(
     body: any | any[],
-    identifier: string
+    identifier: string,
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
+      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.MessageID === identifier);
     }
 
@@ -132,7 +133,7 @@ export class PostmarkEmailProvider
     }
 
     return {
-      status: status,
+      status,
       date: new Date().toISOString(),
       externalId: body.MessageID,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
@@ -155,6 +156,8 @@ export class PostmarkEmailProvider
         return EmailEventStatusEnum.SPAM;
       case 'SubscriptionChange':
         return EmailEventStatusEnum.UNSUBSCRIBED;
+      default:
+        return undefined;
     }
   }
 }

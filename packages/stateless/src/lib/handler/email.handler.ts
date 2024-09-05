@@ -17,7 +17,7 @@ export class EmailHandler {
     private message: IMessage,
     private provider: IEmailProvider,
     private theme?: ITheme,
-    contentEngine?: IContentEngine
+    contentEngine?: IContentEngine,
   ) {
     this.contentEngine = contentEngine ?? new HandlebarsContentEngine();
   }
@@ -26,7 +26,7 @@ export class EmailHandler {
     const attachments = data.$attachments?.filter((item) =>
       item.channels?.length
         ? item.channels?.includes(ChannelTypeEnum.EMAIL)
-        : true
+        : true,
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,12 +42,12 @@ export class EmailHandler {
     if (typeof this.message.template === 'string') {
       html = this.contentEngine.compileTemplate(
         this.message.template,
-        templatePayload
+        templatePayload,
       );
     } else {
       html = this.contentEngine.compileTemplate(
         await this.message.template(templatePayload),
-        templatePayload
+        templatePayload,
       );
     }
 
@@ -56,12 +56,12 @@ export class EmailHandler {
     if (typeof this.message.textTemplate === 'string') {
       text = this.contentEngine.compileTemplate(
         this.message.textTemplate,
-        templatePayload
+        templatePayload,
       );
     } else if (typeof this.message.textTemplate === 'function') {
       text = this.contentEngine.compileTemplate(
         await this.message.textTemplate(templatePayload),
-        templatePayload
+        templatePayload,
       );
     }
 
@@ -74,7 +74,7 @@ export class EmailHandler {
     } else {
       throw new Error(
         `Subject must be either of 'string' or 'function' type. Type ${typeof this
-          .message.subject} passed`
+          .message.subject} passed`,
       );
     }
 
@@ -90,13 +90,13 @@ export class EmailHandler {
           ...templatePayload,
           ...themeVariables,
           body: html,
-        }
+        },
       );
     }
 
     if (!data.$email) {
       throw new Error(
-        '$email on the trigger payload is missing. To send an email, you must provider it.'
+        '$email on the trigger payload is missing. To send an email, you must provider it.',
       );
     }
 
@@ -108,7 +108,7 @@ export class EmailHandler {
         attachments,
         text,
       },
-      {}
+      {},
     );
   }
 }

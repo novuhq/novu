@@ -1,5 +1,4 @@
-import { Modal, useMantineTheme } from '@mantine/core';
-import { Center, Loader } from '@mantine/core';
+import { Modal, useMantineTheme, Center, Loader } from '@mantine/core';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';

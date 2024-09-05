@@ -60,8 +60,8 @@ describe('Inbound Mail Service', () => {
       const text = 'text';
       const _organizationId = 'inbound-mail-parse-organization-id';
       const jobData = {
-        html: html,
-        text: text,
+        html,
+        text,
       };
 
       await inboundMailService.inboundParseQueueService.add({

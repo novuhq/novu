@@ -3,12 +3,11 @@ import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { generateRandomString } from './helpers';
-import type { BaseNovuProviderProps, NovuProviderProps, Tab, Appearance, Localization } from './types';
+import type { Appearance, BaseNovuProviderProps, Localization, NovuProviderProps, Tab } from './types';
 
-// eslint-disable-next-line
 // @ts-ignore
 const isDev = __DEV__;
-// eslint-disable-next-line
+
 // @ts-ignore
 const version = PACKAGE_VERSION;
 const cssHref = isDev

@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
@@ -94,7 +95,7 @@ describe('Stripe webhooks', () => {
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { SetupIntentSucceededHandler, CustomerSubscriptionCreatedHandler, UpsertSubscription, VerifyCustomer } =
     eeBilling;
 

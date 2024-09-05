@@ -5,8 +5,8 @@ function isBrowser() {
 }
 
 function autodetectApiRoot() {
-  const origin = window.location.origin;
-  const matcher = new RegExp(/web|dashboard/);
+  const { origin } = window.location;
+  const matcher = /web|dashboard/;
 
   const isValidTargetForReplace = !origin.includes('localhost') && matcher.test(origin);
 
@@ -68,12 +68,15 @@ export const MAIL_SERVER_DOMAIN =
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
   window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
-export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce((acc, key) => {
-  const defaultValue = 'false';
-  acc[key] = window._env_[key] || process.env[key] || defaultValue;
+export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce(
+  (prev, key) => {
+    const defaultValue = 'false';
+    prev[key] = window._env_[key] || process.env[key] || defaultValue;
 
-  return acc;
-}, {} as Record<FeatureFlagsKeysEnum, string | undefined>);
+    return prev;
+  },
+  {} as Record<FeatureFlagsKeysEnum, string | undefined>
+);
 
 export const HUBSPOT_PORTAL_ID = window._env_.REACT_APP_HUBSPOT_EMBED || process.env.REACT_APP_HUBSPOT_EMBED;
 
@@ -89,9 +92,12 @@ if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
 
-export const BRIDGE_SYNC_SAMPLE_ENDPOINT = 'https://deploy-preview-1--onboarding-sandbox.netlify.app/api/novu';
+export const BRIDGE_SYNC_SAMPLE_ENDPOINT = 'https://deploy-preview-4--onboarding-sandbox.netlify.app/api/novu';
 /**
  * This is used for versioning the sandbox endpoints across revisions
  * On change, we should move the current one to the legacy list
  */
-export const BRIDGE_ENDPOINTS_LEGACY_VERSIONS = ['https://onboarding-sandbox.netlify.app/api/novu'];
+export const BRIDGE_ENDPOINTS_LEGACY_VERSIONS = [
+  'https://onboarding-sandbox.netlify.app/api/novu',
+  'https://deploy-preview-1--onboarding-sandbox.netlify.app/api/novu',
+];

@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { ErrorCodeEnum, HttpHeaderKeysEnum, SIGNATURE_TIMESTAMP_TOLERANCE_MINUTES } from '../constants';
 import { UnauthorizedError } from './base.errors';
 

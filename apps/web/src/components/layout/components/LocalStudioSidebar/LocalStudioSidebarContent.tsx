@@ -2,17 +2,19 @@ import { IconAdd } from '@novu/novui/icons';
 import { Flex, Stack } from '@novu/novui/jsx';
 import { Skeleton } from '@mantine/core';
 import { FC } from 'react';
+import { token } from '@novu/novui/tokens';
+import { css, cx } from '@novu/novui/css';
+import { WithLoadingSkeleton } from '@novu/novui';
 import { IBridgeWorkflow } from '../../../../studio/types';
 import { NavMenu } from '../../../nav/NavMenu';
 import { NavMenuSection } from '../../../nav/NavMenuSection';
 import { LocalStudioSidebarOrganizationDisplay } from './LocalStudioSidebarOrganizationDisplay';
 import { LocalStudioSidebarToggleButton } from './LocalStudioSidebarToggleButton';
-import { token } from '@novu/novui/tokens';
-import { css, cx } from '@novu/novui/css';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
-import { WithLoadingSkeleton } from '@novu/novui';
 import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 import { useDocsModal } from '../../../docs/useDocsModal';
+import { PATHS } from '../../../docs/docs.const';
+import { ROUTES } from '../../../../constants/routes';
 
 type LocalStudioSidebarContentProps = {
   workflows: IBridgeWorkflow[];
@@ -41,7 +43,7 @@ export const LocalStudioSidebarContent: WithLoadingSkeleton<FC<LocalStudioSideba
           <button
             onClick={(e) => {
               e.preventDefault();
-              setPath('workflow/introduction');
+              setPath(PATHS.WORKFLOW_INTRODUCTION);
               toggle();
             }}
             className={css({ width: 'full' })}

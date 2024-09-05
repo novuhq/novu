@@ -1,6 +1,8 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
 import { DalService } from '@novu/dal';
+import os from 'os';
+import { Agenda } from '@hokify/agenda';
 import {
   ACTIVE_CRON_JOBS_TOKEN,
   AgendaCronService,
@@ -9,8 +11,6 @@ import {
 } from '../services';
 import { MetricsModule } from './metrics.module';
 import { dalService as customDalService } from '../custom-providers';
-import os from 'os';
-import { Agenda } from '@hokify/agenda';
 
 /**
  * This map is a little uncomfortable because it depends on the Job topic name, coupling the Cron jobs to the
@@ -33,7 +33,7 @@ export const cronService = {
   useFactory: async (
     metricsService: MetricsService,
     activeCronJobs: JobCronNameEnum[],
-    dalService: DalService
+    dalService: DalService,
   ) => {
     const agenda = new Agenda({
       mongo: dalService.connection.getClient().db() as any,
@@ -43,12 +43,12 @@ export const cronService = {
        *
        * @see https://github.com/agenda/agenda/tree/master?tab=readme-ov-file#namename
        */
-      name: os.hostname + '-' + process.pid,
+      name: `${os.hostname}-${process.pid}`,
     });
     const service = new AgendaCronService(
       metricsService,
       activeCronJobs,
-      agenda
+      agenda,
     );
 
     return service;
@@ -76,7 +76,7 @@ export class CronModule {
 
                 return acc;
               },
-              [] as JobCronNameEnum[]
+              [] as JobCronNameEnum[],
             );
 
             const uniqueActiveJobs = [...new Set(activeJobs)];

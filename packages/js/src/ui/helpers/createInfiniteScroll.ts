@@ -1,5 +1,6 @@
 import { Accessor, batch, createComputed, createResource, createSignal, onCleanup, Setter } from 'solid-js';
 import { isServer } from 'solid-js/web';
+import { createDelayedLoading } from './createDelayedLoading';
 
 export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ data: T[]; hasMore: boolean }>): [
   data: Accessor<T[]>,
@@ -16,10 +17,10 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
         }
       | undefined
     >;
-  }
+  },
 ] {
   const [data, setData] = createSignal<T[]>([]);
-  const [initialLoading, setInitialLoading] = createSignal(true);
+  const [initialLoading, setInitialLoading] = createDelayedLoading(true, 300);
   const [offset, setOffset] = createSignal(0);
   const [end, setEnd] = createSignal(false);
   const [contents, { mutate, refetch }] = createResource(offset, fetcher);
@@ -66,8 +67,8 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     {
       initialLoading,
       setEl,
-      offset: offset,
-      end: end,
+      offset,
+      end,
       mutate,
       reset,
     },

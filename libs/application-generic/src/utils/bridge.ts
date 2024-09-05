@@ -1,8 +1,8 @@
 import { DigestTypeEnum } from '@novu/shared';
 import {
   DigestOutput,
-  digestRegularOutput,
-  digestTimedOutput,
+  DigestRegularOutput,
+  DigestTimedOutput,
 } from '@novu/framework';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
@@ -16,22 +16,22 @@ export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
 }
 
 export const isTimedDigestOutput = (
-  outputs: DigestOutput | undefined
-): outputs is digestTimedOutput => {
-  return (outputs as digestTimedOutput)?.cron != null;
+  outputs: DigestOutput | undefined,
+): outputs is DigestTimedOutput => {
+  return (outputs as DigestTimedOutput)?.cron != null;
 };
 
 export const isLookBackDigestOutput = (
-  outputs: DigestOutput
-): outputs is digestRegularOutput => {
+  outputs: DigestOutput,
+): outputs is DigestRegularOutput => {
   return (
-    (outputs as digestRegularOutput)?.lookBackWindow?.amount != null &&
-    (outputs as digestRegularOutput)?.lookBackWindow?.unit != null
+    (outputs as DigestRegularOutput)?.lookBackWindow?.amount != null &&
+    (outputs as DigestRegularOutput)?.lookBackWindow?.unit != null
   );
 };
 
 export const isRegularDigestOutput = (
-  outputs: DigestOutput
-): outputs is digestRegularOutput => {
+  outputs: DigestOutput,
+): outputs is DigestRegularOutput => {
   return !isTimedDigestOutput(outputs) && !isLookBackDigestOutput(outputs);
 };

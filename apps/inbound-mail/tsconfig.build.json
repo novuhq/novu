@@ -15,6 +15,6 @@
     "baseUrl": "./src",
     "types": ["node", "mocha"]
   },
-  "include": [".eslintrc.js", "src/**/*", "src/**/*.d.ts"],
+  "include": ["src/**/*", "src/**/*.d.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }

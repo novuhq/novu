@@ -1,6 +1,6 @@
 {
   "name": "@novu/novui",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's Design System & Component Library",
   "types": "./dist/index.d.ts",
@@ -51,8 +51,7 @@
       "require": "./styled-system/jsx/index.js",
       "import": "./styled-system/jsx/index.js"
     },
-    "./styles.css": "./styled-system/styles.css",
-    "./components.css": "./node_modules/@mantine/core/styles.layer.css"
+    "./styles.css": "./src/index.css"
   },
   "scripts": {
     "dev": "pnpm build && pnpm storybook",
@@ -63,7 +62,8 @@
     "prepare:audit": "pnpm audit-components",
     "clean": "rimraf dist styled-system",
     "prebuild": "pnpm prepare:panda",
-    "lint": "eslint --ext .ts,.tsx src",
+    "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix",
     "build": "cross-env node_modules/.bin/tsc",
     "build:watch": "pnpm panda --watch & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
     "build:storybook": "pnpm panda && storybook build",
@@ -77,7 +77,6 @@
   "devDependencies": {
     "@pandabox/prettier-plugin": "^0.1.3",
     "@pandacss/dev": "^0.42.0",
-    "@pandacss/eslint-plugin": "^0.1.5",
     "@pandacss/studio": "^0.42.0",
     "@storybook/addon-actions": "8.1.0",
     "@storybook/addon-controls": "^8.1.0",
@@ -94,8 +93,6 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.0.3",
-    "eslint-plugin-react-hooks": "^4.6.2",
-    "eslint-plugin-storybook": "^0.6.13",
     "postcss": "^8.4.38",
     "postcss-preset-mantine": "^1.15.0",
     "postcss-simple-vars": "^7.0.1",
@@ -105,7 +102,7 @@
     "rimraf": "^3.0.2",
     "storybook": "^8.1.0",
     "storybook-dark-mode": "^4.0.1",
-    "typescript": "^4.9.5",
+    "typescript": "4.9.5",
     "vite": "^4.5.2",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^1.2.1"
@@ -131,13 +128,22 @@
     }
   },
   "dependencies": {
-    "@mantine/code-highlight": "^7.10.2",
-    "@mantine/core": "^7.10.0",
-    "@mantine/hooks": "^7.10.0",
-    "@rjsf/core": "^5.17.1",
-    "@rjsf/utils": "^5.17.1",
+    "@mantine/code-highlight": "^7.12.1",
+    "@mantine/core": "^7.12.1",
+    "@mantine/hooks": "^7.12.1",
+    "@mantine/tiptap": "^7.12.1",
+    "@rjsf/core": "^5.20.0",
+    "@rjsf/utils": "^5.20.0",
     "@rjsf/validator-ajv8": "^5.17.1",
     "@tanstack/react-table": "^8.17.3",
+    "@tiptap/extension-document": "^2.6.6",
+    "@tiptap/extension-history": "^2.6.6",
+    "@tiptap/extension-mention": "^2.6.6",
+    "@tiptap/extension-paragraph": "^2.6.6",
+    "@tiptap/extension-text": "^2.6.6",
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/suggestion": "^2.6.6",
     "react-icons": "^5.0.1"
   }
 }

@@ -1,4 +1,4 @@
-import { Accessor, createContext, createEffect, createSignal, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createEffect, createSignal, ParentProps, Setter, useContext } from 'solid-js';
 import { NotificationFilter } from '../../types';
 import { NotificationStatus, Tab } from '../types';
 
@@ -6,9 +6,13 @@ type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
   status: Accessor<NotificationStatus>;
   filter: Accessor<NotificationFilter>;
+  limit: Accessor<number>;
+  setLimit: (tab: number) => void;
   tabs: Accessor<Array<Tab>>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
+  isOpened: Accessor<boolean>;
+  setIsOpened: Setter<boolean>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -19,14 +23,18 @@ const STATUS_TO_FILTER: Record<NotificationStatus, NotificationFilter> = {
   [NotificationStatus.ARCHIVED]: { archived: true },
 };
 
+export const DEFAULT_LIMIT = 10;
+
 type InboxProviderProps = ParentProps<{
   tabs: Array<Tab>;
 }>;
 
 export const InboxProvider = (props: InboxProviderProps) => {
+  const [isOpened, setIsOpened] = createSignal<boolean>(false);
   const [tabs, setTabs] = createSignal<Array<Tab>>(props.tabs);
   const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
   const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD_READ);
+  const [limit, setLimit] = createSignal<number>(DEFAULT_LIMIT);
   const [filter, setFilter] = createSignal<NotificationFilter>({
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? props.tabs[0].value : [],
@@ -63,6 +71,10 @@ export const InboxProvider = (props: InboxProviderProps) => {
         tabs,
         activeTab,
         setActiveTab: setNewActiveTab,
+        limit,
+        setLimit,
+        isOpened,
+        setIsOpened,
       }}
     >
       {props.children}

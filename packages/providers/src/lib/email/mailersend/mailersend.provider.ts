@@ -26,7 +26,7 @@ export class MailersendEmailProvider
       apiKey: string;
       from?: string;
       senderName?: string;
-    }
+    },
   ) {
     super();
     this.mailerSend = new MailerSend({ api_key: this.config.apiKey });
@@ -39,11 +39,11 @@ export class MailersendEmailProvider
   }
 
   private getAttachments(
-    attachments: IEmailOptions['attachments']
+    attachments: IEmailOptions['attachments'],
   ): Attachment[] | null {
     return attachments?.map(
       (attachment) =>
-        new Attachment(attachment.file.toString('base64'), attachment.name)
+        new Attachment(attachment.file.toString('base64'), attachment.name),
     );
   }
 
@@ -79,11 +79,11 @@ export class MailersendEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const emailParams = this.transform(
       bridgeProviderData,
-      this.createMailData(options)
+      this.createMailData(options),
     ).body;
     const response = await this.mailerSend.send(emailParams);
 
@@ -94,7 +94,7 @@ export class MailersendEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     const emailParams = this.createMailData(options);
     const emailSendResponse = await this.mailerSend.send(emailParams);

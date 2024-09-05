@@ -51,9 +51,8 @@ export class ChatOauthCallback {
 
     await this.createSubscriber(_organizationId, command, webhookUrl);
 
-    const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl != '';
+    const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl !== '';
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return { redirect, action: redirect ? integrationCredentials.redirectUrl! : this.SCRIPT_CLOSE_TAB };
   }
 
@@ -64,17 +63,17 @@ export class ChatOauthCallback {
   ): Promise<void> {
     await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
-        organizationId: organizationId,
+        organizationId,
         environmentId: command.environmentId,
         subscriberId: command?.subscriberId,
       })
     );
 
-    const subscriberCredentials: IChannelCredentialsCommand = { webhookUrl: webhookUrl, channel: command.providerId };
+    const subscriberCredentials: IChannelCredentialsCommand = { webhookUrl, channel: command.providerId };
 
     await this.updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
-        organizationId: organizationId,
+        organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         providerId: command.providerId,
@@ -100,9 +99,9 @@ export class ChatOauthCallback {
     command: ChatOauthCallbackCommand,
     integrationCredentials: ICredentialsDto
   ): Promise<string> {
-    let redirectUri =
-      process.env.API_ROOT_URL +
-      `/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/oauth/callback?environmentId=${command.environmentId}`;
+    let redirectUri = `${
+      process.env.API_ROOT_URL
+    }/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/oauth/callback?environmentId=${command.environmentId}`;
 
     if (command.integrationIdentifier) {
       redirectUri = `${redirectUri}&integrationIdentifier=${command.integrationIdentifier}`;
@@ -126,7 +125,7 @@ export class ChatOauthCallback {
     if (res?.data?.ok === false) {
       const metaData = res?.data?.response_metadata?.messages?.join(', ');
       throw new ApiException(
-        `Provider ${command.providerId} returned error ${res.data.error}${metaData ? ', metadata:' + metaData : ''}`
+        `Provider ${command.providerId} returned error ${res.data.error}${metaData ? `, metadata:${metaData}` : ''}`
       );
     }
 
@@ -181,9 +180,9 @@ export class ChatOauthCallback {
       }
 
       validateEncryption({
-        apiKey: apiKey,
-        subscriberId: subscriberId,
-        externalHmacHash: externalHmacHash,
+        apiKey,
+        subscriberId,
+        externalHmacHash,
       });
     }
   }

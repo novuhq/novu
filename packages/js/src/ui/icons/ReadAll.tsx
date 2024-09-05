@@ -1,6 +1,8 @@
-export const ReadAll = () => {
+import { JSX } from 'solid-js';
+
+export const ReadAll = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 20 20">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 20 20" {...props}>
       <path
         fill="currentColor"
         // eslint-disable-next-line max-len

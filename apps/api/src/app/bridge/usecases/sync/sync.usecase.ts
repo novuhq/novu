@@ -5,6 +5,7 @@ import {
   EnvironmentRepository,
   NotificationGroupRepository,
   NotificationTemplateEntity,
+  PreferencesActorEnum,
 } from '@novu/dal';
 import {
   AnalyticsService,
@@ -14,6 +15,8 @@ import {
   UpdateWorkflow,
   UpdateWorkflowCommand,
   ExecuteBridgeRequest,
+  UpsertPreferences,
+  UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
@@ -32,7 +35,8 @@ export class Sync {
     private notificationGroupRepository: NotificationGroupRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private upsertPreferences: UpsertPreferences
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
@@ -50,7 +54,7 @@ export class Sync {
         retriesLimit: 1,
       })) as DiscoverOutput;
     } catch (error: any) {
-      throw new BadRequestException('Bridge URL is not valid. ' + error.message);
+      throw new BadRequestException(`Bridge URL is not valid. ${error.message}`);
     }
 
     if (!discover) {
@@ -61,8 +65,9 @@ export class Sync {
       this.analyticsService.track('Sync Request - [Bridge API]', command.userId, {
         _organization: command.organizationId,
         _environment: command.environmentId,
+        environmentName: environment.name,
         workflowsCount: discover.workflows?.length || 0,
-        localEnvironment: !!command.bridgeUrl?.includes('novu.sh') ? true : false,
+        localEnvironment: !!command.bridgeUrl?.includes('novu.sh'),
         source: command.source,
       });
     }
@@ -125,8 +130,10 @@ export class Sync {
           workflow.workflowId
         );
 
+        let savedWorkflow: NotificationTemplateEntity | undefined;
+
         if (workflowExist) {
-          return await this.updateWorkflowUsecase.execute(
+          savedWorkflow = await this.updateWorkflowUsecase.execute(
             UpdateWorkflowCommand.create({
               id: workflowExist._id,
               environmentId: command.environmentId,
@@ -158,14 +165,15 @@ export class Sync {
             this.castToAnyNotSupportedParam(workflow.options)?.notificationGroupId,
             command.environmentId
           );
+
           if (!notificationGroupId) {
             throw new BadRequestException('Notification group not found');
           }
           const isWorkflowActive = this.castToAnyNotSupportedParam(workflow.options)?.active ?? true;
 
-          return this.createWorkflowUsecase.execute(
+          savedWorkflow = await this.createWorkflowUsecase.execute(
             CreateWorkflowCommand.create({
-              notificationGroupId: notificationGroupId,
+              notificationGroupId,
               draft: !isWorkflowActive,
               environmentId: command.environmentId,
               organizationId: command.organizationId,
@@ -189,12 +197,23 @@ export class Sync {
               active: isWorkflowActive,
               description: this.castToAnyNotSupportedParam(workflow.options).description,
               data: this.castToAnyNotSupportedParam(workflow).options?.data,
-              tags: workflow.tags,
+              tags: workflow.tags || [],
               critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
               preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
             })
           );
         }
+
+        await this.upsertPreferences.upsertWorkflowPreferences(
+          UpsertWorkflowPreferencesCommand.create({
+            environmentId: savedWorkflow._environmentId,
+            organizationId: savedWorkflow._organizationId,
+            templateId: savedWorkflow._id,
+            preferences: workflow.preferences,
+          })
+        );
+
+        return savedWorkflow;
       })
     );
   }

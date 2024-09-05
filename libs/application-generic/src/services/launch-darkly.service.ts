@@ -31,7 +31,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     } else {
       Logger.log(
         'Missing Launch Darkly SDK key. Launch Darkly is not initialized',
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
       this.isEnabled = false;
     }
@@ -42,13 +42,13 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       await this.client.waitForInitialization();
       Logger.log(
         'Launch Darkly SDK has been successfully initialized',
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     } catch (error) {
       Logger.error(
         error,
         'Launch Darkly SDK has failed when initialized',
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
       throw error;
     }
@@ -57,14 +57,14 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   private async get<T>(
     key: FeatureFlagsKeysEnum,
     context: LDSingleKindContext,
-    defaultValue: T
+    defaultValue: T,
   ): Promise<T> {
     return await this.client.variation(key, context, defaultValue);
   }
 
   public async getWithAnonymousContext<T>(
     key: FeatureFlagsKeysEnum,
-    defaultValue: T
+    defaultValue: T,
   ): Promise<T> {
     const anonymousUserContext = {
       key,
@@ -80,7 +80,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   public async getWithEnvironmentContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
-    environmentId: EnvironmentId
+    environmentId: EnvironmentId,
   ): Promise<T> {
     const context = this.mapToEnvironmentContext(environmentId);
 
@@ -90,7 +90,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   public async getWithOrganizationContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
-    organizationId: OrganizationId
+    organizationId: OrganizationId,
   ): Promise<T> {
     const context = this.mapToOrganizationContext(organizationId);
 
@@ -100,7 +100,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   public async getWithUserContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
-    userId: UserId
+    userId: UserId,
   ): Promise<T> {
     const context = this.mapToUserContext(userId);
 
@@ -114,13 +114,13 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         await this.client.close();
         Logger.log(
           'Launch Darkly SDK has been gracefully shut down',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
       } catch (error) {
         Logger.error(
           error,
           'Launch Darkly SDK has failed when shut down',
-          LOG_CONTEXT
+          LOG_CONTEXT,
         );
         throw error;
       }
@@ -129,7 +129,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
 
   // TODO: Unused for now.
   private mapToEnvironmentContext(
-    environmentId: EnvironmentId
+    environmentId: EnvironmentId,
   ): LDSingleKindContext {
     const launchDarklyContext = {
       kind: 'environment',
@@ -141,7 +141,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
 
   // TODO: Unused for now
   private mapToOrganizationContext(
-    organizationId: OrganizationId
+    organizationId: OrganizationId,
   ): LDSingleKindContext {
     const launchDarklyContext = {
       kind: 'organization',

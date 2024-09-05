@@ -72,5 +72,5 @@ function getValidatedPageSizeFromUrl(
 
   return pageSizes.includes(sizeValUnchecked) && sizeValUnchecked > 0
     ? sizeValUnchecked
-    : initialPageSize ?? pageSizes[0];
+    : (initialPageSize ?? pageSizes[0]);
 }

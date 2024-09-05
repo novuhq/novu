@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  MethodNotAllowedException,
   Param,
   Patch,
   Post,
@@ -14,10 +15,12 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { ApiRateLimitCategoryEnum, UserSessionData } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import {
   CreateTenant,
   CreateTenantCommand,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
   GetTenant,
   GetTenantCommand,
   UpdateTenant,
@@ -51,6 +54,8 @@ import { UserAuthentication } from '../shared/framework/swagger/api.key.security
 
 import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 
+const v2TenantsApiDescription = ' Tenants is not supported in code first version of the API.';
+
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
 @Controller('/tenants')
@@ -63,7 +68,8 @@ export class TenantController {
     private updateTenantUsecase: UpdateTenant,
     private getTenantUsecase: GetTenant,
     private deleteTenantUsecase: DeleteTenant,
-    private getTenantsUsecase: GetTenants
+    private getTenantsUsecase: GetTenants,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   @Get('')
@@ -72,13 +78,17 @@ export class TenantController {
   @ApiOkPaginatedResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenants',
-    description: 'Returns a list of tenants, could paginated using the `page` and `limit` query parameter',
+    description: `Returns a list of tenants, could paginated using the \`page\` and \`limit\` query parameter.${
+      v2TenantsApiDescription
+    }`,
   })
   @SdkUsePagination()
   async listTenants(
     @UserSession() user: UserSessionData,
     @Query() query: GetTenantsRequestDto
   ): Promise<PaginatedResponseDto<GetTenantResponseDto>> {
+    await this.verifyTenantsApiAvailability(user);
+
     return await this.getTenantsUsecase.execute(
       GetTenantsCommand.create({
         organizationId: user.organizationId,
@@ -93,7 +103,7 @@ export class TenantController {
   @ApiResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenant',
-    description: `Get tenant by your internal id used to identify the tenant`,
+    description: `Get tenant by your internal id used to identify the tenant${v2TenantsApiDescription}`,
   })
   @ApiNotFoundResponse({
     description: 'The tenant with the identifier provided does not exist in the database.',
@@ -103,11 +113,13 @@ export class TenantController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
   ): Promise<GetTenantResponseDto> {
+    await this.verifyTenantsApiAvailability(user);
+
     return await this.getTenantUsecase.execute(
       GetTenantCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        identifier: identifier,
+        identifier,
       })
     );
   }
@@ -117,7 +129,7 @@ export class TenantController {
   @ApiResponse(CreateTenantResponseDto)
   @ApiOperation({
     summary: 'Create tenant',
-    description: 'Create tenant under the current environment',
+    description: `Create tenant under the current environment${v2TenantsApiDescription}`,
   })
   @ApiConflictResponse({
     description: 'A tenant with the same identifier is already exist.',
@@ -126,6 +138,8 @@ export class TenantController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateTenantRequestDto
   ): Promise<CreateTenantResponseDto> {
+    await this.verifyTenantsApiAvailability(user);
+
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
         userId: user._id,
@@ -143,7 +157,7 @@ export class TenantController {
   @ApiResponse(UpdateTenantResponseDto)
   @ApiOperation({
     summary: 'Update tenant',
-    description: 'Update tenant by your internal id used to identify the tenant',
+    description: `Update tenant by your internal id used to identify the tenant${v2TenantsApiDescription}`,
   })
   @ApiNotFoundResponse({
     description: 'The tenant with the identifier provided does not exist in the database.',
@@ -153,10 +167,12 @@ export class TenantController {
     @Param('identifier') identifier: string,
     @Body() body: UpdateTenantRequestDto
   ): Promise<UpdateTenantResponseDto> {
+    await this.verifyTenantsApiAvailability(user);
+
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
         userId: user._id,
-        identifier: identifier,
+        identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         name: body.name,
@@ -171,7 +187,7 @@ export class TenantController {
   @UserAuthentication()
   @ApiOperation({
     summary: 'Delete tenant',
-    description: 'Deletes a tenant entity from the Novu platform',
+    description: `Deletes a tenant entity from the Novu platform.${v2TenantsApiDescription}`,
   })
   @ApiNoContentResponse({
     description: 'The tenant has been deleted correctly',
@@ -181,13 +197,32 @@ export class TenantController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeTenant(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<void> {
+    await this.verifyTenantsApiAvailability(user);
+
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        identifier: identifier,
+        identifier,
       })
     );
+  }
+
+  private async verifyTenantsApiAvailability(user: UserSessionData) {
+    const isV2Enabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
+      })
+    );
+
+    if (!isV2Enabled) {
+      return;
+    }
+
+    throw new MethodNotAllowedException(v2TenantsApiDescription.trim());
   }
 }

@@ -1,9 +1,9 @@
 import cloneDeep from 'lodash.clonedeep';
 import { ScriptableContext } from 'chart.js';
 import { format, subDays } from 'date-fns';
+import { colors } from '@novu/design-system';
 import { IActivityGraphStats, IChartData } from '../../interfaces';
 import { activityGraphStatsMock } from '../../consts';
-import { colors } from '@novu/design-system';
 
 export function getChartData(data: IActivityGraphStats[] | undefined, isDark: boolean): IChartData {
   if (!data || data?.length === 0) {
@@ -36,8 +36,7 @@ function buildChartDataContainer(data: IActivityGraphStats[], isDark: boolean): 
 
 function fillWeekData(data: IActivityGraphStats[]) {
   const fullWeekData = cloneDeep(data);
-  // eslint-disable-next-line no-plusplus
-  for (let i = data.length - 1; i < 6; i++) {
+  for (let i = data.length - 1; i < 6; i += 1) {
     const earliestDate = fullWeekData[i]._id;
     const newDate = format(subDays(new Date(earliestDate), 1), 'yyyy-MM-dd');
 

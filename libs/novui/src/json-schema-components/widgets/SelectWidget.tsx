@@ -14,7 +14,7 @@ export const SelectWidget = (props: WidgetProps) => {
     <Select
       description={schema.description}
       onChange={onChange}
-      value={typeof value === 'undefined' ? '' : String(value)}
+      value={typeof value === 'undefined' || !value ? null : String(value)}
       required={required}
       label={label}
       data={data}

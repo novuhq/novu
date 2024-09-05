@@ -1,6 +1,7 @@
+/* eslint-disable global-require */
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { EnvironmentRepository, NotificationRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationRepository, CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
 
@@ -9,14 +10,15 @@ describe('GetPlatformNotificationUsage', () => {
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const { GetPlatformNotificationUsage, GetPlatformNotificationUsageCommand } = eeBilling;
 
   const environmentRepo = new EnvironmentRepository();
   const notificationRepo = new NotificationRepository();
+  const communityOrganizationRepo = new CommunityOrganizationRepository();
 
   const createUseCase = () => {
-    const useCase = new GetPlatformNotificationUsage(environmentRepo);
+    const useCase = new GetPlatformNotificationUsage(environmentRepo, notificationRepo, communityOrganizationRepo);
 
     return useCase;
   };
@@ -59,7 +61,7 @@ describe('GetPlatformNotificationUsage', () => {
 
     const organizations: any[] = [];
 
-    for (let index = 0; index < orgCount; index++) {
+    for (let index = 0; index < orgCount; index += 1) {
       const orgSession = new UserSession();
       await orgSession.initialize();
 

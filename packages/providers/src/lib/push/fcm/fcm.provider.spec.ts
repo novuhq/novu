@@ -4,7 +4,7 @@ import app from 'firebase-admin/app';
 
 import { FcmPushProvider } from './fcm.provider';
 
-const sendMulticast = vi.fn().mockResolvedValue({ successCount: 1 });
+const sendEachForMulticast = vi.fn().mockResolvedValue({ successCount: 1 });
 const mockApp = {
   appCheck: vi.fn() as any,
   auth: vi.fn() as any,
@@ -29,9 +29,8 @@ vi.mock(import('firebase-admin/messaging'), async (importOriginal) => {
       return {
         send: vi.fn(),
         sendEach: vi.fn(),
-        sendEachForMulticast: vi.fn(),
         sendAll: vi.fn(),
-        sendMulticast,
+        sendEachForMulticast,
         sendToDevice: vi.fn(),
         sendToDeviceGroup: vi.fn(),
         sendToTopic: vi.fn(),
@@ -85,9 +84,9 @@ describe.skip('FcmPushProvider', () => {
     });
 
     spy = vi
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-expect-error
-      .spyOn(provider.messaging, 'sendMulticast')
+      .spyOn(provider.messaging, 'sendEachForMulticast')
       .mockImplementation(async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return {} as any;
@@ -111,7 +110,7 @@ describe.skip('FcmPushProvider', () => {
         notification: {
           title: 'Test 1',
         },
-      }
+      },
     );
     expect(app.initializeApp).toHaveBeenCalledTimes(1);
     expect(app.cert).toHaveBeenCalledTimes(1);
@@ -436,7 +435,7 @@ describe.skip('FcmPushProvider', () => {
             sound: 'test_sound',
           },
         });
-      })
+      }),
     );
   });
 
@@ -462,7 +461,7 @@ describe.skip('FcmPushProvider', () => {
             tokens: ['tokens'],
           },
         },
-      }
+      },
     );
     expect(app.initializeApp).toHaveBeenCalledTimes(1);
     expect(app.cert).toHaveBeenCalledTimes(1);

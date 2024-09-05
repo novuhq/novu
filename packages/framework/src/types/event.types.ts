@@ -1,20 +1,15 @@
 import type {
-  ITenantDefine,
   ITriggerPayload,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
 } from '@novu/shared';
+import { ConditionalPartial, PickRequiredKeys } from './util.types';
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 type EventPayload = ITriggerPayload & {};
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 type Actor = TriggerRecipientSubscriber & {};
 
-type Tenant = ITenantDefine & Record<string, never>;
-
-// eslint-disable-next-line @typescript-eslint/ban-types
 type Recipients = TriggerRecipientsPayload & {};
 
 export type EventTriggerResult = {
@@ -46,14 +41,6 @@ export type EventTriggerParams<T_Payload = EventPayload> = {
    */
   bridgeUrl?: string;
   /**
-   * Payload to trigger the workflow with
-   */
-  payload: T_Payload;
-  /**
-   * Tenant to trigger the workflow with
-   */
-  tenant?: Tenant;
-  /**
    * Transaction id for trigger
    */
   transactionId?: string;
@@ -69,7 +56,15 @@ export type EventTriggerParams<T_Payload = EventPayload> = {
       [stepId: string]: Record<string, unknown>;
     };
   };
-};
+} & ConditionalPartial<
+  {
+    /**
+     * Payload to trigger the workflow with
+     */
+    payload: T_Payload;
+  },
+  PickRequiredKeys<T_Payload> extends never ? true : false
+>;
 
 export type EventTriggerResponse = {
   /**

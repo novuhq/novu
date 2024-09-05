@@ -11,11 +11,11 @@ const LOG_CONTEXT = 'StandardQueueService';
 @Injectable()
 export class StandardQueueService extends QueueBaseService {
   constructor(
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
   ) {
     super(
       JobTopicNameEnum.STANDARD,
-      new BullMqService(workflowInMemoryProviderService)
+      new BullMqService(workflowInMemoryProviderService),
     );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);

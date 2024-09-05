@@ -15,7 +15,7 @@ describe('Update fcm credential type', function () {
       active: false,
     };
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i += 1) {
       const session = new UserSession();
       await session.initialize();
 

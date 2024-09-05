@@ -1,4 +1,3 @@
-/* eslint-disable */
 import validateProjectName from 'validate-npm-package-name';
 
 type ValidateNpmNameResult =

@@ -1,5 +1,5 @@
-import { WorkflowBaseSidePanelPage } from './workflowSettingsSidePanel';
 import { expect } from '@playwright/test';
+import { WorkflowBaseSidePanelPage } from './workflowSettingsSidePanel';
 import { fillTextInAMonacoEditor } from '../utils/browser';
 import { VariantPreviewModalPage } from './variantPreviewModalPage';
 

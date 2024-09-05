@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0",
   "private": true,
   "description": "",
   "keywords": [],
@@ -20,7 +20,7 @@
     "node": ">=6.0.0"
   },
   "scripts": {
-    "lint": "eslint 'src/**/*.ts'",
+    "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "prebuild": "rimraf dist",
     "build": "tsc && cross-env ENVIRONMENT=local rollup -c rollup.config.js",

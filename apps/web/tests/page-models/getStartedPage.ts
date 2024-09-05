@@ -84,6 +84,7 @@ export class GetStartedPage {
 
   static async goTo(page: Page, queryParams: string = ''): Promise<GetStartedPage> {
     await page.goto(`/get-started${queryParams}`);
+
     return new GetStartedPage(page);
   }
 
@@ -141,7 +142,7 @@ export class GetStartedPage {
     await this.ensureLinkWithAttributes('Learn about ', 'link', /docs.novu.co/, false);
     await expect(this.page.locator('canvas')).toBeVisible();
 
-    for (let index = 1; index <= tabConfig.steps; index++) {
+    for (let index = 1; index <= tabConfig.steps; index += 1) {
       expect(this.page.getByText(`${index}`, { exact: true })).toBeVisible();
     }
 

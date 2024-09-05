@@ -14,15 +14,18 @@ import {
 import { IUserPreferenceSettings } from '@novu/client';
 
 import { ISession } from '../../shared/interfaces';
-import { NovuProvider } from '../../components';
-import { queryClient } from '../../components/novu-provider/NovuProvider';
+import { NovuProvider } from '..';
+import { queryClient } from './NovuProvider';
 import { NotificationBell, PopoverNotificationCenter } from '../..';
 
 configure({
   testIdAttribute: 'data-test-id',
 });
 
-const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
+const promiseResolveTimeout = (ms: number, arg: unknown = {}) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms, arg);
+  });
 
 const templateId = 'templateId';
 const notificationId = 'notificationId';

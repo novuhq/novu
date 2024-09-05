@@ -1,11 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationRepository } from '@novu/dal';
-import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '@novu/application-generic';
+import {
+  areNovuEmailCredentialsSet,
+  areNovuSmsCredentialsSet,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
+} from '@novu/application-generic';
 
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  InAppProviderIdEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
-import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { SetIntegrationAsPrimary } from '../set-integration-as-primary/set-integration-as-primary.usecase';
 import { SetIntegrationAsPrimaryCommand } from '../set-integration-as-primary/set-integration-as-primary.command';
 
@@ -14,7 +25,8 @@ export class CreateNovuIntegrations {
   constructor(
     private createIntegration: CreateIntegration,
     private integrationRepository: IntegrationRepository,
-    private setIntegrationAsPrimary: SetIntegrationAsPrimary
+    private setIntegrationAsPrimary: SetIntegrationAsPrimary,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
@@ -96,12 +108,23 @@ export class CreateNovuIntegrations {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
+
     if (inAppIntegrationCount === 0) {
+      const isV2Enabled = await this.getFeatureFlag.execute(
+        GetFeatureFlagCommand.create({
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
+        })
+      );
+
+      const name = isV2Enabled ? 'Novu Inbox' : 'Novu In-App';
       await this.createIntegration.execute(
         CreateIntegrationCommand.create({
+          name,
           providerId: InAppProviderIdEnum.Novu,
           channel: ChannelTypeEnum.IN_APP,
-          name: 'Novu In-App',
           active: true,
           check: false,
           userId: command.userId,

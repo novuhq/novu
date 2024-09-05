@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import {
+import type {
   UserPublicMetadata as _UserPublicMetadata,
   OrganizationPublicMetadata as _OrganizationPublicMetadata,
 } from '@novu/shared';

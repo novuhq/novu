@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -74,6 +74,8 @@ export class UpdateVercelConfiguration {
         userId: command.userId,
       });
 
+      await this.updateBridgeUrl(command.environmentId, projectIds[0], configurationDetails.accessToken);
+
       const { newAndUpdatedProjectIds, removedProjectIds } = await this.getUpdatedAndRemovedProjectIds(
         command,
         projectIds
@@ -140,17 +142,48 @@ export class UpdateVercelConfiguration {
   ) {
     const { addProjectIds, updateProjectDetails } = projectDetails;
 
-    return envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
+    return envData.reduce<Record<string, MapProjectkeys>>((prev, curr) => {
       const projectIds = projectData[curr._organizationId];
-      acc[curr._organizationId] = {
+      prev[curr._organizationId] = {
         privateKey: curr.apiKeys[0].key,
         clientKey: curr.identifier,
         updateProjectDetails: updateProjectDetails.filter((detail) => projectIds.includes(detail.projectId)),
         addProjectIds: projectIds.filter((id) => addProjectIds.includes(id)),
       };
 
-      return acc;
+      return prev;
     }, {});
+  }
+
+  private async updateBridgeUrl(environmentId: string, projectIds: string, accessToken: string) {
+    try {
+      const getDomainsResponse = await lastValueFrom(
+        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectIds}/domains`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+      );
+
+      const bridgeUrl = getDomainsResponse.data.domains[0].name;
+
+      const fullBridgeUrl = `https://${bridgeUrl}/api/novu`;
+      await this.environmentRepository.update(
+        { _id: environmentId },
+        {
+          $set: {
+            echo: {
+              url: fullBridgeUrl,
+            },
+            bridge: {
+              url: fullBridgeUrl,
+            },
+          },
+        }
+      );
+    } catch (error) {
+      Logger.error(error, 'Error updating bridge url');
+    }
   }
 
   private async setEnvironmentVariables({
@@ -220,7 +253,7 @@ export class UpdateVercelConfiguration {
   private mapProjects(projects: any[], newAndUpdatedProjectIds: string[], removedProjectIds: string[]) {
     return projects.reduce<AllMappedProjectData>(
       (acc, curr) => {
-        const id = curr.id;
+        const { id } = curr;
         const vercelEnvs = curr?.env;
         const clientEnv = vercelEnvs?.find((e) => e.key === 'NOVU_CLIENT_APP_ID');
         const secretEnv = vercelEnvs?.find((e) => e.key === 'NOVU_SECRET_KEY');

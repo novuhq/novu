@@ -10,11 +10,11 @@ const LOG_CONTEXT = 'ActiveJobsMetricQueueService';
 @Injectable()
 export class ActiveJobsMetricQueueService extends QueueBaseService {
   constructor(
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
   ) {
     super(
       JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-      new BullMqService(workflowInMemoryProviderService)
+      new BullMqService(workflowInMemoryProviderService),
     );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);

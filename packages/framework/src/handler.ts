@@ -28,7 +28,6 @@ import {
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { initApiClient } from './utils';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ServeHandlerOptions = {
   client?: Client;
   workflows: Array<Workflow>;
@@ -218,7 +217,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         transactionId: triggerEvent.transactionId,
         overrides: triggerEvent.overrides || {},
         ...(triggerEvent.actor && { actor: triggerEvent.actor }),
-        ...(triggerEvent.tenant && { tenant: triggerEvent.tenant }),
         ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
         ...(triggerEvent.controls && { controls: triggerEvent.controls }),
       };
@@ -322,7 +320,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
 
     const [timestamp, timestampPayload] = timestampPart.split('=');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const [signatureVersion, signaturePayload] = signaturePart.split('=');
 
     if (Number(timestamp) < Date.now() - SIGNATURE_TIMESTAMP_TOLERANCE) {

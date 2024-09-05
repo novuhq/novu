@@ -1,9 +1,10 @@
 import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { colors, PageContainer, Text, Title, When, IRow } from '@novu/design-system';
-import { useAuth, useEnvironment } from '../../../hooks';
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { Flex } from '@novu/novui/jsx';
+import { useAuth, useEnvironment } from '../../../hooks';
 import { FlagIcon } from '../components/shared';
 
 import { ITranslationGroup, useFetchLocales, useFetchTranslationGroups } from '../hooks';
@@ -12,8 +13,6 @@ import { TranslationGroupEmptyList } from '../components/TranslationGroup/Transl
 import { TranslationGroupListToolbar } from '../components/TranslationGroup/TranslationGroupListToolbar';
 import { TranslationGroupsList } from '../components/TranslationGroup/TranslationGroupsList';
 import { ROUTES } from '../routes';
-import { DocsButton } from '../../../components/docs/DocsButton';
-import { Flex } from '@novu/novui/jsx';
 
 export const TranslationGroupsPage = () => {
   const [page, setPage] = useState(0);
@@ -29,7 +28,6 @@ export const TranslationGroupsPage = () => {
   };
 
   const handleAddGroupButtonClick = () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (!currentOrganization!.defaultLocale) {
       openDefaultLocale();
 
@@ -51,7 +49,6 @@ export const TranslationGroupsPage = () => {
           <Title size={2} data-test-id="translation-title">
             Translations
           </Title>
-          <DocsButton />
         </Flex>
 
         <When truthy={currentOrganization && hasTranslationGroups}>
@@ -81,14 +78,11 @@ export const TranslationGroupsPage = () => {
           />
         </Container>
         <TranslationGroupsList
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           data={translationGroups!}
           onRowClick={onRowClick}
           isLoading={isLoading}
           page={page}
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           pageSize={pageSize!}
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           totalCount={totalCount!}
           handlePageChange={handlePageChange}
         />

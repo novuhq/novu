@@ -15,7 +15,7 @@ export const createTranslationMarks = (
   try {
     const result = parseWithoutProcessing(newValue || '');
 
-    for (let index = 0; index < result.body.length; index++) {
+    for (let index = 0; index < result.body.length; index += 1) {
       const line = result.body[index];
       if (line.type !== 'MustacheStatement') {
         continue;
@@ -61,7 +61,7 @@ export const createTranslationMarks = (
       );
 
       decorators.push({
-        range: range,
+        range,
         options: {
           className: 'markerWiggledLine',
           glyphMarginClassName: 'markerGlyphWarning',
@@ -80,7 +80,9 @@ export const createTranslationMarks = (
         },
       });
     }
-  } catch (e) {}
+  } catch (e) {
+    /* empty */
+  }
 
   return decorators;
 };

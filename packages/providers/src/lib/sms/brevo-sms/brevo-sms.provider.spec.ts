@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { BrevoSmsProvider } from './brevo-sms.provider';
 import { ISmsOptions } from '@novu/stateless';
+import { BrevoSmsProvider } from './brevo-sms.provider';
 
 const mockConfig = {
   apiKey: 'ABCDE',
@@ -56,7 +56,7 @@ describe('sendMessage method', () => {
     await provider.sendMessage(mockNovuMessage);
 
     expect(fetchMock.mock.calls[0][0]).toEqual(
-      'https://api.brevo.com/v3/transactionalSMS/sms'
+      'https://api.brevo.com/v3/transactionalSMS/sms',
     );
   });
 

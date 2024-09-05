@@ -10,6 +10,7 @@ import {
 import { UserSession } from '@novu/testing';
 import {
   ApiServiceLevelEnum,
+  ChannelTypeEnum,
   EmailProviderIdEnum,
   ICreateOrganizationDto,
   InAppProviderIdEnum,
@@ -110,13 +111,13 @@ describe('Create Organization - /organizations (POST) @skip-in-ee', async () => 
       const productionEnv = environments.find((e) => e.name === 'Production');
       const developmentEnv = environments.find((e) => e.name === 'Development');
       const novuEmailIntegration = integrations.filter(
-        (i) => i.active && i.name === 'Novu Email' && i.providerId === EmailProviderIdEnum.Novu
+        (i) => i.active && i.channel === ChannelTypeEnum.EMAIL && i.providerId === EmailProviderIdEnum.Novu
       );
       const novuSmsIntegration = integrations.filter(
-        (i) => i.active && i.name === 'Novu SMS' && i.providerId === SmsProviderIdEnum.Novu
+        (i) => i.active && i.channel === ChannelTypeEnum.SMS && i.providerId === SmsProviderIdEnum.Novu
       );
       const novuInAppIntegration = integrations.filter(
-        (i) => i.active && i.name === 'Novu In-App' && i.providerId === InAppProviderIdEnum.Novu
+        (i) => i.active && i.channel === ChannelTypeEnum.IN_APP && i.providerId === InAppProviderIdEnum.Novu
       );
       const novuEmailIntegrationProduction = novuEmailIntegration.filter(
         (el) => el._environmentId === productionEnv?._id

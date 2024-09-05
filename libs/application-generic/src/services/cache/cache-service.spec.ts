@@ -1,10 +1,10 @@
+import sinon from 'sinon';
 import {
   CacheService,
   CachingConfig,
   ICacheService,
   splitKey,
 } from './cache.service';
-import sinon from 'sinon';
 
 import { CacheInMemoryProviderService } from '../in-memory-provider';
 import { MockCacheService } from './cache-service.mock';
@@ -106,7 +106,7 @@ describe('Cache Service - Cluster Mode', () => {
     expect(result).toBeDefined();
     const result1 = await cacheService.setIfNotExist(
       'key1-not-exist',
-      'value1'
+      'value1',
     );
     expect(result1).toBeFalsy();
   });
@@ -205,10 +205,10 @@ describe('cache-service', function () {
         'query:integration:e=642578cea9684e9ebea5b04c:#query#={\\"channelType\\":\\"email\\",\\"findOne\\":true}';
       const result = splitKey(key);
       expect(result.credentials).toEqual(
-        'query:integration:e=642578cea9684e9ebea5b04c'
+        'query:integration:e=642578cea9684e9ebea5b04c',
       );
       expect(result.query).toEqual(
-        '{\\"channelType\\":\\"email\\",\\"findOne\\":true}'
+        '{\\"channelType\\":\\"email\\",\\"findOne\\":true}',
       );
     });
 
@@ -216,7 +216,7 @@ describe('cache-service', function () {
       const key = 'query:integration:e=642578cea9684e9ebea5b04c:#query#=';
       const result = splitKey(key);
       expect(result.credentials).toEqual(
-        'query:integration:e=642578cea9684e9ebea5b04c'
+        'query:integration:e=642578cea9684e9ebea5b04c',
       );
       expect(result.query).toEqual('');
     });
@@ -226,7 +226,7 @@ describe('cache-service', function () {
       const result = splitKey(key);
       expect(result.credentials).toEqual('');
       expect(result.query).toEqual(
-        '{\\"channelType\\":\\"email\\",\\"findOne\\":true}'
+        '{\\"channelType\\":\\"email\\",\\"findOne\\":true}',
       );
     });
   });

@@ -36,7 +36,7 @@ export class SparkPostEmailProvider
       region: string;
       from: string;
       senderName: string;
-    }
+    },
   ) {
     super();
     this.endpoint = this.getEndpoint(config.region);
@@ -44,7 +44,7 @@ export class SparkPostEmailProvider
 
   async sendMessage(
     { from, to, subject, text, html, attachments }: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const recipients: { address: string }[] = to.map((recipient) => {
       return { address: recipient };
@@ -94,7 +94,7 @@ export class SparkPostEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       await this.sendMessage({
@@ -121,7 +121,7 @@ export class SparkPostEmailProvider
 
   private createSparkPostError(err: unknown) {
     if (axios.isAxiosError(err)) {
-      const response = (err as AxiosError<ISparkPostErrorResponse>).response;
+      const { response } = err as AxiosError<ISparkPostErrorResponse>;
 
       if (response && response.data && response.data.errors) {
         throw new SparkPostError(response.data, response.status);

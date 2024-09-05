@@ -70,7 +70,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
       _organizationId: this.blueprintOrganizationId,
-      triggers: { $elemMatch: { identifier: identifier } },
+      triggers: { $elemMatch: { identifier } },
     };
 
     const item = await this.MongooseModel.findOne(requestQuery)
@@ -211,7 +211,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-      active: active,
+      active,
     };
 
     const items = await this.MongooseModel.find(requestQuery)

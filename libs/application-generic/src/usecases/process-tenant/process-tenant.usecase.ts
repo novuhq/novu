@@ -13,12 +13,12 @@ export class ProcessTenant {
   constructor(
     private updateTenantUsecase: UpdateTenant,
     private createTenantUsecase: CreateTenant,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
   ) {}
 
   @InstrumentUsecase()
   public async execute(
-    command: ProcessTenantCommand
+    command: ProcessTenantCommand,
   ): Promise<TenantEntity | undefined> {
     const { environmentId, organizationId, userId, tenant } = command;
 
@@ -29,7 +29,7 @@ export class ProcessTenant {
         environmentId,
         organizationId,
         userId,
-        tenant
+        tenant,
       );
     } catch (e) {
       tenantEntity = null;
@@ -46,7 +46,7 @@ export class ProcessTenant {
     environmentId: string,
     organizationId: string,
     userId: string,
-    tenantPayload: ITenantDefine
+    tenantPayload: ITenantDefine,
   ): Promise<TenantEntity> {
     const tenant = await this.getTenantByIdentifier({
       _environmentId: environmentId,
@@ -67,7 +67,7 @@ export class ProcessTenant {
           name: tenantPayload?.name,
           data: tenantPayload?.data,
           tenant,
-        })
+        }),
       );
     }
 
@@ -75,7 +75,7 @@ export class ProcessTenant {
       environmentId,
       organizationId,
       userId,
-      tenantPayload
+      tenantPayload,
     );
   }
 
@@ -83,7 +83,7 @@ export class ProcessTenant {
     environmentId: string,
     organizationId: string,
     userId: string,
-    tenantPayload: ITenantDefine
+    tenantPayload: ITenantDefine,
   ): Promise<TenantEntity> {
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
@@ -93,7 +93,7 @@ export class ProcessTenant {
         identifier: tenantPayload.identifier,
         name: tenantPayload?.name,
         data: tenantPayload?.data,
-      })
+      }),
     );
   }
 
@@ -112,7 +112,7 @@ export class ProcessTenant {
 
   private tenantNeedUpdate(
     tenant: TenantEntity,
-    tenantPayload: Partial<TenantEntity>
+    tenantPayload: Partial<TenantEntity>,
   ): boolean {
     return (
       !!(tenantPayload?.name && tenant?.name !== tenantPayload?.name) ||

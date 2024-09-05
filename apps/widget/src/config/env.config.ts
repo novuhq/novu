@@ -1,5 +1,4 @@
-import { isBrowser } from '@novu/shared';
-import { getContextPath, NovuComponentEnum } from '@novu/shared';
+import { isBrowser, getContextPath, NovuComponentEnum } from '@novu/shared';
 
 export const API_URL =
   isBrowser() && (window as any).Cypress

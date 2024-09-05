@@ -1,6 +1,6 @@
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { IsArray, IsOptional, Max, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class GetFeedCountCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -15,7 +15,7 @@ export class GetFeedCountCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @Transform(({ value }) => {
-    if (isNaN(value) || value == null) {
+    if (Number.isNaN(value) || value == null) {
       return 100;
     }
 

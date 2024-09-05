@@ -38,7 +38,7 @@ describe('ParseEventRequest Usecase', () => {
     const command = buildCommand(
       session,
       transactionId,
-      [{ subscriberId: subscriberId } as unknown as string],
+      [{ subscriberId } as unknown as string],
       template.triggers[0].identifier
     );
 

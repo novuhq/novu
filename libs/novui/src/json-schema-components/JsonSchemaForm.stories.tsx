@@ -1,7 +1,7 @@
 import React, { FormEventHandler } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { JsonSchemaForm } from './JsonSchemaForm';
 import { RJSFSchema } from '@rjsf/utils';
+import { JsonSchemaForm } from './JsonSchemaForm';
 import { HStack } from '../../styled-system/jsx';
 import { IconOutlineSave } from '../icons';
 import { Title, Button } from '../components';
@@ -12,6 +12,23 @@ export default {
   component: JsonSchemaForm,
   argTypes: {},
 } as Meta<typeof JsonSchemaForm>;
+
+const VARIABLES = [
+  'ctrl.a',
+  'ctrl.b',
+  'ctrl.c',
+  'ctrl.d',
+  'ctrl.e',
+  'payload.var',
+  'payload.obj.var',
+  'fakeAutocomplete.foo',
+  'fakeAutocomplete.bar',
+  'fakeAutocomplete.fizz',
+  'fakeAutocomplete.buzz',
+  'fakeAutocomplete.croissants',
+  'fakeAutocomplete.olympics',
+  'fakeAutocomplete.aReallyLongStringThatShouldOverflowFromTheContainer',
+];
 
 const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => {
   const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
@@ -27,7 +44,7 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => 
           Save
         </Button>
       </HStack>
-      <JsonSchemaForm {...args} />
+      <JsonSchemaForm {...args} variables={VARIABLES} />
     </form>
   );
 };
@@ -59,6 +76,7 @@ const schema: RJSFSchema = {
         country: {
           type: 'string',
           title: 'Country',
+          default: `Hello {{${VARIABLES[0]}}}, my name is {{invalid}} yo`,
         },
         address: {
           type: 'string',
@@ -140,7 +158,7 @@ const schema: RJSFSchema = {
 };
 
 ExampleForm.args = {
-  schema: schema,
+  schema,
   formData: { money: 43 },
 };
 
@@ -203,4 +221,21 @@ const ARRAY_DESIGNS_SCHEMA: RJSFSchema = {
 export const ArrayDesigns = Template.bind({});
 ArrayDesigns.args = {
   schema: ARRAY_DESIGNS_SCHEMA,
+};
+
+const SIMPLE_AUTOCOMPLETE_SCHEMA: RJSFSchema = {
+  type: 'object',
+  title: 'Simple autocomplete',
+  properties: {
+    country: {
+      type: 'string',
+      title: 'Name',
+      default: `Hello {{${VARIABLES[0]}}}, {{ ${VARIABLES[1]} | upcase }} {{invalidRef}} {{badSyntax`,
+    },
+  },
+};
+
+export const SimpleAutocomplete = Template.bind({});
+SimpleAutocomplete.args = {
+  schema: SIMPLE_AUTOCOMPLETE_SCHEMA,
 };

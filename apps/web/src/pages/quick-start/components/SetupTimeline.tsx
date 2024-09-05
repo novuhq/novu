@@ -1,15 +1,22 @@
 import styled from '@emotion/styled';
 import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-
+import { colors, shadows, Text } from '@novu/design-system';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { getApiKeys } from '../../../api/environment';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
-import { colors, shadows, Text } from '@novu/design-system';
-import { useEnvironment } from '../../../hooks';
+import { useEnvironment, useFeatureFlag } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
-import { API_KEY, APPLICATION_IDENTIFIER, BACKEND_API_URL, BACKEND_SOCKET_URL, frameworkInstructions } from '../consts';
+import {
+  API_KEY,
+  APPLICATION_IDENTIFIER,
+  BACKEND_API_URL,
+  BACKEND_SOCKET_URL,
+  frameworkInstructions,
+  frameworkInstructionsV2,
+} from '../consts';
 import { QueryKeys } from '../../../api/query.keys';
 import { useInAppActivated } from '../../../api/hooks';
 
@@ -29,16 +36,18 @@ export const SetupTimeline = ({
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const { isInAppActive } = useInAppActivated();
 
-  const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
+  const finalFrameworkInstructions = isV2Enabled ? frameworkInstructionsV2 : frameworkInstructions;
+  const instructions = finalFrameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ?? '';
 
   return (
     <Stack align="center" sx={{ width: '100%' }} data-test-id="setup-timeline">
       <TimelineWrapper isDark={isDark}>
         <Timeline
+          // eslint-disable-next-line no-unsafe-optional-chaining
           active={instructions?.length + 1}
           bulletSize={40}
           lineWidth={2}
@@ -73,6 +82,7 @@ export const SetupTimeline = ({
           <Timeline.Item
             bullet={
               <div style={{}}>
+                {/* eslint-disable-next-line no-unsafe-optional-chaining */}
                 <Text>{instructions?.length + 1}</Text>
               </div>
             }

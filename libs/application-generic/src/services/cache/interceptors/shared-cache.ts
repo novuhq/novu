@@ -2,7 +2,7 @@ import { CacheKeyPrefixEnum } from '../key-builders';
 
 export function validateCredentials(
   keyPrefix: CacheKeyPrefixEnum,
-  credentials: string
+  credentials: string,
 ) {
   const entitiesEnvironmentLevel = [
     CacheKeyPrefixEnum.USER,
@@ -26,7 +26,7 @@ export function validateCredentials(
  */
 export function getIdentifier(
   key: string,
-  keyConfig: Record<string, unknown>
+  keyConfig: Record<string, unknown>,
 ): { key: string | undefined; value: string } {
   const entitiesSubscriberPreferred = [
     CacheKeyPrefixEnum.MESSAGE_COUNT,
@@ -41,7 +41,7 @@ export function getIdentifier(
   const idPreferredKeys = ['_id', 'id', '_subscriberId', 'subscriberId'];
 
   const subscriberPrefKey = subscriberPreferredKeys.find(
-    (prefKey) => keyConfig[prefKey]
+    (prefKey) => keyConfig[prefKey],
   );
   const subscriberPreferred = {
     key: subscriberPrefKey,
@@ -60,32 +60,31 @@ export function getIdentifier(
 }
 
 export function getEnvironment(
-  keyConfig: Record<string, unknown>
+  keyConfig: Record<string, unknown>,
 ): { key: string; value: string } | undefined {
+  // eslint-disable-next-line no-nested-ternary
   return keyConfig._environmentId
     ? { key: '_environmentId', value: keyConfig._environmentId as string }
     : keyConfig.environmentId
-    ? { key: 'environmentId', value: keyConfig.environmentId as string }
-    : undefined;
+      ? { key: 'environmentId', value: keyConfig.environmentId as string }
+      : undefined;
 }
 
 export function buildCredentialsKeyPart(
   key: string,
-  keyConfig: Record<string, unknown>
+  keyConfig: Record<string, unknown>,
 ): string {
   let credentialsResult = '';
   const identifier = getIdentifier(key, keyConfig);
 
   if (identifier?.key) {
-    credentialsResult +=
-      ':' + getCredentialWithContext(identifier.key, identifier.value);
+    credentialsResult += `:${getCredentialWithContext(identifier.key, identifier.value)}`;
   }
 
   const environment = getEnvironment(keyConfig);
 
   if (environment?.key) {
-    credentialsResult +=
-      ':' + getCredentialWithContext(environment.key, environment.value);
+    credentialsResult += `:${getCredentialWithContext(environment.key, environment.value)}`;
   }
 
   return credentialsResult;
@@ -93,14 +92,13 @@ export function buildCredentialsKeyPart(
 
 export function getCredentialWithContext(
   credentialKey: string,
-  credentialValue: string
+  credentialValue: string,
 ): string {
   const context = credentialKey.replace('_', '')[0];
 
-  return context + '=' + credentialValue;
+  return `${context}=${credentialValue}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum CacheInterceptorTypeEnum {
   CACHED = 'cached',
   INVALIDATE = 'invalidate',
@@ -109,11 +107,11 @@ export enum CacheInterceptorTypeEnum {
 export function buildKey(
   prefix: CacheKeyPrefixEnum,
   keyConfig: Record<string, unknown>,
-  interceptorType: CacheInterceptorTypeEnum
+  interceptorType: CacheInterceptorTypeEnum,
 ): string {
   let cacheKey = prefix as string;
 
-  cacheKey = cacheKey + buildQueryKeyPart(prefix, interceptorType, keyConfig);
+  cacheKey += buildQueryKeyPart(prefix, interceptorType, keyConfig);
 
   const credentials = buildCredentialsKeyPart(cacheKey, keyConfig);
 
@@ -128,7 +126,7 @@ export function getQueryParams(keysConfig: Record<string, unknown>): string {
   const filteredContextKeys = Object.fromEntries(
     Object.entries(keysConfig).filter(([key, value]) => {
       return !keysToExclude.some((element) => element === key);
-    })
+    }),
   );
 
   for (const [key, value] of Object.entries(filteredContextKeys)) {
@@ -140,7 +138,7 @@ export function getQueryParams(keysConfig: Record<string, unknown>): string {
     const elementKey = `${key}=${elementValue as string}`;
 
     if (elementKey) {
-      result += ':' + elementKey;
+      result += `:${elementKey}`;
     }
   }
 
@@ -162,7 +160,7 @@ export function buildCachedQuery(args: unknown[]): Record<string, unknown> {
   const fromStringArray = { id: args[0], environmentId: args[1] };
   const fromObjectArray = args.reduce<Record<string, unknown>>(
     (obj, item) => Object.assign(obj, item),
-    {}
+    {},
   );
 
   return typeof args[0] === 'string' ? fromStringArray : fromObjectArray;
@@ -178,7 +176,7 @@ export function buildCachedQuery(args: unknown[]): Record<string, unknown> {
 export function getInvalidateQuery(
   methodName: string,
   res: Record<string, unknown>,
-  args: Record<string, unknown>[]
+  args: Record<string, unknown>[],
 ): Record<string, unknown> {
   return methodName.startsWith('Create') ? res : args[0];
 }
@@ -186,7 +184,7 @@ export function getInvalidateQuery(
 export function buildQueryKeyPart(
   prefix: CacheKeyPrefixEnum,
   interceptorType: CacheInterceptorTypeEnum,
-  keyConfig: Record<string, unknown>
+  keyConfig: Record<string, unknown>,
 ) {
   const WILD_CARD = '*';
 

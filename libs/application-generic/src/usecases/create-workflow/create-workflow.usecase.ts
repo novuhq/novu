@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import {
   forwardRef,
   Inject,
@@ -51,7 +52,7 @@ export class CreateWorkflow {
     private createChange: CreateChange,
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
   ) {}
 
   async execute(usecaseCommand: CreateWorkflowCommand) {
@@ -60,10 +61,24 @@ export class CreateWorkflow {
 
     this.validatePayload(command);
 
-    const triggerIdentifier = `${slugify(command.name, {
-      lower: true,
-      strict: true,
-    })}`;
+    let triggerIdentifier: string;
+    if (command.type === WorkflowTypeEnum.BRIDGE)
+      /*
+       * Bridge workflows need to have the identifier preserved to ensure that
+       * the Framework-defined identifier is the source of truth.
+       */
+      triggerIdentifier = command.name;
+    else {
+      /**
+       * For non-bridge workflows, we use a slugified version of the workflow name
+       * as the trigger identifier to provide a better trigger DX.
+       */
+      triggerIdentifier = `${slugify(command.name, {
+        lower: true,
+        strict: true,
+      })}`;
+    }
+
     const parentChangeId: string =
       NotificationTemplateRepository.createObjectId();
 
@@ -76,7 +91,7 @@ export class CreateWorkflow {
       command,
       templateSteps,
       trigger,
-      triggerIdentifier
+      triggerIdentifier,
     );
 
     await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
@@ -91,12 +106,11 @@ export class CreateWorkflow {
         }
         const service = this.moduleRef.get(
           require('@novu/ee-shared-services')?.TranslationsService,
-          { strict: false }
+          { strict: false },
         );
 
-        const locales = await service.createTranslationAnalytics(
-          storedWorkflow
-        );
+        const locales =
+          await service.createTranslationAnalytics(storedWorkflow);
 
         this.analyticsService.track(
           'Locale used in workflow - [Translations]',
@@ -106,14 +120,14 @@ export class CreateWorkflow {
             _environment: command.environmentId,
             workflowId: storedWorkflow._id,
             locales,
-          }
+          },
         );
       }
     } catch (e) {
       Logger.error(
         e,
         `Unexpected error while importing enterprise modules`,
-        'TranslationsService'
+        'TranslationsService',
       );
     }
 
@@ -128,7 +142,7 @@ export class CreateWorkflow {
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
         throw new ApiException(
-          `Variant conditions are required, variant name ${variant.name} id ${variant._id}`
+          `Variant conditions are required, variant name ${variant.name} id ${variant._id}`,
         );
       }
     }
@@ -136,7 +150,7 @@ export class CreateWorkflow {
 
   private async createNotificationTrigger(
     command: CreateWorkflowCommand,
-    triggerIdentifier: string
+    triggerIdentifier: string,
   ): Promise<INotificationTrigger> {
     const contentService = new ContentService();
     const { variables, reservedVariables } =
@@ -147,13 +161,13 @@ export class CreateWorkflow {
     const templateCheckIdentifier =
       await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
-        triggerIdentifier
+        triggerIdentifier,
       );
 
     const trigger: INotificationTrigger = {
       type: TriggerTypeEnum.EVENT,
       identifier: `${triggerIdentifier}${
-        !templateCheckIdentifier ? '' : '-' + shortid.generate()
+        !templateCheckIdentifier ? '' : `-${shortid.generate()}`
       }`,
       variables: variables.map((i) => {
         return {
@@ -184,7 +198,7 @@ export class CreateWorkflow {
 
   private sendTemplateCreationEvent(
     command: CreateWorkflowCommand,
-    triggerIdentifier: string
+    triggerIdentifier: string,
   ) {
     if (
       command.name !== 'On-boarding notification' &&
@@ -199,7 +213,7 @@ export class CreateWorkflow {
           channels: command.steps?.map((i) => i.template?.type),
           __source: command.__source,
           triggerIdentifier,
-        }
+        },
       );
     }
   }
@@ -207,7 +221,7 @@ export class CreateWorkflow {
   private async createWorkflowChange(
     command: CreateWorkflowCommand,
     item,
-    parentChangeId: string
+    parentChangeId: string,
   ) {
     if (!isBridgeWorkflow(command.type)) {
       await this.createChange.execute(
@@ -218,7 +232,7 @@ export class CreateWorkflow {
           type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
           item,
           changeId: parentChangeId,
-        })
+        }),
       );
     }
   }
@@ -227,7 +241,7 @@ export class CreateWorkflow {
     command: CreateWorkflowCommand,
     templateSteps: INotificationTemplateStep[],
     trigger: INotificationTrigger,
-    triggerIdentifier: string
+    triggerIdentifier: string,
   ) {
     const savedWorkflow = await this.notificationTemplateRepository.create({
       _organizationId: command.organizationId,
@@ -254,7 +268,7 @@ export class CreateWorkflow {
 
     const item = await this.notificationTemplateRepository.findById(
       savedWorkflow._id,
-      command.environmentId
+      command.environmentId,
     );
     if (!item)
       throw new NotFoundException(`Workflow ${savedWorkflow._id} is not found`);
@@ -266,7 +280,7 @@ export class CreateWorkflow {
 
   private async storeTemplateSteps(
     command: CreateWorkflowCommand,
-    parentChangeId: string
+    parentChangeId: string,
   ): Promise<INotificationTemplateStep[]> {
     let parentStepId: string | null = null;
     const templateSteps: INotificationTemplateStep[] = [];
@@ -300,11 +314,11 @@ export class CreateWorkflow {
             stepId: step.template.stepId,
             parentChangeId,
             workflowType: command.type,
-          })
+          }),
         ),
         await this.storeVariantSteps({
           variants: step.variants,
-          parentChangeId: parentChangeId,
+          parentChangeId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
@@ -364,14 +378,14 @@ export class CreateWorkflow {
     for (const variant of variants) {
       if (!variant.template)
         throw new ApiException(
-          `Unexpected error: variants message template is missing`
+          `Unexpected error: variants message template is missing`,
         );
 
       const variantTemplate = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
-          organizationId: organizationId,
-          environmentId: environmentId,
-          userId: userId,
+          organizationId,
+          environmentId,
+          userId,
           type: variant.template.type,
           name: variant.template.name,
           content: variant.template.content,
@@ -387,7 +401,7 @@ export class CreateWorkflow {
           actor: variant.template.actor,
           parentChangeId,
           workflowType,
-        })
+        }),
       );
 
       variantsList.push({
@@ -424,7 +438,7 @@ export class CreateWorkflow {
       name: command.name,
       tags: command.tags,
       description: command.description,
-      steps: steps,
+      steps,
       notificationGroupId: group._id,
       active: command.active ?? false,
       draft: command.draft ?? true,
@@ -438,11 +452,11 @@ export class CreateWorkflow {
 
   private normalizeSteps(commandSteps: NotificationStep[]): NotificationStep[] {
     const steps = JSON.parse(
-      JSON.stringify(commandSteps)
+      JSON.stringify(commandSteps),
     ) as NotificationStep[];
 
     return steps.map((step) => {
-      const template = step.template;
+      const { template } = step;
       if (template) {
         template.feedId = undefined;
       }
@@ -456,9 +470,9 @@ export class CreateWorkflow {
 
   private async handleFeeds(
     steps: NotificationStepEntity[],
-    command: CreateWorkflowCommand
+    command: CreateWorkflowCommand,
   ): Promise<NotificationStepEntity[]> {
-    for (let i = 0; i < steps.length; i++) {
+    for (let i = 0; i < steps.length; i += 1) {
       const step = steps[i];
 
       if (!step.template?._feedId) {
@@ -472,6 +486,7 @@ export class CreateWorkflow {
 
       if (!blueprintFeed) {
         step.template._feedId = undefined;
+        // eslint-disable-next-line no-param-reassign
         steps[i] = step;
         continue;
       }
@@ -498,12 +513,13 @@ export class CreateWorkflow {
               organizationId: command.organizationId,
               userId: command.userId,
               changeId: FeedRepository.createObjectId(),
-            })
+            }),
           );
         }
       }
 
       step.template._feedId = feedItem._id;
+      // eslint-disable-next-line no-param-reassign
       steps[i] = step;
     }
 
@@ -511,7 +527,7 @@ export class CreateWorkflow {
   }
 
   private async handleGroup(
-    command: CreateWorkflowCommand
+    command: CreateWorkflowCommand,
   ): Promise<NotificationGroupEntity> {
     if (!command.notificationGroup?.name)
       throw new NotFoundException(`Notification group was not provided`);
@@ -538,7 +554,7 @@ export class CreateWorkflow {
             userId: command.userId,
             type: ChangeEntityTypeEnum.NOTIFICATION_GROUP,
             changeId: NotificationGroupRepository.createObjectId(),
-          })
+          }),
         );
       }
     }

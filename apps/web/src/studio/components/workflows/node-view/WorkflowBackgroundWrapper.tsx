@@ -5,9 +5,8 @@ import { FCWithChildren } from '../../../../types';
 export const WorkflowBackgroundWrapper: FCWithChildren = ({ className, children }) => {
   return (
     <Flex
-      // TODO fix this
-      h="[95%]"
       justifyContent="center"
+      flexGrow={1}
       className={cx(
         css({
           // FIXME: popover token isn't correct. Also, ideally there should be a better way to use a token here

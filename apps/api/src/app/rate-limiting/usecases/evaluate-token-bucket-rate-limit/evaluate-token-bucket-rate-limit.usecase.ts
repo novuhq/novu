@@ -1,7 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Ratelimit } from '@upstash/ratelimit';
-import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import { CacheService, InstrumentUsecase } from '@novu/application-generic';
+import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import {
   EvaluateTokenBucketRateLimitResponseDto,
   RegionLimiter,
@@ -148,7 +148,7 @@ export class EvaluateTokenBucketRateLimit {
             success: false,
             limit: refillRate,
             remaining: 0,
-            reset: reset,
+            reset,
             pending: Promise.resolve(),
           };
         }

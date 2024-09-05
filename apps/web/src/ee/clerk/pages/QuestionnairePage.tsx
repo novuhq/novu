@@ -1,10 +1,13 @@
-import { useVercelIntegration, useFeatureFlag } from '../../../hooks';
+import { PageMeta } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useVercelIntegration, useFeatureFlag } from '../../../hooks';
 import AuthLayout from '../../../components/layout/components/AuthLayout';
 import SetupLoader from '../../../pages/auth/components/SetupLoader';
 import { HUBSPOT_PORTAL_ID } from '../../../config/index';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
 import { HubspotSignupForm } from '../../../pages/auth/components/HubspotSignupForm';
+
+const title = 'Tell us more about you';
 
 export default function QuestionnairePage() {
   // TODO: Remove vercel integration logic from this page
@@ -17,7 +20,8 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <AuthLayout title="Tell us more about you">
+    <AuthLayout title={title}>
+      <PageMeta title={title} />
       {isHubspotEnabled ? <HubspotSignupForm /> : <QuestionnaireForm />}
     </AuthLayout>
   );

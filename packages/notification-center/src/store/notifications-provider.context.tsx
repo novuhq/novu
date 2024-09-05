@@ -9,8 +9,8 @@ import {
   useRemoveAllNotifications,
   useUnseenCount,
   useUnreadCount,
+  useMarkNotificationsAs,
 } from '../hooks';
-import { useMarkNotificationsAs } from '../hooks';
 import { useMarkNotificationsAsRead } from '../hooks/useMarkNotificationAsRead';
 import { useMarkNotificationsAsSeen } from '../hooks/useMarkNotificationAsSeen';
 import { useStore } from '../hooks/useStore';

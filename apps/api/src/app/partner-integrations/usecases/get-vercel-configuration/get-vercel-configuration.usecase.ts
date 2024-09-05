@@ -17,20 +17,23 @@ export class GetVercelConfiguration {
       command.configurationId
     );
 
-    return details.reduce((acc, curr) => {
-      if (
-        curr.partnerConfigurations &&
-        curr.partnerConfigurations.length >= 1 &&
-        curr.partnerConfigurations[0].projectIds &&
-        curr.partnerConfigurations[0].projectIds.length >= 1
-      ) {
-        acc.push({
-          organizationId: curr._id,
-          projectIds: curr.partnerConfigurations[0].projectIds,
-        });
-      }
+    return details.reduce(
+      (acc, curr) => {
+        if (
+          curr.partnerConfigurations &&
+          curr.partnerConfigurations.length >= 1 &&
+          curr.partnerConfigurations[0].projectIds &&
+          curr.partnerConfigurations[0].projectIds.length >= 1
+        ) {
+          acc.push({
+            organizationId: curr._id,
+            projectIds: curr.partnerConfigurations[0].projectIds,
+          });
+        }
 
-      return acc;
-    }, [] as { organizationId: string; projectIds: string[] }[]);
+        return acc;
+      },
+      [] as { organizationId: string; projectIds: string[] }[]
+    );
   }
 }

@@ -26,7 +26,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
     });
     this.#session.initialize();
     this.notifications = new Notifications({ useCache: options.useCache ?? true });
-    this.preferences = new Preferences();
+    this.preferences = new Preferences({ useCache: options.useCache ?? true });
     this.#socket = new Socket({ socketUrl: options.socketUrl });
   }
 

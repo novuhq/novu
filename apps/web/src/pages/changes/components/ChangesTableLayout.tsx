@@ -142,7 +142,7 @@ export const ChangesTable = ({
       data={changes || []}
       columns={columns}
       pagination={{
-        pageSize: pageSize,
+        pageSize,
         current: page,
         total: totalCount,
         onPageChange: handleTableChange,

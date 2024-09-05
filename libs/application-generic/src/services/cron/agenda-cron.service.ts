@@ -10,7 +10,7 @@ export class AgendaCronService extends CronService {
   constructor(
     metricsService: MetricsService,
     activeJobs: JobCronNameEnum[],
-    private agenda: Agenda
+    private agenda: Agenda,
   ) {
     super(metricsService, activeJobs);
   }
@@ -19,7 +19,7 @@ export class AgendaCronService extends CronService {
     jobName: JobCronNameEnum,
     processor: CronJobProcessor<TData>,
     interval: string,
-    options: CronOptions
+    options: CronOptions,
   ) {
     this.agenda.define(
       jobName,
@@ -35,7 +35,7 @@ export class AgendaCronService extends CronService {
         lockLimit: options.lockLimit,
         concurrency: options.concurrency,
         priority: options.priority,
-      }
+      },
     );
 
     await this.agenda.every(interval, jobName, {
@@ -67,7 +67,7 @@ export class AgendaCronService extends CronService {
 
         return acc;
       },
-      {} as CronMetrics
+      {} as CronMetrics,
     );
 
     return metrics;

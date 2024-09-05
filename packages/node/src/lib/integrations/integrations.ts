@@ -24,7 +24,7 @@ export class Integrations extends WithHttp implements IIntegrations {
    */
   async getWebhookProviderStatus(providerId: string) {
     return await this.http.get(
-      `integrations/webhook/provider/${providerId}/status`
+      `integrations/webhook/provider/${providerId}/status`,
     );
   }
 
@@ -55,7 +55,7 @@ export class Integrations extends WithHttp implements IIntegrations {
   async setIntegrationAsPrimary(integrationId: string) {
     return await this.http.post(
       `/integrations/${integrationId}/set-primary`,
-      {}
+      {},
     );
   }
 

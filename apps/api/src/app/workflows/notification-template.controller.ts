@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
+import { UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
@@ -19,6 +19,7 @@ import {
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
 
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
@@ -29,12 +30,10 @@ import { DeleteNotificationTemplate } from './usecases/delete-notification-templ
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { WorkflowResponse } from './dto/workflow-response.dto';
 import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
-import { Roles } from '../auth/framework/roles.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
@@ -116,7 +115,6 @@ export class NotificationTemplateController {
 
   @Delete('/:templateId')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: DataBooleanDto,
   })
@@ -169,7 +167,6 @@ export class NotificationTemplateController {
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
-  @Roles(MemberRoleEnum.ADMIN)
   create(
     @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
@@ -200,7 +197,6 @@ export class NotificationTemplateController {
 
   @Put('/:templateId/status')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update Notification template status',

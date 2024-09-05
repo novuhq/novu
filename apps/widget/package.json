@@ -1,9 +1,9 @@
 {
   "name": "@novu/widget",
-  "version": "2.0.0-canary.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
-    "start": "react-app-rewired start",
+    "start": "DISABLE_ESLINT_PLUGIN=true react-app-rewired start",
     "start:dev": "cross-env PORT=4500 pnpm start",
     "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & cross-env PORT=3500 pnpm start",
     "start:test": "pnpm start:shell:test & pnpm start:shell:embed & cross-env NODE_ENV=test REACT_APP_API_URL=http://127.0.0.1:1336 REACT_APP_WS_URL=http://127.0.0.1:1340 PORT=3500 pnpm start",
@@ -14,7 +14,7 @@
     "docker:build": "docker buildx build -f ./Dockerfile --load -t novu-widget ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-widget ./../.. --load",
     "prebuild": "rimraf build",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
     "lint": "eslint src",
     "cypress:run": "cypress run",
@@ -35,7 +35,6 @@
     "babel-plugin-import": "^1.13.3",
     "chroma-js": "^2.4.2",
     "envalid": "^8.0.0",
-    "eslint-plugin-cypress": "^2.15.1",
     "iframe-resizer": "^4.3.1",
     "polished": "^4.1.2",
     "react": "^18.3.1",

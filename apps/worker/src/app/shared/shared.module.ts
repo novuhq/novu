@@ -1,16 +1,13 @@
 import { Module } from '@nestjs/common';
 import {
-  ChangeRepository,
   ControlVariablesRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
-  FeedRepository,
   IntegrationRepository,
   JobRepository,
   LayoutRepository,
   LogRepository,
-  MemberRepository,
   MessageRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
@@ -22,7 +19,6 @@ import {
   TenantRepository,
   TopicRepository,
   TopicSubscribersRepository,
-  UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
@@ -56,14 +52,15 @@ import {
   ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
+import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
 import packageJson from '../../../package.json';
 import { CreateLog } from './logs';
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';
-import { UNIQUE_WORKER_DEPENDENCIES, workersToProcess } from '../../config/worker-init.config';
+import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
+    // eslint-disable-next-line global-require
     const eeAuthPackage = require('@novu/ee-auth');
 
     return eeAuthPackage.injectEEAuthProviders();
@@ -73,7 +70,6 @@ function getDynamicAuthProviders() {
 }
 
 const DAL_MODELS = [
-  UserRepository,
   OrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -83,13 +79,10 @@ const DAL_MODELS = [
   MessageRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
-  MemberRepository,
   LayoutRepository,
   LogRepository,
   IntegrationRepository,
-  ChangeRepository,
   JobRepository,
-  FeedRepository,
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,

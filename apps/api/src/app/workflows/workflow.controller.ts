@@ -19,6 +19,7 @@ import {
 } from '@novu/application-generic';
 import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
@@ -34,12 +35,10 @@ import { DeleteNotificationTemplate } from './usecases/delete-notification-templ
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { WorkflowResponse } from './dto/workflow-response.dto';
 import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
-import { Roles } from '../auth/framework/roles.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
@@ -122,7 +121,6 @@ export class WorkflowController {
 
   @Delete('/:workflowId')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: DataBooleanDto,
   })
@@ -190,7 +188,6 @@ export class WorkflowController {
     summary: 'Create workflow',
     description: `Workflow was previously named notification template`,
   })
-  @Roles(MemberRoleEnum.ADMIN)
   create(
     @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
@@ -221,7 +218,6 @@ export class WorkflowController {
 
   @Put('/:workflowId/status')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update workflow status',

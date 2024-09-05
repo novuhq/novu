@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { devCommand, DevCommandOptions } from './commands';
-import { sync } from './commands/sync';
 import { green } from 'picocolors';
 import { v4 as uuidv4 } from 'uuid';
+import { devCommand, DevCommandOptions } from './commands';
+import { sync } from './commands/sync';
 import { AnalyticService, ConfigService } from './services';
 import { IInitCommandOptions, init } from './commands/init';
 
@@ -43,7 +43,7 @@ program
   .action(async (options) => {
     analytics.track({
       identity: {
-        anonymousId: anonymousId,
+        anonymousId,
       },
       data: {},
       event: 'Sync Novu Endpoint State',
@@ -71,7 +71,7 @@ program
   .action(async (options: DevCommandOptions) => {
     analytics.track({
       identity: {
-        anonymousId: anonymousId,
+        anonymousId,
       },
       data: {},
       event: 'Open Dev Server',

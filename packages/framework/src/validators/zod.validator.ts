@@ -1,18 +1,22 @@
 import { ZodSchema } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import type { JsonSchema, Schema } from '../types/schema.types';
+import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
 import type { ValidateResult, Validator } from '../types/validator.types';
 
 export class ZodValidator implements Validator<ZodSchema> {
-  isSchema(schema: Schema): schema is ZodSchema {
+  canHandle(schema: Schema): schema is ZodSchema {
     return (schema as ZodSchema).safeParseAsync !== undefined;
   }
 
-  async validate<T extends Record<string, unknown>>(data: T, schema: ZodSchema): Promise<ValidateResult<T>> {
+  async validate<
+    T_Schema extends ZodSchema = ZodSchema,
+    T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
+    T_Validated = FromSchema<T_Schema>,
+  >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
     const result = schema.safeParse(data);
     if (result.success) {
-      return { success: true, data: result.data };
+      return { success: true, data: result.data as T_Validated };
     } else {
       return {
         success: false,

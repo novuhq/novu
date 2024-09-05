@@ -31,7 +31,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
-import { ExecuteOutput } from '@novu/framework';
+import { ChatOutput, ExecuteOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -72,7 +72,7 @@ export class SendMessageChat extends SendMessageBase {
     addBreadcrumb({
       message: 'Sending Chat',
     });
-    const step: NotificationStepEntity = command.step;
+    const { step } = command;
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const { subscriber } = command.compileContext;
@@ -88,7 +88,8 @@ export class SendMessageChat extends SendMessageBase {
       step.template = template;
     }
 
-    let content = '';
+    const bridgeOutput = command.bridgeData?.outputs as ChatOutput | undefined;
+    let content: string = bridgeOutput?.body || '';
 
     try {
       if (!command.bridgeData) {
@@ -111,7 +112,7 @@ export class SendMessageChat extends SendMessageBase {
         Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
       ) || [];
 
-    const phone = subscriber.phone;
+    const { phone } = subscriber;
     chatChannels.push({
       providerId: ChatProviderIdEnum.WhatsAppBusiness,
       credentials: {
@@ -240,7 +241,7 @@ export class SendMessageChat extends SendMessageBase {
       _messageTemplateId: chatChannel.template?._id,
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
-      chatWebhookUrl: chatWebhookUrl,
+      chatWebhookUrl,
       phone: phoneNumber,
       content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
@@ -371,8 +372,6 @@ export class SendMessageChat extends SendMessageBase {
           }),
         })
       );
-
-      return;
     }
   }
 
@@ -392,7 +391,6 @@ export class SendMessageChat extends SendMessageBase {
         throw new PlatformException(`Chat handler for provider ${integration.providerId} is  not found`);
       }
 
-      const bridgeContent = this.getOverrideContent(command.bridgeData, integration);
       const overrides = {
         ...(command.overrides[integration?.channel] || {}),
         ...(command.overrides[integration?.providerId] || {}),
@@ -405,7 +403,7 @@ export class SendMessageChat extends SendMessageBase {
         customData: overrides,
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        ...(bridgeContent?.content ? bridgeContent : { content }),
+        content,
       });
 
       await this.executionLogRoute.execute(
@@ -444,22 +442,5 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
     }
-  }
-
-  private getOverrideContent(
-    bridgeData: ExecuteOutput | undefined | null,
-    integration: IntegrationEntity
-  ): Record<string, unknown> & { content: string } {
-    const bridgeProviderOverride = this.getBridgeOverride(bridgeData?.providers, integration);
-
-    // TODO: make this generic to handle all providers.
-    let bridgeContent: Record<string, unknown> & { content: string };
-    if (bridgeProviderOverride) {
-      bridgeContent = { content: bridgeProviderOverride.text as string, blocks: bridgeProviderOverride.blocks };
-    } else {
-      bridgeContent = { content: bridgeData?.outputs.body as string };
-    }
-
-    return bridgeContent;
   }
 }

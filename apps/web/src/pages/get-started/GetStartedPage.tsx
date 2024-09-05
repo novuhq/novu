@@ -1,21 +1,25 @@
-import { useSegment } from '../../components/providers/SegmentProvider';
 import { useCallback, useEffect } from 'react';
 import { css } from '@novu/novui/css';
 import { Stepper, Group } from '@mantine/core';
 
-import { PageContainer } from '../../studio/layout/PageContainer';
 import { Title, Button } from '@novu/novui';
 import { useLocalStorage } from '@mantine/hooks';
+import { motion } from 'framer-motion';
+import { PageContainer } from '../../studio/layout/PageContainer';
 import { OnboardingStepsTimeline } from './OnboardingSteps';
 import { stepperClassNames } from './GetStartedPage.styles';
 import { onboardingTabs } from './form-tabs.config';
-import { motion } from 'framer-motion';
+import { useSegment } from '../../components/providers/SegmentProvider';
 import { navigatePlayground } from '../../utils';
 import { OutlineButton } from '../../studio/components/OutlineButton';
+import { When } from '../../components/utils/When';
+import { useWebContainerSupported } from '../../hooks/useWebContainerSupport';
+
 const PAGE_TITLE = 'Get started with the Novu Flow';
 
 export function GetStartedPage() {
   const segment = useSegment();
+  const { isSupported } = useWebContainerSupported();
 
   useEffect(() => {
     segment.track('Page visit - [Get Started]');
@@ -27,7 +31,7 @@ export function GetStartedPage() {
   };
 
   return (
-    <PageContainer>
+    <PageContainer className={css({ overflowY: 'auto' })}>
       <div
         className={css({
           maxWidth: '1000px',
@@ -44,7 +48,9 @@ export function GetStartedPage() {
           })}
         >
           <Title className={css({ fontWeight: 'bold' })}>{PAGE_TITLE}</Title>
-          <OutlineButton onClick={handleClick}>Visit playground</OutlineButton>
+          <When truthy={isSupported}>
+            <OutlineButton onClick={handleClick}>Visit playground</OutlineButton>
+          </When>
         </div>
         <StepperForm />
       </div>

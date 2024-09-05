@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { Group, Modal, ActionIcon, createStyles, MantineTheme } from '@mantine/core';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { useKeyDown } from '../../hooks';
 import { colors, Close } from '@novu/design-system';
+import { Row } from 'react-table';
+import { useFeatureFlag, useKeyDown } from '../../hooks';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import type { IIntegratedProvider, ITableIntegration } from './types';
 import { IntegrationsList } from './IntegrationsList';
-import { Row } from 'react-table';
 import { SelectProviderSidebar } from './components/multi-provider/SelectProviderSidebar';
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
-import { UpdateProviderSidebar } from './components/multi-provider/UpdateProviderSidebar';
+import { UpdateProviderSidebar as UpdateProviderSidebarOld } from './components/multi-provider/UpdateProviderSidebar';
+import { UpdateProviderSidebar } from './components/multi-provider/v2';
 
 enum SidebarType {
   SELECT = 'select',
@@ -81,9 +82,11 @@ export function IntegrationsListModal({
   selectedProvider?: IIntegratedProvider | null;
 }) {
   const [{ integrationIdToEdit, provider, sidebarType, scrollTo }, dispatch] = useReducer(reducer, {
-    sidebarType: !!scrollToProp ? SidebarType.SELECT : undefined,
+    sidebarType: scrollToProp ? SidebarType.SELECT : undefined,
     provider: selectedProvider,
   });
+
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const segment = useSegment();
   const { classes } = useModalStyles();
@@ -185,12 +188,22 @@ export function IntegrationsListModal({
         providerId={provider?.providerId}
         channel={provider?.channel}
       />
-      <UpdateProviderSidebar
-        key={integrationIdToEdit}
-        isOpened={sidebarType === SidebarType.UPDATE}
-        onClose={onSidebarClose}
-        integrationId={integrationIdToEdit}
-      />
+
+      {isV2Enabled ? (
+        <UpdateProviderSidebar
+          key={integrationIdToEdit}
+          isOpened={sidebarType === SidebarType.UPDATE}
+          onClose={onSidebarClose}
+          integrationId={integrationIdToEdit}
+        />
+      ) : (
+        <UpdateProviderSidebarOld
+          key={integrationIdToEdit}
+          isOpened={sidebarType === SidebarType.UPDATE}
+          onClose={onSidebarClose}
+          integrationId={integrationIdToEdit}
+        />
+      )}
     </Modal>
   );
 }
@@ -227,7 +240,7 @@ const useModalStyles = createStyles((theme: MantineTheme) => {
       backgroundColor: dark ? theme.fn.rgba(colors.BGDark, 0.8) : theme.fn.rgba(colors.white, 0.7),
 
       '.mantine-Drawer-root': {
-        ['&[data-expanded="true"]']: {
+        '&[data-expanded="true"]': {
           '.mantine-Drawer-drawer': {
             width: '100%',
             borderRadius: 0,

@@ -195,7 +195,7 @@ describe('Novu Node.js package - Layouts class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      `/layouts/${layoutId}/default`
+      `/layouts/${layoutId}/default`,
     );
     expect(result).toStrictEqual({});
   });

@@ -13,7 +13,7 @@ export function useBootIntercom() {
       boot({
         userId: currentUser._id,
         email: currentUser?.email ?? '',
-        name: currentUser?.firstName + ' ' + currentUser?.lastName,
+        name: `${currentUser?.firstName} ${currentUser?.lastName}`,
         createdAt: currentUser?.createdAt,
         company: {
           name: currentOrganization?.name,

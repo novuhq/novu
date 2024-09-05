@@ -268,7 +268,7 @@ export class TopicsController {
     return await this.renameTopicUseCase.execute(
       RenameTopicCommand.create({
         environmentId: user.environmentId,
-        topicKey: topicKey,
+        topicKey,
         name: body.name,
         organizationId: user.organizationId,
       })

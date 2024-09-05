@@ -19,6 +19,7 @@ export class StoreControlVariables {
     const changes = (objectControl, baseControl) => {
       return _.transform(objectControl, function (result, value, key) {
         if (!_.isEqual(value, base[key])) {
+          // eslint-disable-next-line no-param-reassign
           result[key] = _.isObject(value) && _.isObject(baseControl[key]) ? changes(value, baseControl[key]) : value;
         }
       });

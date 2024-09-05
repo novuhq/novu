@@ -27,7 +27,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       projectId: string;
       email: string;
       secretKey: string;
-    }
+    },
   ) {
     super();
     this.config = config;
@@ -40,14 +40,14 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           privateKey: this.config.secretKey,
         }),
       },
-      this.appName
+      this.appName,
     );
     this.messaging = getMessaging(firebase);
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const {
       deviceTokens: _,
@@ -68,7 +68,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     let res;
 
     if (type === 'data') {
-      res = await this.messaging.sendMulticast(
+      res = await this.messaging.sendEachForMulticast(
         this.transform<MulticastMessage>(bridgeProviderData, {
           tokens: options.target,
           data: {
@@ -81,10 +81,10 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           apns,
           fcmOptions,
           webpush,
-        }).body
+        }).body,
       );
     } else {
-      res = await this.messaging.sendMulticast(
+      res = await this.messaging.sendEachForMulticast(
         this.transform<MulticastMessage>(bridgeProviderData, {
           tokens: options.target,
           notification: {
@@ -97,7 +97,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           apns,
           fcmOptions,
           webpush,
-        }).body
+        }).body,
       );
     }
 
@@ -105,7 +105,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       throw new Error(
         `Sending message failed due to "${
           res.responses.find((i) => i.success === false).error.message
-        }"`
+        }"`,
       );
     }
 
@@ -116,7 +116,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       ids: res?.responses?.map((response, index) =>
         response.success
           ? response.messageId
-          : `${response.error.message}. Invalid token:- ${options.target[index]}`
+          : `${response.error.message}. Invalid token:- ${options.target[index]}`,
       ),
       date: new Date().toISOString(),
     };

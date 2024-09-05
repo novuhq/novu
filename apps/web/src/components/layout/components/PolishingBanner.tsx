@@ -1,8 +1,8 @@
 import { useMantineTheme } from '@mantine/core';
-import { useSegment } from '../../providers/SegmentProvider';
 import { Close } from '@novu/design-system';
 import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';
+import { useSegment } from '../../providers/SegmentProvider';
 
 export function PolishingBanner() {
   const isDark = useMantineTheme().colorScheme === 'dark';

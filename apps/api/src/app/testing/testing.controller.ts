@@ -2,16 +2,16 @@ import { Body, Controller, Get, HttpException, NotFoundException, Post } from '@
 import { DalService, UserEntity } from '@novu/dal';
 import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
 
+import { ApiExcludeController } from '@nestjs/swagger';
+import { ResourceCategory } from '@novu/application-generic';
 import { ISeedDataResponseDto, SeedDataBodyDto } from './dtos/seed-data.dto';
 import { IdempotencyBodyDto } from './dtos/idempotency.dto';
 import { SeedData } from './usecases/seed-data/seed-data.usecase';
 import { SeedDataCommand } from './usecases/seed-data/seed-data.command';
 import { CreateSession } from './usecases/create-session/create-session.usecase';
 import { CreateSessionCommand } from './usecases/create-session/create-session.command';
-import { ApiExcludeController } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
-import { ResourceCategory } from '@novu/application-generic';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @Controller('/testing')
@@ -46,13 +46,17 @@ export class TestingController {
     return await this.createSessionUsecase.execute(command);
   }
 
-  // @Post('/seed')
-  // async seedData(@Body() body: SeedDataBodyDto): Promise<{ password_user: UserEntity }> {
-  //   if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
-  //   const command = SeedDataCommand.create({});
+  /*
+   * @Post('/seed')
+   * async seedData(@Body() body: SeedDataBodyDto): Promise<{ password_user: UserEntity }> {
+   *   if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+   *   const command = SeedDataCommand.create({});
+   */
 
-  //   return await this.seedDataUsecase.execute(command);
-  // }
+  /*
+   *   return await this.seedDataUsecase.execute(command);
+   * }
+   */
 
   @ExternalApiAccessible()
   @UserAuthentication()
@@ -61,11 +65,13 @@ export class TestingController {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
     if (body.data > 300) {
-      throw new HttpException(`` + Math.random(), body.data);
+      throw new HttpException(`${Math.random()}`, body.data);
     }
     if (body.data === 250) {
-      //for testing conflict
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // for testing conflict
+      await new Promise((resolve) => {
+        setTimeout(resolve, 500);
+      });
     }
 
     return { number: Math.random() };

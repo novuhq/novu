@@ -1,6 +1,6 @@
-import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { Types } from 'mongoose';
+import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 
 export interface IOrganizationRepository extends IOrganizationRepositoryMongo {
   findById(id: string, select?: string): Promise<OrganizationEntity | null>;

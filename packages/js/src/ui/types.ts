@@ -1,17 +1,13 @@
 import type { Notification } from '../notifications';
 import type { NovuOptions } from '../types';
-import { defaultLocalization, appearanceKeys } from './config';
+import { appearanceKeys } from './config';
+import { Localization } from './context/LocalizationContext';
 
-export type NotificationClickHandler = (args: { notification: Notification }) => void;
-export type NotificationActionClickHandler = (args: { notification: Notification }) => void;
+export type NotificationClickHandler = (notification: Notification) => void;
+export type NotificationActionClickHandler = (notification: Notification) => void;
 
-export type NotificationMounter = (
-  el: HTMLDivElement,
-  options: {
-    notification: Notification;
-  }
-) => () => void;
-export type BellMounter = (el: HTMLDivElement, options: { unreadCount: number }) => () => void;
+export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
+export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
 
 export type Tab = { label: string; value: Array<string> };
 
@@ -44,9 +40,6 @@ export type Theme = {
 };
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
-export type LocalizationKey = keyof typeof defaultLocalization;
-export type Localization = Partial<Record<LocalizationKey, string>>;
-
 export type BaseNovuProviderProps = {
   appearance?: Appearance;
   localization?: Localization;
@@ -55,8 +48,8 @@ export type BaseNovuProviderProps = {
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {
-  mountNotification?: NotificationMounter;
-  mountBell?: BellMounter;
+  renderNotification?: NotificationRenderer;
+  renderBell?: BellRenderer;
 };
 
 export enum NotificationStatus {
@@ -64,3 +57,5 @@ export enum NotificationStatus {
   UNREAD = 'unread',
   ARCHIVED = 'archived',
 }
+
+export { Localization, LocalizationKey } from './context/LocalizationContext';

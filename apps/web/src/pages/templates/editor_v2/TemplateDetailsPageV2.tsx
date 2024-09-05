@@ -1,6 +1,7 @@
 import { css, cx } from '@novu/novui/css';
 import { IconCable, IconPlayArrow } from '@novu/novui/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
 import { useTemplateController } from '../components/useTemplateController';
 import { parseUrl } from '../../../utils/routeUtils';
@@ -10,7 +11,6 @@ import { WorkflowNodes } from '../../../studio/components/workflows/node-view/Wo
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
-import { useEffect } from 'react';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -39,6 +39,7 @@ export const TemplateDetailsPageV2 = () => {
 
   return (
     <WorkflowsPageTemplate
+      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
       icon={<IconCable size="32" />}
       title={title}
       actions={

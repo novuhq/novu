@@ -1,7 +1,8 @@
-import Ajv, { type ErrorObject, type ValidateFunction as AjvValidateFunction } from 'ajv';
+import Ajv from 'ajv';
+import type { ErrorObject, ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import type { ValidateResult, Validator } from '../types/validator.types';
-import type { JsonSchema, Schema } from '../types/schema.types';
+import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
 import { cloneData } from '../utils/clone.utils';
 
 export class JsonSchemaValidator implements Validator<JsonSchema> {
@@ -26,7 +27,7 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     this.compiledSchemas = new Map();
   }
 
-  isSchema(schema: Schema): schema is JsonSchema {
+  canHandle(schema: Schema): schema is JsonSchema {
     if (typeof schema === 'boolean') return false;
 
     return (
@@ -37,7 +38,11 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     );
   }
 
-  async validate<T extends Record<string, unknown>>(data: T, schema: JsonSchema): Promise<ValidateResult<T>> {
+  async validate<
+    T_Schema extends JsonSchema = JsonSchema,
+    T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
+    T_Validated = FromSchema<T_Schema>,
+  >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
     let validateFn = this.compiledSchemas.get(schema);
 
     if (!validateFn) {
@@ -51,7 +56,7 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     const valid = validateFn(clonedData);
 
     if (valid) {
-      return { success: true, data: clonedData };
+      return { success: true, data: clonedData as unknown as T_Validated };
     } else {
       return {
         success: false,

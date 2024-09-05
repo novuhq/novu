@@ -12,7 +12,10 @@ const axiosInstance = axios.create();
   scope: Scope.REQUEST,
 })
 export class InviteNudgeWebhook {
-  constructor(private memberRepository: MemberRepository, private getFeatureFlag: GetFeatureFlag) {}
+  constructor(
+    private memberRepository: MemberRepository,
+    private getFeatureFlag: GetFeatureFlag
+  ) {}
 
   async execute(command: InviteNudgeWebhookCommand) {
     const isEnabled = await this.getFeatureFlag.execute(

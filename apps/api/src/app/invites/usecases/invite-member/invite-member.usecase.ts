@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope, Logger, LoggerService } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository, IAddMemberData } from '@novu/dal';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { AnalyticsService } from '@novu/application-generic';
-import { Logger, LoggerService } from '@nestjs/common';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InviteMemberCommand } from './invite-member.command';
@@ -35,6 +34,7 @@ export class InviteMember {
 
     if (process.env.NOVU_API_KEY && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
       const novu = new Novu(process.env.NOVU_API_KEY);
+      // cspell:disable-next-line
       await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn', {
         to: {
           subscriberId: command.email,
@@ -61,11 +61,12 @@ export class InviteMember {
       },
     };
 
+    await this.memberRepository.addMember(organization._id, memberPayload);
+
     this.analyticsService.track('Invite Organization Member', command.userId, {
       _organization: command.organizationId,
       role: command.role,
+      email: command.email,
     });
-
-    await this.memberRepository.addMember(organization._id, memberPayload);
   }
 }

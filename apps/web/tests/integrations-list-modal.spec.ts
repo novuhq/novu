@@ -25,6 +25,7 @@ import { deleteProvider, SessionData } from './utils/plugins';
 
 let session: SessionData;
 test.beforeEach(async ({ page }) => {
+  await setFeatureFlag(page, FeatureFlagsKeysEnum.IS_V2_ENABLED, false);
   ({ session } = await initializeSession(page));
 });
 
@@ -127,9 +128,9 @@ test('should show the table loading skeleton and then table', async ({ page }) =
   });
 
   await checkTableRow(page, {
-    name: 'Novu In-App',
+    name: 'Novu Inbox',
     isFree: false,
-    provider: 'Novu In-App',
+    provider: 'Novu Inbox',
     channel: 'In-App',
     environment: 'Development',
     status: 'Active',
@@ -394,7 +395,7 @@ test('should create a new mailjet integration', async ({ page }) => {
     provider: 'Mailjet',
     channel: 'Email',
     environment: 'Development',
-    status: 'Disabled',
+    status: 'Active',
   });
 });
 
@@ -432,7 +433,7 @@ test('should update the mailjet integration', async ({ page }) => {
   await expect(integrationEnvironment).toContainText('Development');
 
   const isActive = page.getByTestId('is_active_id');
-  await expect(isActive).toHaveValue('false');
+  await expect(isActive).toHaveValue('true');
 
   providerName = updateProviderSidebar.getByPlaceholder('Enter instance name');
   await expect(providerName).toHaveValue('Mailjet Integration');
@@ -446,8 +447,6 @@ test('should update the mailjet integration', async ({ page }) => {
   await providerName.clear();
   await providerName.fill('Mailjet Integration Updated');
 
-  await isActive.locator('~ label').click();
-
   const apiKey = page.getByTestId('apiKey');
   await apiKey.fill('fake-api-key');
 
@@ -460,11 +459,13 @@ test('should update the mailjet integration', async ({ page }) => {
   const senderName = page.getByTestId('senderName');
   await senderName.fill('Novu');
 
+  const toastClose = page.locator('.mantine-Notification-closeButton');
+  await toastClose.click();
+
   await expect(updateButton).toBeEnabled();
   await updateButton.click();
+  await expect(updateButton).toBeEnabled();
 
-  const modalClose = page.locator('.mantine-Modal-close');
-  await modalClose.click();
   const sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 
@@ -512,7 +513,7 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   await expect(updateProviderSidebar).toBeVisible();
 
   const isActive = page.getByTestId('is_active_id');
-  await expect(isActive).toHaveValue('false');
+  await expect(isActive).toHaveValue('true');
 
   providerName = updateProviderSidebar.getByPlaceholder('Enter instance name');
   await expect(providerName).toHaveValue('Mailjet Integration');
@@ -527,8 +528,6 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   await providerName.clear();
   await providerName.fill('Mailjet Integration Updated');
 
-  await isActive.locator('~ label').click();
-
   const apiKey = page.getByTestId('apiKey');
   await apiKey.fill('fake-api-key');
 
@@ -541,11 +540,13 @@ test('should update the mailjet integration from the list', async ({ page }) => 
   const senderName = page.getByTestId('senderName');
   await senderName.fill('Novu');
 
+  const toastClose = page.locator('.mantine-Notification-closeButton');
+  await toastClose.click();
+
   await expect(updateButton).toBeEnabled();
   await updateButton.click();
+  await expect(updateButton).toBeEnabled();
 
-  const modalClose = page.locator('.mantine-Modal-close');
-  await modalClose.click();
   sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 
@@ -617,7 +618,7 @@ test('should allow to delete the mailjet integration', async ({ page }) => {
 test('should show the Novu in-app integration', async ({ page }) => {
   await navigateToGetStarted(page);
 
-  await clickOnListRow(page, new RegExp(`Novu In-App.*Development`));
+  await clickOnListRow(page, /Novu Inbox.*Development/);
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar');
   await expect(updateProviderSidebar).toBeVisible();
@@ -649,7 +650,7 @@ test('should show the Novu in-app integration', async ({ page }) => {
 
   const selectedProviderName = page.getByTestId('provider-instance-name').first();
   await expect(selectedProviderName).toBeVisible();
-  await expect(selectedProviderName).toHaveValue('Novu In-App');
+  await expect(selectedProviderName).toHaveValue('Novu Inbox');
 
   const identifier = page.getByTestId('provider-instance-identifier');
   await expect(identifier).toHaveValue(/novu-in-app/);
@@ -674,7 +675,7 @@ test('should show the Novu in-app integration', async ({ page }) => {
 test('should show the Novu in-app integration - React guide', async ({ page }) => {
   await navigateToGetStarted(page);
 
-  await clickOnListRow(page, new RegExp(`Novu In-App.*Development`));
+  await clickOnListRow(page, /Novu Inbox.*Development/);
 
   let updateProviderSidebar = page.getByTestId('update-provider-sidebar');
   await expect(updateProviderSidebar).toBeVisible();
@@ -703,6 +704,7 @@ test('should show the Novu Email integration sidebar', async ({ page }) => {
     page,
     modifyBody: (body) => {
       const [firstIntegration] = body.data;
+      // eslint-disable-next-line no-param-reassign
       body.data = [
         {
           _id: EmailProviderIdEnum.Novu,
@@ -726,7 +728,7 @@ test('should show the Novu Email integration sidebar', async ({ page }) => {
   const sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 
-  await clickOnListRow(page, new RegExp(`Novu Email.*Development`));
+  await clickOnListRow(page, /Novu Email.*Development/);
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar-novu');
   await expect(updateProviderSidebar).toContainText('Test Provider');
@@ -766,6 +768,7 @@ test('should show the Novu SMS integration sidebar', async ({ page }) => {
     page,
     modifyBody: (body) => {
       const [firstIntegration] = body.data;
+      // eslint-disable-next-line no-param-reassign
       body.data = [
         {
           _id: SmsProviderIdEnum.Novu,
@@ -789,7 +792,7 @@ test('should show the Novu SMS integration sidebar', async ({ page }) => {
   const sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 
-  await clickOnListRow(page, new RegExp(`Novu SMS.*Development`));
+  await clickOnListRow(page, /Novu SMS.*Development/);
 
   const updateProviderSidebar = page.getByTestId('update-provider-sidebar-novu');
   await expect(updateProviderSidebar).toContainText('Test Provider');

@@ -1,7 +1,6 @@
+import { ActorTypeEnum, ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock, UrlTarget } from '../../types';
 import { INotificationTemplate } from '../notification-template';
 import { ButtonTypeEnum } from './action.enum';
-
-import { ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock, ActorTypeEnum } from '../../types';
 
 export interface IMessage {
   _id: string;
@@ -23,6 +22,7 @@ export interface IMessage {
   _feedId?: string | null;
   _layoutId?: string;
   payload: Record<string, unknown>;
+  data?: Record<string, unknown>;
   actor?: IActor;
   avatar?: string;
   subject?: string;
@@ -32,6 +32,7 @@ export interface IMessageCTA {
   type: ChannelCTATypeEnum;
   data: {
     url?: string;
+    target?: UrlTarget;
   };
   action?: IMessageAction;
 }
@@ -50,6 +51,7 @@ export interface IMessageButton {
   content: string;
   resultContent?: string;
   url?: string;
+  target?: UrlTarget;
 }
 
 export enum MessageActionStatusEnum {

@@ -7,6 +7,7 @@ import { IconMenuBook, IconTerminal } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { Button } from '@novu/novui';
 
+import { hstack } from '@novu/novui/patterns';
 import { TerminalHandle } from '../../../hooks/useContainer';
 
 interface TerminalComponentProps {
@@ -15,78 +16,88 @@ interface TerminalComponentProps {
   onStepAddGuide?: () => void;
 }
 
-export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalComponentProps>(
-  ({ onChange, height = '100%', onStepAddGuide }, ref) => {
-    const terminalRef = useRef<HTMLDivElement>(null);
-    const terminalInstance = useRef<Terminal | null>(null);
-    const fitAddon = useRef(new FitAddon());
+export const TerminalComponent = React.forwardRef<TerminalHandle, TerminalComponentProps>(({ onStepAddGuide }, ref) => {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const terminalInstance = useRef<Terminal | null>(null);
+  const fitAddon = useRef(new FitAddon());
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        write: (data: string) => {
-          terminalInstance.current?.write(data.replace(/\n/g, '\r\n'));
-        },
-        fit: () => fitAddon.current.fit(),
-        proposeDimensions: () => fitAddon.current.proposeDimensions(),
-      }),
-      []
-    );
+  useImperativeHandle(
+    ref,
+    () => ({
+      write: (data: string) => {
+        terminalInstance.current?.write(data.replace(/\n/g, '\r\n'));
+      },
+      fit: () => fitAddon.current.fit(),
+      proposeDimensions: () => fitAddon.current.proposeDimensions(),
+    }),
+    []
+  );
 
-    useEffect(() => {
-      if (!terminalRef.current) return;
+  useEffect(() => {
+    if (!terminalRef.current) return;
 
-      const terminal = new Terminal();
-      terminal.loadAddon(fitAddon.current);
-      terminal.open(terminalRef.current);
+    const terminal = new Terminal();
+    terminal.loadAddon(fitAddon.current);
+    terminal.open(terminalRef.current);
 
+    fitAddon.current.activate(terminal);
+    fitAddon.current.fit();
+    terminalInstance.current = terminal;
+
+    setTimeout(() => {
       fitAddon.current.fit();
-      terminalInstance.current = terminal;
+    }, 500);
 
-      setTimeout(() => {
-        fitAddon.current.fit();
-      }, 500);
+    const handleResize = () => {
+      fitAddon.current.fit();
+    };
 
-      const handleResize = () => {
-        fitAddon.current.fit();
-      };
+    window.addEventListener('nv-terminal-layout-resize', handleResize);
+    window.addEventListener('resize', handleResize);
 
-      window.addEventListener('nv-terminal-layout-resize', handleResize);
-      window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('nv-terminal-layout-resize', handleResize);
+      terminal.dispose();
+    };
+  }, []);
 
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('nv-terminal-layout-resize', handleResize);
-        terminal.dispose();
-      };
-    }, []);
+  return (
+    // Necessary to use `style` prop for dynamic, client-side height.
+    <>
+      <div
+        className={hstack({
+          color: 'typography.text.secondary',
+          bg: '#23232b', // TODO: replace with semantic value
+          lineHeight: '125',
+          fontSize: '88',
+          p: '25',
+          width: 'full',
+          justifyContent: 'space-between',
+          position: 'sticky',
+        })}
+      >
+        <span className={hstack()}>
+          <IconTerminal className={css({ mx: '25' })} />
+          Terminal
+        </span>
 
-    return (
-      <div className={css({ height: '100%' })}>
-        <div
-          className={css({
-            color: 'typography.text.secondary',
-            bg: '#292933',
-            lineHeight: '20px',
-            fontSize: '14px',
-            p: '4',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          })}
-        >
-          <span className={css({ display: 'flex', alignItems: 'center' })}>
-            <IconTerminal className={css({ mr: '4' })} />
-            Terminal
-          </span>
-
-          <Button size="xs" Icon={IconMenuBook} onClick={onStepAddGuide}>
-            How to add a Step?
-          </Button>
-        </div>
-        <div style={{ height: '100%' }} ref={terminalRef} />
+        <Button size="xs" Icon={IconMenuBook} onClick={onStepAddGuide}>
+          How to add a Step?
+        </Button>
       </div>
-    );
-  }
-);
+      <div
+        className={css({
+          // Reduce the height by the header height.
+          height: `calc(100% - 32px)`,
+          // Applying padding to the terminal content.
+          '& .xterm-screen': { padding: '75' },
+          // !important is necessary to override xterm.js styles.
+          '& .xterm-rows': { fontFamily: 'mono !important' },
+          '& .xterm .xterm-viewport': { bg: 'transparent !important' },
+        })}
+        ref={terminalRef}
+      />
+    </>
+  );
+});

@@ -1,10 +1,8 @@
-/* eslint-disable max-len */
 import { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { useMantineTheme } from '@mantine/core';
+import { useMantineTheme, Tabs } from '@mantine/core';
 import { Editor, Monaco } from '@monaco-editor/react';
 import { editor as NEditor } from 'monaco-editor';
-import { Tabs } from '@mantine/core';
 
 import { colors } from '@novu/design-system';
 import { BrowserScreenWrapper } from './TitleBarWrapper';

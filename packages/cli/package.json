@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.0.0-canary.8",
+  "version": "2.0.1",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -26,7 +26,8 @@
     "start": "pnpm start:dev",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix",
     "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon init",
     "start:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon",
     "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon dev --dashboard-url http://localhost:4200",
@@ -68,7 +69,7 @@
     "@novu/ntfr-client": "^0.0.4",
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
-    "axios": "^1.6.2",
+    "axios": "^1.6.8",
     "chalk": "4.1.2",
     "commander": "^9.0.0",
     "configstore": "^5.0.0",

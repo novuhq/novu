@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { css } from '@novu/novui/css';
 import { Flex } from '@novu/novui/jsx';
 import { IconOpenInNew, IconClose } from '@novu/novui/icons';
+import { IconButton } from '@novu/novui';
 import { Docs } from './Docs';
 import { DOCS_URL } from './docs.const';
 import { Voting, VotingWidget } from './VotingWidget';
-import { IconButton } from '@novu/novui';
 import { useLoadDocs } from './useLoadDocs';
 import { useTelemetry } from '../../hooks/useNovuAPI';
 

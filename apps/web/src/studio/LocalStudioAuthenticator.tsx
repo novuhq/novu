@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth, useEnvironment } from '../hooks';
 import { ROUTES } from '../constants/routes';
 import { assertProtocol } from '../utils/url';
 import { encodeBase64 } from './utils/base64';
 import { StudioState } from './types';
-import { useLocation } from 'react-router-dom';
 import { novuOnboardedCookie } from '../utils/cookies';
 import { LocalStudioPageLayout } from '../components/layout/components/LocalStudioPageLayout';
 import { getToken } from '../components/providers/AuthProvider';
@@ -115,7 +115,7 @@ export function LocalStudioAuthenticator() {
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
 
     // TODO: Add apiKeys to the IEnvironment interface as they exist in the response
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-expect-error
     const devSecretKey = environments.find((env) => env.name.toLowerCase() === 'development')?.apiKeys[0]?.key;
 

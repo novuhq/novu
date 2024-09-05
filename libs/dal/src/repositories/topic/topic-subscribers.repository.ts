@@ -54,7 +54,7 @@ export class TopicSubscribersRepository extends BaseRepository<
       },
     ];
 
-    for await (const doc of this._model.aggregate(aggregatePipeline, { batchSize: batchSize }).cursor()) {
+    for await (const doc of this._model.aggregate(aggregatePipeline, { batchSize }).cursor()) {
       yield this.mapEntity(doc);
     }
   }

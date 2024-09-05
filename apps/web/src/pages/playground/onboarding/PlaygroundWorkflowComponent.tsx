@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 import { css, cx } from '@novu/novui/css';
 
+import { HStack, VStack } from '@novu/novui/jsx';
 import { BrowserScreenWrapper } from './TitleBarWrapper';
 import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 import { When } from '../../../components/utils/When';
-import { HStack, VStack } from '@novu/novui/jsx';
 import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
 import { useBridgeAPI } from '../../../studio/hooks/useBridgeAPI';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
@@ -76,21 +76,17 @@ export function PlaygroundWorkflowComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflow, controls, payload, clickedStepId]);
 
-  if (isBridgeAppLoading || isDemoWorkflow) {
-    return <StepNodeSkeleton />;
-  }
-
   return (
     <BrowserScreenWrapper
       title={
         <div
           className={css({
-            backgroundColor: '#1E1E26',
-            borderRadius: '6px',
-            maxWidth: '392px',
-            margin: '0 auto',
-            lineHeight: '20px',
-            fontSize: '14px !important',
+            bg: 'legacy.B15',
+            borderRadius: '25',
+            lineHeight: '125',
+            fontSize: '88',
+            maxW: '392px',
+            mx: 'auto',
           })}
         >
           http://localhost:2022/studio
@@ -100,23 +96,36 @@ export function PlaygroundWorkflowComponent({
       <div
         className={cx(
           css({
-            borderRadius: '0 0 8px 8px',
             height: 'inherit',
-            padding: '12px 12px 12px 0',
-            backgroundColor: '#1e1e27',
+            p: '75',
+            pb: '0',
+            bg: 'surface.page',
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            overflowX: 'hidden',
           })
         )}
       >
         <When truthy={!clickedStepId}>
           <WorkflowBackgroundWrapper>
-            <WorkflowNodes
-              steps={steps || []}
-              onStepClick={(stepClicked) => {
-                setWorkflowTab('stepEdit');
-                setClickedStepId(stepClicked.stepId);
-              }}
-              onTriggerClick={() => {}}
-            />
+            <When truthy={isBridgeAppLoading || isDemoWorkflow}>
+              <VStack gap="0">
+                <StepNode.LoadingDisplay />
+                <StepNode.LoadingDisplay />
+                <StepNode.LoadingDisplay />
+              </VStack>
+            </When>
+            <When truthy={!(isBridgeAppLoading || isDemoWorkflow)}>
+              <WorkflowNodes
+                steps={steps || []}
+                onStepClick={(stepClicked) => {
+                  setWorkflowTab('stepEdit');
+                  setClickedStepId(stepClicked.stepId);
+                }}
+                onTriggerClick={() => {}}
+              />
+            </When>
           </WorkflowBackgroundWrapper>
         </When>
 
@@ -124,11 +133,9 @@ export function PlaygroundWorkflowComponent({
           <div>
             <HStack
               className={css({
-                marginTop: '8px',
-                marginBottom: '8px',
+                my: '50',
                 height: 'inherit',
-                borderRadius: '0 8px 8px 0',
-                paddingLeft: '12px',
+                pl: '75',
               })}
             >
               <BackButton
@@ -157,17 +164,5 @@ export function PlaygroundWorkflowComponent({
         </When>
       </div>
     </BrowserScreenWrapper>
-  );
-}
-
-function StepNodeSkeleton() {
-  return (
-    <WorkflowBackgroundWrapper>
-      <VStack gap="0" p="75">
-        <StepNode.LoadingDisplay />
-        <StepNode.LoadingDisplay />
-        <StepNode.LoadingDisplay />
-      </VStack>
-    </WorkflowBackgroundWrapper>
   );
 }

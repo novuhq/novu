@@ -1,6 +1,12 @@
 import { expect } from 'chai';
 
-import { ITopic, SubscriberSourceEnum, TriggerRecipientsTypeEnum, TriggerRecipientSubscriber } from '@novu/shared';
+import {
+  ITopic,
+  SubscriberSourceEnum,
+  TriggerRecipientsTypeEnum,
+  TriggerRecipientSubscriber,
+  ISubscribersDefine,
+} from '@novu/shared';
 import {
   buildSubscriberDefine,
   IProcessSubscriberBulkJobDto,
@@ -8,7 +14,6 @@ import {
   splitByRecipientType,
   validateSubscriberDefine,
 } from '@novu/application-generic';
-import { ISubscribersDefine } from '@novu/shared';
 
 describe('TriggerMulticast Spec', () => {
   describe('splitByRecipientType', () => {

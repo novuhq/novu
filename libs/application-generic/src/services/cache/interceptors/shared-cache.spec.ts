@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 import {
   buildCachedQuery,
   buildCredentialsKeyPart,
@@ -478,7 +479,7 @@ describe('shared cache', function () {
       const credentials = getInvalidateQuery(
         'Create',
         createResponse,
-        queryArgs
+        queryArgs,
       );
 
       expect(credentials._id).toEqual('createResponse_123');
@@ -504,7 +505,7 @@ describe('shared cache', function () {
       const credentials = getInvalidateQuery(
         'update',
         createResponse,
-        queryArgs
+        queryArgs,
       );
 
       expect(credentials._id).toEqual('queryArgs_123');
@@ -524,7 +525,7 @@ describe('shared cache', function () {
       const res = buildQueryKeyPart(
         CacheKeyPrefixEnum.MESSAGE_COUNT,
         CacheInterceptorTypeEnum.CACHED,
-        query
+        query,
       );
 
       expect(res).toEqual(':limit=10:seen=true');
@@ -541,7 +542,7 @@ describe('shared cache', function () {
       const res = buildQueryKeyPart(
         CacheKeyPrefixEnum.MESSAGE_COUNT,
         CacheInterceptorTypeEnum.INVALIDATE,
-        query
+        query,
       );
 
       expect(res).toEqual('*');

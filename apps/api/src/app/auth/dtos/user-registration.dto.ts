@@ -1,5 +1,6 @@
 import { IsDefined, IsEmail, IsOptional, MinLength, Matches, MaxLength, IsString, IsEnum } from 'class-validator';
 import { JobTitleEnum, passwordConstraints, ProductUseCases, SignUpOriginEnum } from '@novu/shared';
+
 export class UserRegistrationBodyDto {
   @IsDefined()
   @IsEmail()
@@ -38,6 +39,10 @@ export class UserRegistrationBodyDto {
   @IsString()
   @IsOptional()
   domain?: string;
+
+  @IsString()
+  @IsOptional()
+  invitationToken?: string;
 
   @IsOptional()
   productUseCases?: ProductUseCases;

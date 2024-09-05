@@ -7,7 +7,6 @@ import reportWebVitals from './reportWebVitals';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from './config';
 
 import './index.css';
-import '@novu/novui/components.css';
 import '@novu/novui/styles.css';
 
 (async () => {
@@ -15,7 +14,7 @@ import '@novu/novui/styles.css';
 
   let FeatureFlagsProvider = ({ children }) => <>{children}</>;
 
-  if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
+  if (LAUNCH_DARKLY_CLIENT_SIDE_ID) {
     FeatureFlagsProvider = await asyncWithLDProvider({
       clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
       reactOptions: {

@@ -1,4 +1,4 @@
-import { JwtPayload } from '@clerk/types';
+import { SignUpOriginEnum } from '../analytics';
 
 export interface IJwtClaims {
   _id: string;
@@ -12,18 +12,6 @@ export interface IJwtClaims {
   iss?: string;
   scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY;
 }
-
-// JWT payload + custom claims
-export type ClerkJwtPayload = JwtPayload & {
-  _id: string;
-  email: string;
-  lastName: string;
-  firstName: string;
-  environmentId: string; // TODO
-  profilePicture: string;
-  externalId?: string;
-  externalOrgId?: string;
-};
 
 export type UserSessionData = IJwtClaims & { environmentId: string };
 
@@ -47,3 +35,8 @@ export type SentryUser = {
 export type HandledUser = (IJwtClaims & SentryUser) | false;
 
 export const NONE_AUTH_SCHEME = 'None';
+
+export type AuthenticateContext = {
+  invitationToken?: string;
+  origin?: SignUpOriginEnum;
+};

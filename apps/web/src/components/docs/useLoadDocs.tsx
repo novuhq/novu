@@ -5,6 +5,8 @@ export type DocsQueryResults = {
   code: string;
   title: string;
   description: string;
+  /** is a map of what needs to have globals and are usually mapped to ChildDocs component */
+  mappings: Record<string, Record<string, string> | string>;
 };
 
 type UseLoadDocsProps = {
@@ -14,7 +16,7 @@ type UseLoadDocsProps = {
 };
 
 export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
-  const { data = { code: '', title: '', description: '' }, ...queryResults } = useQuery<DocsQueryResults>(
+  const { data = { code: '', title: '', description: '', mappings: {} }, ...queryResults } = useQuery<DocsQueryResults>(
     ['docs', path],
     async () => {
       const response = await fetch(MDX_URL + path);
@@ -29,6 +31,6 @@ export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
     ...queryResults,
     data,
     // TODO: we should really be handling this through proper errors in the query, but this will suffice for now
-    hasLoadedSuccessfully: Boolean(!queryResults.isLoading && data.title),
+    hasLoadedSuccessfully: Boolean(!queryResults.isLoading && data.code),
   };
 };

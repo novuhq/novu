@@ -3,8 +3,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { DigestTypeEnum } from '@novu/shared';
 
-import { When } from '../../../components/utils/When';
 import { colors, Input, Select, Tooltip, Bell, Digest, Timer } from '@novu/design-system';
+import { When } from '../../../components/utils/When';
 import { TypeSegmented } from './digest/TypeSegment';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { RegularInfo } from './digest/icons/RegularInfo';

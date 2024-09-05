@@ -27,7 +27,7 @@ export interface ICacheService {
   eval<TData = unknown>(
     script: string,
     keys: string[],
-    args: (string | number | Buffer)[]
+    args: (string | number | Buffer)[],
   ): Promise<TData>;
 }
 
@@ -40,7 +40,7 @@ export class CacheService implements ICacheService {
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
   constructor(
-    private cacheInMemoryProviderService: CacheInMemoryProviderService
+    private cacheInMemoryProviderService: CacheInMemoryProviderService,
   ) {}
 
   public async initialize(): Promise<void> {
@@ -75,19 +75,19 @@ export class CacheService implements ICacheService {
   public async set(
     key: string,
     value: string,
-    options?: CachingConfig
+    options?: CachingConfig,
   ): Promise<string | null> {
     const result = await this.client?.set(
       key,
       value,
       'EX',
-      this.getTtlInSeconds(options)
+      this.getTtlInSeconds(options),
     );
 
     if (result === null) {
       Logger.error(
         `Set operation for key ${key} was not performed`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
     }
 
@@ -97,14 +97,14 @@ export class CacheService implements ICacheService {
   public async setIfNotExist(
     key: string,
     value: string,
-    options?: CachingConfig
+    options?: CachingConfig,
   ): Promise<string | null> {
     const result = await this.client?.set(
       key,
       value,
       'EX',
       this.getTtlInSeconds(options),
-      'NX'
+      'NX',
     );
 
     return result;
@@ -113,7 +113,7 @@ export class CacheService implements ICacheService {
   public async setQuery(
     key: string,
     value: string,
-    options?: CachingConfig
+    options?: CachingConfig,
   ): Promise<void | unknown[]> {
     if (this.client) {
       const { credentials, query } = splitKey(key);
@@ -124,7 +124,7 @@ export class CacheService implements ICacheService {
       pipeline.expire(
         credentials,
         this.cacheInMemoryProviderService.getTtl() +
-          this.getTtlInSeconds(options)
+          this.getTtlInSeconds(options),
       );
 
       pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));
@@ -132,7 +132,7 @@ export class CacheService implements ICacheService {
       return await this.capturedExec(
         pipeline,
         CacheServiceActionsEnum.SET_QUERY,
-        key
+        key,
       );
     }
   }
@@ -172,7 +172,7 @@ export class CacheService implements ICacheService {
       return await this.capturedExec(
         pipeline,
         CacheServiceActionsEnum.DEL_QUERY,
-        key
+        key,
       );
     }
   }
@@ -180,7 +180,7 @@ export class CacheService implements ICacheService {
   private async capturedExec(
     pipeline: Pipeline,
     action: CacheServiceActionsEnum,
-    key: string
+    key: string,
   ): Promise<unknown[]> {
     try {
       return await pipeline.exec();
@@ -188,14 +188,14 @@ export class CacheService implements ICacheService {
       Logger.error(
         error,
         `Failed to execute pipeline action ${action} for key ${key}`,
-        LOG_CONTEXT
+        LOG_CONTEXT,
       );
       throw error;
     }
   }
 
   public delByPattern(pattern: string): Promise<unknown> {
-    const client = this.client;
+    const { client } = this;
 
     if (client) {
       return new Promise((resolve, reject) => {
@@ -236,13 +236,13 @@ export class CacheService implements ICacheService {
   public async eval<TData = unknown>(
     script: string,
     keys: string[],
-    args: (string | number | Buffer)[]
+    args: (string | number | Buffer)[],
   ): Promise<TData> {
     return this.client?.eval(
       script,
       keys.length,
       ...keys,
-      ...args
+      ...args,
     ) as Promise<TData>;
   }
 }

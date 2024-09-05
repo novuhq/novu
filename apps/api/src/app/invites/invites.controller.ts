@@ -15,10 +15,10 @@ import {
   MemberRoleEnum,
   UserSessionData,
 } from '@novu/shared';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
-import { Roles } from '../auth/framework/roles.decorator';
 import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
 import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
 import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
@@ -30,7 +30,6 @@ import { GetInvite } from './usecases/get-invite/get-invite.usecase';
 import { ResendInviteDto } from './dtos/resend-invite.dto';
 import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
@@ -76,7 +75,6 @@ export class InvitesController {
   }
 
   @Post('/')
-  @Roles(MemberRoleEnum.ADMIN)
   @UserAuthentication()
   async inviteMember(
     @UserSession() user: UserSessionData,
@@ -97,7 +95,6 @@ export class InvitesController {
   }
 
   @Post('/resend')
-  @Roles(MemberRoleEnum.ADMIN)
   @UserAuthentication()
   async resendInviteMember(
     @UserSession() user: UserSessionData,
@@ -119,7 +116,6 @@ export class InvitesController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @UserAuthentication()
-  @Roles(MemberRoleEnum.ADMIN)
   async bulkInviteMembers(
     @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto

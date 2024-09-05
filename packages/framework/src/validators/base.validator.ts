@@ -1,32 +1,33 @@
-import type { JsonSchema, Schema } from '../types/schema.types';
+import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
 import type { ValidateResult } from '../types/validator.types';
 import { JsonSchemaValidator } from './json-schema.validator';
 import { ZodValidator } from './zod.validator';
 
-const validators = [new ZodValidator(), new JsonSchemaValidator()];
+const zodValidator = new ZodValidator();
+const jsonSchemaValidator = new JsonSchemaValidator();
 
-export const validateData = async <T extends Record<string, unknown>>(
-  schema: Schema,
-  data: T
-): Promise<ValidateResult<T>> => {
-  for (const validator of validators) {
-    if (validator.isSchema(schema)) {
-      // TODO: fix validator type guards
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return validator.validate(data, schema as any);
-    }
+export const validateData = async <
+  T_Schema extends Schema = Schema,
+  T_Unvalidated extends Record<string, unknown> = FromSchemaUnvalidated<T_Schema>,
+  T_Validated extends Record<string, unknown> = FromSchema<T_Schema>,
+>(
+  schema: T_Schema,
+  data: T_Unvalidated
+): Promise<ValidateResult<T_Validated>> => {
+  if (zodValidator.canHandle(schema)) {
+    return zodValidator.validate(data, schema);
+  } else if (jsonSchemaValidator.canHandle(schema)) {
+    return jsonSchemaValidator.validate(data, schema);
   }
 
   throw new Error('Invalid schema');
 };
 
 export const transformSchema = (schema: Schema): JsonSchema => {
-  for (const validator of validators) {
-    if (validator.isSchema(schema)) {
-      // TODO: fix validator type guards
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return validator.transformToJsonSchema(schema as any);
-    }
+  if (zodValidator.canHandle(schema)) {
+    return zodValidator.transformToJsonSchema(schema);
+  } else if (jsonSchemaValidator.canHandle(schema)) {
+    return jsonSchemaValidator.transformToJsonSchema(schema);
   }
 
   throw new Error('Invalid schema');

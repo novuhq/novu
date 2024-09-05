@@ -1,13 +1,13 @@
 import { css } from '@novu/novui/css';
-import { Footer } from './components/Footer';
-import { Header } from './components/Header';
 import { useEffect } from 'react';
 import { Title, Text } from '@novu/novui';
 import { VStack } from '@novu/novui/jsx';
+import { useNavigate } from 'react-router-dom';
+import { Footer } from './components/Footer';
+import { Header } from './components/Header';
 import { SetupTimeline } from './components/SetupTimeline';
 import { Wrapper } from './components/Wrapper';
 import { ROUTES } from '../../constants/routes';
-import { useNavigate } from 'react-router-dom';
 import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
 import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../../studio/StudioStateProvider';
@@ -39,7 +39,7 @@ export const StudioOnboarding = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  const welcomeMessage = `Welcome ${capitalizeFirstLetter(testUser?.firstName || '')}`.trim() + `. Let's get started!`;
+  const welcomeMessage = `${`Welcome ${capitalizeFirstLetter(testUser?.firstName || '')}`.trim()}. Let's get started!`;
 
   return (
     <Wrapper>

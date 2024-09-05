@@ -28,7 +28,7 @@ RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
 
 RUN pnpm add @babel/core -w
 
-COPY [".eslintrc.js",".prettierrc",".prettierignore", "./"]
+COPY [".prettierrc",".prettierignore", "./"]
 
 RUN NX_DAEMON=false pnpm build:web
 # end build stage

@@ -1,12 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  MessageEntity,
-  DalException,
-  MessageRepository,
-  SubscriberRepository,
-  SubscriberEntity,
-  MemberRepository,
-} from '@novu/dal';
+import { MessageEntity, DalException, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -27,8 +20,7 @@ export class RemoveMessage {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository,
-    private memberRepository: MemberRepository
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
@@ -63,6 +55,7 @@ export class RemoveMessage {
         _id: command.messageId,
       });
 
+      // eslint-disable-next-line prefer-destructuring
       deletedMessage = item[0];
 
       if (!deletedMessage.read) {
@@ -82,17 +75,13 @@ export class RemoveMessage {
   }
 
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: MarkEnum) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-
     this.updateSocketCount(subscriber, marked);
 
-    if (admin) {
-      this.analyticsService.track(`Removed Message - [Notification Center]`, admin._userId, {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
-    }
+    this.analyticsService.track(`Removed Message - [Notification Center]`, command.organizationId, {
+      _subscriber: message._subscriberId,
+      _organization: command.organizationId,
+      _template: message._templateId,
+    });
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
