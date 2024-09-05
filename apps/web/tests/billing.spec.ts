@@ -22,7 +22,7 @@ test.describe('Billing', () => {
   });
 
   async function assertDynamicTimeLeftLabel(billingPage: BillingPage, timeInTrial: number) {
-    await billingPage.assertTrialLabelContains(`${30 - timeInTrial}`);
+    await billingPage.assertTrialLabelContains(`${14 - timeInTrial}`);
   }
 
   test('should display free trial widget', async ({ page }) => {
@@ -30,18 +30,18 @@ test.describe('Billing', () => {
     await expect(billingPage.getTrialProgressBar()).toHaveCSS('width', '0px');
   });
 
-  test('should display free trial widget after 10 days', async ({ page }) => {
-    const billingPage = await testDynamicBannersInTrial(page, 10);
+  test('should display free trial widget after 5 days', async ({ page }) => {
+    const billingPage = await testDynamicBannersInTrial(page, 5);
     await billingPage.assertTrialBarColor(GREEN);
   });
 
-  test('should display free trial widget after 20 days', async ({ page }) => {
-    const billingPage = await testDynamicBannersInTrial(page, 20);
+  test('should display free trial widget after 11 days', async ({ page }) => {
+    const billingPage = await testDynamicBannersInTrial(page, 11);
     await billingPage.assertTrialBarColor(YELLOW);
     await billingPage.assertContactSalesBannerText('Contact sales');
   });
 
-  test('should not display free trial widget after 30 days', async ({ page }) => {
+  test('should not display free trial widget after 14 days', async ({ page }) => {
     await BillingRouteMocks.mockActiveSubscription(page);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.settingsMenu.assertNoFreeTrial();
@@ -53,7 +53,7 @@ test.describe('Billing', () => {
     await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertBillingPlansTitle('Plans');
-    await billingPage.assertTrialWidgetText('30 days left on your trial');
+    await billingPage.assertTrialWidgetText('14 days left on your trial');
   });
 
   test('should be able to manage subscription', async ({ page }) => {
@@ -81,13 +81,13 @@ test.describe('Billing', () => {
 
   async function assertStateOnTrial(page: Page) {
     await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
-    await BillingRouteMocks.mockSubscriptionTrial(page, 20);
+    await BillingRouteMocks.mockSubscriptionTrial(page, 7);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanBusinessCurrent();
     await billingPage.waitForPlanBusinessAndPayment();
     await billingPage.waitForFreeTrialWidget();
-    await billingPage.assertTrialWidgetText('10 days left on your trial');
+    await billingPage.assertTrialWidgetText('7 days left on your trial');
     await billingPage.waitForFreeTrialBanner();
   }
   async function testDynamicBannersInTrial(page: Page, timeInTrial: number) {
