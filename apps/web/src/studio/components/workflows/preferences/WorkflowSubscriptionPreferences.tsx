@@ -42,7 +42,7 @@ const PREFERENCES_COLUMNS = [
 
 export type WorkflowSubscriptionPreferencesProps = {
   preferences: SubscriptionPreferenceRow[];
-  updateChannelPreferences: (prefs: SubscriptionPreferenceRow) => void;
+  updateChannelPreferences: (preference: SubscriptionPreferenceRow) => void;
   channelPreferencesLoading: boolean;
 };
 

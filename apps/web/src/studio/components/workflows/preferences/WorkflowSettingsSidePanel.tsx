@@ -26,12 +26,12 @@ export const WorkflowSettingsSidePanel: FC<WorkflowSettingsSidePanelProps> = ({ 
   );
   const { isLocalStudio } = useStudioState() || {};
 
-  const updateChannelPreferences = (prefs: SubscriptionPreferenceRow) => {
+  const updateChannelPreferences = (preference: SubscriptionPreferenceRow) => {
     if (!cloudWorkflowChannelPreferences) {
       return;
     }
 
-    const { channel, ...values }: SubscriptionPreferenceRow = prefs;
+    const { channel, ...values }: SubscriptionPreferenceRow = preference;
     const result: WorkflowChannelPreferences = { ...cloudWorkflowChannelPreferences } as WorkflowChannelPreferences;
 
     if (channel === 'workflow') {
