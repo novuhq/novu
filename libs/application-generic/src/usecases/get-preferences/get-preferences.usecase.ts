@@ -96,7 +96,11 @@ export class GetPreferences {
         chat: result.channels.chat.defaultValue || result.workflow.defaultValue,
       };
     } catch (e) {
-      return undefined;
+      // If we cant find preferences lets return undefined instead of throwing it up to caller to make it easier for caller to handle.
+      if ((e as Error).name === NotFoundException.name) {
+        return undefined;
+      }
+      throw e;
     }
   }
 
@@ -125,7 +129,7 @@ export class GetPreferences {
 
   private getWorkflowPreferences(items: PreferencesEntity[]) {
     return items.find(
-      (item) => item.type === PreferencesTypeEnum.CODE_FIRST_WORKFLOW,
+      (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
     );
   }
 

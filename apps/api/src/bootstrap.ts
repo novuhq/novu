@@ -3,7 +3,7 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
 import { init, Integrations, Handlers } from '@sentry/node';

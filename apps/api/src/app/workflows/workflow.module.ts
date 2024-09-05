@@ -1,6 +1,4 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { GetPreferences, UpsertPreferences } from '@novu/application-generic';
-import { PreferencesRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { ChangeModule } from '../change/change.module';
 import { IntegrationModule } from '../integrations/integrations.module';
@@ -9,13 +7,12 @@ import { SharedModule } from '../shared/shared.module';
 import { NotificationTemplateController } from './notification-template.controller';
 import { USE_CASES } from './usecases';
 import { WorkflowController } from './workflow.controller';
-
-const EXTERNAL_USE_CASES = [GetPreferences, UpsertPreferences, PreferencesRepository];
+import { PreferencesModule } from '../preferences';
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
+  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule, PreferencesModule],
   controllers: [NotificationTemplateController, WorkflowController],
-  providers: [...USE_CASES, ...EXTERNAL_USE_CASES],
+  providers: [...USE_CASES],
   exports: [...USE_CASES],
 })
 export class WorkflowModule implements NestModule {

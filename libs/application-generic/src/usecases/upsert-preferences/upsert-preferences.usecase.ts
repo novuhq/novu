@@ -24,7 +24,7 @@ export class UpsertPreferences {
       organizationId: command.organizationId,
       actor: PreferencesActorEnum.WORKFLOW,
       preferences: command.preferences,
-      type: PreferencesTypeEnum.CODE_FIRST_WORKFLOW,
+      type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     });
   }
 

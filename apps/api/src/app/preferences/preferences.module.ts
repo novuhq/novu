@@ -10,7 +10,7 @@ const PROVIDERS = [PreferencesRepository, UpsertPreferences, GetPreferences];
   imports: [SharedModule],
   providers: [...PROVIDERS],
   controllers: [PreferencesController],
-  exports: [],
+  exports: [...PROVIDERS],
 })
 export class PreferencesModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {}

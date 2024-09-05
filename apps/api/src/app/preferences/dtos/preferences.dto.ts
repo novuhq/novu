@@ -1,7 +1,8 @@
+import { ChannelTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsBoolean, ValidateNested } from 'class-validator';
 
-class Preference {
+export class Preference {
   @IsBoolean()
   defaultValue: boolean;
 
@@ -9,26 +10,26 @@ class Preference {
   readOnly: boolean;
 }
 
-class Channels {
+export class Channels {
   @ValidateNested({ each: true })
   @Type(() => Preference)
-  in_app: Preference;
+  [ChannelTypeEnum.IN_APP]: Preference;
 
   @ValidateNested({ each: true })
   @Type(() => Preference)
-  email: Preference;
+  [ChannelTypeEnum.EMAIL]: Preference;
 
   @ValidateNested({ each: true })
   @Type(() => Preference)
-  sms: Preference;
+  [ChannelTypeEnum.SMS]: Preference;
 
   @ValidateNested({ each: true })
   @Type(() => Preference)
-  chat: Preference;
+  [ChannelTypeEnum.CHAT]: Preference;
 
   @ValidateNested({ each: true })
   @Type(() => Preference)
-  push: Preference;
+  [ChannelTypeEnum.PUSH]: Preference;
 }
 
 export class PreferencesDto {
