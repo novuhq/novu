@@ -1,7 +1,7 @@
 import { EventHandler, Events, SocketEventNames } from '@novu/js';
 import { useEffect } from 'react';
-import { useNovu } from '../components/NovuProvider';
-import { requestLock } from '../utils/requestLock';
+import { useNovu } from '../NovuProvider';
+import { requestLock } from '../../utils/requestLock';
 import { useBrowserTabsChannel } from './useBrowserTabsChannel';
 
 export const useWebSocketEvent = <E extends SocketEventNames>({

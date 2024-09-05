@@ -1,6 +1,6 @@
 import { NovuError, Preference } from '@novu/js';
 import { useEffect, useState } from 'react';
-import { useNovu } from '../components/NovuProvider';
+import { useNovu } from './NovuProvider';
 
 type UsePreferencesProps = {
   onSuccess?: (data: Preference[]) => void;
@@ -18,7 +18,7 @@ type UsePreferencesResult = {
 export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResult => {
   const { onSuccess, onError } = props || {};
   const [data, setData] = useState<Preference[]>();
-  const { preferences, on } = useNovu();
+  const { preferences, on, off } = useNovu();
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -36,14 +36,20 @@ export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResul
     on('preferences.list.updated', sync);
     on('preferences.list.pending', sync);
     on('preferences.list.resolved', sync);
+
+    return () => {
+      off('preferences.list.updated', sync);
+      off('preferences.list.pending', sync);
+      off('preferences.list.resolved', sync);
+    };
   }, []);
 
   const fetchPreferences = async () => {
     setIsFetching(true);
     const response = await preferences.list();
     if (response.error) {
-      setError(response.error as NovuError);
-      onError?.(response.error as NovuError);
+      setError(response.error);
+      onError?.(response.error);
     } else {
       onSuccess?.(response.data!);
     }
