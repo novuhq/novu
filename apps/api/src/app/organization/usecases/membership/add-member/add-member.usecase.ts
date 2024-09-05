@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
+import { MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { AddMemberCommand } from './add-member.command';
 import { ApiException } from '../../../../shared/exceptions/api.exception';
@@ -10,10 +10,7 @@ import { ApiException } from '../../../../shared/exceptions/api.exception';
 export class AddMember {
   private organizationId: string;
 
-  constructor(
-    private readonly organizationRepository: OrganizationRepository,
-    private readonly memberRepository: MemberRepository
-  ) {}
+  constructor(private readonly memberRepository: MemberRepository) {}
 
   async execute(command: AddMemberCommand): Promise<void> {
     this.organizationId = command.organizationId;
