@@ -1,7 +1,7 @@
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { Anchor, Table } from '@mantine/core';
-import { api } from '@/app/hooks/api.hook';
+import { api } from '@/hooks/api.hook';
 
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {

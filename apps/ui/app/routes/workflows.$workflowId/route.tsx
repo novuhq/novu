@@ -1,8 +1,8 @@
 import { Anchor, Button, Group, Stack, Tabs, TagsInput, Text, TextInput, Title } from '@mantine/core';
 import { json, LoaderFunctionArgs } from '@remix-run/node';
 import { Link, Outlet, useLoaderData, useParams } from '@remix-run/react';
-import { api } from '@/app/hooks/api.hook';
-import { StepIcon } from '@/app/components/icons/step-icon';
+import { api } from '@/hooks/api.hook';
+import { StepIcon } from '@/components/icons/step-icon';
 
 // Adds a breadcrumb to the workflows route - https://remix.run/docs/en/main/guides/breadcrumbs
 export const handle = {
