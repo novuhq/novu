@@ -1,77 +1,68 @@
-import { css } from '@novu/novui/css';
-import {
-  IconAdUnits,
-  IconDynamicFeed,
-  IconNotificationsNone,
-  IconOutlineForum,
-  IconOutlineMailOutline,
-  IconOutlineSms,
-  IconType,
-} from '@novu/novui/icons';
+import { Switch } from '@mantine/core';
 import { Table, Text } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
 import { ColorToken } from '@novu/novui/tokens';
-import { ChannelTypeEnum } from '@novu/shared';
-import { FC } from 'react';
-import { Switch } from '@novu/design-system';
-import { PreferenceChannel, SubscriptionPreferenceRow } from './types';
+import { ChannelTypeEnum, WorkflowChannelPreferences } from '@novu/shared';
+import { FC, useCallback, useMemo } from 'react';
+import { PreferenceChannelName, SubscriptionPreferenceRow } from './types';
+import { CHANNEL_LABELS_LOOKUP, CHANNEL_SETTINGS_LOGO_LOOKUP } from './WorkflowSubscriptionPreferences.const';
 import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
-import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
-import { useStudioState } from '../../../hooks';
-
-const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannel, IconType> = {
-  workflow: IconDynamicFeed,
-  [ChannelTypeEnum.IN_APP]: IconNotificationsNone,
-  [ChannelTypeEnum.EMAIL]: IconOutlineMailOutline,
-  [ChannelTypeEnum.SMS]: IconOutlineSms,
-  [ChannelTypeEnum.PUSH]: IconAdUnits,
-  [ChannelTypeEnum.CHAT]: IconOutlineForum,
-};
-
-const CHANNEL_LABELS_LOOKUP: Record<PreferenceChannel, string> = {
-  ...CHANNEL_TYPE_TO_STRING,
-  workflow: 'Workflow',
-};
 
 // FIXME: determine how to bring in ReactTable types
 const PREFERENCES_COLUMNS = [
   { accessorKey: 'channel', header: 'Channels', cell: ChannelCell },
-  { accessorKey: 'defaultValue', header: 'Default', cell: DefaultValueSwitchCell },
-  { accessorKey: 'readOnly', header: 'Editable', cell: ReadOnlySwitchCell },
+  { accessorKey: 'defaultValue', header: 'Default', cell: SwitchCell },
+  {
+    accessorKey: 'readOnly',
+    accessorFn: (row: SubscriptionPreferenceRow) => !row.readOnly,
+    header: 'Editable',
+    cell: SwitchCell,
+  },
 ];
 
 export type WorkflowSubscriptionPreferencesProps = {
-  preferences: SubscriptionPreferenceRow[];
-  updateChannelPreferences: (preference: SubscriptionPreferenceRow) => void;
-  channelPreferencesLoading: boolean;
+  preferences: WorkflowChannelPreferences;
+  updateChannelPreferences: (prefs: WorkflowChannelPreferences) => void;
+  arePreferencesDisabled?: boolean;
 };
 
 export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({
   preferences,
   updateChannelPreferences,
+  arePreferencesDisabled,
 }) => {
-  const onChange = (channel: PreferenceChannel, key: string, value: boolean) => {
-    const preference = preferences.find((item) => item.channel === channel);
+  const onChange = useCallback(
+    (channel: PreferenceChannelName, key: string, value: boolean) => {
+      const updatedPreferences: WorkflowChannelPreferences =
+        channel === 'workflow'
+          ? {
+              ...preferences,
+              workflow: { ...preferences.workflow, [key]: value },
+            }
+          : {
+              ...preferences,
+              channels: {
+                ...preferences.channels,
+                [channel]: {
+                  ...preferences.channels[channel],
+                  [key]: value,
+                },
+              },
+            };
 
-    if (!preference) {
-      return;
-    }
+      updateChannelPreferences(updatedPreferences);
+    },
+    [preferences, updateChannelPreferences]
+  );
 
-    preference[key] = value;
-
-    updateChannelPreferences(preference);
-  };
+  const preferenceRows = useMemo(
+    () => mapPreferencesToRows(preferences, onChange, arePreferencesDisabled),
+    [preferences, onChange, arePreferencesDisabled]
+  );
 
   return (
-    <Table<
-      SubscriptionPreferenceRow & {
-        onChange: (channel: PreferenceChannel, key: string, value: boolean) => void;
-      }
-    >
-      className={tableClassName}
-      columns={PREFERENCES_COLUMNS}
-      data={preferences.map((item) => ({ ...item, onChange }))}
-    />
+    <Table<SubscriptionPreferenceRow> className={tableClassName} columns={PREFERENCES_COLUMNS} data={preferenceRows} />
   );
 };
 
@@ -88,30 +79,39 @@ function ChannelCell(props) {
   );
 }
 
-function DefaultValueSwitchCell(props) {
-  const { isLocalStudio } = useStudioState() || {};
-
+function SwitchCell(props) {
   return (
     <Switch
+      classNames={{
+        track: css({ bg: 'colorPalette.middle !important' }),
+        root: css({ '&:has(:disabled)': { opacity: 'disabled' } }),
+      }}
       checked={props.getValue()}
       onChange={(e) => {
         props.row.original.onChange(props.row.original.channel, props.column.id, e.currentTarget.value === 'on');
       }}
-      disabled={isLocalStudio}
+      size="lg"
+      disabled={props.row.original.disabled}
     />
   );
 }
 
-function ReadOnlySwitchCell(props) {
-  const { isLocalStudio } = useStudioState() || {};
+function mapPreferencesToRows(
+  workflowChannelPreferences: WorkflowChannelPreferences | undefined,
+  onChange: SubscriptionPreferenceRow['onChange'],
+  areAllDisabled?: boolean
+): SubscriptionPreferenceRow[] {
+  if (!workflowChannelPreferences) {
+    return [];
+  }
 
-  return (
-    <Switch
-      checked={!props.getValue()}
-      onChange={(e) => {
-        props.row.original.onChange(props.row.original.channel, props.column.id, e.currentTarget.value !== 'on');
-      }}
-      disabled={isLocalStudio}
-    />
-  );
+  return [
+    { ...workflowChannelPreferences.workflow, channel: 'workflow', onChange, disabled: areAllDisabled },
+    ...Object.entries(workflowChannelPreferences.channels).map(([channel, pref]) => ({
+      ...pref,
+      channel: channel as ChannelTypeEnum,
+      onChange,
+      disabled: areAllDisabled,
+    })),
+  ];
 }
