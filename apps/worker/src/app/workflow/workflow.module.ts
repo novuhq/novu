@@ -26,8 +26,9 @@ import {
   CompileInAppTemplate,
   WorkflowInMemoryProviderService,
   ExecutionLogRoute,
+  GetPreferences,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, JobRepository, PreferencesRepository } from '@novu/dal';
 
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
@@ -83,7 +84,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
   return modules;
 };
-const REPOSITORIES = [JobRepository, CommunityOrganizationRepository];
+const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository];
 
 const USE_CASES = [
   AddDelayJob,
@@ -135,6 +136,7 @@ const USE_CASES = [
   InboundEmailParse,
   ExecutionLogRoute,
   ExecuteBridgeJob,
+  GetPreferences,
 ];
 
 const PROVIDERS: Provider[] = [];

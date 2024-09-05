@@ -149,6 +149,16 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       )
     );
 
+    res.rateLimitPolicy = {
+      limit,
+      windowDuration,
+      burstLimit,
+      algorithm,
+      apiRateLimitCategory,
+      apiRateLimitCost,
+      apiServiceLevel,
+    };
+
     if (isDryRun) {
       if (!success) {
         Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');

@@ -1,5 +1,4 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-
 import {
   CreateChange,
   CreateMessageTemplate,
@@ -8,11 +7,12 @@ import {
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
+  UpsertPreferences,
 } from '@novu/application-generic';
-
+import { PreferencesRepository } from '@novu/dal';
+import { SharedModule } from '../shared/shared.module';
 import { BridgeController } from './bridge.controller';
 import { USECASES } from './usecases';
-import { SharedModule } from '../shared/shared.module';
 
 const PROVIDERS = [
   CreateWorkflow,
@@ -22,6 +22,8 @@ const PROVIDERS = [
   DeleteMessageTemplate,
   CreateChange,
   UpdateChange,
+  PreferencesRepository,
+  UpsertPreferences,
 ];
 
 @Module({

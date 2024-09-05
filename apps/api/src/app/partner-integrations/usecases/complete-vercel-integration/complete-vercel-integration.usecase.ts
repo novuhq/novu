@@ -25,12 +25,6 @@ interface ISetEnvironment {
   privateKey: string;
 }
 
-type MapProjectkeys = {
-  privateKey: string;
-  clientKey: string;
-  projectIds: string[];
-};
-
 @Injectable()
 export class CompleteVercelIntegration {
   constructor(
