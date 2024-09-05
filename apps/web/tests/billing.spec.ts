@@ -81,13 +81,13 @@ test.describe('Billing', () => {
 
   async function assertStateOnTrial(page: Page) {
     await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
-    await BillingRouteMocks.mockSubscriptionTrial(page, 7);
+    await BillingRouteMocks.mockSubscriptionTrial(page, 11);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanBusinessCurrent();
     await billingPage.waitForPlanBusinessAndPayment();
     await billingPage.waitForFreeTrialWidget();
-    await billingPage.assertTrialWidgetText('7 days left on your trial');
+    await billingPage.assertTrialWidgetText('3 days left on your trial');
     await billingPage.waitForFreeTrialBanner();
   }
   async function testDynamicBannersInTrial(page: Page, timeInTrial: number) {
