@@ -1,30 +1,78 @@
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelPreference, WorkflowChannelPreferences } from '@novu/shared';
 import { Sidebar } from '@novu/design-system';
-import { Preference, PreferenceChannel, SubscriptionPreferenceRow } from './types';
-import { WorkflowSettingsSidePanelContent } from './WorkflowSettingsSidePanelContent';
 import { Title } from '@novu/novui';
+import { WorkflowSettingsSidePanelContent } from './WorkflowSettingsSidePanelContent';
+import { useCloudWorkflowChannelPreferences } from '../../../../hooks/workflowChannelPreferences/useCloudWorkflowChannelPreferences';
+import { useUpdateWorkflowChannelPreferences } from '../../../../hooks/workflowChannelPreferences/useUpdateWorkflowChannelPreferences';
+import { useStudioWorkflowChannelPreferences } from '../../../../hooks/workflowChannelPreferences/useStudioWorkflowChannelPreferences';
+import { useStudioState } from '../../../StudioStateProvider';
+import { SubscriptionPreferenceRow } from './types';
 
-const MOCK_DATA: SubscriptionPreferenceRow[] = [
-  { channel: 'workflow', defaultValue: true, readOnly: false },
-  { channel: ChannelTypeEnum.IN_APP, defaultValue: true, readOnly: true },
-  { channel: ChannelTypeEnum.EMAIL, defaultValue: false, readOnly: true },
-  { channel: ChannelTypeEnum.SMS, defaultValue: true, readOnly: false },
-  { channel: ChannelTypeEnum.PUSH, defaultValue: false, readOnly: true },
-  { channel: ChannelTypeEnum.CHAT, defaultValue: true, readOnly: false },
-];
+type WorkflowSettingsSidePanelProps = { onClose: () => void; workflowId: string };
 
-type WorkflowSettingsSidePanelProps = { onClose: () => void };
+export const WorkflowSettingsSidePanel: FC<WorkflowSettingsSidePanelProps> = ({ onClose, workflowId }) => {
+  const {
+    refetch,
+    workflowChannelPreferences: cloudWorkflowChannelPreferences,
+    isLoading: cloudIsLoading,
+  } = useCloudWorkflowChannelPreferences(workflowId);
+  const { workflowChannelPreferences: studioWorkflowChannelPreferences, isLoading: studioIsLoading } =
+    useStudioWorkflowChannelPreferences(workflowId);
+  const { updateWorkflowChannelPreferences, isLoading: isUpdating } = useUpdateWorkflowChannelPreferences(
+    workflowId,
+    refetch
+  );
+  const { isLocalStudio } = useStudioState() || {};
 
-export const WorkflowSettingsSidePanel: FC<WorkflowSettingsSidePanelProps> = ({ onClose }) => {
-  const updateChannelPreferences = (prefs: Partial<Record<PreferenceChannel, Preference>>) => {
-    return Promise.resolve();
+  const updateChannelPreferences = (prefs: SubscriptionPreferenceRow) => {
+    if (!cloudWorkflowChannelPreferences) {
+      return;
+    }
+
+    const { channel, ...values }: SubscriptionPreferenceRow = prefs;
+    const result: WorkflowChannelPreferences = { ...cloudWorkflowChannelPreferences } as WorkflowChannelPreferences;
+
+    if (channel === 'workflow') {
+      result.workflow = values as ChannelPreference;
+    } else {
+      result.channels[channel] = values as ChannelPreference;
+    }
+
+    updateWorkflowChannelPreferences(result);
   };
+
+  const preferences: SubscriptionPreferenceRow[] = useMemo(() => {
+    if (!cloudWorkflowChannelPreferences && !studioWorkflowChannelPreferences) {
+      return [];
+    }
+
+    const workflowChannelPreferences = (
+      isLocalStudio ? studioWorkflowChannelPreferences : cloudWorkflowChannelPreferences
+    ) as WorkflowChannelPreferences;
+
+    const result: SubscriptionPreferenceRow[] = [{ channel: 'workflow', ...workflowChannelPreferences.workflow }];
+
+    for (const channel of Object.keys(workflowChannelPreferences.channels)) {
+      const channelPreferences = workflowChannelPreferences.channels[channel];
+
+      result.push({
+        channel,
+        ...channelPreferences,
+      });
+    }
+
+    return result;
+  }, [cloudWorkflowChannelPreferences, studioWorkflowChannelPreferences, isLocalStudio]);
 
   return (
     <Sidebar customHeader={<Title variant="section">Workflow settings</Title>} isOpened onClose={onClose}>
-      <WorkflowSettingsSidePanelContent preferences={MOCK_DATA} updateChannelPreferences={updateChannelPreferences} />
+      <WorkflowSettingsSidePanelContent
+        channelPreferencesLoading={cloudIsLoading || studioIsLoading || isUpdating}
+        preferences={preferences}
+        updateChannelPreferences={updateChannelPreferences}
+      />
     </Sidebar>
   );
 };

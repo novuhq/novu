@@ -4,7 +4,8 @@ import { errorMessage, successMessage } from '../../utils/notifications';
 import { useNovuAPI } from '../useNovuAPI';
 
 export const useUpdateWorkflowChannelPreferences = (
-  workflowId: string
+  workflowId: string,
+  onSuccess: () => void = () => {}
 ): {
   isLoading: boolean;
   updateWorkflowChannelPreferences: (data: WorkflowChannelPreferences) => void;
@@ -17,6 +18,7 @@ export const useUpdateWorkflowChannelPreferences = (
     WorkflowChannelPreferences
   >((data) => api.upsertPreferences(workflowId, data), {
     onSuccess: () => {
+      onSuccess();
       successMessage('Workflow Channel Preferences updated');
     },
     onError: () => {

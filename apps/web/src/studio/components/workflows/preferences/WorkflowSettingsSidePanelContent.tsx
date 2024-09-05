@@ -18,17 +18,20 @@ type WorkflowSettingsSidePanelContentProps = WorkflowSubscriptionPreferencesProp
 export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelContentProps> = ({
   updateChannelPreferences,
   preferences,
+  channelPreferencesLoading,
 }) => {
   return (
     <Tabs
-      defaultValue={WorkflowSettingsPanelTab.GENERAL}
+      defaultValue={WorkflowSettingsPanelTab.PREFERENCES}
       tabConfigs={[
-        {
-          value: WorkflowSettingsPanelTab.GENERAL,
-          label: 'General',
-          icon: <IconDynamicFeed />,
-          content: <WorkflowGeneralSettings />,
-        },
+        /*
+         *{
+         *  value: WorkflowSettingsPanelTab.GENERAL,
+         *  label: 'General',
+         *  icon: <IconDynamicFeed />,
+         *  content: <WorkflowGeneralSettings />,
+         *},
+         */
         {
           value: WorkflowSettingsPanelTab.PREFERENCES,
           label: 'Preferences',
@@ -42,6 +45,7 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
               <WorkflowSubscriptionPreferences
                 preferences={preferences}
                 updateChannelPreferences={updateChannelPreferences}
+                channelPreferencesLoading={channelPreferencesLoading}
               />
             </Stack>
           ),

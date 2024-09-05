@@ -1,23 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
+import { WorkflowChannelPreferences } from '@novu/shared';
 import { QueryKeys } from '../../api/query.keys';
 import { useNovuAPI } from '../useNovuAPI';
-import { WorkflowChannelPreferences } from '@novu/shared';
 
 export const useCloudWorkflowChannelPreferences = (
   workflowId: string
 ): {
   isLoading: boolean;
   workflowChannelPreferences: WorkflowChannelPreferences | undefined;
+  refetch: () => void;
 } => {
   const api = useNovuAPI();
 
-  const { data: workflowChannelPreferences, isLoading } = useQuery<WorkflowChannelPreferences>(
+  const {
+    data: workflowChannelPreferences,
+    isLoading,
+    refetch,
+  } = useQuery<WorkflowChannelPreferences>(
     [QueryKeys.getWorkflowChannelPreferences(workflowId)],
-    () => api.getPreferences(workflowId as string)
+    async () => (await api.getPreferences(workflowId as string))?.data
   );
 
   return {
     isLoading,
     workflowChannelPreferences,
+    refetch,
   };
 };

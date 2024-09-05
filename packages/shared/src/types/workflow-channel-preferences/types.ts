@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '../channel';
 
-type ChannelPreference = {
+export type ChannelPreference = {
   defaultValue: boolean;
   readOnly: boolean;
 };

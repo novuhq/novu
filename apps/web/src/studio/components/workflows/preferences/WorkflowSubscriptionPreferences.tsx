@@ -13,10 +13,11 @@ import { HStack } from '@novu/novui/jsx';
 import { ColorToken } from '@novu/novui/tokens';
 import { ChannelTypeEnum } from '@novu/shared';
 import { FC } from 'react';
-import { Preference, PreferenceChannel, SubscriptionPreferenceRow } from './types';
+import { Switch } from '@novu/design-system';
+import { PreferenceChannel, SubscriptionPreferenceRow } from './types';
 import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
-import { Switch } from '@novu/design-system';
+import { useStudioState } from '../../../hooks';
 
 const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannel, IconType> = {
   workflow: IconDynamicFeed,
@@ -41,12 +42,36 @@ const PREFERENCES_COLUMNS = [
 
 export type WorkflowSubscriptionPreferencesProps = {
   preferences: SubscriptionPreferenceRow[];
-  updateChannelPreferences: (prefs: Partial<Record<PreferenceChannel, Preference>>) => Promise<void>;
+  updateChannelPreferences: (prefs: SubscriptionPreferenceRow) => void;
+  channelPreferencesLoading: boolean;
 };
-export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({ preferences }) => {
-  // TODO: setup on toggle behaviors
+
+export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({
+  preferences,
+  updateChannelPreferences,
+}) => {
+  const onChange = (channel: PreferenceChannel, key: string, value: boolean) => {
+    const preference = preferences.find((item) => item.channel === channel);
+
+    if (!preference) {
+      return;
+    }
+
+    preference[key] = value;
+
+    updateChannelPreferences(preference);
+  };
+
   return (
-    <Table<SubscriptionPreferenceRow> className={tableClassName} columns={PREFERENCES_COLUMNS} data={preferences} />
+    <Table<
+      SubscriptionPreferenceRow & {
+        onChange: (channel: PreferenceChannel, key: string, value: boolean) => void;
+      }
+    >
+      className={tableClassName}
+      columns={PREFERENCES_COLUMNS}
+      data={preferences.map((item) => ({ ...item, onChange }))}
+    />
   );
 };
 
@@ -64,9 +89,29 @@ function ChannelCell(props) {
 }
 
 function DefaultValueSwitchCell(props) {
-  return <Switch checked={props.getValue()} />;
+  const { isLocalStudio } = useStudioState() || {};
+
+  return (
+    <Switch
+      checked={props.getValue()}
+      onChange={(e) => {
+        props.row.original.onChange(props.row.original.channel, props.column.id, e.currentTarget.value === 'on');
+      }}
+      disabled={isLocalStudio}
+    />
+  );
 }
 
 function ReadOnlySwitchCell(props) {
-  return <Switch checked={!props.getValue()} />;
+  const { isLocalStudio } = useStudioState() || {};
+
+  return (
+    <Switch
+      checked={!props.getValue()}
+      onChange={(e) => {
+        props.row.original.onChange(props.row.original.channel, props.column.id, e.currentTarget.value !== 'on');
+      }}
+      disabled={isLocalStudio}
+    />
+  );
 }
