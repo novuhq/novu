@@ -1,8 +1,7 @@
-import { IResponseError } from '@novu/shared';
+import { IResponseError, WorkflowChannelPreferences } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { useNovuAPI } from '../useNovuAPI';
-import { WorkflowChannelPreferences } from './types';
 
 export const useUpdateWorkflowChannelPreferences = (
   workflowId: string

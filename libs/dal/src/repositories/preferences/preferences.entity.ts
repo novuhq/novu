@@ -1,19 +1,9 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { WorkflowChannelPreferences } from '@novu/shared';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { SubscriberId } from '../subscriber';
 import { UserId } from '../user';
 import { ChangePropsValueType } from '../../types';
-
-type PreferenceOptions = {
-  defaultValue: boolean;
-  readOnly: boolean;
-};
-
-type WorkflowOptionsPreferences = {
-  workflow: PreferenceOptions;
-  channels: Record<ChannelTypeEnum, PreferenceOptions>;
-};
 
 export enum PreferencesTypeEnum {
   SUBSCRIBER_GLOBAL = 'SUBSCRIBER_GLOBAL',
@@ -50,5 +40,5 @@ export class PreferencesEntity {
 
   type: PreferencesTypeEnum;
 
-  preferences: WorkflowOptionsPreferences;
+  preferences: WorkflowChannelPreferences;
 }
