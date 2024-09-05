@@ -1,6 +1,9 @@
+import { novuConfig } from '@/utils/config';
+import { NovuProvider } from '@novu/react';
 import { useNotifications, usePreferences, useCounts } from '@novu/react';
+import { PropsWithChildren } from 'react';
 
-export default function HooksPage() {
+const Content = (props: any) => {
   const {
     notifications,
     isLoading: isLoadingNotifications,
@@ -37,5 +40,13 @@ export default function HooksPage() {
       </ul>
       {hasMore && <button onClick={fetchMore}>Load More</button>}
     </div>
+  );
+};
+
+export default function HooksPage() {
+  return (
+    <NovuProvider {...novuConfig}>
+      <Content />
+    </NovuProvider>
   );
 }

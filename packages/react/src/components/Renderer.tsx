@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { NovuUI } from '@novu/js/ui';
 import type { NovuUIOptions } from '@novu/js/ui';
 import { MountedElement, RendererProvider } from '../context/RenderContext';
-import { useDataRef } from '../hooks/useDataRef';
+import { useDataRef } from '../hooks/internal/useDataRef';
 
 type RendererProps = React.PropsWithChildren<{
   options: NovuUIOptions;

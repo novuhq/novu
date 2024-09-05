@@ -1,24 +1,20 @@
 import { areTagsEqual, isSameFilter } from '@novu/js';
 import { NotificationFilter, NovuError } from '@novu/js';
 import { useEffect, useState } from 'react';
-import { useNovu } from '../components/NovuProvider';
-import { useWebSocketEvent } from './useWebsocketEvent';
+import { useNovu } from './NovuProvider';
+import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { Notification } from '@novu/js';
-
-type UseCountsProps = {
-  filters: NotificationFilter[];
-  onSuccess?: (data: Notification[]) => void;
-  onError?: (error: NovuError) => void;
-};
-
-type CountsData = {
-  count: number;
-  filter: NotificationFilter;
-};
+import { countReset } from 'console';
 
 type Count = {
   count: number;
   filter: NotificationFilter;
+};
+
+type UseCountsProps = {
+  filters: NotificationFilter[];
+  onSuccess?: (data: Count[]) => void;
+  onError?: (error: NovuError) => void;
 };
 
 type UseCountsResult = {
@@ -30,7 +26,7 @@ type UseCountsResult = {
 };
 
 export const useCounts = (props: UseCountsProps): UseCountsResult => {
-  const { filters } = props;
+  const { filters, onSuccess, onError } = props;
   const { notifications } = useNovu();
   const [error, setError] = useState<NovuError>();
   const [counts, setCounts] = useState<Count[]>();
@@ -61,12 +57,15 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     setIsLoading(false);
     if (countsRes.error) {
       setError(countsRes.error);
+      onError?.(countsRes.error);
       return;
     }
+    const data = countsRes.data!;
+    onSuccess?.(data.counts);
 
     setCounts((oldCounts) => {
       const newCounts: Count[] = [];
-      const countsReceived = countsRes.data!.counts;
+      const countsReceived = data.counts;
 
       for (let i = 0; i < existingCounts.length; i++) {
         const countReceived = countsReceived.find((c) => areTagsEqual(c.filter.tags, existingCounts[i]?.filter.tags));
@@ -84,13 +83,20 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     },
   });
 
+  const resetState = () => {
+    setCounts(undefined);
+    setError(undefined);
+    setIsLoading(true);
+    setIsFetching(false);
+  };
+
   useEffect(() => {
+    resetState();
     sync();
-  }, []);
+  }, [JSON.stringify(filters)]);
 
   const refetch = async () => {
     await sync();
-    return;
   };
 
   return { counts, error, refetch, isLoading, isFetching };
