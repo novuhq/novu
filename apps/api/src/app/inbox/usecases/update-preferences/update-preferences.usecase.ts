@@ -5,6 +5,9 @@ import {
   GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  UpsertPreferences,
+  UpsertSubscriberWorkflowPreferencesCommand,
+  UpsertSubscriberGlobalPreferencesCommand,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -15,10 +18,13 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { IPreferenceChannels } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
+
+const PREFERENCE_DEFAULT_VALUE = true;
 
 @Injectable()
 export class UpdatePreferences {
@@ -28,7 +34,8 @@ export class UpdatePreferences {
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
-    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private upsertPreferences: UpsertPreferences
   ) {}
 
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
@@ -133,6 +140,15 @@ export class UpdatePreferences {
         })
       );
 
+      await this.storePreferences({
+        enabled: preference.enabled,
+        channels: preference.channels,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+        templateId: workflow._id,
+      });
+
       return {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: preference.enabled,
@@ -155,6 +171,14 @@ export class UpdatePreferences {
       })
     );
 
+    await this.storePreferences({
+      enabled: preference.enabled,
+      channels: preference.channels,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
+
     return {
       level: PreferenceLevelEnum.GLOBAL,
       enabled: preference.enabled,
@@ -170,5 +194,64 @@ export class UpdatePreferences {
       level: command.level,
       ...(command.level === PreferenceLevelEnum.TEMPLATE && command.workflowId && { _templateId: command.workflowId }),
     };
+  }
+
+  private async storePreferences(item: {
+    enabled: boolean;
+    channels: IPreferenceChannels;
+    organizationId: string;
+    subscriberId: string;
+    environmentId: string;
+    templateId?: string;
+  }) {
+    const preferences = {
+      workflow: {
+        defaultValue: item.enabled || PREFERENCE_DEFAULT_VALUE,
+        readOnly: false,
+      },
+      channels: {
+        in_app: {
+          defaultValue: item.channels.in_app || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        sms: {
+          defaultValue: item.channels.sms || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        email: {
+          defaultValue: item.channels.email || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        push: {
+          defaultValue: item.channels.push || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+        chat: {
+          defaultValue: item.channels.chat || PREFERENCE_DEFAULT_VALUE,
+          readOnly: false,
+        },
+      },
+    };
+
+    if (item.templateId) {
+      return await this.upsertPreferences.upsertSubscriberWorkflowPreferences(
+        UpsertSubscriberWorkflowPreferencesCommand.create({
+          environmentId: item.environmentId,
+          organizationId: item.organizationId,
+          subscriberId: item.subscriberId,
+          templateId: item.templateId,
+          preferences,
+        })
+      );
+    }
+
+    return await this.upsertPreferences.upsertSubscriberGlobalPreferences(
+      UpsertSubscriberGlobalPreferencesCommand.create({
+        preferences,
+        environmentId: item.environmentId,
+        organizationId: item.organizationId,
+        subscriberId: item.subscriberId,
+      })
+    );
   }
 }

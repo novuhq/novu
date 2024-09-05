@@ -16,10 +16,10 @@ import {
 
 import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
-
 import { EnvironmentRepository, NotificationTemplateRepository, ControlVariablesRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
+
 import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
