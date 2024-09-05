@@ -1,5 +1,6 @@
 import { Accessor, createContext, createEffect, createSignal, ParentProps, Setter, useContext } from 'solid-js';
-import { NotificationFilter } from '../../types';
+import { NotificationFilter, Redirect } from '../../types';
+import { DEFAULT_REFERRER, DEFAULT_TARGET } from '../helpers';
 import { NotificationStatus, RouterPush, Tab } from '../types';
 
 type InboxContextType = {
@@ -13,7 +14,7 @@ type InboxContextType = {
   setActiveTab: (tab: string) => void;
   isOpened: Accessor<boolean>;
   setIsOpened: Setter<boolean>;
-  navigate: (path: string) => void;
+  navigate: (url?: string, target?: Redirect['target']) => void;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -57,16 +58,27 @@ export const InboxProvider = (props: InboxProviderProps) => {
     setFilter((old) => ({ ...old, tags }));
   };
 
-  const navigate = (path: string) => {
-    if (props.routerPush) {
-      props.routerPush(path);
+  const navigate = (url?: string, target?: Redirect['target']) => {
+    if (!url) {
+      return;
+    }
+
+    const isAbsoluteUrl = !url.startsWith('/');
+    if (isAbsoluteUrl) {
+      window.open(url, target ?? DEFAULT_TARGET, DEFAULT_REFERRER);
 
       return;
     }
 
-    const url = new URL(path, window.location.href);
+    if (props.routerPush) {
+      props.routerPush(url);
+
+      return;
+    }
+
+    const fullUrl = new URL(url, window.location.href);
     const pushState = window.history.pushState.bind(window.history);
-    pushState({}, '', url);
+    pushState({}, '', fullUrl);
   };
 
   createEffect(() => {

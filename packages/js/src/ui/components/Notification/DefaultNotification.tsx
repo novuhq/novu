@@ -1,9 +1,9 @@
 import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
-import { ActionTypeEnum, Redirect } from '../../../types';
+import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { cn, DEFAULT_REFERRER, DEFAULT_TARGET, formatToRelativeTime, useStyle } from '../../helpers';
+import { cn, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';
@@ -36,15 +36,6 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     return () => clearInterval(interval);
   });
 
-  const handleUrlNavigation = (url?: string, target?: Redirect['target']) => {
-    const isRelativeUrl = url?.startsWith('/');
-    if (url && !isRelativeUrl) {
-      window.open(url, target, DEFAULT_REFERRER);
-    } else if (url && isRelativeUrl) {
-      navigate(url);
-    }
-  };
-
   const handleNotificationClick: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent> = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -55,9 +46,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
 
     props.onNotificationClick?.(props.notification);
 
-    const url = props.notification.redirect?.url;
-    const target = props.notification.redirect?.target || DEFAULT_TARGET;
-    handleUrlNavigation(url, target);
+    navigate(props.notification.redirect?.url, props.notification.redirect?.target);
   };
 
   const handleActionButtonClick = (action: ActionTypeEnum, e: MouseEvent) => {
@@ -67,18 +56,12 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       props.notification.completePrimary();
       props.onPrimaryActionClick?.(props.notification);
 
-      handleUrlNavigation(
-        props.notification.primaryAction?.redirect?.url,
-        props.notification.primaryAction?.redirect?.target || DEFAULT_TARGET
-      );
+      navigate(props.notification.primaryAction?.redirect?.url, props.notification.primaryAction?.redirect?.target);
     } else {
       props.notification.completeSecondary();
       props.onSecondaryActionClick?.(props.notification);
 
-      handleUrlNavigation(
-        props.notification.secondaryAction?.redirect?.url,
-        props.notification.secondaryAction?.redirect?.target || DEFAULT_TARGET
-      );
+      navigate(props.notification.secondaryAction?.redirect?.url, props.notification.secondaryAction?.redirect?.target);
     }
   };
 
