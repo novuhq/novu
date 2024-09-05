@@ -140,10 +140,6 @@ export class NotificationsCache {
       });
     };
 
-  private has(args: ListNotificationsArgs): boolean {
-    return this.#cache.get(getCacheKey(args)) !== undefined;
-  }
-
   private getAggregated(filter: NotificationFilter): ListNotificationsResponse {
     const cacheKeys = this.#cache.keys().filter((key) => {
       const parsedFilter = getFilter(key);
@@ -167,6 +163,10 @@ export class NotificationsCache {
         },
         { hasMore: false, filter: {}, notifications: [] }
       );
+  }
+
+  has(args: ListNotificationsArgs): boolean {
+    return this.#cache.get(getCacheKey(args)) !== undefined;
   }
 
   set(args: ListNotificationsArgs, data: ListNotificationsResponse): void {

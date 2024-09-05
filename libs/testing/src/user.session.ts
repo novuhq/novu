@@ -246,6 +246,8 @@ export class UserSession {
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
       org_role: 'org:admin',
+      _id: this.user ? this.user.externalId : 'does_not_matter',
+      org_id: this.organization ? this.organization.externalId : 'does_not_matter',
     });
   }
 

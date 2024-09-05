@@ -29,3 +29,4 @@ export * from './topic';
 export * from './user';
 export * from './web-sockets';
 export * from './workflow-override';
+export * from './workflow-channel-preferences';
