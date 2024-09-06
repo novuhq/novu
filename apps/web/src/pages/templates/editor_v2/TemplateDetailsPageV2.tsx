@@ -15,7 +15,7 @@ import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
-import { WorkflowSettingsSidePanel } from '../../../studio/components/workflows/preferences/WorkflowSettingsSidePanel';
+import { CloudWorkflowSettingsSidePanel } from './CloudWorkflowSettingsSidePanel';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -96,7 +96,7 @@ export const TemplateDetailsPageV2 = () => {
           right: '50',
         })}
       />
-      {isPanelOpen && <WorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} workflowId={templateId} />}
+      {isPanelOpen && <CloudWorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
     </WorkflowsPageTemplate>
   );
 };

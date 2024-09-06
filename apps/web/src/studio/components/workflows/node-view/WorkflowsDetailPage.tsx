@@ -14,7 +14,7 @@ import { PageContainer } from '../../../layout/PageContainer';
 import { useStudioState } from '../../../StudioStateProvider';
 import { OutlineButton } from '../../OutlineButton';
 import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
-import { WorkflowSettingsSidePanel } from '../preferences/WorkflowSettingsSidePanel';
+import { StudioWorkflowSettingsSidePanel } from '../preferences/StudioWorkflowSettingsSidePanel';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 import { WorkflowNodes } from './WorkflowNodes';
@@ -76,7 +76,7 @@ export const WorkflowsDetailPage = () => {
           right: '50',
         })}
       />
-      {isPanelOpen && <WorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} workflowId={currentWorkflowId} />}
+      {isPanelOpen && <StudioWorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
     </WorkflowsPageTemplate>
   );
 };
