@@ -5,10 +5,11 @@ import { EnvironmentsController } from './environments.controller';
 import { NotificationGroupsModule } from '../notification-groups/notification-groups.module';
 import { AuthModule } from '../auth/auth.module';
 import { LayoutsModule } from '../layouts/layouts.module';
+import { EnvironmentsBridgeController } from './environments.bridge.controller';
 
 @Module({
   imports: [SharedModule, NotificationGroupsModule, forwardRef(() => AuthModule), forwardRef(() => LayoutsModule)],
-  controllers: [EnvironmentsController],
+  controllers: [EnvironmentsController, EnvironmentsBridgeController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],
 })
