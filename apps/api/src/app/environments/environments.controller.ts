@@ -38,7 +38,7 @@ import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.d
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
-import { NovuBridgeHandler } from './novu-bridge-handler';
+import { NovuNestjsHandler } from './novu-nestjs-handler';
 
 @ApiCommonResponses()
 @Controller('/environments')
@@ -145,7 +145,7 @@ export class EnvironmentsController {
      * I'm leaving it here as a reminder that we need to remove the UI health-check for Novu-managed
      * bridge environments.
      */
-    const novuBridgeHandler = new NovuBridgeHandler({
+    const novuBridgeHandler = new NovuNestjsHandler({
       workflows: [],
       client: new Client({ strictAuthentication: false }),
     });
@@ -191,7 +191,7 @@ export class EnvironmentsController {
         for await (const staticStep of foundWorkflow.steps) {
           await step[stepFnFromStepType[staticStep.template!.type]](staticStep.stepId, () => event.controls, {
             // TODO: fix the step typings, `controls` lives on template property, not step
-            controlSchema: (staticStep.template as any).controls?.schema,
+            controlSchema: (staticStep.template as unknown as typeof staticStep).controls?.schema,
             /*
              * TODO: add conditions
              * Used to construct conditions defined with https://react-querybuilder.js.org/ or similar
@@ -203,13 +203,15 @@ export class EnvironmentsController {
       {
         /*
          * TODO: these are probably not needed, given that this endpoint focuses on execution only.
+         * however we should reconsider if we decide to expose Workflow options to the `workflow` function.
+         *
          * preferences: foundWorkflow.preferences,
          * tags: foundWorkflow.tags,
          */
       }
     );
 
-    const novuBridgeHandler = new NovuBridgeHandler({
+    const novuBridgeHandler = new NovuNestjsHandler({
       workflows: [programmaticallyCreatedWorkflow],
       client: new Client({ strictAuthentication: true, secretKey }),
     });
