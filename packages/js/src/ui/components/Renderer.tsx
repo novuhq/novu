@@ -1,6 +1,7 @@
-import { createMemo, For, onCleanup, onMount } from 'solid-js';
+import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
+import { Novu } from '../../novu';
 import type { NovuOptions } from '../../types';
 import {
   AppearanceProvider,
@@ -47,6 +48,7 @@ type RendererProps = {
   options: NovuOptions;
   tabs: Array<Tab>;
   routerPush?: RouterPush;
+  novu?: Novu;
 };
 
 export const Renderer = (props: RendererProps) => {
@@ -72,7 +74,7 @@ export const Renderer = (props: RendererProps) => {
   });
 
   return (
-    <NovuProvider options={props.options}>
+    <NovuProvider options={props.options} novu={props.novu}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
