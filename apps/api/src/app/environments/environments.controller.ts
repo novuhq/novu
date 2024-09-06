@@ -140,7 +140,10 @@ export class EnvironmentsController {
   async getHandler(@Req() req: Request, @Res() res: Response) {
     /*
      * TODO: remove the GET handler, it's only used right now for the bridge health check,
-     * and it's not needed for UI-defined workflows
+     * and it's not needed for UI-defined workflows.
+     *
+     * I'm leaving it here as a reminder that we need to remove the UI health-check for Novu-managed
+     * bridge environments.
      */
     const novuBridgeHandler = new NovuBridgeHandler({
       workflows: [],
