@@ -3,7 +3,7 @@ import { NovuRequestHandler, ServeHandlerOptions, Either, SupportedFrameworkName
 
 export const frameworkName = 'nestjs';
 
-export class NovuBridgeHandler {
+export class NovuNestjsHandler {
   private novuHandler: NovuRequestHandler;
 
   constructor(options: ServeHandlerOptions) {
