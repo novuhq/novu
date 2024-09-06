@@ -83,15 +83,10 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     },
   });
 
-  const resetState = () => {
-    setCounts(undefined);
+  useEffect(() => {
     setError(undefined);
     setIsLoading(true);
     setIsFetching(false);
-  };
-
-  useEffect(() => {
-    resetState();
     sync();
   }, [JSON.stringify(filters)]);
 

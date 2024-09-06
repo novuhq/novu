@@ -28,20 +28,12 @@ export const useNotifications = (props?: UseNotificationsProps) => {
       return;
     }
     setData(event.data.notifications);
+    console.log(event);
     setHasMore(event.data.hasMore);
   };
 
-  const resetState = () => {
-    setError(undefined);
-    setIsLoading(true);
-    setIsFetching(false);
-    setHasMore(false);
-    setData(undefined);
-  };
-
   useEffect(() => {
-    resetState();
-    fetchNotifications();
+    fetchNotifications({ refetch: true });
 
     on('notifications.list.updated', sync);
     on('notifications.list.pending', sync);
@@ -54,14 +46,19 @@ export const useNotifications = (props?: UseNotificationsProps) => {
     };
   }, [JSON.stringify(tags), read, archived]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (options?: { refetch: boolean }) => {
+    if (options?.refetch) {
+      setError(undefined);
+      setIsLoading(true);
+      setIsFetching(false);
+    }
     setIsFetching(true);
     const response = await notifications.list({
       tags,
       read,
       archived,
       limit,
-      after: after,
+      after: options?.refetch ? undefined : after,
     });
     if (response.error) {
       setError(response.error);
@@ -74,9 +71,8 @@ export const useNotifications = (props?: UseNotificationsProps) => {
   };
 
   const refetch = () => {
-    resetState();
     notifications.clearCache({ filter: { tags, read, archived } });
-    return fetchNotifications();
+    return fetchNotifications({ refetch: true });
   };
 
   const fetchMore = async () => {

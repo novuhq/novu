@@ -1,7 +1,6 @@
 import { novuConfig } from '@/utils/config';
 import { NovuProvider } from '@novu/react';
 import { useNotifications, usePreferences, useCounts } from '@novu/react';
-import { PropsWithChildren } from 'react';
 
 const Content = (props: any) => {
   const {
@@ -11,11 +10,9 @@ const Content = (props: any) => {
     refetch,
     fetchMore,
     hasMore,
-  } = useNotifications();
+  } = useNotifications({ archived: false });
   const { preferences, isLoading: isLoadingPreferences } = usePreferences();
   const counts = useCounts({ filters: [{}] });
-  console.log(preferences);
-  console.log(counts);
 
   if (isLoadingNotifications || isLoadingPreferences) {
     return <div>Loading...</div>;
