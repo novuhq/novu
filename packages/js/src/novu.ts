@@ -9,9 +9,7 @@ import { InboxServiceSingleton } from './utils/inbox-service-singleton';
 import { Socket } from './ws';
 
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
-  #emitter: NovuEventEmitter;
   #session: Session;
-  #socket: Socket;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
@@ -20,7 +18,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
 
   constructor(options: NovuOptions) {
     InboxServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
-    this.#emitter = NovuEventEmitter.getInstance({ recreate: true });
+    const emitter = NovuEventEmitter.getInstance({ recreate: true });
     this.#session = new Session({
       applicationIdentifier: options.applicationIdentifier,
       subscriberId: options.subscriberId,
@@ -29,16 +27,16 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.#session.initialize();
     this.notifications = new Notifications({ useCache: options.useCache ?? true });
     this.preferences = new Preferences({ useCache: options.useCache ?? true });
-    this.#socket = new Socket({ socketUrl: options.socketUrl });
+    const socket = new Socket({ socketUrl: options.socketUrl });
     this.on = (eventName, listener) => {
-      if (this.#socket.isSocketEvent(eventName)) {
-        this.#socket.initialize();
+      if (socket.isSocketEvent(eventName)) {
+        socket.initialize();
       }
-      this.#emitter.on(eventName, listener);
+      emitter.on(eventName, listener);
     };
 
     this.off = (eventName, listener) => {
-      this.#emitter.off(eventName, listener);
+      emitter.off(eventName, listener);
     };
   }
 }
