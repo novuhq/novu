@@ -43,7 +43,6 @@ export class EnvironmentsBridgeController {
   ) {}
 
   @Get('/:environmentId/bridge')
-  @Options('/:environmentId/bridge')
   async getHandler(@Req() req: Request, @Res() res: Response, @Param('environmentId') environmentId: string) {
     /*
      * TODO: remove the GET handler, it's only used right now for the bridge health check,
