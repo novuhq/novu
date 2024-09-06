@@ -58,7 +58,7 @@ export class EnvironmentsBridgeController {
         secretKey: await this.getApiKey(environmentId),
       }),
     });
-    await novuBridgeHandler.handleRequest(req, res, req.method as 'GET' | 'OPTIONS');
+    await novuBridgeHandler.handleRequest(req, res, 'GET');
   }
 
   @Post('/:environmentId/bridge')
