@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   NotFoundException,
+  Options,
   Param,
   Post,
   Query,
@@ -12,13 +13,24 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowTypeEnum } from '@novu/shared';
 import { ApiTags } from '@nestjs/swagger';
 import { decryptApiKey } from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { Client, Event, workflow, Step, Workflow } from '@novu/framework';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { NovuNestjsHandler } from './novu-nestjs-handler';
+
+// Unfortunately we need this mapper because the `in_app` step type uses `step.inApp()` in Framework.
+const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | StepTypeEnum.TRIGGER>, keyof Step> = {
+  [StepTypeEnum.IN_APP]: 'inApp',
+  [StepTypeEnum.EMAIL]: 'email',
+  [StepTypeEnum.SMS]: 'sms',
+  [StepTypeEnum.CHAT]: 'chat',
+  [StepTypeEnum.PUSH]: 'push',
+  [StepTypeEnum.DIGEST]: 'digest',
+  [StepTypeEnum.DELAY]: 'delay',
+};
 
 @ApiCommonResponses()
 @Controller('/environments')
@@ -31,7 +43,8 @@ export class EnvironmentsBridgeController {
   ) {}
 
   @Get('/:environmentId/bridge')
-  async getHandler(@Req() req: Request, @Res() res: Response) {
+  @Options('/:environmentId/bridge')
+  async getHandler(@Req() req: Request, @Res() res: Response, @Param('environmentId') environmentId: string) {
     /*
      * TODO: remove the GET handler, it's only used right now for the bridge health check,
      * and it's not needed for UI-defined workflows.
@@ -41,9 +54,12 @@ export class EnvironmentsBridgeController {
      */
     const novuBridgeHandler = new NovuNestjsHandler({
       workflows: [],
-      client: new Client({ strictAuthentication: true }),
+      client: new Client({
+        strictAuthentication: false,
+        secretKey: await this.getApiKey(environmentId),
+      }),
     });
-    await novuBridgeHandler.handleRequest(req, res, 'GET');
+    await novuBridgeHandler.handleRequest(req, res, req.method as 'GET' | 'OPTIONS');
   }
 
   @Post('/:environmentId/bridge')
@@ -56,22 +72,44 @@ export class EnvironmentsBridgeController {
   ) {
     const foundWorkflow = await this.getWorkflow(environmentId, workflowId);
 
-    // Unfortunately we need this mapper because the `in_app` step type uses `step.inApp()` in Framework.
-    const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | StepTypeEnum.TRIGGER>, keyof Step> = {
-      [StepTypeEnum.IN_APP]: 'inApp',
-      [StepTypeEnum.EMAIL]: 'email',
-      [StepTypeEnum.SMS]: 'sms',
-      [StepTypeEnum.CHAT]: 'chat',
-      [StepTypeEnum.PUSH]: 'push',
-      [StepTypeEnum.DIGEST]: 'digest',
-      [StepTypeEnum.DELAY]: 'delay',
-    };
+    const programmaticallyCreatedWorkflow = this.createWorkflow(foundWorkflow, event.controls);
 
-    const programmaticallyCreatedWorkflow = workflow(
-      foundWorkflow.name,
+    const novuBridgeHandler = new NovuNestjsHandler({
+      workflows: [programmaticallyCreatedWorkflow],
+      client: new Client({ strictAuthentication: true, secretKey: await this.getApiKey(environmentId) }),
+    });
+
+    await novuBridgeHandler.handleRequest(req, res, 'POST');
+  }
+
+  // TODO: wrap the secret key fetching per environmentId in a usecase, including the decryption, add caching.
+  private async getApiKey(environmentId: string): Promise<string> {
+    const environment = await this.environmentsRepository.findOne({ _id: environmentId });
+    if (!environment) {
+      throw new NotFoundException('Environment not found');
+    }
+    const secretKey = decryptApiKey(environment.apiKeys[0].key);
+
+    return secretKey;
+  }
+
+  // TODO: refactor this into a usecase, add caching.
+  private async getWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
+    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
+
+    if (!foundWorkflow) {
+      throw new NotFoundException('Workflow not found');
+    }
+
+    return foundWorkflow;
+  }
+
+  private createWorkflow(newWorkflow: NotificationTemplateEntity, controls: Record<string, unknown>): Workflow {
+    return workflow(
+      newWorkflow.name,
       async ({ step }) => {
-        for await (const staticStep of foundWorkflow.steps) {
-          await step[stepFnFromStepType[staticStep.template!.type]](staticStep.stepId, () => event.controls, {
+        for await (const staticStep of newWorkflow.steps) {
+          await step[stepFnFromStepType[staticStep.template!.type]](staticStep.stepId, () => controls, {
             // TODO: fix the step typings, `controls` lives on template property, not step
             controlSchema: (staticStep.template as unknown as typeof staticStep).controls?.schema,
             /*
@@ -92,34 +130,5 @@ export class EnvironmentsBridgeController {
          */
       }
     );
-
-    const novuBridgeHandler = new NovuNestjsHandler({
-      workflows: [programmaticallyCreatedWorkflow],
-      client: new Client({ strictAuthentication: true, secretKey: await this.getApiKey(environmentId) }),
-    });
-
-    await novuBridgeHandler.handleRequest(req, res, 'POST');
-  }
-
-  // TODO: wrap the secret key fetching per environmentId in a usecase, including the decryption, add caching.
-  private async getApiKey(environmentId: string): Promise<string> {
-    const environment = await this.environmentsRepository.findOne({ _id: environmentId });
-    if (!environment) {
-      throw new NotFoundException('Environment not found');
-    }
-    const secretKey = decryptApiKey(environment.apiKeys[0].key);
-
-    return secretKey;
-  }
-  // TODO: refactor this into a usecase, add caching.
-
-  private async getWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
-
-    if (!foundWorkflow) {
-      throw new NotFoundException('Workflow not found');
-    }
-
-    return foundWorkflow;
   }
 }
