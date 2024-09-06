@@ -1,9 +1,8 @@
 import { expect, Page } from '@playwright/test';
 import { test } from './utils/baseTest';
-import { initializeSession, setFeatureFlag } from './utils/browser';
+import { initializeSession } from './utils/browser';
 import { BillingPage } from './page-models/billingPage';
 import { BillingRouteMocks } from './rest-mocks/BillingRouteMocks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const GREEN = 'rgb(77, 153, 128)';
 const YELLOW = 'rgb(253, 224, 68)';
@@ -13,7 +12,6 @@ test.describe('Billing', () => {
 
   test.beforeEach(async ({ page }) => {
     await initializeSession(page, { noTemplates: true });
-    await setFeatureFlag(page, FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED, true);
   });
 
   test('should display billing page', async ({ page }) => {
@@ -24,7 +22,7 @@ test.describe('Billing', () => {
   });
 
   async function assertDynamicTimeLeftLabel(billingPage: BillingPage, timeInTrial: number) {
-    await billingPage.assertTrialLabelContains(`${14 - timeInTrial}`);
+    await billingPage.assertTrialLabelContains(`${30 - timeInTrial}`);
   }
 
   test('should display free trial widget', async ({ page }) => {
@@ -32,18 +30,18 @@ test.describe('Billing', () => {
     await expect(billingPage.getTrialProgressBar()).toHaveCSS('width', '0px');
   });
 
-  test('should display free trial widget after 5 days', async ({ page }) => {
-    const billingPage = await testDynamicBannersInTrial(page, 5);
+  test('should display free trial widget after 10 days', async ({ page }) => {
+    const billingPage = await testDynamicBannersInTrial(page, 10);
     await billingPage.assertTrialBarColor(GREEN);
   });
 
-  test('should display free trial widget after 11 days', async ({ page }) => {
-    const billingPage = await testDynamicBannersInTrial(page, 11);
+  test('should display free trial widget after 20 days', async ({ page }) => {
+    const billingPage = await testDynamicBannersInTrial(page, 20);
     await billingPage.assertTrialBarColor(YELLOW);
     await billingPage.assertContactSalesBannerText('Contact sales');
   });
 
-  test('should not display free trial widget after 14 days', async ({ page }) => {
+  test('should not display free trial widget after 30 days', async ({ page }) => {
     await BillingRouteMocks.mockActiveSubscription(page);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.settingsMenu.assertNoFreeTrial();
@@ -55,7 +53,7 @@ test.describe('Billing', () => {
     await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertBillingPlansTitle('Plans');
-    await billingPage.assertTrialWidgetText('14 days left on your trial');
+    await billingPage.assertTrialWidgetText('30 days left on your trial');
   });
 
   test('should be able to manage subscription', async ({ page }) => {
@@ -83,13 +81,13 @@ test.describe('Billing', () => {
 
   async function assertStateOnTrial(page: Page) {
     await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
-    await BillingRouteMocks.mockSubscriptionTrial(page, 11);
+    await BillingRouteMocks.mockSubscriptionTrial(page, 20);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanBusinessCurrent();
     await billingPage.waitForPlanBusinessAndPayment();
     await billingPage.waitForFreeTrialWidget();
-    await billingPage.assertTrialWidgetText('3 days left on your trial');
+    await billingPage.assertTrialWidgetText('10 days left on your trial');
     await billingPage.waitForFreeTrialBanner();
   }
   async function testDynamicBannersInTrial(page: Page, timeInTrial: number) {
