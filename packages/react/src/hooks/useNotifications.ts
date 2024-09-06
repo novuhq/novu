@@ -28,7 +28,6 @@ export const useNotifications = (props?: UseNotificationsProps) => {
       return;
     }
     setData(event.data.notifications);
-    console.log(event);
     setHasMore(event.data.hasMore);
   };
 
