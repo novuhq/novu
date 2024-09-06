@@ -57,13 +57,8 @@ export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResul
     setIsFetching(false);
   };
 
-  const resetState = () => {
-    setData(undefined);
-  };
-
   const refetch = () => {
     preferences.cache.clearAll();
-    resetState();
     return fetchPreferences();
   };
 
