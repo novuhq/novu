@@ -21,6 +21,7 @@ const redirectSchema = {
   if: {
     properties: {
       url: {
+        type: 'string',
         pattern: '^/', // Check if url starts with a slash (relative path)
       },
     },
