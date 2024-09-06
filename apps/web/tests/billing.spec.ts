@@ -1,8 +1,9 @@
 import { expect, Page } from '@playwright/test';
 import { test } from './utils/baseTest';
-import { initializeSession } from './utils/browser';
+import { initializeSession, setFeatureFlag } from './utils/browser';
 import { BillingPage } from './page-models/billingPage';
 import { BillingRouteMocks } from './rest-mocks/BillingRouteMocks';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const GREEN = 'rgb(77, 153, 128)';
 const YELLOW = 'rgb(253, 224, 68)';
@@ -12,6 +13,7 @@ test.describe('Billing', () => {
 
   test.beforeEach(async ({ page }) => {
     await initializeSession(page, { noTemplates: true });
+    await setFeatureFlag(page, FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED, true);
   });
 
   test('should display billing page', async ({ page }) => {
