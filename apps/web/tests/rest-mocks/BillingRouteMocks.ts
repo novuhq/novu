@@ -55,7 +55,7 @@ export class BillingRouteMocks {
   public static async mockSubscriptionTrial(page: Page, daysFromStart: number) {
     await BillingRouteMocks.mockSubscriptionRestCall(page, {
       trialStart: subDays(startOfDay(new Date()), daysFromStart),
-      trialEnd: addDays(endOfDay(new Date()), 14 - daysFromStart),
+      trialEnd: addDays(endOfDay(new Date()), 30 - daysFromStart),
       hasPaymentMethod: false,
       status: 'trialing',
     });
