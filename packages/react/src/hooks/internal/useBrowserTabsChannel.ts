@@ -7,10 +7,12 @@ export const useBrowserTabsChannel = <T = unknown>({
   channelName: string;
   onMessage: (args: T) => void;
 }) => {
-  const [tabsChannel] = useState(new BroadcastChannel(channelName));
+  const [tabsChannel] = useState(
+    typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(channelName) : undefined
+  );
 
   const postMessage = (data: T) => {
-    tabsChannel.postMessage(data);
+    tabsChannel?.postMessage(data);
   };
 
   useEffect(() => {
@@ -18,10 +20,10 @@ export const useBrowserTabsChannel = <T = unknown>({
       onMessage(event.data);
     };
 
-    tabsChannel.addEventListener('message', listener);
+    tabsChannel?.addEventListener('message', listener);
 
     return () => {
-      tabsChannel.removeEventListener('message', listener);
+      tabsChannel?.removeEventListener('message', listener);
     };
   }, []);
 
