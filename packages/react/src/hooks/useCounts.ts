@@ -1,10 +1,9 @@
-import { areTagsEqual, isSameFilter } from '@novu/js';
+import { areTagsEqual } from '@novu/js';
 import { NotificationFilter, NovuError } from '@novu/js';
 import { useEffect, useState } from 'react';
 import { useNovu } from './NovuProvider';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { Notification } from '@novu/js';
-import { countReset } from 'console';
 
 type Count = {
   count: number;
