@@ -22,3 +22,9 @@ export const useNovu = () => {
 
   return context;
 };
+
+export const useUnsafeNovu = () => {
+  const context = useContext(NovuContext);
+
+  return context;
+};

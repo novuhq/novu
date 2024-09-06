@@ -29,6 +29,7 @@ export class NovuUI {
   #setOptions;
   #tabs: Accessor<Array<Tab>>;
   #setTabs;
+  #predefinedNovu;
   id: string;
 
   constructor(props: NovuProviderProps) {
@@ -48,6 +49,7 @@ export class NovuUI {
     this.#setOptions = setOptions;
     this.#tabs = tabs;
     this.#setTabs = setTabs;
+    this.#predefinedNovu = props.novu;
 
     this.#mountComponentRenderer();
   }
@@ -71,6 +73,7 @@ export class NovuUI {
           appearance={this.#appearance()}
           localization={this.#localization()}
           tabs={this.#tabs()}
+          novu={this.#predefinedNovu}
         />
       ),
       this.#rootElement
