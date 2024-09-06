@@ -182,7 +182,7 @@ export class EnvironmentsController {
       [StepTypeEnum.DELAY]: 'delay',
     };
 
-    const programaticallyCreatedWorkflow = workflow(
+    const programmaticallyCreatedWorkflow = workflow(
       foundWorkflow.name,
       async ({ step }) => {
         for await (const staticStep of foundWorkflow.steps) {
@@ -207,7 +207,7 @@ export class EnvironmentsController {
     );
 
     const novuBridgeHandler = new NovuBridgeHandler({
-      workflows: [programaticallyCreatedWorkflow],
+      workflows: [programmaticallyCreatedWorkflow],
       client: new Client({ strictAuthentication: true, secretKey }),
     });
 
