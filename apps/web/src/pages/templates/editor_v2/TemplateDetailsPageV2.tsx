@@ -1,9 +1,9 @@
-import { css, cx } from '@novu/novui/css';
-import { IconCable, IconPlayArrow, IconSettings } from '@novu/novui/icons';
+import { css } from '@novu/novui/css';
+import { IconCable, IconPlayArrow, IconSave, IconSettings } from '@novu/novui/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { IconButton } from '@novu/novui';
+import { Button, IconButton } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
 import { useTemplateController } from '../components/useTemplateController';
@@ -16,16 +16,38 @@ import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { CloudWorkflowSettingsSidePanel } from './CloudWorkflowSettingsSidePanel';
+import { useFormContext } from 'react-hook-form';
+import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
+import { useUpdateWorkflowChannelPreferences } from '../../../hooks/workflowChannelPreferences/useUpdateWorkflowChannelPreferences';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const track = useTelemetry();
   const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
+  const { updateWorkflowChannelPreferences } = useUpdateWorkflowChannelPreferences(templateId);
+
   const { template: workflow } = useTemplateController(templateId);
 
-  // TODO: this is a temporary solution while we scaffold the components, and should be replaced w/ modal manager
   const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
+  const { formState, getValues, setValue } = useFormContext<WorkflowDetailFormContext>();
+
+  const handleSave = () => {
+    if (formState.dirtyFields?.preferences) {
+      const prefs = getValues('preferences');
+      updateWorkflowChannelPreferences(prefs);
+    }
+  };
+
+  useEffect(() => {
+    if (workflow) {
+      setValue('general', {
+        workflowId: workflow.triggers?.[0]?.identifier ?? '',
+        name: workflow.name,
+        description: workflow.description,
+      });
+    }
+  }, [workflow]);
 
   const title = workflow?.name || '';
   const navigate = useNavigate();
@@ -53,6 +75,9 @@ export const TemplateDetailsPageV2 = () => {
       title={title}
       actions={
         <HStack gap="75">
+          <Button disabled={!formState.isDirty} Icon={IconSave} onClick={handleSave}>
+            Save
+          </Button>
           <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
             Test workflow
           </OutlineButton>
