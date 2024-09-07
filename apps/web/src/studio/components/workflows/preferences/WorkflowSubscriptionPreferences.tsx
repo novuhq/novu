@@ -9,7 +9,7 @@ import { PreferenceChannelName, SubscriptionPreferenceRow } from './types';
 import { CHANNEL_LABELS_LOOKUP, CHANNEL_SETTINGS_LOGO_LOOKUP } from './WorkflowSubscriptionPreferences.const';
 import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
 
-// FIXME: determine how to bring in ReactTable types
+// these match react-table's specifications, but we don't have the types as a direct dependency in web.
 const PREFERENCES_COLUMNS = [
   { accessorKey: 'channel', header: 'Channels', cell: ChannelCell },
   { accessorKey: 'defaultValue', header: 'Default', cell: SwitchCell },
@@ -82,13 +82,18 @@ function ChannelCell(props) {
 function SwitchCell(props) {
   return (
     <Switch
+      // color prop does not work with 'var()' values
       classNames={{
-        track: css({ bg: 'colorPalette.middle !important' }),
-        root: css({ '&:has(:disabled)': { opacity: 'disabled' } }),
+        root: css({
+          '&:has(:disabled)': { opacity: 'disabled' },
+          '& input:checked + label': { bg: 'colorPalette.middle !important' },
+        }),
       }}
       checked={props.getValue()}
       onChange={(e) => {
-        props.row.original.onChange(props.row.original.channel, props.column.id, e.currentTarget.value === 'on');
+        // readOnly is already negated
+        const updatedVal = props.column.id === 'readOnly' ? !e.target.checked : e.target.checked;
+        props.row.original.onChange(props.row.original.channel, props.column.id, updatedVal);
       }}
       size="lg"
       disabled={props.row.original.disabled}

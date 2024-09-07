@@ -7,12 +7,13 @@ import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { WorkflowChannelPreferences } from '@novu/shared';
 import { useStudioState } from '../../../StudioStateProvider';
-import { WorkflowGeneralSettings } from './WorkflowGeneralSettings';
+import { WorkflowGeneralSettingsForm } from './WorkflowGeneralSettings';
 import {
   WorkflowSubscriptionPreferences,
   WorkflowSubscriptionPreferencesProps,
 } from './WorkflowSubscriptionPreferences';
-import { DEFAULT_WORKFLOW_PREFERENCES } from './WorkflowSubscriptionPreferences.const';
+import { Controller, useFormContext } from 'react-hook-form';
+import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
 
 enum WorkflowSettingsPanelTab {
   GENERAL = 'general',
@@ -30,6 +31,7 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
   isLoading,
 }) => {
   const { isLocalStudio } = useStudioState() || {};
+  const { control } = useFormContext<WorkflowDetailFormContext>();
 
   return (
     <Tabs
@@ -40,7 +42,23 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
           value: WorkflowSettingsPanelTab.GENERAL,
           label: 'General',
           icon: <IconDynamicFeed />,
-          content: isLoading ? <CenteredLoader /> : <WorkflowGeneralSettings />,
+          content: isLoading ? (
+            <CenteredLoader />
+          ) : (
+            <Controller
+              name="general"
+              control={control}
+              render={({ field }) => {
+                return (
+                  <WorkflowGeneralSettingsForm
+                    settings={field.value}
+                    updateSettings={field.onChange}
+                    areSettingsDisabled={isLocalStudio}
+                  />
+                );
+              }}
+            />
+          ),
         },
         {
           value: WorkflowSettingsPanelTab.PREFERENCES,
@@ -54,11 +72,19 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
                 Set default notification channels for subscribers, and determine which channels they can modify
                 themselves.
               </Text>
-              <WorkflowSubscriptionPreferences
-                preferences={preferences ?? DEFAULT_WORKFLOW_PREFERENCES}
-                updateChannelPreferences={updateChannelPreferences}
-                arePreferencesDisabled={isLocalStudio}
-              />
+              <Controller
+                name="preferences"
+                control={control}
+                render={({ field }) => {
+                  return (
+                    <WorkflowSubscriptionPreferences
+                      preferences={field.value}
+                      updateChannelPreferences={field.onChange}
+                      arePreferencesDisabled={isLocalStudio}
+                    />
+                  );
+                }}
+              ></Controller>
             </Stack>
           ),
         },

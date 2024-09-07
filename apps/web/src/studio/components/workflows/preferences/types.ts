@@ -6,3 +6,9 @@ export type SubscriptionPreferenceRow = {
   onChange: (channel: PreferenceChannelName, key: string, value: boolean) => void;
   disabled?: boolean;
 } & ChannelPreference;
+
+export type WorkflowGeneralSettings = {
+  workflowId: string;
+  name: string;
+  description?: string;
+};
