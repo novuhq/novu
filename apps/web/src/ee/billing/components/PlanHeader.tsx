@@ -194,7 +194,7 @@ export const PlanHeader = () => {
                     });
                   }}
                 >
-                  Add payment method
+                  Upgrade
                 </Button>
               </When>
             </When>
