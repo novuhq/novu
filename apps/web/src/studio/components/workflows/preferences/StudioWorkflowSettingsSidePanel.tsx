@@ -16,7 +16,7 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
   const { data } = useDiscover();
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
 
-  const { isLoading, workflowChannelPreferences } = useStudioWorkflowChannelPreferences(workflowId);
+  const { isLoading } = useStudioWorkflowChannelPreferences(workflowId);
   const { setValue } = useFormContext<WorkflowDetailFormContext>();
 
   const workflow = useMemo(() => {
@@ -33,12 +33,7 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
   return (
     <Sidebar customHeader={<Title variant="section">Workflow settings</Title>} isOpened onClose={onClose}>
       <div className={css({ colorPalette: 'mode.local' })}>
-        <WorkflowSettingsSidePanelContent
-          preferences={workflowChannelPreferences}
-          // Users are not able to update preferences directly in studio -- they must use framework / code
-          updateChannelPreferences={() => {}}
-          isLoading={isLoading}
-        />
+        <WorkflowSettingsSidePanelContent isLoading={isLoading} />
       </div>
     </Sidebar>
   );

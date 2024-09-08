@@ -24,11 +24,14 @@ export const TemplateDetailsPageV2 = () => {
   const { template: workflow } = useTemplateController(templateId);
   const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
-  const { submitWorkflow, isSubmitting, hasChanges } = useWorkflowDetailPageForm({ templateId, workflow });
+  const { submitWorkflow, isSubmitting, hasChanges, workflowName } = useWorkflowDetailPageForm({
+    templateId,
+    workflow,
+  });
 
   const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
 
-  const title = workflow?.name || '';
+  const title = workflowName || workflow?.name || '';
   const navigate = useNavigate();
 
   const workflowBackgroundWrapperClass = css({
