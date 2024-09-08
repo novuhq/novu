@@ -5,31 +5,22 @@ import { Tabs, Text } from '@novu/novui';
 import { IconDynamicFeed, IconManageAccounts } from '@novu/novui/icons';
 import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
-import { WorkflowChannelPreferences } from '@novu/shared';
-import { useStudioState } from '../../../StudioStateProvider';
-import { WorkflowGeneralSettingsForm } from './WorkflowGeneralSettingsForm';
-import {
-  WorkflowSubscriptionPreferences,
-  WorkflowSubscriptionPreferencesProps,
-} from './WorkflowSubscriptionPreferences';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useStudioState } from '../../../StudioStateProvider';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
+import { WorkflowGeneralSettingsForm } from './WorkflowGeneralSettingsForm';
+import { WorkflowSubscriptionPreferences } from './WorkflowSubscriptionPreferences';
 
 enum WorkflowSettingsPanelTab {
   GENERAL = 'general',
   PREFERENCES = 'preferences',
 }
 
-type WorkflowSettingsSidePanelContentProps = Omit<WorkflowSubscriptionPreferencesProps, 'preferences'> & {
-  preferences?: WorkflowChannelPreferences;
+type WorkflowSettingsSidePanelContentProps = {
   isLoading?: boolean;
 };
 
-export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelContentProps> = ({
-  updateChannelPreferences,
-  preferences,
-  isLoading,
-}) => {
+export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelContentProps> = ({ isLoading }) => {
   const { isLocalStudio } = useStudioState() || {};
   const { control } = useFormContext<WorkflowDetailFormContext>();
 

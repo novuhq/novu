@@ -11,7 +11,10 @@ type UseWorkflowDetailPageFormProps = {
 };
 
 export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowDetailPageFormProps) => {
-  const { formState, setValue, resetField, reset, handleSubmit } = useFormContext<WorkflowDetailFormContext>();
+  const { formState, setValue, resetField, reset, handleSubmit, getValues, watch } =
+    useFormContext<WorkflowDetailFormContext>();
+
+  const workflowName = watch('general.name');
 
   const { updateWorkflowChannelPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowChannelPreferences(
     templateId,
@@ -27,13 +30,13 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
 
   const hasChanges = Object.keys(formState.dirtyFields).length > 0;
 
-  const onSubmit: SubmitHandler<WorkflowDetailFormContext> = ({ preferences, general }) => {
+  const onSubmit: SubmitHandler<WorkflowDetailFormContext> = () => {
     if (formState.dirtyFields?.preferences) {
-      updateWorkflowChannelPreferences(preferences);
+      updateWorkflowChannelPreferences(getValues('preferences'));
     }
 
     if (formState.dirtyFields?.general) {
-      const { workflowId, ...templateValues } = general;
+      const { workflowId, ...templateValues } = getValues('general');
       updateTemplateMutation({ id: templateId, data: { ...templateValues, identifier: workflowId } });
     }
 
@@ -54,5 +57,6 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
     submitWorkflow: handleSubmit(onSubmit),
     hasChanges,
     isSubmitting: isUpdatingGeneralSettings || isUpdatingPreferences,
+    workflowName,
   };
 };
