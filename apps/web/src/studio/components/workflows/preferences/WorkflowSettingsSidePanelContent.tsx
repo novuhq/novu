@@ -7,7 +7,7 @@ import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { WorkflowChannelPreferences } from '@novu/shared';
 import { useStudioState } from '../../../StudioStateProvider';
-import { WorkflowGeneralSettingsForm } from './WorkflowGeneralSettings';
+import { WorkflowGeneralSettingsForm } from './WorkflowGeneralSettingsForm';
 import {
   WorkflowSubscriptionPreferences,
   WorkflowSubscriptionPreferencesProps,

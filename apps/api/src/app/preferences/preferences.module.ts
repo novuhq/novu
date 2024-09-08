@@ -1,10 +1,10 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { GetPreferences, UpsertPreferences } from '@novu/application-generic';
+import { getFeatureFlag, GetPreferences, UpsertPreferences } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
 import { SharedModule } from '../shared/shared.module';
 import { PreferencesController } from './preferences.controller';
 
-const PROVIDERS = [PreferencesRepository, UpsertPreferences, GetPreferences];
+const PROVIDERS = [PreferencesRepository, UpsertPreferences, GetPreferences, getFeatureFlag];
 
 @Module({
   imports: [SharedModule],

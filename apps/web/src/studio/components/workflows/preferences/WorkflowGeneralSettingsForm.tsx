@@ -34,13 +34,15 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({
         onChange={onChange('workflowId')}
         disabled={areSettingsDisabled}
       />
-      <Textarea
-        label="Description"
-        maxLines={2}
-        value={settings.description}
-        onChange={onChange('description')}
-        disabled={areSettingsDisabled}
-      />
+      {!areSettingsDisabled && (
+        <Textarea
+          label="Description"
+          maxLines={2}
+          value={settings.description}
+          onChange={onChange('description')}
+          disabled={areSettingsDisabled}
+        />
+      )}
     </Stack>
   );
 };

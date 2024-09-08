@@ -16,28 +16,36 @@ import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { CloudWorkflowSettingsSidePanel } from './CloudWorkflowSettingsSidePanel';
-import { useFormContext } from 'react-hook-form';
+import { SubmitHandler, useFormContext } from 'react-hook-form';
 import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
 import { useUpdateWorkflowChannelPreferences } from '../../../hooks/workflowChannelPreferences/useUpdateWorkflowChannelPreferences';
+import { useUpdateTemplate } from '../../../api/hooks';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const track = useTelemetry();
   const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
-  const { updateWorkflowChannelPreferences } = useUpdateWorkflowChannelPreferences(templateId);
+  const { formState, getValues, setValue, resetField, reset, handleSubmit } =
+    useFormContext<WorkflowDetailFormContext>();
+
+  const { updateWorkflowChannelPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowChannelPreferences(
+    templateId,
+    () => {
+      resetField('preferences');
+    }
+  );
+  const { updateTemplateMutation, isLoading: isUpdatingGeneralSettings } = useUpdateTemplate({
+    onSuccess: () => {
+      resetField('general');
+    },
+  });
+
+  const hasChanges = Object.keys(formState.dirtyFields).length > 0;
 
   const { template: workflow } = useTemplateController(templateId);
 
   const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
-  const { formState, getValues, setValue } = useFormContext<WorkflowDetailFormContext>();
-
-  const handleSave = () => {
-    if (formState.dirtyFields?.preferences) {
-      const prefs = getValues('preferences');
-      updateWorkflowChannelPreferences(prefs);
-    }
-  };
 
   useEffect(() => {
     if (workflow) {
@@ -68,60 +76,80 @@ export const TemplateDetailsPageV2 = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const onSubmit: SubmitHandler<WorkflowDetailFormContext> = ({ preferences, general }) => {
+    if (formState.dirtyFields?.preferences) {
+      updateWorkflowChannelPreferences(preferences);
+    }
+
+    if (formState.dirtyFields?.general) {
+      const { workflowId, ...templateValues } = general;
+      updateTemplateMutation({ id: templateId, data: { ...templateValues, identifier: workflowId } });
+    }
+
+    reset();
+  };
+
   return (
-    <WorkflowsPageTemplate
-      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
-      icon={<IconCable size="32" />}
-      title={title}
-      actions={
-        <HStack gap="75">
-          <Button disabled={!formState.isDirty} Icon={IconSave} onClick={handleSave}>
-            Save
-          </Button>
-          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
-            Test workflow
-          </OutlineButton>
-          {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={() => setPanelOpen(true)} />}
-        </HStack>
-      }
-    >
-      <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
-        <WorkflowNodes
-          steps={
-            workflow?.steps?.map((item) => {
-              return {
-                stepId: item.stepId,
-                type: item.template?.type,
-              };
-            }) || []
-          }
-          onStepClick={(step) => {
-            navigate(
-              parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
-                templateId: workflow?._id as string,
-                stepId: step.stepId,
-              })
-            );
-          }}
-          onTriggerClick={() => {
-            navigate(
-              parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
-                templateId: workflow?._id as string,
-              })
-            );
-          }}
+    <form name="workflow-form" noValidate onSubmit={handleSubmit(onSubmit)}>
+      <WorkflowsPageTemplate
+        className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
+        icon={<IconCable size="32" />}
+        title={title}
+        actions={
+          <HStack gap="75">
+            <Button
+              type={'submit'}
+              disabled={!hasChanges}
+              Icon={IconSave}
+              loading={isUpdatingPreferences || isUpdatingGeneralSettings}
+            >
+              Save
+            </Button>
+            <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+              Test workflow
+            </OutlineButton>
+            {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={() => setPanelOpen(true)} />}
+          </HStack>
+        }
+      >
+        <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
+          <WorkflowNodes
+            steps={
+              workflow?.steps?.map((item) => {
+                return {
+                  stepId: item.stepId,
+                  type: item.template?.type,
+                };
+              }) || []
+            }
+            onStepClick={(step) => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
+                  templateId: workflow?._id as string,
+                  stepId: step.stepId,
+                })
+              );
+            }}
+            onTriggerClick={() => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
+                  templateId: workflow?._id as string,
+                })
+              );
+            }}
+          />
+        </WorkflowBackgroundWrapper>
+        <WorkflowFloatingMenu
+          className={css({
+            zIndex: 'docked',
+            position: 'fixed',
+            // TODO: need to talk with Nik about how to position this
+            top: '[182px]',
+            right: '50',
+          })}
         />
-      </WorkflowBackgroundWrapper>
-      <WorkflowFloatingMenu
-        className={css({
-          zIndex: 'docked',
-          position: 'fixed',
-          // TODO: need to talk with Nik about how to position this
-          top: '[182px]',
-          right: '50',
-        })}
-      />
-      {isPanelOpen && <CloudWorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
-    </WorkflowsPageTemplate>
+        {isPanelOpen && <CloudWorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
+      </WorkflowsPageTemplate>
+    </form>
   );
 };
