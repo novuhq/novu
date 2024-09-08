@@ -25,7 +25,7 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
     },
   });
 
-  const hasChanges = useMemo(() => Object.keys(formState.dirtyFields).length > 0, [formState.dirtyFields]);
+  const hasChanges = Object.keys(formState.dirtyFields).length > 0;
 
   const onSubmit: SubmitHandler<WorkflowDetailFormContext> = ({ preferences, general }) => {
     if (formState.dirtyFields?.preferences) {
