@@ -51,7 +51,7 @@ export const TemplateDetailsPageV2 = () => {
   }, []);
 
   return (
-    <form name="workflow-form" noValidate onSubmit={submitWorkflow}>
+    <form name="workflow-form" noValidate onSubmit={submitWorkflow} className={css({ height: 'full' })}>
       <WorkflowsPageTemplate
         className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
         icon={<IconCable size="32" />}
