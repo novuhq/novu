@@ -12,9 +12,7 @@ import { WorkflowDetailFormContext } from '../../../studio/components/workflows/
 
 type CloudWorkflowSettingsSidePanelProps = { onClose: () => void };
 
-// FIXME: move this!
 export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelProps> = ({ onClose }) => {
-  // TODO: safeguard against no url
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
 
   const { isLoading, workflowChannelPreferences } = useCloudWorkflowChannelPreferences(workflowId);
