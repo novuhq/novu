@@ -1,9 +1,9 @@
 import { MantineProvider } from '@mantine/core';
-import { theme } from '@/config/mantine';
+import { themeConfig } from '@/config/mantine';
 
 export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <MantineProvider forceColorScheme="dark" theme={theme}>
+    <MantineProvider forceColorScheme="dark" theme={themeConfig}>
       {children}
     </MantineProvider>
   );

@@ -13,7 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        <ColorSchemeScript />
+        <ColorSchemeScript forceColorScheme="dark" />
       </head>
       <body>
         <RootProvider>

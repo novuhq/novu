@@ -1,6 +1,6 @@
 import { createTheme } from '@mantine/core';
 
-export const theme = createTheme({
+export const themeConfig = createTheme({
   white: '#FFFFFF',
   black: '#000000',
   primaryColor: 'gradient',
