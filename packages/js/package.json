@@ -105,7 +105,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.7",
-    "@novu/client": "^2.0.0",
+    "@novu/client": "workspace:*",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",

@@ -79,6 +79,6 @@
     "react-dom": ">=17"
   },
   "dependencies": {
-    "@novu/js": "^2.0.0-canary.2"
+    "@novu/js": "workspace:*"
   }
 }
