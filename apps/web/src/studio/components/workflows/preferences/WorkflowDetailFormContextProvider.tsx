@@ -24,7 +24,6 @@ export const WorkflowDetailFormContextProvider: FC<PropsWithChildren<IWorkflowDe
   children,
 }) => {
   const formValues = useForm<WorkflowDetailFormContext>({
-    // resolver: zodResolver({} as any),
     mode: 'onChange',
     defaultValues: DEFAULT_FORM_VALUES,
     values: {
