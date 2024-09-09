@@ -1,4 +1,4 @@
-import { ExtendedJsonSchema, Schema } from '../../../types/schema.types';
+import { Schema } from '../../../types/schema.types';
 
 const ABSOLUTE_AND_RELATIVE_URL_REGEX = '^(?!mailto:)(?:(https?):\\/\\/[^\\s/$.?#].[^\\s]*)|^(\\/[^\\s]*)$';
 
@@ -39,7 +39,7 @@ const redirectSchema = {
   },
   required: ['url'],
   additionalProperties: false,
-} as const satisfies ExtendedJsonSchema;
+} as const satisfies Schema;
 
 const actionSchema = {
   type: 'object',
