@@ -60,7 +60,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   }, [currentWorkflow, isInitialLoading, controlVariables, setControls]);
 
   const handleTestClick = async () => {
-    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { workflowId: templateId }));
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
 
   const onControlsSave = async () => {

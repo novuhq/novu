@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../../api/query.keys';
 import { useNovuAPI } from '../useNovuAPI';
-import { WorkflowChannelPreferences } from './types';
+import { WorkflowChannelPreferences } from '@novu/shared';
 
 export const useCloudWorkflowChannelPreferences = (
   workflowId: string

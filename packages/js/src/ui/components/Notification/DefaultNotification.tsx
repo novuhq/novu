@@ -3,7 +3,7 @@ import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { cn, formatToRelativeTime, useStyle, DEFAULT_TARGET, DEFAULT_REFERRER } from '../../helpers';
+import { cn, DEFAULT_REFERRER, DEFAULT_TARGET, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';

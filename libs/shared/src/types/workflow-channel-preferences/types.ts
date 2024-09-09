@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '../channel';
 
 type ChannelPreference = {
   defaultValue: boolean;
