@@ -1,7 +1,6 @@
 import Ajv from 'ajv';
 import type { ErrorObject, ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import addErrors from 'ajv-errors';
 import type { ValidateResult, Validator } from '../types/validator.types';
 import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
 import { cloneData } from '../utils/clone.utils';
@@ -23,11 +22,8 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
       useDefaults: true,
       // https://ajv.js.org/options.html#removeadditional
       removeAdditional: 'failing',
-      // https://ajv.js.org/packages/ajv-errors.html
-      allErrors: true,
     });
     addFormats(this.ajv);
-    addErrors(this.ajv);
     this.compiledSchemas = new Map();
   }
 

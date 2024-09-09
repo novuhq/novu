@@ -57,8 +57,7 @@ describe('in-app schema', () => {
       expect(result.success).toBe(false);
       expect(result.success === false && result.errors).toEqual([
         {
-          message:
-            'The url field must be a relative URL starting with "/" or an absolute URL starting with "https" or "http".',
+          message: 'must match pattern "^(?!mailto:)(?:(https?):\\/\\/[^\\s/$.?#].[^\\s]*)|^(\\/[^\\s]*)$"',
           path: '/redirect/url',
         },
       ]);
@@ -80,7 +79,7 @@ describe('in-app schema', () => {
       expect(result.success).toBe(false);
       expect(result.success === false && result.errors).toEqual([
         {
-          message: 'The target must be one of _self, _blank, _parent, _top, or _unfencedTop.',
+          message: 'must be equal to one of the allowed values',
           path: '/redirect/target',
         },
       ]);
