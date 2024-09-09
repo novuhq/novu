@@ -17,6 +17,7 @@ import {
   IMessageTemplate,
   ControlsDto,
   WorkflowTypeEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 
 import { JSONSchema } from 'json-schema-to-ts';
@@ -75,6 +76,8 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   data?: NotificationTemplateCustomData;
 
   type?: WorkflowTypeEnum;
+
+  origin?: WorkflowOriginEnum;
 
   rawData?: any;
 

@@ -175,6 +175,7 @@ export class Sync {
 
           savedWorkflow = await this.createWorkflowUsecase.execute(
             CreateWorkflowCommand.create({
+              origin: command.origin,
               notificationGroupId,
               draft: !isWorkflowActive,
               environmentId: command.environmentId,

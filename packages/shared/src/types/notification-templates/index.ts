@@ -33,3 +33,8 @@ export enum WorkflowTypeEnum {
   ECHO = 'ECHO',
   BRIDGE = 'BRIDGE',
 }
+
+export enum WorkflowOriginEnum {
+  NOVU = 'novu',
+  EXTERNAL = 'external',
+}

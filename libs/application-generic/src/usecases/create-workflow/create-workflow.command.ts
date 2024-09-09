@@ -20,6 +20,7 @@ import {
   NotificationTemplateCustomData,
   INotificationGroup,
   WorkflowTypeEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 
 import { JsonSchema } from '@novu/framework';
@@ -35,7 +36,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsArray()
-  tags: string[];
+  tags?: string[];
 
   @IsDefined()
   @IsString()
@@ -43,7 +44,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
 
   @IsDefined()
   @IsArray()
@@ -90,6 +91,10 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   type: WorkflowTypeEnum;
+
+  @IsEnum(WorkflowOriginEnum)
+  @IsDefined()
+  origin: WorkflowOriginEnum;
 }
 
 export class ChannelCTACommand {

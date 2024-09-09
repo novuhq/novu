@@ -1,4 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
+import { UserSessionData } from '@novu/shared';
 import { BaseCommand } from './base.command';
 
 export abstract class EnvironmentLevelCommand extends BaseCommand {
@@ -44,6 +45,11 @@ export abstract class EnvironmentWithUserCommand extends BaseCommand {
 
   @IsNotEmpty()
   readonly userId: string;
+}
+
+export abstract class EnvironmentWithUserObjectCommand extends BaseCommand {
+  @IsNotEmpty()
+  user: UserSessionData;
 }
 
 export abstract class EnvironmentWithSubscriber extends BaseCommand {

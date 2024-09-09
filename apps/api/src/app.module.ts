@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
+import { DynamicModule, HttpException, Logger, Module, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -43,6 +43,7 @@ import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 import { PreferencesModule } from './app/preferences';
+import { WorkflowV2Module } from './app/workflows-v2/workflow.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -103,6 +104,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TracingModule.register(packageJson.name, packageJson.version),
   BridgeModule,
   PreferencesModule,
+  WorkflowV2Module,
 ];
 
 const enterpriseModules = enterpriseImports();
