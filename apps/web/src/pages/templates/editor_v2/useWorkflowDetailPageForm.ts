@@ -5,6 +5,7 @@ import { useUpdateWorkflowChannelPreferences } from '../../../hooks/workflowChan
 import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useEffectOnce } from '../../../hooks';
+import { captureException } from '@sentry/react';
 
 type UseWorkflowDetailPageFormProps = {
   templateId: string;
@@ -40,13 +41,13 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
 
   const onSubmit: SubmitHandler<WorkflowDetailFormContext> = async (data) => {
     try {
-      if (dirtyFields?.preferences) {
-        updateWorkflowChannelPreferences(getValues('preferences'));
-      }
-
       if (dirtyFields?.general) {
         const { workflowId, ...templateValues } = getValues('general');
         await updateTemplateMutation({ id: templateId, data: { ...templateValues, identifier: workflowId } });
+      }
+
+      if (dirtyFields?.preferences) {
+        await updateWorkflowChannelPreferences(getValues('preferences'));
       }
 
       successMessage('Workflow updated successfully');
@@ -54,6 +55,7 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
       reset(data);
     } catch (e: any) {
       errorMessage(e.message || 'Unexpected error occurred');
+      captureException(e);
     }
   };
 
