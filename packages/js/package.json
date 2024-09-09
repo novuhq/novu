@@ -5,7 +5,7 @@
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/cjs/index.cjs",
+  "main": "dist/cjs/index.js",
   "module": "dist/esm/index.mjs",
   "types": "dist/cjs/index.d.ts",
   "exports": {
