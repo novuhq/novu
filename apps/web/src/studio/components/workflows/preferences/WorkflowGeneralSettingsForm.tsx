@@ -2,45 +2,76 @@ import { useClipboard } from '@mantine/hooks';
 import { IconButton, Input, Textarea } from '@novu/novui';
 import { IconCheck, IconCopyAll } from '@novu/novui/icons';
 import { Stack } from '@novu/novui/jsx';
-import { ChangeEvent, FC } from 'react';
-import { WorkflowGeneralSettings } from './types';
+import { FC } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
+import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
 
 export type WorkflowGeneralSettingsProps = {
-  settings: WorkflowGeneralSettings;
-  updateSettings: (settings: WorkflowGeneralSettings) => void;
   areSettingsDisabled?: boolean;
 };
 
-export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({
-  settings,
-  updateSettings,
-  areSettingsDisabled,
-}) => {
+export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({ areSettingsDisabled }) => {
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<WorkflowDetailFormContext>();
+
   const { copied, copy } = useClipboard();
-  const onChange =
-    (fieldKey: keyof WorkflowGeneralSettings) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value;
-      updateSettings({ ...settings, [fieldKey]: value });
-    };
 
   return (
     <Stack gap="150">
-      <Input label="Workflow name" value={settings.name} onChange={onChange('name')} disabled={areSettingsDisabled} />
-      <Input
-        label="Identifier"
-        description="Must be unique and all lowercase, using - only"
-        rightSection={<IconButton Icon={copied ? IconCheck : IconCopyAll} onClick={() => copy(settings.workflowId)} />}
-        value={settings.workflowId}
-        onChange={onChange('workflowId')}
-        disabled={areSettingsDisabled}
-      />
       {!areSettingsDisabled && (
-        <Textarea
-          label="Description"
-          maxLines={2}
-          value={settings.description}
-          onChange={onChange('description')}
-          disabled={areSettingsDisabled}
+        <Controller
+          name="general.name"
+          control={control}
+          rules={{ required: 'Workflow name is required' }}
+          render={({ field }) => {
+            return (
+              <Input
+                {...field}
+                label="Workflow name"
+                value={field.value || ''}
+                disabled={areSettingsDisabled}
+                error={errors?.general?.name?.message}
+              />
+            );
+          }}
+        />
+      )}
+      <Controller
+        name="general.workflowId"
+        control={control}
+        rules={{ required: 'Workflow identifier is required' }}
+        render={({ field }) => {
+          return (
+            <Input
+              {...field}
+              label="Identifier"
+              description="Must be unique and all lowercase, using - only"
+              rightSection={<IconButton Icon={copied ? IconCheck : IconCopyAll} onClick={() => copy(field.value)} />}
+              error={errors?.general?.workflowId?.message}
+              value={field.value || ''}
+              disabled={areSettingsDisabled}
+            />
+          );
+        }}
+      />
+
+      {!areSettingsDisabled && (
+        <Controller
+          name="general.description"
+          control={control}
+          render={({ field }) => {
+            return (
+              <Textarea
+                {...field}
+                label="Description"
+                maxLines={2}
+                value={field.value || ''}
+                disabled={areSettingsDisabled}
+              />
+            );
+          }}
         />
       )}
     </Stack>

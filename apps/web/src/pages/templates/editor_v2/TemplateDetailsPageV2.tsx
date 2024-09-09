@@ -24,7 +24,7 @@ export const TemplateDetailsPageV2 = () => {
   const { template: workflow } = useTemplateController(templateId);
   const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
-  const { submitWorkflow, isSubmitting, hasChanges, workflowName } = useWorkflowDetailPageForm({
+  const { submitWorkflow, isSubmitting, hasChanges, workflowName, isValid } = useWorkflowDetailPageForm({
     templateId,
     workflow,
   });
@@ -59,7 +59,7 @@ export const TemplateDetailsPageV2 = () => {
         actions={
           <HStack gap="75">
             {areWorkflowPreferencesEnabled && (
-              <Button type={'submit'} disabled={!hasChanges} Icon={IconSave} loading={isSubmitting}>
+              <Button type={'submit'} disabled={!hasChanges || !isValid} Icon={IconSave} loading={isSubmitting}>
                 Save
               </Button>
             )}

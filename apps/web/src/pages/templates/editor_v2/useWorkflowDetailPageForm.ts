@@ -1,9 +1,10 @@
 import { INotificationTemplate } from '@novu/shared';
-import { useEffect, useMemo } from 'react';
-import { useFormContext, SubmitHandler } from 'react-hook-form';
-import { useUpdateTemplate } from '../../../api/hooks/index';
+import { useFormContext, SubmitHandler, useWatch } from 'react-hook-form';
+import { useUpdateTemplate } from '../../../api/hooks';
 import { useUpdateWorkflowChannelPreferences } from '../../../hooks/workflowChannelPreferences/useUpdateWorkflowChannelPreferences';
 import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
+import { errorMessage, successMessage } from '../../../utils/notifications';
+import { useEffectOnce } from '../../../hooks';
 
 type UseWorkflowDetailPageFormProps = {
   templateId: string;
@@ -11,10 +12,15 @@ type UseWorkflowDetailPageFormProps = {
 };
 
 export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowDetailPageFormProps) => {
-  const { formState, setValue, resetField, reset, handleSubmit, getValues, watch } =
-    useFormContext<WorkflowDetailFormContext>();
+  const {
+    formState: { dirtyFields, isValid },
+    resetField,
+    reset,
+    handleSubmit,
+    getValues,
+  } = useFormContext<WorkflowDetailFormContext>();
 
-  const workflowName = watch('general.name');
+  const workflowName = useWatch({ name: 'general.name' });
 
   const { updateWorkflowChannelPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowChannelPreferences(
     templateId,
@@ -30,34 +36,44 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
     },
   });
 
-  const hasChanges = Object.keys(formState.dirtyFields).length > 0;
+  const hasChanges = Object.keys(dirtyFields).length > 0;
 
-  const onSubmit: SubmitHandler<WorkflowDetailFormContext> = () => {
-    if (formState.dirtyFields?.preferences) {
-      updateWorkflowChannelPreferences(getValues('preferences'));
+  const onSubmit: SubmitHandler<WorkflowDetailFormContext> = async (data) => {
+    try {
+      if (dirtyFields?.preferences) {
+        updateWorkflowChannelPreferences(getValues('preferences'));
+      }
+
+      if (dirtyFields?.general) {
+        const { workflowId, ...templateValues } = getValues('general');
+        await updateTemplateMutation({ id: templateId, data: { ...templateValues, identifier: workflowId } });
+      }
+
+      successMessage('Workflow updated successfully');
+
+      reset(data);
+    } catch (e: any) {
+      errorMessage(e.message || 'Unexpected error occurred');
     }
-
-    if (formState.dirtyFields?.general) {
-      const { workflowId, ...templateValues } = getValues('general');
-      updateTemplateMutation({ id: templateId, data: { ...templateValues, identifier: workflowId } });
-    }
-
-    reset();
   };
 
-  useEffect(() => {
-    if (workflow) {
-      setValue('general', {
+  useEffectOnce(() => {
+    if (!workflow) return;
+
+    const form = {
+      general: {
         workflowId: workflow.triggers?.[0]?.identifier ?? '',
         name: workflow.name,
         description: workflow.description,
-      });
-    }
-  }, [workflow]);
+      },
+    };
+    reset(form);
+  }, !!workflow);
 
   return {
     submitWorkflow: handleSubmit(onSubmit),
     hasChanges,
+    isValid,
     isSubmitting: isUpdatingGeneralSettings || isUpdatingPreferences,
     workflowName,
   };
