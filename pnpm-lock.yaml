@@ -330,7 +330,7 @@ importers:
         version: 7.1.0
       ts-jest:
         specifier: 27.1.5
-        version: 27.1.5(@babel/core@7.25.2)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.25.2))(jest@27.5.1(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5)
+        version: 27.1.5(@babel/core@7.24.3)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.24.3))(jest@27.5.1(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5)
       ts-node:
         specifier: ~10.9.1
         version: 10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)
@@ -3232,9 +3232,6 @@ importers:
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
-      ajv-errors:
-        specifier: ^3.0.0
-        version: 3.0.0(ajv@8.12.0)
       ajv-formats:
         specifier: ^2.1.1
         version: 2.1.1(ajv@8.12.0)
@@ -3295,7 +3292,7 @@ importers:
         version: 1.11.1
       next:
         specifier: ^13.5.4
-        version: 13.5.6(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8)
+        version: 13.5.6(@babel/core@7.24.3)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8)
       prettier:
         specifier: ^3.2.5
         version: 3.3.2
@@ -3823,7 +3820,7 @@ importers:
     devDependencies:
       '@angular-devkit/build-angular':
         specifier: ^16.2.5
-        version: 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@22.5.1)(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))))(jest-environment-jsdom@29.7.0)(jest@29.7.0(@types/node@22.5.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.26.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5)
+        version: 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@22.5.1)(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)))(jest-environment-jsdom@29.7.0)(jest@29.7.0(@types/node@22.5.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.26.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5)
       '@angular/cli':
         specifier: ^16.2.5
         version: 16.2.8(chokidar@3.5.3)
@@ -4229,7 +4226,7 @@ importers:
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next:
         specifier: 14.2.4
-        version: 14.2.4(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.46.1)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8)
+        version: 14.2.4(@babel/core@7.24.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.46.1)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8)
       react:
         specifier: ^18
         version: 18.3.1
@@ -34128,11 +34125,11 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular-devkit/build-angular@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@22.5.1)(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))))(jest-environment-jsdom@29.7.0)(jest@29.7.0(@types/node@22.5.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.26.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5)':
+  '@angular-devkit/build-angular@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@22.5.1)(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)))(jest-environment-jsdom@29.7.0)(jest@29.7.0(@types/node@22.5.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.26.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.4.10(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5)':
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
-      '@angular-devkit/build-webpack': 0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
+      '@angular-devkit/build-webpack': 0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
       '@angular-devkit/core': 16.2.8(chokidar@3.5.3)
       '@angular/compiler-cli': 16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5)
       '@babel/core': 7.22.9
@@ -34193,9 +34190,9 @@ snapshots:
       vite: 4.4.7(@types/node@22.5.1)(less@4.1.3)(lightningcss@1.26.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.19.2)
       webpack: 5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)
       webpack-dev-middleware: 6.1.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
-      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12)))
+      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
       webpack-merge: 5.9.0
-      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
+      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
     optionalDependencies:
       esbuild: 0.18.17
       jest: 29.7.0(@types/node@22.5.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5))
@@ -34221,12 +34218,12 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@angular-devkit/build-webpack@0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))':
+  '@angular-devkit/build-webpack@0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))':
     dependencies:
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
       rxjs: 7.8.1
       webpack: 5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)
-      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12)))
+      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
     transitivePeerDependencies:
       - chokidar
 
@@ -34733,10 +34730,10 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -35207,6 +35204,52 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
+  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+    dependencies:
+      '@aws-crypto/sha256-browser': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/core': 3.575.0
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/middleware-host-header': 3.575.0
+      '@aws-sdk/middleware-logger': 3.575.0
+      '@aws-sdk/middleware-recursion-detection': 3.575.0
+      '@aws-sdk/middleware-user-agent': 3.575.0
+      '@aws-sdk/region-config-resolver': 3.575.0
+      '@aws-sdk/types': 3.575.0
+      '@aws-sdk/util-endpoints': 3.575.0
+      '@aws-sdk/util-user-agent-browser': 3.575.0
+      '@aws-sdk/util-user-agent-node': 3.575.0
+      '@smithy/config-resolver': 3.0.0
+      '@smithy/core': 2.0.0
+      '@smithy/fetch-http-handler': 3.0.0
+      '@smithy/hash-node': 3.0.0
+      '@smithy/invalid-dependency': 3.0.0
+      '@smithy/middleware-content-length': 3.0.0
+      '@smithy/middleware-endpoint': 3.0.0
+      '@smithy/middleware-retry': 3.0.0
+      '@smithy/middleware-serde': 3.0.0
+      '@smithy/middleware-stack': 3.0.0
+      '@smithy/node-config-provider': 3.0.0
+      '@smithy/node-http-handler': 3.0.0
+      '@smithy/protocol-http': 4.0.0
+      '@smithy/smithy-client': 3.0.0
+      '@smithy/types': 3.0.0
+      '@smithy/url-parser': 3.0.0
+      '@smithy/util-base64': 3.0.0
+      '@smithy/util-body-length-browser': 3.0.0
+      '@smithy/util-body-length-node': 3.0.0
+      '@smithy/util-defaults-mode-browser': 3.0.0
+      '@smithy/util-defaults-mode-node': 3.0.0
+      '@smithy/util-endpoints': 2.0.0
+      '@smithy/util-middleware': 3.0.0
+      '@smithy/util-retry': 3.0.0
+      '@smithy/util-utf8': 3.0.0
+      tslib: 2.7.0
+    transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
+      - aws-crt
+
   '@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
@@ -35595,7 +35638,7 @@ snapshots:
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -35632,52 +35675,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.7.0
     transitivePeerDependencies:
-      - aws-crt
-
-  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
-    dependencies:
-      '@aws-crypto/sha256-browser': 3.0.0
-      '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
-      '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
-      '@aws-sdk/middleware-host-header': 3.575.0
-      '@aws-sdk/middleware-logger': 3.575.0
-      '@aws-sdk/middleware-recursion-detection': 3.575.0
-      '@aws-sdk/middleware-user-agent': 3.575.0
-      '@aws-sdk/region-config-resolver': 3.575.0
-      '@aws-sdk/types': 3.575.0
-      '@aws-sdk/util-endpoints': 3.575.0
-      '@aws-sdk/util-user-agent-browser': 3.575.0
-      '@aws-sdk/util-user-agent-node': 3.575.0
-      '@smithy/config-resolver': 3.0.0
-      '@smithy/core': 2.0.0
-      '@smithy/fetch-http-handler': 3.0.0
-      '@smithy/hash-node': 3.0.0
-      '@smithy/invalid-dependency': 3.0.0
-      '@smithy/middleware-content-length': 3.0.0
-      '@smithy/middleware-endpoint': 3.0.0
-      '@smithy/middleware-retry': 3.0.0
-      '@smithy/middleware-serde': 3.0.0
-      '@smithy/middleware-stack': 3.0.0
-      '@smithy/node-config-provider': 3.0.0
-      '@smithy/node-http-handler': 3.0.0
-      '@smithy/protocol-http': 4.0.0
-      '@smithy/smithy-client': 3.0.0
-      '@smithy/types': 3.0.0
-      '@smithy/url-parser': 3.0.0
-      '@smithy/util-base64': 3.0.0
-      '@smithy/util-body-length-browser': 3.0.0
-      '@smithy/util-body-length-node': 3.0.0
-      '@smithy/util-defaults-mode-browser': 3.0.0
-      '@smithy/util-defaults-mode-node': 3.0.0
-      '@smithy/util-endpoints': 2.0.0
-      '@smithy/util-middleware': 3.0.0
-      '@smithy/util-retry': 3.0.0
-      '@smithy/util-utf8': 3.0.0
-      tslib: 2.7.0
-    transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.637.0':
@@ -35905,13 +35902,13 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
+  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
-      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
-      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))
+      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/credential-provider-imds': 3.0.0
       '@smithy/property-provider': 3.0.0
@@ -36008,14 +36005,14 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/credential-provider-node@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
+  '@aws-sdk/credential-provider-node@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)':
     dependencies:
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-http': 3.575.0
-      '@aws-sdk/credential-provider-ini': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-ini': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/credential-provider-process': 3.575.0
-      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
-      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))
+      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/credential-provider-imds': 3.0.0
       '@smithy/property-provider': 3.0.0
@@ -36146,6 +36143,19 @@ snapshots:
       - aws-crt
     optional: true
 
+  '@aws-sdk/credential-provider-sso@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))':
+    dependencies:
+      '@aws-sdk/client-sso': 3.575.0
+      '@aws-sdk/token-providers': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))
+      '@aws-sdk/types': 3.575.0
+      '@smithy/property-provider': 3.0.0
+      '@smithy/shared-ini-file-loader': 3.0.0
+      '@smithy/types': 3.0.0
+      tslib: 2.7.0
+    transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
+      - aws-crt
+
   '@aws-sdk/credential-provider-sso@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-sdk/client-sso': 3.575.0
@@ -36198,14 +36208,6 @@ snapshots:
       - '@aws-sdk/credential-provider-node'
       - aws-crt
     optional: true
-
-  '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
-    dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
-      '@aws-sdk/types': 3.575.0
-      '@smithy/property-provider': 3.0.0
-      '@smithy/types': 3.0.0
-      tslib: 2.7.0
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
@@ -36704,6 +36706,15 @@ snapshots:
       - '@aws-sdk/credential-provider-node'
       - aws-crt
     optional: true
+
+  '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))':
+    dependencies:
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/types': 3.575.0
+      '@smithy/property-provider': 3.0.0
+      '@smithy/shared-ini-file-loader': 3.0.0
+      '@smithy/types': 3.0.0
+      tslib: 2.7.0
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
@@ -38307,6 +38318,12 @@ snapshots:
     dependencies:
       '@babel/core': 7.21.4
       '@babel/helper-plugin-utils': 7.24.8
+
+  '@babel/plugin-syntax-bigint@7.8.3(@babel/core@7.24.3)':
+    dependencies:
+      '@babel/core': 7.24.3
+      '@babel/helper-plugin-utils': 7.24.8
+    optional: true
 
   '@babel/plugin-syntax-bigint@7.8.3(@babel/core@7.24.4)':
     dependencies:
@@ -58806,6 +58823,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  babel-jest@27.5.1(@babel/core@7.24.3):
+    dependencies:
+      '@babel/core': 7.24.3
+      '@jest/transform': 27.5.1
+      '@jest/types': 27.5.1
+      '@types/babel__core': 7.20.3
+      babel-plugin-istanbul: 6.1.1
+      babel-preset-jest: 27.5.1(@babel/core@7.24.3)
+      chalk: 4.1.2
+      graceful-fs: 4.2.11
+      slash: 3.0.0
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
+
   babel-jest@27.5.1(@babel/core@7.24.4):
     dependencies:
       '@babel/core': 7.24.4
@@ -59179,6 +59211,23 @@ snapshots:
       '@babel/plugin-syntax-optional-chaining': 7.8.3(@babel/core@7.21.4)
       '@babel/plugin-syntax-top-level-await': 7.14.5(@babel/core@7.21.4)
 
+  babel-preset-current-node-syntax@1.0.1(@babel/core@7.24.3):
+    dependencies:
+      '@babel/core': 7.24.3
+      '@babel/plugin-syntax-async-generators': 7.8.4(@babel/core@7.24.3)
+      '@babel/plugin-syntax-bigint': 7.8.3(@babel/core@7.24.3)
+      '@babel/plugin-syntax-class-properties': 7.12.13(@babel/core@7.24.3)
+      '@babel/plugin-syntax-import-meta': 7.10.4(@babel/core@7.24.3)
+      '@babel/plugin-syntax-json-strings': 7.8.3(@babel/core@7.24.3)
+      '@babel/plugin-syntax-logical-assignment-operators': 7.10.4(@babel/core@7.24.3)
+      '@babel/plugin-syntax-nullish-coalescing-operator': 7.8.3(@babel/core@7.24.3)
+      '@babel/plugin-syntax-numeric-separator': 7.10.4(@babel/core@7.24.3)
+      '@babel/plugin-syntax-object-rest-spread': 7.8.3(@babel/core@7.24.3)
+      '@babel/plugin-syntax-optional-catch-binding': 7.8.3(@babel/core@7.24.3)
+      '@babel/plugin-syntax-optional-chaining': 7.8.3(@babel/core@7.24.3)
+      '@babel/plugin-syntax-top-level-await': 7.14.5(@babel/core@7.24.3)
+    optional: true
+
   babel-preset-current-node-syntax@1.0.1(@babel/core@7.24.4):
     dependencies:
       '@babel/core': 7.24.4
@@ -59216,6 +59265,13 @@ snapshots:
       '@babel/core': 7.21.4
       babel-plugin-jest-hoist: 27.5.1
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.21.4)
+
+  babel-preset-jest@27.5.1(@babel/core@7.24.3):
+    dependencies:
+      '@babel/core': 7.24.3
+      babel-plugin-jest-hoist: 27.5.1
+      babel-preset-current-node-syntax: 1.0.1(@babel/core@7.24.3)
+    optional: true
 
   babel-preset-jest@27.5.1(@babel/core@7.24.4):
     dependencies:
@@ -65587,7 +65643,7 @@ snapshots:
       tapable: 2.2.1
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.12))
 
-  html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))):
+  html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)):
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
@@ -71124,7 +71180,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  next@13.5.6(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8):
+  next@13.5.6(@babel/core@7.24.3)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8):
     dependencies:
       '@next/env': 13.5.6
       '@swc/helpers': 0.5.2
@@ -71133,7 +71189,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.25.2)(babel-plugin-macros@3.1.0)(react@18.3.1)
+      styled-jsx: 5.1.1(@babel/core@7.24.3)(babel-plugin-macros@3.1.0)(react@18.3.1)
       watchpack: 2.4.0
     optionalDependencies:
       '@next/swc-darwin-arm64': 13.5.6
@@ -71151,7 +71207,7 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
-  next@14.2.4(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.46.1)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8):
+  next@14.2.4(@babel/core@7.24.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.46.1)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8):
     dependencies:
       '@next/env': 14.2.4
       '@swc/helpers': 0.5.5
@@ -71161,7 +71217,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.25.2)(babel-plugin-macros@3.1.0)(react@18.3.1)
+      styled-jsx: 5.1.1(@babel/core@7.24.3)(babel-plugin-macros@3.1.0)(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.2.4
       '@next/swc-darwin-x64': 14.2.4
@@ -77585,12 +77641,12 @@ snapshots:
     dependencies:
       inline-style-parser: 0.2.3
 
-  styled-jsx@5.1.1(@babel/core@7.25.2)(babel-plugin-macros@3.1.0)(react@18.3.1):
+  styled-jsx@5.1.1(@babel/core@7.24.3)(babel-plugin-macros@3.1.0)(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
     optionalDependencies:
-      '@babel/core': 7.25.2
+      '@babel/core': 7.24.3
       babel-plugin-macros: 3.1.0
 
   stylehacks@5.1.1(postcss@8.4.38):
@@ -78136,7 +78192,7 @@ snapshots:
       ansi-escapes: 4.3.2
       supports-hyperlinks: 2.3.0
 
-  terser-webpack-plugin@5.3.10(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))):
+  terser-webpack-plugin@5.3.10(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       jest-worker: 27.5.1
@@ -78569,6 +78625,23 @@ snapshots:
   ts-invariant@0.4.4:
     dependencies:
       tslib: 1.14.1
+
+  ts-jest@27.1.5(@babel/core@7.24.3)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.24.3))(jest@27.5.1(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5):
+    dependencies:
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1(ts-node@10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5))
+      jest-util: 27.5.1
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.6.2
+      typescript: 4.9.5
+      yargs-parser: 20.2.9
+    optionalDependencies:
+      '@babel/core': 7.24.3
+      '@types/jest': 29.5.2
+      babel-jest: 27.5.1(@babel/core@7.24.3)
 
   ts-jest@27.1.5(@babel/core@7.24.4)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.24.4))(jest@27.5.1(ts-node@10.9.1(@swc/core@1.7.21(@swc/helpers@0.5.12))(@types/node@20.14.10)(typescript@4.9.5)))(typescript@4.9.5):
     dependencies:
@@ -80655,7 +80728,7 @@ snapshots:
       schema-utils: 4.0.0
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.12))
 
-  webpack-dev-middleware@5.3.3(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))):
+  webpack-dev-middleware@5.3.3(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)):
     dependencies:
       colorette: 2.0.19
       memfs: 3.5.0
@@ -80780,7 +80853,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))):
+  webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)):
     dependencies:
       '@types/bonjour': 3.5.10
       '@types/connect-history-api-fallback': 1.3.5
@@ -80810,7 +80883,7 @@ snapshots:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack-dev-middleware: 5.3.3(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12)))
+      webpack-dev-middleware: 5.3.3(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
       ws: 8.18.0
     optionalDependencies:
       webpack: 5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)
@@ -80864,12 +80937,12 @@ snapshots:
 
   webpack-sources@3.2.3: {}
 
-  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)):
+  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)):
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)
     optionalDependencies:
-      html-webpack-plugin: 5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12)))
+      html-webpack-plugin: 5.6.0(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
 
   webpack-virtual-modules@0.5.0: {}
 
@@ -81057,7 +81130,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 3.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.10(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12)))
+      terser-webpack-plugin: 5.3.10(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107(@swc/helpers@0.5.12))(esbuild@0.18.17))
       watchpack: 2.4.2
       webpack-sources: 3.2.3
     transitivePeerDependencies:
