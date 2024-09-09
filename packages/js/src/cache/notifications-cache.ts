@@ -55,8 +55,8 @@ export class NotificationsCache {
    */
   #cache: Cache<ListNotificationsResponse>;
 
-  constructor() {
-    this.#emitter = NovuEventEmitter.getInstance();
+  constructor({ emitter }: { emitter: NovuEventEmitter }) {
+    this.#emitter = emitter;
     updateEvents.forEach((event) => {
       this.#emitter.on(event, this.handleNotificationEvent());
     });

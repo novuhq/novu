@@ -15,12 +15,19 @@ export const read = async ({
   apiService: InboxService;
   args: ReadArgs;
 }): Result<Notification> => {
-  const { notificationId, optimisticValue } = getNotificationDetails(args, {
-    isRead: true,
-    readAt: new Date().toISOString(),
-    isArchived: false,
-    archivedAt: undefined,
-  });
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isRead: true,
+      readAt: new Date().toISOString(),
+      isArchived: false,
+      archivedAt: undefined,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
 
   try {
     emitter.emit('notification.read.pending', {
@@ -30,7 +37,7 @@ export const read = async ({
 
     const response = await apiService.read(notificationId);
 
-    const updatedNotification = new Notification(response);
+    const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.read.resolved', { args, data: updatedNotification });
 
     return { data: updatedNotification };
@@ -50,12 +57,19 @@ export const unread = async ({
   apiService: InboxService;
   args: UnreadArgs;
 }): Result<Notification> => {
-  const { notificationId, optimisticValue } = getNotificationDetails(args, {
-    isRead: false,
-    readAt: null,
-    isArchived: false,
-    archivedAt: undefined,
-  });
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isRead: false,
+      readAt: null,
+      isArchived: false,
+      archivedAt: undefined,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
   try {
     emitter.emit('notification.unread.pending', {
       args,
@@ -64,7 +78,7 @@ export const unread = async ({
 
     const response = await apiService.unread(notificationId);
 
-    const updatedNotification = new Notification(response);
+    const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.unread.resolved', { args, data: updatedNotification });
 
     return { data: updatedNotification };
@@ -84,12 +98,19 @@ export const archive = async ({
   apiService: InboxService;
   args: ArchivedArgs;
 }): Result<Notification> => {
-  const { notificationId, optimisticValue } = getNotificationDetails(args, {
-    isArchived: true,
-    archivedAt: new Date().toISOString(),
-    isRead: true,
-    readAt: new Date().toISOString(),
-  });
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isArchived: true,
+      archivedAt: new Date().toISOString(),
+      isRead: true,
+      readAt: new Date().toISOString(),
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
 
   try {
     emitter.emit('notification.archive.pending', {
@@ -99,7 +120,7 @@ export const archive = async ({
 
     const response = await apiService.archive(notificationId);
 
-    const updatedNotification = new Notification(response);
+    const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.archive.resolved', { args, data: updatedNotification });
 
     return { data: updatedNotification };
@@ -119,12 +140,19 @@ export const unarchive = async ({
   apiService: InboxService;
   args: UnarchivedArgs;
 }): Result<Notification> => {
-  const { notificationId, optimisticValue } = getNotificationDetails(args, {
-    isArchived: false,
-    archivedAt: null,
-    isRead: true,
-    readAt: new Date().toISOString(),
-  });
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isArchived: false,
+      archivedAt: null,
+      isRead: true,
+      readAt: new Date().toISOString(),
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
 
   try {
     emitter.emit('notification.unarchive.pending', {
@@ -134,7 +162,7 @@ export const unarchive = async ({
 
     const response = await apiService.unarchive(notificationId);
 
-    const updatedNotification = new Notification(response);
+    const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.unarchive.resolved', { args, data: updatedNotification });
 
     return { data: updatedNotification };
@@ -170,7 +198,10 @@ export const completeAction = async ({
             isCompleted: true,
           },
         };
-  const { notificationId, optimisticValue } = getNotificationDetails(args, optimisticUpdate);
+  const { notificationId, optimisticValue } = getNotificationDetails(args, optimisticUpdate, {
+    emitter,
+    apiService,
+  });
 
   try {
     emitter.emit('notification.complete_action.pending', {
@@ -180,7 +211,7 @@ export const completeAction = async ({
 
     const response = await apiService.completeAction({ actionType, notificationId });
 
-    const updatedNotification = new Notification(response);
+    const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.complete_action.resolved', { args, data: updatedNotification });
 
     return { data: updatedNotification };
@@ -217,7 +248,10 @@ export const revertAction = async ({
           },
         };
 
-  const { notificationId, optimisticValue } = getNotificationDetails(args, optimisticUpdate);
+  const { notificationId, optimisticValue } = getNotificationDetails(args, optimisticUpdate, {
+    emitter,
+    apiService,
+  });
 
   try {
     emitter.emit('notification.revert_action.pending', {
@@ -227,7 +261,7 @@ export const revertAction = async ({
 
     const response = await apiService.revertAction({ actionType, notificationId });
 
-    const updatedNotification = new Notification(response);
+    const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.revert_action.resolved', { args, data: updatedNotification });
 
     return { data: updatedNotification };
@@ -240,12 +274,16 @@ export const revertAction = async ({
 
 const getNotificationDetails = (
   args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs,
-  update: Partial<Notification>
+  update: Partial<Notification>,
+  instances: {
+    emitter: NovuEventEmitter;
+    apiService: InboxService;
+  }
 ): { notificationId: string; optimisticValue?: Notification } => {
   if ('notification' in args) {
     return {
       notificationId: args.notification.id,
-      optimisticValue: new Notification({ ...args.notification, ...update }),
+      optimisticValue: new Notification({ ...args.notification, ...update }, instances.emitter, instances.apiService),
     };
   } else {
     return {
@@ -269,13 +307,17 @@ export const readAll = async ({
     const notifications = notificationsCache.getUniqueNotifications({ tags });
     const optimisticNotifications = notifications.map(
       (notification) =>
-        new Notification({
-          ...notification,
-          isRead: true,
-          readAt: new Date().toISOString(),
-          isArchived: false,
-          archivedAt: undefined,
-        })
+        new Notification(
+          {
+            ...notification,
+            isRead: true,
+            readAt: new Date().toISOString(),
+            isArchived: false,
+            archivedAt: undefined,
+          },
+          emitter,
+          inboxService
+        )
     );
     emitter.emit('notifications.read_all.pending', { args: { tags }, data: optimisticNotifications });
 
@@ -306,13 +348,17 @@ export const archiveAll = async ({
     const notifications = notificationsCache.getUniqueNotifications({ tags });
     const optimisticNotifications = notifications.map(
       (notification) =>
-        new Notification({
-          ...notification,
-          isRead: true,
-          readAt: new Date().toISOString(),
-          isArchived: true,
-          archivedAt: new Date().toISOString(),
-        })
+        new Notification(
+          {
+            ...notification,
+            isRead: true,
+            readAt: new Date().toISOString(),
+            isArchived: true,
+            archivedAt: new Date().toISOString(),
+          },
+          emitter,
+          inboxService
+        )
     );
     emitter.emit('notifications.archive_all.pending', { args: { tags }, data: optimisticNotifications });
 
@@ -342,7 +388,12 @@ export const archiveAllRead = async ({
   try {
     const notifications = notificationsCache.getUniqueNotifications({ tags, read: true });
     const optimisticNotifications = notifications.map(
-      (notification) => new Notification({ ...notification, isArchived: true, archivedAt: new Date().toISOString() })
+      (notification) =>
+        new Notification(
+          { ...notification, isArchived: true, archivedAt: new Date().toISOString() },
+          emitter,
+          inboxService
+        )
     );
     emitter.emit('notifications.archive_all_read.pending', { args: { tags }, data: optimisticNotifications });
 
