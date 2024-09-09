@@ -7,9 +7,19 @@ type NovuProviderProps = NovuOptions & {
 
 const NovuContext = createContext<Novu | undefined>(undefined);
 
-export const NovuProvider = (props: NovuProviderProps) => {
-  const { children, ...options } = props;
-  const novu = useMemo(() => new Novu(options), []);
+export const NovuProvider = ({
+  children,
+  applicationIdentifier,
+  subscriberId,
+  subscriberHash,
+  backendUrl,
+  socketUrl,
+  useCache,
+}: NovuProviderProps) => {
+  const novu = useMemo(
+    () => new Novu({ applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl, useCache }),
+    [applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl, useCache]
+  );
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
 };
