@@ -1,10 +1,32 @@
-import { createTheme } from '@mantine/core';
+import { createTheme, Button, Pill, MantineColorsTuple, DefaultMantineColor } from '@mantine/core';
+
+const extendedColors = {
+  gradient: ['', '', '', '', '', '', 'linear-gradient(99deg, #DD2476 0%, #FF512F 100%)', '', '', ''],
+} as const satisfies Record<string, MantineColorsTuple>;
+
+type ExtendedCustomColors = keyof typeof extendedColors | DefaultMantineColor;
+
+declare module '@mantine/core' {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  export interface MantineThemeColorsOverride {
+    colors: Record<ExtendedCustomColors, MantineColorsTuple>;
+  }
+}
 
 export const themeConfig = createTheme({
   white: '#FFFFFF',
   black: '#000000',
   primaryColor: 'gradient',
   primaryShade: 6,
+  components: {
+    Button: Button.extend({
+      styles: (theme) => ({
+        root: {
+          borderRadius: theme.radius.md,
+        },
+      }),
+    }),
+  },
   colors: {
     gray: [
       '#ededef',
@@ -76,7 +98,7 @@ export const themeConfig = createTheme({
       '#291415',
       '#1f1315',
     ],
-    gradient: ['', '', '', '', '', '', 'linear-gradient(99deg, #DD2476 0%, #FF512F 100%)', '', '', ''],
+    ...extendedColors,
   },
   fontFamily:
     '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji',
