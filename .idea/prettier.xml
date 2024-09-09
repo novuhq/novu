@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="PrettierConfiguration">
-    <option name="myConfigurationMode" value="AUTOMATIC" />
+    <option name="myConfigurationMode" value="MANUAL" />
     <option name="myRunOnSave" value="true" />
     <option name="myRunOnReformat" value="true" />
   </component>

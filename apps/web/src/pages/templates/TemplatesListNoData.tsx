@@ -3,11 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Skeleton } from '@mantine/core';
+
 import { CardTile, colors, Popover } from '@novu/design-system';
+import { WorkflowCreationSourceEnum } from '@novu/shared';
 
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../api/types';
-import { TemplateCreationSourceEnum } from './shared';
 import { useHoverOverItem } from '../../hooks';
 import { FrameworkProjectCardTile } from './components/FrameworkProjectWaitList';
 
@@ -81,7 +82,7 @@ export const TemplatesListNoData = ({
           onClick={(event) => {
             segment.track('[Template Store] Click Create Notification Template', {
               templateIdentifier: 'Blank Workflow',
-              location: TemplateCreationSourceEnum.EMPTY_STATE,
+              location: WorkflowCreationSourceEnum.EMPTY_STATE,
             });
 
             onBlankWorkflowClick(event);
@@ -117,7 +118,7 @@ export const TemplatesListNoData = ({
                     onClick={() => {
                       segment.track('[Template Store] Click Create Notification Template', {
                         templateIdentifier: template?.triggers[0]?.identifier || '',
-                        location: TemplateCreationSourceEnum.EMPTY_STATE,
+                        location: WorkflowCreationSourceEnum.EMPTY_STATE,
                       });
 
                       onTemplateClick(template);
@@ -138,7 +139,7 @@ export const TemplatesListNoData = ({
           data-test-id="all-workflow-tile"
           onClick={(event) => {
             segment.track('[Template Store] Click Open Template Store', {
-              location: TemplateCreationSourceEnum.EMPTY_STATE,
+              location: WorkflowCreationSourceEnum.EMPTY_STATE,
             });
 
             onAllTemplatesClick(event);

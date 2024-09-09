@@ -6,7 +6,9 @@
       <script value="start:dev" />
     </scripts>
     <node-interpreter value="project" />
-    <envs />
+    <envs>
+      <env name="IS_WORKFLOW_PREFERENCES_ENABLED" value="true" />
+    </envs>
     <method v="2" />
   </configuration>
 </component>

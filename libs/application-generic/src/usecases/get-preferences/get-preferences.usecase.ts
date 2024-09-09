@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
@@ -12,6 +16,21 @@ import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { GetPreferencesCommand } from './get-preferences.command';
 import { GetPreferencesResponseDto } from './get-preferences.dto';
 
+class PreferencesNotEnabledException extends BadRequestException {
+  constructor(featureFlagCommand: object) {
+    super({
+      message: 'Preferences Feature Flag are not enabled',
+      ...featureFlagCommand,
+    });
+  }
+}
+
+class PreferencesNotFoundException extends BadRequestException {
+  constructor(featureFlagCommand: object) {
+    super({ message: 'Preferences not found', ...featureFlagCommand });
+  }
+}
+
 @Injectable()
 export class GetPreferences {
   constructor(
@@ -22,23 +41,24 @@ export class GetPreferences {
   async execute(
     command: GetPreferencesCommand,
   ): Promise<GetPreferencesResponseDto> {
+    const featureFlagCommand = {
+      userId: 'system',
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
+    };
     const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      }),
+      GetFeatureFlagCommand.create(featureFlagCommand),
     );
 
     if (!isEnabled) {
-      throw new NotFoundException();
+      throw new PreferencesNotEnabledException(featureFlagCommand);
     }
 
     const items = await this.getPreferencesFromDb(command);
 
     if (items.length === 0) {
-      throw new NotFoundException('We could not find any preferences');
+      throw new PreferencesNotFoundException(featureFlagCommand);
     }
 
     const mergedPreferences = this.mergePreferences(items, command.templateId);

@@ -8,7 +8,12 @@ import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { EnvironmentRepository } from '../environment';
 
-type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
+type NotificationTemplateByIdQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface FindByIdQuery {
+  id: string;
+  environmentId: string;
+}
 
 export class NotificationTemplateRepository extends BaseRepository<
   NotificationTemplateDBModel,
@@ -24,7 +29,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
     };
@@ -35,12 +40,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findById(id: string, environmentId: string) {
-    const requestQuery: NotificationTemplateQuery = {
-      _id: id,
-      _environmentId: environmentId,
-    };
-
-    const item = await this.MongooseModel.findOne(requestQuery)
+    return this.findByIdQuery({ id, environmentId });
+  }
+  async findByIdQuery(query: FindByIdQuery) {
+    const item = await this.MongooseModel.findOne({
+      _id: query.id,
+      _environmentId: query.environmentId,
+    })
       .populate('steps.template')
       .populate('steps.variants.template');
 
@@ -50,7 +56,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   async findBlueprintById(id: string) {
     if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       isBlueprint: true,
       _organizationId: this.blueprintOrganizationId,
       _id: id,
@@ -67,7 +73,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   async findBlueprintByTriggerIdentifier(identifier: string) {
     if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       isBlueprint: true,
       _organizationId: this.blueprintOrganizationId,
       triggers: { $elemMatch: { identifier } },
@@ -119,7 +125,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       );
     }
 
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       isBlueprint: true,
       _environmentId: productionEnvironmentId,
       _organizationId: organizationId,
@@ -156,7 +162,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       return { totalCount: 0, data: [] };
     }
 
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       isBlueprint: true,
       _organizationId: this.blueprintOrganizationId,
     };
@@ -187,7 +193,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       ...searchQuery,
     });
 
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
     };
@@ -216,7 +222,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     environmentId: string;
     tags?: string[];
   }) {
-    const requestQuery: NotificationTemplateQuery = {
+    const requestQuery: NotificationTemplateByIdQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
       active: true,
@@ -234,14 +240,14 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntities(items);
   }
 
-  async delete(query: NotificationTemplateQuery) {
+  async delete(query: NotificationTemplateByIdQuery) {
     const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!item) throw new DalException(`Could not find workflow with id ${query._id}`);
 
     return await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
   }
 
-  async findDeleted(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity> {
+  async findDeleted(query: NotificationTemplateByIdQuery): Promise<NotificationTemplateEntity> {
     const res: NotificationTemplateEntity = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);

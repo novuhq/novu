@@ -74,6 +74,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   inputs?: IStepControl;
+
   @IsOptional()
   controls?: IStepControl;
 

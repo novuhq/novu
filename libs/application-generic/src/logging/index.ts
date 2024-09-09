@@ -1,11 +1,11 @@
 import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import {
-  LoggerErrorInterceptor,
-  Logger,
-  LoggerModule,
-  PinoLogger,
   getLoggerToken,
+  Logger,
+  LoggerErrorInterceptor,
+  LoggerModule,
   Params,
+  PinoLogger,
 } from 'nestjs-pino';
 import { storage, Store } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
@@ -115,7 +115,7 @@ export function createNestLoggingModuleOptions(
       level: values.level,
       redact: {
         paths: redactFields,
-        censor: '[REDACTED]',
+        censor: customRedaction,
       },
       base: {
         pid: process.pid,
@@ -144,6 +144,17 @@ export function createNestLoggingModuleOptions(
     },
   };
 }
+
+const customRedaction = (value: any, path: string[]) => {
+  /*
+   * Logger.
+   * if (obj.email && typeof obj.email === 'string') {
+   *   obj.email = '[REDACTED]';
+   * }
+   *
+   * return JSON.parse(JSON.stringify(obj));
+   */
+};
 
 interface ILoggerSettings {
   serviceName: string;

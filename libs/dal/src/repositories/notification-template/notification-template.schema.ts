@@ -1,4 +1,4 @@
-import { WorkflowTypeEnum } from '@novu/shared';
+import { WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -25,6 +25,10 @@ const variantSchemePart = {
   type: {
     type: Schema.Types.String,
     default: WorkflowTypeEnum.REGULAR,
+  },
+  origin: {
+    type: Schema.Types.String,
+    default: WorkflowOriginEnum.NOVU,
   },
   filters: [
     {
