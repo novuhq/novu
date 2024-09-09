@@ -26,14 +26,6 @@ export const WorkflowDetailFormContextProvider: FC<PropsWithChildren<IWorkflowDe
   const formValues = useForm<WorkflowDetailFormContext>({
     mode: 'onChange',
     defaultValues: DEFAULT_FORM_VALUES,
-    values: {
-      general: {
-        workflowId: '',
-        name: '',
-        description: undefined,
-      },
-      preferences: DEFAULT_WORKFLOW_PREFERENCES,
-    },
   });
 
   return <FormProvider {...formValues}>{children}</FormProvider>;
