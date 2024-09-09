@@ -24,7 +24,7 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({ 
         <Controller
           name="general.name"
           control={control}
-          rules={{ required: 'Workflow name is required' }}
+          rules={{ required: 'Required - Workflow name' }}
           render={({ field }) => {
             return (
               <Input
@@ -41,7 +41,13 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({ 
       <Controller
         name="general.workflowId"
         control={control}
-        rules={{ required: 'Workflow identifier is required' }}
+        rules={{
+          required: 'Required - Workflow identifier',
+          pattern: {
+            value: /^[a-z0-9-]+$/,
+            message: 'Identifier must contain only lowercase, numeric or dash characters',
+          },
+        }}
         render={({ field }) => {
           return (
             <Input
