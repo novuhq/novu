@@ -33,23 +33,7 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
           value: WorkflowSettingsPanelTab.GENERAL,
           label: 'General',
           icon: <IconDynamicFeed />,
-          content: isLoading ? (
-            <CenteredLoader />
-          ) : (
-            <Controller
-              name="general"
-              control={control}
-              render={({ field }) => {
-                return (
-                  <WorkflowGeneralSettingsForm
-                    settings={field.value}
-                    updateSettings={field.onChange}
-                    areSettingsDisabled={isLocalStudio}
-                  />
-                );
-              }}
-            />
-          ),
+          content: isLoading ? <CenteredLoader /> : <WorkflowGeneralSettingsForm areSettingsDisabled={isLocalStudio} />,
         },
         {
           value: WorkflowSettingsPanelTab.PREFERENCES,
