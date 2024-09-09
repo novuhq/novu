@@ -193,10 +193,7 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            json: [
-              { message: "must have required property 'numberType'", path: '' },
-              { message: "must have required property 'booleanType'", path: '' },
-            ],
+            json: [{ message: "must have required property 'numberType'", path: '' }],
             zod: null, // Zod has no support for `allOf`
           },
         },
@@ -294,20 +291,12 @@ describe('validators', () => {
                 path: '',
               },
               {
-                message: 'must be equal to constant',
-                path: '/type',
-              },
-              {
-                message: "must have required property 'numVal'",
-                path: '',
+                message: 'must be number',
+                path: '/numVal',
               },
               {
                 message: "must have required property 'boolVal'",
                 path: '',
-              },
-              {
-                message: 'must be equal to constant',
-                path: '/type',
               },
               {
                 message: 'must match a schema in anyOf',
