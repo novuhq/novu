@@ -12,7 +12,7 @@ export type UseNotificationsProps = {
 };
 
 export const useNotifications = (props?: UseNotificationsProps) => {
-  const { tags, read, archived, limit, onSuccess, onError } = props || {};
+  const { tags, read, archived = false, limit, onSuccess, onError } = props || {};
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
   const { notifications, on, off } = useNovu();
   const [data, setData] = useState<Array<Notification>>();
