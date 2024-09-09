@@ -86,7 +86,16 @@ function SwitchCell(props) {
       classNames={{
         root: css({
           '&:has(:disabled)': { opacity: 'disabled' },
-          '& input:checked + label': { bg: 'colorPalette.middle !important' },
+          '& input:not(:checked) + label': {
+            bg: { _dark: 'legacy.B40 !important', base: 'legacy.B80 !important' },
+          },
+          '& input:checked + label': {
+            bg: 'colorPalette.middle !important',
+          },
+        }),
+        thumb: css({
+          bg: 'legacy.white !important',
+          border: 'none !important',
         }),
       }}
       checked={props.getValue()}
