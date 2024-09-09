@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ListNotificationsResponse, Notification, NovuError, isSameFilter, NotificationFilter } from '@novu/js';
 import { useNovu } from './NovuProvider';
-import { Notification, NovuError, isSameFilter } from '@novu/js';
-import { ListNotificationsResponse } from '@novu/js';
 
 export type UseNotificationsProps = {
   tags?: string[];
@@ -14,6 +13,7 @@ export type UseNotificationsProps = {
 
 export const useNotifications = (props?: UseNotificationsProps) => {
   const { tags, read, archived, limit, onSuccess, onError } = props || {};
+  const filterRef = useRef<NotificationFilter | undefined>(undefined);
   const { notifications, on, off } = useNovu();
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();
@@ -24,7 +24,7 @@ export const useNotifications = (props?: UseNotificationsProps) => {
   const after = length ? data[length - 1].id : undefined;
 
   const sync = (event: { data?: ListNotificationsResponse }) => {
-    if (!event.data || !isSameFilter(event.data.filter, { tags, read, archived })) {
+    if (!event.data || (filterRef.current && !isSameFilter(filterRef.current, event.data.filter))) {
       return;
     }
     setData(event.data.notifications);
@@ -32,18 +32,24 @@ export const useNotifications = (props?: UseNotificationsProps) => {
   };
 
   useEffect(() => {
-    fetchNotifications({ refetch: true });
-
     on('notifications.list.updated', sync);
-    on('notifications.list.pending', sync);
-    on('notifications.list.resolved', sync);
 
     return () => {
       off('notifications.list.updated', sync);
-      off('notifications.list.pending', sync);
-      off('notifications.list.resolved', sync);
     };
-  }, [JSON.stringify(tags), read, archived]);
+  }, []);
+
+  useEffect(() => {
+    const newFilter = { tags, read, archived };
+    if (filterRef.current && isSameFilter(filterRef.current, newFilter)) {
+      return;
+    }
+
+    notifications.clearCache({ filter: filterRef.current });
+    filterRef.current = newFilter;
+
+    fetchNotifications({ refetch: true });
+  }, [tags, read, archived]);
 
   const fetchNotifications = async (options?: { refetch: boolean }) => {
     if (options?.refetch) {
@@ -64,6 +70,8 @@ export const useNotifications = (props?: UseNotificationsProps) => {
       onError?.(response.error);
     } else {
       onSuccess?.(response.data!.notifications);
+      setData(response.data!.notifications);
+      setHasMore(response.data!.hasMore);
     }
     setIsLoading(false);
     setIsFetching(false);
@@ -71,11 +79,13 @@ export const useNotifications = (props?: UseNotificationsProps) => {
 
   const refetch = () => {
     notifications.clearCache({ filter: { tags, read, archived } });
+
     return fetchNotifications({ refetch: true });
   };
 
   const fetchMore = async () => {
     if (!hasMore || isFetching) return;
+
     return fetchNotifications();
   };
 

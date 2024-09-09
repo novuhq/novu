@@ -1,9 +1,7 @@
-import { areTagsEqual } from '@novu/js';
-import { NotificationFilter, NovuError } from '@novu/js';
 import { useEffect, useState } from 'react';
+import { Notification, NotificationFilter, NovuError, areTagsEqual } from '@novu/js';
 import { useNovu } from './NovuProvider';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
-import { Notification } from '@novu/js';
 
 type Count = {
   count: number;
@@ -36,6 +34,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     const existingCounts = counts ?? (new Array(filters.length).fill(undefined) as (Count | undefined)[]);
     let countFiltersToFetch: NotificationFilter[] = [];
     if (notification) {
+      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
         const filter = filters[i];
         if (areTagsEqual(filter.tags, notification.tags)) {
@@ -57,6 +56,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     if (countsRes.error) {
       setError(countsRes.error);
       onError?.(countsRes.error);
+
       return;
     }
     const data = countsRes.data!;
@@ -66,11 +66,13 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       const newCounts: Count[] = [];
       const countsReceived = data.counts;
 
+      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
         const countReceived = countsReceived.find((c) => areTagsEqual(c.filter.tags, existingCounts[i]?.filter.tags));
 
         newCounts.push(countReceived || oldCounts![i]);
       }
+
       return newCounts;
     });
   };
@@ -79,6 +81,13 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     event: 'notifications.notification_received',
     eventHandler: (data) => {
       sync(data.result);
+    },
+  });
+
+  useWebSocketEvent({
+    event: 'notifications.unread_count_changed',
+    eventHandler: () => {
+      sync();
     },
   });
 
