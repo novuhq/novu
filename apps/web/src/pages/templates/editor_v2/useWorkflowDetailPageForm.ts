@@ -18,8 +18,10 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
 
   const { updateWorkflowChannelPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowChannelPreferences(
     templateId,
-    () => {
-      resetField('preferences');
+    {
+      onSuccess: () => {
+        resetField('preferences');
+      },
     }
   );
   const { updateTemplateMutation, isLoading: isUpdatingGeneralSettings } = useUpdateTemplate({
