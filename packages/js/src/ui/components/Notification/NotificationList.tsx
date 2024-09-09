@@ -71,6 +71,7 @@ export const NotificationList = (props: NotificationListProps) => {
             <For each={ids()}>
               {(_, index) => {
                 const notification = () => data()[index()];
+
                 return (
                   <Notification
                     notification={notification()}
