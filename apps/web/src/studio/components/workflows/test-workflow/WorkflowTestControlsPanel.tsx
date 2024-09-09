@@ -28,10 +28,7 @@ export const WorkflowTestControlsPanel: FC<IWorkflowTestControlsPanelProps> = ({
   stepTypes,
 }) => {
   const { control, watch } = useForm({
-    defaultValues: {
-      ...to,
-      phone: '',
-    },
+    defaultValues: to,
   });
 
   useEffect(() => {
@@ -63,6 +60,7 @@ export const WorkflowTestControlsPanel: FC<IWorkflowTestControlsPanelProps> = ({
             <Controller
               control={control}
               name="phone"
+              defaultValue={''}
               render={({ field }) => <Input {...field} label="Phone number" />}
             />
           </When>
