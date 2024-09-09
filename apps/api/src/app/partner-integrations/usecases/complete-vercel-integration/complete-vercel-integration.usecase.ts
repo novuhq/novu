@@ -9,6 +9,7 @@ import {
   OrganizationRepository,
 } from '@novu/dal';
 import { AnalyticsService, decryptApiKey } from '@novu/application-generic';
+import { WorkflowOriginEnum } from '@novu/shared';
 
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
@@ -141,6 +142,7 @@ export class CompleteVercelIntegration {
         userId: internalUser?._id as string,
         environmentId,
         bridgeUrl: fullBridgeUrl,
+        origin: WorkflowOriginEnum.EXTERNAL,
         source: 'vercel',
       });
     } catch (error) {

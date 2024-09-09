@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import crypto from 'node:crypto';
+
 import {
   EnvironmentRepository,
   EnvironmentEntity,
@@ -6,7 +8,8 @@ import {
   MemberRepository,
   CommunityUserRepository,
 } from '@novu/dal';
-import crypto from 'node:crypto';
+import { WorkflowOriginEnum } from '@novu/shared';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { Sync } from '../../../bridge/usecases/sync';
@@ -93,6 +96,7 @@ export class ProcessVercelWebhook {
       environmentId: environment._id,
       bridgeUrl: `https://${url}/api/novu`,
       source: 'vercel',
+      origin: WorkflowOriginEnum.EXTERNAL,
     });
 
     return true;

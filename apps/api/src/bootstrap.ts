@@ -3,7 +3,7 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
 import { init, Integrations, Handlers } from '@sentry/node';
@@ -90,7 +90,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix(`${CONTEXT_PATH}v1`);
+  app.setGlobalPrefix(`${CONTEXT_PATH}v1`, {
+    exclude: [{ path: `${CONTEXT_PATH}v2/workflows`, method: RequestMethod.ALL }],
+  });
 
   app.use(passport.initialize());
 

@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { UserSessionData, WorkflowTypeEnum } from '@novu/shared';
+import { UserSessionData, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
@@ -191,6 +191,7 @@ export class NotificationTemplateController {
         data: body.data,
         __source: query?.__source,
         type: WorkflowTypeEnum.REGULAR,
+        origin: WorkflowOriginEnum.NOVU,
       })
     );
   }
