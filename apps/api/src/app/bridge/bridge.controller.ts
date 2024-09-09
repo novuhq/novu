@@ -14,7 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
+import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
@@ -114,6 +114,7 @@ export class BridgeController {
         workflows: body.workflows,
         bridgeUrl: body.bridgeUrl,
         source,
+        origin: body.origin || WorkflowOriginEnum.EXTERNAL,
       })
     );
   }

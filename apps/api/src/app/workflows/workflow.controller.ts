@@ -17,7 +17,7 @@ import {
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
-import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
+import { MemberRoleEnum, UserSessionData, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
@@ -215,6 +215,7 @@ export class WorkflowController {
         data: body.data,
         __source: query?.__source,
         type: WorkflowTypeEnum.REGULAR,
+        origin: WorkflowOriginEnum.NOVU,
       })
     );
   }

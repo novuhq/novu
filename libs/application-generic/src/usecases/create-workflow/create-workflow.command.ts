@@ -20,6 +20,7 @@ import {
   NotificationTemplateCustomData,
   INotificationGroup,
   WorkflowTypeEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -90,6 +91,10 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   type: WorkflowTypeEnum;
+
+  @IsEnum(WorkflowOriginEnum)
+  @IsDefined()
+  origin: WorkflowOriginEnum;
 }
 
 export class ChannelCTACommand {

@@ -165,6 +165,7 @@ export class Sync {
 
           return this.createWorkflowUsecase.execute(
             CreateWorkflowCommand.create({
+              origin: command.origin,
               notificationGroupId: notificationGroupId,
               draft: !isWorkflowActive,
               environmentId: command.environmentId,

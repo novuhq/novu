@@ -23,6 +23,7 @@ import {
   isBridgeWorkflow,
   IStepVariant,
   TriggerTypeEnum,
+  WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
 
@@ -245,6 +246,7 @@ export class CreateWorkflow {
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
       type: command.type,
+      origin: command.origin,
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema
         ? { payloadSchema: command.payloadSchema }
@@ -433,6 +435,7 @@ export class CreateWorkflow {
       blueprintId: command.blueprintId,
       __source: command.__source,
       type: WorkflowTypeEnum.REGULAR,
+      origin: command.origin ?? WorkflowOriginEnum.NOVU,
     });
   }
 
