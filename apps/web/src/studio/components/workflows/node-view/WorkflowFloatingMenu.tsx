@@ -29,7 +29,7 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
         <WorkflowFloatingMenuSection title="Actions">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAutoAwesomeMotion}
-            tooltipLabel="Click to open the Digest step documentation"
+            tooltipLabel="View the Digest step documentation"
             onClick={handleClick('digest')}
           />
           <WorkflowFloatingMenuButton
