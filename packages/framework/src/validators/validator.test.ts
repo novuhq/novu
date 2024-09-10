@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ZodSchema, z } from 'zod';
 import { validateData, transformSchema } from './base.validator';
-import { JsonSchema, Schema } from '../types/schema.types';
+import { JsonSchema, Schema } from '../types';
 
 const schemas = ['zod', 'json'] as const;
 
@@ -270,7 +270,7 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            zod: [{ message: 'Expected number, received string', path: '/numVal' }],
+            zod: [{ message: 'Expected number, received string', path: '/numVal', property: '.numVal' }],
             /*
              * TODO: use discriminator to get the correct error message.
              *
@@ -289,18 +289,22 @@ describe('validators', () => {
               {
                 message: "must have required property 'stringVal'",
                 path: '',
+                property: '.stringVal',
               },
               {
                 message: 'must be number',
                 path: '/numVal',
+                property: '.numVal',
               },
               {
                 message: "must have required property 'boolVal'",
                 path: '',
+                property: '.boolVal',
               },
               {
                 message: 'must match a schema in anyOf',
                 path: '',
+                property: '',
               },
             ],
           },
