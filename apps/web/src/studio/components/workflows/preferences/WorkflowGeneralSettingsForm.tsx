@@ -1,16 +1,25 @@
 import { useClipboard } from '@mantine/hooks';
-import { IconButton, Input, Textarea } from '@novu/novui';
+import { IconButton, Input } from '@novu/novui';
 import { IconCheck, IconCopyAll } from '@novu/novui/icons';
 import { Stack } from '@novu/novui/jsx';
 import { FC } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, FieldPath, useFormContext } from 'react-hook-form';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
 
+export type WorkflowGeneralSettingsFieldName = Extract<
+  FieldPath<WorkflowDetailFormContext>,
+  'general.workflowId' | 'general.name'
+>;
+
 export type WorkflowGeneralSettingsProps = {
-  areSettingsDisabled?: boolean;
+  checkShouldDisableField?: (fieldName: WorkflowGeneralSettingsFieldName, fieldValue: string) => boolean;
+  checkShouldHideField?: (fieldName: WorkflowGeneralSettingsFieldName) => boolean;
 };
 
-export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({ areSettingsDisabled }) => {
+export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({
+  checkShouldDisableField,
+  checkShouldHideField,
+}) => {
   const {
     control,
     formState: { errors },
@@ -20,7 +29,7 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({ 
 
   return (
     <Stack gap="150">
-      {!areSettingsDisabled && (
+      {!checkShouldHideField?.('general.name') && (
         <Controller
           name="general.name"
           control={control}
@@ -31,50 +40,34 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({ 
                 {...field}
                 label="Workflow name"
                 value={field.value || ''}
-                disabled={areSettingsDisabled}
+                disabled={checkShouldDisableField?.(field.name, field.value)}
                 error={errors?.general?.name?.message}
               />
             );
           }}
         />
       )}
-      <Controller
-        name="general.workflowId"
-        control={control}
-        rules={{
-          required: 'Required - Workflow identifier',
-          pattern: {
-            value: /^[a-z0-9-]+$/,
-            message: 'Identifier must contain only lowercase, numeric or dash characters',
-          },
-        }}
-        render={({ field }) => {
-          return (
-            <Input
-              {...field}
-              label="Identifier"
-              description="Must be unique and all lowercase, using - only"
-              rightSection={<IconButton Icon={copied ? IconCheck : IconCopyAll} onClick={() => copy(field.value)} />}
-              error={errors?.general?.workflowId?.message}
-              value={field.value || ''}
-              disabled={areSettingsDisabled}
-            />
-          );
-        }}
-      />
-
-      {!areSettingsDisabled && (
+      {!checkShouldHideField?.('general.workflowId') && (
         <Controller
-          name="general.description"
+          name="general.workflowId"
           control={control}
+          rules={{
+            required: 'Required - Workflow identifier',
+            pattern: {
+              value: /^[a-z0-9-]+$/,
+              message: 'Identifier must contain only lowercase, numeric or dash characters',
+            },
+          }}
           render={({ field }) => {
             return (
-              <Textarea
+              <Input
                 {...field}
-                label="Description"
-                maxLines={2}
+                label="Identifier"
+                description="Must be unique and all lowercase, using - only"
+                rightSection={<IconButton Icon={copied ? IconCheck : IconCopyAll} onClick={() => copy(field.value)} />}
+                error={errors?.general?.workflowId?.message}
                 value={field.value || ''}
-                disabled={areSettingsDisabled}
+                disabled={checkShouldDisableField?.(field.name, field.value)}
               />
             );
           }}
