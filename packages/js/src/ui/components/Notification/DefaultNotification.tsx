@@ -3,7 +3,7 @@ import { createEffect, createMemo, createSignal, JSX, Show } from 'solid-js';
 import type { Notification } from '../../../notifications';
 import { ActionTypeEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
-import { cn, formatToRelativeTime, useStyle, DEFAULT_TARGET, DEFAULT_REFERRER } from '../../helpers';
+import { cn, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';
@@ -20,7 +20,7 @@ type DefaultNotificationProps = {
 export const DefaultNotification = (props: DefaultNotificationProps) => {
   const style = useStyle();
   const { t, locale } = useLocalization();
-  const { status } = useInboxContext();
+  const { navigate, status } = useInboxContext();
   const [minutesPassed, setMinutesPassed] = createSignal(0);
   const date = createMemo(() => {
     minutesPassed(); // register as dep
@@ -45,10 +45,8 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     }
 
     props.onNotificationClick?.(props.notification);
-    if (props.notification.redirect?.url) {
-      const target = props.notification.redirect?.target || DEFAULT_TARGET;
-      window.open(props.notification.redirect?.url, target, DEFAULT_REFERRER);
-    }
+
+    navigate(props.notification.redirect?.url, props.notification.redirect?.target);
   };
 
   const handleActionButtonClick = (action: ActionTypeEnum, e: MouseEvent) => {
@@ -57,18 +55,13 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     if (action === ActionTypeEnum.PRIMARY) {
       props.notification.completePrimary();
       props.onPrimaryActionClick?.(props.notification);
-      if (props.notification.primaryAction?.redirect?.url) {
-        const target = props.notification.primaryAction?.redirect?.target || DEFAULT_TARGET;
-        window.open(props.notification.primaryAction?.redirect?.url, target, DEFAULT_REFERRER);
-      }
+
+      navigate(props.notification.primaryAction?.redirect?.url, props.notification.primaryAction?.redirect?.target);
     } else {
       props.notification.completeSecondary();
       props.onSecondaryActionClick?.(props.notification);
 
-      if (props.notification.secondaryAction?.redirect?.url) {
-        const target = props.notification.secondaryAction?.redirect?.target || DEFAULT_TARGET;
-        window.open(props.notification.secondaryAction?.redirect?.url, target, DEFAULT_REFERRER);
-      }
+      navigate(props.notification.secondaryAction?.redirect?.url, props.notification.secondaryAction?.redirect?.target);
     }
   };
 
