@@ -121,11 +121,13 @@ function mapPreferencesToRows(
 
   return [
     { ...workflowChannelPreferences.workflow, channel: 'workflow', onChange, disabled: areAllDisabled },
-    ...Object.entries(workflowChannelPreferences.channels).map(([channel, pref]) => ({
-      ...pref,
-      channel: channel as ChannelTypeEnum,
-      onChange,
-      disabled: areAllDisabled,
-    })),
+    ...Object.entries(workflowChannelPreferences.channels)
+      .map(([channel, pref]) => ({
+        ...pref,
+        channel: channel as ChannelTypeEnum,
+        onChange,
+        disabled: areAllDisabled,
+      }))
+      .sort((preferenceA, preferenceB) => preferenceA.channel.localeCompare(preferenceB.channel)),
   ];
 }
