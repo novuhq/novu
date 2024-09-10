@@ -9,7 +9,7 @@ export default function WorkflowStepRoute() {
   console.log({ stepData: data });
 
   return (
-    <Stack h="600" bg="pink" p="md">
+    <Stack h="calc(100vh - 148px)" p="md">
       <Group justify="space-between">
         <Group>
           <Link to={`/workflows/${data.workflowId}`}>
@@ -27,11 +27,11 @@ export default function WorkflowStepRoute() {
         </Group>
       </Group>
       <Group justify="space-between" grow>
-        <Stack align="center" bg="grape">
+        <Stack align="center">
           <Text>{data.step.name}</Text>
           <Text>{data.step.template.type}</Text>
         </Stack>
-        <Tabs defaultValue="controls" bg="grape">
+        <Tabs defaultValue="controls">
           <Tabs.List>
             <Tabs.Tab value="controls">Controls</Tabs.Tab>
             <Tabs.Tab value="payload">Payload</Tabs.Tab>

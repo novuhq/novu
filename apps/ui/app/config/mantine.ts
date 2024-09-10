@@ -1,10 +1,24 @@
-import { createTheme, Button, Pill, MantineColorsTuple, DefaultMantineColor } from '@mantine/core';
+import { createTheme, Button, Pill, MantineColorsTuple, NavLink, Table, Select } from '@mantine/core';
+
+const generateColorsArray = (color: string, steps: number = 10): MantineColorsTuple => {
+  return Array.from({ length: steps }, (_, index) => color) as unknown as MantineColorsTuple;
+};
 
 const extendedColors = {
   gradient: ['', '', '', '', '', '', 'linear-gradient(99deg, #DD2476 0%, #FF512F 100%)', '', '', ''],
+  primary: generateColorsArray('#EAF6FF'),
+  secondary: generateColorsArray('#A09FA6'),
+  success: generateColorsArray('#3CB179'),
+  page: generateColorsArray('#161618'),
+  panel: generateColorsArray('#28282C'),
+  popover: generateColorsArray('#1C1C1F'),
+  button: generateColorsArray('#2A92E7'),
+  black: generateColorsArray('#000000'),
+  white: generateColorsArray('#FFFFFF'),
+  dimmed: generateColorsArray('#3E3E44'),
 } as const satisfies Record<string, MantineColorsTuple>;
 
-type ExtendedCustomColors = keyof typeof extendedColors | DefaultMantineColor;
+type ExtendedCustomColors = keyof typeof extendedColors;
 
 declare module '@mantine/core' {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -14,90 +28,55 @@ declare module '@mantine/core' {
 }
 
 export const themeConfig = createTheme({
-  white: '#FFFFFF',
-  black: '#000000',
+  white: 'var(--mantine-color-white-1)',
+  black: 'var(--mantine-color-black-1)',
   primaryColor: 'gradient',
   primaryShade: 6,
   components: {
     Button: Button.extend({
+      defaultProps: {
+        size: 'sm',
+      },
+      styles: (theme) => ({
+        root: {
+          borderRadius: theme.radius.md,
+          background: 'unset',
+          backgroundColor: 'var(--mantine-color-button-1)',
+        },
+      }),
+    }),
+    NavLink: NavLink.extend({
       styles: (theme) => ({
         root: {
           borderRadius: theme.radius.md,
         },
       }),
+      vars: () => ({
+        root: {
+          '--nl-bg': 'var(--mantine-color-panel-1)',
+          '--nl-hover': 'var(--mantine-color-panel-1)',
+        },
+        children: {},
+      }),
+    }),
+    Pill: Pill.extend({
+      styles: (theme) => ({
+        root: {
+          color: theme.white,
+          backgroundColor: 'var(--mantine-color-panel-1)',
+        },
+      }),
+    }),
+    Table: Table.extend({
+      defaultProps: {
+        verticalSpacing: 'md',
+      },
+    }),
+    Select: Select.extend({
+      styles: () => ({}),
     }),
   },
   colors: {
-    gray: [
-      '#ededef',
-      '#a09fa6',
-      '#7e7d86',
-      '#706f78',
-      '#504f57',
-      '#3e3e44',
-      '#34343a',
-      '#2e2e32',
-      '#28282c',
-      '#232326',
-      '#1c1c1f',
-      '#161618',
-    ],
-    yellow: [
-      '#fef3dd',
-      '#f1a10d',
-      '#ffcb47',
-      '#ffb224',
-      '#824e00',
-      '#693f05',
-      '#573300',
-      '#4a2900',
-      '#3f2200',
-      '#341c00',
-      '#271700',
-      '#1f1300',
-    ],
-    blue: [
-      '#eaf6ff',
-      '#52a9ff',
-      '#369eff',
-      '#0077d4',
-      '#0954a5',
-      '#0a4481',
-      '#0d3868',
-      '#0f3058',
-      '#102a4c',
-      '#10243e',
-      '#0f1b2d',
-      '#0f1720',
-    ],
-    green: [
-      '#e5fbeb',
-      '#4cc38a',
-      '#3cb179',
-      '#30a46c',
-      '#236e4a',
-      '#1b543a',
-      '#164430',
-      '#133929',
-      '#113123',
-      '#0f291e',
-      '#0c1f17',
-      '#0d1912',
-    ],
-    red: [
-      '#feecee',
-      '#ff6369',
-      '#f2555a',
-      '#e5484d',
-      '#aa2429',
-      '#822025',
-      '#671e22',
-      '#541b1f',
-      '#481a1d',
-      '#3c181a',
-      '#291415',
-      '#1f1315',
-    ],
     ...extendedColors,
   },
   fontFamily:
@@ -115,7 +94,7 @@ export const themeConfig = createTheme({
   },
   fontSizes: { xs: '0.75rem', sm: '0.875rem', md: '1rem', lg: '1.25rem', xl: '1.5rem' },
   spacing: { xs: '0.25rem', sm: '0.5rem', md: '1rem', lg: '1.5rem', xl: '2rem', xxl: '2.5rem', xxxl: '3rem' },
-  radius: { xs: '0.25rem', sm: '0.375rem', md: '0.5rem', lg: '0.75rem' },
+  radius: { xs: '0.25rem', sm: '0.375rem', md: '0.5rem', lg: '1rem' },
   defaultRadius: 'md',
   shadows: {
     sm: '0px 5px 15px rgba(38, 68, 128, 0.05)',

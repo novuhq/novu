@@ -2,7 +2,7 @@ import {
   IconOutlineSms,
   IconOutlineEmail,
   IconOutlineChat,
-  IconOutlineInbox,
+  IconNotificationsNone,
   IconAdUnits,
   IconAutoAwesomeMotion,
   IconTimer,
@@ -10,7 +10,7 @@ import {
 } from '@novu/novui/icons';
 
 const iconFromStepType = {
-  in_app: IconOutlineInbox,
+  in_app: IconNotificationsNone,
   email: IconOutlineEmail,
   sms: IconOutlineSms,
   chat: IconOutlineChat,

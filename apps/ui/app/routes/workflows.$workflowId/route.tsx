@@ -46,7 +46,7 @@ export default function WorkflowRoute() {
   const step = data.workflow.data.steps.find((step) => step.name === params.stepName);
 
   return (
-    <Stack bg="green" p="sm">
+    <Stack p="sm">
       <Group justify="space-between">
         <Title order={2}>{data.workflow.data.name}</Title>
         <Group>
@@ -60,7 +60,7 @@ export default function WorkflowRoute() {
           {/* @ts-expect-error - need to figure out how to type this */}
           {data.workflow.data.steps.map((step) => (
             <Link key={step.id} to={`/workflows/${data.workflow.data.id}/steps/${step.name}`}>
-              <Group bg="gray" p="md" w="200px">
+              <Group bg="popover" p="md" w="200px">
                 <StepIcon type={step.template.type} />
                 <Text>{step.template.name}</Text>
               </Group>

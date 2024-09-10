@@ -1,6 +1,7 @@
 import { json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
-import { Table, Pill, Group, Anchor } from '@mantine/core';
+import { Link, useLoaderData } from '@remix-run/react';
+import { Table, Pill, Group, Anchor, Stack, Text, Box, Title, Button } from '@mantine/core';
+import { IconOutlineOfflineBolt, IconMoreHoriz, IconAdd } from '@novu/novui/icons';
 import { api } from '@/hooks/api.hook';
 import { StepIcon } from '@/components/icons/step-icon';
 
@@ -37,10 +38,22 @@ export default function WorkflowsRoute() {
   const rows = data.workflows.data.map((workflow) => (
     <Table.Tr key={workflow._id}>
       <Table.Td>
-        <Anchor href={`/workflows/${workflow._id}`}>{workflow.name}</Anchor>
+        <Anchor component={Link} to={`/workflows/${workflow._id}`}>
+          <Group gap="sm">
+            <Box c="success">
+              <IconOutlineOfflineBolt style={{ height: 20, width: 20 }} />
+            </Box>
+            <Stack gap="xs">
+              <Text truncate="end">{workflow.name}</Text>
+              <Text size="xs" c="secondary">
+                {workflow.name}
+              </Text>
+            </Stack>
+          </Group>
+        </Anchor>
       </Table.Td>
       <Table.Td>
-        <Group gap={2}>
+        <Group gap="sm">
           {[...new Set(workflow.steps.map((step) => step.template.type))].map((type) => (
             // @ts-expect-error - Template type is not typed
             <StepIcon key={type} type={type} />
@@ -54,23 +67,31 @@ export default function WorkflowsRoute() {
           ))}
         </Group>
       </Table.Td>
-      <Table.Td>{workflow.createdAt}</Table.Td>
-      <Table.Td>{workflow.updatedAt}</Table.Td>
+      <Table.Td>{new Date(workflow.updatedAt).toLocaleDateString()}</Table.Td>
+      <Table.Td>
+        <IconMoreHoriz />
+      </Table.Td>
     </Table.Tr>
   ));
 
   return (
-    <Table>
-      <Table.Thead>
-        <Table.Tr>
-          <Table.Th>Name</Table.Th>
-          <Table.Th>Channels</Table.Th>
-          <Table.Th>Tags</Table.Th>
-          <Table.Th>Created</Table.Th>
-          <Table.Th>Updated</Table.Th>
-        </Table.Tr>
-      </Table.Thead>
-      <Table.Tbody>{rows}</Table.Tbody>
-    </Table>
+    <>
+      <Group justify="space-between">
+        <Title order={1}>Workflows</Title>
+        <Button leftSection={<IconAdd style={{ height: 16, width: 16 }} />}>Create</Button>
+      </Group>
+      <Table>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Name</Table.Th>
+            <Table.Th>Channels</Table.Th>
+            <Table.Th>Tags</Table.Th>
+            <Table.Th>Updated</Table.Th>
+            <Table.Th></Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>{rows}</Table.Tbody>
+      </Table>
+    </>
   );
 }

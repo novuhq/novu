@@ -1,6 +1,6 @@
 import { redirect } from '@remix-run/node';
 
-// Redirects to the workflows page
+// Redirects the base path to the workflows page
 export function loader() {
   return redirect('/workflows');
 }
