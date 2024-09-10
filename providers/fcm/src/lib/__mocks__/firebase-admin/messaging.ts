@@ -1,4 +1,4 @@
 exports.getMessaging = () => ({
   sendToDevice: jest.fn(),
-  sendMulticast: jest.fn(),
+  sendEachForMulticast: jest.fn(),
 });

@@ -25,7 +25,7 @@ beforeEach(() => {
   spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    .spyOn(provider.messaging, 'sendMulticast')
+    .spyOn(provider.messaging, 'sendEachForMulticast')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
