@@ -774,7 +774,6 @@
     ".env.production",
     ".env.test",
     ".example.env",
-    "pnpm-lock.yaml",
     "apps/web/env.sh",
     "packages/js/src/ui/index.directcss",
     "unreadRead",
