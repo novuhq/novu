@@ -1,8 +1,8 @@
 import { Novu, NovuOptions } from '@novu/js';
-import { createContext, useContext, useMemo } from 'react';
+import { ReactNode, createContext, useContext, useMemo } from 'react';
 
 type NovuProviderProps = NovuOptions & {
-  children: JSX.Element;
+  children: ReactNode;
 };
 
 const NovuContext = createContext<Novu | undefined>(undefined);
