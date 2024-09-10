@@ -10,7 +10,7 @@ on:
       - main
     paths:
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - 'apps/api/**'
       - 'libs/dal/**'
       - 'packages/shared/**'

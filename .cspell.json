@@ -749,7 +749,6 @@
     ".cspell.json",
     "package.json",
     "package-lock.json",
-    "yarn.lock",
     "tsconfig.json",
     "node_modules/**",
     "pnpm-lock.yaml",
