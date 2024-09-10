@@ -34,39 +34,35 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineAvTimer}
-            tooltipLabel="Click to open the Delay step documentation"
+            tooltipLabel="View the Delay step documentation"
             onClick={handleClick('delay')}
           />
-          <WorkflowFloatingMenuButton
-            Icon={IconOutlineBolt}
-            tooltipLabel="Click to open the Custom step documentation"
-            onClick={handleClick('custom')}
-          />
+          <WorkflowFloatingMenuButton Icon={IconOutlineBolt} onClick={handleClick('custom')} />
         </WorkflowFloatingMenuSection>
         <WorkflowFloatingMenuSection title="Channels">
           <WorkflowFloatingMenuButton
             Icon={IconOutlineNotifications}
-            tooltipLabel="Click to open the In-app step documentation"
+            tooltipLabel="View the In-app step documentation"
             onClick={handleClick('inbox')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineEmail}
-            tooltipLabel="Click to open the Email step documentation"
+            tooltipLabel="View the Email step documentation"
             onClick={handleClick('email')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineSms}
-            tooltipLabel="Click to open the SMS step documentation"
+            tooltipLabel="View the SMS step documentation"
             onClick={handleClick('sms')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineMobileFriendly}
-            tooltipLabel="Click to open the Push step documentation"
+            tooltipLabel="View the Push step documentation"
             onClick={handleClick('push')}
           />
           <WorkflowFloatingMenuButton
             Icon={IconOutlineForum}
-            tooltipLabel="Click to open the Chat step documentation"
+            tooltipLabel="View the Chat step documentation"
             onClick={handleClick('chat')}
           />
         </WorkflowFloatingMenuSection>
