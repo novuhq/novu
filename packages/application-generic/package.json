@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -67,7 +67,7 @@
     "@novu/email-webhook": "^0.24.1",
     "@novu/emailjs": "^0.24.1",
     "@novu/expo": "^0.24.1",
-    "@novu/fcm": "^0.24.1",
+    "@novu/fcm": "^0.24.2",
     "@novu/firetext": "^0.24.1",
     "@novu/forty-six-elks": "^0.24.1",
     "@novu/generic-sms": "^0.24.1",

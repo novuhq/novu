@@ -1,6 +1,6 @@
 {
   "name": "@novu/webhook",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "",
   "author": "",
   "private": true,
@@ -26,7 +26,7 @@
     "@nestjs/core": "^10.2.2",
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.24.1",
+    "@novu/application-generic": "^0.24.2",
     "@novu/dal": "^0.24.1",
     "@novu/shared": "^0.24.1",
     "@novu/stateless": "^0.24.1",

@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-translation",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
     "@nestjs/swagger": "^7.1.8",
-    "@novu/application-generic": "^0.24.1",
+    "@novu/application-generic": "^0.24.2",
     "@novu/ee-dal": "^0.24.1",
     "@novu/shared": "^0.24.1",
     "class-transformer": "^0.5.1",
