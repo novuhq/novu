@@ -57,6 +57,7 @@ export const Renderer = ({ options, children }: RendererProps) => {
     novuUI.updateLocalization(options.localization);
     novuUI.updateTabs(options.tabs);
     novuUI.updateOptions(options.options);
+    novuUI.updateRouterPush(options.routerPush);
   }, [options]);
 
   if (!novuUI) {
