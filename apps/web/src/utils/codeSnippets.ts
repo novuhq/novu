@@ -13,11 +13,15 @@ export type CodeSnippetProps = {
 const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
 
 const normalizePayload = (originalPayload: Record<string, unknown>) => {
-  // Remove internal params
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { __source, ...payload } = originalPayload;
+  if (originalPayload?.__source) {
+    // Remove internal params
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { __source, ...payload } = originalPayload;
 
-  return payload;
+    return payload;
+  }
+
+  return originalPayload;
 };
 export const createNodeSnippet = ({ identifier, to, payload, overrides, snippet, secretKey }: CodeSnippetProps) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
