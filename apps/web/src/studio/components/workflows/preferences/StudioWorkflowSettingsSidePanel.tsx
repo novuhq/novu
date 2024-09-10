@@ -26,7 +26,7 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
   useEffect(() => {
     if (workflow) {
       setValue('general.workflowId', workflow.workflowId);
-      // TODO: how are we handling workflow name for a workflow from framework?
+      setValue('preferences', workflow.preferences);
     }
   }, [workflow]);
 
