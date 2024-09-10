@@ -62,14 +62,12 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
   useEffectOnce(() => {
     if (!workflow) return;
 
-    const form = {
+    reset({
       general: {
         workflowId: workflow.triggers?.[0]?.identifier ?? '',
         name: workflow.name,
-        description: workflow.description,
       },
-    };
-    reset(form);
+    });
   }, !!workflow);
 
   return {
