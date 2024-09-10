@@ -14,7 +14,6 @@ export type WorkflowDetailFormContext = {
 const DEFAULT_FORM_VALUES: WorkflowDetailFormContext = {
   general: {
     workflowId: '',
-    description: '',
     name: '',
   },
   preferences: DEFAULT_WORKFLOW_PREFERENCES,
