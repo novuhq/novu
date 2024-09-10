@@ -766,7 +766,7 @@
     ".gitignore",
     "angular.json",
     "ng-package.json",
-    "libs/shared/src/types/timezones/timezones.types.ts",
+    "packages/shared/src/types/timezones/timezones.types.ts",
     "*.riv",
     "websockets",
     ".env",

@@ -13,7 +13,7 @@ on:
       - 'yarn.lock'
       - 'apps/webhook/**'
       - 'libs/dal/**'
-      - 'libs/shared/**'
+      - 'packages/shared/**'
 
 jobs:
   test_webhook:
