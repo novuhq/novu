@@ -104,7 +104,10 @@ export function buildApiHttpClient({
   environmentId?: string;
 }) {
   if (!secretKey && !jwt) {
-    throw new Error('A secretKey or jwt is required to create a Novu API client.');
+    // eslint-disable-next-line no-console
+    console.error('A secretKey or jwt is required to create a Novu API client.');
+
+    return;
   }
 
   const authHeader = jwt ? `Bearer ${jwt}` : `ApiKey ${secretKey}`;
