@@ -3,7 +3,7 @@ name: Prepare Self-hosted Release
 on:
   push:
     tags:
-      - v0.*
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 permissions:
   contents: write
