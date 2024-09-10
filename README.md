@@ -153,7 +153,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [x] [Brevo (formerly SendinBlue)](https://github.com/novuhq/novu/tree/main/providers/brevo)
 - [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
 - [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
 - [x] [Resend](https://github.com/novuhq/novu/tree/main/providers/resend)
