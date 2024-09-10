@@ -15,7 +15,7 @@ on:
       - 'libs/dal/**'
       - 'packages/shared/**'
       - 'libs/testing/**'
-      - 'packages/application-generic/**'
+      - 'libs/application-generic/**'
       - 'packages/stateless/**'
       - 'packages/node/**'
 env:
