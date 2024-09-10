@@ -1,11 +1,11 @@
-import { EnvironmentCommand } from '../../commands';
 import { IsDefined, IsNotEmpty } from 'class-validator';
 import { WorkflowChannelPreferences } from '@novu/shared';
+import { EnvironmentCommand } from '../../commands';
 
 export class UpsertSubscriberGlobalPreferencesCommand extends EnvironmentCommand {
   @IsDefined()
   readonly preferences: WorkflowChannelPreferences;
 
   @IsNotEmpty()
-  subscriberId: string;
+  _subscriberId: string;
 }
