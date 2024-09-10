@@ -4,11 +4,12 @@ import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useMemo } from 'react';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useSubscription } from '../hooks/useSubscription';
-import { WARNING_LIMIT_DAYS, COLOR_WARNING, pluralizeDaysLeft } from '../utils/freeTrial.constants';
+import { warningLimitDays, COLOR_WARNING, pluralizeDaysLeft } from '../utils/freeTrial.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { capitalize } from '../utils/capitalize';
+import { useFeatureFlag } from '../../../hooks';
 
 export function FreeTrialBanner() {
   const { colorScheme } = useMantineTheme();
@@ -21,8 +22,14 @@ export function FreeTrialBanner() {
   const navigate = useNavigate();
   const plan = useMemo(() => capitalize(apiServiceLevel), [apiServiceLevel]);
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
+  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (freeTrialDismissed === 'true' || !isFreeTrialActive || daysLeft > WARNING_LIMIT_DAYS || hasPaymentMethod) {
+  if (
+    freeTrialDismissed === 'true' ||
+    !isFreeTrialActive ||
+    daysLeft > warningLimitDays(isImprovedBillingEnabled) ||
+    hasPaymentMethod
+  ) {
     return null;
   }
 
