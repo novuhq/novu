@@ -35,14 +35,24 @@ const DefaultInbox = (props: DefaultInboxProps) => {
 };
 
 export const Inbox = React.memo((props: InboxProps) => {
-  const { localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } =
-    props;
+  const {
+    localization,
+    appearance,
+    tabs,
+    routerPush,
+    applicationIdentifier,
+    subscriberId,
+    subscriberHash,
+    backendUrl,
+    socketUrl,
+  } = props;
 
   const options = useMemo(() => {
     return {
       localization,
       appearance,
       tabs,
+      routerPush,
       options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
     };
   }, [localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl]);
