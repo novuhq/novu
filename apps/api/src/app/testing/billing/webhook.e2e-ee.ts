@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
-import { InvalidateCacheService } from '@novu/application-generic';
+import { GetFeatureFlag } from '@novu/application-generic';
 
 const mockSetupIntentSucceededEvent = {
   type: 'setup_intent.succeeded',
@@ -104,6 +104,7 @@ describe('Stripe webhooks', () => {
 
     let verifyCustomerStub: sinon.SinonStub;
     let upsertSubscriptionStub: sinon.SinonStub;
+    let getFeatureFlagStub: sinon.SinonStub;
     const analyticsServiceStub = {
       track: sinon.stub(),
     };
@@ -135,6 +136,9 @@ describe('Stripe webhooks', () => {
         metered: { id: 'metered_subscription_id' },
       } as any);
       updateCustomerStub = sinon.stub(stripeStub.customers, 'update').resolves({});
+      // TODO: remove this after IS_IMPROVED_BILLING_ENABLED flag is removed
+      const IS_IMPROVED_BILLING_ENABLED = false;
+      getFeatureFlagStub = sinon.stub(GetFeatureFlag.prototype, 'execute').resolves(IS_IMPROVED_BILLING_ENABLED);
     });
 
     const createHandler = () => {
@@ -142,7 +146,8 @@ describe('Stripe webhooks', () => {
         stripeStub as any,
         { execute: verifyCustomerStub } as any,
         { execute: upsertSubscriptionStub } as any,
-        analyticsServiceStub as any
+        analyticsServiceStub as any,
+        { execute: getFeatureFlagStub } as any
       );
 
       return handler;
