@@ -20,6 +20,11 @@ const iconFromStepType = {
   custom: IconCode,
 };
 
-export const StepIcon = ({ type }: { type: keyof typeof iconFromStepType }) => {
-  return iconFromStepType[type]();
+export const StepIcon = ({
+  type,
+  ...props
+}: { type: keyof typeof iconFromStepType } & React.ComponentPropsWithoutRef<'svg'>) => {
+  const IconComponent = iconFromStepType[type];
+
+  return <IconComponent {...props} />;
 };

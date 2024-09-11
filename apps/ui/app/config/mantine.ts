@@ -1,7 +1,7 @@
-import { createTheme, Button, Pill, MantineColorsTuple, NavLink, Table, Select } from '@mantine/core';
+import { createTheme, Button, Pill, MantineColorsTuple, NavLink, Table, Select, SegmentedControl } from '@mantine/core';
 
 const generateColorsArray = (color: string, steps: number = 10): MantineColorsTuple => {
-  return Array.from({ length: steps }, (_, index) => color) as unknown as MantineColorsTuple;
+  return Array.from({ length: steps }, () => color) as unknown as MantineColorsTuple;
 };
 
 const extendedColors = {
@@ -12,6 +12,8 @@ const extendedColors = {
   page: generateColorsArray('#161618'),
   panel: generateColorsArray('#28282C'),
   popover: generateColorsArray('#1C1C1F'),
+  menu: generateColorsArray('#232326'),
+  segmentedControl: generateColorsArray('#34343A'),
   button: generateColorsArray('#2A92E7'),
   black: generateColorsArray('#000000'),
   white: generateColorsArray('#FFFFFF'),
@@ -19,6 +21,8 @@ const extendedColors = {
 } as const satisfies Record<string, MantineColorsTuple>;
 
 type ExtendedCustomColors = keyof typeof extendedColors;
+
+const colorToken = (color: ExtendedCustomColors, shade: number = 1) => `var(--mantine-color-${color}-${shade})`;
 
 declare module '@mantine/core' {
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -28,8 +32,8 @@ declare module '@mantine/core' {
 }
 
 export const themeConfig = createTheme({
-  white: 'var(--mantine-color-white-1)',
-  black: 'var(--mantine-color-black-1)',
+  white: colorToken('white'),
+  black: colorToken('black'),
   primaryColor: 'gradient',
   primaryShade: 6,
   components: {
@@ -41,7 +45,7 @@ export const themeConfig = createTheme({
         root: {
           borderRadius: theme.radius.md,
           background: 'unset',
-          backgroundColor: 'var(--mantine-color-button-1)',
+          backgroundColor: colorToken('button'),
         },
       }),
     }),
@@ -53,8 +57,8 @@ export const themeConfig = createTheme({
       }),
       vars: () => ({
         root: {
-          '--nl-bg': 'var(--mantine-color-panel-1)',
-          '--nl-hover': 'var(--mantine-color-panel-1)',
+          '--nl-bg': colorToken('panel'),
+          '--nl-hover': colorToken('panel'),
         },
         children: {},
       }),
@@ -63,7 +67,7 @@ export const themeConfig = createTheme({
       styles: (theme) => ({
         root: {
           color: theme.white,
-          backgroundColor: 'var(--mantine-color-panel-1)',
+          backgroundColor: colorToken('panel'),
         },
       }),
     }),
@@ -73,7 +77,27 @@ export const themeConfig = createTheme({
       },
     }),
     Select: Select.extend({
-      styles: () => ({}),
+      styles: (theme) => ({
+        dropdown: {
+          color: theme.white,
+          backgroundColor: colorToken('menu'),
+        },
+        groupLabel: {
+          paddingTop: '0.25rem',
+          paddingBottom: '0.25rem',
+        },
+      }),
+    }),
+    SegmentedControl: SegmentedControl.extend({
+      defaultProps: {},
+      styles: (theme) => ({
+        root: {
+          backgroundColor: theme.colors.black[0],
+        },
+        indicator: {
+          backgroundColor: theme.colors.segmentedControl[0],
+        },
+      }),
     }),
   },
   colors: {

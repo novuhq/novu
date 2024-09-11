@@ -1,10 +1,10 @@
-import { Breadcrumbs, Text, Group, Select, Box } from '@mantine/core';
+import { Breadcrumbs, Group, Select, Box, Text } from '@mantine/core';
 import { useMatches } from '@remix-run/react';
 import { useState } from 'react';
 import { IconKeyboardArrowRight } from '@novu/novui/icons';
 
 const Separator = () => (
-  <Box c="dimmed">
+  <Box c="dimmed" mt="xs">
     <IconKeyboardArrowRight />
   </Box>
 );
@@ -16,17 +16,31 @@ export function NavigationBreadcrumbs() {
   return (
     <>
       <Group gap="xs">
-        <Separator />
-        <Breadcrumbs separator={<Separator />}>
+        <Breadcrumbs separator={<Separator />} separatorMargin="md">
+          <Text>Organization</Text>
           <Select
             variant="unstyled"
-            data={['Development', 'Production']}
+            data={[
+              {
+                group: 'Environments',
+                items: [
+                  { value: 'Development', label: 'Development' },
+                  { value: 'Production', label: 'Production' },
+                ],
+              },
+            ]}
             value={environment}
+            size="md"
             allowDeselect={false}
-            leftSection={<Separator />}
             rightSection={<></>}
+            w="6.25rem"
             checkIconPosition="right"
-            comboboxProps={{ withArrow: false }}
+            styles={{
+              input: {
+                paddingRight: 0,
+              },
+            }}
+            comboboxProps={{ withArrow: false, width: '12rem', position: 'bottom-start', offset: 0 }}
             onChange={(value) => {
               setEnvironment(value as 'Development' | 'Production');
             }}
