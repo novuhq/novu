@@ -5,30 +5,38 @@
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/cjs/index.cjs",
+  "main": "dist/cjs/index.js",
   "module": "dist/esm/index.mjs",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/cjs/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/cjs/index.cjs",
-      "import": "./dist/esm/index.mjs",
-      "default": "./dist/esm/index.mjs",
-      "types": "./dist/types/index.d.ts"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.d.ts"
+      }
     },
     "./ui": {
-      "require": "./dist/cjs/ui/index.cjs",
-      "import": "./dist/esm/ui/index.mjs",
-      "default": "./dist/esm/ui/index.mjs",
-      "types": "./dist/types/ui/index.d.ts"
+      "import": {
+        "types": "./dist/esm/ui/index.d.mts",
+        "default": "./dist/esm/ui/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/ui/index.js",
+        "default": "./dist/cjs/ui/index.d.ts"
+      }
     }
   },
   "files": [
     "dist/cjs",
     "dist/esm",
-    "dist/types",
     "dist/index.css",
     "dist/novu.min.js",
-    "dist/novu.min.js.gz"
+    "dist/novu.min.js.gz",
+    "ui/**/*"
   ],
   "sideEffects": false,
   "private": false,
@@ -39,11 +47,11 @@
     "clean": "rimraf ./dist",
     "start:server": "http-server ./dist -p 4010",
     "build": "pnpm run clean && NODE_ENV=production tsup && pnpm run post:build",
-    "build:declarations": "tsc -p tsconfig.declarations.json",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch && pnpm run post:build",
-    "post:build": "node scripts/size-limit.mjs",
+    "post:build": "node scripts/size-limit.mjs && pnpm run check-exports",
+    "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "jest"
@@ -61,7 +69,7 @@
     ]
   },
   "devDependencies": {
-    "@tailwindcss/line-clamp": "^0.4.4",
+    "@arethetypeswrong/cli": "^0.15.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^20.14.10",
     "autoprefixer": "^10.4.0",

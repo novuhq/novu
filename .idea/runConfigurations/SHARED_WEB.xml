@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="SHARED-WEB" type="js.build_tools.npm">
-    <package-json value="$PROJECT_DIR$/libs/shared-web/package.json" />
+    <package-json value="$PROJECT_DIR$/packages/shared-web/package.json" />
     <command value="run" />
     <scripts>
       <script value="build:watch" />
