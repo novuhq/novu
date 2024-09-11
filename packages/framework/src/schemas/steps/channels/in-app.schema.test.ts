@@ -59,7 +59,6 @@ describe('in-app schema', () => {
         {
           message: 'must match pattern "^(?!mailto:)(?:(https?):\\/\\/[^\\s/$.?#].[^\\s]*)|^(\\/[^\\s]*)$"',
           path: '/redirect/url',
-          property: '.redirect.url',
         },
       ]);
     });
@@ -82,7 +81,6 @@ describe('in-app schema', () => {
         {
           message: 'must be equal to one of the allowed values',
           path: '/redirect/target',
-          property: '.redirect.target',
         },
       ]);
     });

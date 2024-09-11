@@ -6,20 +6,22 @@ import { css } from '@novu/novui/css';
 import { Container, Flex } from '@novu/novui/jsx';
 
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ValidationError } from '@novu/framework';
+
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
 import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { PATHS } from '../../../../components/docs/docs.const';
 import { getSuggestionVariables, subscriberVariables } from '../../../utils';
-import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
+import { useFeatureFlag } from '../../../../hooks';
 
 export type OnChangeType = 'step' | 'payload';
 
 interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
-  error?: any;
+  errors?: ValidationError[];
   onChange: (type: OnChangeType, data: any, id?: string) => void;
   onSave?: () => void;
   defaultControls?: Record<string, unknown>;
@@ -38,7 +40,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   defaultControls,
   isLoadingSave,
   className,
-  error,
+  errors,
 }) => {
   const track = useTelemetry();
   const { Component, toggle, setPath } = useDocsModal();
@@ -107,7 +109,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                   <JsonSchemaForm
                     onChange={(data, id) => handleOnChange('step', data, id)}
                     schema={step?.controls?.schema || step?.inputs?.schema || {}}
-                    errors={error}
+                    errors={errors}
                     formData={defaultControls || {}}
                     variables={variables}
                   />
@@ -136,7 +138,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     schema={
                       workflow?.payload?.schema || workflow?.options?.payloadSchema || workflow?.payloadSchema || {}
                     }
-                    errors={error}
+                    errors={errors}
                     formData={{}}
                   />
                 </When>

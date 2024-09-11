@@ -18,8 +18,8 @@ describe('validators', () => {
         success: boolean;
         data?: Record<string, unknown>;
         errors?: {
-          zod: { message: string; path: string; property: string }[] | null;
-          json: { message: string; path: string; property: string }[];
+          zod: { message: string; path: string }[] | null;
+          json: { message: string; path: string }[];
         };
       };
     };
@@ -59,8 +59,8 @@ describe('validators', () => {
           success: false,
           errors: {
             // TODO: error normalization
-            json: [{ message: 'must be string', path: '/name', property: '.name' }],
-            zod: [{ message: 'Expected string, received number', path: '/name', property: '.name' }],
+            json: [{ message: 'must be string', path: '/name' }],
+            zod: [{ message: 'Expected string, received number', path: '/name' }],
           },
         },
       },
@@ -98,8 +98,8 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            zod: [{ message: 'Expected number, received string', path: '/nested/age', property: '.nested.age' }],
-            json: [{ message: 'must be number', path: '/nested/age', property: '.nested.age' }],
+            zod: [{ message: 'Expected number, received string', path: '/nested/age' }],
+            json: [{ message: 'must be number', path: '/nested/age' }],
           },
         },
       },
@@ -144,7 +144,7 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            json: [{ message: 'must match exactly one schema in oneOf', path: '', property: '' }],
+            json: [{ message: 'must match exactly one schema in oneOf', path: '' }],
             zod: null, // Zod has no support for `oneOf`
           },
         },
@@ -193,7 +193,7 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            json: [{ message: "must have required property 'numberType'", path: '', property: '.numberType' }],
+            json: [{ message: "must have required property 'numberType'", path: '/numberType' }],
             zod: null, // Zod has no support for `allOf`
           },
         },
@@ -270,7 +270,7 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            zod: [{ message: 'Expected number, received string', path: '/numVal', property: '.numVal' }],
+            zod: [{ message: 'Expected number, received string', path: '/numVal' }],
             /*
              * TODO: use discriminator to get the correct error message.
              *
@@ -288,23 +288,19 @@ describe('validators', () => {
             json: [
               {
                 message: "must have required property 'stringVal'",
-                path: '',
-                property: '.stringVal',
+                path: '/stringVal',
               },
               {
                 message: 'must be number',
                 path: '/numVal',
-                property: '.numVal',
               },
               {
                 message: "must have required property 'boolVal'",
-                path: '',
-                property: '.boolVal',
+                path: '/boolVal',
               },
               {
                 message: 'must match a schema in anyOf',
                 path: '',
-                property: '',
               },
             ],
           },

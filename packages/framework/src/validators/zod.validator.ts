@@ -22,7 +22,6 @@ export class ZodValidator implements Validator<ZodSchema> {
         errors: result.error.errors.map((err) => ({
           path: `/${err.path.join('/')}`,
           message: err.message,
-          property: `.${err.path.join('.')}`,
         })),
       };
     }

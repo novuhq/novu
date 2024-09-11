@@ -47,13 +47,26 @@ export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
   CoreProps &
   Pick<FormProps<TFormData>, 'onChange' | 'onSubmit' | 'onBlur' | 'schema' | 'formData' | 'tagName'> & {
     variables?: string[];
+    /*
+     * TODO: find a way to have a shared type with @novu/framework (ValidationError)
+     */
     errors?: any;
   };
+
+// RJSF don't use [JSON-Pointer](https://datatracker.ietf.org/doc/html/rfc6901) to validate, so we need to convert to dot notation
+const errorsToRJSFValidationError = (errors: any) => {
+  return errors?.map((error: any) => {
+    const nestedPath = error.path.split('/').join('.');
+
+    return { property: nestedPath, ...error } as Partial<RJSFValidationError>;
+  });
+};
 
 const getExtraErrors = (errors: RJSFValidationError[]) => {
   if (!errors) {
     return {};
   }
+
   // adding a default error for the case of errors in an array not updating correctly
   return { __errors: ['enableShowExtraErrors'], ...toErrorSchema(errors || []) };
 };
@@ -62,6 +75,7 @@ const getExtraErrors = (errors: RJSFValidationError[]) => {
 function transformErrors(_: RJSFValidationError[]) {
   return [];
 }
+
 /**
  * Specialized form editor for data passed as JSON.
  */
@@ -73,9 +87,10 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
   const formRef = useRef<Form>(null);
 
   function customValidate(formData: TFormData, formErrors: FormValidation<TFormData>) {
-    const extraErrors = getExtraErrors(errors);
+    const extraErrors = getExtraErrors(errorsToRJSFValidationError(errors));
 
     if (Object.keys(extraErrors)?.length > 0) {
+      // eslint-disable-next-line no-param-reassign
       formErrors = { ...formErrors, ...extraErrors };
     }
 

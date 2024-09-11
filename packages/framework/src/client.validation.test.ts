@@ -2,7 +2,7 @@
 import { expect, it, describe, beforeEach } from 'vitest';
 import { z } from 'zod';
 import { Client } from './client';
-import { workflow } from './resources/workflow';
+import { workflow } from './resources';
 import { ExecutionStateControlsInvalidError } from './errors';
 import { PostActionEnum } from './constants';
 
@@ -185,7 +185,6 @@ describe('validation', () => {
           {
             message: 'Required',
             path: '/baz',
-            property: '.baz',
           },
         ]);
       }
@@ -368,8 +367,7 @@ describe('validation', () => {
         expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([
           {
             message: "must have required property 'baz'",
-            path: '',
-            property: '.baz',
+            path: '/baz',
           },
         ]);
       }
