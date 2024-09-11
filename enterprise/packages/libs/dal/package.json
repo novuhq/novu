@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-dal",
-  "version": "0.24.1",
+  "version": "0.24.3",
   "description": "",
   "private": true,
   "scripts": {
@@ -18,7 +18,7 @@
   "license": "ISC",
   "main": "dist/index.js",
   "dependencies": {
-    "@novu/dal": "^0.24.1",
+    "@novu/dal": "^0.24.3",
     "@novu/shared": "^0.24.1",
     "mongoose": "^7.5.0",
     "mongoose-delete": "^1.0.1",

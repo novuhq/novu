@@ -1,4 +1,8 @@
-import { ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ISmsOptions,
+  ISmsProvider,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { ISmsHandler } from '../interfaces';
 
@@ -18,7 +22,7 @@ export abstract class BaseSmsHandler implements ISmsHandler {
     return providerId === this.providerId && channelType === this.channelType;
   }
 
-  async send(options: ISmsOptions) {
+  async send(options: ISmsOptions): Promise<ISendMessageSuccessResponse> {
     if (process.env.NODE_ENV === 'test') {
       throw new Error(
         'Currently 3rd-party packages test are not support on test env'

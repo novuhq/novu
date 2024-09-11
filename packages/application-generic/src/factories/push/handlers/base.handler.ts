@@ -1,6 +1,9 @@
-import { IPushOptions, IPushProvider } from '@novu/stateless';
+import {
+  IPushOptions,
+  IPushProvider,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import {} from '@novu/dal';
 import { IPushHandler } from '../interfaces';
 
 export abstract class BasePushHandler implements IPushHandler {
@@ -15,7 +18,7 @@ export abstract class BasePushHandler implements IPushHandler {
     return providerId === this.providerId && channelType === this.channelType;
   }
 
-  async send(options: IPushOptions) {
+  async send(options: IPushOptions): Promise<ISendMessageSuccessResponse> {
     if (process.env.NODE_ENV === 'test') {
       throw new Error(
         'Currently 3rd-party packages test are not support on test env'

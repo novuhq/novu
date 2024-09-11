@@ -1,6 +1,6 @@
 {
   "name": "@novu/widget",
-  "version": "0.24.1",
+  "version": "0.24.3",
   "private": true,
   "scripts": {
     "start": "react-app-rewired start",
@@ -63,8 +63,8 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.24.1",
-    "@novu/testing": "^0.24.1",
+    "@novu/dal": "^0.24.3",
+    "@novu/testing": "^0.24.3",
     "@types/jest": "^29.5.0",
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
