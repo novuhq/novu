@@ -1,6 +1,6 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas';
 import { actionStepSchemas } from '../schemas/steps/actions';
+import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas/steps/actions/digest.schema';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import type { Providers } from './provider.types';
 import type { FromSchema, FromSchemaUnvalidated, Schema } from './schema.types';

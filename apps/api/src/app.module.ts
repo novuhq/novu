@@ -43,6 +43,7 @@ import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 import { PreferencesModule } from './app/preferences';
+import { ControlsModule } from './app/controls/controls.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -70,6 +71,7 @@ const enterpriseQuotaThrottlerInterceptor =
     : [];
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+  ControlsModule,
   AuthModule,
   InboundParseModule,
   SharedModule,
