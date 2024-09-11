@@ -1,11 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import {
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  MessageTemplateRepository,
-  PreferencesRepository,
-} from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, WorkflowTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
 import { BridgeServer } from '../../../../e2e/bridge.server';
@@ -15,7 +10,6 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
   const environmentRepository = new EnvironmentRepository();
   const workflowsRepository = new NotificationTemplateRepository();
   const messageTemplateRepository = new MessageTemplateRepository();
-  const preferencesRepository = new PreferencesRepository();
 
   const inputPostPayload = {
     schema: {
@@ -37,6 +31,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
   afterEach(async () => {
     await bridgeServer.stop();
+    // @ts-ignore
+    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'false';
   });
 
   it('should update bridge url', async () => {
@@ -368,9 +364,5 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.status).to.equal(200);
-    const preferences = await preferencesRepository.find({ _environmentId: session.environment._id });
-    for (const preference of preferences) {
-      await preferencesRepository.delete({ _id: preference._id, _environmentId: session.environment._id });
-    }
   });
 });
