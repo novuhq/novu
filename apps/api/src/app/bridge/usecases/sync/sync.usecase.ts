@@ -204,14 +204,16 @@ export class Sync {
           );
         }
 
-        await this.upsertPreferences.upsertWorkflowPreferences(
-          UpsertWorkflowPreferencesCommand.create({
-            environmentId: savedWorkflow._environmentId,
-            organizationId: savedWorkflow._organizationId,
-            templateId: savedWorkflow._id,
-            preferences: workflow.preferences,
-          })
-        );
+        if (workflow.preferences) {
+          await this.upsertPreferences.upsertWorkflowPreferences(
+            UpsertWorkflowPreferencesCommand.create({
+              environmentId: savedWorkflow._environmentId,
+              organizationId: savedWorkflow._organizationId,
+              templateId: savedWorkflow._id,
+              preferences: workflow.preferences,
+            })
+          );
+        }
 
         return savedWorkflow;
       })
