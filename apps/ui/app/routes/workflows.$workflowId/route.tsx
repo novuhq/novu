@@ -38,10 +38,16 @@ export const handle = {
     const step = match.data.workflow.data.steps.find((step) => step.name === match.params.stepName);
 
     return [
-      <Anchor href="/workflows">Workflows</Anchor>,
-      <Anchor href={`/workflows/${match.data.workflow.data.id}`}>{match.data.workflow.data.name}</Anchor>,
+      <Anchor component={Link} to="/workflows">
+        Workflows
+      </Anchor>,
+      <Anchor component={Link} to={`/workflows/${match.data.workflow.data.id}`}>
+        {match.data.workflow.data.name}
+      </Anchor>,
       match.params.stepName ? (
-        <Anchor href={`/workflows/${match.data.workflow.data.id}/steps/${step.name}`}>{step.name}</Anchor>
+        <Anchor component={Link} to={`/workflows/${match.data.workflow.data.id}/steps/${step.name}`}>
+          {step.name}
+        </Anchor>
       ) : null,
     ];
   },
