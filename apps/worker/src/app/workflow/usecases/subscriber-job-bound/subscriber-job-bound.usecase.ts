@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { NotificationTemplateEntity, NotificationTemplateRepository, IntegrationRepository } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  IntegrationRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   InAppProviderIdEnum,
@@ -34,6 +39,7 @@ export class SubscriberJobBound {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
+    private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
@@ -58,6 +64,7 @@ export class SubscriberJobBound {
       identifier,
       _subscriberSource,
       requestCategory,
+      environmentName,
     } = command;
 
     const template =
@@ -90,6 +97,7 @@ export class SubscriberJobBound {
       source: command.payload.__source || 'api',
       subscriberSource: _subscriberSource || null,
       requestCategory: requestCategory || null,
+      environmentName,
       statelessWorkflow: !!command.bridge?.url,
     });
 

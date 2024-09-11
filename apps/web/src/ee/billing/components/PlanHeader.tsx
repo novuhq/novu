@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
 import { useSubscription } from '../hooks/useSubscription';
@@ -12,6 +12,7 @@ import { includedEventQuotaFromApiServiceLevel } from '../utils/plan.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { BillingIntervalControl } from './BillingIntervalControl';
 import { useSubscriptionContext } from './SubscriptionProvider';
+import { useFeatureFlag } from '../../../hooks';
 
 const black = colors.BGDark;
 
@@ -34,6 +35,7 @@ export const PlanHeader = () => {
     isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
+  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
   useEffect(() => {
     if (!isLoadingSubscriptionData) {
@@ -164,7 +166,7 @@ export const PlanHeader = () => {
                   });
                 }}
               >
-                Upgrade now
+                {isImprovedBillingEnabled ? 'Upgrade' : 'Add payment method'}
               </Button>
             </When>
             <When truthy={apiServiceLevel === ApiServiceLevelEnum.BUSINESS}>
@@ -194,7 +196,7 @@ export const PlanHeader = () => {
                     });
                   }}
                 >
-                  Add payment method
+                  Upgrade
                 </Button>
               </When>
             </When>

@@ -15,6 +15,7 @@ import {
 
 export interface IProcessSubscriberDataDto {
   environmentId: string;
+  environmentName: string;
   organizationId: string;
   userId: string;
   transactionId: string;

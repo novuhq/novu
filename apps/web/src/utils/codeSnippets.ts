@@ -12,6 +12,17 @@ export type CodeSnippetProps = {
 
 const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
 
+const normalizePayload = (originalPayload: Record<string, unknown>) => {
+  if (originalPayload?.__source) {
+    // Remove internal params
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { __source, ...payload } = originalPayload;
+
+    return payload;
+  }
+
+  return originalPayload;
+};
 export const createNodeSnippet = ({ identifier, to, payload, overrides, snippet, secretKey }: CodeSnippetProps) => {
   const renderedSecretKey = secretKey ? `'${secretKey}'` : `process.env['${SECRET_KEY_ENV_KEY}']`;
 
@@ -22,7 +33,7 @@ const novu = new Novu(${renderedSecretKey});
 novu.trigger('${identifier}', ${JSON.stringify(
     {
       to,
-      payload,
+      payload: normalizePayload(payload),
       overrides,
       ...snippet,
     },
@@ -50,7 +61,7 @@ export const createCurlSnippet = ({
     {
       name: identifier,
       to,
-      payload,
+      payload: normalizePayload(payload),
       overrides,
       bridgeUrl,
       ...snippet,
@@ -84,7 +95,7 @@ $novu = new Novu(${renderedSecretKey});
 
 $response = $novu->triggerEvent([
     'name' => '${identifier}',
-    'payload' => [${transformJsonToPhpArray(payload, 8)}],
+    'payload' => [${transformJsonToPhpArray(normalizePayload(payload), 8)}],
     'to' => [${transformJsonToPhpArray(to, 8)}],
 ])->toArray();`;
 };
@@ -119,7 +130,7 @@ url = "${API_ROOT}"
 novu = EventApi(url, ${renderedSecretKey}).trigger(
     name="${identifier}",
     recipients={${to.subscriberId as string}},
-    payload={${transformJsonToPythonDict(payload, 6)}},
+    payload={${transformJsonToPythonDict(normalizePayload(payload), 6)}},
 )`;
 };
 
@@ -152,7 +163,7 @@ import (
 func main() {
 	ctx := context.Background()
 	to := map[string]interface{}{${transformJsonToGoMap(to, 8)}}
-	payload := map[string]interface{}{${transformJsonToGoMap(payload, 8)}}
+	payload := map[string]interface{}{${transformJsonToGoMap(normalizePayload(payload), 8)}}
 	data := novu.ITriggerPayloadOptions{To: to, Payload: payload}
 	novuClient := novu.NewAPIClient(${renderedSecretKey}, &novu.Config{})
 

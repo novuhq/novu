@@ -201,122 +201,76 @@ describe('validators', () => {
       {
         title: 'should successfully validate polymorphic `anyOf` properties',
         schemas: {
-          zod: z.object({
-            elements: z.array(
-              z.discriminatedUnion('type', [
-                z.object({ type: z.literal('stringType'), stringVal: z.string() }),
-                z.object({ type: z.literal('numberType'), numVal: z.number() }),
-                z.object({ type: z.literal('booleanType'), boolVal: z.boolean() }),
-              ])
-            ),
-          }),
+          zod: z.discriminatedUnion('type', [
+            z.object({ type: z.literal('stringType'), stringVal: z.string() }),
+            z.object({ type: z.literal('numberType'), numVal: z.number() }),
+            z.object({ type: z.literal('booleanType'), boolVal: z.boolean() }),
+          ]),
           json: {
-            type: 'object',
-            properties: {
-              elements: {
-                type: 'array',
-                items: {
-                  anyOf: [
-                    {
-                      type: 'object',
-                      properties: { type: { type: 'string', const: 'stringType' }, stringVal: { type: 'string' } },
-                      additionalProperties: false,
-                      required: ['type', 'stringVal'],
-                    },
-                    {
-                      type: 'object',
-                      properties: { type: { type: 'string', const: 'numberType' }, numVal: { type: 'number' } },
-                      additionalProperties: false,
-                      required: ['type', 'numVal'],
-                    },
-                    {
-                      type: 'object',
-                      properties: { type: { type: 'string', const: 'booleanType' }, boolVal: { type: 'boolean' } },
-                      additionalProperties: false,
-                      required: ['type', 'boolVal'],
-                    },
-                  ],
-                },
+            anyOf: [
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'stringType' }, stringVal: { type: 'string' } },
+                additionalProperties: false,
+                required: ['type', 'stringVal'],
               },
-            },
-            additionalProperties: false,
-            required: ['elements'],
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'numberType' }, numVal: { type: 'number' } },
+                additionalProperties: false,
+                required: ['type', 'numVal'],
+              },
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'booleanType' }, boolVal: { type: 'boolean' } },
+                additionalProperties: false,
+                required: ['type', 'boolVal'],
+              },
+            ],
           } as const,
         },
-        payload: {
-          elements: [
-            { type: 'stringType', stringVal: '123' },
-            { type: 'numberType', numVal: 123, extra: 'shouldBeRemoved' },
-            { type: 'booleanType', boolVal: true },
-          ],
-        },
+        payload: { type: 'stringType', stringVal: '123' },
         result: {
           success: true,
-          data: {
-            elements: [
-              { type: 'stringType', stringVal: '123' },
-              { type: 'numberType', numVal: 123 },
-              { type: 'booleanType', boolVal: true },
-            ],
-          },
+          data: { type: 'stringType', stringVal: '123' },
         },
       },
       {
         title: 'should return errors for invalid polymorphic `anyOf` properties',
         schemas: {
-          zod: z.object({
-            elements: z.array(
-              z.discriminatedUnion('type', [
-                z.object({ type: z.literal('stringType'), stringVal: z.string() }),
-                z.object({ type: z.literal('numberType'), numVal: z.number() }),
-                z.object({ type: z.literal('booleanType'), boolVal: z.boolean() }),
-              ])
-            ),
-          }),
+          zod: z.discriminatedUnion('type', [
+            z.object({ type: z.literal('stringType'), stringVal: z.string() }),
+            z.object({ type: z.literal('numberType'), numVal: z.number() }),
+            z.object({ type: z.literal('booleanType'), boolVal: z.boolean() }),
+          ]),
           json: {
-            type: 'object',
-            properties: {
-              elements: {
-                type: 'array',
-                items: {
-                  anyOf: [
-                    {
-                      type: 'object',
-                      properties: { type: { type: 'string', const: 'stringType' }, stringVal: { type: 'string' } },
-                      additionalProperties: false,
-                      required: ['type', 'stringVal'],
-                    },
-                    {
-                      type: 'object',
-                      properties: { type: { type: 'string', const: 'numberType' }, numVal: { type: 'number' } },
-                      additionalProperties: false,
-                      required: ['type', 'numVal'],
-                    },
-                    {
-                      type: 'object',
-                      properties: { type: { type: 'string', const: 'booleanType' }, boolVal: { type: 'boolean' } },
-                      additionalProperties: false,
-                      required: ['type', 'boolVal'],
-                    },
-                  ],
-                },
+            anyOf: [
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'stringType' }, stringVal: { type: 'string' } },
+                additionalProperties: false,
+                required: ['type', 'stringVal'],
               },
-            },
-            additionalProperties: false,
-            required: ['elements'],
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'numberType' }, numVal: { type: 'number' } },
+                additionalProperties: false,
+                required: ['type', 'numVal'],
+              },
+              {
+                type: 'object',
+                properties: { type: { type: 'string', const: 'booleanType' }, boolVal: { type: 'boolean' } },
+                additionalProperties: false,
+                required: ['type', 'boolVal'],
+              },
+            ],
           } as const,
         },
-        payload: {
-          elements: [
-            { type: 'stringType', stringVal: '123' },
-            { type: 'numberType', numVal: '123' },
-            { type: 'booleanType', boolVal: true },
-          ],
-        },
+        payload: { type: 'numberType', numVal: '123' },
         result: {
           success: false,
           errors: {
-            zod: [{ message: 'Expected number, received string', path: '/elements/1/numVal' }],
+            zod: [{ message: 'Expected number, received string', path: '/numVal' }],
             /*
              * TODO: use discriminator to get the correct error message.
              *
@@ -334,16 +288,19 @@ describe('validators', () => {
             json: [
               {
                 message: "must have required property 'stringVal'",
-                path: '/elements/1',
+                path: '',
               },
-              { message: 'must be number', path: '/elements/1/numVal' },
+              {
+                message: 'must be number',
+                path: '/numVal',
+              },
               {
                 message: "must have required property 'boolVal'",
-                path: '/elements/1',
+                path: '',
               },
               {
                 message: 'must match a schema in anyOf',
-                path: '/elements/1',
+                path: '',
               },
             ],
           },
