@@ -1,6 +1,5 @@
+import { NovuProvider, useNotifications, usePreferences, useCounts } from '@novu/react';
 import { novuConfig } from '@/utils/config';
-import { NovuProvider } from '@novu/react';
-import { useNotifications, usePreferences, useCounts } from '@novu/react';
 
 const Content = (props: any) => {
   const {
