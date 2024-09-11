@@ -10,9 +10,14 @@ const Separator = () => (
   </Box>
 );
 
+enum EnvironmentEnum {
+  DEVELOPMENT = 'Development',
+  PRODUCTION = 'Production',
+}
+
 export function NavigationBreadcrumbs() {
   const matches = useMatches();
-  const [environment, setEnvironment] = useState<'Development' | 'Production'>('Development');
+  const [environment, setEnvironment] = useState<EnvironmentEnum>(EnvironmentEnum.DEVELOPMENT);
 
   return (
     <>
@@ -29,8 +34,8 @@ export function NavigationBreadcrumbs() {
               {
                 group: 'Environments',
                 items: [
-                  { value: 'Development', label: 'Development' },
-                  { value: 'Production', label: 'Production' },
+                  { value: EnvironmentEnum.DEVELOPMENT, label: 'Development' },
+                  { value: EnvironmentEnum.PRODUCTION, label: 'Production' },
                 ],
               },
             ]}
@@ -48,7 +53,7 @@ export function NavigationBreadcrumbs() {
             }}
             comboboxProps={{ withArrow: false, width: '12rem', position: 'bottom-start', offset: 0 }}
             onChange={(value) => {
-              setEnvironment(value as 'Development' | 'Production');
+              setEnvironment(value as EnvironmentEnum);
             }}
           />
           {matches

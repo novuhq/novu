@@ -23,7 +23,7 @@ const extendedColors = {
 
 type ExtendedCustomColors = keyof typeof extendedColors;
 
-const colorToken = (color: ExtendedCustomColors, shade: number = 1) => `var(--mantine-color-${color}-${shade})`;
+const colorToken = (color: ExtendedCustomColors) => `var(--mantine-color-${color}-0)`;
 
 declare module '@mantine/core' {
   // eslint-disable-next-line @typescript-eslint/naming-convention
