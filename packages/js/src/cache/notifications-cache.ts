@@ -1,9 +1,9 @@
-import { InMemoryCache } from './in-memory-cache';
-import type { Cache } from './types';
-import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
 import { NotificationEvents, NovuEventEmitter } from '../event-emitter';
+import type { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
 import type { NotificationFilter } from '../types';
 import { areTagsEqual, isSameFilter } from '../utils/notification-utils';
+import { InMemoryCache } from './in-memory-cache';
+import type { Cache } from './types';
 
 const excludeEmpty = ({ tags, read, archived, limit, offset, after }: ListNotificationsArgs) =>
   Object.entries({ tags, read, archived, limit, offset, after })

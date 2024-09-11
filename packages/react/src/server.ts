@@ -9,3 +9,7 @@ export function Inbox() {}
 export function Notifications() {}
 export function Preferences() {}
 export function Bell() {}
+
+//Hooks
+export { NovuProvider } from './index';
+export * from './hooks';

@@ -22,4 +22,15 @@ export default defineConfig([
     clean: true,
     dts: true,
   },
+  {
+    entry: ['src/hooks/index.ts'],
+    format: ['esm', 'cjs'],
+    target: 'esnext',
+    platform: 'neutral',
+    outDir: 'dist/hooks',
+    splitting: false,
+    sourcemap: true,
+    clean: true,
+    dts: true,
+  },
 ]);
