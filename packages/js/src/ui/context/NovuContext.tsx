@@ -5,12 +5,13 @@ import type { NovuOptions } from '../../types';
 type NovuProviderProps = {
   options: NovuOptions;
   children: JSX.Element;
+  novu?: Novu;
 };
 
 const NovuContext = createContext<Novu | undefined>(undefined);
 
 export function NovuProvider(props: NovuProviderProps) {
-  const novu = createMemo(() => new Novu(props.options));
+  const novu = createMemo(() => props.novu || new Novu(props.options));
 
   return <NovuContext.Provider value={novu()}>{props.children}</NovuContext.Provider>;
 }

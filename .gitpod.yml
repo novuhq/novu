@@ -7,7 +7,7 @@ tasks:
     command: redis-server
   - name: Shared Library
     init: gp sync-await setup
-    command: cd libs/shared && pnpm start
+    command: cd packages/shared && pnpm start
   - name: DAL
     init: gp sync-await setup
     command: cd libs/dal && pnpm start

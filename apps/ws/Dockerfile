@@ -16,7 +16,7 @@ COPY --chown=1000:1000 package.json .
 
 COPY --chown=1000:1000 apps/ws ./apps/ws
 COPY --chown=1000:1000 libs/dal ./libs/dal
-COPY --chown=1000:1000 libs/shared ./libs/shared
+COPY --chown=1000:1000 packages/shared ./packages/shared
 COPY --chown=1000:1000 libs/testing ./libs/testing
 COPY --chown=1000:1000 libs/application-generic ./libs/application-generic
 COPY --chown=1000:1000 packages/client ./packages/client
