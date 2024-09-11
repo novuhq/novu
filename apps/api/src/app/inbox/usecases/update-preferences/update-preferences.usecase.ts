@@ -145,7 +145,7 @@ export class UpdatePreferences {
         channels: preference.channels,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
+        subscriberId: subscriber._id,
         templateId: workflow._id,
       });
 
@@ -176,7 +176,7 @@ export class UpdatePreferences {
       channels: preference.channels,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
+      subscriberId: subscriber._id,
     });
 
     return {
