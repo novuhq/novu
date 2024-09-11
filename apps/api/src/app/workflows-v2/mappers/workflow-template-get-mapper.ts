@@ -1,5 +1,5 @@
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal/src';
 import { IPreferenceChannels, StepTypeEnum } from '@novu/shared';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { MinifiedResponseWorkflowDto, StepDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../dto/workflow.dto';
 
 export class WorkflowTemplateGetMapper {
