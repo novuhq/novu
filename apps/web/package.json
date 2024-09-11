@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.24.1",
+  "version": "0.24.3",
   "private": true,
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",
@@ -134,8 +134,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.20.13",
-    "@novu/dal": "^0.24.1",
-    "@novu/testing": "^0.24.1",
+    "@novu/dal": "^0.24.3",
+    "@novu/testing": "^0.24.3",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
     "@storybook/addon-links": "^7.4.2",

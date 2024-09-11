@@ -279,10 +279,10 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/node':
         specifier: ^0.24.1
@@ -294,7 +294,7 @@ importers:
         specifier: ^0.24.1
         version: 0.24.2
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@sendgrid/mail':
         specifier: ^8.1.0
@@ -427,13 +427,13 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-auth':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../enterprise/packages/billing
       '@novu/ee-translation':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -509,7 +509,7 @@ importers:
   apps/inbound-mail:
     dependencies:
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../packages/application-generic
       '@novu/shared':
         specifier: ^0.24.1
@@ -564,7 +564,7 @@ importers:
         version: 3.10.0
     devDependencies:
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@types/chai':
         specifier: ^4.2.11
@@ -932,10 +932,10 @@ importers:
         specifier: ^7.20.13
         version: 7.21.0
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@storybook/addon-actions':
         specifier: ^7.4.2
@@ -1037,10 +1037,10 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -1049,7 +1049,7 @@ importers:
         specifier: ^0.24.1
         version: 0.24.2
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.66.0
@@ -1270,10 +1270,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@types/jest':
         specifier: ^29.5.0
@@ -1357,10 +1357,10 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -1369,7 +1369,7 @@ importers:
         specifier: ^0.24.1
         version: 0.24.2
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.40.0
@@ -1445,10 +1445,10 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-billing':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../enterprise/packages/billing
       '@novu/ee-translation':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -1545,16 +1545,16 @@ importers:
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@nestjs/platform-socket.io@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
         version: 0.24.2
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.30.0
@@ -1681,10 +1681,10 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -1751,13 +1751,13 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../../packages/application-generic
       '@novu/dal':
         specifier: workspace:latest
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -1909,7 +1909,7 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -1961,13 +1961,13 @@ importers:
         specifier: ^7.1.8
         version: 7.1.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../../packages/application-generic
       '@novu/dal':
         specifier: workspace:latest
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -2571,7 +2571,7 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../dal
       '@novu/shared':
         specifier: ^0.24.1
@@ -2734,7 +2734,7 @@ importers:
         specifier: ^0.24.1
         version: link:../../providers/clicksend
       '@novu/dal':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/dal
       '@novu/discord':
         specifier: ^0.24.1
@@ -2749,7 +2749,7 @@ importers:
         specifier: ^0.24.1
         version: link:../../providers/expo
       '@novu/fcm':
-        specifier: ^0.24.2
+        specifier: ^0.24.3
         version: link:../../providers/fcm
       '@novu/firetext':
         specifier: ^0.24.1
@@ -2893,7 +2893,7 @@ importers:
         specifier: ^0.24.1
         version: link:../../providers/termii
       '@novu/testing':
-        specifier: ^0.24.1
+        specifier: ^0.24.3
         version: link:../../libs/testing
       '@novu/twilio':
         specifier: ^0.24.1
@@ -9915,7 +9915,7 @@ packages:
       '@babel/traverse': 7.23.2
       '@babel/types': 7.23.0
       convert-source-map: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -13945,7 +13945,7 @@ packages:
       '@babel/helper-split-export-declaration': 7.22.6
       '@babel/parser': 7.23.0
       '@babel/types': 7.23.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -31347,7 +31347,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       eslint: 8.51.0
       grapheme-splitter: 1.0.4
       ignore: 5.2.4
@@ -31537,7 +31537,7 @@ packages:
     dependencies:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@4.9.5)
       '@typescript-eslint/utils': 5.62.0(eslint@8.38.0)(typescript@4.9.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       eslint: 8.38.0
       tsutils: 3.21.0(typescript@4.9.5)
       typescript: 4.9.5
@@ -31619,7 +31619,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/visitor-keys': 5.62.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.5.4
@@ -32129,7 +32129,7 @@ packages:
     resolution:
       { integrity: sha512-VzOm3IJC8Xz8hlMLGvjaLZ9yPPEejXAlO0M+lK5gTtWJwIe3h3jZDpr9Oy6EpMphWOewlK3uEFOn1pRPfIfh6A== }
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       lodash.merge: 4.6.2
       node-fetch: 2.7.0
     transitivePeerDependencies:
@@ -32949,7 +32949,7 @@ packages:
       { integrity: sha512-7Epl1Blf4Sy37j4v9f9FjICCh4+KAQOyXgHEwlyBiAQLbhKdq/i2QQU3amQalS/wPhdPzDXPL5DMR5bkn+YeWg== }
     engines: { node: '>= 8.0.0' }
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       depd: 2.0.0
       humanize-ms: 1.2.1
     transitivePeerDependencies:
@@ -37944,7 +37944,6 @@ packages:
     dependencies:
       ms: 2.1.3
       supports-color: 8.1.1
-    dev: true
 
   /debuglog@1.0.1:
     resolution:
@@ -38320,12 +38319,6 @@ packages:
   /diff@5.0.0:
     resolution:
       { integrity: sha512-/VTCrvm5Z0JGty/BWHljh+BAiw3IK+2j87NGMu8Nwc/f48WoDAC395uomO9ZD117ZOBaHmkX1oyLvkVM/aIT3w== }
-    engines: { node: '>=0.3.1' }
-    dev: true
-
-  /diff@5.1.0:
-    resolution:
-      { integrity: sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw== }
     engines: { node: '>=0.3.1' }
     dev: true
 
@@ -41685,7 +41678,7 @@ packages:
     dependencies:
       basic-ftp: 5.0.3
       data-uri-to-buffer: 5.0.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       fs-extra: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -41815,7 +41808,7 @@ packages:
       { integrity: sha512-jeY2kO7CVyTa6cUM7ZD2ZxIyBkna1xvW2esV/3o8tbhiUneX1UBQCH4D9aMrHgGiohBjyXbuZogyjKXslnY5Yg== }
     engines: { node: '>= 10.x' }
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       tslib: 1.14.1
     transitivePeerDependencies:
       - supports-color
@@ -42902,7 +42895,7 @@ packages:
     dependencies:
       '@tootallnate/once': 1.1.2
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -42996,7 +42989,7 @@ packages:
     engines: { node: '>= 6.0.0' }
     dependencies:
       agent-base: 5.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -43018,7 +43011,7 @@ packages:
     engines: { node: '>= 6' }
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -48279,7 +48272,7 @@ packages:
       { integrity: sha512-uD66tJj54JLYq0De10AhWycZWGQNUvDI55xPgk2sQM5kn1JYlhbCMTtEeT27+vAhW2FBQxLlOmS3pmA7/2z4aA== }
     dependencies:
       '@types/debug': 4.1.8
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       decode-named-character-reference: 1.0.2
       micromark-core-commonmark: 1.1.0
       micromark-factory-space: 1.1.0
@@ -55795,7 +55788,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -56854,7 +56847,7 @@ packages:
     engines: { node: '>= 10' }
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       socks: 2.7.1
     transitivePeerDependencies:
       - supports-color
@@ -57093,7 +57086,7 @@ packages:
     resolution:
       { integrity: sha512-hsLVFE5SjA6TCisWeJXFKniGGOpBgMLmerfO2aCyCU5s7nJ/rpAepqmFifv/GCbSbueEeAJJnmSQ2rKC/g8Fcw== }
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       detect-node: 2.1.0
       hpack.js: 2.1.6
       obuf: 1.1.2
@@ -57380,7 +57373,7 @@ packages:
     engines: { node: '>=8.0' }
     dependencies:
       date-format: 4.0.14
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       fs-extra: 8.1.0
     transitivePeerDependencies:
       - supports-color
@@ -57816,7 +57809,7 @@ packages:
     peerDependencies:
       superagent: '>= 0.15.4 || 1 || 2 || 3'
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       proxy-agent: 6.3.0
       superagent: 8.1.2
     transitivePeerDependencies:
@@ -57869,7 +57862,7 @@ packages:
     dependencies:
       component-emitter: 1.3.0
       cookiejar: 2.1.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       fast-safe-stringify: 2.1.1
       form-data: 4.0.0
       formidable: 2.1.2
@@ -59390,7 +59383,7 @@ packages:
     engines: { node: ^14.17.0 || ^16.13.0 || >=18.0.0 }
     dependencies:
       '@tufjs/models': 1.0.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       make-fetch-happen: 11.1.1
     transitivePeerDependencies:
       - bluebird
@@ -60348,7 +60341,7 @@ packages:
     hasBin: true
     dependencies:
       dequal: 2.0.3
-      diff: 5.1.0
+      diff: 5.2.0
       kleur: 4.1.5
       sade: 1.8.1
     dev: true
