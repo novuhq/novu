@@ -9,6 +9,7 @@ const extendedColors = {
   primary: generateColorsArray('#EAF6FF'),
   secondary: generateColorsArray('#A09FA6'),
   success: generateColorsArray('#3CB179'),
+  error: generateColorsArray('#E72A2A'),
   page: generateColorsArray('#161618'),
   panel: generateColorsArray('#28282C'),
   popover: generateColorsArray('#1C1C1F'),

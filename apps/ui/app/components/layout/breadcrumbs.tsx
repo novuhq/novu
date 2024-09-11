@@ -1,4 +1,4 @@
-import { Breadcrumbs, Group, Select, Box, Text } from '@mantine/core';
+import { Breadcrumbs, Group, Select, Box, Text, Avatar } from '@mantine/core';
 import { useMatches } from '@remix-run/react';
 import { useState } from 'react';
 import { IconKeyboardArrowRight } from '@novu/novui/icons';
@@ -18,7 +18,11 @@ export function NavigationBreadcrumbs() {
     <>
       <Group gap="xs">
         <Breadcrumbs separator={<Separator />} separatorMargin="md">
-          <Text>Organization</Text>
+          {/* TODO: implement Organization switcher */}
+          <Group gap="sm">
+            <Avatar bg="error" size="sm" radius="sm" name="Organization" />
+            <Text>Organization</Text>
+          </Group>
           <Select
             variant="unstyled"
             data={[

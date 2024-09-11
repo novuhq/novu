@@ -1,4 +1,4 @@
-import { AppShell as MantineAppShell, Avatar, Box, Flex, Group, Paper } from '@mantine/core';
+import { AppShell as MantineAppShell, Avatar, Group, Paper } from '@mantine/core';
 import { NovuInbox } from '../navigation/inbox';
 import { Navigation } from './navigation';
 import { NavigationBreadcrumbs } from './breadcrumbs';
