@@ -17,7 +17,7 @@
 '@novu/novui':
   - libs/novui/**/*
 '@novu/shared':
-  - libs/shared/**/*
+  - packages/shared/**/*
 '@novu/notification-center':
   - packages/notification-center/**/*
 '@novu/notification-center-vue':
