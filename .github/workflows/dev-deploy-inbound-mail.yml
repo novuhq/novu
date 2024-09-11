@@ -12,7 +12,7 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'apps/inbound-mail/**'
-      - 'libs/shared/**'
+      - 'packages/shared/**'
       - 'libs/testing/**'
 env:
   TF_WORKSPACE: novu-dev
