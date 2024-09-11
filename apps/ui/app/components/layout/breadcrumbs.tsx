@@ -1,7 +1,7 @@
 import { Breadcrumbs, Group, Select, Box, Text } from '@mantine/core';
 import { useMatches } from '@remix-run/react';
 import { useState } from 'react';
-import { IconKeyboardArrowRight, IconConstruction, IconOutlineRocketLaunch } from '@novu/novui/icons';
+import { IconKeyboardArrowRight } from '@novu/novui/icons';
 import { EnvironmentIcon } from '../icons/environment-icon';
 
 const Separator = () => (
