@@ -13,7 +13,7 @@ export class ZodValidator implements Validator<ZodSchema> {
     T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
     T_Validated = FromSchema<T_Schema>,
   >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
-    const result = schema.safeParse(data);
+    const result = await schema.safeParseAsync(data);
     if (result.success) {
       return { success: true, data: result.data as T_Validated };
     } else {
