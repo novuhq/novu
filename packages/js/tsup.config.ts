@@ -43,14 +43,10 @@ const baseConfig: Options = {
 const baseModuleConfig: Options = {
   ...baseConfig,
   treeshake: true,
+  dts: true,
   entry: {
     index: './src/index.ts',
     'ui/index': './src/ui/index.ts',
-  },
-  outExtension: ({ format }) => {
-    return {
-      js: format === 'cjs' ? '.cjs' : '.mjs',
-    };
   },
 };
 
@@ -94,5 +90,5 @@ export default defineConfig((config: Options) => {
     onSuccess: async () => await buildCSS(),
   };
 
-  return runAfterLast(['pnpm run build:declarations', copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
+  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
 });
