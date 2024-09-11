@@ -67,6 +67,11 @@ export class GetPreferences {
       .filter((preference) => preference !== undefined)
       .map((item) => item.preferences);
 
+    // ensure we don't merge on an empty list
+    if (preferences.length === 0) {
+      throw new NotFoundException('We could not find any preferences');
+    }
+
     return deepMerge(preferences);
   }
 
@@ -111,7 +116,7 @@ export class GetPreferences {
     return items.find(
       (item) =>
         item.type === PreferencesTypeEnum.SUBSCRIBER_WORKFLOW &&
-        item._templateId == templateId,
+        item._templateId === templateId,
     );
   }
 
