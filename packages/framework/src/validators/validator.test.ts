@@ -104,6 +104,45 @@ describe('validators', () => {
         },
       },
       {
+        title: 'should validate array properties successfully',
+        schemas: {
+          zod: z.object({ array: z.array(z.string()) }),
+          json: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              array: { type: 'array', items: { type: 'string' } },
+            },
+          } as const,
+        },
+        payload: { array: ['apples'] },
+        result: {
+          success: true,
+          data: { array: ['apples'] },
+        },
+      },
+      {
+        title: 'should return errors for invalid array properties',
+        schemas: {
+          zod: z.object({ array: z.array(z.string()) }),
+          json: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              array: { type: 'array', items: { type: 'string' } },
+            },
+          } as const,
+        },
+        payload: { array: [5] },
+        result: {
+          success: false,
+          errors: {
+            zod: [{ message: 'Expected string, received number', path: '/array/0' }],
+            json: [{ message: 'must be string', path: '/array/0' }],
+          },
+        },
+      },
+      {
         title: 'should successfully validate a polymorphic oneOf schema',
         schemas: {
           zod: null, // Zod has no support for `oneOf`
