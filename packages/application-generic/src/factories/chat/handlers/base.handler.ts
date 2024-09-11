@@ -1,4 +1,8 @@
-import { IChatOptions, IChatProvider } from '@novu/stateless';
+import {
+  IChatOptions,
+  IChatProvider,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IChatHandler } from '../interfaces';
 
@@ -16,7 +20,7 @@ export abstract class BaseChatHandler implements IChatHandler {
 
   abstract buildProvider(credentials);
 
-  async send(chatContent: IChatOptions) {
+  async send(chatContent: IChatOptions): Promise<ISendMessageSuccessResponse> {
     if (process.env.NODE_ENV === 'test') {
       return {};
     }

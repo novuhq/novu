@@ -1,4 +1,9 @@
-import { IEmailOptions, IEmailProvider } from '@novu/stateless';
+import {
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+} from '@novu/stateless';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { IMailHandler } from '../interfaces/send.handler.interface';
@@ -18,7 +23,7 @@ export abstract class BaseHandler implements IMailHandler {
 
   abstract buildProvider(credentials, options);
 
-  async send(mailData: IEmailOptions) {
+  async send(mailData: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     if (process.env.NODE_ENV === 'test') {
       return {};
     }
@@ -30,7 +35,7 @@ export abstract class BaseHandler implements IMailHandler {
     return this.provider;
   }
 
-  async check() {
+  async check(): Promise<ICheckIntegrationResponse> {
     const mailData: IEmailOptions = {
       html: '<div>checking integration</div>',
       subject: 'Checking Integration',
