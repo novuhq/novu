@@ -157,7 +157,7 @@ export default tsEslint.config(
             '!@novu/shared/utils',
             '@novu/dal/*',
             '*../libs/dal/*',
-            '*../libs/shared/*',
+            '*../packages/shared/*',
             '*../libs/stateless/*',
           ],
         },

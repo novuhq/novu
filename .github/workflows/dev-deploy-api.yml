@@ -10,11 +10,11 @@ on:
       - main
     paths:
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - 'apps/api/**'
       - 'libs/dal/**'
-      - 'libs/shared/**'
-      - 'packages/application-generic/**'
+      - 'packages/shared/**'
+      - 'libs/application-generic/**'
 env:
   TF_WORKSPACE: novu-dev
 
