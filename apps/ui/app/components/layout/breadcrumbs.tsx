@@ -1,7 +1,8 @@
 import { Breadcrumbs, Group, Select, Box, Text } from '@mantine/core';
 import { useMatches } from '@remix-run/react';
 import { useState } from 'react';
-import { IconKeyboardArrowRight } from '@novu/novui/icons';
+import { IconKeyboardArrowRight, IconConstruction, IconOutlineRocketLaunch } from '@novu/novui/icons';
+import { EnvironmentIcon } from '../icons/environment-icon';
 
 const Separator = () => (
   <Box c="dimmed" mt="xs">
@@ -29,11 +30,12 @@ export function NavigationBreadcrumbs() {
                 ],
               },
             ]}
+            leftSection={<EnvironmentIcon environment={environment} />}
             value={environment}
             size="md"
             allowDeselect={false}
             rightSection={<></>}
-            w="6.25rem"
+            w="8.75rem"
             checkIconPosition="right"
             styles={{
               input: {
