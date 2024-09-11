@@ -102,34 +102,18 @@ export default function WorkflowRoute() {
           radius="xs"
           onChange={(value) => setTab(value as 'steps' | 'logs' | 'settings')}
           data={[
-            {
-              label: (
-                <Flex dir="row" gap="sm" align="center">
-                  <IconOutlineSchema />
-                  <Text>Steps</Text>
-                </Flex>
-              ),
-              value: 'steps',
-            },
-            {
-              label: (
-                <Flex dir="row" gap="sm" align="center">
-                  <IconChecklist />
-                  <Text>Logs</Text>
-                </Flex>
-              ),
-              value: 'logs',
-            },
-            {
-              label: (
-                <Flex dir="row" gap="sm" align="center">
-                  <IconSettings />
-                  <Text>Settings</Text>
-                </Flex>
-              ),
-              value: 'settings',
-            },
-          ]}
+            { label: 'Steps', value: 'steps', icon: IconOutlineSchema },
+            { label: 'Logs', value: 'logs', icon: IconChecklist },
+            { label: 'Settings', value: 'settings', icon: IconSettings },
+          ].map(({ label, value, icon }) => ({
+            label: (
+              <Flex dir="row" gap="sm" align="center">
+                {icon()}
+                <Text>{label}</Text>
+              </Flex>
+            ),
+            value,
+          }))}
         />
         <Group gap="sm">
           <Button leftSection={<IconOutlineSave />}>Save</Button>
