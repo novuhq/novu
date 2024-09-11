@@ -156,25 +156,21 @@ export const completeAction = async ({
   args: CompleteArgs;
   actionType: ActionTypeEnum;
 }): Result<Notification> => {
-  const optimisticAction: Action =
-    'notification' in args
-      ? {
-          isCompleted: true,
-          label: args.notification.primaryAction?.label ?? '',
-        }
-      : {
-          isCompleted: true,
-          label: '',
-        };
-
-  const { notificationId, optimisticValue } = getNotificationDetails(
-    args,
+  const optimisticUpdate: Partial<Notification> =
     actionType === ActionTypeEnum.PRIMARY
       ? {
-          primaryAction: optimisticAction,
+          primaryAction: {
+            ...(('notification' in args ? args.notification.primaryAction : {}) as any),
+            isCompleted: true,
+          },
         }
-      : { secondaryAction: optimisticAction }
-  );
+      : {
+          secondaryAction: {
+            ...(('notification' in args ? args.notification.secondaryAction : {}) as any),
+            isCompleted: true,
+          },
+        };
+  const { notificationId, optimisticValue } = getNotificationDetails(args, optimisticUpdate);
 
   try {
     emitter.emit('notification.complete_action.pending', {
@@ -206,25 +202,22 @@ export const revertAction = async ({
   args: RevertArgs;
   actionType: ActionTypeEnum;
 }): Result<Notification> => {
-  const optimisticAction: Action =
-    'notification' in args
-      ? {
-          isCompleted: false,
-          label: args.notification.primaryAction?.label ?? '',
-        }
-      : {
-          isCompleted: false,
-          label: '',
-        };
-
-  const { notificationId, optimisticValue } = getNotificationDetails(
-    args,
+  const optimisticUpdate: Partial<Notification> =
     actionType === ActionTypeEnum.PRIMARY
       ? {
-          primaryAction: optimisticAction,
+          primaryAction: {
+            ...(('notification' in args ? args.notification.primaryAction : {}) as any),
+            isCompleted: false,
+          },
         }
-      : { secondaryAction: optimisticAction }
-  );
+      : {
+          secondaryAction: {
+            ...(('notification' in args ? args.notification.secondaryAction : {}) as any),
+            isCompleted: false,
+          },
+        };
+
+  const { notificationId, optimisticValue } = getNotificationDetails(args, optimisticUpdate);
 
   try {
     emitter.emit('notification.revert_action.pending', {
