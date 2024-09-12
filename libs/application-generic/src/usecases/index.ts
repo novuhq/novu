@@ -44,3 +44,4 @@ export * from './subscribers';
 export * from './execute-bridge-request';
 export * from './upsert-preferences';
 export * from './get-preferences';
+export * from './control-variables';

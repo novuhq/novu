@@ -1,3 +1,5 @@
+import { JSONSchema } from 'json-schema-to-ts';
+
 import {
   ChannelCTATypeEnum,
   EnvironmentId,
@@ -40,6 +42,16 @@ export interface IMessageTemplate {
   preheader?: string;
   senderName?: string;
   actor?: IActor;
+  inputs?: {
+    schema: JSONSchema;
+  };
+  controls?: {
+    schema: JSONSchema;
+  };
+  output?: {
+    schema: JSONSchema;
+  };
+  code?: string;
   createdAt?: string;
   updatedAt?: string;
 }

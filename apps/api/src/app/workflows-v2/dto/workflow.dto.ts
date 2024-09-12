@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { DiscoverWorkflowOutputPreferences, JsonSchema } from '@novu/framework';
@@ -55,6 +55,10 @@ export class StepDto {
   @IsOptional()
   @IsBoolean()
   shouldStopOnFail?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  controlValues?: Record<string, unknown>;
 }
 
 export class WorkflowDto {
