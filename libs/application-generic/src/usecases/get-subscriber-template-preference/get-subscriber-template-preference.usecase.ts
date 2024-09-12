@@ -70,27 +70,40 @@ export class GetSubscriberTemplatePreference {
     const workflowOverride = await this.getWorkflowOverride(command);
 
     const templateChannelPreference = command.template.preferenceSettings;
-    const subscriberChannelPreference =
-      (await this.getPreferences.getPreferenceChannels({
+
+    const subscriberWorkflowPreferences =
+      await this.getPreferences.getWorkflowOptionsPreferences({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-      })) || subscriberPreference?.channels;
+      });
+
+    const subscriberPreferenceChannels =
+      GetPreferences.mapWorkflowOptionsPreferencesToChannels(
+        subscriberWorkflowPreferences,
+      ) || subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 
     const { channels, overrides } = overridePreferences(
       {
         template: templateChannelPreference,
-        subscriber: subscriberChannelPreference,
+        subscriber: subscriberPreferenceChannels,
         workflowOverride: workflowOverrideChannelPreference,
       },
       initialActiveChannels,
     );
 
+    const template = mapTemplateConfiguration({
+      ...command.template,
+      critical: GetPreferences.checkIfWorkflowPreferencesIsReadOnly(
+        subscriberWorkflowPreferences,
+      ),
+    });
+
     return {
-      template: mapTemplateConfiguration(command.template),
+      template,
       preference: {
         enabled: subscriberPreference?.enabled ?? true,
         channels,
