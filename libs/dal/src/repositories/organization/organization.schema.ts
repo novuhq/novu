@@ -61,6 +61,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       },
     },
     externalId: Schema.Types.String,
+    stripeCustomerId: Schema.Types.String,
   },
   schemaOptions
 );

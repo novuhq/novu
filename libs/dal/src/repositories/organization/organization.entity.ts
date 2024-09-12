@@ -28,6 +28,8 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   externalId?: string;
 
+  stripeCustomerId?: string;
+
   createdBy?: string;
 }
 

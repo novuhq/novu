@@ -1,8 +1,8 @@
-import { ChannelTypeEnum } from '@novu/shared';
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
 import type { Prettify } from './util.types';
 import type { Schema } from './schema.types';
+import { WorkflowChannelEnum } from '../constants';
 
 /**
  * The parameters for the workflow function.
@@ -40,9 +40,7 @@ export type WorkflowOptionChannelPreference = {
 
 export type WorkflowOptionsPreferences = {
   workflow?: WorkflowOptionChannelPreference;
-  channels?: {
-    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]?: WorkflowOptionChannelPreference;
-  };
+  channels?: Partial<Record<WorkflowChannelEnum, WorkflowOptionChannelPreference>>;
 };
 
 /**

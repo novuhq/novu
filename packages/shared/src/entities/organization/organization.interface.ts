@@ -20,5 +20,6 @@ export interface IOrganizationEntity {
   createdAt: string;
   updatedAt: string;
   externalId?: string;
+  stripeCustomerId?: string;
   createdBy?: string;
 }
