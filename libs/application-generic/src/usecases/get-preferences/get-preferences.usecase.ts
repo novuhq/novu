@@ -5,8 +5,11 @@ import {
   PreferencesRepository,
   PreferencesTypeEnum,
 } from '@novu/dal';
-import { WorkflowOptionsPreferences } from '@novu/framework';
-import { FeatureFlagsKeysEnum, IPreferenceChannels } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  IPreferenceChannels,
+  WorkflowChannelPreferences,
+} from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { GetPreferencesCommand } from './get-preferences.command';
@@ -20,7 +23,7 @@ export class GetPreferences {
 
   async execute(
     command: GetPreferencesCommand,
-  ): Promise<WorkflowOptionsPreferences> {
+  ): Promise<WorkflowChannelPreferences> {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         userId: 'system',
