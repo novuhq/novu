@@ -6,6 +6,7 @@ import type { Providers } from './provider.types';
 import type { FromSchema, FromSchemaUnvalidated, Schema } from './schema.types';
 import type { Skip } from './skip.types';
 import type { Awaitable, Prettify } from './util.types';
+import { WorkflowChannelEnum } from '../constants/workflow.constants';
 
 export type StepOptions<
   T_ControlSchema extends Schema = Schema,
@@ -225,15 +226,15 @@ export type DigestResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.
  */
 export type Step = {
   /** Send an email. */
-  email: ChannelStep<ChannelStepEnum.EMAIL, EmailOutputUnvalidated, EmailResult>;
+  [WorkflowChannelEnum.EMAIL]: ChannelStep<ChannelStepEnum.EMAIL, EmailOutputUnvalidated, EmailResult>;
   /** Send an SMS. */
-  sms: ChannelStep<ChannelStepEnum.SMS, SmsOutputUnvalidated, SmsResult>;
+  [WorkflowChannelEnum.SMS]: ChannelStep<ChannelStepEnum.SMS, SmsOutputUnvalidated, SmsResult>;
   /** Send a push notification. */
-  push: ChannelStep<ChannelStepEnum.PUSH, PushOutputUnvalidated, PushResult>;
+  [WorkflowChannelEnum.PUSH]: ChannelStep<ChannelStepEnum.PUSH, PushOutputUnvalidated, PushResult>;
   /** Send a chat message. */
-  chat: ChannelStep<ChannelStepEnum.CHAT, ChatOutputUnvalidated, ChatResult>;
+  [WorkflowChannelEnum.CHAT]: ChannelStep<ChannelStepEnum.CHAT, ChatOutputUnvalidated, ChatResult>;
   /** Send an in-app notification. */
-  inApp: ChannelStep<ChannelStepEnum.IN_APP, InAppOutputUnvalidated, InAppResult>;
+  [WorkflowChannelEnum.IN_APP]: ChannelStep<ChannelStepEnum.IN_APP, InAppOutputUnvalidated, InAppResult>;
   /** Aggregate events for a period of time. */
   digest: ActionStep<DigestOutputUnvalidated, DigestResult>;
   /** Delay the workflow for a period of time. */
