@@ -17,8 +17,10 @@ import {
   ExecuteBridgeRequest,
   UpsertPreferences,
   UpsertWorkflowPreferencesCommand,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
 } from '@novu/application-generic';
-import { WorkflowTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import { SyncCommand } from './sync.command';
@@ -36,7 +38,8 @@ export class Sync {
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private analyticsService: AnalyticsService,
-    private upsertPreferences: UpsertPreferences
+    private upsertPreferences: UpsertPreferences,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
@@ -204,14 +207,25 @@ export class Sync {
           );
         }
 
-        await this.upsertPreferences.upsertWorkflowPreferences(
-          UpsertWorkflowPreferencesCommand.create({
-            environmentId: savedWorkflow._environmentId,
-            organizationId: savedWorkflow._organizationId,
-            templateId: savedWorkflow._id,
-            preferences: workflow.preferences,
+        const isWorkflowPreferencesEnabled = await this.getFeatureFlag.execute(
+          GetFeatureFlagCommand.create({
+            key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
           })
         );
+
+        if (isWorkflowPreferencesEnabled && workflow.preferences) {
+          await this.upsertPreferences.upsertWorkflowPreferences(
+            UpsertWorkflowPreferencesCommand.create({
+              environmentId: savedWorkflow._environmentId,
+              organizationId: savedWorkflow._organizationId,
+              templateId: savedWorkflow._id,
+              preferences: workflow.preferences,
+            })
+          );
+        }
 
         return savedWorkflow;
       })

@@ -1,4 +1,5 @@
 import type { Notification } from '../notifications';
+import { Novu } from '../novu';
 import type { NovuOptions } from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
@@ -47,6 +48,7 @@ export type BaseNovuProviderProps = {
   options: NovuOptions;
   tabs?: Array<Tab>;
   routerPush?: RouterPush;
+  novu?: Novu;
 };
 
 export type NovuProviderProps = BaseNovuProviderProps & {

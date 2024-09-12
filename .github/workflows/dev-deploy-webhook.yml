@@ -10,10 +10,10 @@ on:
       - main
     paths:
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - 'apps/webhook/**'
       - 'libs/dal/**'
-      - 'libs/shared/**'
+      - 'packages/shared/**'
 
 jobs:
   test_webhook:
