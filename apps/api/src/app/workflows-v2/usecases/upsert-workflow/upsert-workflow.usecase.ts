@@ -14,6 +14,8 @@ import {
   UpdateWorkflowCommand,
   UpsertPreferences,
   UpsertWorkflowPreferencesCommand,
+  UpsertControlVariablesCommand,
+  UpsertControlVariables,
 } from '@novu/application-generic';
 import { IPreferenceChannels, WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
@@ -30,6 +32,7 @@ export class UpsertWorkflowUseCase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     private upsertPreferencesUsecase: UpsertPreferences,
+    private upsertControlVariables: UpsertControlVariables,
     private environmentRepository: EnvironmentRepository
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
@@ -37,8 +40,39 @@ export class UpsertWorkflowUseCase {
     const existingWorkflow = await this.getWorkflowIfExist(command);
     const workflow = await this.createOrUpdateWorkflow(existingWorkflow, command);
     await this.upsertPreference(command, workflow);
+    await this.upsertControlValues(workflow, command);
 
     return WorkflowTemplateGetMapper.toResponseWorkflowDto(workflow);
+  }
+
+  private async upsertControlValues(workflow: NotificationTemplateEntity, command: UpsertWorkflowCommand) {
+    for (const upsertedStep of workflow.steps) {
+      // should not happen as it was created in the createWorkflowGenericUsecase
+      if (!upsertedStep._id || !upsertedStep.stepId || !upsertedStep.template?.controls) {
+        continue;
+      }
+
+      const commandStep = command.workflowDto?.steps.find(
+        (commandStepItem) => commandStepItem.stepId === upsertedStep.stepId
+      );
+
+      if (!commandStep) {
+        continue;
+      }
+
+      await this.upsertControlVariables.execute(
+        UpsertControlVariablesCommand.create({
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+          _workflowId: workflow._id,
+          workflowId: command.workflowDto.workflowId,
+          _stepId: upsertedStep._id,
+          stepId: upsertedStep.stepId,
+          controlValues: commandStep.controlValues || {},
+          defaultControls: upsertedStep.template?.controls,
+        })
+      );
+    }
   }
 
   private async upsertPreference(command: UpsertWorkflowCommand, workflow: NotificationTemplateEntity) {
