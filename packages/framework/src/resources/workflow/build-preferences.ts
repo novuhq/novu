@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { WorkflowOptionsChannelEnum } from '../../constants';
+import { WorkflowChannelEnum } from '../../constants';
 import type {
   WorkflowOptionsPreferences,
   DiscoverWorkflowOutputPreferences,
@@ -22,11 +22,11 @@ export function buildPreferences(preferences?: WorkflowOptionsPreferences): Disc
     workflow: setPreference(preferences?.workflow),
     // map between framework user-friendly enum (with camelCasing) to shared ChannelTypeEnum
     channels: {
-      [ChannelTypeEnum.EMAIL]: setPreference(preferences?.channels?.[WorkflowOptionsChannelEnum.EMAIL]),
-      [ChannelTypeEnum.SMS]: setPreference(preferences?.channels?.[WorkflowOptionsChannelEnum.SMS]),
-      [ChannelTypeEnum.PUSH]: setPreference(preferences?.channels?.[WorkflowOptionsChannelEnum.PUSH]),
-      [ChannelTypeEnum.IN_APP]: setPreference(preferences?.channels?.[WorkflowOptionsChannelEnum.IN_APP]),
-      [ChannelTypeEnum.CHAT]: setPreference(preferences?.channels?.[WorkflowOptionsChannelEnum.CHAT]),
+      [ChannelTypeEnum.EMAIL]: setPreference(preferences?.channels?.[WorkflowChannelEnum.EMAIL]),
+      [ChannelTypeEnum.SMS]: setPreference(preferences?.channels?.[WorkflowChannelEnum.SMS]),
+      [ChannelTypeEnum.PUSH]: setPreference(preferences?.channels?.[WorkflowChannelEnum.PUSH]),
+      [ChannelTypeEnum.IN_APP]: setPreference(preferences?.channels?.[WorkflowChannelEnum.IN_APP]),
+      [ChannelTypeEnum.CHAT]: setPreference(preferences?.channels?.[WorkflowChannelEnum.CHAT]),
     },
   };
 }

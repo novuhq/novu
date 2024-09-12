@@ -1,4 +1,4 @@
-export enum WorkflowOptionsChannelEnum {
+export enum WorkflowChannelEnum {
   EMAIL = 'email',
   SMS = 'sms',
   PUSH = 'push',

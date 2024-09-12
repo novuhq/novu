@@ -2,7 +2,7 @@ import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
 import type { Prettify } from './util.types';
 import type { Schema } from './schema.types';
-import { WorkflowOptionsChannelEnum } from '../constants';
+import { WorkflowChannelEnum } from '../constants';
 
 /**
  * The parameters for the workflow function.
@@ -40,7 +40,7 @@ export type WorkflowOptionChannelPreference = {
 
 export type WorkflowOptionsPreferences = {
   workflow?: WorkflowOptionChannelPreference;
-  channels?: Partial<Record<WorkflowOptionsChannelEnum, WorkflowOptionChannelPreference>>;
+  channels?: Partial<Record<WorkflowChannelEnum, WorkflowOptionChannelPreference>>;
 };
 
 /**
