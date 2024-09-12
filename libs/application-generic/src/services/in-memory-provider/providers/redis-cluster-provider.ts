@@ -7,9 +7,9 @@ import Redis, {
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
 
-export { ChainableCommander, Cluster, ClusterOptions };
-
 import { convertStringValues } from './variable-mappers';
+
+export { ChainableCommander, Cluster, ClusterOptions };
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -52,7 +52,7 @@ export const getRedisClusterProviderConfig =
       ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
       password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
       connectTimeout: convertStringValues(
-        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
+        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
       ),
       keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
       family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
@@ -60,11 +60,11 @@ export const getRedisClusterProviderConfig =
       tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
     };
 
-    const host = redisClusterConfig.host;
+    const { host } = redisClusterConfig;
     const ports = redisClusterConfig.ports
       ? JSON.parse(redisClusterConfig.ports)
       : [];
-    const password = redisClusterConfig.password;
+    const { password } = redisClusterConfig;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)
       : DEFAULT_CONNECT_TIMEOUT;
@@ -80,7 +80,7 @@ export const getRedisClusterProviderConfig =
       : DEFAULT_TTL_SECONDS;
 
     const instances: ClusterNode[] = ports.map(
-      (port: number): ClusterNode => ({ host, port })
+      (port: number): ClusterNode => ({ host, port }),
     );
 
     return {
@@ -97,7 +97,7 @@ export const getRedisClusterProviderConfig =
   };
 
 export const getRedisCluster = (
-  enableAutoPipelining?: boolean
+  enableAutoPipelining?: boolean,
 ): Cluster | undefined => {
   const { instances } = getRedisClusterProviderConfig();
 
@@ -114,7 +114,7 @@ export const getRedisCluster = (
   };
 
   Logger.log(
-    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`,
   );
 
   if (instances && instances.length > 0) {

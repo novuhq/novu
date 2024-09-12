@@ -2,19 +2,21 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { NovuUI } from '@novu/js/ui';
 import type { NovuUIOptions } from '@novu/js/ui';
+import { Novu } from '@novu/js';
 import { MountedElement, RendererProvider } from '../context/RenderContext';
-import { useDataRef } from '../hooks/useDataRef';
+import { useDataRef } from '../hooks/internal/useDataRef';
 
 type RendererProps = React.PropsWithChildren<{
   options: NovuUIOptions;
+  novu?: Novu;
 }>;
 
 /**
  *
  * Renderer component that provides the NovuUI instance and mounts the elements on DOM in a portal
  */
-export const Renderer = ({ options, children }: RendererProps) => {
-  const optionsRef = useDataRef(options);
+export const Renderer = ({ options, novu, children }: RendererProps) => {
+  const optionsRef = useDataRef({ ...options, novu });
   const [novuUI, setNovuUI] = useState<NovuUI | undefined>();
   const [mountedElements, setMountedElements] = useState(new Map<HTMLElement, MountedElement>());
 
@@ -57,6 +59,7 @@ export const Renderer = ({ options, children }: RendererProps) => {
     novuUI.updateLocalization(options.localization);
     novuUI.updateTabs(options.tabs);
     novuUI.updateOptions(options.options);
+    novuUI.updateRouterPush(options.routerPush);
   }, [options]);
 
   if (!novuUI) {

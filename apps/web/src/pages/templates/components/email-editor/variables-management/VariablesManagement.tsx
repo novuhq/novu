@@ -49,16 +49,16 @@ function searchByKey(object, searchString) {
 }
 
 function flattenObject(obj, parentKey = '') {
-  return Object.keys(obj).reduce((acc, key) => {
+  return Object.keys(obj).reduce((prev, key) => {
     const newKey = parentKey ? `${parentKey}.${key}` : key;
 
     if (typeof obj[key] === 'object' && obj[key] !== null) {
-      Object.assign(acc, flattenObject(obj[key], newKey));
+      Object.assign(prev, flattenObject(obj[key], newKey));
     } else {
-      acc[newKey] = obj[key];
+      prev[newKey] = obj[key];
     }
 
-    return acc;
+    return prev;
   }, {});
 }
 

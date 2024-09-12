@@ -1,5 +1,4 @@
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
@@ -78,7 +77,6 @@ environmentSchema.index({
   _organizationId: 1,
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Environment =
   (mongoose.models.Environment as mongoose.Model<EnvironmentDBModel>) ||
   mongoose.model<EnvironmentDBModel>('Environment', environmentSchema);

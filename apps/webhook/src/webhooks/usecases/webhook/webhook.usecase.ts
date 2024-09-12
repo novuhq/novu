@@ -32,7 +32,7 @@ export class Webhook {
   ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
-    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const { providerOrIntegrationId } = command;
     const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
     const channel: ChannelTypeEnum = command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS;
 
@@ -85,7 +85,7 @@ export class Webhook {
     providerId: string,
     channel: ChannelTypeEnum
   ): Promise<IWebhookResult[]> {
-    const body = command.body;
+    const { body } = command;
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
@@ -141,7 +141,7 @@ export class Webhook {
       message,
       webhook: {
         ...command,
-        providerId: providerId,
+        providerId,
       },
       webhookEvent: parsedEvent,
       channel,

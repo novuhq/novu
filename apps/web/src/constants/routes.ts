@@ -72,6 +72,24 @@ export enum ROUTES {
   STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',
 
   LOCAL_STUDIO_AUTH = '/local-studio/auth',
+
+  /** Account settings routes, bookmarkable by tabs */
+  MANAGE_ACCOUNT_SEGMENT = '/manage-account/',
+  MANAGE_ACCOUNT_USER_PROFILE = '/manage-account/user-profile',
+  MANAGE_ACCOUNT_ACCESS_SECURITY = '/manage-account/access-security',
+  MANAGE_ACCOUNT_ORGANIZATION = '/manage-account/organization',
+  MANAGE_ACCOUNT_TEAM_MEMBERS = '/manage-account/team-members',
+  MANAGE_ACCOUNT_BILLING = '/manage-account/billing',
+  MANAGE_ACCOUNT_BRANDING = '/manage-account/branding',
+}
+
+export enum MANAGE_ACCOUNT_ROUTE_SEGMENTS {
+  USER_PROFILE = 'user-profile',
+  ACCESS_SECURITY = 'access-security',
+  ORGANIZATION = 'organization',
+  TEAM_MEMBERS = 'team-members',
+  BILLING = 'billing',
+  BRANDING = 'branding',
 }
 
 export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/local-studio']);

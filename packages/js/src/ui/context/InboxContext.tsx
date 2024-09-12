@@ -1,14 +1,20 @@
-import { Accessor, createContext, createEffect, createSignal, ParentProps, useContext } from 'solid-js';
-import { NotificationFilter } from '../../types';
-import { NotificationStatus, Tab } from '../types';
+import { Accessor, createContext, createEffect, createSignal, ParentProps, Setter, useContext } from 'solid-js';
+import { NotificationFilter, Redirect } from '../../types';
+import { DEFAULT_REFERRER, DEFAULT_TARGET } from '../helpers';
+import { NotificationStatus, RouterPush, Tab } from '../types';
 
 type InboxContextType = {
   setStatus: (status: NotificationStatus) => void;
   status: Accessor<NotificationStatus>;
   filter: Accessor<NotificationFilter>;
+  limit: Accessor<number>;
+  setLimit: (tab: number) => void;
   tabs: Accessor<Array<Tab>>;
   activeTab: Accessor<string>;
   setActiveTab: (tab: string) => void;
+  isOpened: Accessor<boolean>;
+  setIsOpened: Setter<boolean>;
+  navigate: (url?: string, target?: Redirect['target']) => void;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -19,14 +25,19 @@ const STATUS_TO_FILTER: Record<NotificationStatus, NotificationFilter> = {
   [NotificationStatus.ARCHIVED]: { archived: true },
 };
 
+export const DEFAULT_LIMIT = 10;
+
 type InboxProviderProps = ParentProps<{
   tabs: Array<Tab>;
+  routerPush?: RouterPush;
 }>;
 
 export const InboxProvider = (props: InboxProviderProps) => {
+  const [isOpened, setIsOpened] = createSignal<boolean>(false);
   const [tabs, setTabs] = createSignal<Array<Tab>>(props.tabs);
   const [activeTab, setActiveTab] = createSignal<string>((props.tabs[0] && props.tabs[0].label) ?? '');
   const [status, setStatus] = createSignal<NotificationStatus>(NotificationStatus.UNREAD_READ);
+  const [limit, setLimit] = createSignal<number>(DEFAULT_LIMIT);
   const [filter, setFilter] = createSignal<NotificationFilter>({
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? props.tabs[0].value : [],
@@ -47,6 +58,29 @@ export const InboxProvider = (props: InboxProviderProps) => {
     setFilter((old) => ({ ...old, tags }));
   };
 
+  const navigate = (url?: string, target?: Redirect['target']) => {
+    if (!url) {
+      return;
+    }
+
+    const isAbsoluteUrl = !url.startsWith('/');
+    if (isAbsoluteUrl) {
+      window.open(url, target ?? DEFAULT_TARGET, DEFAULT_REFERRER);
+
+      return;
+    }
+
+    if (props.routerPush) {
+      props.routerPush(url);
+
+      return;
+    }
+
+    const fullUrl = new URL(url, window.location.href);
+    const pushState = window.history.pushState.bind(window.history);
+    pushState({}, '', fullUrl);
+  };
+
   createEffect(() => {
     setTabs(props.tabs);
     const firstTab = props.tabs[0];
@@ -63,6 +97,11 @@ export const InboxProvider = (props: InboxProviderProps) => {
         tabs,
         activeTab,
         setActiveTab: setNewActiveTab,
+        limit,
+        setLimit,
+        isOpened,
+        setIsOpened,
+        navigate,
       }}
     >
       {props.children}

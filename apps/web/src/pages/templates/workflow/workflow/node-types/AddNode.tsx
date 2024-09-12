@@ -52,6 +52,7 @@ export default memo(({ data }: { data: NodeData }) => {
               },
               zIndex: 9999,
               pointerEvents: 'all',
+              // eslint-disable-next-line no-nested-ternary
               color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B60) : colors.B60,
               '&:hover': {
                 color: theme.colorScheme === 'dark' ? colors.white : colors.B40,

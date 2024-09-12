@@ -15,11 +15,11 @@ const LOG_CONTEXT = 'InboundParseQueueService';
 @Injectable()
 export class InboundParseQueueService extends QueueBaseService {
   constructor(
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
   ) {
     super(
       JobTopicNameEnum.INBOUND_PARSE_MAIL,
-      new BullMqService(workflowInMemoryProviderService)
+      new BullMqService(workflowInMemoryProviderService),
     );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);

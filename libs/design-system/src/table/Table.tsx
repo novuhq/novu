@@ -275,6 +275,7 @@ export function Table<T extends object>({
             <Button
               variant="outline"
               disabled={pagination?.current === 0 || loading}
+              // eslint-disable-next-line no-unsafe-optional-chaining
               onClick={() => handlePageChange(pagination?.current - 1)}
             >
               <ChevronLeft />
@@ -283,6 +284,7 @@ export function Table<T extends object>({
               loading={loading}
               variant="outline"
               disabled={!pagination?.hasMore || loading}
+              // eslint-disable-next-line no-unsafe-optional-chaining
               onClick={() => handlePageChange(pagination?.current + 1)}
             >
               <ChevronRight />

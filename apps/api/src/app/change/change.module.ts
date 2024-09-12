@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import {
   DynamicModule,
   forwardRef,

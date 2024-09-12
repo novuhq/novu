@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
 import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ApiServiceLevelEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
 import { UpgradeModal } from './UpgradeModal';
 import { includedEventQuotaFromApiServiceLevel } from '../utils/plan.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { BillingIntervalControl } from './BillingIntervalControl';
 import { useSubscriptionContext } from './SubscriptionProvider';
+import { useFeatureFlag } from '../../../hooks';
 
 const black = colors.BGDark;
 
@@ -34,6 +35,7 @@ export const PlanHeader = () => {
     isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
+  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
   useEffect(() => {
     if (!isLoadingSubscriptionData) {
@@ -144,7 +146,7 @@ export const PlanHeader = () => {
                   <b style={{ fontSize: 14 }}>$250</b> month package / billed monthly
                 </When>
                 <When truthy={billingInterval === 'year'}>
-                  <b style={{ fontSize: 14 }}>{`\$${(2700).toLocaleString()}`}</b> year package / billed annually
+                  <b style={{ fontSize: 14 }}>{`$${(2700).toLocaleString()}`}</b> year package / billed annually
                 </When>
               </Text>
               <Text size={12} color={isDark ? colors.B80 : colors.B40}>
@@ -164,7 +166,7 @@ export const PlanHeader = () => {
                   });
                 }}
               >
-                Upgrade now
+                {isImprovedBillingEnabled ? 'Upgrade' : 'Add payment method'}
               </Button>
             </When>
             <When truthy={apiServiceLevel === ApiServiceLevelEnum.BUSINESS}>
@@ -194,7 +196,7 @@ export const PlanHeader = () => {
                     });
                   }}
                 >
-                  Add payment method
+                  Upgrade
                 </Button>
               </When>
             </When>

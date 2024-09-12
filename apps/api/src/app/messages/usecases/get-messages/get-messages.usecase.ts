@@ -2,9 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberEntity } from '@novu/dal';
 import { ActorTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 
+import { GetFeatureFlag, GetFeatureFlagCommand } from '@novu/application-generic';
 import { GetMessagesCommand } from './get-messages.command';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
-import { GetFeatureFlag, GetFeatureFlagCommand } from '@novu/application-generic';
 
 @Injectable()
 export class GetMessages {
@@ -49,6 +49,7 @@ export class GetMessages {
 
     const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
+      sort: { createdAt: -1 },
       skip: command.page * LIMIT,
     });
 

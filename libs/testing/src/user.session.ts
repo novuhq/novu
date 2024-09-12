@@ -1,8 +1,7 @@
 import 'cross-fetch/polyfill';
 import { faker } from '@faker-js/faker';
-import { SuperTest, Test } from 'supertest';
+import request, { SuperTest, Test } from 'supertest';
 import jwt from 'jsonwebtoken';
-import request from 'supertest';
 import superAgentDefaults from 'superagent-defaults';
 import {
   ApiServiceLevelEnum,
@@ -247,6 +246,8 @@ export class UserSession {
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
       org_role: 'org:admin',
+      _id: this.user ? this.user.externalId : 'does_not_matter',
+      org_id: this.organization ? this.organization.externalId : 'does_not_matter',
     });
   }
 
@@ -418,7 +419,8 @@ export class UserSession {
   }
 
   async createFeed(name?: string) {
-    name = name ? name : 'Activities';
+    // eslint-disable-next-line no-param-reassign
+    name = name || 'Activities';
     const feed = await this.feedRepository.create({
       name,
       identifier: name,
@@ -432,11 +434,9 @@ export class UserSession {
   async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
-      to: to,
+      to,
       payload,
     });
-
-    return;
   }
 
   public async awaitRunningJobs(

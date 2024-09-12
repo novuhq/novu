@@ -12,10 +12,10 @@ import {
   IconOutlineVisibility,
   IconOutlineVisibilityOff,
 } from '@novu/design-system';
+import { useState } from 'react';
 import { useAPIKeys, useEnvironment } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
 import { When } from '../../../components/utils/When';
-import { useState } from 'react';
 
 export const ApiKeysCard = () => {
   const clipboardApiKey = useClipboard({ timeout: 1000 });

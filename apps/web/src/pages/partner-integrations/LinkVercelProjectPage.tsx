@@ -1,9 +1,9 @@
 import { Stack } from '@mantine/core';
 
+import { Container, Text, Title } from '@novu/design-system';
 import { LinkProjectContainer } from './components/LinkProjectContainer';
 
 import { PartnerIntegrationLayout } from '../../components/layout/components/PartnerIntegrationLayout';
-import { Container, Text, Title } from '@novu/design-system';
 
 export function LinkVercelProjectPage({ type }: { type: 'edit' | 'create' }) {
   return (

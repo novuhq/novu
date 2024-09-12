@@ -45,7 +45,7 @@ test('emailHandler should be called correctly', async () => {
     themeStore,
     contentEngine,
     {},
-    ee
+    ee,
   );
 
   const emailSpy = jest.spyOn(EmailHandler.prototype, 'send');
@@ -76,7 +76,7 @@ test('variable protection should throw if missing variable provided', async () =
     {
       variableProtection: true,
     },
-    ee
+    ee,
   );
 
   await providerStore.addProvider('email', {
@@ -107,7 +107,7 @@ test('variable protection should throw if missing variable provided', async () =
     triggerEngine.trigger('test-notification', {
       $user_id: '12345',
       $email: 'test@gmail.com',
-    })
+    }),
   ).rejects.toEqual(new Error('Missing variables passed. firstName'));
 });
 
@@ -126,7 +126,7 @@ test('variable protection should throw if missing variable provided with templat
     {
       variableProtection: true,
     },
-    ee
+    ee,
   );
 
   await providerStore.addProvider('email', {
@@ -157,7 +157,7 @@ test('variable protection should throw if missing variable provided with templat
     triggerEngine.trigger('test-notification-promise', {
       $user_id: '12345',
       $email: 'test@gmail.com',
-    })
+    }),
   ).rejects.toEqual(new Error('Missing variables passed. firstName'));
 });
 
@@ -203,7 +203,7 @@ test('TriggerEngine should call validate if validator is provided', async () => 
     themeStore,
     contentEngine,
     {},
-    ee
+    ee,
   );
 
   await triggerEngine.trigger('test-notification', {
@@ -258,13 +258,13 @@ test('Validation should throw error if validate method returns false', async () 
     themeStore,
     contentEngine,
     {},
-    ee
+    ee,
   );
 
   await expect(
     triggerEngine.trigger('test-notification', {
       $user_id: '12345',
       $email: 'test@gmail.com',
-    })
+    }),
   ).rejects.toEqual(new Error('Payload for email is invalid'));
 });

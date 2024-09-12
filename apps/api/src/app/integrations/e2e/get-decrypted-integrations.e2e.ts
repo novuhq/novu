@@ -30,7 +30,7 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
 
     const activeEmailIntegrations = result.filter(
       (integration) =>
-        integration.channel == ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
+        integration.channel === ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
     );
 
     expect(activeEmailIntegrations.length).to.eq(2);

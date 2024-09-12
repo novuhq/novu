@@ -12,7 +12,7 @@ on:
       - main
     paths:
       - 'apps/web/**'
-      - 'libs/shared/**'
+      - 'packages/shared/**'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -28,7 +28,7 @@ jobs:
     uses: ./.github/workflows/reusable-web-deploy.yml
     with:
       environment: Development
-      react_app_api_url: https://dev.api.novu.co
+      react_app_api_url: https://api.novu-staging.co
       react_app_ws_url: https://dev.ws.novu.co
       react_app_webhook_url: https://dev.webhook.novu.co
       react_app_widget_embed_path: https://dev.embed.novu.co/embed.umd.min.js
@@ -40,7 +40,7 @@ jobs:
       netlify_alias: dev
       netlify_gh_env: development
       netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
-      clerk_publishable_key: pk_live_Y2xlcmsubm92dS5jbyQ
+      clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
       clerk_is_ee_auth_enabled: true
     secrets: inherit
 

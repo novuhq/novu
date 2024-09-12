@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { GenericSmsProvider } from './generic-sms.provider';
 import crypto from 'crypto';
+import { GenericSmsProvider } from './generic-sms.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 
 test('should trigger generic-sms library correctly', async () => {
@@ -68,7 +68,7 @@ test('should trigger generic-sms library correctly with _passthrough', async () 
           to: '+2234567890',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

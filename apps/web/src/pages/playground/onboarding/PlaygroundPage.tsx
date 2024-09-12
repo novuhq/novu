@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
-const { Pane } = Allotment;
-const RootView = Allotment;
-const EditorView = Allotment;
 
 import { css, cx } from '@novu/novui/css';
 import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
+import { hstack } from '@novu/novui/patterns';
+import { token } from '@novu/novui/tokens';
 import { TerminalComponent } from './Terminal';
 import { CodeEditor } from './CodeEditor';
 import { PlaygroundWorkflowComponent } from './PlaygroundWorkflowComponent';
@@ -21,8 +20,10 @@ import { useAPIKeys } from '../../../hooks/useApiKey';
 import { TourGuideComponent } from './PlaygroundTourGuide';
 import { Header } from './PlaygroundHeader';
 import { useContainer } from '../../../hooks/useContainer';
-import { hstack } from '@novu/novui/patterns';
-import { token } from '@novu/novui/tokens';
+
+const { Pane } = Allotment;
+const RootView = Allotment;
+const EditorView = Allotment;
 
 export function PlaygroundPage() {
   const { apiKey } = useAPIKeys();

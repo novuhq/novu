@@ -153,8 +153,8 @@ export async function updateTenant({
     `${session.serverUrl}/v1/tenants/${identifier}`,
     {
       identifier: newIdentifier,
-      name: name,
-      data: data,
+      name,
+      data,
     },
     {
       headers: {

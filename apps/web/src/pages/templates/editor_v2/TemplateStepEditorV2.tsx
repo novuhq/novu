@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { errorMessage, IconPlayArrow, successMessage } from '@novu/design-system';
 import { useTemplateController } from '../components/useTemplateController';
 import { parseUrl } from '../../../utils/routeUtils';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../../../api/api.client';
 import { ROUTES } from '../../../constants/routes';
-import { errorMessage, IconPlayArrow, successMessage } from '@novu/design-system';
 import { useControlsHandler } from '../../../hooks/workflow/useControlsHandler';
 import { WorkflowsStepEditor } from '../../../components/workflow_v2/StepEditorComponent';
 import { StepIcon, WorkflowsPageTemplate } from '../../../studio/components/workflows/layout/WorkflowsPageTemplate';
@@ -42,14 +42,14 @@ export const WorkflowsStepEditorPageV2 = () => {
     setControls,
     onControlsChange,
   } = useControlsHandler(
-    (data) => api.post('/v1/bridge/preview/' + workflowId + '/' + currentStepId, data),
+    (data) => api.post(`/v1/bridge/preview/${workflowId}/${currentStepId}`, data),
     workflowId as string,
     currentStepId,
     'dashboard'
   );
 
   const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
-    api.put('/v1/bridge/controls/' + workflowId + '/' + currentStepId, { variables: data })
+    api.put(`/v1/bridge/controls/${workflowId}/${currentStepId}`, { variables: data })
   );
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   }, [currentWorkflow, isInitialLoading, controlVariables, setControls]);
 
   const handleTestClick = async () => {
-    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { workflowId: templateId }));
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
 
   const onControlsSave = async () => {

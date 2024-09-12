@@ -22,7 +22,7 @@ test.describe('Billing', () => {
   });
 
   async function assertDynamicTimeLeftLabel(billingPage: BillingPage, timeInTrial: number) {
-    await billingPage.assertTrialLabelContains(30 - timeInTrial + '');
+    await billingPage.assertTrialLabelContains(`${30 - timeInTrial}`);
   }
 
   test('should display free trial widget', async ({ page }) => {

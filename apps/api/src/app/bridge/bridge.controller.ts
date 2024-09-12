@@ -16,15 +16,14 @@ import {
 
 import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
+import { EnvironmentRepository, NotificationTemplateRepository, ControlVariablesRepository } from '@novu/dal';
 
-import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { ControlVariablesRepository } from '@novu/dal';
+import { ApiExcludeController } from '@nestjs/swagger';
 
 import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
 import { Sync } from './usecases/sync/sync.usecase';
-import { ApiExcludeController } from '@nestjs/swagger';
 import { ValidateBridgeUrlRequestDto } from './dtos/validate-bridge-url-request.dto';
 import { ValidateBridgeUrlResponseDto } from './dtos/validate-bridge-url-response.dto';
 import { GetBridgeStatus } from './usecases/get-bridge-status/get-bridge-status.usecase';
@@ -180,7 +179,7 @@ export class BridgeController {
       _environmentId: user.environmentId,
       _organizationId: user.organizationId,
       _workflowId: workflowExist._id,
-      stepId: stepId,
+      stepId,
       level: ControlVariablesLevelEnum.STEP_CONTROLS,
     });
 
@@ -198,8 +197,8 @@ export class BridgeController {
   ) {
     return this.storeControlVariables.execute(
       StoreControlVariablesCommand.create({
-        stepId: stepId,
-        workflowId: workflowId,
+        stepId,
+        workflowId,
         variables: body.variables,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

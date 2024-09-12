@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 import { captureException } from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
-import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError } from '@novu/shared';
-import { api } from '../../../api/api.client';
 import { PasswordInput, Button, colors, Text } from '@novu/design-system';
+import { useAuth } from '../../../hooks/useAuth';
+import { api } from '../../../api/api.client';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { ROUTES } from '../../../constants/routes';
 

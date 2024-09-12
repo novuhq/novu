@@ -1,11 +1,13 @@
 import { addProjectConfiguration, formatFiles, generateFiles, Tree } from '@nx/devkit';
-import { IProviderGeneratorSchema } from './schema';
 import fs from 'node:fs';
 import path from 'node:path';
+// eslint-disable-next-line import/extensions
+import { IProviderGeneratorSchema } from './schema';
 
 const PROVIDERS_BASE_FOLDER = path.join('..', '..', 'packages', 'providers', 'src', 'lib');
 
 export async function providerGenerator(tree: Tree, options: IProviderGeneratorSchema) {
+  // eslint-disable-next-line no-param-reassign
   options = enrichOptionsWithMultipleCases(options);
   const providerNameInKebabCase = options.name;
   const providerInnerFolder = path.join(PROVIDERS_BASE_FOLDER, options.type.toLowerCase(), providerNameInKebabCase);
@@ -17,7 +19,7 @@ export async function providerGenerator(tree: Tree, options: IProviderGeneratorS
 }
 
 function repopulateFileWithNewLine(filePath, lines: string[]) {
-  fs.writeFile(filePath, lines.join('\n') + '\n', 'utf8', (err) => {
+  fs.writeFile(filePath, `${lines.join('\n')}\n`, 'utf8', (err) => {
     if (err) {
       console.error('Error writing to file:', err);
 
@@ -80,7 +82,7 @@ function addExportToIndexTs(providerName: string, type: string) {
 }
 
 function removeDefaultProjectJsonFromTree(tree: Tree, projectRoot: string) {
-  tree.delete(projectRoot + '/project.json');
+  tree.delete(`${projectRoot}/project.json`);
 }
 
 function generateFilesBasedOnTemplate(tree: Tree, projectRoot: string, options: IProviderGeneratorSchema) {

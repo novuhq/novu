@@ -6,8 +6,8 @@ import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstac
 import { IOrganizationEntity } from '@novu/shared';
 
 import { Text, Select, IconOutlineArrowLeft, IconOutlineArrowRight } from '@novu/design-system';
-import { ProjectLinkFormValues } from './LinkProjectContainer';
 import { OrganizationMembershipResource } from '@clerk/types';
+import { ProjectLinkFormValues } from './LinkProjectContainer';
 
 type ProjectDataType = {
   id: string;
@@ -72,6 +72,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   eligibleProjectOptions.push({
     id: 'infinite-scroll-helper',
+    // eslint-disable-next-line no-nested-ternary
     name: isFetchingNextPage ? 'Fetching projects...' : hasNextPage ? 'Load newer' : 'All projects fetched',
     disabled: true,
     infiniteHelperRef,

@@ -1,11 +1,11 @@
 import { CorePropsWithChildren, LocalizedMessage, Text } from '@novu/novui';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
-import { DocsButton } from '../../../../components/docs/DocsButton';
 import { hstack } from '@novu/novui/patterns';
+import { css } from '@novu/novui/css';
+import { DocsButton } from '../../../../components/docs/DocsButton';
 import { PageContainer } from '../../../layout/PageContainer';
 import { IPageMetaProps, PageMeta } from '../../../layout/PageMeta';
-import { css } from '@novu/novui/css';
 import { PATHS } from '../../../../components/docs/docs.const';
 
 export type WorkflowPlaceholderPageContentProps = { docsButtonLabel: LocalizedMessage } & CorePropsWithChildren;

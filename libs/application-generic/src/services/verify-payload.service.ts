@@ -5,12 +5,12 @@ import { ApiException } from '../utils/exceptions';
 export class VerifyPayloadService {
   checkRequired(
     variables: ITemplateVariable[],
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
   ): string[] {
     const invalidKeys: string[] = [];
 
     for (const variable of variables.filter(
-      (vari) => vari.required && !this.isSystemVariable(vari.name)
+      (vari) => vari.required && !this.isSystemVariable(vari.name),
     )) {
       let value;
 
@@ -56,12 +56,12 @@ export class VerifyPayloadService {
       (elem) =>
         elem.defaultValue !== undefined &&
         elem.defaultValue !== null &&
-        !this.isSystemVariable(elem.name)
+        !this.isSystemVariable(elem.name),
     )) {
       this.setNestedKey(
         payload,
         variable.name.split('.'),
-        variable.defaultValue
+        variable.defaultValue,
       );
     }
 
@@ -71,6 +71,7 @@ export class VerifyPayloadService {
   private setNestedKey(obj, path, value) {
     if (path.length === 1) {
       if (value !== '') {
+        // eslint-disable-next-line no-param-reassign
         obj[path[0]] = value;
       }
 
@@ -78,6 +79,7 @@ export class VerifyPayloadService {
     }
 
     if (!obj[path[0]]) {
+      // eslint-disable-next-line no-param-reassign
       obj[path[0]] = {};
     }
 
@@ -86,21 +88,21 @@ export class VerifyPayloadService {
 
   isSystemVariable(variableName: string): boolean {
     return TemplateSystemVariables.includes(
-      variableName.includes('.') ? variableName.split('.')[0] : variableName
+      variableName.includes('.') ? variableName.split('.')[0] : variableName,
     );
   }
 
   verifyPayload(
     variables: ITemplateVariable[],
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
   ): Record<string, unknown> {
     const invalidKeys: string[] = [];
     invalidKeys.push(...this.checkRequired(variables || [], payload));
     if (invalidKeys.length) {
       throw new ApiException(
         `payload is missing required key(s) and type(s): ${invalidKeys.join(
-          ', '
-        )}`
+          ', ',
+        )}`,
       );
     }
 

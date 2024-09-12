@@ -128,7 +128,7 @@ describe('Compile Template', function () {
     });
 
     expect(result).toEqual(
-      '<div>Hello World and hello world and HELLO WORLD</div>'
+      '<div>Hello World and hello world and HELLO WORLD</div>',
     );
   });
 

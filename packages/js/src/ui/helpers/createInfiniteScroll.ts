@@ -17,7 +17,7 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
         }
       | undefined
     >;
-  }
+  },
 ] {
   const [data, setData] = createSignal<T[]>([]);
   const [initialLoading, setInitialLoading] = createDelayedLoading(true, 300);
@@ -67,8 +67,8 @@ export function createInfiniteScroll<T>(fetcher: (page: number) => Promise<{ dat
     {
       initialLoading,
       setEl,
-      offset: offset,
-      end: end,
+      offset,
+      end,
       mutate,
       reset,
     },

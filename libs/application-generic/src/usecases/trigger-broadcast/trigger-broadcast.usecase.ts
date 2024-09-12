@@ -35,34 +35,32 @@ export class TriggerBroadcast {
     private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private subscriberProcessQueueService: SubscriberProcessQueueService
+    private subscriberProcessQueueService: SubscriberProcessQueueService,
   ) {}
 
   @InstrumentUsecase()
   async execute(command: TriggerBroadcastCommand) {
-    {
-      const subscriberFetchBatchSize = 500;
-      let subscribers: SubscriberEntity[] = [];
+    const subscriberFetchBatchSize = 500;
+    let subscribers: SubscriberEntity[] = [];
 
-      for await (const subscriber of this.subscriberRepository.findBatch(
-        {
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        'subscriberId',
-        {},
-        subscriberFetchBatchSize
-      )) {
-        subscribers.push(subscriber);
-        if (subscribers.length === subscriberFetchBatchSize) {
-          await this.sendToProcessSubscriberService(command, subscribers);
-          subscribers = [];
-        }
-      }
-
-      if (subscribers.length > 0) {
+    for await (const subscriber of this.subscriberRepository.findBatch(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      'subscriberId',
+      {},
+      subscriberFetchBatchSize,
+    )) {
+      subscribers.push(subscriber);
+      if (subscribers.length === subscriberFetchBatchSize) {
         await this.sendToProcessSubscriberService(command, subscribers);
+        subscribers = [];
       }
+    }
+
+    if (subscribers.length > 0) {
+      await this.sendToProcessSubscriberService(command, subscribers);
     }
   }
 
@@ -79,26 +77,26 @@ export class TriggerBroadcast {
   }) {
     return await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
-      command.triggerIdentifier
+      command.triggerIdentifier,
     );
   }
 
   @Instrument()
   private async validateTransactionIdProperty(
     transactionId: string,
-    environmentId: string
+    environmentId: string,
   ): Promise<void> {
     const found = (await this.jobRepository.findOne(
       {
         transactionId,
         _environmentId: environmentId,
       },
-      '_id'
+      '_id',
     )) as Pick<JobEntity, '_id'>;
 
     if (found) {
       throw new ApiException(
-        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId',
       );
     }
   }
@@ -106,7 +104,7 @@ export class TriggerBroadcast {
   @Instrument()
   private async getProviderId(
     environmentId: string,
-    channelType: ChannelTypeEnum
+    channelType: ChannelTypeEnum,
   ): Promise<ProvidersIdEnum> {
     const integration = await this.integrationRepository.findOne(
       {
@@ -114,7 +112,7 @@ export class TriggerBroadcast {
         active: true,
         channel: channelType,
       },
-      'providerId'
+      'providerId',
     );
 
     return integration?.providerId as ProvidersIdEnum;
@@ -122,7 +120,7 @@ export class TriggerBroadcast {
 
   private async sendToProcessSubscriberService(
     command: TriggerBroadcastCommand,
-    subscribers: { subscriberId: string }[]
+    subscribers: { subscriberId: string }[],
   ) {
     const jobs = this.mapSubscribersToJobs(subscribers, command);
 
@@ -131,7 +129,7 @@ export class TriggerBroadcast {
 
   private mapSubscribersToJobs(
     subscribers: { subscriberId: string }[],
-    command: TriggerBroadcastCommand
+    command: TriggerBroadcastCommand,
   ): IProcessSubscriberBulkJobDto[] {
     return subscribers.map((subscriber) => {
       return {
@@ -155,6 +153,7 @@ export class TriggerBroadcast {
             url: command.bridgeUrl,
             workflow: command.bridgeWorkflow,
           },
+          environmentName: command.environmentName,
         },
         groupId: command.organizationId,
       };
@@ -164,8 +163,8 @@ export class TriggerBroadcast {
   private async subscriberProcessQueueAddBulk(jobs) {
     return await Promise.all(
       _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk) =>
-        this.subscriberProcessQueueService.addBulk(chunk)
-      )
+        this.subscriberProcessQueueService.addBulk(chunk),
+      ),
     );
   }
 }

@@ -207,7 +207,6 @@ class Novu {
 
   receiveMessage = (event: any) => {
     if (!!event && !!event.data && !!event.data.type) {
-      // eslint-disable-next-line default-case
       switch (event.data.type) {
         case SET_COOKIE:
           document.cookie = event.data.value;
@@ -348,7 +347,6 @@ class Novu {
       const method: any = call[0];
       const args = call[1];
       if (allowedCalls.includes(method)) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         (this[method as any] as any).apply(this, args);
       }
@@ -387,7 +385,6 @@ export default ((window: any) => {
   novuApi.logout = novu.logout;
 
   if (initCall) {
-    // eslint-disable-next-line prefer-spread
     novuApi[initCall[0]].apply(novuApi, initCall[1]);
 
     const onCalls = window.novu._c.filter((call: string[]) => call[0] === 'on');
@@ -404,13 +401,8 @@ export default ((window: any) => {
       }
     }
   } else {
-    // eslint-disable-next-line no-param-reassign
     (window as any).novu.init = novu.init;
-
-    // eslint-disable-next-line no-param-reassign
     (window as any).novu.on = novu.on;
-
-    // eslint-disable-next-line no-param-reassign
     (window as any).novu.logout = novu.logout;
   }
 })(window);

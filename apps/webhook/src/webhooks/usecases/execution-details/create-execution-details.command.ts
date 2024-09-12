@@ -2,9 +2,9 @@ import { IsArray, IsDefined } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
 import { MessageEntity } from '@novu/dal';
 
+import { ChannelTypeEnum } from '@novu/shared';
 import { WebhookTypes } from '../../interfaces/webhook.interface';
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
-import { ChannelTypeEnum } from '@novu/shared';
 
 export class CreateExecutionDetailsCommand {
   @IsDefined()

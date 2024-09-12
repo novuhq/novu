@@ -5,16 +5,16 @@ import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
 import styled from '@emotion/styled';
 
 import { Dropdown, PlusButton, Popover } from '@novu/design-system';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Button } from '@novu/novui';
+import { IconOutlineAdd } from '@novu/novui/icons';
+import { useEffect } from 'react';
 import { IBlueprintTemplate } from '../../../api/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { TemplateCreationSourceEnum } from '../shared';
 import { useFeatureFlag, useHoverOverItem } from '../../../hooks';
 import { FrameworkProjectDropDownItem } from './FrameworkProjectWaitList';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { Button } from '@novu/novui';
-import { IconOutlineAdd } from '@novu/novui/icons';
 import { useDocsModal } from '../../../components/docs/useDocsModal';
-import { useEffect } from 'react';
 import { PATHS } from '../../../components/docs/docs.const';
 import { ROUTES } from '../../../constants/routes';
 

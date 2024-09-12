@@ -25,7 +25,7 @@ export class ResendEmailProvider
       apiKey: string;
       from: string;
       senderName?: string;
-    }
+    },
   ) {
     super();
     this.resendClient = new Resend(this.config.apiKey);
@@ -33,7 +33,7 @@ export class ResendEmailProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
@@ -53,7 +53,7 @@ export class ResendEmailProvider
         })),
         bcc: options.bcc,
         headers: options.headers,
-      }).body
+      }).body,
     );
 
     if (response.error) {
@@ -67,7 +67,7 @@ export class ResendEmailProvider
   }
 
   async checkIntegration(
-    options: IEmailOptions
+    options: IEmailOptions,
   ): Promise<ICheckIntegrationResponse> {
     try {
       await this.resendClient.emails.send({

@@ -1,9 +1,9 @@
 import { Button, LoadingOverlay } from '@novu/design-system';
-import { useAuth } from '../../hooks/useAuth';
 import { useForm } from 'react-hook-form';
-import { useUpdateOrganizationBranding } from '../../api/hooks';
 import { css } from '@novu/novui/css';
 import { Stack } from '@novu/novui/jsx';
+import { useUpdateOrganizationBranding } from '../../api/hooks';
+import { useAuth } from '../../hooks/useAuth';
 import { successMessage } from '../../utils/notifications';
 import { SettingsPageContainer } from '../settings/SettingsPageContainer';
 import {

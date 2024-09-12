@@ -2,8 +2,8 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 import { WorkflowTypeEnum } from '@novu/shared';
-import { BridgeServer } from '../../../../e2e/bridge.server';
 import { workflow } from '@novu/framework';
+import { BridgeServer } from '../../../../e2e/bridge.server';
 
 describe('Bridge Sync - /bridge/sync (POST)', async () => {
   let session: UserSession;
@@ -57,8 +57,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
           'send-email',
           async (controls) => {
             return {
-              subject: 'This is an email subject ' + controls.name,
-              body: 'Body result ' + payload.name,
+              subject: `This is an email subject ${controls.name}`,
+              body: `Body result ${payload.name}`,
             };
           },
           {
@@ -210,8 +210,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
           'send-email',
           async (controls) => {
             return {
-              subject: 'This is an email subject ' + controls.name,
-              body: 'Body result ' + payload.name,
+              subject: `This is an email subject ${controls.name}`,
+              body: `Body result ${payload.name}`,
             };
           },
           {
@@ -252,8 +252,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
           'send-email-2',
           async (controls) => {
             return {
-              subject: 'This is an email subject ' + controls.name,
-              body: 'Body result ' + payload.name,
+              subject: `This is an email subject ${controls.name}`,
+              body: `Body result ${payload.name}`,
             };
           },
           {

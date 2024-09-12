@@ -1,5 +1,5 @@
 {
-  "main": "../dist/cjs/ui/index.js",
+  "main": "../dist/cjs/ui/index.cjs",
   "module": "../dist/esm/ui/index.mjs",
-  "types": "../dist/types/ui/index.d.ts"
+  "types": "../dist/cjs/ui/index.d.ts"
 }

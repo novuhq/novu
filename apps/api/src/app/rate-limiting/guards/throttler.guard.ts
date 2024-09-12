@@ -5,12 +5,12 @@ import {
   ThrottlerGuard,
   ThrottlerModuleOptions,
   ThrottlerOptions,
+  ThrottlerRequest,
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
-import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { GetFeatureFlag, GetFeatureFlagCommand, Instrument, PinoLogger } from '@novu/application-generic';
+import { GetFeatureFlag, GetFeatureFlagCommand, Instrument } from '@novu/application-generic';
 import {
   ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
@@ -20,6 +20,7 @@ import {
   FeatureFlagsKeysEnum,
   UserSessionData,
 } from '@novu/shared';
+import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
@@ -40,8 +41,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
-    private getFeatureFlag: GetFeatureFlag,
-    private logger: PinoLogger
+    private getFeatureFlag: GetFeatureFlag
   ) {
     super(options, storageService, reflector);
   }
@@ -50,13 +50,9 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * Thin wrapper around the ThrottlerGuard's canActivate method.
    */
   async intercept(context: ExecutionContext, next: CallHandler) {
-    try {
-      await this.canActivate(context);
+    await this.canActivate(context);
 
-      return next.handle();
-    } catch (error) {
-      throw error;
-    }
+    return next.handle();
   }
 
   @Instrument()
@@ -91,12 +87,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
    * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
    * @throws {ThrottlerException}
    */
-  protected async handleRequest(
-    context: ExecutionContext,
-    _limit: number,
-    _ttl: number,
-    throttler: ThrottlerOptions
-  ): Promise<boolean> {
+  protected async handleRequest({ context, throttler }: ThrottlerRequest): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const ignoreUserAgents = throttler.ignoreUserAgents ?? this.commonOptions.ignoreUserAgents;
     // Return early if the current user agent should be ignored.
@@ -129,18 +120,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
-    const rateLimitPolicy = {
-      limit,
-      windowDuration,
-      burstLimit,
-      algorithm,
-      apiRateLimitCategory,
-      apiRateLimitCost,
-      apiServiceLevel,
-    };
-
-    this.logger.assign({ rateLimitPolicy });
-
     /**
      * The purpose of the dry run is to allow us to observe how
      * the rate limiting would behave without actually enforcing it.
@@ -153,14 +132,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
         key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_DRY_RUN_ENABLED,
       })
     );
-
-    if (isDryRun) {
-      if (!success) {
-        Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');
-      }
-
-      return true;
-    }
 
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
@@ -177,6 +148,24 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
         apiServiceLevel
       )
     );
+
+    res.rateLimitPolicy = {
+      limit,
+      windowDuration,
+      burstLimit,
+      algorithm,
+      apiRateLimitCategory,
+      apiRateLimitCost,
+      apiServiceLevel,
+    };
+
+    if (isDryRun) {
+      if (!success) {
+        Logger.warn(`[Dry run] ${THROTTLED_EXCEPTION_MESSAGE}`, 'ApiRateLimitInterceptor');
+      }
+
+      return true;
+    }
 
     if (success) {
       return true;
@@ -212,7 +201,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const authScheme = req.authScheme;
+    const { authScheme } = req;
 
     return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }

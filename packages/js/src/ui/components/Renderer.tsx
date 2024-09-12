@@ -1,6 +1,7 @@
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
+import { Novu } from '../../novu';
 import type { NovuOptions } from '../../types';
 import {
   AppearanceProvider,
@@ -10,7 +11,7 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Appearance, Localization, Tab } from '../types';
+import type { Appearance, Localization, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
@@ -46,9 +47,13 @@ type RendererProps = {
   localization?: Localization;
   options: NovuOptions;
   tabs: Array<Tab>;
+  routerPush?: RouterPush;
+  novu?: Novu;
 };
 
 export const Renderer = (props: RendererProps) => {
+  const nodes = () => [...props.nodes.keys()];
+
   onMount(() => {
     const id = 'novu-default-css';
     const el = document.getElementById(id);
@@ -69,19 +74,20 @@ export const Renderer = (props: RendererProps) => {
   });
 
   return (
-    <NovuProvider options={props.options}>
+    <NovuProvider options={props.options} novu={props.novu}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxProvider tabs={props.tabs}>
+            <InboxProvider tabs={props.tabs} routerPush={props.routerPush}>
               <CountProvider>
-                <For each={[...props.nodes]}>
-                  {([node, component]) => {
+                <For each={nodes()}>
+                  {(node) => {
+                    const novuComponent = () => props.nodes.get(node)!;
                     let portalDivElement: HTMLDivElement;
-                    const Component = novuComponents[component.name];
+                    const Component = novuComponents[novuComponent().name];
 
                     onMount(() => {
-                      if (!['Notifications', 'Preferences'].includes(component.name)) return;
+                      if (!['Notifications', 'Preferences'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
                         node.classList.add('nt-h-full');
@@ -97,7 +103,7 @@ export const Renderer = (props: RendererProps) => {
                         }}
                       >
                         <Root>
-                          <Component {...component.props} />
+                          <Component {...novuComponent().props} />
                         </Root>
                       </Portal>
                     );

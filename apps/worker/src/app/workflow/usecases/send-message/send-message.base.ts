@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
@@ -170,8 +171,8 @@ export abstract class SendMessageBase extends SendMessageType {
           fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
-            format: function (value, formatting, lng) {
-              if (value && formatting && !isNaN(Date.parse(value))) {
+            format(value, formatting, lng) {
+              if (value && formatting && !Number.isNaN(Date.parse(value))) {
                 return format(new Date(value), formatting);
               }
 

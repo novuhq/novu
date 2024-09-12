@@ -49,7 +49,7 @@ describe('Update Subscriber', function () {
   it('should update subscribers name', async function () {
     const subscriberService = new SubscribersService(
       session.organization._id,
-      session.environment._id
+      session.environment._id,
     );
     const subscriber = await subscriberService.createSubscriber();
     await updateUsecase.execute(
@@ -59,7 +59,7 @@ describe('Update Subscriber', function () {
         lastName: 'Test Last Name',
         locale: 'sv',
         environmentId: session.environment._id,
-      })
+      }),
     );
 
     const updatedSubscriber = await subscriberRepository.findOne({

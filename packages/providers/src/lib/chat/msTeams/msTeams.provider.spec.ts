@@ -1,11 +1,11 @@
 import { expect, test } from 'vitest';
-import { MsTeamsProvider } from './msTeams.provider';
 import { v4 as uuidv4 } from 'uuid';
+import { MsTeamsProvider } from './msTeams.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 
 test('should trigger msTeams webhook correctly', async () => {
   const { mockPost: fakePost } = axiosSpy({
-    headers: { ['request-id']: uuidv4() },
+    headers: { 'request-id': uuidv4() },
   });
 
   const provider = new MsTeamsProvider({});
@@ -25,7 +25,7 @@ test('should trigger msTeams webhook correctly', async () => {
 
 test('should trigger msTeams webhook correctly with _passthrough', async () => {
   const { mockPost: fakePost } = axiosSpy({
-    headers: { ['request-id']: uuidv4() },
+    headers: { 'request-id': uuidv4() },
   });
 
   const provider = new MsTeamsProvider({});
@@ -43,7 +43,7 @@ test('should trigger msTeams webhook correctly with _passthrough', async () => {
           title: '_passthrough test title',
         },
       },
-    }
+    },
   );
 
   expect(fakePost).toHaveBeenCalled();

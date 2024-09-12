@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import { hash } from 'bcrypt';
-import { SignUpOriginEnum } from '@novu/shared';
+import { SignUpOriginEnum, normalizeEmail } from '@novu/shared';
 import { AnalyticsService, AuthService, createHash } from '@novu/application-generic';
 
 import { UserRegisterCommand } from './user-register.command';
-import { normalizeEmail } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';

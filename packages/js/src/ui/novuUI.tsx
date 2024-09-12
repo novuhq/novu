@@ -1,14 +1,13 @@
-import { Accessor, ComponentProps, createSignal } from 'solid-js';
+import { Accessor, Setter, ComponentProps, createSignal } from 'solid-js';
 import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { generateRandomString } from './helpers';
-import type { Appearance, BaseNovuProviderProps, Localization, NovuProviderProps, Tab } from './types';
+import type { Appearance, BaseNovuProviderProps, Localization, NovuProviderProps, RouterPush, Tab } from './types';
 
-// eslint-disable-next-line
 // @ts-ignore
 const isDev = __DEV__;
-// eslint-disable-next-line
+
 // @ts-ignore
 const version = PACKAGE_VERSION;
 const cssHref = isDev
@@ -30,6 +29,9 @@ export class NovuUI {
   #setOptions;
   #tabs: Accessor<Array<Tab>>;
   #setTabs;
+  #routerPush: Accessor<RouterPush | undefined>;
+  #setRouterPush: Setter<RouterPush | undefined>;
+  #predefinedNovu;
   id: string;
 
   constructor(props: NovuProviderProps) {
@@ -39,6 +41,7 @@ export class NovuUI {
     const [options, setOptions] = createSignal(props.options);
     const [mountedElements, setMountedElements] = createSignal(new Map<MountableElement, NovuComponent>());
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
+    const [routerPush, setRouterPush] = createSignal(props.routerPush);
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
     this.#appearance = appearance;
@@ -49,6 +52,9 @@ export class NovuUI {
     this.#setOptions = setOptions;
     this.#tabs = tabs;
     this.#setTabs = setTabs;
+    this.#routerPush = routerPush;
+    this.#setRouterPush = setRouterPush;
+    this.#predefinedNovu = props.novu;
 
     this.#mountComponentRenderer();
   }
@@ -72,6 +78,8 @@ export class NovuUI {
           appearance={this.#appearance()}
           localization={this.#localization()}
           tabs={this.#tabs()}
+          routerPush={this.#routerPush()}
+          novu={this.#predefinedNovu}
         />
       ),
       this.#rootElement
@@ -136,6 +144,10 @@ export class NovuUI {
 
   updateTabs(tabs?: Array<Tab>) {
     this.#setTabs(tabs ?? []);
+  }
+
+  updateRouterPush(routerPush?: RouterPush) {
+    this.#setRouterPush(() => routerPush);
   }
 
   unmount(): void {

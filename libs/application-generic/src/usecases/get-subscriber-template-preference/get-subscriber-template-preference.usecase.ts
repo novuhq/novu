@@ -23,6 +23,7 @@ import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-templat
 
 import { ApiException } from '../../utils/exceptions';
 import { CachedEntity, buildSubscriberKey } from '../../services/cache';
+import { GetPreferences, GetPreferencesCommand } from '../get-preferences';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -37,7 +38,8 @@ export class GetSubscriberTemplatePreference {
     private messageTemplateRepository: MessageTemplateRepository,
     private subscriberRepository: SubscriberRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
+    private getPreferences: GetPreferences
   ) {}
 
   async execute(
@@ -68,7 +70,13 @@ export class GetSubscriberTemplatePreference {
     const workflowOverride = await this.getWorkflowOverride(command);
 
     const templateChannelPreference = command.template.preferenceSettings;
-    const subscriberChannelPreference = subscriberPreference?.channels;
+    const subscriberChannelPreference =
+      (await this.getPreferences.getPreferenceChannels({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        templateId: command.template._id,
+      })) || subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 
@@ -210,6 +218,7 @@ function updateOverrideReasons(
   const notFoundFlag = -1;
   const existsInOverrideReasons = index !== notFoundFlag;
   if (existsInOverrideReasons) {
+    // eslint-disable-next-line no-param-reassign
     overrideReasons[index] = currentOverride;
   } else {
     overrideReasons.push(currentOverride);

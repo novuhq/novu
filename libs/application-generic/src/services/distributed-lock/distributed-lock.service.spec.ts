@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 
@@ -10,8 +9,10 @@ import {
   CacheInMemoryProviderService,
 } from '../in-memory-provider';
 
+// eslint-disable-next-line no-multi-assign
 const originalRedisCacheServiceHost = (process.env.REDIS_CACHE_SERVICE_HOST =
   process.env.REDIS_CACHE_SERVICE_HOST ?? 'localhost');
+// eslint-disable-next-line no-multi-assign
 const originalRedisCacheServicePort = (process.env.REDIS_CACHE_SERVICE_PORT =
   process.env.REDIS_CACHE_SERVICE_PORT ?? '6379');
 const originalRedisClusterServiceHost = process.env.REDIS_CLUSTER_SERVICE_HOST;
@@ -20,11 +21,11 @@ const originalRedisClusterServicePorts =
 
 const spyDecreaseLockCounter = jest.spyOn(
   DistributedLockService.prototype,
-  <any>'decreaseLockCounter'
+  <any>'decreaseLockCounter',
 );
 const spyIncreaseLockCounter = jest.spyOn(
   DistributedLockService.prototype,
-  <any>'increaseLockCounter'
+  <any>'increaseLockCounter',
 );
 const spyLock = jest.spyOn(Redlock.prototype, 'acquire');
 const spyUnlock = jest.spyOn(Redlock.prototype, 'release');
@@ -49,7 +50,7 @@ describe('Distributed Lock Service', () => {
       expect(cacheInMemoryProviderService.getClientStatus()).toEqual('ready');
 
       distributedLockService = new DistributedLockService(
-        cacheInMemoryProviderService
+        cacheInMemoryProviderService,
       );
       await distributedLockService.initialize();
     });
@@ -67,22 +68,22 @@ describe('Distributed Lock Service', () => {
         expect(await client!.ping()).toEqual('PONG');
         expect(client!.status).toEqual('ready');
         expect(client!.isCluster).toEqual(
-          process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED === 'true'
+          process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED === 'true',
         );
       });
 
       it('should have default settings', () => {
         expect(
-          distributedLockService.distributedLock.settings.driftFactor
+          distributedLockService.distributedLock.settings.driftFactor,
         ).toEqual(0.01);
         expect(
-          distributedLockService.distributedLock.settings.retryCount
+          distributedLockService.distributedLock.settings.retryCount,
         ).toEqual(50);
         expect(
-          distributedLockService.distributedLock.settings.retryDelay
+          distributedLockService.distributedLock.settings.retryDelay,
         ).toEqual(100);
         expect(
-          distributedLockService.distributedLock.settings.retryJitter
+          distributedLockService.distributedLock.settings.retryJitter,
         ).toEqual(200);
       });
     });
@@ -122,7 +123,7 @@ describe('Distributed Lock Service', () => {
         const resourceWithPrefix =
           distributedLockService.buildResourceWithPrefix(resource);
         expect(resourceWithPrefix).toEqual(
-          `{environmentId:90210}user:1:template:1:environment:90210`
+          `{environmentId:90210}user:1:template:1:environment:90210`,
         );
       });
 
@@ -173,7 +174,7 @@ describe('Distributed Lock Service', () => {
         try {
           const result = await distributedLockService.applyLock(
             { resource, ttl: TTL },
-            handler
+            handler,
           );
           expect(result).not.toBeDefined();
         } catch {
@@ -236,7 +237,7 @@ describe('Distributed Lock Service', () => {
         const call = async () => {
           if (executed < 1) {
             await setTimeout(90);
-            executed++;
+            executed += 1;
           }
         };
 
@@ -269,7 +270,7 @@ describe('Distributed Lock Service', () => {
         const call = (duration: number) => {
           async function closure() {
             await setTimeout(duration);
-            executed++;
+            executed += 1;
           }
 
           return closure;
@@ -306,7 +307,7 @@ describe('Distributed Lock Service', () => {
       cacheInMemoryProviderService = new CacheInMemoryProviderService();
       expect(
         cacheInMemoryProviderService.inMemoryProviderService
-          .inMemoryProviderConfig.host
+          .inMemoryProviderConfig.host,
       ).toEqual('localhost');
       distributedLockService = new DistributedLockService(undefined);
       // If no initializing the service is like the client is not properly set
@@ -338,7 +339,7 @@ describe('Distributed Lock Service', () => {
 
         const result = await distributedLockService.applyLock(
           { resource, ttl: TTL },
-          handler
+          handler,
         );
         expect(result).toEqual({ executed: true });
 

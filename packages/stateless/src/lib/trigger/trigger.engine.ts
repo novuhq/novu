@@ -24,14 +24,14 @@ export class TriggerEngine {
     private themeStore: ThemeStore,
     private contentEngine: IContentEngine,
     private config: INovuConfig,
-    private eventEmitter: EventEmitter
+    private eventEmitter: EventEmitter,
   ) {}
 
   async trigger(eventId: string, data: ITriggerPayload) {
     const template = await this.templateStore.getTemplateById(eventId);
     if (!template) {
       throw new Error(
-        `Template on event: ${eventId} was not found in the template store`
+        `Template on event: ${eventId} was not found in the template store`,
       );
     }
 
@@ -46,7 +46,7 @@ export class TriggerEngine {
   async processTemplateMessage(
     template: ITemplate,
     message: IMessage,
-    data: ITriggerPayload
+    data: ITriggerPayload,
   ) {
     const provider = message.providerId
       ? await this.providerStore.getProviderById(message.providerId)
@@ -59,7 +59,7 @@ export class TriggerEngine {
     const missingVariables = this.getMissingVariables(message, data);
     if (missingVariables.length && this.config.variableProtection) {
       throw new Error(
-        `Missing variables passed. ${missingVariables.toString()}`
+        `Missing variables passed. ${missingVariables.toString()}`,
       );
     }
 
@@ -120,22 +120,22 @@ export class TriggerEngine {
 
     if (message.template && typeof message.template === 'string') {
       mergedResults.push(
-        ...this.contentEngine.extractMessageVariables(message.template)
+        ...this.contentEngine.extractMessageVariables(message.template),
       );
     }
 
     if (message.subject) {
       if (typeof message.subject === 'string') {
         mergedResults.push(
-          ...this.contentEngine.extractMessageVariables(message.subject)
+          ...this.contentEngine.extractMessageVariables(message.subject),
         );
       } else if (typeof message.subject === 'function') {
         mergedResults.push(
-          ...this.contentEngine.extractMessageVariables(message.subject(data))
+          ...this.contentEngine.extractMessageVariables(message.subject(data)),
         );
       } else {
         throw new Error(
-          "Subject must be either of 'string' or 'function' type"
+          "Subject must be either of 'string' or 'function' type",
         );
       }
     }

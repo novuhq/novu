@@ -8,7 +8,7 @@ describe('In-memory Provider Service', () => {
     beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService(
         InMemoryProviderEnum.REDIS,
-        false
+        false,
       );
 
       await inMemoryProviderService.delayUntilReadiness();
@@ -25,12 +25,12 @@ describe('In-memory Provider Service', () => {
         const { inMemoryProviderConfig } = inMemoryProviderService;
 
         expect(inMemoryProviderConfig.host).toEqual(
-          process.env.REDIS_CACHE_SERVICE_HOST
+          process.env.REDIS_CACHE_SERVICE_HOST,
         );
 
         if ('port' in inMemoryProviderConfig) {
           expect(inMemoryProviderConfig.port).toEqual(
-            Number(process.env.REDIS_CACHE_SERVICE_PORT)
+            Number(process.env.REDIS_CACHE_SERVICE_PORT),
           );
         }
 
@@ -53,7 +53,7 @@ describe('In-memory Provider Service', () => {
 
         expect(options?.host).toEqual(process.env.REDIS_CACHE_SERVICE_HOST);
         expect(options?.port).toEqual(
-          Number(process.env.REDIS_CACHE_SERVICE_PORT)
+          Number(process.env.REDIS_CACHE_SERVICE_PORT),
         );
         expect(options?.role).toEqual('master');
         expect(options?.username).toEqual(null);
@@ -69,11 +69,10 @@ describe('In-memory Provider Service', () => {
         const valueToStore = 'non cluster mode';
         await inMemoryProviderService.inMemoryProviderClient.set(
           'novu',
-          valueToStore
+          valueToStore,
         );
-        const value = await inMemoryProviderService.inMemoryProviderClient.get(
-          'novu'
-        );
+        const value =
+          await inMemoryProviderService.inMemoryProviderClient.get('novu');
         expect(value).toEqual('non cluster mode');
       });
     });
@@ -83,7 +82,7 @@ describe('In-memory Provider Service', () => {
     beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService(
         InMemoryProviderEnum.REDIS,
-        true
+        true,
       );
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -99,14 +98,14 @@ describe('In-memory Provider Service', () => {
         const clusterWithPipelining = new InMemoryProviderService(
           InMemoryProviderEnum.REDIS,
           true,
-          true
+          true,
         );
         await clusterWithPipelining.delayUntilReadiness();
 
         expect(clusterWithPipelining.getStatus()).toEqual('ready');
         expect(
           clusterWithPipelining.inMemoryProviderClient.options
-            .enableAutoPipelining
+            .enableAutoPipelining,
         ).toEqual(true);
       });
     });
@@ -116,7 +115,7 @@ describe('In-memory Provider Service', () => {
         const { inMemoryProviderConfig } = inMemoryProviderService;
 
         expect(inMemoryProviderConfig.host).toEqual(
-          process.env.REDIS_CLUSTER_SERVICE_HOST
+          process.env.REDIS_CLUSTER_SERVICE_HOST,
         );
         if ('ports' in inMemoryProviderConfig) {
           const ports =
@@ -149,7 +148,7 @@ describe('In-memory Provider Service', () => {
         expect(inMemoryProviderClient.status).toEqual('ready');
         expect(inMemoryProviderClient.isCluster).toEqual(true);
         expect(inMemoryProviderClient.options.enableAutoPipelining).toEqual(
-          false
+          false,
         );
 
         const options = inMemoryProviderService.getOptions();
@@ -173,11 +172,10 @@ describe('In-memory Provider Service', () => {
         const valueToStore = 'cluster mode';
         await inMemoryProviderService.inMemoryProviderClient.set(
           'novu',
-          valueToStore
+          valueToStore,
         );
-        const value = await inMemoryProviderService.inMemoryProviderClient.get(
-          'novu'
-        );
+        const value =
+          await inMemoryProviderService.inMemoryProviderClient.get('novu');
         expect(value).toEqual('cluster mode');
       });
     });

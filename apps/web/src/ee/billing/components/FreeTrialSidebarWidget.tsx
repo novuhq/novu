@@ -1,14 +1,17 @@
 import { Box, MantineColor, Progress, Text } from '@mantine/core';
 import { colors, Button } from '@novu/design-system';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
 import { useSubscription } from '../hooks/useSubscription';
-import { pluralizeDaysLeft, WARNING_LIMIT_DAYS, COLOR_WARNING } from '../utils/freeTrial.constants';
+import { pluralizeDaysLeft, warningLimitDays, COLOR_WARNING } from '../utils/freeTrial.constants';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';
+import { ROUTES } from '../../../constants/routes';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFeatureFlag } from '../../../hooks';
 
 export const FreeTrialSidebarWidget = () => {
   const { isFreeTrialActive, daysLeft, daysTotal, hasPaymentMethod } = useSubscription();
+  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
   const percentRemaining = useMemo(() => {
     return daysTotal === 0 && daysLeft === 0 ? 0 : Math.round((daysLeft / daysTotal) * 100);
   }, [daysTotal, daysLeft]);
@@ -20,10 +23,10 @@ export const FreeTrialSidebarWidget = () => {
   }
 
   const getProgressBarColor = () => {
-    if (daysLeft <= WARNING_LIMIT_DAYS) {
+    if (daysLeft <= warningLimitDays(isImprovedBillingEnabled)) {
       return COLOR_WARNING;
     }
-    if (daysLeft > WARNING_LIMIT_DAYS) {
+    if (daysLeft > warningLimitDays(isImprovedBillingEnabled)) {
       return colors.success;
     }
   };
@@ -45,7 +48,7 @@ export const FreeTrialSidebarWidget = () => {
       />
       <Button
         onClick={() => {
-          navigate(IS_EE_AUTH_ENABLED ? '/billing' : '/settings/billing');
+          navigate(IS_EE_AUTH_ENABLED ? ROUTES.MANAGE_ACCOUNT_BILLING : ROUTES.BILLING);
         }}
         data-test-id="free-trial-widget-button"
         mt={12}

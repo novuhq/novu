@@ -22,7 +22,7 @@ export class MessageBirdSmsProvider
   constructor(
     private config: {
       access_key?: string;
-    }
+    },
   ) {
     super();
     this.messageBirdClient = initClient(config.access_key);
@@ -30,7 +30,7 @@ export class MessageBirdSmsProvider
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const params = this.transform<MessageParameters>(bridgeProviderData, {
       originator: options.from,

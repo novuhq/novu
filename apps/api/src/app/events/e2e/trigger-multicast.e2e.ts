@@ -257,7 +257,7 @@ describe('TriggerMulticast', () => {
       organizationId: session.organization._id,
       environmentId: session.environment._id,
       userId: session.user._id,
-      actor: actor,
+      actor,
     }) as any;
 
     await triggerMulticast.execute(command);
@@ -396,7 +396,7 @@ describe('TriggerMulticast', () => {
   });
 
   it('should batch topic subscribers by 100', async () => {
-    for (let i = 0; i < 234; i++) {
+    for (let i = 0; i < 234; i += 1) {
       const newSubscriber = await subscriberService.createSubscriber();
       await addSubscribersToTopic(session, bootstrapFirstTopic, [newSubscriber]);
     }

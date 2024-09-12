@@ -9,7 +9,7 @@ export abstract class BaseHandler implements IMailHandler {
 
   protected constructor(
     private providerId: EmailProviderIdEnum,
-    private channelType: string
+    private channelType: string,
   ) {}
 
   canHandle(providerId: string, channelType: ChannelTypeEnum) {
@@ -39,9 +39,8 @@ export abstract class BaseHandler implements IMailHandler {
       to: ['no-reply@novu.co'],
     };
 
-    const { message, success, code } = await this.provider.checkIntegration(
-      mailData
-    );
+    const { message, success, code } =
+      await this.provider.checkIntegration(mailData);
 
     if (!success) {
       throw new PlatformException(
@@ -51,7 +50,7 @@ export abstract class BaseHandler implements IMailHandler {
           message:
             message ||
             'Something went wrong! Please double check your account details(Email/API key)',
-        })
+        }),
       );
     }
 

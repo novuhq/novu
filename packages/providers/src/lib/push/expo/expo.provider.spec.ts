@@ -9,7 +9,7 @@ describe('Expo', () => {
     });
 
     const spy = vi
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
       .mockImplementation(async () => {
@@ -31,7 +31,6 @@ describe('Expo', () => {
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
@@ -57,7 +56,7 @@ describe('Expo', () => {
     });
 
     const spy = vi
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
       .mockImplementation(async () => {
@@ -88,11 +87,10 @@ describe('Expo', () => {
       throw new Error('Should not reach here');
     } catch (error) {
       expect(error.message).toEqual(
-        '"invalidDeviceToken" is not a registered push notification recipient'
+        '"invalidDeviceToken" is not a registered push notification recipient',
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
@@ -116,7 +114,7 @@ describe('Expo', () => {
     });
 
     const spy = vi
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
       .mockImplementation(async () => {
@@ -148,7 +146,6 @@ describe('Expo', () => {
       expect(error.message).toEqual('Unexpected Expo status');
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
@@ -172,7 +169,7 @@ describe('Expo', () => {
     });
 
     const spy = vi
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-expect-error
       .spyOn(provider.expo, 'sendPushNotificationsAsync')
       .mockImplementation(async () => {
@@ -200,10 +197,9 @@ describe('Expo', () => {
             badge: '_passthrough',
           },
         },
-      }
+      },
     );
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();

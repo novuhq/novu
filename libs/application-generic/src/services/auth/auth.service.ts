@@ -24,7 +24,7 @@ export class AuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    authContext: AuthenticateContext = {}
+    authContext: AuthenticateContext = {},
   ): Promise<{ newUser: boolean; token: string }> {
     return this.authService.authenticate(
       authProvider,
@@ -32,7 +32,7 @@ export class AuthService implements IAuthService {
       refreshToken,
       profile,
       distinctId,
-      authContext
+      authContext,
     );
   }
 
@@ -42,11 +42,11 @@ export class AuthService implements IAuthService {
 
   isAuthenticatedForOrganization(
     userId: string,
-    organizationId: string
+    organizationId: string,
   ): Promise<boolean> {
     return this.authService.isAuthenticatedForOrganization(
       userId,
-      organizationId
+      organizationId,
     );
   }
 
@@ -66,13 +66,13 @@ export class AuthService implements IAuthService {
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
-    environmentId?: string
+    environmentId?: string,
   ): Promise<string> {
     return this.authService.getSignedToken(
       user,
       organizationId,
       member,
-      environmentId
+      environmentId,
     );
   }
 

@@ -7,7 +7,7 @@ import { BadRequestException, flatten } from '@nestjs/common';
 export abstract class BaseCommand {
   static create<T extends BaseCommand>(
     this: new (...args: any[]) => T,
-    data: T
+    data: T,
   ): T {
     const convertedObject = plainToInstance<T, any>(this, {
       ...data,
@@ -16,7 +16,7 @@ export abstract class BaseCommand {
     const errors = validateSync(convertedObject as unknown as object);
     if (errors?.length) {
       const mappedErrors = flatten(
-        errors.map((item) => Object.values((item as any).constraints))
+        errors.map((item) => Object.values((item as any).constraints)),
       );
 
       addBreadcrumb({

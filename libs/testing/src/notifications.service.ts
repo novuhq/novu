@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 export class NotificationsService {
-  constructor(private token: string, private environmentId: string) {}
+  constructor(
+    private token: string,
+    private environmentId: string
+  ) {}
 
   async triggerEvent(name: string, subscriberId: string, payload = {}) {
     await axios.post(

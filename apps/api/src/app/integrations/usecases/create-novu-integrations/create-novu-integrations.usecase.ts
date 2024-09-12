@@ -7,9 +7,6 @@ import {
   GetFeatureFlagCommand,
 } from '@novu/application-generic';
 
-import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
-import { CreateIntegration } from '../create-integration/create-integration.usecase';
-import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -17,6 +14,9 @@ import {
   InAppProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
+import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
+import { CreateIntegration } from '../create-integration/create-integration.usecase';
+import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
 import { SetIntegrationAsPrimary } from '../set-integration-as-primary/set-integration-as-primary.usecase';
 import { SetIntegrationAsPrimaryCommand } from '../set-integration-as-primary/set-integration-as-primary.command';
 

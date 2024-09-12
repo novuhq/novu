@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 
 export function subscriberNeedUpdate(
   subscriber: SubscriberEntity,
-  subscriberPayload: Partial<Omit<SubscriberEntity, 'channels'>>
+  subscriberPayload: Partial<Omit<SubscriberEntity, 'channels'>>,
 ): boolean {
   return (
     !!(

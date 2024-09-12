@@ -25,12 +25,6 @@ interface ISetEnvironment {
   privateKey: string;
 }
 
-type MapProjectkeys = {
-  privateKey: string;
-  clientKey: string;
-  projectIds: string[];
-};
-
 @Injectable()
 export class CompleteVercelIntegration {
   constructor(
@@ -143,9 +137,9 @@ export class CompleteVercelIntegration {
       }
 
       await this.syncUsecase.execute({
-        organizationId: organizationId,
+        organizationId,
         userId: internalUser?._id as string,
-        environmentId: environmentId,
+        environmentId,
         bridgeUrl: fullBridgeUrl,
         source: 'vercel',
       });

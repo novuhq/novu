@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { EvaluateTokenBucketRateLimit } from './evaluate-token-bucket-rate-limit.usecase';
 import { CacheService, cacheService as inMemoryCacheService } from '@novu/application-generic';
-import { SharedModule } from '../../../shared/shared.module';
-import { RateLimitingModule } from '../../rate-limiting.module';
 import { Test } from '@nestjs/testing';
 import sinon from 'sinon';
-import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import { v4 as uuid } from 'uuid';
+import { EvaluateTokenBucketRateLimit } from './evaluate-token-bucket-rate-limit.usecase';
+import { SharedModule } from '../../../shared/shared.module';
+import { RateLimitingModule } from '../../rate-limiting.module';
+import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 
 describe('EvaluateTokenBucketRateLimit', () => {
   let useCase: EvaluateTokenBucketRateLimit;
@@ -300,7 +300,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
         const bins = 10;
 
         // Find the maximum duration to scale the histogram
-        const maxDuration = Math.max(...results.map((r) => r.duration));
+        const maxDuration = Math.max(...results.map((result) => result.duration));
 
         // Initialize an array for the histogram bins
         const histogram = Array(bins).fill(0);
@@ -308,7 +308,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
         // Populate the histogram bins
         results.forEach((result) => {
           const index = Math.floor((result.duration / maxDuration) * bins);
-          histogram[index < bins ? index : bins - 1]++;
+          histogram[index < bins ? index : bins - 1] += 1;
         });
 
         // Find the maximum bin count to scale the histogram height
@@ -356,9 +356,9 @@ describe('EvaluateTokenBucketRateLimit', () => {
                 const refillPerWindow = (maxTokens * mockProportionRefill) / mockWindowDuration;
 
                 before(async () => {
-                  const cacheService = await inMemoryCacheService.useFactory();
+                  const cacheServiceInitialized = await inMemoryCacheService.useFactory();
                   testContext = {
-                    redis: EvaluateTokenBucketRateLimit.getCacheClient(cacheService),
+                    redis: EvaluateTokenBucketRateLimit.getCacheClient(cacheServiceInitialized),
                   };
 
                   const proms = Array.from({ length: totalRequests }).map(async (_val, index) => {
@@ -388,7 +388,9 @@ describe('EvaluateTokenBucketRateLimit', () => {
                         : mockRepeatId;
 
                     const jitter = Math.floor(Math.random() * maxJitterMs);
-                    await new Promise((resolve) => setTimeout(resolve, jitter));
+                    await new Promise((resolve) => {
+                      setTimeout(resolve, jitter);
+                    });
                     const start = Date.now();
                     const limit = EvaluateTokenBucketRateLimit.tokenBucketLimiter(
                       refillPerWindow,
@@ -412,8 +414,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
 
                   totalTime = endAll - startAll;
                   averageTime = results.reduce((acc, val) => acc + val.duration, 0) / results.length;
-                  variance =
-                    results.reduce((acc, val) => acc + Math.pow(val.duration - averageTime, 2), 0) / results.length;
+                  variance = results.reduce((acc, val) => acc + (val.duration - averageTime) ** 2, 0) / results.length;
                   stdev = Math.sqrt(variance);
                   nthPercentile = results.sort((a, b) => a.duration - b.duration)[
                     Math.floor(results.length * testPercentile)

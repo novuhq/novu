@@ -161,7 +161,7 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
 
     const hmacHash = createHash(session.apiKey, userSubscriberId);
 
-    const invalidHmac = hmacHash + '007';
+    const invalidHmac = `${hmacHash}007`;
 
     await expectThrow({
       subscriberId: userSubscriberId,
@@ -197,7 +197,7 @@ describe('ChatOauthCallback - /:subscriberId/credentials/:providerId/:environmen
     environmentId?: string;
     hashHmac?: string;
   }) {
-    const expectedError = 'Exception should have been thrown' + ` expect error: ${error}`;
+    const expectedError = `Exception should have been thrown expect error: ${error}`;
     try {
       await chatOauthCallback(session.serverUrl, subscriberId, environmentId, ChatProviderIdEnum.Slack, hashHmac);
       throw new Error(expectedError);

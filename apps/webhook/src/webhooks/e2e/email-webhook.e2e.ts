@@ -75,7 +75,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
 
     const { data } = await callWebhook(envId, orgId, webhookBody);
 
-    const event: IEmailEventBody = data[0].event;
+    const { event } = data[0];
     expect(data[0].id).to.equal(webhookBody.id);
     expect(event.externalId).to.equal(webhookBody.id);
     expect(event.attempts).to.equal(5);
@@ -132,7 +132,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
 
     const { data } = await callWebhook(envId, orgId, webhookBody, sendgridIntegration._id);
 
-    const event: IEmailEventBody = data[0].event;
+    const { event } = data[0];
     expect(data[0].id).to.equal(webhookBody.id);
     expect(event.externalId).to.equal(webhookBody.id);
     expect(event.attempts).to.equal(5);

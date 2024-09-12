@@ -59,7 +59,7 @@ test('should trigger Maqsam correctly with _passthrough', async () => {
           to: '+276543',
         },
       },
-    }
+    },
   );
 
   expect(spy).toHaveBeenCalled();

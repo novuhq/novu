@@ -1,12 +1,12 @@
 import { createContext, useCallback, useEffect, useState, useMemo } from 'react';
-import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
-import { type AuthContextValue } from '../../../components/providers/AuthProvider';
 import type { IOrganizationEntity, IUserEntity, ProductUseCases } from '@novu/shared';
 import { useAuth, useUser, useOrganization, useOrganizationList } from '@clerk/clerk-react';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { type AuthContextValue } from '../../../components/providers/AuthProvider';
+import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
 import { useGetDefaultLocale } from '../../translations/hooks/useGetDefaultLocale';
@@ -104,7 +104,7 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
       if (hasOrgs) {
         const firstOrg = clerkUser.organizationMemberships[0].organization;
         setActive({ organization: firstOrg });
-      } else if (!location.href.includes(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST)) {
+      } else if (!window.location.href.includes(ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST)) {
         redirectTo({ url: ROUTES.AUTH_SIGNUP_ORGANIZATION_LIST });
       }
     }
@@ -202,7 +202,7 @@ const toOrganizationEntity = (
     name: clerkOrganization.name,
     createdAt: clerkOrganization.createdAt.toISOString(),
     updatedAt: clerkOrganization.updatedAt.toISOString(),
-    defaultLocale: defaultLocale,
+    defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,
     language: clerkOrganization.publicMetadata.language,

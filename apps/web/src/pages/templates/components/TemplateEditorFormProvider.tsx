@@ -12,16 +12,20 @@ import {
   INotificationTrigger,
   isBridgeWorkflow,
   WorkflowTypeEnum,
+  StepTypeEnum,
+  ActorTypeEnum,
+  EmailBlockTypeEnum,
+  IEmailBlock,
+  TextAlignEnum,
 } from '@novu/shared';
 import { captureException } from '@sentry/react';
-import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
+import { v4 as uuid4 } from 'uuid';
 import type { IForm, IFormStep, ITemplates } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
-import { v4 as uuid4 } from 'uuid';
 import { useEffectOnce, useNotificationGroup } from '../../../hooks';
 import { useCreate } from '../hooks/useCreate';
 import { stepNames } from '../constants';
@@ -305,7 +309,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       isCreating,
       isUpdating,
       isDeleting,
-      trigger: trigger,
+      trigger,
       onSubmit,
       onInvalid,
       addStep,

@@ -30,7 +30,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       authenticateByToken?: boolean;
       domain?: string;
       authenticationTokenKey?: string;
-    }
+    },
   ) {
     super();
     this.headers = {
@@ -51,7 +51,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       ...options,

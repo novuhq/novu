@@ -130,11 +130,11 @@ describe('GetEventResourceUsage', async () => {
   describe('fallback evaluation', () => {
     it('should return the fallback evaluation when the usage evaluation takes longer than the maximum evaluation duration', async () => {
       getPlatformNotificationUsageStub.resolves(
-        new Promise((resolve) =>
+        new Promise((resolve) => {
           setTimeout(async () => {
             resolve([{ _id: '1', notificationsCount: 50, apiServiceLevel: ApiServiceLevelEnum.BUSINESS }]);
-          }, 1000)
-        )
+          }, 1000);
+        })
       );
 
       const result = await useCase.execute({

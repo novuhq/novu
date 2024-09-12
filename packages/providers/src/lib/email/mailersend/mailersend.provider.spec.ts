@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vitest';
-import { MailersendEmailProvider } from './mailersend.provider';
 import MailerSend, { Attachment, Recipient } from 'mailersend';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
+import { MailersendEmailProvider } from './mailersend.provider';
 
 const mockConfig = {
   apiKey: 'SG.1234',
@@ -61,7 +61,7 @@ test('should trigger mailerSend correctly', async () => {
 
   const attachment = new Attachment(
     Buffer.from('ZEdWemRBPT0=').toString(),
-    'test.txt'
+    'test.txt',
   );
   const recipient1 = new Recipient('test@test1.com', undefined);
   const recipient2 = new Recipient('test@test2.com', undefined);

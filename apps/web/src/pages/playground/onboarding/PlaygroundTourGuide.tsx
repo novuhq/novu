@@ -1,9 +1,8 @@
-import { Code } from '@mantine/core';
+import { Code, Accordion } from '@mantine/core';
 import { css } from '@novu/novui/css';
 import { useState, useEffect } from 'react';
 import Joyride, { ACTIONS, CallBackProps, LIFECYCLE, STATUS, Step, TooltipRenderProps } from 'react-joyride';
 import { Button } from '@novu/novui';
-import { Accordion } from '@mantine/core';
 
 export function TourGuideComponent({
   setClickedStepId,
@@ -19,7 +18,6 @@ export function TourGuideComponent({
       target: '[data-test-id="playground-header-title"]',
       title: 'Welcome to the Playground',
       content:
-        // eslint-disable-next-line max-len
         'This is an interactive playground, where you will learn about the main Novu concepts, and send your first test notification.',
       placement: 'bottom',
       disableBeacon: true,

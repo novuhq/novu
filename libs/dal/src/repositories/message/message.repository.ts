@@ -713,6 +713,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     options?: {
       limit?: number;
       skip?: number;
+      sort?: { [key: string]: number };
     }
   ) {
     const filterQuery: FilterQuery<MessageEntity> = { ...query };
@@ -720,6 +721,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       filterQuery.transactionId = { $in: query.transactionId };
     }
     const data = await this.MongooseModel.find(query, select, {
+      sort: options?.sort,
       limit: options?.limit,
       skip: options?.skip,
     })

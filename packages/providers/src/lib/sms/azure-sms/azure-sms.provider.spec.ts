@@ -1,7 +1,7 @@
 // azure-sms.provider.spec.ts
 import { expect, test, vi, MockedClass } from 'vitest';
-import { AzureSmsProvider } from './azure-sms.provider';
 import { SmsClient } from '@azure/communication-sms';
+import { AzureSmsProvider } from './azure-sms.provider';
 
 vi.mock('@azure/communication-sms');
 test('should trigger AzureSmsProvider library correctly', async () => {
@@ -71,7 +71,7 @@ test('should trigger AzureSmsProvider library correctly with _passthrough', asyn
           from: '+2234567890',
         },
       },
-    }
+    },
   );
 
   expect(mockSend).toHaveBeenCalled();

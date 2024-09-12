@@ -6,8 +6,7 @@ import { SidebarPage } from './page-models/sidebarPage';
 import { SignUpPage } from './page-models/signupPage';
 import { initializeSession } from './utils/browser';
 import { logout } from './utils/commands';
-import { createUser, randomEmail, testPassword } from './utils/plugins';
-import { inviteUser, SessionData } from './utils/plugins';
+import { createUser, randomEmail, testPassword, inviteUser, SessionData } from './utils/plugins';
 
 let session: SessionData;
 

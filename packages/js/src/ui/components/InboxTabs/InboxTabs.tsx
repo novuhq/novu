@@ -1,6 +1,6 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { createMemo, For, Show } from 'solid-js';
-import { useInboxContext, useUnreadCounts } from '../../../ui/context';
+import { useInboxContext, useUnreadCounts } from '../../context';
 import { cn, useStyle } from '../../helpers';
 import { Check, Dots } from '../../icons';
 import {

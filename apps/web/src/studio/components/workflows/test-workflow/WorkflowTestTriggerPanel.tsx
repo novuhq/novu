@@ -4,6 +4,7 @@ import { IconOutlineBolt } from '@novu/novui/icons';
 import { Tabs, Title } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
+import { Language } from 'prism-react-renderer';
 import {
   createNodeSnippet,
   createCurlSnippet,
@@ -12,7 +13,6 @@ import {
   createPythonSnippet,
   CodeSnippetProps,
 } from '../../../../utils/codeSnippets';
-import { Language } from 'prism-react-renderer';
 
 type Snippet = {
   languageLabel: string;

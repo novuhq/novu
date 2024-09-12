@@ -186,5 +186,5 @@ export const buildSubscriptionKey = ({
 
 export const buildServiceConfigApiRateLimitMaximumKey = (): string =>
   buildServiceConfigKey(
-    ServiceConfigIdentifierEnum.API_RATE_LIMIT_SERVICE_MAXIMUM
+    ServiceConfigIdentifierEnum.API_RATE_LIMIT_SERVICE_MAXIMUM,
   );

@@ -1,5 +1,5 @@
-import { Bell, Chat, Mail, Mobile, Sms } from '../../../../shared/icons';
 import React from 'react';
+import { Bell, Chat, Mail, Mobile, Sms } from '../../../../shared/icons';
 
 export const channels = [
   { type: 'sms', label: 'SMS', Icon: Sms, description: 'This is an sms' },

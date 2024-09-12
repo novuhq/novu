@@ -86,7 +86,7 @@
       "script": "start",
       "isBackground": true,
       "label": "SHARED",
-      "path": "/libs/shared",
+      "path": "/packages/shared",
       "problemMatcher": "$tsc-watch"
     },
     {

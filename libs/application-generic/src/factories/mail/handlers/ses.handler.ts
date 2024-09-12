@@ -3,8 +3,7 @@ import {
   EmailProviderIdEnum,
   ICredentials,
 } from '@novu/shared';
-import { SESConfig } from '@novu/providers';
-import { SESEmailProvider } from '@novu/providers';
+import { SESConfig, SESEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class SESHandler extends BaseHandler {

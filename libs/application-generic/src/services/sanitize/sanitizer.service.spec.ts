@@ -6,14 +6,14 @@ import { sanitizeHTML, sanitizeMessageContent } from './sanitizer.service';
 describe('HTML Sanitizer', function () {
   it('should sanitize bad html', function () {
     const sanitizedHtml = sanitizeHTML(
-      'hello <b>bold</b> <script>alert(123)</script>'
+      'hello <b>bold</b> <script>alert(123)</script>',
     );
     expect(sanitizedHtml).to.equal('hello <b>bold</b> ');
   });
 
   it('should sanitized message text content', function () {
     const result = sanitizeMessageContent(
-      'hello <b>bold</b> <script>alert(123)</script>'
+      'hello <b>bold</b> <script>alert(123)</script>',
     );
     expect(result).to.equal('hello <b>bold</b> ');
   });
@@ -40,7 +40,7 @@ describe('HTML Sanitizer', function () {
     ]) as IEmailBlock[];
 
     expect(result[0].content).to.equal(
-      '<style>p { color: red; }</style><p>Red Text</p>'
+      '<style>p { color: red; }</style><p>Red Text</p>',
     );
   });
 
@@ -79,7 +79,7 @@ describe('HTML Sanitizer', function () {
     ]) as IEmailBlock[];
 
     expect(result[0].content).to.equal(
-      '<img src="https://example.com/image.jpg" alt="Example Image" />'
+      '<img src="https://example.com/image.jpg" alt="Example Image" />',
     );
   });
 });

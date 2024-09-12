@@ -132,7 +132,7 @@ export default createStyles(
     }
 
     if (pulse) {
-      overrides = Object.assign({}, overrides, getPulseStyles());
+      overrides = { ...overrides, ...getPulseStyles() };
     }
 
     return {

@@ -1,10 +1,10 @@
-import mongoose from 'mongoose';
-import { IndexOptions, Schema } from 'mongoose';
-const mongooseDelete = require('mongoose-delete');
+import mongoose, { IndexOptions, Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { IndexDefinition } from '../../shared/types';
+
+const mongooseDelete = require('mongoose-delete');
 
 const subscriberSchema = new Schema<SubscriberDBModel>(
   {
@@ -185,7 +185,6 @@ index(
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Subscriber =
   (mongoose.models.Subscriber as mongoose.Model<SubscriberDBModel>) ||
   mongoose.model<SubscriberDBModel>('Subscriber', subscriberSchema);

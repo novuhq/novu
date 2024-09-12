@@ -34,7 +34,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
       teamId: string;
       bundleId: string;
       production: boolean;
-    }
+    },
   ) {
     super();
     this.config = config;
@@ -50,8 +50,9 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
   ): Promise<ISendMessageSuccessResponse> {
+    // eslint-disable-next-line no-param-reassign
     delete (options.overrides as any)?.notificationIdentifiers;
     const notification = new apn.Notification(
       this.transform(bridgeProviderData, {
@@ -60,7 +61,7 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
         payload: options.payload,
         topic: this.config.bundleId,
         ...options.overrides,
-      }).body
+      }).body,
     );
     const res = await this.provider.send(notification, options.target);
 
@@ -69,9 +70,9 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
         res.failed
           .map(
             (failed) =>
-              `${failed.device} failed for reason: ${failed.response.reason}`
+              `${failed.device} failed for reason: ${failed.response.reason}`,
           )
-          .join(',')
+          .join(','),
       );
     }
 
