@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   AnalyticsService,
   buildIntegrationKey,
@@ -8,7 +8,7 @@ import {
   GetFeatureFlagCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -22,7 +22,8 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
+    private communityOrganizationRepository: CommunityOrganizationRepository
   ) {}
 
   private async calculatePriorityAndPrimaryForActive({
@@ -94,6 +95,18 @@ export class UpdateIntegration {
     }
 
     return result;
+  }
+
+  private async setRemoveNovuBranding(command: UpdateIntegrationCommand): Promise<boolean> {
+    const organization = await this.communityOrganizationRepository.findOne({
+      _id: command.organizationId,
+    });
+
+    if (organization && organization.apiServiceLevel !== ApiServiceLevelEnum.FREE) {
+      return command.removeNovuBranding ?? false;
+    }
+
+    return false;
   }
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -183,6 +196,10 @@ export class UpdateIntegration {
 
     if (command.conditions) {
       updatePayload.conditions = command.conditions;
+    }
+
+    if (command.removeNovuBranding) {
+      updatePayload.removeNovuBranding = await this.setRemoveNovuBranding(command);
     }
 
     if (!Object.keys(updatePayload).length) {
