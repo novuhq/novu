@@ -45,7 +45,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen, refe
 
     try {
       setLoadingSync(true);
-      await api?.syncBridge(manualUrl);
+      await api.syncBridge(manualUrl);
 
       refetchOriginWorkflows();
 

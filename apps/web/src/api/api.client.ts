@@ -104,16 +104,12 @@ export function buildApiHttpClient({
   environmentId?: string;
 }) {
   if (!secretKey && !jwt) {
-    // eslint-disable-next-line no-console
-    console.error('A secretKey or jwt is required to create a Novu API client.');
-
-    return;
+    throw new Error('A secretKey or jwt is required to create a Novu API client.');
   }
 
   const authHeader = jwt ? `Bearer ${jwt}` : `ApiKey ${secretKey}`;
 
   const httpClient = axios.create({
-    baseURL,
     headers: {
       Authorization: authHeader,
       'Content-Type': 'application/json',
