@@ -163,7 +163,7 @@ describe('Preferences', function () {
           },
           environmentId: session.environment._id,
           organizationId: session.organization._id,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
@@ -209,7 +209,7 @@ describe('Preferences', function () {
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
@@ -485,7 +485,7 @@ describe('Preferences', function () {
           },
           environmentId: session.environment._id,
           organizationId: session.organization._id,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
@@ -559,7 +559,7 @@ describe('Preferences', function () {
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
