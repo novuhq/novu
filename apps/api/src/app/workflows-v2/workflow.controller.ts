@@ -53,6 +53,7 @@ export class WorkflowController {
   create(@UserSession() user: UserSessionData, @Body() body: CreateWorkflowDto): Promise<WorkflowResponseDto> {
     const workflowDto = { ...body, origin: body.origin ?? WorkflowOriginEnum.NOVU };
     const command = UpsertWorkflowCommand.create({ workflowDto, user });
+
     return this.upsertWorkflowUseCase.execute(command);
   }
   @Put('/:workflowId')
@@ -69,8 +70,10 @@ export class WorkflowController {
   ): Promise<WorkflowResponseDto> {
     const workflowDto = { ...body, workflowId, origin: body.origin ?? WorkflowOriginEnum.NOVU };
     const command = UpsertWorkflowCommand.create({ workflowDto, user });
+
     return this.upsertWorkflowUseCase.execute(command);
   }
+
   @Get('/:workflowId')
   @ExternalApiAccessible()
   @UseGuards(UserAuthGuard)
@@ -80,8 +83,10 @@ export class WorkflowController {
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowResponseDto> {
     const command = GetWorkflowCommand.create({ workflowId, user });
+
     return this.getWorkflowUseCase.execute(command);
   }
+
   @Delete('/:workflowId')
   @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)

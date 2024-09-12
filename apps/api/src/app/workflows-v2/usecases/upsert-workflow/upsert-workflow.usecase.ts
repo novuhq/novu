@@ -12,11 +12,14 @@ import {
   NotificationStep,
   UpdateWorkflow,
   UpdateWorkflowCommand,
+  UpsertPreferences,
+  UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { IPreferenceChannels, WorkflowTypeEnum } from '@novu/shared';
+import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
 
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
-import { StepDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dto/workflow.dto';
+import { StepDto, WorkflowResponseDto } from '../../dto/workflow.dto';
 import { WorkflowTemplateGetMapper } from '../../mappers/workflow-template-get-mapper';
 
 @Injectable()
@@ -26,14 +29,29 @@ export class UpsertWorkflowUseCase {
     private updateWorkflowUsecase: UpdateWorkflow,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
+    private upsertPreferencesUsecase: UpsertPreferences,
     private environmentRepository: EnvironmentRepository
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
     await this.validateEnvironment(command);
     const existingWorkflow = await this.getWorkflowIfExist(command);
     const workflow = await this.createOrUpdateWorkflow(existingWorkflow, command);
+    await this.upsertPreference(command, workflow);
 
     return WorkflowTemplateGetMapper.toResponseWorkflowDto(workflow);
+  }
+
+  private async upsertPreference(command: UpsertWorkflowCommand, workflow: NotificationTemplateEntity) {
+    if (command.workflowDto.preferences) {
+      await this.upsertPreferencesUsecase.upsertWorkflowPreferences(
+        UpsertWorkflowPreferencesCommand.create({
+          environmentId: workflow._environmentId,
+          organizationId: workflow._organizationId,
+          templateId: workflow._id,
+          preferences: command.workflowDto.preferences,
+        })
+      );
+    }
   }
 
   private async createOrUpdateWorkflow(
@@ -52,17 +70,10 @@ export class UpsertWorkflowUseCase {
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
     }
-    const isWorkflowActive = command.workflowDto?.active ?? true;
 
     return await this.createWorkflowGenericUsecase.execute(
-      CreateWorkflowCommand.create(
-        this.buildCreateWorkflowGenericCommand(notificationGroupId, isWorkflowActive, command)
-      )
+      CreateWorkflowCommand.create(this.buildCreateWorkflowGenericCommand(notificationGroupId, command))
     );
-  }
-
-  private persistWorkflow(workflowEntityToPersist: any) {
-    // this.notificationTemplateRepository.create({
   }
 
   private async validateEnvironment(command: UpsertWorkflowCommand) {
@@ -75,11 +86,11 @@ export class UpsertWorkflowUseCase {
 
   private buildCreateWorkflowGenericCommand(
     notificationGroupId: string,
-    isWorkflowActive: boolean,
     command: UpsertWorkflowCommand
   ): CreateWorkflowCommand {
     const { user } = command;
     const { workflowDto } = command;
+    const isWorkflowActive = command.workflowDto?.active ?? true;
 
     return {
       notificationGroupId,
@@ -104,7 +115,7 @@ export class UpsertWorkflowUseCase {
   }
 
   // Function to map WorkflowPreferencesDto to IPreferenceChannels
-  private buildPreferencesForEntity(preferences: WorkflowPreferencesDto): IPreferenceChannels {
+  private buildPreferencesForEntity(preferences: DiscoverWorkflowOutputPreferences): IPreferenceChannels {
     const channels: IPreferenceChannels = {};
     // eslint-disable-next-line guard-for-in
     for (const channel in preferences.channels) {
@@ -112,8 +123,8 @@ export class UpsertWorkflowUseCase {
         channels[channel] = preferences.channels[channel].defaultValue;
         continue;
       }
-      const { defaultWorkflowPreference } = preferences;
-      channels[channel] = defaultWorkflowPreference.defaultValue;
+      const { workflow } = preferences;
+      channels[channel] = workflow.defaultValue;
     }
 
     return channels;
