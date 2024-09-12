@@ -1,4 +1,6 @@
-export const theme = {
+import type { Theme } from '@novu/js/ui';
+
+export const light: Theme = {
   variables: {
     colorPrimary: '#efefed',
     colorPrimaryForeground: 'white',
