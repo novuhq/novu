@@ -31,6 +31,7 @@ export class NovuUI {
   #setTabs;
   #routerPush: Accessor<RouterPush | undefined>;
   #setRouterPush: Setter<RouterPush | undefined>;
+  #predefinedNovu;
   id: string;
 
   constructor(props: NovuProviderProps) {
@@ -53,6 +54,7 @@ export class NovuUI {
     this.#setTabs = setTabs;
     this.#routerPush = routerPush;
     this.#setRouterPush = setRouterPush;
+    this.#predefinedNovu = props.novu;
 
     this.#mountComponentRenderer();
   }
@@ -77,6 +79,7 @@ export class NovuUI {
           localization={this.#localization()}
           tabs={this.#tabs()}
           routerPush={this.#routerPush()}
+          novu={this.#predefinedNovu}
         />
       ),
       this.#rootElement
