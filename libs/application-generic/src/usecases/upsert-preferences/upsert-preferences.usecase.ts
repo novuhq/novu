@@ -32,7 +32,7 @@ export class UpsertPreferences {
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
     return this.upsert({
-      subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       actor: PreferencesActorEnum.SUBSCRIBER,
@@ -45,7 +45,7 @@ export class UpsertPreferences {
     command: UpsertSubscriberWorkflowPreferencesCommand,
   ) {
     return this.upsert({
-      subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       actor: PreferencesActorEnum.SUBSCRIBER,
@@ -85,7 +85,7 @@ export class UpsertPreferences {
     command: UpsertPreferencesCommand,
   ): Promise<PreferencesEntity> {
     return await this.preferencesRepository.create({
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _userId: command.userId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -124,7 +124,7 @@ export class UpsertPreferences {
   ): Promise<string | undefined> {
     const found = await this.preferencesRepository.findOne(
       {
-        _subscriberId: command.subscriberId,
+        _subscriberId: command._subscriberId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.templateId,
