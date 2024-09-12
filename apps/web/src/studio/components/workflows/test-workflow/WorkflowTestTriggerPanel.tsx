@@ -37,7 +37,7 @@ const snippets: Snippet[] = [
     create: createPhpSnippet,
   },
   {
-    languageLabel: 'GOlang',
+    languageLabel: 'Golang',
     language: 'go',
     create: createGoSnippet,
   },
