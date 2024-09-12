@@ -59,13 +59,15 @@ export class GetPreferences {
     subscriberId: string;
     templateId?: string;
   }): Promise<IPreferenceChannels | undefined> {
-    const result = await this.getWorkflowOptionsPreferences(command);
+    const result = await this.getWorkflowChannelPreferences(command);
 
-    return GetPreferences.mapWorkflowOptionsPreferencesToChannels(result);
+    return GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+      result,
+    );
   }
 
   /** Safely get WorkflowChannelPreferences by returning undefined if none are found */
-  public async getWorkflowOptionsPreferences(command: {
+  public async getWorkflowChannelPreferences(command: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
@@ -90,7 +92,7 @@ export class GetPreferences {
   }
 
   /** Transform WorkflowChannelPreferences into IPreferenceChannels */
-  public static mapWorkflowOptionsPreferencesToChannels(
+  public static mapWorkflowChannelPreferencesToChannelPreferences(
     workflowPreferences: WorkflowChannelPreferences,
   ): IPreferenceChannels | undefined {
     if (!workflowPreferences) {

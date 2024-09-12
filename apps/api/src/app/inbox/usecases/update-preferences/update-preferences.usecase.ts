@@ -140,6 +140,13 @@ export class UpdatePreferences {
         })
       );
 
+      /*
+       * Backwards compatible storage of new Preferences DTO.
+       *
+       * Currently, this is a side-effect due to the way that Preferences are stored
+       * and resolved with overrides in cascading order, necessitating a lookup against
+       * the old preferences structure before we can store the new Preferences DTO.
+       */
       await this.storePreferences({
         enabled: preference.enabled,
         channels: preference.channels,

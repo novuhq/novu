@@ -23,7 +23,7 @@ import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-templat
 
 import { ApiException } from '../../utils/exceptions';
 import { CachedEntity, buildSubscriberKey } from '../../services/cache';
-import { GetPreferences, GetPreferencesCommand } from '../get-preferences';
+import { GetPreferences } from '../get-preferences';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -72,17 +72,14 @@ export class GetSubscriberTemplatePreference {
     const templateChannelPreference = command.template.preferenceSettings;
 
     const subscriberWorkflowPreferences =
-      await this.getPreferences.getWorkflowOptionsPreferences({
+      await this.getPreferences.getWorkflowChannelPreferences({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
       });
 
-    const subscriberPreferenceChannels =
-      GetPreferences.mapWorkflowOptionsPreferencesToChannels(
-        subscriberWorkflowPreferences,
-      ) || subscriberPreference?.channels;
+    const subscriberPreferenceChannels = subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 
