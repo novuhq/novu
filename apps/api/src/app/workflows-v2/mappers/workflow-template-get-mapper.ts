@@ -1,6 +1,8 @@
 import { IPreferenceChannels, StepTypeEnum } from '@novu/shared';
+import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { MinifiedResponseWorkflowDto, StepDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../dto/workflow.dto';
+
+import { MinifiedResponseWorkflowDto, StepDto, WorkflowResponseDto } from '../dto/workflow.dto';
 
 export class WorkflowTemplateGetMapper {
   static toResponseWorkflowDto(template: NotificationTemplateEntity): WorkflowResponseDto {
@@ -55,9 +57,9 @@ export class WorkflowTemplateGetMapper {
     return step.controls ? { schema: step.controls.schema } : undefined;
   }
 
-  private static toPreferences(preferenceSettings: IPreferenceChannels): WorkflowPreferencesDto {
+  private static toPreferences(preferenceSettings: IPreferenceChannels): DiscoverWorkflowOutputPreferences {
     return {
-      defaultWorkflowPreference: { defaultValue: true, readOnly: false },
+      workflow: { defaultValue: true, readOnly: false },
       channels: {
         email: { defaultValue: preferenceSettings.email || true, readOnly: false },
         sms: { defaultValue: preferenceSettings.sms || true, readOnly: false },

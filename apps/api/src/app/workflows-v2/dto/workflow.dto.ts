@@ -1,23 +1,12 @@
 import { IsArray, IsBoolean, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { JsonSchema } from '@novu/framework';
-import { ChannelTypeEnum, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { DiscoverWorkflowOutputPreferences, JsonSchema } from '@novu/framework';
+import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 
 class Schema {
   schema: JsonSchema;
 }
-export type SingleChannelPreference = {
-  defaultValue: boolean;
-  readOnly: boolean;
-};
-
-export type WorkflowPreferencesDto = {
-  defaultWorkflowPreference: SingleChannelPreference;
-  channels: {
-    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]: SingleChannelPreference;
-  };
-};
 
 export type CreateWorkflowDto = Omit<WorkflowDto, '_id'>;
 
@@ -105,7 +94,7 @@ export class WorkflowDto {
   notificationGroupId: string;
 
   @IsDefined()
-  preferences: WorkflowPreferencesDto;
+  preferences: DiscoverWorkflowOutputPreferences;
 
   @IsString()
   @IsDefined()
