@@ -7,16 +7,17 @@ import {
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { PreferencesActorEnum, PreferencesRepository } from '@novu/dal';
+import { PreferencesActorEnum, PreferencesRepository, SubscriberRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+
 import { AuthModule } from '../auth/auth.module';
 import { PreferencesModule } from './preferences.module';
 
 describe('Preferences', function () {
   let getPreferences: GetPreferences;
-  let subscriberId: string;
+  const subscriberId = SubscriberRepository.createObjectId();
   const workflowId = PreferencesRepository.createObjectId();
   let upsertPreferences: UpsertPreferences;
   let session: UserSession;
@@ -31,8 +32,6 @@ describe('Preferences', function () {
 
     session = new UserSession();
     await session.initialize();
-
-    subscriberId = session.subscriberId;
 
     getPreferences = moduleRef.get<GetPreferences>(GetPreferences);
     upsertPreferences = moduleRef.get<UpsertPreferences>(UpsertPreferences);
@@ -163,7 +162,7 @@ describe('Preferences', function () {
           },
           environmentId: session.environment._id,
           organizationId: session.organization._id,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
@@ -209,7 +208,7 @@ describe('Preferences', function () {
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
@@ -485,7 +484,7 @@ describe('Preferences', function () {
           },
           environmentId: session.environment._id,
           organizationId: session.organization._id,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 
@@ -559,7 +558,7 @@ describe('Preferences', function () {
           environmentId: session.environment._id,
           organizationId: session.organization._id,
           templateId: workflowId,
-          subscriberId,
+          _subscriberId: subscriberId,
         })
       );
 

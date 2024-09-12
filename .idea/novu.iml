@@ -22,7 +22,7 @@
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/dist" />
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/.rpt2_cache" />
       <excludeFolder url="file://$MODULE_DIR$/libs/embed/.rpt2_cache" />
-      <excludeFolder url="file://$MODULE_DIR$/libs/shared/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/shared/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/nest/build" />
       <excludeFolder url="file://$MODULE_DIR$/providers/mailersend/build" />
       <excludeFolder url="file://$MODULE_DIR$/providers/mailgun/build" />

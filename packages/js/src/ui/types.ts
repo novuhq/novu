@@ -9,6 +9,7 @@ export type NotificationActionClickHandler = (notification: Notification) => voi
 
 export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
 export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
+export type RouterPush = (path: string) => void;
 
 export type Tab = { label: string; value: Array<string> };
 
@@ -46,6 +47,7 @@ export type BaseNovuProviderProps = {
   localization?: Localization;
   options: NovuOptions;
   tabs?: Array<Tab>;
+  routerPush?: RouterPush;
   novu?: Novu;
 };
 

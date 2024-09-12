@@ -43,6 +43,7 @@ export const NotificationList = (props: NotificationListProps) => {
   const { data, setEl, end, refetch, initialLoading } = useNotificationsInfiniteScroll({ options });
   const { count, reset: resetNewMessagesCount } = useNewMessagesCount({ filter: { tags: props.filter?.tags ?? [] } });
   const { setLimit } = useInboxContext();
+  const ids = createMemo(() => data().map((n) => n.id));
   let notificationListElement: HTMLDivElement;
 
   createEffect(() => {
@@ -67,16 +68,20 @@ export const NotificationList = (props: NotificationListProps) => {
       >
         <Show when={!initialLoading()} fallback={<NotificationListSkeleton count={8} />}>
           <Show when={data().length > 0} fallback={<EmptyNotificationList />}>
-            <For each={data()}>
-              {(notification) => (
-                <Notification
-                  notification={notification}
-                  renderNotification={props.renderNotification}
-                  onNotificationClick={props.onNotificationClick}
-                  onPrimaryActionClick={props.onPrimaryActionClick}
-                  onSecondaryActionClick={props.onSecondaryActionClick}
-                />
-              )}
+            <For each={ids()}>
+              {(_, index) => {
+                const notification = () => data()[index()];
+
+                return (
+                  <Notification
+                    notification={notification()}
+                    renderNotification={props.renderNotification}
+                    onNotificationClick={props.onNotificationClick}
+                    onPrimaryActionClick={props.onPrimaryActionClick}
+                    onSecondaryActionClick={props.onSecondaryActionClick}
+                  />
+                );
+              }}
             </For>
             <Show when={!end()}>
               <div ref={setEl}>

@@ -11,7 +11,7 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Appearance, Localization, Tab } from '../types';
+import type { Appearance, Localization, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
@@ -47,6 +47,7 @@ type RendererProps = {
   localization?: Localization;
   options: NovuOptions;
   tabs: Array<Tab>;
+  routerPush?: RouterPush;
   novu?: Novu;
 };
 
@@ -77,7 +78,7 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxProvider tabs={props.tabs}>
+            <InboxProvider tabs={props.tabs} routerPush={props.routerPush}>
               <CountProvider>
                 <For each={nodes()}>
                   {(node) => {

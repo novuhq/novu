@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.0.0-canary.2",
+  "version": "2.1.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -70,7 +70,6 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.15.4",
-    "@tailwindcss/line-clamp": "^0.4.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^20.14.10",
     "autoprefixer": "^10.4.0",
