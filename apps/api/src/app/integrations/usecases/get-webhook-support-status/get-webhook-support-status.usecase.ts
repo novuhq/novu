@@ -48,7 +48,6 @@ export class GetWebhookSupportStatus {
       ...(isProviderId
         ? { providerId: providerOrIntegrationId, credentials: { $exists: true } }
         : { _id: providerOrIntegrationId }),
-      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     };
 
