@@ -45,8 +45,10 @@ export const themeConfig = createTheme({
       styles: (theme) => ({
         root: {
           borderRadius: theme.radius.md,
-          background: 'unset',
-          backgroundColor: colorToken('button'),
+          /*
+           * background: 'unset',
+           * backgroundColor: colorToken('button'),
+           */
         },
       }),
     }),
@@ -76,6 +78,11 @@ export const themeConfig = createTheme({
       defaultProps: {
         verticalSpacing: 'md',
       },
+      styles: () => ({
+        th: {
+          fontWeight: 'unset',
+        },
+      }),
     }),
     Select: Select.extend({
       styles: (theme) => ({
@@ -118,7 +125,7 @@ export const themeConfig = createTheme({
     },
   },
   fontSizes: { xs: '0.75rem', sm: '0.875rem', md: '1rem', lg: '1.25rem', xl: '1.5rem' },
-  spacing: { xs: '0.25rem', sm: '0.5rem', md: '1rem', lg: '1.5rem', xl: '2rem', xxl: '2.5rem', xxxl: '3rem' },
+  spacing: { xs: '0.25rem', sm: '0.5rem', md: '0.625rem', lg: '1.5rem', xl: '2rem', xxl: '2.5rem', xxxl: '3rem' },
   radius: { xs: '0.25rem', sm: '0.375rem', md: '0.5rem', lg: '1rem' },
   defaultRadius: 'md',
   shadows: {

@@ -44,7 +44,9 @@ export default function WorkflowsRoute() {
               <IconOutlineOfflineBolt style={{ height: 20, width: 20 }} />
             </Box>
             <Stack gap="xs">
-              <Text truncate="end">{workflow.name}</Text>
+              <Text size="md" truncate="end">
+                {workflow.name}
+              </Text>
               <Text size="xs" c="secondary">
                 {workflow.name}
               </Text>
@@ -56,7 +58,7 @@ export default function WorkflowsRoute() {
         <Group gap="sm">
           {[...new Set(workflow.steps.map((step) => step.template.type))].map((type) => (
             // @ts-expect-error - Template type is not typed
-            <StepIcon key={type} type={type} />
+            <StepIcon key={type} type={type} style={{ height: 16, width: 16 }} />
           ))}
         </Group>
       </Table.Td>
@@ -83,7 +85,7 @@ export default function WorkflowsRoute() {
       <Table>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Name</Table.Th>
+            <Table.Th>Workflow</Table.Th>
             <Table.Th>Channels</Table.Th>
             <Table.Th>Tags</Table.Th>
             <Table.Th>Updated</Table.Th>

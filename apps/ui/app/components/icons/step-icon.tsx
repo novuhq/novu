@@ -5,7 +5,7 @@ import {
   IconNotificationsNone,
   IconAdUnits,
   IconAutoAwesomeMotion,
-  IconTimer,
+  IconOutlineTimer,
   IconCode,
 } from '@novu/novui/icons';
 
@@ -16,7 +16,7 @@ const iconFromStepType = {
   chat: IconOutlineChat,
   push: IconAdUnits,
   digest: IconAutoAwesomeMotion,
-  delay: IconTimer,
+  delay: IconOutlineTimer,
   custom: IconCode,
 };
 

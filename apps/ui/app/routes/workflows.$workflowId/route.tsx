@@ -95,10 +95,17 @@ export default function WorkflowRoute() {
 
   return (
     <Stack p="sm">
-      <Group justify="space-between" mx="-1.5rem" mt="-1rem" px="md" pb="sm" style={{ borderBottom: '1px solid #000' }}>
+      <Group
+        justify="space-between"
+        mx="-1.125rem"
+        mt="-0.625rem"
+        px="md"
+        pb="sm"
+        style={{ borderBottom: '1px solid #000' }}
+      >
         <Flex gap="sm" align="center">
           <Box c="success" mt="xs">
-            <IconOutlineOfflineBolt style={{ height: 20, width: 20 }} />
+            <IconOutlineOfflineBolt style={{ height: 24, width: 24 }} />
           </Box>
           <Title order={2}>{data.workflow.data.name}</Title>
         </Flex>

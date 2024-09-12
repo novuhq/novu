@@ -1,4 +1,4 @@
-import { AppShell as MantineAppShell, Avatar, Group, Paper } from '@mantine/core';
+import { AppShell as MantineAppShell, Avatar, Group, Paper, RemoveScroll } from '@mantine/core';
 import { NovuInbox } from '../navigation/inbox';
 import { Navigation } from './navigation';
 import { NavigationBreadcrumbs } from './breadcrumbs';
@@ -36,16 +36,18 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       </MantineAppShell.Navbar>
 
       <MantineAppShell.Main bg="black">
-        <Paper
-          bg="page"
-          radius="lg"
-          h={`calc(100vh - ${HEADER_HEIGHT_REM + HEADER_PADDING_REM * 2}rem)`}
-          p="md"
-          mb="sm"
-          mr="sm"
-        >
-          {children}
-        </Paper>
+        <RemoveScroll>
+          <Paper
+            bg="page"
+            radius="lg"
+            h={`calc(100vh - ${HEADER_HEIGHT_REM + HEADER_PADDING_REM * 2}rem)`}
+            p="md"
+            mb="sm"
+            mr="sm"
+          >
+            {children}
+          </Paper>
+        </RemoveScroll>
       </MantineAppShell.Main>
     </MantineAppShell>
   );
