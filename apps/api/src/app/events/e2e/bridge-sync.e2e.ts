@@ -329,7 +329,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
             readOnly: true,
           },
           channels: {
-            in_app: {
+            inApp: {
               defaultValue: true,
               readOnly: true,
             },
@@ -348,7 +348,7 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
       channels: {
         email: { defaultValue: true, readOnly: false },
         sms: { defaultValue: true, readOnly: false },
-        in_app: { defaultValue: false, readOnly: true },
+        inApp: { defaultValue: false, readOnly: true },
         chat: { defaultValue: true, readOnly: false },
         push: { defaultValue: true, readOnly: false },
       },
