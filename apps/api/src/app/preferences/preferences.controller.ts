@@ -19,7 +19,7 @@ import {
   UserSession,
   UpsertUserWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { buildWorkflowChannelPreferences, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
@@ -57,7 +57,7 @@ export class PreferencesController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        preferences: data.preferences,
+        preferences: buildWorkflowChannelPreferences(data.preferences),
         templateId: data.workflowId,
       })
     );
