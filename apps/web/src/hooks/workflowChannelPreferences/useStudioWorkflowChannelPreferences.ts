@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useDiscover } from '../../studio/hooks/useBridgeAPI';
-import { WorkflowChannelPreferences } from '@novu/shared';
+import { buildWorkflowChannelPreferences, WorkflowChannelPreferences } from '@novu/shared';
 
 export const useStudioWorkflowChannelPreferences = (
   workflowId: string
@@ -10,8 +10,10 @@ export const useStudioWorkflowChannelPreferences = (
 } => {
   const { data, isLoading } = useDiscover();
 
-  const workflowChannelPreferences = useMemo(() => {
-    return data?.workflows?.find((workflow) => workflow.workflowId === workflowId)?.preferences;
+  const workflowChannelPreferences: WorkflowChannelPreferences = useMemo(() => {
+    const workflowPreference = data?.workflows?.find((workflow) => workflow.workflowId === workflowId)?.preferences;
+
+    return buildWorkflowChannelPreferences(workflowPreference);
   }, [data, workflowId]);
 
   return {
