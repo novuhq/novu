@@ -48,18 +48,72 @@ describe('buildWorkflowChannelPreferences', () => {
     expect(result).toEqual(testPreferences);
   });
 
-  it('should populate the remainder of the object with default values', () => {
-    const testPreferences: IncompleteWorkflowChannelPreferences = {
-      channels: { in_app: { readOnly: true } },
-    };
+  describe('should populate the remainder of the object with default values', () => {
+    it('using just a single, partial channel with readOnly', () => {
+      const testPreferences: IncompleteWorkflowChannelPreferences = {
+        channels: { in_app: { readOnly: true } },
+      };
 
-    const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
-    expect(result).toEqual({
-      ...testDefaultPreferences,
-      channels: {
-        ...testDefaultPreferences.channels,
-        in_app: { ...testDefaultPreferences.channels.in_app, ...testPreferences.channels?.in_app },
-      },
+      const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+      expect(result).toEqual({
+        ...testDefaultPreferences,
+        channels: {
+          ...testDefaultPreferences.channels,
+          in_app: { defaultValue: true, readOnly: true },
+        },
+      });
+    });
+
+    it('using just a full, single channel', () => {
+      const testPreferences: IncompleteWorkflowChannelPreferences = {
+        channels: { in_app: { defaultValue: false, readOnly: false } },
+      };
+
+      const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+      expect(result).toEqual({
+        ...testDefaultPreferences,
+        channels: {
+          ...testDefaultPreferences.channels,
+          in_app: { defaultValue: false, readOnly: false },
+        },
+      });
+    });
+
+    it('using a combination of channels and workflow-level preferences', () => {
+      const testPreferences: IncompleteWorkflowChannelPreferences = {
+        workflow: { defaultValue: true, readOnly: true },
+        channels: {
+          in_app: { defaultValue: false, readOnly: false },
+          chat: { defaultValue: false },
+        },
+      };
+
+      const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+      expect(result).toEqual({
+        workflow: testPreferences.workflow,
+        channels: {
+          in_app: {
+            defaultValue: false,
+            readOnly: false,
+          },
+          chat: {
+            defaultValue: false,
+            readOnly: testPreferences.workflow?.readOnly,
+          },
+          sms: {
+            defaultValue: testPreferences.workflow?.defaultValue,
+            readOnly: testPreferences.workflow?.readOnly,
+          },
+          email: {
+            defaultValue: testPreferences.workflow?.defaultValue,
+            readOnly: testPreferences.workflow?.readOnly,
+          },
+          push: {
+            defaultValue: testPreferences.workflow?.defaultValue,
+            readOnly: testPreferences.workflow?.readOnly,
+          },
+        },
+      });
     });
   });
 
