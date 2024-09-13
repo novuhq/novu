@@ -198,8 +198,23 @@ export class UpdateIntegration {
       updatePayload.conditions = command.conditions;
     }
 
-    if (command.removeNovuBranding) {
-      updatePayload.removeNovuBranding = await this.setRemoveNovuBranding(command);
+    const isRemoveNovuBrandingDefined = typeof command.removeNovuBranding !== 'undefined';
+    const isRemoveNovuBrandingChanged =
+      isRemoveNovuBrandingDefined && existingIntegration.removeNovuBranding !== command.removeNovuBranding;
+
+    if (isRemoveNovuBrandingChanged) {
+      const isImprovedBillingEnabled = await this.getFeatureFlag.execute(
+        GetFeatureFlagCommand.create({
+          userId: 'system',
+          environmentId: 'system',
+          organizationId: command.organizationId,
+          key: FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED,
+        })
+      );
+
+      if (isImprovedBillingEnabled) {
+        updatePayload.removeNovuBranding = await this.setRemoveNovuBranding(command);
+      }
     }
 
     if (!Object.keys(updatePayload).length) {
