@@ -27,7 +27,6 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
-    actor: Schema.Types.String,
     type: Schema.Types.String,
     preferences: {
       workflow: {

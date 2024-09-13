@@ -1,10 +1,13 @@
 import { IResponseError, WorkflowChannelPreferences } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
-import { errorMessage, successMessage } from '../../utils/notifications';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useNovuAPI } from '../useNovuAPI';
 
 export const useUpdateWorkflowChannelPreferences = (
-  workflowId: string
+  workflowId: string,
+  options: Omit<
+    UseMutationOptions<WorkflowChannelPreferences, IResponseError, WorkflowChannelPreferences>,
+    'mutationFn'
+  >
 ): {
   isLoading: boolean;
   updateWorkflowChannelPreferences: (data: WorkflowChannelPreferences) => void;
@@ -16,12 +19,7 @@ export const useUpdateWorkflowChannelPreferences = (
     IResponseError,
     WorkflowChannelPreferences
   >((data) => api.upsertPreferences(workflowId, data), {
-    onSuccess: () => {
-      successMessage('Workflow Channel Preferences updated');
-    },
-    onError: () => {
-      errorMessage('Failed to update Workflow Channel Preferences');
-    },
+    ...options,
   });
 
   return {
