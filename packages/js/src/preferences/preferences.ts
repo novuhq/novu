@@ -1,3 +1,5 @@
+import { InboxService } from '../api';
+import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
 import { updatePreference } from './helpers';
 import { Preference } from './preference';
@@ -10,9 +12,22 @@ export class Preferences extends BaseModule {
 
   readonly cache: PreferencesCache;
 
-  constructor({ useCache }: { useCache: boolean }) {
-    super();
-    this.cache = new PreferencesCache();
+  constructor({
+    useCache,
+    inboxServiceInstance,
+    eventEmitterInstance,
+  }: {
+    useCache: boolean;
+    inboxServiceInstance: InboxService;
+    eventEmitterInstance: NovuEventEmitter;
+  }) {
+    super({
+      eventEmitterInstance,
+      inboxServiceInstance,
+    });
+    this.cache = new PreferencesCache({
+      emitterInstance: this._emitter,
+    });
     this.#useCache = useCache;
   }
 
@@ -24,7 +39,13 @@ export class Preferences extends BaseModule {
 
         if (!data) {
           const response = await this._inboxService.fetchPreferences();
-          data = response.map((el) => new Preference(el));
+          data = response.map(
+            (el) =>
+              new Preference(el, {
+                emitterInstance: this._emitter,
+                inboxServiceInstance: this._inboxService,
+              })
+          );
 
           if (this.#useCache) {
             this.cache.set(data);

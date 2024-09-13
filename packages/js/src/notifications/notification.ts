@@ -1,5 +1,4 @@
 import { InboxService } from '../api';
-import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
 import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
@@ -25,9 +24,9 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
   readonly redirect: InboxNotification['redirect'];
   readonly data?: InboxNotification['data'];
 
-  constructor(notification: InboxNotification) {
-    this.#emitter = NovuEventEmitter.getInstance();
-    this.#inboxService = InboxServiceSingleton.getInstance();
+  constructor(notification: InboxNotification, emitter: NovuEventEmitter, inboxService: InboxService) {
+    this.#emitter = emitter;
+    this.#inboxService = inboxService;
 
     this.id = notification.id;
     this.subject = notification.subject;

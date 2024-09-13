@@ -1,3 +1,5 @@
+import { InboxService } from '../api';
+import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
 import { ActionTypeEnum, NotificationFilter, Result } from '../types';
 import {
@@ -38,9 +40,22 @@ export class Notifications extends BaseModule {
 
   readonly cache: NotificationsCache;
 
-  constructor({ useCache }: { useCache: boolean }) {
-    super();
-    this.cache = new NotificationsCache();
+  constructor({
+    useCache,
+    inboxServiceInstance,
+    eventEmitterInstance,
+  }: {
+    useCache: boolean;
+    inboxServiceInstance: InboxService;
+    eventEmitterInstance: NovuEventEmitter;
+  }) {
+    super({
+      eventEmitterInstance,
+      inboxServiceInstance,
+    });
+    this.cache = new NotificationsCache({
+      emitter: eventEmitterInstance,
+    });
     this.#useCache = useCache;
   }
 
@@ -60,7 +75,7 @@ export class Notifications extends BaseModule {
           data = {
             hasMore: response.hasMore,
             filter: response.filter,
-            notifications: response.data.map((el) => new Notification(el)),
+            notifications: response.data.map((el) => new Notification(el, this._emitter, this._inboxService)),
           };
 
           if (this.#useCache) {
