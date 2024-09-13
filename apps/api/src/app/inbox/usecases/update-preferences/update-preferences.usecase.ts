@@ -133,7 +133,7 @@ export class UpdatePreferences {
      * the old preferences structure before we can store the new Preferences DTO.
      */
     await this.storePreferences({
-      channels: Object.keys(ChannelTypeEnum).reduce((acc, key) => {
+      channels: Object.values(ChannelTypeEnum).reduce((acc, key) => {
         acc[key] = channelObj[key];
 
         if (acc[key] === undefined) {
