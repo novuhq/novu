@@ -23,7 +23,7 @@ import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-templat
 
 import { ApiException } from '../../utils/exceptions';
 import { CachedEntity, buildSubscriberKey } from '../../services/cache';
-import { GetPreferences, GetPreferencesCommand } from '../get-preferences';
+import { GetPreferences } from '../get-preferences';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -70,27 +70,41 @@ export class GetSubscriberTemplatePreference {
     const workflowOverride = await this.getWorkflowOverride(command);
 
     const templateChannelPreference = command.template.preferenceSettings;
-    const subscriberChannelPreference =
-      (await this.getPreferences.getPreferenceChannels({
+
+    const subscriberWorkflowPreferences =
+      await this.getPreferences.getWorkflowChannelPreferences({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-      })) || subscriberPreference?.channels;
+      });
+
+    const subscriberPreferenceChannels =
+      GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+        subscriberWorkflowPreferences,
+      ) || subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 
     const { channels, overrides } = overridePreferences(
       {
         template: templateChannelPreference,
-        subscriber: subscriberChannelPreference,
+        subscriber: subscriberPreferenceChannels,
         workflowOverride: workflowOverrideChannelPreference,
       },
       initialActiveChannels,
     );
 
+    const template = mapTemplateConfiguration({
+      ...command.template,
+      // determine if any readOnly constraints have been set by the Workflow owner
+      critical: GetPreferences.checkIfWorkflowPreferencesIsReadOnly(
+        subscriberWorkflowPreferences,
+      ),
+    });
+
     return {
-      template: mapTemplateConfiguration(command.template),
+      template,
       preference: {
         enabled: subscriberPreference?.enabled ?? true,
         channels,
