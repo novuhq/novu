@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsup';
 
-const themes: string[] = ['notion'];
+const themes: string[] = ['notion', 'default'];
 
 export default defineConfig([
   {

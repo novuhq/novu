@@ -13,6 +13,11 @@
       "types": "./dist/client/themes/notion/index.d.ts",
       "require": "./dist/client/themes/notion/index.js",
       "import": "./dist/client/themes/notion/index.js"
+    },
+    "./default": {
+      "types": "./dist/client/themes/default/index.d.ts",
+      "require": "./dist/client/themes/default/index.js",
+      "import": "./dist/client/themes/default/index.js"
     }
   },
   "files": [
