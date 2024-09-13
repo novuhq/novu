@@ -85,7 +85,6 @@ export class UpsertPreferences {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _templateId: command.templateId,
-      actor: command.actor,
       preferences: command.preferences,
       type: command.type,
     });
@@ -123,7 +122,6 @@ export class UpsertPreferences {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.templateId,
-        actor: command.actor,
         type: command.type,
       },
       '_id',
