@@ -145,7 +145,7 @@ export class UpdatePreferences {
         channels: preference.channels,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
+        _subscriberId: subscriber._id,
         templateId: workflow._id,
       });
 
@@ -176,7 +176,7 @@ export class UpdatePreferences {
       channels: preference.channels,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
+      _subscriberId: subscriber._id,
     });
 
     return {
@@ -200,7 +200,7 @@ export class UpdatePreferences {
     enabled: boolean;
     channels: IPreferenceChannels;
     organizationId: string;
-    subscriberId: string;
+    _subscriberId: string;
     environmentId: string;
     templateId?: string;
   }) {
@@ -238,7 +238,7 @@ export class UpdatePreferences {
         UpsertSubscriberWorkflowPreferencesCommand.create({
           environmentId: item.environmentId,
           organizationId: item.organizationId,
-          subscriberId: item.subscriberId,
+          _subscriberId: item._subscriberId,
           templateId: item.templateId,
           preferences,
         })
@@ -250,7 +250,7 @@ export class UpdatePreferences {
         preferences,
         environmentId: item.environmentId,
         organizationId: item.organizationId,
-        subscriberId: item.subscriberId,
+        _subscriberId: item._subscriberId,
       })
     );
   }
