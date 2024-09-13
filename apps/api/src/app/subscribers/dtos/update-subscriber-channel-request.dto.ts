@@ -1,12 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-import { ChatProviderIdEnum, ISubscriberChannel, PushProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ISubscriberChannel, ProvidersIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const ProviderIdChatAndPushEnum = { ...ChatProviderIdEnum, ...PushProviderIdEnum };
 export class UpdateSubscriberChannelRequestDto implements ISubscriberChannel {
   @ApiProperty({
-    enum: [ChatProviderIdEnum, PushProviderIdEnum],
+    enum: ProviderIdChatAndPushEnum,
     description: 'The provider identifier for the credentials',
   })
   @IsString()
