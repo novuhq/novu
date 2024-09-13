@@ -102,20 +102,25 @@ export class GetPreferences {
 
     return {
       in_app:
-        workflowPreferences.channels.in_app.defaultValue ||
-        workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.in_app.defaultValue !== undefined
+          ? workflowPreferences.channels.in_app.defaultValue
+          : workflowPreferences.workflow.defaultValue,
       sms:
-        workflowPreferences.channels.sms.defaultValue ||
-        workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.sms.defaultValue !== undefined
+          ? workflowPreferences.channels.sms.defaultValue
+          : workflowPreferences.workflow.defaultValue,
       email:
-        workflowPreferences.channels.email.defaultValue ||
-        workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.email.defaultValue !== undefined
+          ? workflowPreferences.channels.email.defaultValue
+          : workflowPreferences.workflow.defaultValue,
       push:
-        workflowPreferences.channels.push.defaultValue ||
-        workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.push.defaultValue !== undefined
+          ? workflowPreferences.channels.push.defaultValue
+          : workflowPreferences.workflow.defaultValue,
       chat:
-        workflowPreferences.channels.chat.defaultValue ||
-        workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.chat.defaultValue !== undefined
+          ? workflowPreferences.channels.chat.defaultValue
+          : workflowPreferences.workflow.defaultValue,
     };
   }
 
