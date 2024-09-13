@@ -76,7 +76,6 @@ export class UpdatePreferences {
       push: command.push,
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
-    const enabled = true;
 
     /*
      * Backwards compatible storage of new Preferences DTO.
@@ -86,12 +85,11 @@ export class UpdatePreferences {
      * the old preferences structure before we can store the new Preferences DTO.
      */
     await this.storePreferences({
-      enabled,
       channels: Object.keys(ChannelTypeEnum).reduce((acc, key) => {
-        acc[key] = channelObj[key] || PREFERENCE_DEFAULT_VALUE;
+        acc[key] = channelObj[key] !== undefined ? channelObj[key] : PREFERENCE_DEFAULT_VALUE;
 
         return acc;
-      }, {}),
+      }, {} as IPreferenceChannels),
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
@@ -109,7 +107,7 @@ export class UpdatePreferences {
     const query = this.commonQuery(command, subscriber);
     await this.subscriberPreferenceRepository.create({
       ...query,
-      enabled,
+      enabled: true,
       channels: channelObj,
     });
   }
@@ -135,12 +133,16 @@ export class UpdatePreferences {
      * the old preferences structure before we can store the new Preferences DTO.
      */
     await this.storePreferences({
-      enabled: userPreference.enabled,
       channels: Object.keys(ChannelTypeEnum).reduce((acc, key) => {
-        acc[key] = channelObj[key] || userPreference.channels[key] || PREFERENCE_DEFAULT_VALUE;
+        acc[key] = channelObj[key];
+
+        if (acc[key] === undefined) {
+          acc[key] =
+            userPreference.channels[key] === undefined ? PREFERENCE_DEFAULT_VALUE : userPreference.channels[key];
+        }
 
         return acc;
-      }, {}),
+      }, {} as IPreferenceChannels),
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
@@ -236,7 +238,6 @@ export class UpdatePreferences {
   }
 
   private async storePreferences(item: {
-    enabled: boolean;
     channels: IPreferenceChannels;
     organizationId: string;
     _subscriberId: string;

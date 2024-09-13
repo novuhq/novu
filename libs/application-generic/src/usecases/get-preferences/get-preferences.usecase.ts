@@ -6,6 +6,7 @@ import {
   PreferencesTypeEnum,
 } from '@novu/dal';
 import {
+  ChannelTypeEnum,
   FeatureFlagsKeysEnum,
   IPreferenceChannels,
   WorkflowChannelPreferences,
@@ -139,15 +140,25 @@ export class GetPreferences {
     workflowId?: string,
   ): WorkflowChannelPreferences | undefined {
     const workflowPreferences = this.getWorkflowPreferences(items);
-
     const userPreferences = this.getUserPreferences(items);
+
+    const resourcePreferences = deepMerge(
+      [workflowPreferences, userPreferences]
+        .filter((preference) => preference !== undefined)
+        .map((item) => item.preferences),
+    );
 
     const subscriberGlobalPreferences =
       this.getSubscriberGlobalPreferences(items);
-
     const subscriberWorkflowPreferences = this.getSubscriberWorkflowPreferences(
       items,
       workflowId,
+    );
+
+    const subscriberPreferences = deepMerge(
+      [subscriberGlobalPreferences, subscriberWorkflowPreferences]
+        .filter((preference) => preference !== undefined)
+        .map((item) => item.preferences),
     );
 
     /**
@@ -197,7 +208,26 @@ export class GetPreferences {
     ) as WorkflowChannelPreferences[];
 
     // by merging only the read-only values after the full objects, we ensure that only the readOnly field is affected.
-    return deepMerge([...preferences, ...readOnlyPreferences]);
+    const readOnlyPreference = deepMerge([...readOnlyPreferences]);
+
+    // if there is no subscriber preferences, we return the resource preferences
+    if (Object.keys(subscriberPreferences).length === 0) {
+      return resourcePreferences;
+    }
+
+    if (readOnlyPreference?.workflow?.readOnly) {
+      subscriberPreferences.workflow.defaultValue =
+        resourcePreferences?.workflow?.defaultValue;
+    }
+
+    for (const channel of Object.keys(ChannelTypeEnum)) {
+      if (readOnlyPreference?.channels[channel]?.readOnly) {
+        subscriberPreferences.channels[channel].defaultValue =
+          resourcePreferences?.channels[channel]?.defaultValue;
+      }
+    }
+
+    return deepMerge([subscriberPreferences, readOnlyPreference]);
   }
 
   private getSubscriberWorkflowPreferences(
