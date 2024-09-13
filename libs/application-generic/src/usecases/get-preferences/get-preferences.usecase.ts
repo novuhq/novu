@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  PreferencesActorEnum,
   PreferencesEntity,
   PreferencesRepository,
   PreferencesTypeEnum,
@@ -290,29 +289,28 @@ export class GetPreferences {
       items.push(...workflowPreferences);
     }
 
-    // Fetch the Global Subscriber Preferences.
+    // Fetch the Subscriber Global Preference.
     if (command.subscriberId) {
-      const subscriberPreferences = await this.preferencesRepository.find({
+      const subscriberGlobalPreference = await this.preferencesRepository.find({
         _subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
-        actor: PreferencesActorEnum.SUBSCRIBER,
         type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       });
 
-      items.push(...subscriberPreferences);
+      items.push(...subscriberGlobalPreference);
     }
 
-    // Fetch the Subscriber Workflow Preferences.
+    // Fetch the Subscriber Workflow Preference.
     if (command.subscriberId && command.templateId) {
-      const subscriberPreferences = await this.preferencesRepository.find({
-        _subscriberId: command.subscriberId,
-        _templateId: command.templateId,
-        _environmentId: command.environmentId,
-        actor: PreferencesActorEnum.SUBSCRIBER,
-        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-      });
+      const subscriberWorkflowPreference =
+        await this.preferencesRepository.find({
+          _subscriberId: command.subscriberId,
+          _templateId: command.templateId,
+          _environmentId: command.environmentId,
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        });
 
-      items.push(...subscriberPreferences);
+      items.push(...subscriberWorkflowPreference);
     }
 
     return items;

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  PreferencesActorEnum,
   PreferencesEntity,
   PreferencesRepository,
   PreferencesTypeEnum,
@@ -22,7 +21,6 @@ export class UpsertPreferences {
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.WORKFLOW,
       preferences: command.preferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     });
@@ -35,7 +33,6 @@ export class UpsertPreferences {
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.SUBSCRIBER,
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     });
@@ -48,7 +45,6 @@ export class UpsertPreferences {
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.SUBSCRIBER,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
@@ -62,7 +58,6 @@ export class UpsertPreferences {
       userId: command.userId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.USER,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.USER_WORKFLOW,

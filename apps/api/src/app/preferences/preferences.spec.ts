@@ -7,7 +7,7 @@ import {
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { PreferencesActorEnum, PreferencesRepository, SubscriberRepository } from '@novu/dal';
+import { PreferencesRepository, PreferencesTypeEnum, SubscriberRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -80,7 +80,7 @@ describe('Preferences', function () {
       expect(workflowPreferences._templateId).to.equal(workflowId);
       expect(workflowPreferences._userId).to.be.undefined;
       expect(workflowPreferences._subscriberId).to.be.undefined;
-      expect(workflowPreferences.actor).to.equal(PreferencesActorEnum.WORKFLOW);
+      expect(workflowPreferences.type).to.equal(PreferencesTypeEnum.WORKFLOW_RESOURCE);
     });
 
     it('should create user workflow preferences', async function () {
@@ -126,7 +126,7 @@ describe('Preferences', function () {
       expect(userPreferences._templateId).to.equal(workflowId);
       expect(userPreferences._userId).to.equal(session.user._id);
       expect(userPreferences._subscriberId).to.be.undefined;
-      expect(userPreferences.actor).to.equal(PreferencesActorEnum.USER);
+      expect(userPreferences.type).to.equal(PreferencesTypeEnum.USER_WORKFLOW);
     });
 
     it('should create global subscriber preferences', async function () {
@@ -171,7 +171,7 @@ describe('Preferences', function () {
       expect(subscriberGlobalPreferences._templateId).to.be.undefined;
       expect(subscriberGlobalPreferences._userId).to.be.undefined;
       expect(subscriberGlobalPreferences._subscriberId).to.equal(subscriberId);
-      expect(subscriberGlobalPreferences.actor).to.equal(PreferencesActorEnum.SUBSCRIBER);
+      expect(subscriberGlobalPreferences.type).to.equal(PreferencesTypeEnum.SUBSCRIBER_GLOBAL);
     });
 
     it('should create subscriber workflow preferences', async function () {
@@ -217,7 +217,7 @@ describe('Preferences', function () {
       expect(subscriberWorkflowPreferences._templateId).to.equal(workflowId);
       expect(subscriberWorkflowPreferences._userId).to.be.undefined;
       expect(subscriberWorkflowPreferences._subscriberId).to.equal(subscriberId);
-      expect(subscriberWorkflowPreferences.actor).to.equal(PreferencesActorEnum.SUBSCRIBER);
+      expect(subscriberWorkflowPreferences.type).to.equal(PreferencesTypeEnum.SUBSCRIBER_WORKFLOW);
     });
 
     it('should update preferences', async function () {
@@ -262,7 +262,7 @@ describe('Preferences', function () {
       expect(workflowPreferences._templateId).to.equal(workflowId);
       expect(workflowPreferences._userId).to.be.undefined;
       expect(workflowPreferences._subscriberId).to.be.undefined;
-      expect(workflowPreferences.actor).to.equal(PreferencesActorEnum.WORKFLOW);
+      expect(workflowPreferences.type).to.equal(PreferencesTypeEnum.WORKFLOW_RESOURCE);
 
       workflowPreferences = await upsertPreferences.upsertWorkflowPreferences(
         UpsertWorkflowPreferencesCommand.create({
