@@ -77,6 +77,11 @@ export class UpdatePreferences {
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
 
+    const channelPreferences = Object.values(ChannelTypeEnum).reduce((acc, key) => {
+      acc[key] = channelObj[key] !== undefined ? channelObj[key] : PREFERENCE_DEFAULT_VALUE;
+
+      return acc;
+    }, {} as IPreferenceChannels);
     /*
      * Backwards compatible storage of new Preferences DTO.
      *
@@ -85,11 +90,7 @@ export class UpdatePreferences {
      * the old preferences structure before we can store the new Preferences DTO.
      */
     await this.storePreferences({
-      channels: Object.values(ChannelTypeEnum).reduce((acc, key) => {
-        acc[key] = channelObj[key] !== undefined ? channelObj[key] : PREFERENCE_DEFAULT_VALUE;
-
-        return acc;
-      }, {} as IPreferenceChannels),
+      channels: channelPreferences,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
@@ -125,6 +126,15 @@ export class UpdatePreferences {
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
 
+    const channelPreferences = Object.values(ChannelTypeEnum).reduce((acc, key) => {
+      acc[key] = channelObj[key];
+
+      if (acc[key] === undefined) {
+        acc[key] = userPreference.channels[key] === undefined ? PREFERENCE_DEFAULT_VALUE : userPreference.channels[key];
+      }
+
+      return acc;
+    }, {} as IPreferenceChannels);
     /*
      * Backwards compatible storage of new Preferences DTO.
      *
@@ -133,16 +143,7 @@ export class UpdatePreferences {
      * the old preferences structure before we can store the new Preferences DTO.
      */
     await this.storePreferences({
-      channels: Object.values(ChannelTypeEnum).reduce((acc, key) => {
-        acc[key] = channelObj[key];
-
-        if (acc[key] === undefined) {
-          acc[key] =
-            userPreference.channels[key] === undefined ? PREFERENCE_DEFAULT_VALUE : userPreference.channels[key];
-        }
-
-        return acc;
-      }, {} as IPreferenceChannels),
+      channels: channelPreferences,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       _subscriberId: subscriber._id,
