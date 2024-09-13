@@ -79,7 +79,10 @@ export class GetSubscriberTemplatePreference {
         templateId: command.template._id,
       });
 
-    const subscriberPreferenceChannels = subscriberPreference?.channels;
+    const subscriberPreferenceChannels =
+      GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+        subscriberWorkflowPreferences,
+      ) || subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 
