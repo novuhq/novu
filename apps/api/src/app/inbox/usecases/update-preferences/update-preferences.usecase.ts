@@ -212,14 +212,6 @@ export class UpdatePreferences {
       })
     );
 
-    await this.storePreferences({
-      enabled: preference.enabled,
-      channels: preference.channels,
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      _subscriberId: subscriber._id,
-    });
-
     return {
       level: PreferenceLevelEnum.GLOBAL,
       enabled: preference.enabled,

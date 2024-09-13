@@ -215,11 +215,13 @@ export class GetPreferences {
       return resourcePreferences;
     }
 
+    // if the workflow should be readonly we return the resource preferences default value for workflow.
     if (readOnlyPreference?.workflow?.readOnly) {
       subscriberPreferences.workflow.defaultValue =
         resourcePreferences?.workflow?.defaultValue;
     }
 
+    // if the workflow channel should be readonly we return the resource preferences default value for channel.
     for (const channel of Object.keys(ChannelTypeEnum)) {
       if (readOnlyPreference?.channels[channel]?.readOnly) {
         subscriberPreferences.channels[channel].defaultValue =
@@ -227,6 +229,7 @@ export class GetPreferences {
       }
     }
 
+    // making sure we respond with correct readonly values.
     return deepMerge([subscriberPreferences, readOnlyPreference]);
   }
 
