@@ -1,5 +1,5 @@
 import { buildWorkflowChannelPreferences } from './buildWorkflowChannelPreferences';
-import { WorkflowChannelPreferences } from '../types';
+import { IncompleteWorkflowChannelPreferences, WorkflowChannelPreferences } from '../types';
 
 const fullPreferences: WorkflowChannelPreferences = {
   workflow: {
@@ -32,7 +32,16 @@ const fullPreferences: WorkflowChannelPreferences = {
 
 describe('buildWorkflowChannelPreferences', () => {
   it('should return the input object if a complete preferences object is supplied', () => {
-    const testPreferences = { ...fullPreferences };
+    const testPreferences: IncompleteWorkflowChannelPreferences = { ...fullPreferences };
+
+    const result = buildWorkflowChannelPreferences(testPreferences);
+    expect(result).toEqual(testPreferences);
+  });
+
+  it('should populate the remainder of the object with default values', () => {
+    const testPreferences: IncompleteWorkflowChannelPreferences = {
+      channels: { in_app: { readOnly: true, defaultValue: false } },
+    };
 
     const result = buildWorkflowChannelPreferences(testPreferences);
     expect(result).toEqual(testPreferences);

@@ -1,4 +1,4 @@
-import { WorkflowChannelPreferences } from '../types';
+import { IncompleteWorkflowChannelPreferences, WorkflowChannelPreferences } from '../types';
 
 const PREFERENCE_DEFAULT_READ_ONLY = true;
 const PREFERENCE_DEFAULT_VALUE = false;
@@ -32,7 +32,7 @@ export const DEFAULT_WORKFLOW_PREFERENCES: WorkflowChannelPreferences = {
 };
 
 export const buildWorkflowChannelPreferences = (
-  inputPreferences: Partial<WorkflowChannelPreferences>
+  inputPreferences: IncompleteWorkflowChannelPreferences
 ): WorkflowChannelPreferences => {
   return DEFAULT_WORKFLOW_PREFERENCES;
 };
