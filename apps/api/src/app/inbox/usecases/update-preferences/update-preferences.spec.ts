@@ -3,6 +3,7 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   GetSubscriberGlobalPreferenceCommand,
+  UpsertPreferences,
 } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberPreferenceRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum } from '@novu/shared';
@@ -56,6 +57,7 @@ describe('UpdatePreferences', () => {
   let subscriberPreferenceRepositoryMock: sinon.SinonStubbedInstance<SubscriberPreferenceRepository>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
+  let upsertPreferenceMock: sinon.SinonStubbedInstance<UpsertPreferences>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
@@ -64,6 +66,7 @@ describe('UpdatePreferences', () => {
     subscriberPreferenceRepositoryMock = sinon.createStubInstance(SubscriberPreferenceRepository);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
+    upsertPreferenceMock = sinon.createStubInstance(UpsertPreferences);
 
     updatePreferences = new UpdatePreferences(
       subscriberPreferenceRepositoryMock as any,
@@ -71,7 +74,8 @@ describe('UpdatePreferences', () => {
       subscriberRepositoryMock as any,
       analyticsServiceMock as any,
       getSubscriberGlobalPreferenceMock as any,
-      getSubscriberTemplatePreferenceUsecase as any
+      getSubscriberTemplatePreferenceUsecase as any,
+      upsertPreferenceMock as any
     );
   });
 
