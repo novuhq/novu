@@ -13,6 +13,7 @@ const LINKS: LinkType[] = [
   { href: '/render-notification', label: 'Render Notification' },
   { href: '/preferences', label: 'Preferences' },
   { href: '/notifications', label: 'Notifications' },
+  { href: '/themes', label: 'Themes' },
   { href: '/novu-theme', label: 'Novu Theme' },
   { href: '/custom-popover', label: 'Custom Popover' },
   { href: '/hooks', label: 'Hooks' },
@@ -21,9 +22,10 @@ const LINKS: LinkType[] = [
 const NavLink = ({ href, label }: LinkType) => {
   const router = useRouter();
 
-  const pathname = router.pathname;
+  const { pathname } = router;
 
   const isActive = pathname === href;
+
   return (
     <li className={`p-2 rounded hover:bg-slate-200 ${isActive ? 'underline text-cyan-800' : ''}`}>
       <Link href={href}>{label}</Link>

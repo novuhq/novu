@@ -10,9 +10,9 @@
   "types": "dist/client/index.d.ts",
   "exports": {
     "./notion": {
-      "types": "./dist/themes/notion/index.d.ts",
-      "require": "./dist/themes/notion/index.js",
-      "import": "./dist/themes/notion/index.js"
+      "types": "./dist/client/themes/notion/index.d.ts",
+      "require": "./dist/client/themes/notion/index.js",
+      "import": "./dist/client/themes/notion/index.js"
     }
   },
   "files": [
