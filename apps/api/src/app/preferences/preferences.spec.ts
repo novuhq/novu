@@ -462,7 +462,7 @@ describe('Preferences', function () {
             channels: {
               in_app: {
                 defaultValue: false,
-                readOnly: true,
+                readOnly: false,
               },
               sms: {
                 defaultValue: false,
@@ -503,7 +503,7 @@ describe('Preferences', function () {
         channels: {
           in_app: {
             defaultValue: false,
-            readOnly: true,
+            readOnly: false,
           },
           sms: {
             defaultValue: false,
@@ -577,11 +577,11 @@ describe('Preferences', function () {
         channels: {
           in_app: {
             defaultValue: false,
-            readOnly: true,
+            readOnly: false,
           },
           sms: {
             defaultValue: false,
-            readOnly: true,
+            readOnly: false,
           },
           email: {
             defaultValue: false,
