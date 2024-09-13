@@ -7,7 +7,7 @@ import { ControlVariablesLevelEnum } from '@novu/shared';
 import { UpsertControlVariablesCommand } from './upsert-control-variables.command';
 
 @Injectable()
-export class UpsertControlVariables {
+export class UpsertControlVariablesUseCase {
   constructor(private controlVariablesRepository: ControlVariablesRepository) {}
 
   async execute(command: UpsertControlVariablesCommand) {

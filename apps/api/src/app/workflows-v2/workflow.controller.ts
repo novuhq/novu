@@ -15,8 +15,8 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { MemberRoleEnum, UserSessionData, WorkflowOriginEnum } from '@novu/shared';
-import { ExternalApiAccessible, Roles, UserAuthGuard, UserSession } from '@novu/application-generic';
+import { UserSessionData, WorkflowOriginEnum } from '@novu/shared';
+import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { CONTEXT_PATH } from '../../config';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -49,7 +49,6 @@ export class WorkflowController {
     summary: 'Create workflow',
     description: `Workflow was previously named notification template`,
   })
-  @Roles(MemberRoleEnum.ADMIN)
   create(@UserSession() user: UserSessionData, @Body() body: CreateWorkflowDto): Promise<WorkflowResponseDto> {
     const workflowDto = { ...body, origin: body.origin ?? WorkflowOriginEnum.NOVU };
     const command = UpsertWorkflowCommand.create({ workflowDto, user });
@@ -62,7 +61,6 @@ export class WorkflowController {
     summary: 'Update workflow',
     description: `Update Workflow`,
   })
-  @Roles(MemberRoleEnum.ADMIN)
   update(
     @UserSession() user: UserSessionData,
     @Param() workflowId: string,
@@ -77,7 +75,6 @@ export class WorkflowController {
   @Get('/:workflowId')
   @ExternalApiAccessible()
   @UseGuards(UserAuthGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   getWorkflow(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string
@@ -89,7 +86,6 @@ export class WorkflowController {
 
   @Delete('/:workflowId')
   @ExternalApiAccessible()
-  @Roles(MemberRoleEnum.ADMIN)
   removeWorkflow(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
@@ -102,7 +98,6 @@ export class WorkflowController {
 
   @Get('')
   @UseGuards(UserAuthGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   searchWorkflows(
     @UserSession() user: UserSessionData,
     @Query() offset?: number,

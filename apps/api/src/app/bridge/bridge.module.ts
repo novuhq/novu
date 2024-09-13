@@ -7,6 +7,7 @@ import {
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
+  UpsertControlVariablesUseCase,
   UpsertPreferences,
 } from '@novu/application-generic';
 import { PreferencesRepository } from '@novu/dal';
@@ -24,6 +25,7 @@ const PROVIDERS = [
   UpdateChange,
   PreferencesRepository,
   UpsertPreferences,
+  UpsertControlVariablesUseCase,
 ];
 
 @Module({

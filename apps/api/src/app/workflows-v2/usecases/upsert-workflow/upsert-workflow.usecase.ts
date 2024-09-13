@@ -12,10 +12,10 @@ import {
   NotificationStep,
   UpdateWorkflow,
   UpdateWorkflowCommand,
+  UpsertControlVariablesCommand,
+  UpsertControlVariablesUseCase,
   UpsertPreferences,
   UpsertWorkflowPreferencesCommand,
-  UpsertControlVariablesCommand,
-  UpsertControlVariables,
 } from '@novu/application-generic';
 import { IPreferenceChannels, WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
@@ -32,7 +32,7 @@ export class UpsertWorkflowUseCase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     private upsertPreferencesUsecase: UpsertPreferences,
-    private upsertControlVariables: UpsertControlVariables,
+    private upsertControlVariables: UpsertControlVariablesUseCase,
     private environmentRepository: EnvironmentRepository
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {

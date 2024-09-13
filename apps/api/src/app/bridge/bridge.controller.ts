@@ -14,13 +14,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { ControlVariablesLevelEnum, UserSessionData, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
-import { EnvironmentRepository, NotificationTemplateRepository, ControlVariablesRepository } from '@novu/dal';
+import { ControlVariablesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
 
-import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
+import { StoreControlVariablesCommand, StoreControlVariablesUseCase } from './usecases/store-control-variables';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
 import { Sync } from './usecases/sync/sync.usecase';
@@ -41,7 +41,7 @@ export class BridgeController {
     private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private controlVariablesRepository: ControlVariablesRepository,
-    private storeControlVariables: StoreControlVariables,
+    private storeControlVariables: StoreControlVariablesUseCase,
     private previewStep: PreviewStep,
     private analyticsService: AnalyticsService
   ) {}

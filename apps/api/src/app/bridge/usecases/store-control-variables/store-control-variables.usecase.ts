@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 import defaults from 'json-schema-defaults';
 
 import { NotificationTemplateRepository } from '@novu/dal';
-import { ApiException, UpsertControlVariables, UpsertControlVariablesCommand } from '@novu/application-generic';
+import { ApiException, UpsertControlVariablesCommand, UpsertControlVariablesUseCase } from '@novu/application-generic';
 import { JsonSchema } from '@novu/framework';
 
 import { StoreControlVariablesCommand } from './store-control-variables.command';
 
 @Injectable()
-export class StoreControlVariables {
+export class StoreControlVariablesUseCase {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private upsertControlVariables: UpsertControlVariables
+    private upsertControlVariablesUseCase: UpsertControlVariablesUseCase
   ) {}
 
   async execute(command: StoreControlVariablesCommand) {
@@ -35,7 +35,7 @@ export class StoreControlVariables {
       {}
     ) as JsonSchema;
 
-    return await this.upsertControlVariables.execute(
+    return await this.upsertControlVariablesUseCase.execute(
       UpsertControlVariablesCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
