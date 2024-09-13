@@ -227,7 +227,7 @@ export class GetPreferences {
     }
 
     // if the workflow channel should be readonly we return the resource preferences default value for channel.
-    for (const channel of Object.keys(ChannelTypeEnum)) {
+    for (const channel of Object.values(ChannelTypeEnum)) {
       if (readOnlyPreference?.channels[channel]?.readOnly) {
         subscriberPreferences.channels[channel].defaultValue =
           resourcePreferences?.channels[channel]?.defaultValue;
@@ -270,23 +270,46 @@ export class GetPreferences {
   private async getPreferencesFromDb(command: GetPreferencesCommand) {
     const items: PreferencesEntity[] = [];
 
+    /*
+     * Fetch the Workflow Preferences. This includes:
+     * - Workflow Resource Preferences - the Code-defined Workflow Preferences
+     * - User Workflow Preferences - the Dashboard-defined Workflow Preferences
+     */
     if (command.templateId) {
       const workflowPreferences = await this.preferencesRepository.find({
         _templateId: command.templateId,
         _environmentId: command.environmentId,
-        actor: {
-          $ne: PreferencesActorEnum.SUBSCRIBER,
+        type: {
+          $in: [
+            PreferencesTypeEnum.WORKFLOW_RESOURCE,
+            PreferencesTypeEnum.USER_WORKFLOW,
+          ],
         },
       });
 
       items.push(...workflowPreferences);
     }
 
+    // Fetch the Global Subscriber Preferences.
     if (command.subscriberId) {
       const subscriberPreferences = await this.preferencesRepository.find({
         _subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
         actor: PreferencesActorEnum.SUBSCRIBER,
+        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+      });
+
+      items.push(...subscriberPreferences);
+    }
+
+    // Fetch the Subscriber Workflow Preferences.
+    if (command.subscriberId && command.templateId) {
+      const subscriberPreferences = await this.preferencesRepository.find({
+        _subscriberId: command.subscriberId,
+        _templateId: command.templateId,
+        _environmentId: command.environmentId,
+        actor: PreferencesActorEnum.SUBSCRIBER,
+        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
       });
 
       items.push(...subscriberPreferences);
