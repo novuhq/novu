@@ -1,0 +1,68 @@
+{
+  "name": "@novu/themes",
+  "version": "2.0.0-canary.3",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's Themes for building custom inbox notification experiences",
+  "author": "",
+  "license": "ISC",
+  "main": "dist/client/index.js",
+  "module": "dist/client/index.mjs",
+  "types": "dist/client/index.d.ts",
+  "exports": {
+    "./notion": {
+      "types": "./dist/client/themes/notion/index.d.ts",
+      "require": "./dist/client/themes/notion/index.js",
+      "import": "./dist/client/themes/notion/index.js"
+    },
+    "./default": {
+      "types": "./dist/client/themes/default/index.d.ts",
+      "require": "./dist/client/themes/default/index.js",
+      "import": "./dist/client/themes/default/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "dist/client/**/*"
+  ],
+  "sideEffects": false,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:watch": "tsup --watch",
+    "build": "tsup",
+    "lint": "eslint src"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.2.1",
+    "typescript": "4.9.5"
+  },
+  "peerDependencies": {
+    "react": ">=17",
+    "react-dom": ">=17",
+    "@novu/js": "^2.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@novu/js": {
+      "optional": true
+    }
+  }
+}
