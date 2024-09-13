@@ -13,6 +13,7 @@ export const useStudioWorkflowChannelPreferences = (
   const workflowChannelPreferences: WorkflowChannelPreferences = useMemo(() => {
     const workflowPreference = data?.workflows?.find((workflow) => workflow.workflowId === workflowId)?.preferences;
 
+    // if incomplete preferences are discovered from framework, populate the rest based on whatever is provided.
     return buildWorkflowChannelPreferences(workflowPreference);
   }, [data, workflowId]);
 
