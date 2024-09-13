@@ -8,9 +8,7 @@ import { UpdateProviderSidebar as UpdateProviderSidebarOld } from './components/
 export function UpdateProviderPage() {
   const { integrationId } = useParams();
   const navigate = useNavigate();
-  let isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
-
-  isV2Enabled = false;
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const onClose = () => {
     navigate(ROUTES.INTEGRATIONS);
