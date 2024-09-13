@@ -275,7 +275,7 @@ export const revertAction = async ({
 const getNotificationDetails = (
   args: ReadArgs | UnreadArgs | ArchivedArgs | UnarchivedArgs,
   update: Partial<Notification>,
-  instances: {
+  dependencies: {
     emitter: NovuEventEmitter;
     apiService: InboxService;
   }
@@ -283,7 +283,11 @@ const getNotificationDetails = (
   if ('notification' in args) {
     return {
       notificationId: args.notification.id,
-      optimisticValue: new Notification({ ...args.notification, ...update }, instances.emitter, instances.apiService),
+      optimisticValue: new Notification(
+        { ...args.notification, ...update },
+        dependencies.emitter,
+        dependencies.apiService
+      ),
     };
   } else {
     return {
