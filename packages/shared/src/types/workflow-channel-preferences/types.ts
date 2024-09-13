@@ -9,3 +9,8 @@ export type WorkflowChannelPreferences = {
   workflow: ChannelPreference;
   channels: Record<ChannelTypeEnum, ChannelPreference>;
 };
+
+export type IncompleteWorkflowChannelPreferences = {
+  workflow?: Partial<ChannelPreference>;
+  channels?: Partial<Record<ChannelTypeEnum, Partial<ChannelPreference>>>;
+};
