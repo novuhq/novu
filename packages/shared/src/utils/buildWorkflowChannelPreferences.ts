@@ -1,38 +1,40 @@
-import { IncompleteWorkflowChannelPreferences, WorkflowChannelPreferences } from '../types';
+import { DEFAULT_WORKFLOW_PREFERENCES } from '../consts';
+import { ChannelTypeEnum, IncompleteWorkflowChannelPreferences, WorkflowChannelPreferences } from '../types';
 
-const PREFERENCE_DEFAULT_READ_ONLY = true;
-const PREFERENCE_DEFAULT_VALUE = false;
-export const DEFAULT_WORKFLOW_PREFERENCES: WorkflowChannelPreferences = {
-  workflow: {
-    defaultValue: PREFERENCE_DEFAULT_READ_ONLY,
-    readOnly: PREFERENCE_DEFAULT_VALUE,
-  },
-  channels: {
-    in_app: {
-      defaultValue: PREFERENCE_DEFAULT_READ_ONLY,
-      readOnly: PREFERENCE_DEFAULT_VALUE,
-    },
-    sms: {
-      defaultValue: PREFERENCE_DEFAULT_READ_ONLY,
-      readOnly: PREFERENCE_DEFAULT_VALUE,
-    },
-    email: {
-      defaultValue: PREFERENCE_DEFAULT_READ_ONLY,
-      readOnly: PREFERENCE_DEFAULT_VALUE,
-    },
-    push: {
-      defaultValue: PREFERENCE_DEFAULT_READ_ONLY,
-      readOnly: PREFERENCE_DEFAULT_VALUE,
-    },
-    chat: {
-      defaultValue: PREFERENCE_DEFAULT_READ_ONLY,
-      readOnly: PREFERENCE_DEFAULT_VALUE,
-    },
-  },
-};
-
+/**
+ * Given any partial input of preferences, output a complete preferences object that:
+ * - First uses channel-level preferences
+ * - Uses the workflow-level preference as defaults for channel preferences if not specified
+ * - Lastly, uses the defaults we've defined
+ */
 export const buildWorkflowChannelPreferences = (
-  inputPreferences: IncompleteWorkflowChannelPreferences
+  inputPreferences: IncompleteWorkflowChannelPreferences | undefined,
+  defaultPreferences: WorkflowChannelPreferences = DEFAULT_WORKFLOW_PREFERENCES
 ): WorkflowChannelPreferences => {
-  return DEFAULT_WORKFLOW_PREFERENCES;
+  if (!inputPreferences) {
+    return defaultPreferences;
+  }
+
+  return {
+    ...defaultPreferences,
+    workflow: {
+      ...defaultPreferences.workflow,
+      ...inputPreferences.workflow,
+    },
+    channels: {
+      ...defaultPreferences.channels,
+      ...Object.values(ChannelTypeEnum).reduce(
+        (output, channel) => ({
+          ...output,
+          [channel]: {
+            // any channel could be used here, but 'chat' is used as it is the first alphabetically
+            ...defaultPreferences.channels.chat,
+            ...inputPreferences?.workflow,
+            ...inputPreferences?.channels?.[channel],
+          },
+        }),
+        {} as WorkflowChannelPreferences['channels']
+      ),
+    },
+  };
 };
