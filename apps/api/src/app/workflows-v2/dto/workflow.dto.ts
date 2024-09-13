@@ -1,8 +1,8 @@
 import { IsArray, IsBoolean, IsDefined, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { DiscoverWorkflowOutputPreferences, JsonSchema } from '@novu/framework';
-import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { JsonSchema } from '@novu/framework';
+import { StepTypeEnum, WorkflowChannelPreferences, WorkflowOriginEnum } from '@novu/shared';
 
 class Schema {
   schema: JsonSchema;
@@ -98,7 +98,7 @@ export class WorkflowDto {
   notificationGroupId: string;
 
   @IsDefined()
-  preferences: DiscoverWorkflowOutputPreferences;
+  preferences: WorkflowChannelPreferences;
 
   @IsString()
   @IsDefined()
