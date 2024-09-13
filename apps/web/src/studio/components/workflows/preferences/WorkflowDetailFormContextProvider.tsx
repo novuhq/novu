@@ -1,8 +1,7 @@
-import { WorkflowChannelPreferences } from '@novu/shared';
+import { buildWorkflowChannelPreferences, WorkflowChannelPreferences } from '@novu/shared';
 import { FC, PropsWithChildren } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { WorkflowGeneralSettings } from './types';
-import { DEFAULT_WORKFLOW_PREFERENCES } from './WorkflowSubscriptionPreferences.const';
 
 interface IWorkflowDetailFormContextProviderProps {}
 
@@ -16,7 +15,7 @@ const DEFAULT_FORM_VALUES: WorkflowDetailFormContext = {
     workflowId: '',
     name: '',
   },
-  preferences: DEFAULT_WORKFLOW_PREFERENCES,
+  preferences: buildWorkflowChannelPreferences(undefined),
 };
 
 export const WorkflowDetailFormContextProvider: FC<PropsWithChildren<IWorkflowDetailFormContextProviderProps>> = ({

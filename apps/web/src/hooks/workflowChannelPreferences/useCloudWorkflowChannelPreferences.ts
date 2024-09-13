@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { WorkflowChannelPreferences } from '@novu/shared';
+import { buildWorkflowChannelPreferences, WorkflowChannelPreferences } from '@novu/shared';
 import { QueryKeys } from '../../api/query.keys';
 import { useNovuAPI } from '../useNovuAPI';
-import { DEFAULT_WORKFLOW_PREFERENCES } from '../../studio/components/workflows/preferences/WorkflowSubscriptionPreferences.const';
 import { AxiosError, HttpStatusCode } from 'axios';
 
 export const useCloudWorkflowChannelPreferences = (
@@ -28,7 +27,7 @@ export const useCloudWorkflowChannelPreferences = (
       }
 
       // if preferences aren't found (404), use default so that user can modify them to upsert properly.
-      return DEFAULT_WORKFLOW_PREFERENCES;
+      return buildWorkflowChannelPreferences(undefined);
     }
   });
 
