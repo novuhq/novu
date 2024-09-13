@@ -7,6 +7,7 @@ import { cn, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';
+import Markdown from '../elements/Markdown';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 
@@ -214,9 +215,18 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           </div>
         </div>
         <Show when={props.notification.subject}>
-          <p class={style('notificationSubject', 'nt-text-start nt-font-semibold')}>{props.notification.subject}</p>
+          {(subject) => (
+            <Markdown
+              class={style('notificationSubject', 'nt-text-start nt-font-semibold')}
+              strongAppearanceKey="notificationSubject__strong"
+            >
+              {subject()}
+            </Markdown>
+          )}
         </Show>
-        <p class={style('notificationBody', 'nt-text-start')}>{props.notification.body}</p>
+        <Markdown class={style('notificationBody', 'nt-text-start')} strongAppearanceKey="notificationBody__strong">
+          {props.notification.body}
+        </Markdown>
         <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
