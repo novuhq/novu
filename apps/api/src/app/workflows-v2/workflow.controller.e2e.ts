@@ -61,9 +61,10 @@ describe('Workflow Controller E2E API Testing', () => {
 
 async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
   const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-
-  const { body } = await session.testAgent.post('/v2/workflows').send(createWorkflowDto);
-
+  console.log(JSON.stringify(createWorkflowDto, null, 2));
+  const { body, status } = await session.testAgent.post('/v2/workflows').send(createWorkflowDto);
+  console.log(status);
+  console.log(body);
   expect(body.data).to.be.ok;
   const createdWorkflow = body.data;
   const createdWorkflowWithoutUpdateDate = _.omit(createdWorkflow, 'updatedAt');
