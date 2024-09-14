@@ -1,5 +1,10 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { CreateWorkflow, UpdateWorkflow } from '@novu/application-generic';
+import {
+  CreateWorkflow,
+  UpdateWorkflow,
+  UpsertControlVariablesUseCase,
+  UpsertPreferences,
+} from '@novu/application-generic';
 import { SharedModule } from '../shared/shared.module';
 import { MessageTemplateModule } from '../message-template/message-template.module';
 import { ChangeModule } from '../change/change.module';
@@ -22,6 +27,8 @@ import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflo
     GetWorkflowUseCase,
     ListWorkflowsUseCase,
     DeleteWorkflowUseCase,
+    UpsertPreferences,
+    UpsertControlVariablesUseCase,
   ],
 })
 export class WorkflowV2Module implements NestModule {
