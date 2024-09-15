@@ -13,8 +13,8 @@ export class PreferencesCache {
   #emitter: NovuEventEmitter;
   #cache: Cache<Preference[]>;
 
-  constructor() {
-    this.#emitter = NovuEventEmitter.getInstance();
+  constructor({ emitterInstance }: { emitterInstance: NovuEventEmitter }) {
+    this.#emitter = emitterInstance;
     updateEvents.forEach((event) => {
       this.#emitter.on(event, this.handlePreferenceEvent);
     });

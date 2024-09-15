@@ -15,6 +15,7 @@ import {
   NotificationTemplateRepository,
   PreferenceLevelEnum,
   SubscriberEntity,
+  SubscriberPreferenceEntity,
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -55,11 +56,13 @@ export class UpdatePreferences {
       }
     }
 
-    const userPreference = await this.subscriberPreferenceRepository.findOne(this.commonQuery(command, subscriber));
+    const userPreference: SubscriberPreferenceEntity | null = await this.subscriberPreferenceRepository.findOne(
+      this.commonQuery(command, subscriber)
+    );
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);
     } else {
-      await this.updateUserPreference(command, subscriber);
+      await this.updateUserPreference(command, subscriber, userPreference);
     }
 
     return await this.findPreference(command, subscriber);
@@ -73,6 +76,26 @@ export class UpdatePreferences {
       push: command.push,
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
+
+    const channelPreferences = Object.values(ChannelTypeEnum).reduce((acc, key) => {
+      acc[key] = channelObj[key] !== undefined ? channelObj[key] : PREFERENCE_DEFAULT_VALUE;
+
+      return acc;
+    }, {} as IPreferenceChannels);
+    /*
+     * Backwards compatible storage of new Preferences DTO.
+     *
+     * Currently, this is a side-effect due to the way that Preferences are stored
+     * and resolved with overrides in cascading order, necessitating a lookup against
+     * the old preferences structure before we can store the new Preferences DTO.
+     */
+    await this.storePreferences({
+      channels: channelPreferences,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      templateId: command.workflowId,
+    });
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.CREATE_PREFERENCES, '', {
       _organization: command.organizationId,
@@ -90,7 +113,11 @@ export class UpdatePreferences {
     });
   }
 
-  private async updateUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
+  private async updateUserPreference(
+    command: UpdatePreferencesCommand,
+    subscriber: SubscriberEntity,
+    userPreference: SubscriberPreferenceEntity
+  ): Promise<void> {
     const channelObj = {
       chat: command.chat,
       email: command.email,
@@ -98,6 +125,30 @@ export class UpdatePreferences {
       push: command.push,
       sms: command.sms,
     } as Record<ChannelTypeEnum, boolean>;
+
+    const channelPreferences = Object.values(ChannelTypeEnum).reduce((acc, key) => {
+      acc[key] = channelObj[key];
+
+      if (acc[key] === undefined) {
+        acc[key] = userPreference.channels[key] === undefined ? PREFERENCE_DEFAULT_VALUE : userPreference.channels[key];
+      }
+
+      return acc;
+    }, {} as IPreferenceChannels);
+    /*
+     * Backwards compatible storage of new Preferences DTO.
+     *
+     * Currently, this is a side-effect due to the way that Preferences are stored
+     * and resolved with overrides in cascading order, necessitating a lookup against
+     * the old preferences structure before we can store the new Preferences DTO.
+     */
+    await this.storePreferences({
+      channels: channelPreferences,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      templateId: command.workflowId,
+    });
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.UPDATE_PREFERENCES, '', {
       _organization: command.organizationId,
@@ -140,15 +191,6 @@ export class UpdatePreferences {
         })
       );
 
-      await this.storePreferences({
-        enabled: preference.enabled,
-        channels: preference.channels,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        templateId: workflow._id,
-      });
-
       return {
         level: PreferenceLevelEnum.TEMPLATE,
         enabled: preference.enabled,
@@ -171,14 +213,6 @@ export class UpdatePreferences {
       })
     );
 
-    await this.storePreferences({
-      enabled: preference.enabled,
-      channels: preference.channels,
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
-    });
-
     return {
       level: PreferenceLevelEnum.GLOBAL,
       enabled: preference.enabled,
@@ -197,37 +231,36 @@ export class UpdatePreferences {
   }
 
   private async storePreferences(item: {
-    enabled: boolean;
     channels: IPreferenceChannels;
     organizationId: string;
-    subscriberId: string;
+    _subscriberId: string;
     environmentId: string;
     templateId?: string;
   }) {
     const preferences = {
       workflow: {
-        defaultValue: item.enabled || PREFERENCE_DEFAULT_VALUE,
+        defaultValue: PREFERENCE_DEFAULT_VALUE,
         readOnly: false,
       },
       channels: {
         in_app: {
-          defaultValue: item.channels.in_app || PREFERENCE_DEFAULT_VALUE,
+          defaultValue: item.channels.in_app !== undefined ? item.channels.in_app : PREFERENCE_DEFAULT_VALUE,
           readOnly: false,
         },
         sms: {
-          defaultValue: item.channels.sms || PREFERENCE_DEFAULT_VALUE,
+          defaultValue: item.channels.sms !== undefined ? item.channels.sms : PREFERENCE_DEFAULT_VALUE,
           readOnly: false,
         },
         email: {
-          defaultValue: item.channels.email || PREFERENCE_DEFAULT_VALUE,
+          defaultValue: item.channels.email !== undefined ? item.channels.email : PREFERENCE_DEFAULT_VALUE,
           readOnly: false,
         },
         push: {
-          defaultValue: item.channels.push || PREFERENCE_DEFAULT_VALUE,
+          defaultValue: item.channels.push !== undefined ? item.channels.push : PREFERENCE_DEFAULT_VALUE,
           readOnly: false,
         },
         chat: {
-          defaultValue: item.channels.chat || PREFERENCE_DEFAULT_VALUE,
+          defaultValue: item.channels.chat !== undefined ? item.channels.chat : PREFERENCE_DEFAULT_VALUE,
           readOnly: false,
         },
       },
@@ -238,7 +271,7 @@ export class UpdatePreferences {
         UpsertSubscriberWorkflowPreferencesCommand.create({
           environmentId: item.environmentId,
           organizationId: item.organizationId,
-          subscriberId: item.subscriberId,
+          _subscriberId: item._subscriberId,
           templateId: item.templateId,
           preferences,
         })
@@ -250,7 +283,7 @@ export class UpdatePreferences {
         preferences,
         environmentId: item.environmentId,
         organizationId: item.organizationId,
-        subscriberId: item.subscriberId,
+        _subscriberId: item._subscriberId,
       })
     );
   }

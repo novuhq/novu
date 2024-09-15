@@ -12,12 +12,6 @@ export enum PreferencesTypeEnum {
   WORKFLOW_RESOURCE = 'WORKFLOW_RESOURCE',
 }
 
-export enum PreferencesActorEnum {
-  USER = 'USER',
-  SUBSCRIBER = 'SUBSCRIBER',
-  WORKFLOW = 'WORKFLOW',
-}
-
 export type PreferencesDBModel = ChangePropsValueType<
   PreferencesEntity,
   '_environmentId' | '_organizationId' | '_subscriberId' | '_templateId' | '_userId'
@@ -35,8 +29,6 @@ export class PreferencesEntity {
   _userId?: UserId;
 
   _templateId?: string;
-
-  actor: PreferencesActorEnum;
 
   type: PreferencesTypeEnum;
 

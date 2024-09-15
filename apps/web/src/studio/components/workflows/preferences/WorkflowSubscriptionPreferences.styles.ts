@@ -26,11 +26,11 @@ export const tableClassName = css({
     width: '275',
   },
   '& tr td:last-child, & tr th:last-child': {
-    pr: '0',
+    pr: '0 !important',
   },
   _hover: {
     '& tbody tr:hover': {
-      bg: '[initial]',
+      bg: '[unset !important]',
     },
   },
 });

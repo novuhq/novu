@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  PreferencesActorEnum,
   PreferencesEntity,
   PreferencesRepository,
   PreferencesTypeEnum,
@@ -22,7 +21,6 @@ export class UpsertPreferences {
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.WORKFLOW,
       preferences: command.preferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     });
@@ -32,10 +30,9 @@ export class UpsertPreferences {
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
     return this.upsert({
-      subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.SUBSCRIBER,
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     });
@@ -45,10 +42,9 @@ export class UpsertPreferences {
     command: UpsertSubscriberWorkflowPreferencesCommand,
   ) {
     return this.upsert({
-      subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.SUBSCRIBER,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
@@ -62,7 +58,6 @@ export class UpsertPreferences {
       userId: command.userId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.USER,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -85,12 +80,11 @@ export class UpsertPreferences {
     command: UpsertPreferencesCommand,
   ): Promise<PreferencesEntity> {
     return await this.preferencesRepository.create({
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _userId: command.userId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _templateId: command.templateId,
-      actor: command.actor,
       preferences: command.preferences,
       type: command.type,
     });
@@ -124,11 +118,10 @@ export class UpsertPreferences {
   ): Promise<string | undefined> {
     const found = await this.preferencesRepository.findOne(
       {
-        _subscriberId: command.subscriberId,
+        _subscriberId: command._subscriberId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.templateId,
-        actor: command.actor,
         type: command.type,
       },
       '_id',

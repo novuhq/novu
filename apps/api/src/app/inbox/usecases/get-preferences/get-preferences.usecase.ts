@@ -71,7 +71,7 @@ export class GetPreferences {
             id: workflow._id,
             identifier: workflow.triggers[0].identifier,
             name: workflow.name,
-            critical: workflow.critical,
+            critical: workflow.critical || workflowPreference.template.critical,
             tags: workflow.tags,
           },
         } satisfies InboxPreference;

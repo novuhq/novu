@@ -23,7 +23,7 @@ describe('build preferences function', () => {
       channels: {
         sms: { defaultValue: true, readOnly: false },
         push: { defaultValue: true, readOnly: false },
-        in_app: { defaultValue: true, readOnly: true },
+        inApp: { defaultValue: true, readOnly: true },
         chat: { defaultValue: true, readOnly: false },
       },
     });
@@ -45,7 +45,7 @@ describe('build preferences function', () => {
       channels: {
         sms: { defaultValue: true, readOnly: false },
         push: { defaultValue: true, readOnly: false },
-        in_app: { defaultValue: true, readOnly: true },
+        inApp: { defaultValue: true, readOnly: true },
         chat: { defaultValue: true, readOnly: false },
       },
     });
@@ -66,7 +66,7 @@ describe('build preferences function', () => {
     it('should build pick up in_app', () => {
       const result = buildPreferences({
         channels: {
-          in_app: { defaultValue: true, readOnly: true },
+          inApp: { defaultValue: true, readOnly: true },
         },
       });
 

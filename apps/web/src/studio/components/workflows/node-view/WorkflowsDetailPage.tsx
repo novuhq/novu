@@ -14,20 +14,19 @@ import { PageContainer } from '../../../layout/PageContainer';
 import { useStudioState } from '../../../StudioStateProvider';
 import { OutlineButton } from '../../OutlineButton';
 import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
-import { WorkflowSettingsSidePanel } from '../preferences/WorkflowSettingsSidePanel';
+import { StudioWorkflowSettingsSidePanel } from '../preferences/StudioWorkflowSettingsSidePanel';
+import { WorkflowDetailFormContextProvider } from '../preferences/WorkflowDetailFormContextProvider';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 import { WorkflowNodes } from './WorkflowNodes';
 
-export const WorkflowsDetailPage = () => {
+const BaseWorkflowsDetailPage = () => {
   const { currentWorkflowId, goToStep, goToTest } = useStudioWorkflowsNavigation();
   const { data: workflow, isLoading } = useWorkflow(currentWorkflowId);
   const track = useTelemetry();
   const { isLocalStudio } = useStudioState() || {};
 
   const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
-
-  // TODO: this is a temporary solution while we scaffold the components, and should be replaced w/ modal manager
   const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -76,8 +75,16 @@ export const WorkflowsDetailPage = () => {
           right: '50',
         })}
       />
-      {isPanelOpen && <WorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
+      {isPanelOpen && <StudioWorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
     </WorkflowsPageTemplate>
+  );
+};
+
+export const WorkflowsDetailPage = () => {
+  return (
+    <WorkflowDetailFormContextProvider>
+      <BaseWorkflowsDetailPage />
+    </WorkflowDetailFormContextProvider>
   );
 };
 

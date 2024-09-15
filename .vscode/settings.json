@@ -31,5 +31,8 @@
   },
   "search.exclude": {
     "**/.source": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
