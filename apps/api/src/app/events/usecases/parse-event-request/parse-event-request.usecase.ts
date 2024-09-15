@@ -84,8 +84,17 @@ export class ParseEventRequest {
     if (environment) {
       const discoveredWorkflow = await this.queryDiscoverWorkflow(command, environment);
 
+      const template = await this.getNotificationTemplateByTriggerIdentifier({
+        environmentId: command.environmentId,
+        triggerIdentifier: command.identifier,
+      });
+
       if (!discoveredWorkflow) {
         throw new UnprocessableEntityException('workflow_not_found');
+      }
+
+      if (!template && command.payload?.__source === 'api-trigger') {
+        throw new UnprocessableEntityException('workflow_not_synced');
       }
 
       return await this.dispatchEvent(command, transactionId, discoveredWorkflow);

@@ -62,6 +62,7 @@ export function workflow<
       to: event.to,
       payload: {
         ...validatedData,
+        __source: 'api-trigger',
       },
       ...(event.transactionId && { transactionId: event.transactionId }),
       ...(event.overrides && { overrides: event.overrides }),
