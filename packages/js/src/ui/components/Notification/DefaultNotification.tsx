@@ -217,7 +217,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <Show when={props.notification.subject}>
           {(subject) => (
             <Markdown
-              class={style('notificationSubject', 'nt-text-start nt-font-semibold')}
+              class={style('notificationSubject', 'nt-text-start')}
               strongAppearanceKey="notificationSubject__strong"
             >
               {subject()}
