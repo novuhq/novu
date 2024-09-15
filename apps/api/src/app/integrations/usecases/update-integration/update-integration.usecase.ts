@@ -97,16 +97,39 @@ export class UpdateIntegration {
     return result;
   }
 
-  private async setRemoveNovuBranding(command: UpdateIntegrationCommand): Promise<boolean> {
-    const organization = await this.communityOrganizationRepository.findOne({
-      _id: command.organizationId,
-    });
+  private async shouldUpdateRemoveNovuBranding(
+    command: UpdateIntegrationCommand,
+    existingIntegration: IntegrationEntity
+  ): Promise<boolean> {
+    const [isImprovedBillingEnabled, organization] = await Promise.all([
+      this.getFeatureFlag.execute(
+        GetFeatureFlagCommand.create({
+          userId: 'system',
+          environmentId: 'system',
+          organizationId: command.organizationId,
+          key: FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED,
+        })
+      ),
+      this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
+    ]);
 
-    if (organization && organization.apiServiceLevel !== ApiServiceLevelEnum.FREE) {
-      return command.removeNovuBranding ?? false;
+    if (!isImprovedBillingEnabled) {
+      return false;
     }
 
-    return false;
+    const isRemoveNovuBrandingDefined = typeof command.removeNovuBranding !== 'undefined';
+    const isRemoveNovuBrandingChanged =
+      isRemoveNovuBrandingDefined && existingIntegration.removeNovuBranding !== command.removeNovuBranding;
+
+    if (!isRemoveNovuBrandingChanged) {
+      return false;
+    }
+
+    if (!organization || organization.apiServiceLevel === ApiServiceLevelEnum.FREE) {
+      return false;
+    }
+
+    return true;
   }
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -198,23 +221,9 @@ export class UpdateIntegration {
       updatePayload.conditions = command.conditions;
     }
 
-    const isRemoveNovuBrandingDefined = typeof command.removeNovuBranding !== 'undefined';
-    const isRemoveNovuBrandingChanged =
-      isRemoveNovuBrandingDefined && existingIntegration.removeNovuBranding !== command.removeNovuBranding;
-
-    if (isRemoveNovuBrandingChanged) {
-      const isImprovedBillingEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          userId: 'system',
-          environmentId: 'system',
-          organizationId: command.organizationId,
-          key: FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED,
-        })
-      );
-
-      if (isImprovedBillingEnabled) {
-        updatePayload.removeNovuBranding = await this.setRemoveNovuBranding(command);
-      }
+    const shouldUpdateRemoveNovuBranding = await this.shouldUpdateRemoveNovuBranding(command, existingIntegration);
+    if (shouldUpdateRemoveNovuBranding) {
+      updatePayload.removeNovuBranding = command.removeNovuBranding;
     }
 
     if (!Object.keys(updatePayload).length) {
