@@ -93,7 +93,7 @@ export class ParseEventRequest {
         throw new UnprocessableEntityException('workflow_not_found');
       }
 
-      if (!template && command.payload?.__source === 'api-trigger') {
+      if (!template && command.payload?.__source === 'framework-workflow-trigger') {
         throw new UnprocessableEntityException('workflow_not_synced');
       }
 

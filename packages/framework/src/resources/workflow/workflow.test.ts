@@ -350,6 +350,7 @@ describe('workflow function', () => {
             to: 'test@test.com',
             payload: {
               free: 'field',
+              __source: 'framework-workflow-trigger',
             },
           }),
           headers: {
@@ -399,6 +400,7 @@ describe('workflow function', () => {
             to: 'test@test.com',
             payload: {
               foo: 'bar',
+              __source: 'framework-workflow-trigger',
             },
           }),
           headers: {
