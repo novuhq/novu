@@ -25,7 +25,7 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
         return;
       }
 
-      mutate(reconcile(data));
+      mutate(data);
     };
 
     novu.on('preferences.list.updated', listener);
