@@ -1,4 +1,5 @@
 import {
+  Accessor,
   createContext,
   createEffect,
   createMemo,
@@ -14,10 +15,11 @@ import { parseElements, parseVariables } from '../helpers';
 import type { Appearance, Elements, Variables } from '../types';
 
 type AppearanceContextType = {
-  variables?: Variables;
-  elements?: Elements;
+  variables: Accessor<Variables>;
+  elements: Accessor<Elements>;
+  animations: Accessor<boolean>;
   appearanceKeyToCssInJsClass: Record<string, string>;
-  id: string;
+  id: Accessor<string>;
 };
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
@@ -34,6 +36,10 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const themes = createMemo(() =>
     Array.isArray(props.appearance?.baseTheme) ? props.appearance?.baseTheme || [] : [props.appearance?.baseTheme || {}]
   );
+  const id = () => props.id;
+  const variables = () => props.appearance?.variables || {};
+  const elements = () => props.appearance?.elements || {};
+  const animations = () => props.appearance?.animations ?? true;
 
   onMount(() => {
     const el = document.getElementById(props.id);
@@ -85,7 +91,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
 
     const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
 
-    const elementsStyleData = parseElements({ ...baseElements, ...(props.appearance?.elements || {}) });
+    const elementsStyleData = parseElements({ ...baseElements, ...elements() });
     setStore('appearanceKeyToCssInJsClass', (obj) => ({
       ...obj,
       ...elementsStyleData.reduce<Record<string, string>>((acc, item) => {
@@ -110,9 +116,11 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   return (
     <AppearanceContext.Provider
       value={{
-        elements: props.appearance?.elements || {},
-        appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass,
-        id: props.id,
+        elements,
+        variables,
+        appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass, // stores are reactive
+        animations,
+        id,
       }}
     >
       {props.children}

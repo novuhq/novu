@@ -1,10 +1,10 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { Motion } from 'solid-motionone';
 import { useFocusManager } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
+import { Motion } from '../Motion';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
