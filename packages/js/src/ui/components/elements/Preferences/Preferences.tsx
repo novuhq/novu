@@ -71,15 +71,13 @@ export const Preferences = () => {
             }
 
             return (
-              <>
-                <PreferencesRow
-                  localizationKey={preference().workflow!.identifier as StringLocalizationKey}
-                  channels={preference().channels}
-                  workflowId={preference().workflow?.id}
-                  onChange={optimisticUpdate(preference())}
-                  isCritical={preference().workflow?.critical}
-                />
-              </>
+              <PreferencesRow
+                localizationKey={preference().workflow!.identifier as StringLocalizationKey}
+                channels={preference().channels}
+                workflowId={preference().workflow?.id}
+                onChange={optimisticUpdate(preference())}
+                isCritical={preference().workflow?.critical}
+              />
             );
           }}
         </For>
