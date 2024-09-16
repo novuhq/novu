@@ -227,7 +227,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <Markdown class={style('notificationBody', 'nt-text-start')} strongAppearanceKey="notificationBody__strong">
           {props.notification.body}
         </Markdown>
-        <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
+        <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
               <Button
