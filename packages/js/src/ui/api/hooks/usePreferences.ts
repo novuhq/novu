@@ -1,5 +1,4 @@
 import { createEffect, createResource, createSignal, onCleanup, onMount } from 'solid-js';
-import { reconcile } from 'solid-js/store';
 import { Preference } from '../../../preferences/preference';
 import { FetchPreferencesArgs } from '../../../preferences/types';
 import { useNovu } from '../../context';
