@@ -3,14 +3,14 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
-import { init, Integrations, Handlers } from '@sentry/node';
+import { Handlers, init, Integrations } from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
-import { validateEnv, CONTEXT_PATH, corsOptionsDelegate } from './config';
+import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
@@ -90,10 +90,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix(`${CONTEXT_PATH}v1`, {
-    exclude: [{ path: `${CONTEXT_PATH}v2/workflows`, method: RequestMethod.ALL }],
-  });
-
+  app.setGlobalPrefix(`${CONTEXT_PATH}v1`);
   app.use(passport.initialize());
 
   app.useGlobalPipes(

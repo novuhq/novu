@@ -43,7 +43,6 @@ export class WorkflowTemplateGetMapper {
       stepId: step._id || step.uuid || 'Missing-ID', // Assuming _id is used as stepId
       type: step.template?.type || StepTypeEnum.EMAIL, // Assuming type is directly available; adjust as necessary
       controls: WorkflowTemplateGetMapper.convertControls(step),
-      replyCallback: WorkflowTemplateGetMapper.convertReplyCallBack(step),
       active: step.active,
       shouldStopOnFail: step.shouldStopOnFail,
     };
