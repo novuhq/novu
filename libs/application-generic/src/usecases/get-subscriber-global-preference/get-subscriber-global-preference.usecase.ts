@@ -17,7 +17,7 @@ export class GetSubscriberGlobalPreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private subscriberRepository: SubscriberRepository,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
   ) {}
 
   async execute(command: GetSubscriberGlobalPreferenceCommand) {
@@ -43,10 +43,10 @@ export class GetSubscriberGlobalPreference {
       (await this.getPreferences.getPreferenceChannels({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
+        subscriberId: subscriber._id,
       })) || subscriberPreference?.channels;
     const channels = this.updatePreferenceStateWithDefault(
-      subscriberChannelPreference ?? {}
+      subscriberChannelPreference ?? {},
     );
 
     return {
@@ -73,7 +73,7 @@ export class GetSubscriberGlobalPreference {
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(
       _environmentId,
-      subscriberId
+      subscriberId,
     );
   }
   // adds default state for missing channels

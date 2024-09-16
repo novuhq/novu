@@ -198,6 +198,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           integrationId,
           credentials: body.credentials,
+          removeNovuBranding: body.removeNovuBranding,
           active: body.active,
           check: body.check ?? true,
           conditions: body.conditions,

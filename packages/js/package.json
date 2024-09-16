@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",

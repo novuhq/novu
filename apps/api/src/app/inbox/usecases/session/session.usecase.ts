@@ -86,9 +86,12 @@ export class Session {
 
     const token = await this.authService.getSubscriberWidgetToken(subscriber);
 
+    const removeNovuBranding = inAppIntegration.removeNovuBranding || false;
+
     return {
       token,
       totalUnreadCount,
+      removeNovuBranding,
     };
   }
 }
