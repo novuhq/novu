@@ -37,6 +37,14 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @ValidateNested()
   credentials?: CredentialsDto;
 
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'If true, the Novu branding will be removed from the Inbox component',
+  })
+  @IsOptional()
+  @IsBoolean()
+  removeNovuBranding?: boolean;
+
   @ApiPropertyOptional({ type: Boolean })
   @IsOptional()
   @IsBoolean()

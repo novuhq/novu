@@ -37,6 +37,7 @@ import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { useWebhookSupportStatus } from '../../../../api/hooks';
 import { defaultIntegrationConditionsProps } from '../../constants';
+import { NovuInAppRemoveBranding } from '../NovuInAppRemoveBranding';
 
 interface IProviderForm {
   name: string;
@@ -44,6 +45,7 @@ interface IProviderForm {
   active: boolean;
   identifier: string;
   conditions: IConditions[];
+  removeNovuBranding?: boolean;
 }
 
 enum SidebarStateEnum {
@@ -154,6 +156,7 @@ export function UpdateProviderSidebar({
       }, {} as any),
       conditions: foundProvider.conditions,
       active: foundProvider.active,
+      removeNovuBranding: foundProvider.removeNovuBranding,
     });
   }, [reset, integrationId, providers]);
 
@@ -382,7 +385,12 @@ export function UpdateProviderSidebar({
             </InputWrapper>
           )}
           <ShareableUrl provider={selectedProvider?.providerId} hmacEnabled={!!hmacEnabled} />
-          {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
+          {isNovuInAppProvider && (
+            <>
+              <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />
+              <NovuInAppRemoveBranding control={control} />
+            </>
+          )}
         </When>
         <When truthy={isNovuInAppProvider && sidebarState === SidebarStateEnum.EXPANDED}>
           <SetupTimeline
