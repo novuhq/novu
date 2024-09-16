@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
@@ -69,6 +69,7 @@ describe('UpsertSubscription', () => {
       ],
     } as any);
     updateOrgStub = sinon.stub(repo, 'update').resolves({ matched: 1, modified: 1 });
+    (repo as any).integrationRepository = sinon.createStubInstance(IntegrationRepository);
     createSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'create');
     updateSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'update');
     deleteSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'del');

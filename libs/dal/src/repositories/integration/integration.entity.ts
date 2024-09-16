@@ -35,6 +35,8 @@ export class IntegrationEntity {
   deletedBy: string;
 
   conditions?: StepFilter[];
+
+  removeNovuBranding?: boolean;
 }
 
 export type ICredentialsEntity = ICredentials;
