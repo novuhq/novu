@@ -1,8 +1,9 @@
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
-import { setDynamicLocalization } from '../../../config';
+import { Motion, Presence } from 'solid-motionone';
 import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
+import { setDynamicLocalization } from '../../../config';
 import { StringLocalizationKey, useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown, Lock } from '../../../icons';
@@ -198,32 +199,41 @@ const PreferencesRow = (props: {
             <ArrowDropDown class={style('workflowArrow__icon', 'nt-text-foreground-alpha-600')} />
           </span>
         </div>
-        <Show when={isOpen()}>
-          <div class={style('channelsContainer', 'nt-flex nt-flex-col nt-gap-1 nt-self-stretch')}>
-            <Show when={props.isCritical}>
-              <span
-                class={style(
-                  'workflowContainerDisabledNotice',
-                  'nt-text-sm nt-text-foreground-alpha-600 nt-text-start'
-                )}
-                data-localization="preferences.workflow.disabled.notice"
-              >
-                {t('preferences.workflow.disabled.notice')}
-              </span>
-            </Show>
-            <For each={channels()}>
-              {(channel) => (
-                <ChannelRow
-                  channel={channel as ChannelType}
-                  enabled={!!props.channels[channel as keyof ChannelPreference]}
-                  workflowId={props.workflowId}
-                  onChange={props.onChange}
-                  isCritical={props.isCritical}
-                />
-              )}
-            </For>
-          </div>
-        </Show>
+        <Presence exitBeforeEnter>
+          <Show when={isOpen()}>
+            <Motion.div
+              animate={{ gridTemplateRows: ['0fr', '1fr'] }}
+              exit={{ gridTemplateRows: ['1fr', '0fr'] }}
+              transition={{ duration: 0.2, easing: 'ease-out' }}
+              class={style('channelsContainerCollapsible', 'nt-grid')}
+            >
+              <div class={style('channelsContainer', 'nt-overflow-hidden nt-flex-col nt-gap-1')}>
+                <Show when={props.isCritical}>
+                  <span
+                    class={style(
+                      'workflowContainerDisabledNotice',
+                      'nt-text-sm nt-text-foreground-alpha-600 nt-text-start'
+                    )}
+                    data-localization="preferences.workflow.disabled.notice"
+                  >
+                    {t('preferences.workflow.disabled.notice')}
+                  </span>
+                </Show>
+                <For each={channels()}>
+                  {(channel) => (
+                    <ChannelRow
+                      channel={channel as ChannelType}
+                      enabled={!!props.channels[channel as keyof ChannelPreference]}
+                      workflowId={props.workflowId}
+                      onChange={props.onChange}
+                      isCritical={props.isCritical}
+                    />
+                  )}
+                </For>
+              </div>
+            </Motion.div>
+          </Show>
+        </Presence>
       </div>
     </Show>
   );
