@@ -100,18 +100,21 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   searchWorkflows(
     @UserSession() user: UserSessionData,
-    @Query() offset?: number,
-    @Query() limit?: number,
-    @Query() searchQuery?: string,
-    @Query() partialId?: string
+    @Query() query: GetListQueryParams
   ): Promise<ListWorkflowResponse> {
     return this.listWorkflowsUseCase.execute(
       ListWorkflowsCommand.create({
-        offset: offset ?? 0,
-        limit: limit ?? 50,
-        searchQuery,
+        offset: query.offset ?? 0,
+        limit: query.limit ?? 50,
+        searchQuery: query.searchQuery,
         user,
       })
     );
   }
+}
+interface GetListQueryParams {
+  offset?: number; // Optional offset for pagination
+  limit?: number; // Optional limit for pagination
+  searchQuery?: string; // Optional search query string
+  partialId?: string; // Optional partial ID for filtering
 }

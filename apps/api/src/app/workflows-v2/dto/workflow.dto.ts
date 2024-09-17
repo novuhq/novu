@@ -44,11 +44,6 @@ export class StepDto {
   controls?: Schema;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ReplyCallbackDto)
-  replyCallback?: ReplyCallbackDto;
-
-  @IsOptional()
   @IsBoolean()
   active?: boolean;
 
@@ -120,14 +115,4 @@ export class WorkflowDto {
   @IsEnum(WorkflowOriginEnum)
   @IsOptional()
   origin?: WorkflowOriginEnum;
-}
-
-export class ReplyCallbackDto {
-  @IsBoolean()
-  @IsDefined()
-  active: boolean;
-
-  @IsString()
-  @IsDefined()
-  url: string;
 }
