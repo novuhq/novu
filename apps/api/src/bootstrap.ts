@@ -72,9 +72,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
   }
 
-  app.setGlobalPrefix(`${CONTEXT_PATH}`);
   app.enableVersioning({
     type: VersioningType.URI,
+    prefix: `${CONTEXT_PATH}v`,
     defaultVersion: '1',
   });
 
