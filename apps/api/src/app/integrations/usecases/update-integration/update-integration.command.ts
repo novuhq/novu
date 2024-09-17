@@ -28,6 +28,9 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
   credentials?: ICredentialsDto;
 
   @IsOptional()
+  removeNovuBranding?: boolean;
+
+  @IsOptional()
   active?: boolean;
 
   @IsOptional()

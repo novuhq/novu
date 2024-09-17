@@ -5,7 +5,6 @@ import {
   EnvironmentRepository,
   NotificationGroupRepository,
   NotificationTemplateEntity,
-  PreferencesActorEnum,
 } from '@novu/dal';
 import {
   AnalyticsService,

@@ -1,4 +1,5 @@
 import io, { Socket as SocketIO } from 'socket.io-client';
+import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 
 import {
@@ -101,9 +102,20 @@ export class Socket extends BaseModule {
   #socketIo: SocketIO | undefined;
   #socketUrl: string;
 
-  constructor({ socketUrl }: { socketUrl?: string }) {
-    super();
-    this.#emitter = NovuEventEmitter.getInstance();
+  constructor({
+    socketUrl,
+    inboxServiceInstance,
+    eventEmitterInstance,
+  }: {
+    socketUrl?: string;
+    inboxServiceInstance: InboxService;
+    eventEmitterInstance: NovuEventEmitter;
+  }) {
+    super({
+      eventEmitterInstance,
+      inboxServiceInstance,
+    });
+    this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
   }
 
@@ -113,7 +125,7 @@ export class Socket extends BaseModule {
 
   #notificationReceived = ({ message }: { message: TODO }) => {
     this.#emitter.emit(NOTIFICATION_RECEIVED, {
-      result: new Notification(mapToNotification(message)),
+      result: new Notification(mapToNotification(message), this.#emitter, this._inboxService),
     });
   };
 

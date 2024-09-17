@@ -16,6 +16,7 @@ import { NavigateValidatorModal } from '../components/NavigateValidatorModal';
 import { useTourStorage } from '../hooks/useTourStorage';
 import { useBasePath } from '../hooks/useBasePath';
 import { TemplateDetailsPageV2 } from '../editor_v2/TemplateDetailsPageV2';
+import { WorkflowDetailFormContextProvider } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
 
 function BaseTemplateEditorPage() {
   const navigate = useNavigate();
@@ -105,6 +106,10 @@ export default function TemplateEditorPage() {
       </TemplateEditorFormProvider>
     );
   } else {
-    return <TemplateDetailsPageV2 />;
+    return (
+      <WorkflowDetailFormContextProvider>
+        <TemplateDetailsPageV2 />
+      </WorkflowDetailFormContextProvider>
+    );
   }
 }

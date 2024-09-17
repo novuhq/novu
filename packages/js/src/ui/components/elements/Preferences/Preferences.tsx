@@ -19,8 +19,9 @@ export const Preferences = () => {
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
     const workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
+    const workflowPreferencesIds = workflowPreferences?.map((preference) => preference.workflow?.id);
 
-    return { globalPreference, workflowPreferences };
+    return { globalPreference, workflowPreferences, workflowPreferencesIds };
   });
 
   createEffect(() => {
@@ -61,16 +62,24 @@ export const Preferences = () => {
           channels={allPreferences().globalPreference?.channels || {}}
           onChange={optimisticUpdate(allPreferences().globalPreference)}
         />
-        <For each={allPreferences().workflowPreferences}>
-          {(preference) => (
-            <PreferencesRow
-              localizationKey={preference.workflow!.identifier as StringLocalizationKey}
-              channels={preference.channels}
-              workflowId={preference.workflow?.id}
-              onChange={optimisticUpdate(preference)}
-              isCritical={preference.workflow?.critical}
-            />
-          )}
+        <For each={allPreferences().workflowPreferencesIds}>
+          {(_, index) => {
+            const preference = () => allPreferences().workflowPreferences?.[index()] as Preference;
+
+            if (!preference()) {
+              return null;
+            }
+
+            return (
+              <PreferencesRow
+                localizationKey={preference().workflow!.identifier as StringLocalizationKey}
+                channels={preference().channels}
+                workflowId={preference().workflow?.id}
+                onChange={optimisticUpdate(preference())}
+                isCritical={preference().workflow?.critical}
+              />
+            );
+          }}
         </For>
       </Show>
     </div>
