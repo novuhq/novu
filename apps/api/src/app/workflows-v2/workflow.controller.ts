@@ -18,7 +18,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSessionData, WorkflowOriginEnum } from '@novu/shared';
 import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { CONTEXT_PATH } from '../../config';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
 import { UpsertWorkflowUseCase } from './usecases/upsert-workflow/upsert-workflow.usecase';
@@ -31,7 +30,7 @@ import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflo
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 
 @ApiCommonResponses()
-@Controller({ path: `${CONTEXT_PATH}v2/workflows` })
+@Controller({ path: `/workflows`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 @ApiTags('Workflows')
