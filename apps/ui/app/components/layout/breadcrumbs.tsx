@@ -25,7 +25,7 @@ export function NavigationBreadcrumbs() {
         <Breadcrumbs separator={<Separator />} separatorMargin="md">
           {/* TODO: implement Organization switcher */}
           <Group gap="sm">
-            <Avatar bg="error" size="sm" radius="sm" name="Organization" />
+            <Avatar bg="gradient" size="sm" radius="sm" name="Organization" />
             <Text>Organization</Text>
           </Group>
           <Select
