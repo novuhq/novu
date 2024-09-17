@@ -7,6 +7,7 @@ import {
   IUserEntity,
   MessageActionStatusEnum,
 } from '@novu/shared';
+import { Inbox } from '@novu/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
@@ -23,6 +24,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
 
   return (
     <>
+      {/* TODO: remove in the next step */}
       <NovuProvider
         backendUrl={BACKEND_URL}
         socketUrl={SOCKET_URL}
@@ -31,6 +33,12 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
       >
         <PopoverWrapper />
       </NovuProvider>
+      <Inbox
+        backendUrl={BACKEND_URL}
+        socketUrl={SOCKET_URL}
+        subscriberId={user?._id as string}
+        applicationIdentifier={APP_ID || (environment?.identifier as string)}
+      />
     </>
   );
 }
