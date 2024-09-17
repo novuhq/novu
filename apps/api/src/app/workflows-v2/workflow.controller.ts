@@ -55,6 +55,7 @@ export class WorkflowController {
 
     return this.upsertWorkflowUseCase.execute(command);
   }
+
   @Put('/:workflowId')
   @UseGuards(UserAuthGuard)
   @ApiOperation({

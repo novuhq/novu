@@ -48,7 +48,7 @@ export class UpsertWorkflowUseCase {
   private async upsertControlValues(workflow: NotificationTemplateEntity, command: UpsertWorkflowCommand) {
     for (const upsertedStep of workflow.steps) {
       // should not happen as it was created in the createWorkflowGenericUsecase
-      if (!upsertedStep._id || !upsertedStep.stepId || !upsertedStep.template?.controls) {
+      if (!upsertedStep._id || !upsertedStep.stepId) {
         continue;
       }
 
@@ -69,7 +69,7 @@ export class UpsertWorkflowUseCase {
           _stepId: upsertedStep._id,
           stepId: upsertedStep.stepId,
           controlValues: commandStep.controlValues || {},
-          defaultControls: upsertedStep.template?.controls,
+          defaultControls: commandStep?.controls || { schema: {} },
         })
       );
     }

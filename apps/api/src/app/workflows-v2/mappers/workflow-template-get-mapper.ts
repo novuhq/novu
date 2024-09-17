@@ -40,7 +40,7 @@ export class WorkflowTemplateGetMapper {
   static toStepDto(step: NotificationStepEntity): StepDto {
     return {
       code: step.name || 'Missing Name', // Assuming name is used as code
-      stepId: step._id || step.uuid || 'Missing-ID', // Assuming _id is used as stepId
+      stepId: step.stepId!,
       type: step.template?.type || StepTypeEnum.EMAIL, // Assuming type is directly available; adjust as necessary
       controls: WorkflowTemplateGetMapper.convertControls(step),
       active: step.active,
@@ -53,8 +53,8 @@ export class WorkflowTemplateGetMapper {
   }
 
   private static convertControls(step: NotificationStepEntity) {
-    if (step.controls) {
-      return { schema: step.controls.schema };
+    if (step.template?.controls) {
+      return { schema: step.template.controls.schema };
     } else {
       return undefined;
     }

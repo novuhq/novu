@@ -157,10 +157,10 @@ async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
 
 async function getAllAndValidate(
   query: string = '',
-  offest: number = 0,
+  offset: number = 0,
   limit: number = 10
 ): Promise<ListWorkflowResponse> {
-  const { body } = await session.testAgent.get(`/v2/workflows?query=${query}&offset=${offest}&limit=${limit}`);
+  const { body } = await session.testAgent.get(`/v2/workflows?query=${query}&offset=${offset}&limit=${limit}`);
   expect(body.data).to.be.ok;
   expect(body.data).to.be.an('array');
 

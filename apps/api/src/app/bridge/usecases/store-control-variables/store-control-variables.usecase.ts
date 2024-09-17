@@ -30,7 +30,7 @@ export class StoreControlVariablesUseCase {
       throw new ApiException('Step not found');
     }
 
-    const stepDefaultContorls = defaults(
+    const stepDefaultControls = defaults(
       (step.template as any)?.controls?.schema || (step.template as any)?.inputs?.schema,
       {}
     ) as JsonSchema;
@@ -44,7 +44,7 @@ export class StoreControlVariablesUseCase {
         _stepId: step._id,
         stepId: command.stepId,
         controlValues: command.variables,
-        defaultControls: { schema: stepDefaultContorls },
+        defaultControls: { schema: stepDefaultControls },
       })
     );
   }
