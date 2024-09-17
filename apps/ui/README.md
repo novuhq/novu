@@ -4,6 +4,18 @@
 
 ## Development
 
+Install dependencies:
+
+```shellscript
+npm install
+```
+
+Copy environment variables and populate with your values:
+
+```shellscript
+cp .env.example .env
+```
+
 Run the dev server:
 
 ```shellscript
