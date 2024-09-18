@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum } from 'class-validator';
+import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum, IsNumber } from 'class-validator';
 import {
   AddressingTypeEnum,
   TriggerRecipients,
@@ -37,6 +37,10 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  @IsOptional()
+  @IsNumber()
+  priority?: number;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {
