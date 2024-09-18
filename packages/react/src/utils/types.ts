@@ -6,6 +6,7 @@ import type {
   Appearance,
   Localization,
   RouterPush,
+  PreferencesFilter,
 } from '@novu/js/ui';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
@@ -29,6 +30,7 @@ export type BaseProps = {
   appearance?: Appearance;
   localization?: Localization;
   tabs?: Array<Tab>;
+  preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
 };
 

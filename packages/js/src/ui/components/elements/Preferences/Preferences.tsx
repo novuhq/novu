@@ -3,7 +3,7 @@ import { setDynamicLocalization } from '../../../config';
 import { Preference } from '../../../../preferences/preference';
 import { ChannelPreference, ChannelType, PreferenceLevel } from '../../../../types';
 import { usePreferences } from '../../../api';
-import { StringLocalizationKey, useLocalization } from '../../../context';
+import { StringLocalizationKey, useInboxContext, useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown, Lock } from '../../../icons';
 import { Tooltip } from '../../primitives/Tooltip';
@@ -13,8 +13,9 @@ import { LoadingScreen } from './LoadingScreen';
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
   const style = useStyle();
+  const { preferencesFilter } = useInboxContext();
 
-  const { preferences, loading } = usePreferences();
+  const { preferences, loading } = usePreferences({ tags: preferencesFilter()?.tags });
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);

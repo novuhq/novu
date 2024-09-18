@@ -1,7 +1,7 @@
 /* eslint-disable local-rules/no-class-without-style */
 import { createMemo, For, Show } from 'solid-js';
 import { useInboxContext, useUnreadCounts } from '../../context';
-import { cn, useStyle } from '../../helpers';
+import { cn, getTagsFromTab, useStyle } from '../../helpers';
 import { Check, Dots } from '../../icons';
 import {
   NotificationActionClickHandler,
@@ -32,7 +32,9 @@ export const InboxTabs = (props: InboxTabsProps) => {
   const style = useStyle();
   const { activeTab, status, setActiveTab, filter } = useInboxContext();
   const { dropdownTabs, setTabsList, visibleTabs } = useTabsDropdown({ tabs: props.tabs });
-  const dropdownTabsUnreadCounts = useUnreadCounts({ filters: dropdownTabs().map((tab) => ({ tags: tab.value })) });
+  const dropdownTabsUnreadCounts = useUnreadCounts({
+    filters: dropdownTabs().map((tab) => ({ tags: getTagsFromTab(tab) })),
+  });
 
   const options = createMemo(() =>
     dropdownTabs().map((tab) => ({
@@ -116,7 +118,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             onNotificationClick={props.onNotificationClick}
             onPrimaryActionClick={props.onPrimaryActionClick}
             onSecondaryActionClick={props.onSecondaryActionClick}
-            filter={{ ...filter(), tags: tab.value }}
+            filter={{ ...filter(), tags: getTagsFromTab(tab) }}
           />
         </Tabs.Content>
       ))}

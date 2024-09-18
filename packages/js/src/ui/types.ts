@@ -1,6 +1,6 @@
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import type { NovuOptions } from '../types';
+import type { NotificationFilter, NovuOptions } from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -11,7 +11,14 @@ export type NotificationRenderer = (el: HTMLDivElement, notification: Notificati
 export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
 export type RouterPush = (path: string) => void;
 
-export type Tab = { label: string; value: Array<string> };
+export type Tab = {
+  label: string;
+  /**
+   * @deprecated Use `filter` instead
+   */
+  value?: Array<string>;
+  filter?: Pick<NotificationFilter, 'tags'>;
+};
 
 export type CSSProperties = {
   [key: string]: string | number;
@@ -47,6 +54,7 @@ export type BaseNovuProviderProps = {
   localization?: Localization;
   options: NovuOptions;
   tabs?: Array<Tab>;
+  preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
   novu?: Novu;
 };
@@ -61,5 +69,7 @@ export enum NotificationStatus {
   UNREAD = 'unread',
   ARCHIVED = 'archived',
 }
+
+export type PreferencesFilter = Pick<NotificationFilter, 'tags'>;
 
 export { Localization, LocalizationKey } from './context/LocalizationContext';
