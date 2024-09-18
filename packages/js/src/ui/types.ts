@@ -29,6 +29,7 @@ export type Variables = {
   colorCounter?: string;
   colorCounterForeground?: string;
   colorNeutral?: string;
+  colorShadow?: string;
   fontSize?: string;
   borderRadius?: string;
 };
