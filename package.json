@@ -59,7 +59,7 @@
     "release:preminor": "nx release version preminor --no-push",
     "release:prerelease": "nx release version prerelease --no-push",
     "release:submodules": "ts-node scripts/release-with-submodules.ts",
-    "release:previews": "nx affected -t release:preview --base=origin/main~1 --head=origin/main",
+    "release:previews": "nx affected -t release:preview --base=origin/next~1 --head=origin/next --exclude=nextjs",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:e2e:api": "cd apps/api && pnpm run test:e2e",
     "g:module": "hygen module new --name=$npm_config_name",
