@@ -54,7 +54,8 @@
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "jest"
+    "test": "jest",
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "browserslist": {
     "production": [

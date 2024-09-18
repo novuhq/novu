@@ -35,7 +35,8 @@
     "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon sync",
     "start:test": "cross-env NODE_ENV=test PORT=1336 nodemon init",
     "start:debug": "cross-env nodemon --config nodemon-debug.json",
-    "start:prod": "cross-env node dist/src/index.js"
+    "start:prod": "cross-env node dist/src/index.js",
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "keywords": [
     "novu",
