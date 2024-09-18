@@ -683,7 +683,8 @@
     "xcodebuild",
     "xkeysib",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "motionone"
   ],
   "flagWords": [],
   "patterns": [

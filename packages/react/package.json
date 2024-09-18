@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "2.1.0",
+  "version": "2.1.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React SDK for building custom inbox notification experiences",
   "author": "",
@@ -50,7 +50,8 @@
     "build:watch": "tsup --watch",
     "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
-    "check-exports": "attw --pack ."
+    "check-exports": "attw --pack .",
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "browserslist": {
     "production": [
@@ -70,7 +71,7 @@
     "@types/react": "*",
     "@types/react-dom": "*",
     "tsup": "^8.2.1",
-    "typescript": "4.9.5"
+    "typescript": "5.6.2"
   },
   "peerDependencies": {
     "react": ">=17",

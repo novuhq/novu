@@ -3,13 +3,13 @@ import { Button as MantineButton, ButtonProps, Sx } from '@mantine/core';
 
 import useStyles from './Button.styles';
 
-export type Size = 'md' | 'lg' | undefined;
+export type Size = 'xs' | 'md' | 'lg' | undefined;
 
 export interface IButtonProps extends ButtonProps {
   id?: string;
   loading?: boolean;
   size?: Size;
-  variant?: 'outline' | 'gradient' | 'subtle';
+  variant?: 'outline' | 'gradient' | 'subtle' | 'light';
   disabled?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;

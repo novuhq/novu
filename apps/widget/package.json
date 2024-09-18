@@ -65,7 +65,7 @@
     "@novu/dal": "workspace:*",
     "@novu/testing": "workspace:*",
     "@types/jest": "^29.5.0",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/react-router-dom": "^5.1.7",
@@ -81,7 +81,7 @@
     "less-loader": "4.1.0",
     "react-app-rewired": "^2.2.1",
     "react-scripts": "^5.0.1",
-    "typescript": "4.9.5",
+    "typescript": "5.6.2",
     "webpack": "5.78.0",
     "webpack-dev-server": "4.11.1"
   },

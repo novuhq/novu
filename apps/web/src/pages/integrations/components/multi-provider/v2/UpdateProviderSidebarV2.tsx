@@ -30,6 +30,7 @@ import { useProviders } from '../../../useProviders';
 import { IntegrationInput } from '../../IntegrationInput';
 import { ShareableUrl } from '../../Modal/ConnectIntegrationForm';
 import { NovuInAppFrameworkHeader } from '../../NovuInAppFrameworkHeader';
+import { NovuInAppRemoveBranding } from '../../NovuInAppRemoveBranding';
 import { SetupWarning } from '../../SetupWarning';
 import { UpdateIntegrationCommonFields } from '../../UpdateIntegrationCommonFields';
 import { UpdateIntegrationSidebarHeader } from '../../UpdateIntegrationSidebarHeader';
@@ -43,6 +44,7 @@ interface IProviderForm {
   active: boolean;
   identifier: string;
   conditions: IConditions[];
+  removeNovuBranding?: boolean;
 }
 
 enum SidebarStateEnum {
@@ -153,6 +155,7 @@ export function UpdateProviderSidebar({
       }, {} as any),
       conditions: foundProvider.conditions,
       active: foundProvider.active,
+      removeNovuBranding: foundProvider.removeNovuBranding,
     });
   }, [reset, integrationId, providers]);
 
@@ -364,6 +367,7 @@ export function UpdateProviderSidebar({
               />
             </InputWrapper>
           ))}
+          {isNovuInAppProvider && <NovuInAppRemoveBranding control={control} />}
           {isWebhookEnabled && (
             <InputWrapper>
               <Input
