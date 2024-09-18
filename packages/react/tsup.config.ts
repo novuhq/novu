@@ -33,4 +33,15 @@ export default defineConfig([
     clean: true,
     dts: true,
   },
+  {
+    entry: ['src/themes/index.ts'],
+    format: ['esm', 'cjs'],
+    target: 'esnext',
+    platform: 'neutral',
+    outDir: 'dist/themes',
+    splitting: false,
+    sourcemap: true,
+    clean: true,
+    dts: true,
+  },
 ]);
