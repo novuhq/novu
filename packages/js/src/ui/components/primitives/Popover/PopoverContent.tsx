@@ -1,9 +1,10 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { useFocusManager } from '../../../context';
-import type { AppearanceKey } from '../../../types';
 import { cn, useStyle } from '../../../helpers';
+import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
+import { Motion } from '../Motion';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
@@ -28,11 +29,13 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   });
 
   return (
-    <div
+    <Motion.div
       ref={setFloating}
       class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
       style={floatingStyles()}
       data-open={open()}
+      animate={{ opacity: [0, 1], y: [-6, 0] }}
+      transition={{ duration: 0.1, easing: 'ease-out' }}
       {...rest}
     />
   );
