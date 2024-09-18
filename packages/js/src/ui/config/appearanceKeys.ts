@@ -119,6 +119,7 @@ export const appearanceKeys = [
 
   // channel
   'channelContainer',
+  'channelsContainerCollapsible',
   'channelsContainer',
   'channelLabel',
   'channelLabelContainer',

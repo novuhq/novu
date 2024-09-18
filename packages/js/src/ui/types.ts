@@ -46,6 +46,7 @@ export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 export type Theme = {
   variables?: Variables;
   elements?: Elements;
+  animations?: boolean;
 };
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
