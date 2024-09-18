@@ -96,7 +96,7 @@
     "@types/eslint__js": "^8.42.3",
     "@types/inquirer": "8.2.10",
     "@types/jest": "29.5.2",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.16.5",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
     "chalk-animation": "^1.6.0",
@@ -176,7 +176,7 @@
     "tar": "^6.1.11",
     "ts-jest": "27.1.5",
     "ts-node": "~10.9.1",
-    "typescript": "4.9.5",
+    "typescript": "5.6.2",
     "typescript-eslint": "^8.3.0",
     "wait-port": "^0.3.0"
   },
@@ -187,7 +187,6 @@
       "packages/*",
       "enterprise/packages/*",
       "enterprise/packages/*/*",
-      "packages/notification-center-angular/projects/*",
       "playground/*"
     ]
   },
@@ -233,7 +232,8 @@
       "tar": "7.1.0",
       "tough-cookie@<4.1.3": "^4.1.3",
       "trim-newlines@<3.0.1": "^3.0.1",
-      "xml2js@<0.5.0": "^0.5.0"
+      "xml2js@<0.5.0": "^0.5.0",
+      "@types/mocha": "^10.0.8"
     }
   }
 }
