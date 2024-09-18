@@ -14,6 +14,13 @@ const getLabelStyles = (disabled: boolean, variant?: string): any => {
     return {};
   }
 
+  if (variant === 'light') {
+    return {
+      fontWeight: 'normal',
+      fontSize: '12px',
+    };
+  }
+
   return {
     backgroundImage: colors.horizontal,
     backgroundClip: 'text',
@@ -115,6 +122,21 @@ export const getPulseStyles = () => {
   };
 };
 
+export const getLightStyles = (theme) => {
+  const dark = theme.colorScheme === 'dark';
+
+  return {
+    border: '1px solid transparent',
+    background: dark ? '#34343A' : colors.BGLight,
+    color: dark ? theme.white : colors.B17,
+    boxShadow: 'none',
+    '&:hover:not(:disabled)': {
+      background: dark ? '#34343A' : colors.BGLight,
+      filter: 'brightness(0.9)',
+    },
+  };
+};
+
 export default createStyles(
   (
     theme: MantineTheme,
@@ -129,6 +151,10 @@ export default createStyles(
 
     if (variant === 'subtle') {
       overrides = getSubtleStyles(theme);
+    }
+
+    if (variant === 'light') {
+      overrides = getLightStyles(theme);
     }
 
     if (pulse) {

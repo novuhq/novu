@@ -1,6 +1,7 @@
 import { Accessor, createContext, createEffect, createSignal, ParentProps, Setter, useContext } from 'solid-js';
 import { NotificationFilter, Redirect } from '../../types';
 import { DEFAULT_REFERRER, DEFAULT_TARGET } from '../helpers';
+import { useNovuEvent } from '../helpers/useNovuEvent';
 import { NotificationStatus, RouterPush, Tab } from '../types';
 
 type InboxContextType = {
@@ -15,6 +16,7 @@ type InboxContextType = {
   isOpened: Accessor<boolean>;
   setIsOpened: Setter<boolean>;
   navigate: (url?: string, target?: Redirect['target']) => void;
+  hideBranding: Accessor<boolean>;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -42,6 +44,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
     ...STATUS_TO_FILTER[NotificationStatus.UNREAD_READ],
     tags: props.tabs.length > 0 ? props.tabs[0].value : [],
   });
+  const [hideBranding, setHideBranding] = createSignal(false);
 
   const setNewStatus = (newStatus: NotificationStatus) => {
     setStatus(newStatus);
@@ -88,6 +91,17 @@ export const InboxProvider = (props: InboxProviderProps) => {
     setFilter((old) => ({ ...old, tags: firstTab?.value ?? [] }));
   });
 
+  useNovuEvent({
+    event: 'session.initialize.resolved',
+    eventHandler: ({ data }) => {
+      if (!data) {
+        return;
+      }
+
+      setHideBranding(data.removeNovuBranding);
+    },
+  });
+
   return (
     <InboxContext.Provider
       value={{
@@ -102,6 +116,7 @@ export const InboxProvider = (props: InboxProviderProps) => {
         isOpened,
         setIsOpened,
         navigate,
+        hideBranding,
       }}
     >
       {props.children}
