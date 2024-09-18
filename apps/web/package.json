@@ -135,7 +135,6 @@
     "rimraf": "^3.0.2",
     "slugify": "^1.4.6",
     "storybook-dark-mode": "^3.0.1",
-    "typescript": "5.6.2",
     "uniqid": "^5.3.0",
     "uuid": "8.3.2",
     "web-vitals": "^1.0.1",
