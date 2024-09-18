@@ -30,7 +30,6 @@ describe('CORS Configuration', () => {
         process.env.NODE_ENV = environment;
 
         process.env.FRONT_BASE_URL = 'https://test.com';
-        process.env.LEGACY_V1_FRONT_BASE_URL = 'https://test-legacy.com';
         process.env.LEGACY_STAGING_DASHBOARD_URL = 'https://test-legacy-staging-dashboard.com';
         process.env.WIDGET_BASE_URL = 'https://widget.com';
         process.env.PR_PREVIEW_ROOT_URL = 'https://pr-preview.com';

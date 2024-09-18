@@ -367,6 +367,7 @@ export function UpdateProviderSidebar({
               />
             </InputWrapper>
           ))}
+          {isNovuInAppProvider && <NovuInAppRemoveBranding control={control} />}
           {isWebhookEnabled && (
             <InputWrapper>
               <Input
@@ -383,12 +384,7 @@ export function UpdateProviderSidebar({
             </InputWrapper>
           )}
           <ShareableUrl provider={selectedProvider?.providerId} hmacEnabled={!!hmacEnabled} />
-          {isNovuInAppProvider && (
-            <>
-              <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />
-              <NovuInAppRemoveBranding control={control} />
-            </>
-          )}
+          {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
         </When>
         <When truthy={isNovuInAppProvider && sidebarState === SidebarStateEnum.EXPANDED}>
           <SetupTimeline

@@ -33,6 +33,7 @@ import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
 import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
+import { GetPreferencesRequestDto } from './dtos/get-preferences-request.dto';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -103,13 +104,15 @@ export class InboxController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/preferences')
   async getAllPreferences(
-    @SubscriberSession() subscriberSession: SubscriberEntity
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query() query: GetPreferencesRequestDto
   ): Promise<GetPreferencesResponseDto[]> {
     return await this.getPreferencesUsecase.execute(
       GetPreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
+        tags: query.tags,
       })
     );
   }

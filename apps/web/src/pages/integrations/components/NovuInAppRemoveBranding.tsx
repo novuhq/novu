@@ -1,28 +1,17 @@
 import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
-import { Switch, Tooltip } from '@novu/design-system';
+import { Popover, Switch, Text, Button, useColorScheme } from '@novu/design-system';
 import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFeatureFlag } from '../../../hooks';
-
-const InputWrapper = styled.div`
-  > div {
-    width: 100%;
-  }
-`;
+import { Group } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../constants/routes';
+import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 
 const SwitchWrapper = styled.div`
   display: flex;
   align-items: center;
-`;
-
-const SwitchDescription = styled.div`
-  color: ${({ theme }) => `${theme.colorScheme === 'dark' ? theme.colors.dark[3] : theme.colors.gray[6]}`};
-  font-size: 14px !important;
-  font-weight: 400;
-  margin-top: '0px';
-  margin-bottom: '10px';
-  line-height: '17px';
 `;
 
 const SwitchLabel = styled.div`
@@ -33,47 +22,73 @@ const SwitchLabel = styled.div`
   line-height: 17px;
 `;
 
+const PopoverContent = () => {
+  const navigate = useNavigate();
+
+  return (
+    <Group spacing={8}>
+      <Text>Upgrade your billing plan to remove Novu branding</Text>
+      <Button
+        size="xs"
+        variant="light"
+        onClick={() => {
+          navigate(ROUTES.MANAGE_ACCOUNT_BILLING);
+        }}
+      >
+        View plans
+      </Button>
+    </Group>
+  );
+};
+
 export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
   const { apiServiceLevel } = useSubscription();
+  const { colorScheme } = useColorScheme();
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (!isImprovedBillingEnabled) {
+  if (!isImprovedBillingEnabled && !IS_EE_AUTH_ENABLED) {
     return null;
   }
 
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    if (apiServiceLevel === ApiServiceLevelEnum.FREE) {
+      // If it's a free tier, don't change the value, just show the popover
+      e.preventDefault();
+      return;
+    }
+
+    field.onChange(!e.target.checked);
+  };
+
   return (
-    <InputWrapper key="removeNovuBranding">
-      <Controller
-        name="removeNovuBranding"
-        control={control}
-        defaultValue={false}
-        render={({ field }) => (
-          <>
-            <SwitchWrapper>
-              <SwitchLabel>Remove Novu branding</SwitchLabel>
-              <Tooltip
-                disabled={apiServiceLevel !== ApiServiceLevelEnum.FREE}
-                withinPortal={false}
-                position="bottom"
-                width={250}
-                multiline
-                label="Please upgrade your plan to enable this feature"
-              >
-                <span>
-                  <Switch
-                    label={field.value ? 'Active' : 'Disabled'}
-                    data-test-id="remove-novu-branding"
-                    disabled={apiServiceLevel === ApiServiceLevelEnum.FREE}
-                    checked={field.value}
-                    onChange={field.onChange}
-                  />
-                </span>
-              </Tooltip>
-            </SwitchWrapper>
-            <SwitchDescription>Removes Novu branding from the Inbox when active</SwitchDescription>
-          </>
-        )}
-      />
-    </InputWrapper>
+    <Controller
+      name="removeNovuBranding"
+      control={control}
+      defaultValue={false}
+      render={({ field }) => (
+        <SwitchWrapper>
+          <SwitchLabel>Powered by Novu label</SwitchLabel>
+          <Popover
+            disabled={apiServiceLevel !== ApiServiceLevelEnum.FREE}
+            position="top"
+            withArrow={false}
+            offset={12}
+            styles={{
+              dropdown: { backgroundColor: colorScheme === 'dark' ? '#1C1C1F !important' : 'transparent' },
+            }}
+            width={192}
+            target={
+              <Switch
+                label={field.value ? 'Disabled' : 'Active'}
+                data-test-id="remove-novu-branding"
+                checked={!field.value}
+                onChange={(e) => onChange(e, field)}
+              />
+            }
+            content={<PopoverContent />}
+          />
+        </SwitchWrapper>
+      )}
+    />
   );
 };

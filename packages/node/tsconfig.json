@@ -4,7 +4,7 @@
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "outDir": "build/main",
-    "module": "CommonJS",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "rootDir": "src",

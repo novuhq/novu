@@ -56,10 +56,6 @@ const notificationStyles = (theme: MantineTheme) => {
   };
 };
 
-declare module '@mantine/core' {
-  export type MantineColor = MantineColor | 'gradient';
-}
-
 export function ThemeProvider({
   children,
   shouldDisableGlobals,

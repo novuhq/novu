@@ -48,8 +48,8 @@ export const useStyle = () => {
 
     const appearanceClassnames = [];
     for (let i = 0; i < finalAppearanceKeys.length; i += 1) {
-      if (typeof appearance.elements?.[finalAppearanceKeys[i]] === 'string') {
-        appearanceClassnames.push(appearance.elements?.[finalAppearanceKeys[i]]);
+      if (typeof appearance.elements()?.[finalAppearanceKeys[i]] === 'string') {
+        appearanceClassnames.push(appearance.elements()?.[finalAppearanceKeys[i]]);
       }
     }
 
