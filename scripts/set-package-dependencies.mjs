@@ -56,7 +56,7 @@ function processPackageJson(filePath) {
   updateNovuDependencies(packageJson.optionalDependencies);
 
   fs.writeJsonSync(filePath, packageJson, { spaces: 2 });
-  console.log(`Restored workspace protocol at ${filePath}`);
+  console.log(`Set Novu packages dependencies to ${replacement} at ${filePath}`);
 }
 
 // Find all package.json files in the repo
