@@ -1,7 +1,6 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
-import {} from './types';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
@@ -309,7 +308,12 @@ export class Client {
         resolve: stepResolve as typeof step.resolve,
       });
 
-      if (Object.values(ChannelStepEnum).includes(step.type as ChannelStepEnum)) {
+      if (
+        Object.values(ChannelStepEnum).includes(step.type as ChannelStepEnum) &&
+        // TODO: Update return type to include ChannelStep and fix typings
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (options as any)?.disableOutputSanitization !== true
+      ) {
         // Sanitize the outputs to avoid XSS attacks via Channel content.
         stepResult = {
           ...stepResult,

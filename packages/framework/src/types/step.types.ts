@@ -179,6 +179,12 @@ export type ChannelStep<
      * The providers for the step. Used to override the behaviour of the providers for the step.
      */
     providers?: Prettify<Providers<T_StepType, T_Controls, T_Outputs>>;
+    /**
+     * Disable the output sanitization for the step.
+     *
+     * @default false
+     */
+    disableOutputSanitization?: boolean;
   }
 ) => StepOutput<T_Result>;
 
