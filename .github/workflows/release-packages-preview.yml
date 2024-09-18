@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - next
-      - main
+      - '*'
+      - '!prod'
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm run build
+        run: pnpm nx affected -t build --stream
           
       - name: Release package previews to pkg.pr.new
         run: pnpx run release:previews
