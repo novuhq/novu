@@ -57,7 +57,7 @@ export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
       return;
     }
 
-    field.onChange(!e.target.checked);
+    field.onChange(e.target.checked);
   };
 
   return (
@@ -67,7 +67,7 @@ export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
       defaultValue={false}
       render={({ field }) => (
         <SwitchWrapper>
-          <SwitchLabel>Powered by Novu label</SwitchLabel>
+          <SwitchLabel>Remove "Powered by Novu" branding</SwitchLabel>
           <Popover
             disabled={apiServiceLevel !== ApiServiceLevelEnum.FREE}
             position="top"
@@ -79,9 +79,9 @@ export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
             width={192}
             target={
               <Switch
-                label={field.value ? 'Disabled' : 'Active'}
+                label={field.value ? 'Active' : 'Disabled'}
                 data-test-id="remove-novu-branding"
-                checked={!field.value}
+                checked={field.value}
                 onChange={(e) => onChange(e, field)}
               />
             }
