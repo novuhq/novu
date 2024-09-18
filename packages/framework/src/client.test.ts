@@ -1317,7 +1317,7 @@ describe('Novu Client', () => {
       client.addWorkflows([
         workflow('test-workflow', async ({ step }) => {
           await step.inApp(
-            'send-email',
+            'send-inapp',
             async () => ({
               body: `Start of body.`,
               data: {

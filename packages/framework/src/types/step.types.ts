@@ -180,7 +180,7 @@ export type ChannelStep<
      */
     providers?: Prettify<Providers<T_StepType, T_Controls, T_Outputs>>;
     /**
-     * Disable the output sanitization for the step.
+     * A flag to disable output sanitization for the step.
      *
      * @default false
      */
