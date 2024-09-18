@@ -12,7 +12,6 @@ export const serve = (options: ServeHandlerOptions) => {
     /*
      * TODO: Fix this
      */
-    // @ts-expect-error - Request type is not correct
     handler: (event: H3Event) => ({
       queryString: (key) => String(getQuery(event)[key]),
       body: () => readBody(event),

@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
     "declaration": true,
@@ -14,8 +14,7 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
-    "types": ["node", "mocha"]
+    "baseUrl": "./src"
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "**/*.e2e.ts", "**/*.e2e-ee.ts"]
