@@ -29,12 +29,12 @@ export class GetSubscriberPreference {
       command.subscriberId,
     );
 
-    const templateList =
-      await this.notificationTemplateRepository.getActiveList(
-        command.organizationId,
-        command.environmentId,
-        true,
-      );
+    const templateList = await this.notificationTemplateRepository.filterActive(
+      {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      },
+    );
 
     this.analyticsService.mixpanelTrack(
       'Fetch User Preferences - [Notification Center]',

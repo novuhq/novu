@@ -43,8 +43,11 @@ export class GetPreferences {
     };
 
     const workflowList =
-      (await this.notificationTemplateRepository.getActiveList(command.organizationId, command.environmentId, true)) ||
-      [];
+      (await this.notificationTemplateRepository.filterActive({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        tags: command.tags,
+      })) || [];
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
       _organization: command.organizationId,
@@ -71,7 +74,7 @@ export class GetPreferences {
             id: workflow._id,
             identifier: workflow.triggers[0].identifier,
             name: workflow.name,
-            critical: workflow.critical || workflowPreference.template.critical,
+            critical: workflow.critical ?? workflowPreference.template.critical,
             tags: workflow.tags,
           },
         } satisfies InboxPreference;
