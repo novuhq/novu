@@ -25,7 +25,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm nx affected -t build --stream
+        run: pnpm run build:affected
           
       - name: Release package previews to pkg.pr.new
-        run: pnpx run release:previews
+        run: pnpm run release:previews
