@@ -9,6 +9,7 @@ const excludeEmpty = ({ tags, read, archived, limit, offset, after }: ListNotifi
   Object.entries({ tags, read, archived, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
+      // @ts-expect-error
       acc[key] = value;
 
       return acc;

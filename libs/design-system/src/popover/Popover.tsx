@@ -62,8 +62,7 @@ export const Popover = ({
           padding: '16px',
           backgroundColor: colorScheme === 'dark' ? colors.B17 : colors.white,
         }}
-        // eslint-disable-next-line no-constant-binary-expression
-        sx={{ opacity: `${opacity} !important` ?? 1 }}
+        sx={{ opacity: `${opacity || 1} !important` }}
       >
         {title && (
           <Label gradientColor={titleGradient} style={{ marginBottom: '8px' }}>

@@ -33,6 +33,7 @@ type PolymorphicComponent = <C extends React.ElementType = IconButtonDefaultElem
  *
  * TODO: there are not specifications for these in the Design System, so this just follows the Button recipe.
  */
+// @ts-expect-error
 export const IconButton: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = IconButtonDefaultElement>(
     { variant = DEFAULT_VARIANT, ...props }: IconButtonProps<C>,
