@@ -7,7 +7,7 @@ import { Root } from '../../elements';
 import { useTooltip } from './TooltipRoot';
 
 export const tooltipContentVariants = () =>
-  'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-z-10 nt-rounded-lg nt-text-background nt-text-xs';
+  'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-rounded-lg nt-text-background nt-text-xs';
 
 const TooltipContentBody = (props: TooltipContentProps) => {
   const { open, setFloating, floating, floatingStyles } = useTooltip();
@@ -28,7 +28,7 @@ const TooltipContentBody = (props: TooltipContentProps) => {
     <div
       ref={setFloating}
       class={local.class ? local.class : style(local.appearanceKey || 'tooltipContent', tooltipContentVariants())}
-      style={floatingStyles()}
+      style={{ ...floatingStyles(), 'z-index': 99999 }}
       data-open={open()}
       {...rest}
     />
@@ -41,6 +41,7 @@ export const TooltipContent = (props: TooltipContentProps) => {
 
   return (
     <Show when={open()}>
+      {/* we can safely use portal here as this element won't be focused and close other portals (outside solid world) as a result */}
       <Portal>
         <Root>
           <TooltipContentBody {...props} />

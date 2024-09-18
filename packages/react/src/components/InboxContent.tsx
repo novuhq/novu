@@ -1,27 +1,36 @@
 import React from 'react';
-import type { NotificationClickHandler, NotificationActionClickHandler } from '@novu/js/ui';
+import type { NotificationClickHandler, NotificationActionClickHandler, InboxPage } from '@novu/js/ui';
 import { Mounter } from './Mounter';
 import { NotificationsRenderer } from '../utils/types';
 import { useRenderer } from '../context/RendererContext';
 import { useNovuUI } from '../context/NovuUIContext';
 import { withRenderer } from './Renderer';
 
-export type NotificationProps = {
+export type InboxContentProps = {
   renderNotification?: NotificationsRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
+  initialPage?: InboxPage;
+  hideNav?: boolean;
 };
 
-const _Notifications = React.memo((props: NotificationProps) => {
-  const { onNotificationClick, onPrimaryActionClick, renderNotification, onSecondaryActionClick } = props;
+const _InboxContent = React.memo((props: InboxContentProps) => {
+  const {
+    onNotificationClick,
+    onPrimaryActionClick,
+    renderNotification,
+    onSecondaryActionClick,
+    initialPage,
+    hideNav,
+  } = props;
   const { novuUI } = useNovuUI();
   const { mountElement } = useRenderer();
 
   const mount = React.useCallback(
     (element: HTMLElement) => {
       return novuUI.mountComponent({
-        name: 'Notifications',
+        name: 'InboxContent',
         element,
         props: {
           renderNotification: renderNotification
@@ -30,6 +39,8 @@ const _Notifications = React.memo((props: NotificationProps) => {
           onNotificationClick,
           onPrimaryActionClick,
           onSecondaryActionClick,
+          initialPage,
+          hideNav,
         },
       });
     },
@@ -39,4 +50,4 @@ const _Notifications = React.memo((props: NotificationProps) => {
   return <Mounter mount={mount} />;
 });
 
-export const Notifications = withRenderer(_Notifications);
+export const InboxContent = withRenderer(_InboxContent);
