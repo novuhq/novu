@@ -46,7 +46,7 @@ export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
   const { colorScheme } = useColorScheme();
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (!isImprovedBillingEnabled && !IS_EE_AUTH_ENABLED) {
+  if (!isImprovedBillingEnabled || !IS_EE_AUTH_ENABLED) {
     return null;
   }
 
