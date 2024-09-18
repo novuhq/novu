@@ -1,0 +1,31 @@
+name: Publish Next Packages Previews
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - next
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build
+          
+      - name: Release package previews to pkg.pr.new
+        run: pnpx run release:previews
