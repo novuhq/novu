@@ -1334,7 +1334,7 @@ describe('Novu Client', () => {
       const event: Event = {
         action: PostActionEnum.EXECUTE,
         workflowId: 'test-workflow',
-        stepId: 'send-email',
+        stepId: 'send-inapp',
         subscriber: {},
         state: [],
         data: {},
