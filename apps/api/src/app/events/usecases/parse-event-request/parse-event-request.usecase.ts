@@ -215,7 +215,14 @@ export class ParseEventRequest {
       bridgeWorkflow: discoveredWorkflow ?? undefined,
     };
 
-    await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
+    const options = process.env.IS_DOCKER_HOSTED === 'true' && command.priority ? { priority: command.priority } : {};
+
+    await this.workflowQueueService.add({
+      name: transactionId,
+      data: jobData,
+      groupId: command.organizationId,
+      ...options,
+    });
 
     return {
       acknowledged: true,
