@@ -57,6 +57,10 @@ export class GetSubscriberTemplatePreference {
     }
 
     const initialActiveChannels = await this.getActiveChannels(command);
+
+    /**
+     * V1 preference object.
+     */
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne(
         {
@@ -71,6 +75,9 @@ export class GetSubscriberTemplatePreference {
 
     const templateChannelPreference = command.template.preferenceSettings;
 
+    /**
+     * V2 preference object.
+     */
     const subscriberWorkflowPreferences =
       await this.getPreferences.getWorkflowChannelPreferences({
         environmentId: command.environmentId,
@@ -79,10 +86,11 @@ export class GetSubscriberTemplatePreference {
         templateId: command.template._id,
       });
 
-    const subscriberPreferenceChannels =
-      GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
-        subscriberWorkflowPreferences,
-      ) || subscriberPreference?.channels;
+    const subscriberPreferenceChannels = subscriberWorkflowPreferences
+      ? GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+          subscriberWorkflowPreferences,
+        )
+      : subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 

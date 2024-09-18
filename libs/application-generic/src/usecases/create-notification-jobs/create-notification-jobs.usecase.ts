@@ -64,6 +64,7 @@ export class CreateNotificationJobs {
       channels,
       controls: command.controls,
       tags: command.template.tags,
+      preferences: command.template.preferences,
     });
 
     if (!notification) {

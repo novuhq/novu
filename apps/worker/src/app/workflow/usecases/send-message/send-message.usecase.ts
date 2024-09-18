@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import {
   DigestTypeEnum,
@@ -19,6 +19,7 @@ import {
   DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  GetPreferences,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
@@ -96,7 +97,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let bridgeResponse: ExecuteOutput | null = null;
-    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
+    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as StepTypeEnum)) {
       bridgeResponse = await this.executeBridgeJob.execute({
         ...command,
         variables,
@@ -206,34 +207,19 @@ export class SendMessage {
     command: SendMessageCommand,
     variables: IFilterVariables
   ): Promise<{ filterResult: IConditionsFilterResponse | null; channelPreferenceResult: boolean | null }> {
-    const skipHalt = this.shouldSkipHalt(bridgeSkip, command.job?.step?.bridgeUrl);
-    if (skipHalt) {
+    if (bridgeSkip === true) {
       return { filterResult: { passed: true, conditions: [], variables: {} }, channelPreferenceResult: true };
     }
 
     const [filterResult, channelPreferenceResult] = await Promise.all([
-      this.filter(command, variables),
-      this.filterPreferredChannels(command.job),
+      this.filterConditions(command, variables),
+      this.filterPreferredChannels(command),
     ]);
 
     return { filterResult, channelPreferenceResult };
   }
 
-  /**
-   * This function checks if a bridge skip is happening.
-   *
-   * - If `bridgeSkip` is true (highest priority), skips all checks.
-   * - If `bridgeUrl` is provided, skips all checks (use `skip` option in workflow definition instead).
-   *
-   * @param bridgeSkip Whether to skip bridge checks (optional).
-   * @param bridgeUrl URL of the bridge (optional).
-   * @return True if bridge skip is happening, false otherwise.
-   */
-  private shouldSkipHalt(bridgeSkip: boolean | undefined, bridgeUrl: string | undefined): boolean {
-    return bridgeSkip === true || !!bridgeUrl;
-  }
-
-  private async filter(command: SendMessageCommand, variables: IFilterVariables) {
+  private async filterConditions(command: SendMessageCommand, variables: IFilterVariables) {
     return await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: command.job.step.filters || [],
@@ -301,16 +287,15 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
+  private async filterPreferredChannels(command: SendMessageCommand): Promise<boolean> {
+    const { job } = command;
+
     const template = await this.getNotificationTemplate({
       _id: job._templateId,
       environmentId: job._environmentId,
     });
-    if (!template) {
-      throw new PlatformException(`Notification template ${job._templateId} is not found`);
-    }
 
-    if (template.critical || this.isActionStep(job)) {
+    if (template?.critical || this.isActionStep(job)) {
       return true;
     }
 
@@ -346,18 +331,40 @@ export class SendMessage {
       return false;
     }
 
-    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
-      GetSubscriberTemplatePreferenceCommand.create({
-        organizationId: job._organizationId,
-        subscriberId: subscriber.subscriberId,
-        environmentId: job._environmentId,
-        template,
-        subscriber,
-        tenant: job.tenant,
-      })
-    );
+    let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
+    if (command.statelessPreferences) {
+      /*
+       * Stateless Workflow executions do not have their definitions stored in the database.
+       * Their preferences are available in the command instead.
+       *
+       * TODO: Refactor the send-message flow to better handle stateless workflows
+       */
+      const workflowPreference = GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+        command.statelessPreferences
+      );
+      subscriberPreference = {
+        enabled: true,
+        channels: workflowPreference,
+      };
+    } else {
+      if (!template) {
+        throw new PlatformException(`Notification template ${job._templateId} is not found`);
+      }
 
-    const result = this.stepPreferred(preference, job);
+      const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
+        GetSubscriberTemplatePreferenceCommand.create({
+          organizationId: job._organizationId,
+          subscriberId: subscriber.subscriberId,
+          environmentId: job._environmentId,
+          template,
+          subscriber,
+          tenant: job.tenant,
+        })
+      );
+      subscriberPreference = preference;
+    }
+
+    const result = this.stepPreferred(subscriberPreference, job);
 
     if (!result) {
       await this.executionLogRoute.execute(
@@ -368,7 +375,7 @@ export class SendMessage {
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(preference),
+          raw: JSON.stringify(subscriberPreference),
         })
       );
     }

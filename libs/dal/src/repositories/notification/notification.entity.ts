@@ -1,4 +1,4 @@
-import { ControlsDto, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
+import { ControlsDto, ISubscribersDefine, StepTypeEnum, WorkflowChannelPreferences } from '@novu/shared';
 
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
@@ -38,6 +38,7 @@ export class NotificationEntity {
   updatedAt?: string;
   expireAt?: string;
   tags?: string[];
+  preferences?: WorkflowChannelPreferences;
   controls?: ControlsDto;
 }
 
