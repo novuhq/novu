@@ -8,7 +8,7 @@ on:
       - '!prod'
 
 jobs:
-  build:
+  release_packages_preview:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,9 +25,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-
-      - name: Teach Novu preview packages to work with latest dependencies
-        run: pnpm run packages:set-latest
 
       - name: Build
         run: pnpm run build:affected

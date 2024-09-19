@@ -3,7 +3,7 @@ import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
 import { updatePreference } from './helpers';
 import { Preference } from './preference';
-import type { UpdatePreferencesArgs } from './types';
+import type { ListPreferencesArgs, UpdatePreferencesArgs } from './types';
 import { Result } from '../types';
 import { PreferencesCache } from '../cache/preferences-cache';
 
@@ -31,14 +31,14 @@ export class Preferences extends BaseModule {
     this.#useCache = useCache;
   }
 
-  async list(): Result<Preference[]> {
+  async list(args: ListPreferencesArgs = {}): Result<Preference[]> {
     return this.callWithSession(async () => {
       try {
-        let data = this.#useCache ? this.cache.getAll() : undefined;
-        this._emitter.emit('preferences.list.pending', { args: undefined, data });
+        let data = this.#useCache ? this.cache.getAll(args) : undefined;
+        this._emitter.emit('preferences.list.pending', { args, data });
 
         if (!data) {
-          const response = await this._inboxService.fetchPreferences();
+          const response = await this._inboxService.fetchPreferences(args.tags);
           data = response.map(
             (el) =>
               new Preference(el, {
@@ -48,15 +48,16 @@ export class Preferences extends BaseModule {
           );
 
           if (this.#useCache) {
-            this.cache.set(data);
+            this.cache.set(args, data);
+            data = this.cache.getAll(args);
           }
         }
 
-        this._emitter.emit('preferences.list.resolved', { args: undefined, data });
+        this._emitter.emit('preferences.list.resolved', { args, data });
 
         return { data };
       } catch (error) {
-        this._emitter.emit('preferences.list.resolved', { args: undefined, error });
+        this._emitter.emit('preferences.list.resolved', { args, error });
         throw error;
       }
     });
