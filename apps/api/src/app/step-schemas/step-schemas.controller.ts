@@ -4,25 +4,25 @@ import { UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { StepType } from '@novu/framework';
 
-import { GetControlSchemaCommand } from './usecases/get-control-schema/get-control-schema.command';
-import { GetControlSchema } from './usecases/get-control-schema/get-control-schema.usecase';
+import { GetStepDefaultSchemaCommand } from './usecases/get-default-schema/get-default-schema.command';
 import { StepOutputSchema } from './types';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { GetStepDefaultSchema } from './usecases/get-default-schema/get-default-schema.usecase';
 
-@Controller('/controls')
+@Controller('/step-schemas')
 @UserAuthentication()
 @UseInterceptors(ClassSerializerInterceptor)
-export class ControlsController {
-  constructor(private getControlSchemaUsecase: GetControlSchema) {}
+export class StepSchemasController {
+  constructor(private getStepDefaultSchemaUsecase: GetStepDefaultSchema) {}
 
-  @Get('/:stepType/schema')
+  @Get('/defaults/:stepType')
   @ExternalApiAccessible()
-  async getControlSchema(
+  async getStepSchema(
     @UserSession() user: UserSessionData,
     @Param('stepType') stepType: StepType
   ): Promise<StepOutputSchema> {
-    return await this.getControlSchemaUsecase.execute(
-      GetControlSchemaCommand.create({
+    return await this.getStepDefaultSchemaUsecase.execute(
+      GetStepDefaultSchemaCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,

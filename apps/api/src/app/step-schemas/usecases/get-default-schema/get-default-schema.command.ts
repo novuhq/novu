@@ -4,7 +4,7 @@ import { IsEnum } from 'class-validator';
 
 const StepTypeValue = { ...ChannelStepEnum, ...ActionStepEnum };
 
-export class GetControlSchemaCommand extends EnvironmentWithUserCommand {
+export class GetStepDefaultSchemaCommand extends EnvironmentWithUserCommand {
   @IsEnum(StepTypeValue)
   stepType: StepType;
 }
