@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNovu } from './NovuProvider';
 
 type UsePreferencesProps = {
+  filter?: { tags?: string[] };
   onSuccess?: (data: Preference[]) => void;
   onError?: (error: NovuError) => void;
 };
@@ -46,7 +47,7 @@ export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResul
 
   const fetchPreferences = async () => {
     setIsFetching(true);
-    const response = await preferences.list();
+    const response = await preferences.list(props?.filter);
     if (response.error) {
       setError(response.error);
       onError?.(response.error);
@@ -59,6 +60,7 @@ export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResul
 
   const refetch = () => {
     preferences.cache.clearAll();
+
     return fetchPreferences();
   };
 
