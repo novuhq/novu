@@ -1,5 +1,6 @@
 import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
 import { NotificationFilter, Notification } from '../../types';
+import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
 import { useInboxContext } from './InboxContext';
@@ -27,7 +28,7 @@ export const CountProvider = (props: ParentProps) => {
     if (tabs().length === 0) {
       return;
     }
-    const filters = tabs().map((tab) => ({ tags: tab.value, read: false, archived: false }));
+    const filters = tabs().map((tab) => ({ tags: getTagsFromTab(tab), read: false, archived: false }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
       return;
@@ -106,7 +107,7 @@ export const CountProvider = (props: ParentProps) => {
       if (allTabs.length > 0) {
         for (let i = 0; i < allTabs.length; i += 1) {
           const tab = allTabs[i];
-          const tags = tab.value;
+          const tags = getTagsFromTab(tab);
           const allNotifications = tags.length === 0;
           const includesAtLeastOneTag = tags.some((tag) => notification.tags?.includes(tag));
           if (!allNotifications && !includesAtLeastOneTag) {

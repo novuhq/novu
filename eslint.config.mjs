@@ -96,6 +96,8 @@ export default tsEslint.config(
       'unused-imports/no-unused-imports': 'off',
       '@typescript-eslint/space-before-blocks': 'off',
       '@typescript-eslint/lines-between-class-members': 'off',
+      "@typescript-eslint/no-throw-literal": "off",
+      "@typescript-eslint/only-throw-error": "error",
       'react/jsx-wrap-multilines': 'off',
       'react/jsx-filename-extension': 'off',
       'multiline-comment-style': ['warn', 'starred-block'],

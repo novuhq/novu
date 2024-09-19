@@ -72,7 +72,8 @@
     "get-affected": "node scripts/print-affected-array.mjs",
     "symlink:submodules": "pnpm --filter \"@novu/ee-*\" exec node \"$(pwd)/scripts/symlink-ee.mjs\"",
     "install:with-ee": "pnpm install && pnpm symlink:submodules",
-    "restore-workspace-protocol": "node scripts/restore-workspace-protocol.mjs"
+    "packages:set-workspace-protocol": "node scripts/set-package-dependencies.mjs workspace:*",
+    "packages:set-latest": "node scripts/set-package-dependencies.mjs latest"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
