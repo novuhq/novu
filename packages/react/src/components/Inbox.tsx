@@ -61,6 +61,7 @@ export const InboxChild = React.memo((props: InboxProps) => {
     localization,
     appearance,
     tabs,
+    preferencesFilter,
     routerPush,
     applicationIdentifier,
     subscriberId,
@@ -75,10 +76,21 @@ export const InboxChild = React.memo((props: InboxProps) => {
       localization,
       appearance,
       tabs,
+      preferencesFilter,
       routerPush,
       options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
     };
-  }, [localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl]);
+  }, [
+    localization,
+    appearance,
+    tabs,
+    preferencesFilter,
+    applicationIdentifier,
+    subscriberId,
+    subscriberHash,
+    backendUrl,
+    socketUrl,
+  ]);
 
   if (isWithChildrenProps(props)) {
     return (
