@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Teach Novu preview packages to work with latest dependencies
+        run: pnpm run packages:set-latest
+
       - name: Build
         run: pnpm run build:affected
         if: ${{ success() }}
