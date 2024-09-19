@@ -54,7 +54,13 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.identify(user?._id);
+    this._segment?.identify(user?._id, {
+      email: user.email,
+      name: user.firstName + ' ' + user.lastName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.profilePicture,
+    });
   }
 
   alias(anonymousId: string, userId: string) {
