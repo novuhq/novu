@@ -1,11 +1,11 @@
 import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
 import { Popover, Switch, Text, Button, useColorScheme } from '@novu/design-system';
-import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../../hooks';
 import { Group } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import { useFeatureFlag } from '../../../hooks';
+import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 import { ROUTES } from '../../../constants/routes';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 
@@ -29,8 +29,8 @@ const PopoverContent = () => {
     <Group spacing={8}>
       <Text>Upgrade your billing plan to remove Novu branding</Text>
       <Button
-        size="xs"
-        variant="light"
+        size="md"
+        variant="subtle"
         onClick={() => {
           navigate(ROUTES.MANAGE_ACCOUNT_BILLING);
         }}
@@ -54,6 +54,7 @@ export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
     if (apiServiceLevel === ApiServiceLevelEnum.FREE) {
       // If it's a free tier, don't change the value, just show the popover
       e.preventDefault();
+
       return;
     }
 

@@ -1,11 +1,38 @@
 const { useBabelRc, override, overrideDevServer } = require('customize-cra');
 const { DefinePlugin } = require('webpack');
+const { ModuleFederationPlugin } = require('webpack').container;
 const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
   const plugins = [
     ...config.plugins,
+    new ModuleFederationPlugin({
+      name: 'remote',
+      library: { type: 'module' },
+      filename: 'remoteEntry.js',
+      exposes: {
+        './IntegrationsListPage': './src/pages/integrations/IntegrationsListPage',
+        './Providers': './src/Providers',
+      },
+      shared: {
+        react: {
+          // eager: true,
+          // singleton: true,
+          requiredVersion: '^18.3.1',
+        },
+        'react-dom': {
+          // eager: true,
+          // singleton: true,
+          requiredVersion: '^18.3.1',
+        },
+        'react-router-dom': {
+          // eager: true,
+          // singleton: true,
+          requiredVersion: '6.2.2',
+        },
+      },
+    }),
     new DefinePlugin({
       'process.env.NOVU_VERSION': JSON.stringify(version),
     }),
@@ -14,6 +41,16 @@ function overrideConfig(config, env) {
 
   return {
     ...config,
+    output: {
+      ...config.output,
+      publicPath: 'auto',
+    },
+    experiments: {
+      outputModule: true,
+    },
+    optimization: {
+      minimize: false,
+    },
     plugins,
     ignoreWarnings: [
       {

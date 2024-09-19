@@ -36,3 +36,5 @@ export const IntegrationsListPage = () => {
     />
   );
 };
+
+export default IntegrationsListPage;
