@@ -60,6 +60,7 @@ export const Renderer = ({ options, novu, children }: RendererProps) => {
     novuUI.updateTabs(options.tabs);
     novuUI.updateOptions(options.options);
     novuUI.updateRouterPush(options.routerPush);
+    novuUI.updatePreferencesFilter(options.preferencesFilter);
   }, [options]);
 
   if (!novuUI) {
