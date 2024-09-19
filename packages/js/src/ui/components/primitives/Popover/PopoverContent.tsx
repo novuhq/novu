@@ -9,8 +9,8 @@ import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
   cn(
-    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background ',
-    'nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
+    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
+    'nt-shadow-popover nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
   );
 
 const PopoverContentBody = (props: PopoverContentProps) => {
