@@ -23,5 +23,10 @@ export const StepTypeToOutputMap = {
   [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].output,
   [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].output,
   [ActionStepEnum.DIGEST]: actionStepSchemas[ActionStepEnum.DIGEST].output,
-  [ActionStepEnum.CUSTOM]: {},
+  [ActionStepEnum.CUSTOM]: {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+  },
 };
