@@ -288,7 +288,7 @@ export class SendMessage {
     });
 
     /*
-     * The `critical` flag check is needed here for backward-compatibilty of V1 Workflow Preferences only.
+     * The `critical` flag check is needed here for backward-compatibility of V1 Workflow Preferences only.
      * V2 Workflow Preferences are stored on the Preference entity instead.
      */
     if (workflow?.critical || this.isActionStep(job)) {
