@@ -8,7 +8,7 @@ on:
       - '!prod'
 
 jobs:
-  build:
+  release_packages_preview:
     runs-on: ubuntu-latest
 
     steps:
