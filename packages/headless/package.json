@@ -20,7 +20,7 @@
     "lint:fix": "eslint src --fix",
     "test": "jest",
     "test:watch": "jest --watch",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
   },
   "publishConfig": {
     "access": "public"
