@@ -35,7 +35,8 @@
     "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
     "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
-    "prepare-release": "run-s reset-hard test"
+    "prepare-release": "run-s reset-hard test",
+    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
   },
   "publishConfig": {
     "access": "public"
@@ -48,14 +49,14 @@
   },
   "devDependencies": {
     "@types/jest": "29.5.2",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "codecov": "^3.5.0",
     "jest": "^27.0.6",
     "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
     "typedoc": "^0.24.0",
-    "typescript": "4.9.5"
+    "typescript": "5.6.2"
   },
   "prettier": {
     "singleQuote": true

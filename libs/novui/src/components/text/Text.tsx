@@ -13,6 +13,7 @@ export type TextProps<C extends React.ElementType> = PolymorphicComponentPropWit
 
 type PolymorphicComponent = <C extends React.ElementType = 'p'>(props: TextProps<C>) => JSX.Element | null;
 
+// @ts-expect-error
 export const Text: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = 'p'>(props: TextProps<C>, ref?: PolymorphicRef<C>) => {
     const [variantProps, textProps] = text.splitVariantProps(props);
