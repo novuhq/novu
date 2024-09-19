@@ -104,23 +104,13 @@ export class SendMessage {
       });
     }
     const isBridgeSkipped = bridgeResponse?.options?.skip;
-    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(
-      isBridgeSkipped,
-      command,
-      variables
-    );
+    const { stepCondition, channelPreference } = await this.evaluateFilters(isBridgeSkipped, command, variables);
 
     if (!command.payload?.$on_boarding_trigger) {
-      this.sendProcessStepEvent(
-        command,
-        isBridgeSkipped,
-        filterResult,
-        channelPreferenceResult,
-        !!bridgeResponse?.outputs
-      );
+      this.sendProcessStepEvent(command, isBridgeSkipped, stepCondition, channelPreference, !!bridgeResponse?.outputs);
     }
 
-    if (!filterResult?.passed || !channelPreferenceResult || isBridgeSkipped) {
+    if (!stepCondition?.passed || !channelPreference || isBridgeSkipped) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       await this.executionLogRoute.execute(
@@ -132,8 +122,10 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            ...(filterResult ? { filter: { conditions: filterResult?.conditions, passed: filterResult?.passed } } : {}),
-            ...(channelPreferenceResult ? { preferences: { passed: channelPreferenceResult } } : {}),
+            ...(stepCondition
+              ? { filter: { conditions: stepCondition?.conditions, passed: stepCondition?.passed } }
+              : {}),
+            ...(channelPreference ? { preferences: { passed: channelPreference } } : {}),
             ...(isBridgeSkipped ? { skip: isBridgeSkipped } : {}),
           }),
         })
@@ -202,24 +194,24 @@ export class SendMessage {
     return { status: 'success' };
   }
 
-  private async getStepExecutionHalt(
+  private async evaluateFilters(
     bridgeSkip: boolean | undefined,
     command: SendMessageCommand,
     variables: IFilterVariables
-  ): Promise<{ filterResult: IConditionsFilterResponse | null; channelPreferenceResult: boolean | null }> {
+  ): Promise<{ stepCondition: IConditionsFilterResponse | null; channelPreference: boolean | null }> {
     if (bridgeSkip === true) {
-      return { filterResult: { passed: true, conditions: [], variables: {} }, channelPreferenceResult: true };
+      return { stepCondition: { passed: true, conditions: [], variables: {} }, channelPreference: true };
     }
 
-    const [filterResult, channelPreferenceResult] = await Promise.all([
-      this.filterConditions(command, variables),
-      this.filterPreferredChannels(command),
+    const [stepCondition, channelPreference] = await Promise.all([
+      this.evaluateStepCondition(command, variables),
+      this.evaluateChannelPreference(command),
     ]);
 
-    return { filterResult, channelPreferenceResult };
+    return { stepCondition, channelPreference };
   }
 
-  private async filterConditions(command: SendMessageCommand, variables: IFilterVariables) {
+  private async evaluateStepCondition(command: SendMessageCommand, variables: IFilterVariables) {
     return await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: command.job.step.filters || [],
@@ -287,7 +279,7 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async filterPreferredChannels(command: SendMessageCommand): Promise<boolean> {
+  private async evaluateChannelPreference(command: SendMessageCommand): Promise<boolean> {
     const { job } = command;
 
     const template = await this.getNotificationTemplate({
