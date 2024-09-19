@@ -133,6 +133,11 @@ export const parseElements = (elements: Elements) => {
   return elementsStyleData;
 };
 
+/**
+ * In the next minor release we can remove the deprecated `value` field from the Tab type.
+ * This function can be removed after that and the code should be updated to use the `filter` field.
+ * @returns tags from the tab object
+ */
 export const getTagsFromTab = (tab?: Tab) => {
   return tab?.filter?.tags || tab?.value || [];
 };

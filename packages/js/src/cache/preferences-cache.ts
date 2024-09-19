@@ -9,13 +9,15 @@ import { ListPreferencesArgs } from '../preferences/types';
 const updateEvents: PreferenceEvents[] = ['preference.update.pending', 'preference.update.resolved'];
 
 const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
-  Object.entries({ tags })
-    .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
-    .reduce((acc, [key, value]) => {
-      acc[key] = value;
-
+  Object.entries({ tags }).reduce((acc, [key, value]) => {
+    if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
       return acc;
-    }, {});
+    }
+    // @ts-expect-error
+    acc[key] = value;
+
+    return acc;
+  }, {});
 
 const getCacheKey = ({ tags }: ListPreferencesArgs): string => {
   return JSON.stringify(excludeEmpty({ tags }));
