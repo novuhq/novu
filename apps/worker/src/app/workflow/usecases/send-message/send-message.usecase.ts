@@ -344,7 +344,7 @@ export class SendMessage {
       };
     } else {
       if (!workflow) {
-        throw new PlatformException(`Notification template ${job._templateId} is not found`);
+        throw new PlatformException(`Workflow with id '${job._templateId}' was not found`);
       }
 
       const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
