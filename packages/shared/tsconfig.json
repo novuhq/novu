@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "strictNullChecks": true,
     "module": "commonjs",
@@ -7,7 +7,9 @@
     "declaration": true,
     "outDir": "./dist/cjs",
     "rootDir": "./src",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"]
 }

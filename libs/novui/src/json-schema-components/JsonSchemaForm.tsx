@@ -79,8 +79,8 @@ function transformErrors(_: RJSFValidationError[]) {
 /**
  * Specialized form editor for data passed as JSON.
  */
-export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TFormData>) {
-  const [cssProps, { className, variables, errors, ...formProps }] = splitCssProps(props);
+export function JsonSchemaForm<TFormData = {}>(props: JsonSchemaFormProps<TFormData>) {
+  const [cssProps, { className, variables,errors, ...formProps }] = splitCssProps(props);
 
   const isAutocompleteEnabled = Boolean(variables && variables.length > 0);
 
@@ -119,8 +119,10 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
         css(cssProps),
         className
       )}
+      // @ts-expect-error
       uiSchema={UI_SCHEMA}
       widgets={isAutocompleteEnabled ? WIDGETS : LEGACY_WIDGETS}
+      // @ts-expect-error
       validator={validator}
       // override default behavior don't print to console when there is a validation error
       onError={() => {}}
@@ -132,10 +134,12 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
       formContext={{ variables }}
       idSeparator={JSON_SCHEMA_FORM_ID_DELIMITER}
       templates={{
+        // @ts-expect-error
         ArrayFieldTitleTemplate,
         ArrayFieldTemplate,
         ArrayFieldItemTemplate,
         ObjectFieldTemplate,
+        // @ts-expect-error
         ButtonTemplates: { MoveDownButton, AddButton, RemoveButton, MoveUpButton },
       }}
       {...formProps}

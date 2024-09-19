@@ -1,17 +1,15 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "strictNullChecks": true,
-    "module": "commonjs",
-    "sourceMap": true,
+    "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
-    "types": ["node", "mocha", "chai", "sinon"],
-    "target": "es6",
-    "allowJs": false,
     "esModuleInterop": true,
-    "declarationMap": true,
-    "skipLibCheck": true
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "target": "es6"
   },
   "exclude": ["node_modules"]
 }

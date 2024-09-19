@@ -32,7 +32,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
     <div
       class={style(
         'channelContainer',
-        'nt-flex nt-justify-between nt-items-center nt-h-11 data-[disabled=true]:nt-text-foreground-alpha-600'
+        'nt-flex nt-justify-between nt-items-center nt-h-11 nt-gap-2 data-[disabled=true]:nt-text-foreground-alpha-600'
       )}
       data-disabled={props.isCritical}
     >

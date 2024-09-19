@@ -42,6 +42,7 @@ export const Switch = (props: SwitchProps) => {
           data-[disabled=true]:nt-opacity-40`
         )}
         data-disabled={props.disabled}
+        data-checked={props.checked}
       />
     </label>
   );

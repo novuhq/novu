@@ -17,7 +17,6 @@ COPY libs ./libs
 COPY packages ./packages
 COPY enterprise ./enterprise
 COPY tsconfig.json .
-COPY tsconfig.base.json .
 
 COPY nx.json .
 COPY pnpm-workspace.yaml .

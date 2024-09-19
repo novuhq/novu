@@ -92,7 +92,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       </Show>
       <div class={style('notificationBody', 'nt-overflow-hidden nt-w-full')}>
         {/* eslint-disable-next-line local-rules/no-class-without-style */}
-        <div class="nt-relative nt-shrink-0 nt-float-right">
+        <div class="nt-relative nt-shrink-0 nt-float-right nt-ml-2">
           <p
             class={style(
               'notificationDate',
@@ -107,7 +107,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               'notificationDefaultActions',
               `nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 
               nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center 
-              nt-absolute nt-top-0 nt-right-0  nt-bg-neutral-100 nt-p-0.5 nt-rounded nt-z-50`
+              nt-absolute nt-top-0 nt-right-0  nt-bg-neutral-100 nt-p-0.5 nt-rounded nt-z-50 nt-inset-0`
             )}
           >
             <Show when={status() !== NotificationStatus.ARCHIVED}>
@@ -217,7 +217,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <Show when={props.notification.subject}>
           {(subject) => (
             <Markdown
-              class={style('notificationSubject', 'nt-text-start nt-font-semibold')}
+              class={style('notificationSubject', 'nt-text-start')}
               strongAppearanceKey="notificationSubject__strong"
             >
               {subject()}
@@ -227,7 +227,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <Markdown class={style('notificationBody', 'nt-text-start')} strongAppearanceKey="notificationBody__strong">
           {props.notification.body}
         </Markdown>
-        <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
+        <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
               <Button

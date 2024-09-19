@@ -12,7 +12,7 @@ import type {
   UnreadArgs,
 } from '../notifications';
 import { Preference } from '../preferences/preference';
-import { UpdatePreferencesArgs } from '../preferences/types';
+import { ListPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import { Session, WebSocketEvent } from '../types';
 
@@ -52,7 +52,7 @@ type NotificationsReadArchivedAllEvents = BaseEvents<
   { tags?: string[] },
   Notification[]
 >;
-type PreferencesFetchEvents = BaseEvents<'preferences.list', undefined, Preference[]>;
+type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;
 type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferencesArgs, Preference>;
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;

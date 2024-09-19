@@ -55,8 +55,7 @@ export const useUpdateUserGlobalPreferences = ({
     },
     onError: (error, variables, context) => {
       updateGlobalPreferenceChecked({
-        // eslint-disable-next-line no-constant-binary-expression
-        enabled: !variables.enabled ?? undefined,
+        enabled: !variables.enabled,
         preferences: variables.preferences,
       });
       onError?.(error, variables, context);
