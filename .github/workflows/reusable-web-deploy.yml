@@ -78,23 +78,23 @@ jobs:
         working-directory: apps/web
         run: |
           touch .env
-          echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
-          echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
-          echo REACT_APP_API_URL=${{ inputs.react_app_api_url }} >> .env
-          echo REACT_APP_WS_URL=${{ inputs.react_app_ws_url }} >> .env
-          echo REACT_APP_WEBHOOK_URL=${{ inputs.react_app_webhook_url }} >> .env
-          echo REACT_APP_WIDGET_EMBED_PATH=${{ inputs.react_app_widget_embed_path }} >> .env
-          echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
-          echo REACT_APP_SENTRY_DSN=${{ inputs.react_app_sentry_dsn }} >> .env
-          echo REACT_APP_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
-          echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
-          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
-          echo REACT_APP_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
-          echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
-          echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
-          echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
           echo REACT_APP_CLERK_PUBLISHABLE_KEY=${{ inputs.clerk_publishable_key }} >> .env
           echo REACT_APP_IS_EE_AUTH_ENABLED=${{ inputs.clerk_is_ee_auth_enabled }} >> .env
+          echo VITE_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
+          echo VITE_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
+          echo VITE_API_URL=${{ inputs.react_app_api_url }} >> .env
+          echo VITE_WS_URL=${{ inputs.react_app_ws_url }} >> .env
+          echo VITE_WEBHOOK_URL=${{ inputs.react_app_webhook_url }} >> .env
+          echo VITE_WIDGET_EMBED_PATH=${{ inputs.react_app_widget_embed_path }} >> .env
+          echo VITE_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
+          echo VITE_SENTRY_DSN=${{ inputs.react_app_sentry_dsn }} >> .env
+          echo VITE_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
+          echo VITE_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
+          echo VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
+          echo VITE_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
+          echo VITE_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
+          echo VITE_NOVU_GTM_ID=${{ secrets.NOVU_GTM_ID }} >> .env
+          echo VITE_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup

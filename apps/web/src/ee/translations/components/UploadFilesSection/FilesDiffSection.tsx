@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Center, Grid, useMantineTheme } from '@mantine/core';
 import { DiffEditor, Monaco } from '@monaco-editor/react';
 

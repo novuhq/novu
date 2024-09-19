@@ -1,11 +1,12 @@
 import { ActionIcon, Avatar } from '@mantine/core';
 import { colors, Dropdown, IconLogout, IconOutlineGroupAdd, IconSettings, Text, When } from '@novu/design-system';
 import { Link } from 'react-router-dom';
-import { CONTEXT_PATH, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../../config';
+import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../../../../config';
 import { ROUTES } from '../../../../constants/routes';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useIsDarkTheme } from '../../../../hooks';
 import { ProfileMenuItem } from './ProfileMenuItem';
+import { version } from '../../../../../package.json';
 
 const FALLBACK_AVATAR = `${CONTEXT_PATH}/static/images/avatar.webp`;
 
@@ -74,7 +75,7 @@ export function HeaderMenuItems({}) {
       {profileMenuItems}
       <When truthy={IS_SELF_HOSTED}>
         <Dropdown.Item disabled>
-          <Text color={colors.B40}>Version: {REACT_APP_VERSION}</Text>
+          <Text color={colors.B40}>Version: {version}</Text>
         </Dropdown.Item>
       </When>
     </Dropdown>

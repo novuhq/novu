@@ -1,6 +1,6 @@
 import { Avatar, Divider, Container, LoadingOverlay, Stack, Text } from '@mantine/core';
-import styled from '@emotion/styled';
-import capitalize from 'lodash.capitalize';
+import styled from '@emotion/styled/macro';
+import * as capitalize from 'lodash.capitalize';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
@@ -21,7 +21,7 @@ export function MembersTable({
 }) {
   const { classes, theme } = useTextStyles();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const selfHosted = import.meta.env.VITE_DOCKER_HOSTED_ENV === 'true';
 
   function isEnableMemberActions(currentMember): boolean {
     const currentUserRoles = members?.find((memberEntity) => memberEntity._userId === currentUser?._id)?.roles || [];

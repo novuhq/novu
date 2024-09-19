@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ChannelTypeEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { ArrowRight } from '@novu/design-system';
 

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { colors, Text } from '@novu/design-system';
 
 export function MessageContainer({ isDark }: { isDark: boolean }) {

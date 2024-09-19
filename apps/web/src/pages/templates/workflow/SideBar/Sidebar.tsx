@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Stack, useMantineColorScheme } from '@mantine/core';
 import { useOutletContext } from 'react-router-dom';
 import { useEnvironment } from '../../../../hooks';

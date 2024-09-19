@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group, ScrollArea } from '@mantine/core';
 import { Button, colors, Popover, Text } from '@novu/design-system';
 import React from 'react';

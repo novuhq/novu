@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group, Indicator } from '@mantine/core';
 import { colors, IExtendedColumn, Table, Text, Tooltip, withCellLoading, IRow } from '@novu/design-system';
 import { format } from 'date-fns';

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Accordion, Group, Indicator, Stack, createStyles } from '@mantine/core';
 import { Text, Tooltip, colors } from '@novu/design-system';
 import React, { useState } from 'react';

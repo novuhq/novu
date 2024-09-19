@@ -1,6 +1,6 @@
 import { ActionIcon, Input as MantineInput } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import {
   Input,

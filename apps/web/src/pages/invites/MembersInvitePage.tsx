@@ -1,6 +1,6 @@
 import { Form } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
@@ -28,7 +28,7 @@ export function MembersInvitePage() {
   const [form] = Form.useForm();
   const segment = useSegment();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const selfHosted = import.meta.env.VITE_DOCKER_HOSTED_ENV === 'true';
   const { currentOrganization, currentUser } = useAuth();
 
   const {

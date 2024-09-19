@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ActionIcon, Divider, Group } from '@mantine/core';
 import { ChevronPlainDown, colors, ErrorIcon, Text } from '@novu/design-system';
 

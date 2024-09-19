@@ -13,7 +13,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "pnpm start:dev",
     "start:dev": "nest start --watch",
-    "start:test": "cross-env NODE_ENV=test nest start",
+    "start:test": "cross-env NODE_ENV=test pnpm start:prod",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint src",

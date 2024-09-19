@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group, Stack } from '@mantine/core';
 import { Button, colors, Label, Modal, Text, WarningIcon } from '@novu/design-system';
 import { useDeleteTranslation, useFetchLocales } from '../../hooks';

@@ -90,11 +90,11 @@ jobs:
       - name: Start Novu web app
         working-directory: apps/web
         env:
-          REACT_APP_API_URL: http://127.0.0.1:1336
-          REACT_APP_WS_URL: http://127.0.0.1:1340
-          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
+          VITE_API_URL: http://127.0.0.1:1336
+          VITE_WS_URL: http://127.0.0.1:1340
+          VITE_WEBHOOK_URL: http://127.0.0.1:1341
           # Disable LaunchDarkly client-side SDK in the test environment to reduce E2E flakiness
-          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ''
+          VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID: ''
           NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
         run: pnpm start:static:build &
 

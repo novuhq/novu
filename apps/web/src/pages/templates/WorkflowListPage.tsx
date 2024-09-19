@@ -1,7 +1,7 @@
 import { ChangeEventHandler, useMemo, useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { createSearchParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { format } from 'date-fns';
 import {
   Tag,

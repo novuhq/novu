@@ -3,7 +3,7 @@ import { JsonInput, MultiSelect, ActionIcon } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import {

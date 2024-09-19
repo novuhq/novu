@@ -51,7 +51,7 @@ export const useTelemetry = () => {
 
   return useCallback(
     (event: string, data?: Record<string, unknown>) => {
-      const mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
+      const mixpanelEnabled = !!import.meta.env.VITE_MIXPANEL_KEY;
 
       if (mixpanelEnabled) {
         const sessionReplayProperties = mixpanel.get_session_recording_properties();

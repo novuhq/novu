@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Button, colors } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
 import { useSegment } from '../../../../components/providers/SegmentProvider';

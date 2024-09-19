@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 

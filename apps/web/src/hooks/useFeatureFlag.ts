@@ -10,7 +10,7 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false):
   const flags = useFlags();
 
   if (!isLaunchDarklyEnabled()) {
-    return prepareBooleanStringFeatureFlag(window._env_[key] || process.env[key], defaultValue);
+    return prepareBooleanStringFeatureFlag(window._env_[key] || import.meta.env[key], defaultValue);
   }
 
   return flags[key] ?? defaultValue;

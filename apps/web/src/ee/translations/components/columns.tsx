@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { FileButton, Group, Indicator, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import {
   ActionButton,

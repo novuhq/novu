@@ -1,6 +1,6 @@
 import { Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Grid } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { ActiveLabel, Button, colors } from '@novu/design-system';

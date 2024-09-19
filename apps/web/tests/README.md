@@ -15,7 +15,7 @@ NOVU_ENTERPRISE=true pnpm --filter @novu/api start:test
 
 NOVU_ENTERPRISE=true pnpm --filter @novu/worker start:test
 
-NOVU_ENTERPRISE=true REACT_APP_API_URL='http://127.0.0.1:1336' REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID='' pnpm --filter @novu/web start
+NOVU_ENTERPRISE=true VITE_API_URL='http://127.0.0.1:1336' VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID='' pnpm --filter @novu/web start
 
 NOVU_ENTERPRISE=true pnpm --filter @novu/web run test:e2e
 ```

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { colors, Text, IconMenuBook } from '@novu/design-system';
 
