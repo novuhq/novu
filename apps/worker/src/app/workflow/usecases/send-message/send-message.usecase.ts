@@ -282,12 +282,16 @@ export class SendMessage {
   private async evaluateChannelPreference(command: SendMessageCommand): Promise<boolean> {
     const { job } = command;
 
-    const template = await this.getNotificationTemplate({
+    const workflow = await this.getWorkflow({
       _id: job._templateId,
       environmentId: job._environmentId,
     });
 
-    if (template?.critical || this.isActionStep(job)) {
+    /*
+     * The `critical` flag check is needed here for backward-compatibilty of V1 Workflow Preferences only.
+     * V2 Workflow Preferences are stored on the Preference entity instead.
+     */
+    if (workflow?.critical || this.isActionStep(job)) {
       return true;
     }
 
@@ -339,7 +343,7 @@ export class SendMessage {
         channels: workflowPreference,
       };
     } else {
-      if (!template) {
+      if (!workflow) {
         throw new PlatformException(`Notification template ${job._templateId} is not found`);
       }
 
@@ -348,7 +352,7 @@ export class SendMessage {
           organizationId: job._organizationId,
           subscriberId: subscriber.subscriberId,
           environmentId: job._environmentId,
-          template,
+          template: workflow,
           subscriber,
           tenant: job.tenant,
         })
@@ -412,7 +416,7 @@ export class SendMessage {
         _id: command._id,
       }),
   })
-  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+  private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
@@ -438,13 +442,13 @@ export class SendMessage {
 
   @Instrument()
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
-    const templatePreferred = preference.enabled;
+    const workflowPreferred = preference.enabled;
 
     const channelPreferred = Object.keys(preference.channels).some(
       (channelKey) => channelKey === job.type && preference.channels[job.type]
     );
 
-    return templatePreferred && channelPreferred;
+    return workflowPreferred && channelPreferred;
   }
 
   private isActionStep(job: JobEntity) {
