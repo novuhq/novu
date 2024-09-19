@@ -136,6 +136,7 @@ export class SubscriberJobBound {
       userId,
       tenant,
       bridgeUrl: command.bridge?.url,
+      preferences: command.bridge?.workflow?.preferences,
     };
 
     if (actor) {

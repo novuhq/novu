@@ -99,6 +99,7 @@ export class RunJob {
           events: job.digest?.events,
           job,
           tags: notification.tags || [],
+          statelessPreferences: job.preferences,
         })
       );
 
