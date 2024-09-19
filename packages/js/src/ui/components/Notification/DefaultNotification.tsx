@@ -92,7 +92,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       </Show>
       <div class={style('notificationBody', 'nt-overflow-hidden nt-w-full')}>
         {/* eslint-disable-next-line local-rules/no-class-without-style */}
-        <div class="nt-relative nt-shrink-0 nt-float-right">
+        <div class="nt-relative nt-shrink-0 nt-float-right nt-ml-2">
           <p
             class={style(
               'notificationDate',
