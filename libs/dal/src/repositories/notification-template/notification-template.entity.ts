@@ -17,7 +17,6 @@ import {
   IMessageTemplate,
   ControlsDto,
   WorkflowTypeEnum,
-  WorkflowChannelPreferences,
 } from '@novu/shared';
 
 import { JSONSchema } from 'json-schema-to-ts';
@@ -37,7 +36,6 @@ export class NotificationTemplateEntity implements INotificationTemplate {
 
   draft: boolean;
 
-  // V1 Preferences
   preferenceSettings: IPreferenceChannels;
 
   critical: boolean;
@@ -81,9 +79,6 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   rawData?: any;
 
   payloadSchema?: any;
-
-  // V2 Preferences
-  preferences?: WorkflowChannelPreferences;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<

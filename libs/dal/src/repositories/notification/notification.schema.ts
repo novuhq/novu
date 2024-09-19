@@ -46,9 +46,6 @@ const notificationSchema = new Schema<NotificationDBModel>(
     tags: {
       type: [Schema.Types.String],
     },
-    preferences: {
-      type: Schema.Types.Mixed,
-    },
   },
   schemaOptions
 );
