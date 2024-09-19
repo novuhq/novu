@@ -29,6 +29,7 @@ export type Variables = {
   colorCounter?: string;
   colorCounterForeground?: string;
   colorNeutral?: string;
+  colorShadow?: string;
   fontSize?: string;
   borderRadius?: string;
 };
@@ -39,6 +40,7 @@ export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
 export type Theme = {
   variables?: Variables;
   elements?: Elements;
+  animations?: boolean;
 };
 export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 

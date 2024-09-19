@@ -34,6 +34,7 @@ type PolymorphicComponent = <C extends React.ElementType = ButtonDefaultElement>
   props: ButtonProps<C>
 ) => JSX.Element | null;
 
+// @ts-expect-error
 export const Button: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = ButtonDefaultElement>(
     { variant = DEFAULT_VARIANT, size = DEFAULT_SIZE, ...props }: ButtonProps<C>,
