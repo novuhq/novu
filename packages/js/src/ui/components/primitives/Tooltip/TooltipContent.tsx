@@ -7,7 +7,7 @@ import { Root } from '../../elements';
 import { useTooltip } from './TooltipRoot';
 
 export const tooltipContentVariants = () =>
-  'nt-bg-foreground nt-p-4 nt-shadow-tooltip nt-z-10 nt-rounded-lg nt-text-background nt-text-sm';
+  'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-z-10 nt-rounded-lg nt-text-background nt-text-xs';
 
 const TooltipContentBody = (props: TooltipContentProps) => {
   const { open, setFloating, floating, floatingStyles } = useTooltip();
