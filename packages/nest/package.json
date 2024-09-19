@@ -27,7 +27,7 @@
     "watch:test": "jest src --watch",
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
     "prepare-release": "run-s reset-hard test",
-    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "publishConfig": {
     "access": "public"
