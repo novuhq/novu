@@ -14,7 +14,7 @@ export type ChannelPreference = {
   /**
    * A flag specifying if the preference is read-only.
    *
-   * If `true`, the preference cannot be changed by the User or Subscriber.
+   * If `true`, the preference cannot be changed by the Subscriber.
    *
    * @default false
    */

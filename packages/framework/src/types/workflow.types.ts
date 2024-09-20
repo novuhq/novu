@@ -46,7 +46,7 @@ export type ChannelPreference = {
   /**
    * A flag specifying if the preference is read-only.
    *
-   * If `true`, the preference cannot be changed by the User or Subscriber.
+   * If `true`, the preference cannot be changed by the Subscriber.
    *
    * @default false
    */
@@ -112,7 +112,7 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * @example
    * ```ts
    * // Enable notification delivery for all channels by default,
-   * // disallowing the User and Subscriber to change the preference.
+   * // disallowing the Subscriber to change the preference.
    * {
    *   workflow: { enabled: true, readOnly: true },
    * }
@@ -121,7 +121,7 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * @example
    * ```ts
    * // Disable notification delivery for all channels by default,
-   * // allowing the User and Subscriber to change the preference.
+   * // allowing the Subscriber to change the preference.
    * {
    *   workflow: { enabled: false, readOnly: false },
    * }
@@ -130,7 +130,7 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * @example
    * ```ts
    * // Disable notification delivery for only the in-app channel by default,
-   * // allowing the User and Subscriber to change the preference.
+   * // allowing the Subscriber to change the preference.
    * {
    *   channels: {
    *     inApp: { enabled: false, readOnly: false },
