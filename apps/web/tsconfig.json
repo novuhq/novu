@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "ESNext",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -18,6 +18,6 @@
     "noImplicitAny": false,
     "types": ["vite/client", "vite-plugin-svgr/client"]
   },
-  "include": ["src", "styled-system"],
+  "include": ["src"],
   "exclude": ["node_modules"]
 }

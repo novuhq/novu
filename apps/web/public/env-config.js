@@ -1,6 +1,5 @@
 window._env_ = Object.assign(
   {
-    SKIP_PREFLIGHT_CHECK: 'true',
     IS_V2_ENABLED: 'true',
     IS_V2_EXPERIENCE_ENABLED: 'true',
     VITE_ENVIRONMENT: 'dev',

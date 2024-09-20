@@ -1,1 +1,6 @@
-@layer reset, mantine, base, tokens, recipes, utilities;
+@layer mantine, base, tokens, recipes, utilities;
+
+body {
+  /* SOKRATIS */
+  backdrop: red;
+}

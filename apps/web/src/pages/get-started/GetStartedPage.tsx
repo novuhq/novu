@@ -85,37 +85,35 @@ function StepperForm() {
   };
 
   return (
-    <>
-      <Stepper active={active} onStepClick={setActive} classNames={stepperClassNames} orientation="vertical">
-        {onboardingTabs.map((tab, index) => (
-          <Stepper.Step
-            key={index}
-            description={tab.description}
-            icon={
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                {tab.icon}
-              </motion.div>
-            }
-            label={tab.stepperTitle}
-            onClick={() => setActive(index)}
-          >
-            {tab.content}
+    <Stepper active={active} onStepClick={setActive} classNames={stepperClassNames} orientation="vertical">
+      {onboardingTabs.map((tab, index) => (
+        <Stepper.Step
+          key={index}
+          description={tab.description}
+          icon={
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              {tab.icon}
+            </motion.div>
+          }
+          label={tab.stepperTitle}
+          onClick={() => setActive(index)}
+        >
+          {tab.content}
 
-            {tab.steps && <OnboardingStepsTimeline steps={tab.steps} />}
-            <Group position="apart" mt="xl">
-              <Button disabled={active === 0} onClick={prevStep} variant="transparent">
-                Back
+          {tab.steps && <OnboardingStepsTimeline steps={tab.steps} />}
+          <Group position="apart" mt="xl">
+            <Button disabled={active === 0} onClick={prevStep} variant="transparent">
+              Back
+            </Button>
+
+            {active !== onboardingTabs.length - 1 && (
+              <Button onClick={nextStep} variant="filled" disabled={active === 2}>
+                Next step
               </Button>
-
-              {active !== onboardingTabs.length - 1 && (
-                <Button onClick={nextStep} variant="filled" disabled={active === 2}>
-                  Next step
-                </Button>
-              )}
-            </Group>
-          </Stepper.Step>
-        ))}
-      </Stepper>
-    </>
+            )}
+          </Group>
+        </Stepper.Step>
+      ))}
+    </Stepper>
   );
 }
