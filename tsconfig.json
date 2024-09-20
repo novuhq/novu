@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "lib": ["es2015", "dom"],
+    "sourceMap": true,
     "moduleResolution": "node",
     "noImplicitAny": false,
     "removeComments": true,
@@ -15,6 +16,7 @@
     "skipLibCheck": true,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
-    "target": "es5",
+    "target": "es6",
+    "module": "commonjs"
   }
 }
