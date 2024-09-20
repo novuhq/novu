@@ -1,4 +1,3 @@
-import { buildWorkflowChannelPreferences } from '@novu/shared';
 import { ActionStepEnum, ChannelStepEnum } from '../../constants';
 import { MissingSecretKeyError, WorkflowPayloadInvalidError } from '../../errors';
 import { channelStepSchemas, delayActionSchemas, digestActionSchemas, emptySchema } from '../../schemas';
@@ -82,9 +81,6 @@ export function workflow<
     };
   };
 
-  // TODO: delegate preference building to API later on. Must keep the mapping layer here though
-  const preferences = buildWorkflowChannelPreferences(mapPreferences(options.preferences));
-
   const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,
     options: {
@@ -118,7 +114,7 @@ export function workflow<
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     tags: options.tags || [],
-    preferences,
+    preferences: mapPreferences(options.preferences),
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 

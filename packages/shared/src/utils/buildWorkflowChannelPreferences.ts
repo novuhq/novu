@@ -1,5 +1,5 @@
 import { DEFAULT_WORKFLOW_PREFERENCES } from '../consts';
-import { ChannelTypeEnum, IncompleteWorkflowChannelPreferences, WorkflowChannelPreferences } from '../types';
+import { ChannelTypeEnum, WorkflowPreferencesPartial, WorkflowPreferences } from '../types';
 
 /**
  * Given any partial input of preferences, output a complete preferences object that:
@@ -8,9 +8,9 @@ import { ChannelTypeEnum, IncompleteWorkflowChannelPreferences, WorkflowChannelP
  * - Lastly, uses the defaults we've defined
  */
 export const buildWorkflowChannelPreferences = (
-  inputPreferences: IncompleteWorkflowChannelPreferences | undefined,
-  defaultPreferences: WorkflowChannelPreferences = DEFAULT_WORKFLOW_PREFERENCES
-): WorkflowChannelPreferences => {
+  inputPreferences: WorkflowPreferencesPartial | undefined,
+  defaultPreferences: WorkflowPreferences = DEFAULT_WORKFLOW_PREFERENCES
+): WorkflowPreferences => {
   if (!inputPreferences) {
     return defaultPreferences;
   }
@@ -32,7 +32,7 @@ export const buildWorkflowChannelPreferences = (
             ...inputPreferences?.channels?.[channel],
           },
         }),
-        {} as WorkflowChannelPreferences['channels']
+        {} as WorkflowPreferences['channels']
       ),
     },
   };

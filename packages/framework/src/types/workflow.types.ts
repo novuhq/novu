@@ -1,6 +1,6 @@
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
-import type { Prettify } from './util.types';
+import type { DeepPartial, Prettify } from './util.types';
 import type { Schema } from './schema.types';
 import { WorkflowChannelEnum } from '../constants';
 
@@ -33,15 +33,43 @@ export type Execute<T_Payload extends Record<string, unknown>, T_Controls extend
   event: ExecuteInput<T_Payload, T_Controls>
 ) => Promise<void>;
 
-export type WorkflowOptionChannelPreference = {
-  defaultValue?: boolean;
-  readOnly?: boolean;
+/** A preference for a notification delivery channel. */
+export type ChannelPreference = {
+  /**
+   * A flag specifying if notification delivery is enabled for the channel.
+   *
+   * If `true`, notification delivery is enabled.
+   *
+   * @default true
+   */
+  enabled: boolean;
+  /**
+   * A flag specifying if the preference is read-only.
+   *
+   * If `true`, the preference cannot be changed by the User or Subscriber.
+   *
+   * @default false
+   */
+  readOnly: boolean;
 };
 
-export type WorkflowOptionsPreferences = {
-  workflow?: WorkflowOptionChannelPreference;
-  channels?: Partial<Record<WorkflowChannelEnum, WorkflowOptionChannelPreference>>;
-};
+/**
+ * A partial set of workflow preferences.
+ */
+export type WorkflowPreferences = DeepPartial<{
+  /**
+   * A preference for the workflow.
+   *
+   * The values specified here will be used if no preference is specified for a channel.
+   */
+  workflow: ChannelPreference;
+  /**
+   * A preference for each notification deliverychannel.
+   *
+   * If no preference is specified for a channel, the `workflow` preference will be used.
+   */
+  channels: Record<WorkflowChannelEnum, ChannelPreference>;
+}>;
 
 /**
  * The options for the workflow.
@@ -55,7 +83,62 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * @deprecated Use `controlSchema` instead
    */
   inputSchema?: T_ControlSchema;
+  /** The schema for the controls. */
   controlSchema?: T_ControlSchema;
-  preferences?: WorkflowOptionsPreferences;
+  /**
+   * The preferences for the notification workflow.
+   *
+   * If no preference is specified for a channel, the `workflow` preference will be used.
+   *
+   * @example
+   * ```ts
+   * // Enable notification delivery for only the in-app channel by default.
+   * {
+   *   workflow: { enabled: false },
+   *   channels: {
+   *     inApp: { enabled: true },
+   *   },
+   * }
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Enable notification delivery for all channels by default.
+   * {
+   *   workflow: { enabled: true }
+   * }
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Enable notification delivery for all channels by default,
+   * // disallowing the User and Subscriber to change the preference.
+   * {
+   *   workflow: { enabled: true, readOnly: true },
+   * }
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Disable notification delivery for all channels by default,
+   * // allowing the User and Subscriber to change the preference.
+   * {
+   *   workflow: { enabled: false, readOnly: false },
+   * }
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Disable notification delivery for only the in-app channel by default,
+   * // allowing the User and Subscriber to change the preference.
+   * {
+   *   channels: {
+   *     inApp: { enabled: false, readOnly: false },
+   *   },
+   * }
+   * ```
+   */
+  preferences?: WorkflowPreferences;
+  /** The tags for the workflow. */
   tags?: string[];
 };

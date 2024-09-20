@@ -1,9 +1,9 @@
-import { ChannelTypeEnum, IncompleteWorkflowChannelPreferences } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowPreferencesPartial } from '@novu/shared';
 import { WorkflowChannelEnum } from '../../constants';
-import { WorkflowOptionsPreferences } from '../../types';
+import { WorkflowPreferences } from '../../types';
 
 /** Correlate user-friendly channels to system-friendly channels */
-const WORKFLOW_CHANNEL_TO_CHANNEL_TYPE: Record<WorkflowChannelEnum, ChannelTypeEnum> = {
+const CHANNEL_TYPE_FROM_WORKFLOW_CHANNEL: Record<WorkflowChannelEnum, ChannelTypeEnum> = {
   [WorkflowChannelEnum.EMAIL]: ChannelTypeEnum.EMAIL,
   [WorkflowChannelEnum.SMS]: ChannelTypeEnum.SMS,
   [WorkflowChannelEnum.PUSH]: ChannelTypeEnum.PUSH,
@@ -12,22 +12,20 @@ const WORKFLOW_CHANNEL_TO_CHANNEL_TYPE: Record<WorkflowChannelEnum, ChannelTypeE
 };
 
 /** Map preferences between user-friendly and system-friendly values / keys */
-export function mapPreferences(
-  preferences?: WorkflowOptionsPreferences
-): IncompleteWorkflowChannelPreferences | undefined {
+export function mapPreferences(preferences?: WorkflowPreferences): WorkflowPreferencesPartial {
   if (!preferences) {
-    return;
+    return {};
   }
 
-  const output: IncompleteWorkflowChannelPreferences = {};
+  const output: WorkflowPreferencesPartial = {};
 
   if (preferences.workflow) {
     output.workflow = preferences.workflow;
   }
 
   // map between framework user-friendly enum (with camelCasing) to shared ChannelTypeEnum if the entry exists
-  Object.entries(preferences.channels || {}).forEach(([userFriendlyChannel, channelLevelPreference]) => {
-    const systemChannel = WORKFLOW_CHANNEL_TO_CHANNEL_TYPE[userFriendlyChannel as WorkflowChannelEnum];
+  Object.entries(preferences.channels || {}).forEach(([developerFriendlyChannel, channelLevelPreference]) => {
+    const systemChannel = CHANNEL_TYPE_FROM_WORKFLOW_CHANNEL[developerFriendlyChannel as WorkflowChannelEnum];
     if (systemChannel) {
       if (!output.channels) {
         output.channels = {};

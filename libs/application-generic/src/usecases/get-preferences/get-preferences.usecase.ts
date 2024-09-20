@@ -8,7 +8,7 @@ import {
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
   IPreferenceChannels,
-  WorkflowChannelPreferences,
+  WorkflowPreferences,
 } from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
@@ -21,9 +21,7 @@ export class GetPreferences {
     private getFeatureFlag: GetFeatureFlag,
   ) {}
 
-  async execute(
-    command: GetPreferencesCommand,
-  ): Promise<WorkflowChannelPreferences> {
+  async execute(command: GetPreferencesCommand): Promise<WorkflowPreferences> {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         userId: 'system',
@@ -65,18 +63,16 @@ export class GetPreferences {
       return undefined;
     }
 
-    return GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
-      result,
-    );
+    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(result);
   }
 
-  /** Safely get WorkflowChannelPreferences by returning undefined if none are found */
+  /** Safely get WorkflowPreferences by returning undefined if none are found */
   public async getWorkflowChannelPreferences(command: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
     templateId?: string;
-  }): Promise<WorkflowChannelPreferences | undefined> {
+  }): Promise<WorkflowPreferences | undefined> {
     try {
       return await this.execute(
         GetPreferencesCommand.create({
@@ -95,9 +91,9 @@ export class GetPreferences {
     }
   }
 
-  /** Transform WorkflowChannelPreferences into IPreferenceChannels */
-  public static mapWorkflowChannelPreferencesToChannelPreferences(
-    workflowPreferences: WorkflowChannelPreferences,
+  /** Transform WorkflowPreferences into IPreferenceChannels */
+  public static mapWorkflowPreferencesToChannelPreferences(
+    workflowPreferences: WorkflowPreferences,
   ): IPreferenceChannels {
     return {
       in_app:
@@ -125,7 +121,7 @@ export class GetPreferences {
 
   /** Determine if Workflow Preferences should be marked as critical / readOnly at the top level */
   public static checkIfWorkflowPreferencesIsReadOnly(
-    workflowPreferences?: WorkflowChannelPreferences,
+    workflowPreferences?: WorkflowPreferences,
   ): boolean {
     if (!workflowPreferences) {
       return false;
@@ -142,7 +138,7 @@ export class GetPreferences {
   private mergePreferences(
     items: PreferencesEntity[],
     workflowId?: string,
-  ): WorkflowChannelPreferences | undefined {
+  ): WorkflowPreferences | undefined {
     const workflowPreferences = this.getWorkflowPreferences(items);
     const userPreferences = this.getUserPreferences(items);
 
@@ -209,7 +205,7 @@ export class GetPreferences {
           push: { readOnly: channels.push.readOnly },
         },
       }),
-    ) as WorkflowChannelPreferences[];
+    ) as WorkflowPreferences[];
 
     // by merging only the read-only values after the full objects, we ensure that only the readOnly field is affected.
     const readOnlyPreference = deepMerge([...readOnlyPreferences]);

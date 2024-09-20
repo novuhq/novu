@@ -87,7 +87,7 @@ export class GetSubscriberTemplatePreference {
       });
 
     const subscriberPreferenceChannels = subscriberWorkflowPreferences
-      ? GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+      ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(
           subscriberWorkflowPreferences,
         )
       : subscriberPreference?.channels;

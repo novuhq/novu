@@ -19,7 +19,7 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { IPreferenceChannels, WorkflowChannelPreferences } from '@novu/shared';
+import { IPreferenceChannels, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
@@ -237,7 +237,7 @@ export class UpdatePreferences {
     environmentId: string;
     templateId?: string;
   }) {
-    const preferences: WorkflowChannelPreferences = {
+    const preferences: WorkflowPreferencesPartial = {
       workflow: {
         defaultValue: PREFERENCE_DEFAULT_VALUE,
         readOnly: false,
@@ -247,7 +247,7 @@ export class UpdatePreferences {
           ...outputChannels,
           [channel]: { defaultValue },
         }),
-        {} as WorkflowChannelPreferences['channels']
+        {} as WorkflowPreferences['channels']
       ),
     };
 
