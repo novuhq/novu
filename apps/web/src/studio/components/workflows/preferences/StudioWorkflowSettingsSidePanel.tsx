@@ -5,7 +5,7 @@ import { Title } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { useStudioWorkflowChannelPreferences } from '../../../../hooks/workflowChannelPreferences/useStudioWorkflowChannelPreferences';
+import { useStudioWorkflowPreferences } from '../../../../hooks/workflowPreferences/useStudioWorkflowPreferences';
 import { useDiscover } from '../../../hooks/useBridgeAPI';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
 import { WorkflowSettingsSidePanelContent } from './WorkflowSettingsSidePanelContent';
@@ -16,11 +16,11 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
   const { data } = useDiscover();
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
 
-  const { isLoading } = useStudioWorkflowChannelPreferences(workflowId);
+  const { isLoading } = useStudioWorkflowPreferences(workflowId);
   const { setValue } = useFormContext<WorkflowDetailFormContext>();
 
   const workflow = useMemo(() => {
-    return data?.workflows?.find((workflow) => workflow.workflowId === workflowId);
+    return data?.workflows?.find((wf) => wf.workflowId === workflowId);
   }, [data, workflowId]);
 
   useEffect(() => {

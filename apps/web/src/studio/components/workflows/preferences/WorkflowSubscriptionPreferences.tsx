@@ -3,7 +3,7 @@ import { Table, Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
 import { ColorToken } from '@novu/novui/tokens';
-import { ChannelTypeEnum, WorkflowChannelPreferences } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowPreferences } from '@novu/shared';
 import { FC, useCallback, useMemo } from 'react';
 import { PreferenceChannelName, SubscriptionPreferenceRow } from './types';
 import { CHANNEL_LABELS_LOOKUP, CHANNEL_SETTINGS_LOGO_LOOKUP } from './WorkflowSubscriptionPreferences.const';
@@ -12,7 +12,7 @@ import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
 // these match react-table's specifications, but we don't have the types as a direct dependency in web.
 const PREFERENCES_COLUMNS = [
   { accessorKey: 'channel', header: 'Channels', cell: ChannelCell },
-  { accessorKey: 'defaultValue', header: 'Default', cell: SwitchCell },
+  { accessorKey: 'enabled', header: 'Enabled', cell: SwitchCell },
   {
     accessorKey: 'readOnly',
     accessorFn: (row: SubscriptionPreferenceRow) => !row.readOnly,
@@ -22,8 +22,8 @@ const PREFERENCES_COLUMNS = [
 ];
 
 export type WorkflowSubscriptionPreferencesProps = {
-  preferences: WorkflowChannelPreferences;
-  updateChannelPreferences: (prefs: WorkflowChannelPreferences) => void;
+  preferences: WorkflowPreferences;
+  updateChannelPreferences: (prefs: WorkflowPreferences) => void;
   arePreferencesDisabled?: boolean;
 };
 
@@ -34,7 +34,7 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
 }) => {
   const onChange = useCallback(
     (channel: PreferenceChannelName, key: string, value: boolean) => {
-      const updatedPreferences: WorkflowChannelPreferences =
+      const updatedPreferences: WorkflowPreferences =
         channel === 'workflow'
           ? {
               ...preferences,
@@ -69,7 +69,7 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
 function ChannelCell(props) {
   const Icon = CHANNEL_SETTINGS_LOGO_LOOKUP[props.getValue()];
 
-  const colorToken: ColorToken = props.row.original.defaultValue ? 'typography.text.main' : 'typography.text.secondary';
+  const colorToken: ColorToken = props.row.original.enabled ? 'typography.text.main' : 'typography.text.secondary';
 
   return (
     <HStack color={colorToken} opacity={props.row.original.disabled ? 'disabled' : undefined}>
@@ -111,7 +111,7 @@ function SwitchCell(props) {
 }
 
 function mapPreferencesToRows(
-  workflowChannelPreferences: WorkflowChannelPreferences | undefined,
+  workflowChannelPreferences: WorkflowPreferences | undefined,
   onChange: SubscriptionPreferenceRow['onChange'],
   areAllDisabled?: boolean
 ): SubscriptionPreferenceRow[] {

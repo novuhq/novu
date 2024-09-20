@@ -1,20 +1,20 @@
 import { useMemo } from 'react';
+import { buildWorkflowPreferences, WorkflowPreferences } from '@novu/shared';
 import { useDiscover } from '../../studio/hooks/useBridgeAPI';
-import { buildWorkflowChannelPreferences, WorkflowChannelPreferences } from '@novu/shared';
 
-export const useStudioWorkflowChannelPreferences = (
+export const useStudioWorkflowPreferences = (
   workflowId: string
 ): {
   isLoading: boolean;
-  workflowChannelPreferences: WorkflowChannelPreferences | undefined;
+  workflowChannelPreferences: WorkflowPreferences | undefined;
 } => {
   const { data, isLoading } = useDiscover();
 
-  const workflowChannelPreferences: WorkflowChannelPreferences = useMemo(() => {
+  const workflowChannelPreferences: WorkflowPreferences = useMemo(() => {
     const workflowPreference = data?.workflows?.find((workflow) => workflow.workflowId === workflowId)?.preferences;
 
     // if incomplete preferences are discovered from framework, populate the rest based on whatever is provided.
-    return buildWorkflowChannelPreferences(workflowPreference);
+    return buildWorkflowPreferences(workflowPreference);
   }, [data, workflowId]);
 
   return {
