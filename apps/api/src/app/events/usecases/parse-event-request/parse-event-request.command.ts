@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum } from 'class-validator';
+import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum, IsNumber } from 'class-validator';
 import {
   AddressingTypeEnum,
   TriggerRecipients,
@@ -8,6 +8,7 @@ import {
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { ApiHideProperty } from '@nestjs/swagger';
 
 export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -37,6 +38,11 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  @ApiHideProperty()
+  @IsOptional()
+  @IsNumber()
+  priority?: number;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {
