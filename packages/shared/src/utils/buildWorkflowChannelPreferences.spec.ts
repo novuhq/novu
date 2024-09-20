@@ -1,3 +1,4 @@
+import { expect, describe, it } from 'vitest';
 import { buildWorkflowChannelPreferences } from './buildWorkflowChannelPreferences';
 import { ChannelPreference, IncompleteWorkflowChannelPreferences, WorkflowChannelPreferences } from '../types';
 
