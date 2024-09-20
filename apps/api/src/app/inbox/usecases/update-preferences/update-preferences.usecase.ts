@@ -239,13 +239,13 @@ export class UpdatePreferences {
   }) {
     const preferences: WorkflowPreferencesPartial = {
       workflow: {
-        defaultValue: PREFERENCE_DEFAULT_VALUE,
+        enabled: PREFERENCE_DEFAULT_VALUE,
         readOnly: false,
       },
       channels: Object.entries(item.channels).reduce(
-        (outputChannels, [channel, defaultValue]) => ({
+        (outputChannels, [channel, enabled]) => ({
           ...outputChannels,
-          [channel]: { defaultValue },
+          [channel]: { enabled },
         }),
         {} as WorkflowPreferences['channels']
       ),

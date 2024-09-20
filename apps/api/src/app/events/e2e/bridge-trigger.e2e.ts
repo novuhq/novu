@@ -778,7 +778,7 @@ contexts.forEach((context: Context) => {
           preferences: {
             channels: {
               inApp: {
-                defaultValue: true,
+                enabled: true,
               },
             },
           },
@@ -816,7 +816,7 @@ contexts.forEach((context: Context) => {
           preferences: {
             channels: {
               inApp: {
-                defaultValue: false,
+                enabled: false,
               },
             },
           },
@@ -853,11 +853,11 @@ contexts.forEach((context: Context) => {
         {
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
             },
             channels: {
               inApp: {
-                defaultValue: true,
+                enabled: true,
               },
             },
           },
@@ -894,7 +894,7 @@ contexts.forEach((context: Context) => {
         {
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
             },
           },
         }

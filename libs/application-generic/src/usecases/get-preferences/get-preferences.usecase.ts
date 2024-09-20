@@ -97,25 +97,25 @@ export class GetPreferences {
   ): IPreferenceChannels {
     return {
       in_app:
-        workflowPreferences.channels.in_app.defaultValue !== undefined
-          ? workflowPreferences.channels.in_app.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.in_app.enabled !== undefined
+          ? workflowPreferences.channels.in_app.enabled
+          : workflowPreferences.workflow.enabled,
       sms:
-        workflowPreferences.channels.sms.defaultValue !== undefined
-          ? workflowPreferences.channels.sms.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.sms.enabled !== undefined
+          ? workflowPreferences.channels.sms.enabled
+          : workflowPreferences.workflow.enabled,
       email:
-        workflowPreferences.channels.email.defaultValue !== undefined
-          ? workflowPreferences.channels.email.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.email.enabled !== undefined
+          ? workflowPreferences.channels.email.enabled
+          : workflowPreferences.workflow.enabled,
       push:
-        workflowPreferences.channels.push.defaultValue !== undefined
-          ? workflowPreferences.channels.push.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.push.enabled !== undefined
+          ? workflowPreferences.channels.push.enabled
+          : workflowPreferences.workflow.enabled,
       chat:
-        workflowPreferences.channels.chat.defaultValue !== undefined
-          ? workflowPreferences.channels.chat.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.chat.enabled !== undefined
+          ? workflowPreferences.channels.chat.enabled
+          : workflowPreferences.workflow.enabled,
     };
   }
 
@@ -217,15 +217,15 @@ export class GetPreferences {
 
     // if the workflow should be readonly, we return the resource preferences default value for workflow.
     if (readOnlyPreference?.workflow?.readOnly) {
-      subscriberPreferences.workflow.defaultValue =
-        resourcePreferences?.workflow?.defaultValue;
+      subscriberPreferences.workflow.enabled =
+        resourcePreferences?.workflow?.enabled;
     }
 
     // if the workflow channel should be readonly, we return the resource preferences default value for channel.
     for (const channel of Object.values(ChannelTypeEnum)) {
       if (readOnlyPreference?.channels[channel]?.readOnly) {
-        subscriberPreferences.channels[channel].defaultValue =
-          resourcePreferences?.channels[channel]?.defaultValue;
+        subscriberPreferences.channels[channel].enabled =
+          resourcePreferences?.channels[channel]?.enabled;
       }
     }
 

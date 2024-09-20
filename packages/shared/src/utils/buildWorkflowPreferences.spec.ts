@@ -1,5 +1,5 @@
 import { expect, describe, it } from 'vitest';
-import { buildWorkflowChannelPreferences } from './buildWorkflowChannelPreferences';
+import { buildWorkflowPreferences } from './buildWorkflowPreferences';
 import { ChannelPreference, WorkflowPreferencesPartial, WorkflowPreferences } from '../types';
 
 const WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_VALUE = true;
@@ -21,9 +21,9 @@ const testDefaultPreferences: WorkflowPreferences = {
   },
 };
 
-describe('buildWorkflowChannelPreferences', () => {
+describe('buildWorkflowPreferences', () => {
   it('should return the defaults if input is undefined', () => {
-    const result = buildWorkflowChannelPreferences(undefined, testDefaultPreferences);
+    const result = buildWorkflowPreferences(undefined, testDefaultPreferences);
     expect(result).toEqual(testDefaultPreferences);
   });
 
@@ -45,7 +45,7 @@ describe('buildWorkflowChannelPreferences', () => {
       },
     };
 
-    const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+    const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
     expect(result).toEqual(testPreferences);
   });
 
@@ -55,7 +55,7 @@ describe('buildWorkflowChannelPreferences', () => {
         channels: { in_app: { readOnly: true } },
       };
 
-      const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+      const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
       expect(result).toEqual({
         ...testDefaultPreferences,
         channels: {
@@ -70,7 +70,7 @@ describe('buildWorkflowChannelPreferences', () => {
         channels: { in_app: { enabled: false, readOnly: false } },
       };
 
-      const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+      const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
       expect(result).toEqual({
         ...testDefaultPreferences,
         channels: {
@@ -89,7 +89,7 @@ describe('buildWorkflowChannelPreferences', () => {
         },
       };
 
-      const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+      const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
       expect(result).toEqual({
         workflow: testPreferences.workflow,
         channels: {
@@ -124,7 +124,7 @@ describe('buildWorkflowChannelPreferences', () => {
       workflow: { enabled: expectedDefaultValue },
     };
 
-    const result = buildWorkflowChannelPreferences(testPreferences, testDefaultPreferences);
+    const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
 
     const expectedResult: WorkflowPreferences = {
       workflow: {

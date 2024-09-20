@@ -7,7 +7,7 @@ import { ChannelTypeEnum, WorkflowPreferencesPartial, WorkflowPreferences } from
  * - Uses the workflow-level preference as defaults for channel preferences if not specified
  * - Lastly, uses the defaults we've defined
  */
-export const buildWorkflowChannelPreferences = (
+export const buildWorkflowPreferences = (
   inputPreferences: WorkflowPreferencesPartial | undefined,
   defaultPreferences: WorkflowPreferences = DEFAULT_WORKFLOW_PREFERENCES
 ): WorkflowPreferences => {
