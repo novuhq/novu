@@ -59,7 +59,7 @@
     "release:preminor": "nx release version preminor --no-push",
     "release:prerelease": "nx release version prerelease --no-push",
     "release:submodules": "ts-node scripts/release-with-submodules.ts",
-    "release:previews": "nx affected -t release:preview --base=origin/next --head=HEAD --exclude=nextjs",
+    "release:previews": "nx affected -t release:preview --base=origin/next~1 --head=HEAD --exclude=nextjs",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:e2e:api": "cd apps/api && pnpm run test:e2e",
     "g:module": "hygen module new --name=$npm_config_name",
@@ -72,7 +72,8 @@
     "get-affected": "node scripts/print-affected-array.mjs",
     "symlink:submodules": "pnpm --filter \"@novu/ee-*\" exec node \"$(pwd)/scripts/symlink-ee.mjs\"",
     "install:with-ee": "pnpm install && pnpm symlink:submodules",
-    "packages:set-workspace-protocol": "node scripts/set-package-dependencies.mjs workspace:*"
+    "packages:set-workspace-protocol": "node scripts/set-package-dependencies.mjs workspace:*",
+    "packages:set-latest": "node scripts/set-package-dependencies.mjs latest"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",

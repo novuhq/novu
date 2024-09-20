@@ -16,7 +16,7 @@
     "lint:fix": "pnpm lint -- --fix",
     "test": "jest src",
     "watch:test": "jest src --watch",
-    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "author": "",
   "license": "ISC",

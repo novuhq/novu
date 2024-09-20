@@ -55,7 +55,7 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "jest",
-    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "browserslist": {
     "production": [

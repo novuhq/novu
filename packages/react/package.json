@@ -51,7 +51,7 @@
     "build": "tsup && pnpm run check-exports",
     "lint": "eslint src",
     "check-exports": "attw --pack .",
-    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "browserslist": {
     "production": [

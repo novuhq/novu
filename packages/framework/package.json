@@ -30,7 +30,7 @@
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
     "devtool": "tsx ./scripts/devtool.ts",
-    "release:preview": "pnpx pkg-pr-new --compact --pnpm publish"
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "keywords": [
     "novu",
