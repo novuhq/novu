@@ -29,7 +29,7 @@ export type WorkflowPreferences = {
    */
   workflow: ChannelPreference;
   /**
-   * A preference for each notification deliverychannel.
+   * A preference for each notification delivery channel.
    *
    * If no preference is specified for a channel, the `workflow` preference will be used.
    */
