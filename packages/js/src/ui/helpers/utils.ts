@@ -1,6 +1,6 @@
 import clsx, { ClassValue } from 'clsx';
 import { extendTailwindMerge, type ClassNameValue } from 'tailwind-merge';
-import type { CSSProperties, Elements, Variables } from '../types';
+import type { CSSProperties, Elements, Tab, Variables } from '../types';
 
 const twMerge = extendTailwindMerge({
   prefix: 'nt-',
@@ -94,6 +94,7 @@ export const parseVariables = (variables: Required<Variables>, id: string) => {
     generateDefaultColor({ color: variables.colorSecondaryForeground, key: 'color-secondary-foreground', id }),
     generateDefaultColor({ color: variables.colorCounter, key: 'color-counter', id }),
     generateDefaultColor({ color: variables.colorCounterForeground, key: 'color-counter-foreground', id }),
+    generateDefaultColor({ color: variables.colorShadow, key: 'color-shadow', id }),
     ...generatesAlphaShadesFromColor({ color: variables.colorBackground, key: 'color-background-alpha', id }),
     ...generatesAlphaShadesFromColor({ color: variables.colorForeground, key: 'color-foreground-alpha', id }),
     ...generatesSolidShadesFromColor({ color: variables.colorPrimary, key: 'color-primary', id }),
@@ -130,4 +131,13 @@ export const parseElements = (elements: Elements) => {
   }
 
   return elementsStyleData;
+};
+
+/**
+ * In the next minor release we can remove the deprecated `value` field from the Tab type.
+ * This function can be removed after that and the code should be updated to use the `filter` field.
+ * @returns tags from the tab object
+ */
+export const getTagsFromTab = (tab?: Tab) => {
+  return tab?.filter?.tags || tab?.value || [];
 };

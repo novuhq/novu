@@ -39,6 +39,7 @@ type PolymorphicComponent = <C extends React.ElementType = LoadingOverlayDefault
  * TODO: Add support for container-scoped loader. For now, only full-page works.
  * To work around this, use position: relative in the parent component
  */
+// @ts-expect-error
 export const LoadingOverlay: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = LoadingOverlayDefaultElement>(
     { variant, isVisible = true, size = DEFAULT_SIZE, zIndex = DEFAULT_Z_INDEX, ...props }: LoadingOverlayProps<C>,
@@ -68,6 +69,7 @@ export const LoadingOverlay: PolymorphicComponent = React.forwardRef(
         loading
         visible={isVisible}
         loaderProps={{ type, size }}
+        // @ts-expect-error
         zIndex={token(`zIndex.${zIndex}`)}
         {...otherProps}
       />

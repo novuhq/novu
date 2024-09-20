@@ -1,13 +1,13 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { useFocusManager } from '../../../context';
-import type { AppearanceKey } from '../../../types';
 import { useStyle } from '../../../helpers';
+import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
 import { useTooltip } from './TooltipRoot';
 
 export const tooltipContentVariants = () =>
-  'nt-bg-foreground nt-p-4 nt-shadow-[0px_5px_20px_0px_rgba(0,0,0,0.20)] nt-z-10 nt-rounded-lg nt-text-background nt-text-sm';
+  'nt-bg-foreground nt-p-2 nt-shadow-tooltip nt-z-10 nt-rounded-lg nt-text-background nt-text-xs';
 
 const TooltipContentBody = (props: TooltipContentProps) => {
   const { open, setFloating, floating, floatingStyles } = useTooltip();

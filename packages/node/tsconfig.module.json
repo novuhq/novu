@@ -3,7 +3,8 @@
   "compilerOptions": {
     "target": "esnext",
     "outDir": "build/module",
-    "module": "esnext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "types": ["jest", "node"],
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]

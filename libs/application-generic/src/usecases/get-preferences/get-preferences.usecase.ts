@@ -61,6 +61,10 @@ export class GetPreferences {
   }): Promise<IPreferenceChannels | undefined> {
     const result = await this.getWorkflowChannelPreferences(command);
 
+    if (!result) {
+      return undefined;
+    }
+
     return GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
       result,
     );
@@ -94,11 +98,7 @@ export class GetPreferences {
   /** Transform WorkflowChannelPreferences into IPreferenceChannels */
   public static mapWorkflowChannelPreferencesToChannelPreferences(
     workflowPreferences: WorkflowChannelPreferences,
-  ): IPreferenceChannels | undefined {
-    if (!workflowPreferences) {
-      return undefined;
-    }
-
+  ): IPreferenceChannels {
     return {
       in_app:
         workflowPreferences.channels.in_app.defaultValue !== undefined
