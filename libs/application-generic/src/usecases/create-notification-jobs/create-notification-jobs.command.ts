@@ -7,7 +7,7 @@ import {
   ISubscribersDefine,
   ITenantDefine,
   ProvidersIdEnum,
-  WorkflowChannelPreferences,
+  WorkflowPreferences,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -49,5 +49,5 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
 
   controls?: ControlsDto;
 
-  preferences?: WorkflowChannelPreferences;
+  preferences?: WorkflowPreferences;
 }

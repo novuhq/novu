@@ -7,6 +7,7 @@ import {
   EnvironmentRepository,
 } from '@novu/dal';
 import {
+  buildWorkflowPreferences,
   ChannelTypeEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
@@ -136,7 +137,9 @@ export class SubscriberJobBound {
       userId,
       tenant,
       bridgeUrl: command.bridge?.url,
-      preferences: command.bridge?.workflow?.preferences,
+      ...(command.bridge?.workflow?.preferences && {
+        preferences: buildWorkflowPreferences(command.bridge?.workflow?.preferences),
+      }),
     };
 
     if (actor) {

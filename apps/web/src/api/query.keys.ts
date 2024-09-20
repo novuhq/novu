@@ -15,7 +15,7 @@ interface IQueryKeys {
   getTemplateById: (templateId?: string) => string;
   tenantsList: string;
   getTenantByIdentifier: (tenantIdentifier?: string) => string;
-  getWorkflowChannelPreferences: (workflowId: string) => string;
+  getWorkflowPreferences: (workflowId: string) => string;
 }
 
 export const QueryKeys: IQueryKeys = Object.freeze({
@@ -35,5 +35,5 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   getTemplateById: (templateId?: string) => `notificationById:${templateId}`,
   tenantsList: 'tenantsList',
   getTenantByIdentifier: (tenantIdentifier?: string) => `tenantByIdentifier:${tenantIdentifier}`,
-  getWorkflowChannelPreferences: (workflowId: string) => `workflowChannelPreferences:${workflowId}`,
+  getWorkflowPreferences: (workflowId: string) => `workflowChannelPreferences:${workflowId}`,
 });

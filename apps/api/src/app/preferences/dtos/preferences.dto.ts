@@ -4,7 +4,7 @@ import { IsBoolean, ValidateNested } from 'class-validator';
 
 export class Preference {
   @IsBoolean()
-  defaultValue: boolean;
+  enabled: boolean;
 
   @IsBoolean()
   readOnly: boolean;

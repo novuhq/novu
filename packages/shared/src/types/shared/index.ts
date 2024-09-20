@@ -17,3 +17,12 @@ export interface IPaginatedResponse<T = unknown> {
   pageSize: number;
   page: number;
 }
+
+/**
+ * Recursively make all properties of type `T` optional.
+ */
+export type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;

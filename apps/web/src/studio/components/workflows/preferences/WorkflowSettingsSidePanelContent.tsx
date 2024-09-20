@@ -6,11 +6,11 @@ import { IconDynamicFeed, IconManageAccounts } from '@novu/novui/icons';
 import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { Controller, useFormContext } from 'react-hook-form';
+import { isBridgeWorkflow, WorkflowTypeEnum } from '@novu/shared';
 import { useStudioState } from '../../../StudioStateProvider';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
 import { WorkflowGeneralSettingsFieldName, WorkflowGeneralSettingsForm } from './WorkflowGeneralSettingsForm';
 import { WorkflowSubscriptionPreferences } from './WorkflowSubscriptionPreferences';
-import { isBridgeWorkflow, WorkflowTypeEnum } from '@novu/shared';
 
 enum WorkflowSettingsPanelTab {
   GENERAL = 'general',
@@ -87,7 +87,7 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
                   return (
                     <WorkflowSubscriptionPreferences
                       preferences={field.value}
-                      updateChannelPreferences={field.onChange}
+                      updateWorkflowPreferences={field.onChange}
                       arePreferencesDisabled={isLocalStudio}
                     />
                   );

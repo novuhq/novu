@@ -325,12 +325,12 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
       {
         preferences: {
           workflow: {
-            defaultValue: false,
+            enabled: false,
             readOnly: true,
           },
           channels: {
             inApp: {
-              defaultValue: true,
+              enabled: true,
               readOnly: true,
             },
           },
@@ -344,13 +344,13 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
     });
 
     const dashboardPreferences = {
-      workflow: { defaultValue: false, readOnly: true },
+      workflow: { enabled: false, readOnly: true },
       channels: {
-        email: { defaultValue: true, readOnly: false },
-        sms: { defaultValue: true, readOnly: false },
-        inApp: { defaultValue: false, readOnly: true },
-        chat: { defaultValue: true, readOnly: false },
-        push: { defaultValue: true, readOnly: false },
+        email: { enabled: true, readOnly: false },
+        sms: { enabled: true, readOnly: false },
+        inApp: { enabled: false, readOnly: true },
+        chat: { enabled: true, readOnly: false },
+        push: { enabled: true, readOnly: false },
       },
     };
 

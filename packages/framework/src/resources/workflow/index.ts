@@ -17,8 +17,8 @@ import { transformSchema, validateData } from '../../validators';
 import { discoverActionStepFactory } from './discover-action-step-factory';
 import { discoverChannelStepFactory } from './discover-channel-step-factory';
 import { discoverCustomStepFactory } from './discover-custom-step-factory';
+import { mapPreferences } from './map-preferences';
 import { prettyPrintDiscovery } from './pretty-print-discovery';
-import { buildPreferences } from './build-preferences';
 
 /**
  * Define a new notification workflow.
@@ -114,7 +114,7 @@ export function workflow<
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     tags: options.tags || [],
-    preferences: buildPreferences(options.preferences),
+    preferences: mapPreferences(options.preferences),
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 

@@ -8,6 +8,7 @@ import {
   PickOptionalKeys,
   PickRequiredKeys,
   Prettify,
+  DeepPartial,
 } from './util.types';
 
 describe('Either', () => {
@@ -176,5 +177,17 @@ describe('Prettify', () => {
     type TestPrettify = Prettify<{ foo: string }>;
     // @ts-expect-error - foo should be a string
     const testPrettifyInvalid: TestPrettify = { foo: 123 };
+  });
+});
+
+describe('DeepPartial', () => {
+  it('should make a top-level property optional', () => {
+    type TestDeepPartial = DeepPartial<{ foo: string }>;
+    const testDeepPartialValid: TestDeepPartial = { foo: undefined };
+  });
+
+  it('should make a nested property optional', () => {
+    type TestDeepPartial = DeepPartial<{ foo: { bar: string } }>;
+    const testDeepPartialValid: TestDeepPartial = { foo: { bar: undefined } };
   });
 });

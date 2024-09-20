@@ -335,7 +335,7 @@ export class SendMessage {
        *
        * TODO: Refactor the send-message flow to better handle stateless workflows
        */
-      const workflowPreference = GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
+      const workflowPreference = GetPreferences.mapWorkflowPreferencesToChannelPreferences(
         command.statelessPreferences
       );
       subscriberPreference = {
