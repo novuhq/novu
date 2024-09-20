@@ -139,11 +139,12 @@ export class GetPreferences {
     items: PreferencesEntity[],
     workflowId?: string,
   ): WorkflowPreferences | undefined {
-    const workflowPreferences = this.getWorkflowPreferences(items);
-    const userPreferences = this.getUserPreferences(items);
+    const workflowResourcePreferences =
+      this.getWorkflowResourcePreferences(items);
+    const workflowUserPreferences = this.getWorkflowUserPreferences(items);
 
-    const resourcePreferences = deepMerge(
-      [workflowPreferences, userPreferences]
+    const workflowPreferences = deepMerge(
+      [workflowResourcePreferences, workflowUserPreferences]
         .filter((preference) => preference !== undefined)
         .map((item) => item.preferences),
     );
@@ -168,8 +169,8 @@ export class GetPreferences {
      * we use subscribers workflow preferences
      */
     const preferences = [
-      workflowPreferences,
-      userPreferences,
+      workflowResourcePreferences,
+      workflowUserPreferences,
       subscriberGlobalPreferences,
       subscriberWorkflowPreferences,
     ]
@@ -188,8 +189,8 @@ export class GetPreferences {
     const orderedPreferencesForReadOnly = [
       subscriberWorkflowPreferences,
       subscriberGlobalPreferences,
-      workflowPreferences,
-      userPreferences,
+      workflowResourcePreferences,
+      workflowUserPreferences,
     ]
       .filter((preference) => preference !== undefined)
       .map((item) => item.preferences);
@@ -212,20 +213,20 @@ export class GetPreferences {
 
     // if there is no subscriber preferences, we return the resource preferences
     if (Object.keys(subscriberPreferences).length === 0) {
-      return resourcePreferences;
+      return workflowPreferences;
     }
 
     // if the workflow should be readonly, we return the resource preferences default value for workflow.
     if (readOnlyPreference?.workflow?.readOnly) {
       subscriberPreferences.workflow.enabled =
-        resourcePreferences?.workflow?.enabled;
+        workflowPreferences?.workflow?.enabled;
     }
 
     // if the workflow channel should be readonly, we return the resource preferences default value for channel.
     for (const channel of Object.values(ChannelTypeEnum)) {
       if (readOnlyPreference?.channels[channel]?.readOnly) {
         subscriberPreferences.channels[channel].enabled =
-          resourcePreferences?.channels[channel]?.enabled;
+          workflowPreferences?.channels[channel]?.enabled;
       }
     }
 
@@ -250,13 +251,13 @@ export class GetPreferences {
     );
   }
 
-  private getUserPreferences(items: PreferencesEntity[]) {
+  private getWorkflowUserPreferences(items: PreferencesEntity[]) {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
     );
   }
 
-  private getWorkflowPreferences(items: PreferencesEntity[]) {
+  private getWorkflowResourcePreferences(items: PreferencesEntity[]) {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
     );

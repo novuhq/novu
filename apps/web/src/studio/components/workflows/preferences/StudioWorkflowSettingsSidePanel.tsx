@@ -5,6 +5,7 @@ import { Title } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
+import { buildWorkflowPreferences } from '@novu/shared';
 import { useStudioWorkflowPreferences } from '../../../../hooks/workflowPreferences/useStudioWorkflowPreferences';
 import { useDiscover } from '../../../hooks/useBridgeAPI';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
@@ -26,7 +27,7 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
   useEffect(() => {
     if (workflow) {
       setValue('general.workflowId', workflow.workflowId);
-      setValue('preferences', workflow.preferences);
+      setValue('preferences', buildWorkflowPreferences(workflow.preferences));
     }
   }, [workflow]);
 
