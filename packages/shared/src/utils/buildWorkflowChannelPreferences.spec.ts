@@ -29,8 +29,8 @@ describe('buildWorkflowChannelPreferences', () => {
 
   it('should return the input object if a complete preferences object is supplied', () => {
     const testPreference: ChannelPreference = {
-      defaultValue: !WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_VALUE,
-      readOnly: !WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
+      defaultValue: false,
+      readOnly: true,
     };
 
     // opposite of default
@@ -118,7 +118,7 @@ describe('buildWorkflowChannelPreferences', () => {
     });
   });
 
-  it('should use the `workflow`-level preferences to define defaults for channel-level preferences', () => {
+  it('should use the `workflow`-level preferences to define defaults for all channel-level preferences', () => {
     const expectedDefaultValue = false;
     const testPreferences: IncompleteWorkflowChannelPreferences = {
       workflow: { defaultValue: expectedDefaultValue },

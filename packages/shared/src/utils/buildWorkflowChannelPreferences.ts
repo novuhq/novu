@@ -27,8 +27,7 @@ export const buildWorkflowChannelPreferences = (
         (output, channel) => ({
           ...output,
           [channel]: {
-            // any channel could be used here, but 'chat' is used as it is the first alphabetically
-            ...defaultPreferences.channels.chat,
+            ...defaultPreferences.channels[channel],
             ...inputPreferences?.workflow,
             ...inputPreferences?.channels?.[channel],
           },
