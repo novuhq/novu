@@ -841,6 +841,83 @@ contexts.forEach((context: Context) => {
 
       expect(sentMessages.length).to.be.eq(0);
     });
+
+    it(`should deliver inApp message if workflow is disabled via workflow preferences and inApp is enabled [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            workflow: {
+              defaultValue: false,
+            },
+            channels: {
+              inApp: {
+                defaultValue: true,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(1);
+    });
+
+    it(`should NOT deliver inApp message if workflow is disabled via workflow preferences [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            workflow: {
+              defaultValue: false,
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(0);
+    });
   });
 });
 
