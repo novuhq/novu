@@ -17,7 +17,7 @@ export const useCloudWorkflowPreferences = (
     data: workflowChannelPreferences,
     isLoading,
     refetch,
-  } = useQuery<WorkflowPreferences>([QueryKeys.getWorkflowChannelPreferences(workflowId)], async () => {
+  } = useQuery<WorkflowPreferences>([QueryKeys.getWorkflowPreferences(workflowId)], async () => {
     try {
       const result = await api.getPreferences(workflowId as string);
 

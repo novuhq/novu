@@ -57,7 +57,7 @@ export class GetPreferences {
     subscriberId: string;
     templateId?: string;
   }): Promise<IPreferenceChannels | undefined> {
-    const result = await this.getWorkflowChannelPreferences(command);
+    const result = await this.getWorkflowPreferences(command);
 
     if (!result) {
       return undefined;
@@ -67,7 +67,7 @@ export class GetPreferences {
   }
 
   /** Safely get WorkflowPreferences by returning undefined if none are found */
-  public async getWorkflowChannelPreferences(command: {
+  public async getWorkflowPreferences(command: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;

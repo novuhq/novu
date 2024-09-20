@@ -23,13 +23,13 @@ const PREFERENCES_COLUMNS = [
 
 export type WorkflowSubscriptionPreferencesProps = {
   preferences: WorkflowPreferences;
-  updateChannelPreferences: (prefs: WorkflowPreferences) => void;
+  updateWorkflowPreferences: (prefs: WorkflowPreferences) => void;
   arePreferencesDisabled?: boolean;
 };
 
 export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({
   preferences,
-  updateChannelPreferences,
+  updateWorkflowPreferences,
   arePreferencesDisabled,
 }) => {
   const onChange = useCallback(
@@ -51,9 +51,9 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
               },
             };
 
-      updateChannelPreferences(updatedPreferences);
+      updateWorkflowPreferences(updatedPreferences);
     },
-    [preferences, updateChannelPreferences]
+    [preferences, updateWorkflowPreferences]
   );
 
   const preferenceRows = useMemo(

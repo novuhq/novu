@@ -23,14 +23,11 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
 
   const workflowName = useWatch({ name: 'general.name' });
 
-  const { updateWorkflowChannelPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowPreferences(
-    templateId,
-    {
-      onSuccess: () => {
-        resetField('preferences');
-      },
-    }
-  );
+  const { updateWorkflowPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowPreferences(templateId, {
+    onSuccess: () => {
+      resetField('preferences');
+    },
+  });
   const { updateTemplateMutation, isLoading: isUpdatingGeneralSettings } = useUpdateTemplate({
     onSuccess: () => {
       resetField('general');
@@ -47,7 +44,7 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
       }
 
       if (dirtyFields?.preferences) {
-        await updateWorkflowChannelPreferences(getValues('preferences'));
+        await updateWorkflowPreferences(getValues('preferences'));
       }
 
       successMessage('Workflow updated successfully');

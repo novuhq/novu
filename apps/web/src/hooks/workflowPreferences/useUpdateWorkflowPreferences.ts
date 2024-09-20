@@ -7,11 +7,11 @@ export const useUpdateWorkflowPreferences = (
   options: Omit<UseMutationOptions<WorkflowPreferences, IResponseError, WorkflowPreferences>, 'mutationFn'>
 ): {
   isLoading: boolean;
-  updateWorkflowChannelPreferences: (data: WorkflowPreferences) => void;
+  updateWorkflowPreferences: (data: WorkflowPreferences) => void;
 } => {
   const api = useNovuAPI();
 
-  const { mutateAsync: updateWorkflowChannelPreferences, isLoading } = useMutation<
+  const { mutateAsync: updateWorkflowPreferences, isLoading } = useMutation<
     WorkflowPreferences,
     IResponseError,
     WorkflowPreferences
@@ -21,6 +21,6 @@ export const useUpdateWorkflowPreferences = (
 
   return {
     isLoading,
-    updateWorkflowChannelPreferences,
+    updateWorkflowPreferences,
   };
 };
