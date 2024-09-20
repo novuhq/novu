@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
-import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
+import { Button, Text, When, colors, errorMessage, successMessage } from '@novu/design-system';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
@@ -36,6 +36,22 @@ export const PlanHeader = () => {
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
+  const isStripeCheckoutEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STRIPE_CHECKOUT_ENABLED);
+
+  const checkoutUrl = isStripeCheckoutEnabled ? '/v1/billing/checkout-session' : '/v1/billing/checkout';
+
+  const checkoutOnSuccess = (data) => {
+    if (isStripeCheckoutEnabled) {
+      window.location.href = data.sessionUrl;
+    } else {
+      if (upgradeOpen) {
+        return;
+      }
+
+      setIntentSecret(data.clientSecret);
+      setUpgradeOpen(true);
+    }
+  };
 
   useEffect(() => {
     if (!isLoadingSubscriptionData) {
@@ -47,27 +63,37 @@ export const PlanHeader = () => {
     any,
     any,
     { billingInterval: 'month' | 'year'; apiServiceLevel: ApiServiceLevelEnum }
-  >((data) => api.post('/v1/billing/checkout', data), {
-    onSuccess: (data) => {
-      if (upgradeOpen) {
-        return;
-      }
-
-      setIntentSecret(data.clientSecret);
-      setUpgradeOpen(true);
-    },
+  >((data) => api.post(checkoutUrl, data), {
+    onSuccess: checkoutOnSuccess,
     onError: (e: any) => {
       errorMessage(e.message || 'Unexpected error');
     },
   });
 
   useEffect(() => {
-    if (intentSecret === '') {
-      return;
+    if (!isStripeCheckoutEnabled) {
+      if (intentSecret === '') {
+        return;
+      }
+      checkout({ billingInterval, apiServiceLevel: ApiServiceLevelEnum.BUSINESS });
     }
-    checkout({ billingInterval, apiServiceLevel: ApiServiceLevelEnum.BUSINESS });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingInterval, intentSecret, apiServiceLevel]);
+
+  useEffect(() => {
+    if (isStripeCheckoutEnabled) {
+      const query = new URLSearchParams(window.location.search);
+
+      if (query.get('success')) {
+        setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
+        successMessage('Payment was successful.');
+      }
+
+      if (query.get('canceled')) {
+        errorMessage('Order canceled.');
+      }
+    }
+  }, []);
 
   const { mutateAsync: goToPortal, isLoading: isGoingToPortal } = useMutation<any, any, any>(
     () => api.get('/v1/billing/portal'),
@@ -254,25 +280,27 @@ export const PlanHeader = () => {
           </Stack>
         </div>
       </Group>
-      <UpgradeModal
-        loading={isCheckingOut}
-        billingInterval={billingInterval}
-        setBillingInterval={setBillingInterval}
-        intentSecret={intentSecret}
-        open={upgradeOpen}
-        onClose={() => {
-          setUpgradeOpen(false);
-        }}
-        onSucceeded={() => {
-          setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
-          setUpgradeOpen(false);
-        }}
-        onContactSales={() => {
-          setUpgradeOpen(false);
-          setIntendedApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
-          setIsContactSalesModalOpen(true);
-        }}
-      />
+      {!isStripeCheckoutEnabled ? (
+        <UpgradeModal
+          loading={isCheckingOut}
+          billingInterval={billingInterval}
+          setBillingInterval={setBillingInterval}
+          intentSecret={intentSecret}
+          open={upgradeOpen}
+          onClose={() => {
+            setUpgradeOpen(false);
+          }}
+          onSucceeded={() => {
+            setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
+            setUpgradeOpen(false);
+          }}
+          onContactSales={() => {
+            setUpgradeOpen(false);
+            setIntendedApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
+            setIsContactSalesModalOpen(true);
+          }}
+        />
+      ) : null}
       <ContactSalesModal
         isOpen={isContactSalesModalOpen}
         onClose={() => {
