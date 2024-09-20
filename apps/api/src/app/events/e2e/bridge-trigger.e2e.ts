@@ -767,7 +767,6 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should deliver message if inApp is enabled via workflow preferences [${context.name}]`, async () => {
-      // @ts-expect-error - process.env is immutable
       process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
       const workflowId = `enabled-inapp-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
@@ -806,7 +805,6 @@ contexts.forEach((context: Context) => {
     });
 
     it(`should NOT deliver message if inApp is disabled via workflow preferences [${context.name}]`, async () => {
-      // @ts-expect-error - process.env is immutable
       process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
       const workflowId = `disabled-inapp-workflow-${`${context.name}-${uuidv4()}`}`;
       const newWorkflow = workflow(
