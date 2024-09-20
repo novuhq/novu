@@ -12,7 +12,12 @@ import sinon from 'sinon';
 import { AnalyticsEventsEnum } from '../../utils';
 import { UpdatePreferences } from './update-preferences.usecase';
 
-const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
+const mockedSubscriber: any = {
+  _id: '6447aff3d89122e250412c29',
+  subscriberId: 'test-mockSubscriber',
+  firstName: 'test',
+  lastName: 'test',
+};
 
 const mockedSubscriberPreference: any = {
   _id: '123',
@@ -57,7 +62,7 @@ describe('UpdatePreferences', () => {
   let subscriberPreferenceRepositoryMock: sinon.SinonStubbedInstance<SubscriberPreferenceRepository>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
   let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
-  let upsertPreferenceMock: sinon.SinonStubbedInstance<UpsertPreferences>;
+  let upsertPreferencesMock: sinon.SinonStubbedInstance<UpsertPreferences>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
@@ -66,7 +71,7 @@ describe('UpdatePreferences', () => {
     subscriberPreferenceRepositoryMock = sinon.createStubInstance(SubscriberPreferenceRepository);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
-    upsertPreferenceMock = sinon.createStubInstance(UpsertPreferences);
+    upsertPreferencesMock = sinon.createStubInstance(UpsertPreferences);
 
     updatePreferences = new UpdatePreferences(
       subscriberPreferenceRepositoryMock as any,
@@ -75,7 +80,7 @@ describe('UpdatePreferences', () => {
       analyticsServiceMock as any,
       getSubscriberGlobalPreferenceMock as any,
       getSubscriberTemplatePreferenceUsecase as any,
-      upsertPreferenceMock as any
+      upsertPreferencesMock as any
     );
   });
 
