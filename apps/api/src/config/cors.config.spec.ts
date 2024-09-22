@@ -47,11 +47,10 @@ describe('CORS Configuration', () => {
 
         expect(callbackSpy.calledOnce).to.be.ok;
         expect(callbackSpy.firstCall.firstArg).to.be.null;
-        expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(4);
-        expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal('https://test.com');
-        expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal('https://test-legacy.com');
-        expect(callbackSpy.firstCall.lastArg.origin[2]).to.equal('https://test-legacy-staging-dashboard.com');
-        expect(callbackSpy.firstCall.lastArg.origin[3]).to.equal('https://widget.com');
+        expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(3);
+        expect(callbackSpy.firstCall.lastArg.origin[0]).to.equal(process.env.FRONT_BASE_URL);
+        expect(callbackSpy.firstCall.lastArg.origin[1]).to.equal(process.env.LEGACY_STAGING_DASHBOARD_URL);
+        expect(callbackSpy.firstCall.lastArg.origin[2]).to.equal(process.env.WIDGET_BASE_URL);
       });
 
       it('widget routes should be wildcarded', () => {

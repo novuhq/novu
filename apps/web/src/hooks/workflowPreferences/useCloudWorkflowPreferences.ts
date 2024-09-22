@@ -1,15 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { WorkflowChannelPreferences } from '@novu/shared';
+import { buildWorkflowPreferences, WorkflowPreferences } from '@novu/shared';
+import { AxiosError, HttpStatusCode } from 'axios';
 import { QueryKeys } from '../../api/query.keys';
 import { useNovuAPI } from '../useNovuAPI';
-import { DEFAULT_WORKFLOW_PREFERENCES } from '../../studio/components/workflows/preferences/WorkflowSubscriptionPreferences.const';
-import { AxiosError, HttpStatusCode } from 'axios';
 
-export const useCloudWorkflowChannelPreferences = (
+export const useCloudWorkflowPreferences = (
   workflowId: string
 ): {
   isLoading: boolean;
-  workflowChannelPreferences: WorkflowChannelPreferences | undefined;
+  workflowChannelPreferences: WorkflowPreferences | undefined;
   refetch: () => void;
 } => {
   const api = useNovuAPI();
@@ -18,9 +17,10 @@ export const useCloudWorkflowChannelPreferences = (
     data: workflowChannelPreferences,
     isLoading,
     refetch,
-  } = useQuery<WorkflowChannelPreferences>([QueryKeys.getWorkflowChannelPreferences(workflowId)], async () => {
+  } = useQuery<WorkflowPreferences>([QueryKeys.getWorkflowPreferences(workflowId)], async () => {
     try {
       const result = await api.getPreferences(workflowId as string);
+
       return result?.data;
     } catch (err: unknown) {
       if (!checkIsAxiosError(err) || err.response?.status !== HttpStatusCode.NotFound) {
@@ -28,7 +28,7 @@ export const useCloudWorkflowChannelPreferences = (
       }
 
       // if preferences aren't found (404), use default so that user can modify them to upsert properly.
-      return DEFAULT_WORKFLOW_PREFERENCES;
+      return buildWorkflowPreferences(undefined);
     }
   });
 

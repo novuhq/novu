@@ -4,6 +4,7 @@ import {
   PreferencesRepository,
   PreferencesTypeEnum,
 } from '@novu/dal';
+import { buildWorkflowPreferences } from '@novu/shared';
 import { UpsertPreferencesCommand } from './upsert-preferences.command';
 import { UpsertWorkflowPreferencesCommand } from './upsert-workflow-preferences.command';
 import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
@@ -69,11 +70,18 @@ export class UpsertPreferences {
   ): Promise<PreferencesEntity> {
     const foundId = await this.getPreferencesId(command);
 
+    const builtPreferences = buildWorkflowPreferences(command.preferences);
+
+    const builtCommand = {
+      ...command,
+      preferences: builtPreferences,
+    };
+
     if (foundId) {
-      return this.updatePreferences(foundId, command);
+      return this.updatePreferences(foundId, builtCommand);
     }
 
-    return this.createPreferences(command);
+    return this.createPreferences(builtCommand);
   }
 
   private async createPreferences(

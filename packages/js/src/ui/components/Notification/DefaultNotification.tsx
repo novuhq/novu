@@ -70,12 +70,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     <a
       class={style(
         'notification',
-        cn(
-          'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-pr-4 nt-pl-6 nt-gap-2',
-          {
-            'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-          }
-        )
+        cn('nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-px-6 nt-gap-2', {
+          'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
+        })
       )}
       onClick={handleNotificationClick}
     >
@@ -92,7 +89,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       </Show>
       <div class={style('notificationBody', 'nt-overflow-hidden nt-w-full')}>
         {/* eslint-disable-next-line local-rules/no-class-without-style */}
-        <div class="nt-relative nt-shrink-0 nt-float-right nt-ml-2">
+        <div class="nt-relative nt-shrink-0 nt-float-right nt-ml-1 nt-pr-1.5">
           <p
             class={style(
               'notificationDate',
@@ -107,7 +104,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               'notificationDefaultActions',
               `nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 
               nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center 
-              nt-absolute nt-top-0 nt-right-0  nt-bg-neutral-100 nt-p-0.5 nt-rounded nt-z-50 nt-inset-0`
+              nt-absolute nt-top-0 nt-right-0 nt-bg-neutral-100 nt-py-0.5 nt-rounded nt-z-50`
             )}
           >
             <Show when={status() !== NotificationStatus.ARCHIVED}>

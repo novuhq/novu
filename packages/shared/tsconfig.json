@@ -7,7 +7,7 @@
     "declaration": true,
     "outDir": "./dist/cjs",
     "rootDir": "./src",
-    "types": ["node", "jest"],
+    "types": ["node"],
     "moduleResolution": "node",
     "resolveJsonModule": true
   },

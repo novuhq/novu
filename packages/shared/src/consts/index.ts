@@ -8,3 +8,4 @@ export * from './template-store';
 export * from './rate-limiting';
 export * from './productFeatureEnabledForServiceLevel';
 export * from './inviteTeamMemberNudge';
+export * from './preferences';

@@ -215,7 +215,7 @@ export class Sync {
           })
         );
 
-        if (isWorkflowPreferencesEnabled && workflow.preferences) {
+        if (isWorkflowPreferencesEnabled) {
           await this.upsertPreferences.upsertWorkflowPreferences(
             UpsertWorkflowPreferencesCommand.create({
               environmentId: savedWorkflow._environmentId,

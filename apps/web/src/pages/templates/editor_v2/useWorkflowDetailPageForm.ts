@@ -1,11 +1,11 @@
 import { INotificationTemplate } from '@novu/shared';
 import { useFormContext, SubmitHandler, useWatch } from 'react-hook-form';
+import { captureException } from '@sentry/react';
 import { useUpdateTemplate } from '../../../api/hooks';
-import { useUpdateWorkflowChannelPreferences } from '../../../hooks/workflowChannelPreferences/useUpdateWorkflowChannelPreferences';
+import { useUpdateWorkflowPreferences } from '../../../hooks/workflowPreferences/useUpdateWorkflowPreferences';
 import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useEffectOnce } from '../../../hooks';
-import { captureException } from '@sentry/react';
 
 type UseWorkflowDetailPageFormProps = {
   templateId: string;
@@ -23,14 +23,11 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
 
   const workflowName = useWatch({ name: 'general.name' });
 
-  const { updateWorkflowChannelPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowChannelPreferences(
-    templateId,
-    {
-      onSuccess: () => {
-        resetField('preferences');
-      },
-    }
-  );
+  const { updateWorkflowPreferences, isLoading: isUpdatingPreferences } = useUpdateWorkflowPreferences(templateId, {
+    onSuccess: () => {
+      resetField('preferences');
+    },
+  });
   const { updateTemplateMutation, isLoading: isUpdatingGeneralSettings } = useUpdateTemplate({
     onSuccess: () => {
       resetField('general');
@@ -47,7 +44,7 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
       }
 
       if (dirtyFields?.preferences) {
-        await updateWorkflowChannelPreferences(getValues('preferences'));
+        await updateWorkflowPreferences(getValues('preferences'));
       }
 
       successMessage('Workflow updated successfully');

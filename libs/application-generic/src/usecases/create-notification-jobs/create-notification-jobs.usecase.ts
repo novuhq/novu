@@ -113,6 +113,7 @@ export class CreateNotificationJobs {
           _actorId: command.actor?._id,
           actorId: command.actor?.subscriberId,
         }),
+        preferences: command.preferences,
       };
 
       jobs.push(job);

@@ -123,18 +123,23 @@ describe('Session', () => {
     validateHmacEncryptionStub.restore();
   });
 
-  it('should return truthy removeNovuBranding value only if its explicitly set', async () => {
+  it('should return correct removeNovuBranding value when is set on the integration', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',
       subscriberId: 'subscriber-id',
       subscriberHash: 'hash',
     };
-
+    const subscriber = { _id: 'subscriber-id' };
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
     const integrationWithoutRemoveNovuBranding = { ...mockIntegration, credentials: { hmac: false } };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integrationWithoutRemoveNovuBranding);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
 
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
@@ -143,9 +148,9 @@ describe('Session', () => {
     const integrationWithInvalidRemoveNovuBranding = {
       ...mockIntegration,
       credentials: { hmac: false },
-      removeNovuBranding: 'true',
+      removeNovuBranding: false,
     };
-    selectIntegration.execute.resolves(integrationWithInvalidRemoveNovuBranding);
+    selectIntegration.execute.resolves(integrationWithInvalidRemoveNovuBranding as any);
 
     const responseWithRemoveNovuBranding: SubscriberSessionResponseDto = await session.execute(command);
 

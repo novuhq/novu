@@ -74,7 +74,16 @@ export class GetPreferences {
             id: workflow._id,
             identifier: workflow.triggers[0].identifier,
             name: workflow.name,
-            critical: workflow.critical ?? workflowPreference.template.critical,
+            /*
+             * V1 Preferences define `critial` flag on the workflow level.
+             * V2 Preferences define `critical` flag on the template returned via Preferences.
+             * This pattern safely returns false when:
+             * 1. Workflow V1 with no critical flag set
+             * 2. Workflow V2 with no critical flag set
+             * 3. Workflow V1 with critical flag set to false
+             * 4. Workflow V2 with critical flag set to false
+             */
+            critical: workflow.critical || workflowPreference.template.critical || false,
             tags: workflow.tags,
           },
         } satisfies InboxPreference;
