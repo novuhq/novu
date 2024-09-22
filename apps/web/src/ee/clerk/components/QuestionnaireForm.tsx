@@ -22,6 +22,7 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
+import { identifyUser } from '../../../api/telemtry';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
@@ -57,6 +58,20 @@ export function QuestionnaireForm() {
       language: selectedLanguages,
     };
     await updateOrganizationMutation(updateClerkOrgDto);
+
+    const hubspotContext = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('hubspotutk='))
+      ?.split('=')[1];
+
+    await identifyUser({
+      location: (location.state as any)?.origin || 'web',
+      language: selectedLanguages,
+      jobTitle: data.jobTitle,
+      pageUri: window.location.href,
+      pageName: 'Create Organization Form',
+      hubspotContext: hubspotContext || '',
+    });
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',

@@ -45,7 +45,7 @@ export const api = {
   },
   post(url: string, payload, params?: CustomDataType) {
     return axios
-      .post(`${API_ROOT}${url}`, payload, { params, headers: getHeaders() })
+      .post(`${API_ROOT}${url}`, payload, { params, headers: { ...getHeaders() } })
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
