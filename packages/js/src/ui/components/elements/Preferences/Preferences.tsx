@@ -207,7 +207,7 @@ const PreferencesRow = (props: {
               animate={{ gridTemplateRows: ['0fr', '1fr'] }}
               exit={{ gridTemplateRows: ['1fr', '0fr'] }}
               transition={{ duration: 0.2, easing: 'ease-out' }}
-              class={style('channelsContainerCollapsible', 'nt-grid')}
+              class={style('channelsContainerCollapsible', 'nt-grid nt-self-stretch')}
             >
               <div class={style('channelsContainer', 'nt-overflow-hidden nt-flex-col nt-gap-1')}>
                 <Show when={props.isCritical}>
