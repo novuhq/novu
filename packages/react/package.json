@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React SDK for building custom inbox notification experiences",
   "author": "",
@@ -15,19 +15,31 @@
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/client/index.d.ts",
+        "types": "./dist/client/index.d.mts",
         "default": "./dist/server/server.mjs"
       },
       "require": {
         "types": "./dist/server/server.d.ts",
         "default": "./dist/server/server.js"
       }
+    },
+    "./hooks": {
+      "import": {
+        "types": "./dist/hooks/index.d.mts",
+        "default": "./dist/hooks/index.mjs"
+      },
+      "require": {
+        "types": "./dist/hooks/index.d.ts",
+        "default": "./dist/hooks/index.js"
+      }
     }
   },
   "files": [
     "dist",
     "dist/client/**/*",
-    "dist/server/**/*"
+    "dist/server/**/*",
+    "dist/hooks/**/*",
+    "hooks/**/*"
   ],
   "sideEffects": false,
   "private": false,
@@ -36,8 +48,10 @@
   },
   "scripts": {
     "build:watch": "tsup --watch",
-    "build": "tsup",
-    "lint": "eslint src"
+    "build": "tsup && pnpm run check-exports",
+    "lint": "eslint src",
+    "check-exports": "attw --pack .",
+    "release:preview": "pnpx pkg-pr-new publish"
   },
   "browserslist": {
     "production": [
@@ -52,17 +66,21 @@
     ]
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.15.4",
     "@types/node": "^20.14.12",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@types/react": "*",
+    "@types/react-dom": "*",
     "tsup": "^8.2.1",
-    "typescript": "4.9.5"
+    "typescript": "5.6.2"
   },
   "peerDependencies": {
     "react": ">=17",
     "react-dom": ">=17"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@novu/js": "workspace:*"

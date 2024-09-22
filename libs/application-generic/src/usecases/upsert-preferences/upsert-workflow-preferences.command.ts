@@ -1,10 +1,10 @@
-import { DiscoverWorkflowOutputPreferences } from '@novu/framework';
+import { IsNotEmpty, IsOptional } from 'class-validator';
+import { WorkflowPreferencesPartial } from '@novu/shared';
 import { EnvironmentCommand } from '../../commands';
-import { IsDefined, IsNotEmpty } from 'class-validator';
 
 export class UpsertWorkflowPreferencesCommand extends EnvironmentCommand {
-  @IsDefined()
-  readonly preferences: DiscoverWorkflowOutputPreferences;
+  @IsOptional()
+  readonly preferences?: WorkflowPreferencesPartial;
 
   @IsNotEmpty()
   templateId: string;

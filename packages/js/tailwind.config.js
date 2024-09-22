@@ -43,8 +43,14 @@ module.exports = {
         foreground: defaultColor('nv-color-foreground'),
         'foreground-alpha': generateColorShades('nv-color-foreground-alpha'),
         'neutral-alpha': generateColorShades('nv-color-neutral-alpha'),
+        shadow: defaultColor('nv-color-shadow'),
+      },
+      boxShadow: {
+        popover: '0 5px 15px 0 var(--nv-color-shadow)',
+        dropdown: '0 5px 20px 0 var(--nv-color-shadow)',
+        tooltip: '0 5px 20px 0 var(--nv-color-shadow)',
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), require('@tailwindcss/line-clamp')],
+  plugins: [require('tailwindcss-animate')],
 };

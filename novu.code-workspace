@@ -58,7 +58,7 @@
     },
     {
       "name": "📦 @novu/shared",
-      "path": "libs/shared"
+      "path": "packages/shared"
     },
     {
       "name": "📦 @novu/testing",

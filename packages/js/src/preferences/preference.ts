@@ -1,5 +1,4 @@
 import { InboxService } from '../api';
-import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 
 import { NovuEventEmitter } from '../event-emitter';
 import { ChannelPreference, PreferenceLevel, Result, Workflow } from '../types';
@@ -16,9 +15,12 @@ export class Preference {
   readonly channels: ChannelPreference;
   readonly workflow?: Workflow;
 
-  constructor(preference: PreferenceLike) {
-    this.#emitter = NovuEventEmitter.getInstance();
-    this.#apiService = InboxServiceSingleton.getInstance();
+  constructor(
+    preference: PreferenceLike,
+    { emitterInstance, inboxServiceInstance }: { emitterInstance: NovuEventEmitter; inboxServiceInstance: InboxService }
+  ) {
+    this.#emitter = emitterInstance;
+    this.#apiService = inboxServiceInstance;
 
     this.level = preference.level;
     this.enabled = preference.enabled;

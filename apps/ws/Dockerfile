@@ -16,7 +16,7 @@ COPY --chown=1000:1000 package.json .
 
 COPY --chown=1000:1000 apps/ws ./apps/ws
 COPY --chown=1000:1000 libs/dal ./libs/dal
-COPY --chown=1000:1000 libs/shared ./libs/shared
+COPY --chown=1000:1000 packages/shared ./packages/shared
 COPY --chown=1000:1000 libs/testing ./libs/testing
 COPY --chown=1000:1000 libs/application-generic ./libs/application-generic
 COPY --chown=1000:1000 packages/client ./packages/client
@@ -25,7 +25,7 @@ COPY --chown=1000:1000 packages/node ./packages/node
 COPY --chown=1000:1000 packages/framework ./packages/framework
 COPY --chown=1000:1000 packages/providers ./packages/providers
 
-COPY --chown=1000:1000 ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
+COPY --chown=1000:1000 ["tsconfig.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
     if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi

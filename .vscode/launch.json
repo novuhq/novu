@@ -164,7 +164,7 @@
         "start:dev"
       ],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/libs/shared",
+      "cwd": "${workspaceFolder}/packages/shared",
       "skipFiles": [
         "<node_internals>/**"
       ],

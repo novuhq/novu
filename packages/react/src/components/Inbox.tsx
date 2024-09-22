@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useRenderer } from '../context/RenderContext';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
+import { NovuProvider, useNovu, useUnsafeNovu } from './index';
 import { Mounter } from './Mounter';
 import { Renderer } from './Renderer';
 
@@ -35,10 +36,32 @@ const DefaultInbox = (props: DefaultInboxProps) => {
 };
 
 export const Inbox = React.memo((props: InboxProps) => {
+  const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } = props;
+  const novu = useUnsafeNovu();
+
+  if (novu) {
+    return <InboxChild {...props} />;
+  }
+
+  return (
+    <NovuProvider
+      applicationIdentifier={applicationIdentifier}
+      subscriberId={subscriberId}
+      subscriberHash={subscriberHash}
+      backendUrl={backendUrl}
+      socketUrl={socketUrl}
+    >
+      <InboxChild {...props} />
+    </NovuProvider>
+  );
+});
+
+export const InboxChild = React.memo((props: InboxProps) => {
   const {
     localization,
     appearance,
     tabs,
+    preferencesFilter,
     routerPush,
     applicationIdentifier,
     subscriberId,
@@ -46,26 +69,42 @@ export const Inbox = React.memo((props: InboxProps) => {
     backendUrl,
     socketUrl,
   } = props;
+  const novu = useNovu();
 
   const options = useMemo(() => {
     return {
       localization,
       appearance,
       tabs,
+      preferencesFilter,
       routerPush,
       options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
     };
-  }, [localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl]);
+  }, [
+    localization,
+    appearance,
+    tabs,
+    preferencesFilter,
+    applicationIdentifier,
+    subscriberId,
+    subscriberHash,
+    backendUrl,
+    socketUrl,
+  ]);
 
   if (isWithChildrenProps(props)) {
-    return <Renderer options={options}>{props.children}</Renderer>;
+    return (
+      <Renderer options={options} novu={novu}>
+        {props.children}
+      </Renderer>
+    );
   }
 
   const { open, renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } =
     props;
 
   return (
-    <Renderer options={options}>
+    <Renderer options={options} novu={novu}>
       <DefaultInbox
         open={open}
         renderNotification={renderNotification}

@@ -23,6 +23,7 @@ const DEFAULT_VARIANT: TitleVariant = 'page';
 
 type PolymorphicComponent = <C extends React.ElementType = 'h1'>(props: TitleProps<C>) => JSX.Element | null;
 
+// @ts-expect-error
 export const Title: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = 'h1'>(props: TitleProps<C>, ref?: PolymorphicRef<C>) => {
     const [variantProps, titleProps] = title.splitVariantProps(props);

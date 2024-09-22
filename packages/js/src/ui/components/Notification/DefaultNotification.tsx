@@ -7,6 +7,7 @@ import { cn, formatToRelativeTime, useStyle } from '../../helpers';
 import { Archive, ReadAll, Unarchive, Unread } from '../../icons';
 import type { NotificationActionClickHandler, NotificationClickHandler } from '../../types';
 import { NotificationStatus } from '../../types';
+import Markdown from '../elements/Markdown';
 import { Button } from '../primitives';
 import { Tooltip } from '../primitives/Tooltip';
 
@@ -69,12 +70,9 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     <a
       class={style(
         'notification',
-        cn(
-          'nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-pr-4 nt-pl-6 nt-gap-2',
-          {
-            'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-          }
-        )
+        cn('nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-px-6 nt-gap-2', {
+          'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
+        })
       )}
       onClick={handleNotificationClick}
     >
@@ -91,7 +89,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
       </Show>
       <div class={style('notificationBody', 'nt-overflow-hidden nt-w-full')}>
         {/* eslint-disable-next-line local-rules/no-class-without-style */}
-        <div class="nt-relative nt-shrink-0 nt-float-right">
+        <div class="nt-relative nt-shrink-0 nt-float-right nt-ml-1 nt-pr-1.5">
           <p
             class={style(
               'notificationDate',
@@ -106,7 +104,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               'notificationDefaultActions',
               `nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 
               nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center 
-              nt-absolute nt-top-0 nt-right-0  nt-bg-neutral-100 nt-p-0.5 nt-rounded nt-z-50`
+              nt-absolute nt-top-0 nt-right-0 nt-bg-neutral-100 nt-py-0.5 nt-rounded nt-z-50`
             )}
           >
             <Show when={status() !== NotificationStatus.ARCHIVED}>
@@ -214,10 +212,19 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           </div>
         </div>
         <Show when={props.notification.subject}>
-          <p class={style('notificationSubject', 'nt-text-start nt-font-semibold')}>{props.notification.subject}</p>
+          {(subject) => (
+            <Markdown
+              class={style('notificationSubject', 'nt-text-start')}
+              strongAppearanceKey="notificationSubject__strong"
+            >
+              {subject()}
+            </Markdown>
+          )}
         </Show>
-        <p class={style('notificationBody', 'nt-text-start')}>{props.notification.body}</p>
-        <div class={style('notificationCustomActions', 'nt-flex nt-gap-4 nt-mt-4')}>
+        <Markdown class={style('notificationBody', 'nt-text-start')} strongAppearanceKey="notificationBody__strong">
+          {props.notification.body}
+        </Markdown>
+        <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-4 nt-mt-4')}>
           <Show when={props.notification.primaryAction} keyed>
             {(primaryAction) => (
               <Button

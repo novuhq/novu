@@ -1,17 +1,15 @@
-import { createEffect, createResource, onCleanup, onMount } from 'solid-js';
-import { reconcile } from 'solid-js/store';
+import { createEffect, createResource, createSignal, onCleanup, onMount } from 'solid-js';
 import { Preference } from '../../../preferences/preference';
 import { FetchPreferencesArgs } from '../../../preferences/types';
 import { useNovu } from '../../context';
-import { createDelayedLoading } from '../../helpers/createDelayedLoading';
 
 export const usePreferences = (options?: FetchPreferencesArgs) => {
   const novu = useNovu();
 
-  const [loading, setLoading] = createDelayedLoading(true, 300);
-  const [preferences, { mutate, refetch }] = createResource(options || {}, async () => {
+  const [loading, setLoading] = createSignal(true);
+  const [preferences, { mutate, refetch }] = createResource(options || {}, async ({ tags }) => {
     try {
-      const response = await novu.preferences.list();
+      const response = await novu.preferences.list({ tags });
 
       return response.data;
     } catch (error) {
@@ -26,7 +24,7 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
         return;
       }
 
-      mutate(reconcile(data));
+      mutate(data);
     };
 
     novu.on('preferences.list.updated', listener);

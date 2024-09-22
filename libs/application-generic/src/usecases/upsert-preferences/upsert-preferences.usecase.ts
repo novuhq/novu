@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import {
-  PreferencesActorEnum,
   PreferencesEntity,
   PreferencesRepository,
   PreferencesTypeEnum,
 } from '@novu/dal';
+import { buildWorkflowPreferences } from '@novu/shared';
 import { UpsertPreferencesCommand } from './upsert-preferences.command';
 import { UpsertWorkflowPreferencesCommand } from './upsert-workflow-preferences.command';
 import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
@@ -22,7 +22,6 @@ export class UpsertPreferences {
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.WORKFLOW,
       preferences: command.preferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     });
@@ -32,10 +31,9 @@ export class UpsertPreferences {
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
     return this.upsert({
-      subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.SUBSCRIBER,
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     });
@@ -45,10 +43,9 @@ export class UpsertPreferences {
     command: UpsertSubscriberWorkflowPreferencesCommand,
   ) {
     return this.upsert({
-      subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.SUBSCRIBER,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
@@ -62,7 +59,6 @@ export class UpsertPreferences {
       userId: command.userId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      actor: PreferencesActorEnum.USER,
       preferences: command.preferences,
       templateId: command.templateId,
       type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -74,23 +70,29 @@ export class UpsertPreferences {
   ): Promise<PreferencesEntity> {
     const foundId = await this.getPreferencesId(command);
 
+    const builtPreferences = buildWorkflowPreferences(command.preferences);
+
+    const builtCommand = {
+      ...command,
+      preferences: builtPreferences,
+    };
+
     if (foundId) {
-      return this.updatePreferences(foundId, command);
+      return this.updatePreferences(foundId, builtCommand);
     }
 
-    return this.createPreferences(command);
+    return this.createPreferences(builtCommand);
   }
 
   private async createPreferences(
     command: UpsertPreferencesCommand,
   ): Promise<PreferencesEntity> {
     return await this.preferencesRepository.create({
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _userId: command.userId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _templateId: command.templateId,
-      actor: command.actor,
       preferences: command.preferences,
       type: command.type,
     });
@@ -124,11 +126,10 @@ export class UpsertPreferences {
   ): Promise<string | undefined> {
     const found = await this.preferencesRepository.findOne(
       {
-        _subscriberId: command.subscriberId,
+        _subscriberId: command._subscriberId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _templateId: command.templateId,
-        actor: command.actor,
         type: command.type,
       },
       '_id',

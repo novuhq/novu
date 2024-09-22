@@ -123,6 +123,51 @@ describe('Session', () => {
     validateHmacEncryptionStub.restore();
   });
 
+  it('should return correct removeNovuBranding value when is set on the integration', async () => {
+    const command: SessionCommand = {
+      applicationIdentifier: 'app-id',
+      subscriberId: 'subscriber-id',
+      subscriberHash: 'hash',
+    };
+    const subscriber = { _id: 'subscriber-id' };
+    const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
+    const integrationWithoutRemoveNovuBranding = { ...mockIntegration, credentials: { hmac: false } };
+    const notificationCount = { data: [{ count: 10, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    selectIntegration.execute.resolves(integrationWithoutRemoveNovuBranding);
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+
+    const response: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(response.removeNovuBranding).to.equal(false);
+
+    const integrationWithInvalidRemoveNovuBranding = {
+      ...mockIntegration,
+      credentials: { hmac: false },
+      removeNovuBranding: false,
+    };
+    selectIntegration.execute.resolves(integrationWithInvalidRemoveNovuBranding as any);
+
+    const responseWithRemoveNovuBranding: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(responseWithRemoveNovuBranding.removeNovuBranding).to.equal(false);
+
+    const integrationWithValidRemoveNovuBranding = {
+      ...mockIntegration,
+      credentials: { hmac: false },
+      removeNovuBranding: true,
+    };
+    selectIntegration.execute.resolves(integrationWithValidRemoveNovuBranding);
+
+    const responseWithValidRemoveNovuBranding: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(responseWithValidRemoveNovuBranding.removeNovuBranding).to.equal(true);
+  });
+
   it('should create a subscriber and return the session response', async () => {
     const command: SessionCommand = {
       applicationIdentifier: 'app-id',

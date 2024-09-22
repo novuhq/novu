@@ -19,13 +19,19 @@ export const updatePreference = async ({
     emitter.emit('preference.update.pending', {
       args,
       data: args.preference
-        ? new Preference({
-            ...args.preference,
-            channels: {
-              ...args.preference.channels,
-              ...channelPreferences,
+        ? new Preference(
+            {
+              ...args.preference,
+              channels: {
+                ...args.preference.channels,
+                ...channelPreferences,
+              },
             },
-          })
+            {
+              emitterInstance: emitter,
+              inboxServiceInstance: apiService,
+            }
+          )
         : undefined,
     });
 
@@ -36,7 +42,10 @@ export const updatePreference = async ({
       response = await apiService.updateGlobalPreferences(channelPreferences);
     }
 
-    const preference = new Preference(response);
+    const preference = new Preference(response, {
+      emitterInstance: emitter,
+      inboxServiceInstance: apiService,
+    });
     emitter.emit('preference.update.resolved', { args, data: preference });
 
     return { data: preference };

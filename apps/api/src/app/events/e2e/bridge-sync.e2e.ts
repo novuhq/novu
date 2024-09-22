@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
-import { WorkflowTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, WorkflowTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
 import { BridgeServer } from '../../../../e2e/bridge.server';
 
@@ -22,6 +22,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
   let bridgeServer: BridgeServer;
   beforeEach(async () => {
+    // @ts-ignore
+    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
     session = new UserSession();
     await session.initialize();
     bridgeServer = new BridgeServer();
@@ -29,6 +31,8 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
   afterEach(async () => {
     await bridgeServer.stop();
+    // @ts-ignore
+    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'false';
   });
 
   it('should update bridge url', async () => {
@@ -306,5 +310,59 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
     expect(workflowData.steps[1].stepId).to.equal('send-sms-2');
     expect(workflowData.steps[1].uuid).to.equal('send-sms-2');
     expect(workflowData.steps[1].name).to.equal('send-sms-2');
+  });
+
+  it('should create workflow preferences', async () => {
+    const workflowId = 'hello-world-preferences';
+    const newWorkflow = workflow(
+      workflowId,
+      async ({ step }) => {
+        await step.inApp('send-in-app', () => ({
+          subject: 'Welcome!',
+          body: 'Hello there',
+        }));
+      },
+      {
+        preferences: {
+          workflow: {
+            enabled: false,
+            readOnly: true,
+          },
+          channels: {
+            inApp: {
+              enabled: true,
+              readOnly: true,
+            },
+          },
+        },
+      }
+    );
+    await bridgeServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+
+    const dashboardPreferences = {
+      workflow: { enabled: false, readOnly: true },
+      channels: {
+        email: { enabled: true, readOnly: false },
+        sms: { enabled: true, readOnly: false },
+        inApp: { enabled: false, readOnly: true },
+        chat: { enabled: true, readOnly: false },
+        push: { enabled: true, readOnly: false },
+      },
+    };
+
+    await session.testAgent.post(`/v1/preferences`).send({
+      preferences: dashboardPreferences,
+      workflowId: result.body.data[0]._id,
+    });
+
+    const response = await session.testAgent
+      .get('/v1/inbox/preferences')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.status).to.equal(200);
   });
 });

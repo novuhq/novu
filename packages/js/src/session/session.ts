@@ -1,4 +1,3 @@
-import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 import { NovuEventEmitter } from '../event-emitter';
 import { InitializeSessionArgs } from './types';
 import type { InboxService } from '../api';
@@ -8,9 +7,13 @@ export class Session {
   #inboxService: InboxService;
   #options: InitializeSessionArgs;
 
-  constructor(options: InitializeSessionArgs) {
-    this.#emitter = NovuEventEmitter.getInstance();
-    this.#inboxService = InboxServiceSingleton.getInstance();
+  constructor(
+    options: InitializeSessionArgs,
+    inboxServiceInstance: InboxService,
+    eventEmitterInstance: NovuEventEmitter
+  ) {
+    this.#emitter = eventEmitterInstance;
+    this.#inboxService = inboxServiceInstance;
     this.#options = options;
   }
 

@@ -86,6 +86,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         identifier: integrationItem?.identifier,
         primary: integrationItem?.primary ?? false,
         conditions: integrationItem?.conditions ?? [],
+        removeNovuBranding: integrationItem?.removeNovuBranding ?? false,
       };
     });
 }

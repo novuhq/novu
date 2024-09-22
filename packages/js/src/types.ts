@@ -1,4 +1,9 @@
+import { NovuError } from './utils/errors';
+
+export { type FiltersCountResponse, type ListNotificationsResponse } from './notifications';
 export type { Notification } from './notifications';
+export type { Preference } from './preferences/preference';
+export type { NovuError } from './utils/errors';
 
 export enum NotificationStatus {
   READ = 'read',
@@ -54,6 +59,7 @@ export enum ActionTypeEnum {
 export type Session = {
   token: string;
   totalUnreadCount: number;
+  removeNovuBranding: boolean;
 };
 
 export type MessageButton = {
@@ -161,7 +167,7 @@ export type IPreferenceOverride = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TODO = any;
 
-export type Result<D = undefined, E = unknown> = Promise<{
+export type Result<D = undefined, E = NovuError> = Promise<{
   data?: D;
   error?: E;
 }>;

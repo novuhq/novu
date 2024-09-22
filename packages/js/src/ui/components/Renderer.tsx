@@ -1,6 +1,7 @@
-import { createMemo, For, onCleanup, onMount } from 'solid-js';
+import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
 import { NovuUI } from '..';
+import { Novu } from '../../novu';
 import type { NovuOptions } from '../../types';
 import {
   AppearanceProvider,
@@ -10,7 +11,7 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Appearance, Localization, RouterPush, Tab } from '../types';
+import type { Appearance, Localization, PreferencesFilter, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
@@ -46,7 +47,9 @@ type RendererProps = {
   localization?: Localization;
   options: NovuOptions;
   tabs: Array<Tab>;
+  preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
+  novu?: Novu;
 };
 
 export const Renderer = (props: RendererProps) => {
@@ -72,11 +75,11 @@ export const Renderer = (props: RendererProps) => {
   });
 
   return (
-    <NovuProvider options={props.options}>
+    <NovuProvider options={props.options} novu={props.novu}>
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxProvider tabs={props.tabs} routerPush={props.routerPush}>
+            <InboxProvider tabs={props.tabs} preferencesFilter={props.preferencesFilter} routerPush={props.routerPush}>
               <CountProvider>
                 <For each={nodes()}>
                   {(node) => {

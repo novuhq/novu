@@ -84,3 +84,12 @@ export type PickRequiredKeys<T, DEEP extends boolean = true> = keyof PickRequire
  * Optionally, recurses through nested objects if `DEEP` is true.
  */
 export type PickOptionalKeys<T, DEEP extends boolean = true> = keyof PickOptional<T, DEEP>;
+
+/**
+ * Recursively make all properties of type `T` optional.
+ */
+export type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;

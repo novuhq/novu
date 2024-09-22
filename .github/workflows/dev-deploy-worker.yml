@@ -10,12 +10,12 @@ on:
       - main
     paths:
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - 'apps/api/**'
       - 'libs/dal/**'
-      - 'libs/shared/**'
+      - 'packages/shared/**'
       - 'libs/testing/**'
-      - 'packages/application-generic/**'
+      - 'libs/application-generic/**'
       - 'packages/stateless/**'
       - 'packages/node/**'
 env:
