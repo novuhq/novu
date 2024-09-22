@@ -130,6 +130,7 @@ const jobSchema = new Schema<JobDBModel>(
     },
     expireAt: Schema.Types.Date,
     stepOutput: Schema.Types.Mixed,
+    preferences: Schema.Types.Mixed,
   },
   schemaOptions
 );
