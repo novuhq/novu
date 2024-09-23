@@ -18,7 +18,6 @@ export class HubspotIdentifyFormUsecase {
         { name: 'email', value: command.email },
         { name: 'lastname', value: command.lastName || 'Unknown' },
         { name: 'firstname', value: command.firstName || 'Unknown' },
-        { name: 'app_organizationid', value: command.organizationId || 'Unknown' },
       ],
       context: {
         hutk: command.hubspotContext,
