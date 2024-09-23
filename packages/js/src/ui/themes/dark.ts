@@ -7,5 +7,6 @@ export const dark: Theme = {
     colorForeground: '#EDEDEF',
     colorSecondary: '#7E7D86',
     colorSecondaryForeground: '#EDEDEF',
+    colorShadow: 'black',
   },
 };

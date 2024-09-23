@@ -101,7 +101,7 @@ const ChannelsLabel = (props: { channels: ChannelPreference }) => {
 
         const element = (
           <span
-            class={style('channelName', 'data-[disabled=true]:nt-text-foreground-alpha-200')}
+            class={style('channelName', 'data-[disabled=true]:nt-text-foreground-alpha-400')}
             data-disabled={isDisabled}
           >
             {getLabel(key as ChannelType)}
@@ -145,7 +145,7 @@ const PreferencesRow = (props: {
         class={style(
           'workflowContainer',
           `nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch 
-          hover:nt-bg-neutral-100 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
+          hover:nt-bg-neutral-alpha-50 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
         )}
         data-disabled={props.isCritical}
         data-open={isOpen()}
