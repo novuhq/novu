@@ -19,7 +19,7 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { IPreferenceChannels } from '@novu/shared';
+import { IPreferenceChannels, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
@@ -237,33 +237,18 @@ export class UpdatePreferences {
     environmentId: string;
     templateId?: string;
   }) {
-    const preferences = {
+    const preferences: WorkflowPreferencesPartial = {
       workflow: {
-        defaultValue: PREFERENCE_DEFAULT_VALUE,
+        enabled: PREFERENCE_DEFAULT_VALUE,
         readOnly: false,
       },
-      channels: {
-        in_app: {
-          defaultValue: item.channels.in_app !== undefined ? item.channels.in_app : PREFERENCE_DEFAULT_VALUE,
-          readOnly: false,
-        },
-        sms: {
-          defaultValue: item.channels.sms !== undefined ? item.channels.sms : PREFERENCE_DEFAULT_VALUE,
-          readOnly: false,
-        },
-        email: {
-          defaultValue: item.channels.email !== undefined ? item.channels.email : PREFERENCE_DEFAULT_VALUE,
-          readOnly: false,
-        },
-        push: {
-          defaultValue: item.channels.push !== undefined ? item.channels.push : PREFERENCE_DEFAULT_VALUE,
-          readOnly: false,
-        },
-        chat: {
-          defaultValue: item.channels.chat !== undefined ? item.channels.chat : PREFERENCE_DEFAULT_VALUE,
-          readOnly: false,
-        },
-      },
+      channels: Object.entries(item.channels).reduce(
+        (outputChannels, [channel, enabled]) => ({
+          ...outputChannels,
+          [channel]: { enabled },
+        }),
+        {} as WorkflowPreferences['channels']
+      ),
     };
 
     if (item.templateId) {

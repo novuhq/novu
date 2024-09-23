@@ -1,4 +1,5 @@
 /* cSpell:enableCompoundWords */
+import { expect, describe, it } from 'vitest';
 import { WithRequired, ConvertToConstantCase, testHttpHeaderEnumValidity, ValidateHttpHeaderCase } from './utils.types';
 
 describe('HTTP headers', () => {
