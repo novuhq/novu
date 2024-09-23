@@ -1,1 +1,1 @@
-export { NovuProvider, useNotifications, useCount } from '@novu/react';
+export * from '@novu/react/hooks';
