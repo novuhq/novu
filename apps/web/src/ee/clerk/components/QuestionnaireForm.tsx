@@ -22,7 +22,8 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
 import { DynamicCheckBox } from '../../../pages/auth/components/dynamic-checkbox/DynamicCheckBox';
 import { useWebContainerSupported } from '../../../hooks/useWebContainerSupport';
-import { identifyUser } from '../../../api/telemtry';
+import { identifyUser } from '../../../api/telemetry';
+import { hubspotCookie } from '../../../utils';
 
 function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
@@ -59,10 +60,7 @@ export function QuestionnaireForm() {
     };
     await updateOrganizationMutation(updateClerkOrgDto);
 
-    const hubspotContext = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('hubspotutk='))
-      ?.split('=')[1];
+    const hubspotContext = hubspotCookie.get();
 
     await identifyUser({
       location: (location.state as any)?.origin || 'web',
