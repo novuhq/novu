@@ -1,17 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas, StepType } from '@novu/framework';
+import {
+  ActionStepEnum,
+  actionStepSchemas,
+  ChannelStepEnum,
+  channelStepSchemas,
+  Schema,
+  StepType,
+} from '@novu/framework';
 
-import { GetStepDefaultSchemaCommand } from './get-default-schema.command';
-import { StepOutputSchema } from '../../types';
+import { GetStepSchemaCommand } from './get-step-schema.command';
+import { SchemaOutput } from '../../types';
 
 @Injectable()
-export class GetStepDefaultSchema {
-  async execute(command: GetStepDefaultSchemaCommand): Promise<StepOutputSchema> {
-    return getStepDefaultOutput(command.stepType);
+export class GetStepSchema {
+  async execute(command: GetStepSchemaCommand): Promise<SchemaOutput> {
+    return StepTypeToOutputMap[command.stepType];
   }
 }
 
-export const getStepDefaultOutput = (stepType: StepType): StepOutputSchema => {
+export const getStepDefaultOutput = (stepType: StepType): SchemaOutput => {
   return StepTypeToOutputMap[stepType];
 };
 
@@ -28,5 +35,5 @@ export const StepTypeToOutputMap = {
     properties: {},
     required: [],
     additionalProperties: false,
-  },
+  } as const satisfies Schema,
 };

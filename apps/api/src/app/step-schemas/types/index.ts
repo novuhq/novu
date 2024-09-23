@@ -1,19 +1,14 @@
-import {
-  ChatOutput,
-  DelayOutput,
-  DigestOutput,
-  EmailOutput,
-  InAppOutput,
-  PushOutput,
-  SmsOutput,
-} from '@novu/framework';
+import { actionStepSchemas, channelStepSchemas, Schema } from '@novu/framework';
 
-export type StepOutputSchema =
-  | SmsOutput
-  | EmailOutput
-  | PushOutput
-  | ChatOutput
-  | InAppOutput
-  | DelayOutput
-  | DigestOutput
-  | Record<string, unknown>;
+export const schemasList = Object.values({ ...channelStepSchemas, ...actionStepSchemas }).map(
+  (schema) => schema.output
+);
+
+export const customActionStepSchema = {
+  type: 'object',
+  properties: {},
+  required: [],
+  additionalProperties: false,
+} as const satisfies Schema;
+
+export type SchemaOutput = (typeof schemasList)[number] | typeof customActionStepSchema;
