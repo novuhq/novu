@@ -23,121 +23,69 @@
     -webkit-tap-highlight-color: transparent; /* 7 */
   }
 
-  :where(body),
-  :where(body *) ::before,
-  :where(body *) ::after,
-  :where(body)::before,
-  :where(body)::after {
+  :where(body) {
     margin: 0; /* 1 */
     line-height: inherit; /* 2 */
   }
 
-  :where(hr),
-  :where(hr *) ::before,
-  :where(hr *) ::after,
-  :where(hr)::before,
-  :where(hr)::after {
+  :where(hr) {
     height: 0; /* 1 */
     color: inherit; /* 2 */
     border-top-width: 1px; /* 3 */
   }
 
-  :where(abbr:where([title])),
-  :where(abbr:where([title]) *) ::before,
-  :where(abbr:where([title]) *) ::after,
-  :where(abbr:where([title]))::before,
-  :where(abbr:where([title]))::after {
+  :where(abbr:where([title])) {
     -webkit-text-decoration: underline dotted;
     text-decoration: underline dotted;
   }
 
-  :where(h1, h2, h3, h4, h5, h6),
-  :where(h1, h2, h3, h4, h5, h6) * ::before,
-  :where(h1, h2, h3, h4, h5, h6) * ::after,
-  :where(h1, h2, h3, h4, h5, h6)::before,
-  :where(h1, h2, h3, h4, h5, h6)::after {
+  :where(h1, h2, h3, h4, h5, h6) {
     font-size: inherit;
     font-weight: inherit;
   }
 
-  :where(a),
-  :where(a *) ::before,
-  :where(a *) ::after,
-  :where(a)::before,
-  :where(a)::after {
+  :where(a) {
     color: inherit;
     text-decoration: inherit;
   }
 
-  :where(b, strong),
-  :where(b, strong) * ::before,
-  :where(b, strong) * ::after,
-  :where(b, strong)::before,
-  :where(b, strong)::after {
+  :where(b, strong) {
     font-weight: bolder;
   }
 
-  :where(code, kbd, samp, pre),
-  :where(code, kbd, samp, pre) * ::before,
-  :where(code, kbd, samp, pre) * ::after,
-  :where(code, kbd, samp, pre)::before,
-  :where(code, kbd, samp, pre)::after {
+  :where(code, kbd, samp, pre) {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; /* 1 */
     font-feature-settings: normal; /* 2 */
     font-variation-settings: normal; /* 3 */
     font-size: 1em; /* 4 */
   }
 
-  :where(small),
-  :where(small *) ::before,
-  :where(small *) ::after,
-  :where(small)::before,
-  :where(small)::after {
+  :where(small) {
     font-size: 80%;
   }
 
-  :where(sub, sup),
-  :where(sub, sup) * ::before,
-  :where(sub, sup) * ::after,
-  :where(sub, sup)::before,
-  :where(sub, sup)::after {
+  :where(sub, sup) {
     font-size: 75%;
     line-height: 0;
     position: relative;
     vertical-align: baseline;
   }
 
-  :where(sub),
-  :where(sub *) ::before,
-  :where(sub *) ::after,
-  :where(sub)::before,
-  :where(sub)::after {
+  :where(sub) {
     bottom: -0.25em;
   }
 
-  :where(sup),
-  :where(sup *) ::before,
-  :where(sup *) ::after,
-  :where(sup)::before,
-  :where(sup)::after {
+  :where(sup) {
     top: -0.5em;
   }
 
-  :where(table),
-  :where(table *) ::before,
-  :where(table *) ::after,
-  :where(table)::before,
-  :where(table)::after {
+  :where(table) {
     text-indent: 0; /* 1 */
     border-color: inherit; /* 2 */
     border-collapse: collapse; /* 3 */
   }
 
-  :where(button, input, optgroup, select, textarea),
-  :where(button, input, optgroup, select, textarea) * ::before,
-  :where(button, input, optgroup, select, textarea) * ::after,
-  :where(button, input, optgroup, select, textarea)::before,
-  :where(button, input, optgroup, select, textarea)::after {
+  :where(button, input, optgroup, select, textarea) {
     font-family: inherit; /* 1 */
     font-feature-settings: inherit; /* 1 */
     font-variation-settings: inherit; /* 1 */
@@ -150,142 +98,90 @@
     padding: 0; /* 3 */
   }
 
-  :where(button, select),
-  :where(button, select) * ::before,
-  :where(button, select) * ::after,
-  :where(button, select)::before,
-  :where(button, select)::after {
+  :where(button, select) {
     text-transform: none;
   }
 
-  :where(button, input:where([type='button']), input:where([type='reset']), input:where([type='submit'])),
-  :where(button, input:where([type='button']), input:where([type='reset']), input:where([type='submit'])) * ::before,
-  :where(button, input:where([type='button']), input:where([type='reset']), input:where([type='submit'])) * ::after,
-  :where(button, input:where([type='button']), input:where([type='reset']), input:where([type='submit']))::before,
-  :where(button, input:where([type='button']), input:where([type='reset']), input:where([type='submit']))::after {
+  :where(button, input:where([type='button']), input:where([type='reset']), input:where([type='submit'])) {
     -webkit-appearance: button; /* 1 */
     background-color: transparent; /* 2 */
     background-image: none; /* 2 */
   }
 
-  :where(:-moz-focusring),
-  :where(:-moz-focusring) * ::before,
-  :where(:-moz-focusring) * ::after,
-  :where(:-moz-focusring)::before,
-  :where(:-moz-focusring)::after {
+  :where(:-moz-focusring) {
     outline: auto;
   }
 
-  :where(:-moz-ui-invalid),
-  :where(:-moz-ui-invalid) * ::before,
-  :where(:-moz-ui-invalid) * ::after,
-  :where(:-moz-ui-invalid)::before,
-  :where(:-moz-ui-invalid)::after {
+  :where(:-moz-ui-invalid) {
     box-shadow: none;
   }
 
-  :where(progress),
-  :where(progress *) ::before,
-  :where(progress *) ::after,
-  :where(progress)::before,
-  :where(progress)::after {
+  :where(progress) {
     vertical-align: baseline;
   }
 
-  :where(::-webkit-inner-spin-button, ::-webkit-outer-spin-button),
-  :where(::-webkit-inner-spin-button, ::-webkit-outer-spin-button) * ::before,
-  :where(::-webkit-inner-spin-button, ::-webkit-outer-spin-button) * ::after,
-  :where(::-webkit-inner-spin-button, ::-webkit-outer-spin-button)::before,
-  :where(::-webkit-inner-spin-button, ::-webkit-outer-spin-button)::after {
+  :where(.novu)::-webkit-inner-spin-button,
+  :where(.novu)::-webkit-outer-spin-button {
     height: auto;
   }
 
-  :where([type='search']),
-  :where([type='search']) * ::before,
-  :where([type='search']) * ::after,
-  :where([type='search'])::before,
-  :where([type='search'])::after {
+  :where([type='search']) {
     -webkit-appearance: textfield; /* 1 */
     outline-offset: -2px; /* 2 */
   }
 
-  :where(::-webkit-search-decoration) {
+  :where(.novu)::-webkit-search-decoration {
     -webkit-appearance: none;
   }
 
-  :where(::-webkit-file-upload-button) {
+  :where(.novu)::-webkit-file-upload-button {
     -webkit-appearance: button; /* 1 */
     font: inherit; /* 2 */
   }
 
-  :where(summary),
-  :where(summary *) ::before,
-  :where(summary *) ::after,
-  :where(summary)::before,
-  :where(summary)::after {
+  :where(summary) {
     display: list-item;
   }
 
-  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre),
-  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre) * ::before,
-  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre) * ::after,
-  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre)::before,
-  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre)::after {
+  :where(blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre) {
     margin: 0;
   }
 
-  :where(fieldset),
-  :where(fieldset *) ::before,
-  :where(fieldset *) ::after,
-  :where(fieldset)::before,
-  :where(fieldset)::after {
+  :where(fieldset) {
     margin: 0;
     padding: 0;
   }
 
-  :where(legend),
-  :where(legend *) ::before,
-  :where(legend *) ::after,
-  :where(legend)::before,
-  :where(legend)::after {
+  :where(legend) {
     padding: 0;
   }
 
-  :where(ol, ul, menu),
-  :where(ol, ul, menu) * ::before,
-  :where(ol, ul, menu) * ::after,
-  :where(ol, ul, menu)::before,
-  :where(ol, ul, menu)::after {
+  :where(ol, ul, menu) {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  :where(dialog),
-  :where(dialog *) ::before,
-  :where(dialog *) ::after,
-  :where(dialog)::before,
-  :where(dialog)::after {
+  :where(dialog) {
     padding: 0;
   }
 
-  :where(textarea),
-  :where(textarea *) ::before,
-  :where(textarea *) ::after,
-  :where(textarea)::before,
-  :where(textarea)::after {
+  :where(textarea) {
     resize: vertical;
   }
 
-  :where(input::-moz-placeholder, textarea::-moz-placeholder) {
+  :where(.novu input)::-moz-placeholder,
+  :where(.novu textarea)::-moz-placeholder {
     opacity: 1; /* 1 */
     color: #9ca3af; /* 2 */
   }
 
-  :where(input::placeholder, textarea::placeholder) {
+  :where(.novu input)::placeholder,
+  :where(.novu textarea)::placeholder  {
     opacity: 1; /* 1 */
     color: #9ca3af; /* 2 */
   }
+
 
   :where(button, [role='button']) {
     cursor: pointer;
@@ -295,20 +191,12 @@
     cursor: default;
   }
 
-  :where(img, svg, video, canvas, audio, iframe, embed, object),
-  :where(img, svg, video, canvas, audio, iframe, embed, object) * ::before,
-  :where(img, svg, video, canvas, audio, iframe, embed, object) * ::after,
-  :where(img, svg, video, canvas, audio, iframe, embed, object)::before,
-  :where(img, svg, video, canvas, audio, iframe, embed, object)::after {
+  :where(img, svg, video, canvas, audio, iframe, embed, object) {
     display: block; /* 1 */
     vertical-align: middle; /* 2 */
   }
 
-  :where(img, video),
-  :where(img, video) * ::before,
-  :where(img, video) * ::after,
-  :where(img, video)::before,
-  :where(img, video)::after {
+  :where(img, video) {
     max-width: 100%;
     height: auto;
   }
@@ -317,7 +205,11 @@
     display: none;
   }
 
-  :where(*, ::before, ::after) {
+  :where(.novu *),
+  :where(.novu *) ::before,
+  :where(.novu *) ::after,
+  :where(.novu)::before,
+  :where(.novu)::after {
     --tw-border-spacing-x: 0;
     --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
@@ -371,7 +263,7 @@
     --tw-contain-style: ;
   }
 
-  :where(::backdrop) {
+  :where(.novu) ::backdrop {
     --tw-border-spacing-x: 0;
     --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
