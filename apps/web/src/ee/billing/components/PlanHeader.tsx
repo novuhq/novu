@@ -42,7 +42,7 @@ export const PlanHeader = () => {
 
   const checkoutOnSuccess = (data) => {
     if (isStripeCheckoutEnabled) {
-      window.location.href = data.sessionUrl;
+      window.location.href = data.stripeCheckoutUrl;
     } else {
       if (upgradeOpen) {
         return;
