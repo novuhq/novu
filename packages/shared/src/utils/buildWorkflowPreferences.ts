@@ -15,11 +15,16 @@ export const buildWorkflowPreferences = (
     return defaultPreferences;
   }
 
+  const defaultChannelPreference = {
+    // Only use the workflow-level enabled preference if defined
+    ...(inputPreferences?.all?.enabled !== undefined ? { enabled: inputPreferences.all.enabled } : {}),
+  };
+
   return {
     ...defaultPreferences,
-    workflow: {
-      ...defaultPreferences.workflow,
-      ...inputPreferences.workflow,
+    all: {
+      ...defaultPreferences.all,
+      ...inputPreferences.all,
     },
     channels: {
       ...defaultPreferences.channels,
@@ -28,7 +33,7 @@ export const buildWorkflowPreferences = (
           ...output,
           [channel]: {
             ...defaultPreferences.channels[channel],
-            ...inputPreferences?.workflow,
+            ...defaultChannelPreference,
             ...inputPreferences?.channels?.[channel],
           },
         }),
