@@ -1,9 +1,9 @@
 .novu {
-  :where(.novu *),
-  :where(.novu *) ::before,
-  :where(.novu *) ::after,
-  :where(.novu)::before,
-  :where(.novu)::after {
+  :where(*),
+  :where(*) ::before,
+  :where(*) ::after,
+  :where(*)::before,
+  :where(*)::after {
     box-sizing: border-box;
     border-width: 0;
     border-style: solid;
@@ -120,8 +120,8 @@
     vertical-align: baseline;
   }
 
-  :where(.novu)::-webkit-inner-spin-button,
-  :where(.novu)::-webkit-outer-spin-button {
+  :where(*)::-webkit-inner-spin-button,
+  :where(*)::-webkit-outer-spin-button {
     height: auto;
   }
 
@@ -130,11 +130,11 @@
     outline-offset: -2px; /* 2 */
   }
 
-  :where(.novu)::-webkit-search-decoration {
+  :where(*)::-webkit-search-decoration {
     -webkit-appearance: none;
   }
 
-  :where(.novu)::-webkit-file-upload-button {
+  :where(*)::-webkit-file-upload-button {
     -webkit-appearance: button; /* 1 */
     font: inherit; /* 2 */
   }
@@ -170,14 +170,14 @@
     resize: vertical;
   }
 
-  :where(.novu input)::-moz-placeholder,
-  :where(.novu textarea)::-moz-placeholder {
+  :where(input)::-moz-placeholder,
+  :where(textarea)::-moz-placeholder {
     opacity: 1; /* 1 */
     color: #9ca3af; /* 2 */
   }
 
-  :where(.novu input)::placeholder,
-  :where(.novu textarea)::placeholder  {
+  :where(input)::placeholder,
+  :where(textarea)::placeholder  {
     opacity: 1; /* 1 */
     color: #9ca3af; /* 2 */
   }
@@ -205,11 +205,11 @@
     display: none;
   }
 
-  :where(.novu *),
-  :where(.novu *) ::before,
-  :where(.novu *) ::after,
-  :where(.novu)::before,
-  :where(.novu)::after {
+  :where(*),
+  :where(*) ::before,
+  :where(*) ::after,
+  :where(*)::before,
+  :where(*)::after {
     --tw-border-spacing-x: 0;
     --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
@@ -263,7 +263,7 @@
     --tw-contain-style: ;
   }
 
-  :where(.novu) ::backdrop {
+  :where(*) ::backdrop {
     --tw-border-spacing-x: 0;
     --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
