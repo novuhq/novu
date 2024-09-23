@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
+import { GetFeatureFlag } from '@novu/application-generic';
 
 const mockMonthlyBusinessSubscription = {
   id: 'subscription_id',
@@ -43,6 +44,7 @@ describe('CreateUsageRecords', () => {
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
   let getCustomerStub: sinon.SinonStub;
+  let getFeatureFlagStub: sinon.SinonStub;
 
   beforeEach(() => {
     createUsageRecordStub = sinon.stub(stripeStub.subscriptionItems, 'createUsageRecord').resolves({
@@ -70,6 +72,9 @@ describe('CreateUsageRecords', () => {
         data: [mockMonthlyBusinessSubscription],
       },
     } as any);
+
+    const IS_STRIPE_CHECKOUT_ENABLED = false;
+    getFeatureFlagStub = sinon.stub(GetFeatureFlag.prototype, 'execute').resolves(IS_STRIPE_CHECKOUT_ENABLED);
   });
 
   afterEach(() => {
@@ -86,7 +91,8 @@ describe('CreateUsageRecords', () => {
       getCustomerUsecase,
       upsertSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
-      analyticsServiceStub
+      analyticsServiceStub,
+      getFeatureFlagStub
     );
 
     return useCase;
