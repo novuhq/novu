@@ -31,13 +31,13 @@ export const Switch = (props: SwitchProps) => {
       <div
         class={style(
           'channelSwitchThumb',
-          `nt-peer nt-h-6 nt-w-11 nt-rounded-full nt-border nt-bg-slate-200
+          `nt-peer nt-h-6 nt-w-11 nt-rounded-full nt-border nt-border-neutral-alpha-200 peer-checked:nt-border-neutral-alpha-400 nt-bg-neutral-alpha-300
           after:nt-absolute after:nt-left-[2px] after:nt-top-0.5 after:nt-h-5
           after:nt-w-5 after:nt-rounded-full after:nt-border
-          after:nt-border-gray-300
-          after:nt-bg-white after:nt-transition-all after:nt-content-['']
+          after:nt-border-neutral-alpha-400
+          after:nt-bg-background after:nt-transition-all after:nt-content-['']
           peer-checked:nt-bg-primary peer-checked:after:nt-translate-x-full
-          peer-checked:after:nt-border-white
+          peer-checked:after:nt-border-background
           nt-transition-all nt-duration-200 after:nt-duration-200
           data-[disabled=true]:nt-opacity-40`
         )}
