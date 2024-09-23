@@ -1,0 +1,88 @@
+{
+  "name": "@novu/react-native",
+  "version": "2.2.0",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's React Native SDK for building custom inbox notification experiences",
+  "author": "",
+  "license": "ISC",
+  "main": "dist/server/server.js",
+  "module": "dist/client/index.mjs",
+  "types": "dist/client/index.d.ts",
+  "browser": {
+    "./dist/server/server.js": "./dist/client/index.js",
+    "./dist/server/server.mjs": "./dist/client/index.mjs"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/client/index.d.mts",
+        "default": "./dist/server/server.mjs"
+      },
+      "require": {
+        "types": "./dist/server/server.d.ts",
+        "default": "./dist/server/server.js"
+      }
+    },
+    "./hooks": {
+      "import": {
+        "types": "./dist/hooks/index.d.mts",
+        "default": "./dist/hooks/index.mjs"
+      },
+      "require": {
+        "types": "./dist/hooks/index.d.ts",
+        "default": "./dist/hooks/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "dist/client/**/*",
+    "dist/server/**/*",
+    "dist/hooks/**/*",
+    "hooks/**/*"
+  ],
+  "sideEffects": false,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:watch": "tsup --watch",
+    "build": "tsup && pnpm run check-exports",
+    "lint": "eslint src",
+    "check-exports": "attw --pack .",
+    "release:preview": "pnpx pkg-pr-new publish"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.15.4",
+    "@types/node": "^20.14.12",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "tsup": "^8.2.1",
+    "typescript": "5.6.2"
+  },
+  "peerDependencies": {
+    "react": ">=17",
+    "react-dom": ">=17"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@novu/react": "workspace:*"
+  }
+}
