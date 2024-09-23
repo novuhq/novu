@@ -25,8 +25,4 @@ export class HubspotIdentifyFormCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   pageName?: string;
-
-  @IsOptional()
-  @IsString()
-  organizationId?: string;
 }
