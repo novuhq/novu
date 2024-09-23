@@ -38,6 +38,8 @@ export const novuRedirectURLCookie = createCookieHandler('nv_redirect_url');
  */
 export const novuOnboardedCookie = createCookieHandler('nv_onboarding_step');
 
+export const hubspotCookie = createCookieHandler('hubspotutk');
+
 const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 
 // Never expires! Well it does, in 10 years but you will change device or browser by then :)
