@@ -1,6 +1,6 @@
 {
   "name": "@novu/react-native",
-  "version": "2.2.0",
+  "version": "2.2.0-rc.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React Native SDK for building custom inbox notification experiences",
   "author": "",
