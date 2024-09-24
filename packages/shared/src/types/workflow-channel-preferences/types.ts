@@ -2,6 +2,24 @@ import { ChannelTypeEnum } from '../channel';
 import { DeepPartial } from '../shared';
 
 /**
+ * The preference type for a set of preferences.
+ *
+ * Each preference type is resolved in order of specificity,
+ * with 1 being the most specific and 4 being the least specific.
+ *
+ * 1. `SUBSCRIBER_WORKFLOW` - The subscriber's preference for a workflow.
+ * 2. `SUBSCRIBER_GLOBAL` - The subscriber's global preference.
+ * 3. `USER_WORKFLOW` - The user's preference for a workflow.
+ * 4. `WORKFLOW_RESOURCE` - The Framework-defined preference for a workflow.
+ */
+export enum PreferencesTypeEnum {
+  SUBSCRIBER_WORKFLOW = 'SUBSCRIBER_WORKFLOW',
+  SUBSCRIBER_GLOBAL = 'SUBSCRIBER_GLOBAL',
+  USER_WORKFLOW = 'USER_WORKFLOW',
+  WORKFLOW_RESOURCE = 'WORKFLOW_RESOURCE',
+}
+
+/**
  * A preference for a notification delivery workflow.
  *
  * This provides a shortcut to setting all channels to the same preference.

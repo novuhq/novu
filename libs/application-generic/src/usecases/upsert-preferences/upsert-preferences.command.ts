@@ -1,6 +1,5 @@
 import { IsDefined, IsEnum } from 'class-validator';
-import { PreferencesTypeEnum } from '@novu/dal';
-import { WorkflowPreferencesPartial } from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowPreferencesPartial } from '@novu/shared';
 import { EnvironmentCommand } from '../../commands';
 
 export class UpsertPreferencesCommand extends EnvironmentCommand {
