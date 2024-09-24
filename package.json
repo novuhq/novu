@@ -18,6 +18,7 @@
     "test": "cross-env CI=true lerna run test:watch --parallel",
     "start:dev": "cross-env lerna run start:dev --stream --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
     "start:web": "cross-env nx run @novu/web:start",
+    "start:dashboard": "cross-env nx run @novu/dashboard:start",
     "start:ws": "cross-env nx run @novu/ws:start",
     "start:webhook": "cross-env nx run @novu/webhook:start",
     "start:widget": "cross-env nx run @novu/widget:start",
