@@ -15,7 +15,7 @@ describe('Get Control Schema - /step-schemas/:stepType (GET)', async () => {
   it('should get control schema for email step', async function () {
     const { body } = await session.testAgent.get(`/v1/step-schemas/${StepTypeEnum.EMAIL}`);
 
-    const schema = body.data.schema;
+    const { schema } = body.data;
 
     expect(schema.type).to.equal('object');
     expect(schema.properties).to.have.property('subject');
