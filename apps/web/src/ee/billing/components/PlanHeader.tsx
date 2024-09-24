@@ -82,14 +82,14 @@ export const PlanHeader = () => {
 
   useEffect(() => {
     if (isStripeCheckoutEnabled) {
-      const query = new URLSearchParams(window.location.search);
+      const checkoutResult = new URLSearchParams(window.location.search).get('result');
 
-      if (query.get('success')) {
+      if (checkoutResult === 'success') {
         setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
         successMessage('Payment was successful.');
       }
 
-      if (query.get('canceled')) {
+      if (checkoutResult === 'canceled') {
         errorMessage('Order canceled.');
       }
     }
