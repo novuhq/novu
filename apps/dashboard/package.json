@@ -9,7 +9,7 @@
     "build": "pnpm legacy:prepare && tsc -b && vite build",
     "legacy:prepare": "pnpm legacy:clean && pnpm legacy:build && pnpm legacy:copy",
     "legacy:clean": "rimraf legacy/*",
-    "legacy:build": "cd ../web && pnpm build:for-dashboard && pnpm envsetup:dashboard",
+    "legacy:build": "cd ../web && pnpm build:for-dashboard",
     "legacy:copy": "cp -r ../web/build/* ./legacy",
     "lint": "eslint .",
     "preview": "vite preview"

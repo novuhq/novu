@@ -3,10 +3,10 @@
 
 [build]
   # default build command
-  command = "pnpm run build:dashboard --skip-nx-cache"
+  command = "pnpm run build --skip-nx-cache && pnpm run build:dashboard --skip-nx-cache"
 
 [context.deploy-preview]
-  command = "pnpm run build:dashboard --skip-nx-cache"
+  command = "pnpm run build --skip-nx-cache && pnpm run build:dashboard --skip-nx-cache"
 
 [[redirects]]
   from = "/legacy/*"
