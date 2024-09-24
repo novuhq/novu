@@ -36,10 +36,15 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const themes = createMemo(() =>
     Array.isArray(props.appearance?.baseTheme) ? props.appearance?.baseTheme || [] : [props.appearance?.baseTheme || {}]
   );
+
   const id = () => props.id;
   const variables = () => props.appearance?.variables || {};
-  const elements = () => props.appearance?.elements || {};
   const animations = () => props.appearance?.animations ?? true;
+  const allElements = createMemo(() => {
+    const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
+
+    return { ...baseElements, ...(props.appearance?.elements || {}) };
+  });
 
   onMount(() => {
     const el = document.getElementById(props.id);
@@ -89,9 +94,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
-
-    const elementsStyleData = parseElements({ ...baseElements, ...elements() });
+    const elementsStyleData = parseElements(allElements());
     setStore('appearanceKeyToCssInJsClass', (obj) => ({
       ...obj,
       ...elementsStyleData.reduce<Record<string, string>>((acc, item) => {
@@ -116,7 +119,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   return (
     <AppearanceContext.Provider
       value={{
-        elements,
+        elements: allElements,
         variables,
         appearanceKeyToCssInJsClass: store.appearanceKeyToCssInJsClass, // stores are reactive
         animations,
