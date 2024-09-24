@@ -15,7 +15,7 @@ type CloudWorkflowSettingsSidePanelProps = { onClose: () => void };
 export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelProps> = ({ onClose }) => {
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
   const [searchParams] = useSearchParams();
-  const { isLoading, workflowChannelPreferences } = useCloudWorkflowPreferences(workflowId);
+  const { isLoading, workflowChannelPreferences, hasWorkflowPreferences } = useCloudWorkflowPreferences(workflowId);
   const { setValue } = useFormContext<WorkflowDetailFormContext>();
 
   useEffect(() => {
@@ -30,6 +30,7 @@ export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelPr
         <WorkflowSettingsSidePanelContent
           isLoading={isLoading}
           workflowType={searchParams.get('type') as WorkflowTypeEnum}
+          hasWorkflowPreferences={hasWorkflowPreferences}
         />
       </div>
     </Sidebar>

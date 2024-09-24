@@ -1,68 +1,155 @@
 import { Switch } from '@mantine/core';
 import { Table, Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { HStack } from '@novu/novui/jsx';
+import { HStack, VStack } from '@novu/novui/jsx';
 import { ColorToken } from '@novu/novui/tokens';
 import { ChannelTypeEnum, WorkflowPreferences } from '@novu/shared';
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { IconInfoOutline, Tooltip, When } from '@novu/design-system';
 import { PreferenceChannelName, SubscriptionPreferenceRow } from './types';
 import { CHANNEL_LABELS_LOOKUP, CHANNEL_SETTINGS_LOGO_LOOKUP } from './WorkflowSubscriptionPreferences.const';
 import { tableClassName } from './WorkflowSubscriptionPreferences.styles';
+
+const switchClassNames = {
+  root: css({
+    '&:has(:disabled)': { opacity: 'disabled' },
+    '& input:not(:checked) + label': {
+      bg: { _dark: 'legacy.B40 !important', base: 'legacy.B80 !important' },
+    },
+    '& input:checked + label': {
+      bg: 'colorPalette.middle !important',
+    },
+  }),
+  thumb: css({
+    bg: 'legacy.white !important',
+    border: 'none !important',
+  }),
+};
 
 // these match react-table's specifications, but we don't have the types as a direct dependency in web.
 const PREFERENCES_COLUMNS = [
   { accessorKey: 'channel', header: 'Channels', cell: ChannelCell },
   { accessorKey: 'enabled', header: 'Enabled', cell: SwitchCell },
-  {
-    accessorKey: 'readOnly',
-    accessorFn: (row: SubscriptionPreferenceRow) => !row.readOnly,
-    header: 'Editable',
-    cell: SwitchCell,
-  },
 ];
 
 export type WorkflowSubscriptionPreferencesProps = {
   preferences: WorkflowPreferences;
-  updateWorkflowPreferences: (prefs: WorkflowPreferences) => void;
+  updateWorkflowPreferences: (prefs: WorkflowPreferences | null) => void;
   arePreferencesDisabled?: boolean;
+  hasWorkflowPreferences?: boolean;
 };
 
 export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({
   preferences,
   updateWorkflowPreferences,
   arePreferencesDisabled,
+  hasWorkflowPreferences,
 }) => {
+  const [isOverridingPreferences, setIsOverridingPreferences] = useState(hasWorkflowPreferences === true);
+  const isDisabled = arePreferencesDisabled || !isOverridingPreferences;
+
   const onChange = useCallback(
     (channel: PreferenceChannelName, key: string, value: boolean) => {
-      const updatedPreferences: WorkflowPreferences =
-        channel === 'workflow'
-          ? {
-              ...preferences,
-              workflow: { ...preferences.workflow, [key]: value },
-            }
-          : {
-              ...preferences,
-              channels: {
-                ...preferences.channels,
-                [channel]: {
-                  ...preferences.channels[channel],
-                  [key]: value,
-                },
-              },
-            };
+      let updatedPreferences: WorkflowPreferences;
+
+      if (channel === 'all') {
+        const updatedChannels = Object.keys(preferences.channels).reduce(
+          (acc, currChannel) => {
+            acc[currChannel] = { ...preferences.channels[currChannel], [key]: value };
+
+            return acc;
+          },
+          {} as WorkflowPreferences['channels']
+        );
+
+        updatedPreferences = {
+          ...preferences,
+          all: { ...preferences.all, [key]: value },
+          channels: updatedChannels,
+        };
+      } else {
+        const updatedChannels = {
+          ...preferences.channels,
+          [channel]: {
+            ...preferences.channels[channel],
+            [key]: value,
+          },
+        };
+
+        const allChannelsFalse = Object.values(updatedChannels).every((channelPreferences) => !channelPreferences[key]);
+
+        updatedPreferences = {
+          ...preferences,
+          all: { ...preferences.all, [key]: !allChannelsFalse },
+          channels: updatedChannels,
+        };
+      }
 
       updateWorkflowPreferences(updatedPreferences);
     },
     [preferences, updateWorkflowPreferences]
   );
 
+  useEffect(() => {
+    if (isOverridingPreferences === false) {
+      updateWorkflowPreferences(null);
+    }
+  }, [isOverridingPreferences, updateWorkflowPreferences]);
+
   const preferenceRows = useMemo(
-    () => mapPreferencesToRows(preferences, onChange, arePreferencesDisabled),
-    [preferences, onChange, arePreferencesDisabled]
+    () => mapPreferencesToRows(preferences, onChange, isDisabled),
+    [preferences, onChange, isDisabled]
   );
 
   return (
-    <Table<SubscriptionPreferenceRow> className={tableClassName} columns={PREFERENCES_COLUMNS} data={preferenceRows} />
+    <VStack alignItems="inherit" gap="200">
+      <When truthy={!arePreferencesDisabled}>
+        <HStack justify="space-between">
+          <HStack>
+            <Text>Override Preferences</Text>
+            <Tooltip
+              classNames={{
+                tooltip: css({
+                  zIndex: 'tooltip',
+                }),
+              }}
+              label={'Override the default preferences for this workflow'}
+            >
+              <IconInfoOutline size={16} />
+            </Tooltip>
+          </HStack>
+          <Switch
+            size="lg"
+            classNames={switchClassNames}
+            checked={isOverridingPreferences}
+            onChange={(e) => setIsOverridingPreferences(e.target.checked)}
+          />
+        </HStack>
+      </When>
+      <HStack justify="space-between">
+        <HStack
+          color={preferences?.all?.readOnly ? 'typography.text.main' : 'typography.text.secondary'}
+          opacity={isDisabled ? 'disabled' : undefined}
+        >
+          <Text color="inherit">Critical</Text>
+          <Tooltip label={'Mark the workflow as critical, disabling modification of its preferences'}>
+            <IconInfoOutline size={16} color="inherit" />
+          </Tooltip>
+        </HStack>
+        <Switch
+          size="lg"
+          classNames={switchClassNames}
+          onChange={(e) => onChange('all', 'readOnly', e.target.checked)}
+          disabled={isDisabled}
+          checked={preferences?.all?.readOnly}
+        />
+      </HStack>
+      <Table<SubscriptionPreferenceRow>
+        className={tableClassName}
+        columns={PREFERENCES_COLUMNS}
+        data={preferenceRows}
+      />
+    </VStack>
   );
 };
 
@@ -83,25 +170,10 @@ function SwitchCell(props) {
   return (
     <Switch
       // color prop does not work with 'var()' values
-      classNames={{
-        root: css({
-          '&:has(:disabled)': { opacity: 'disabled' },
-          '& input:not(:checked) + label': {
-            bg: { _dark: 'legacy.B40 !important', base: 'legacy.B80 !important' },
-          },
-          '& input:checked + label': {
-            bg: 'colorPalette.middle !important',
-          },
-        }),
-        thumb: css({
-          bg: 'legacy.white !important',
-          border: 'none !important',
-        }),
-      }}
+      classNames={switchClassNames}
       checked={props.getValue()}
       onChange={(e) => {
-        // readOnly is already negated
-        const updatedVal = props.column.id === 'readOnly' ? !e.target.checked : e.target.checked;
+        const updatedVal = e.target.checked;
         props.row.original.onChange(props.row.original.channel, props.column.id, updatedVal);
       }}
       size="lg"
@@ -120,7 +192,7 @@ function mapPreferencesToRows(
   }
 
   return [
-    { ...workflowChannelPreferences.workflow, channel: 'workflow', onChange, disabled: areAllDisabled },
+    { ...workflowChannelPreferences.all, channel: 'all', onChange, disabled: areAllDisabled },
     ...Object.entries(workflowChannelPreferences.channels)
       .map(([channel, pref]) => ({
         ...pref,

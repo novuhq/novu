@@ -20,11 +20,13 @@ enum WorkflowSettingsPanelTab {
 type WorkflowSettingsSidePanelContentProps = {
   isLoading?: boolean;
   workflowType?: WorkflowTypeEnum;
+  hasWorkflowPreferences?: boolean;
 };
 
 export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelContentProps> = ({
   isLoading,
   workflowType,
+  hasWorkflowPreferences,
 }) => {
   const { isLocalStudio } = useStudioState() || {};
   const { control } = useFormContext<WorkflowDetailFormContext>();
@@ -89,6 +91,7 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
                       preferences={field.value}
                       updateWorkflowPreferences={field.onChange}
                       arePreferencesDisabled={isLocalStudio}
+                      hasWorkflowPreferences={hasWorkflowPreferences}
                     />
                   );
                 }}
