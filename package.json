@@ -50,6 +50,7 @@
     "build:webhook": "nx build @novu/webhook",
     "build:inbound-mail": "nx build @novu/inbound-mail",
     "build:web": "nx build @novu/web",
+    "build:dashboard": "nx build @novu/dashboard",
     "build:widget": "nx build @novu/widget",
     "build:embed": "nx build @novu/embed",
     "build:storybook": "nx run @novu/design-system:build-storybook",
