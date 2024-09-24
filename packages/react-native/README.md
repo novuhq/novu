@@ -1,4 +1,4 @@
-# Novu's React SDK for building custom inbox notification experiences.
+# Novu's React Native SDK for building custom inbox notification experiences.
 
 Novu provides the `@novu/react-native` a React library that helps to add a fully functioning Inbox to your mobile application in minutes. Let's do a quick recap on how you can easily use it in your application.
 See full documentation [here](https://docs.novu.co/inbox/react-native/quickstart).

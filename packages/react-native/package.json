@@ -8,10 +8,6 @@
   "main": "dist/client/client.js",
   "module": "dist/client/index.mjs",
   "types": "dist/client/index.d.ts",
-  "browser": {
-    "./dist/server/server.js": "./dist/client/index.js",
-    "./dist/server/server.mjs": "./dist/client/index.mjs"
-  },
   "files": [
     "dist",
     "dist/client/**/*"
@@ -28,18 +24,6 @@
     "check-exports": "attw --pack .",
     "release:preview": "pnpx pkg-pr-new publish"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.15.4",
     "@types/node": "^20.14.12",
@@ -49,13 +33,7 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "react": ">=17",
-    "react-dom": ">=17"
-  },
-  "peerDependenciesMeta": {
-    "react-dom": {
-      "optional": true
-    }
+    "react": ">=17"
   },
   "dependencies": {
     "@novu/react": "workspace:*"

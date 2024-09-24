@@ -3987,9 +3987,6 @@ importers:
       react:
         specifier: '>=17'
         version: 18.3.1
-      react-dom:
-        specifier: '>=17'
-        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.4
