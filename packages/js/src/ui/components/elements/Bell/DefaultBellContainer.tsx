@@ -13,7 +13,7 @@ export const BellContainer = (props: DefaultBellContainerProps) => {
     <span
       class={style(
         'bellContainer',
-        `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md nt-relative nt-text-foreground-alpha-600 nt-cursor-pointer`
+        `nt-h-6 nt-w-6 nt-flex nt-justify-center nt-items-center nt-rounded-md nt-relative nt-text-foreground nt-cursor-pointer`
       )}
     >
       <BellIcon class={style('bellIcon')} />

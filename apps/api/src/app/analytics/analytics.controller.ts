@@ -44,6 +44,7 @@ export class AnalyticsController {
         hubspotContext: body.hubspotContext,
         pageUri: body.pageUri,
         pageName: body.pageName,
+        organizationId: user.organizationId,
       })
     );
   }
