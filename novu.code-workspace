@@ -17,6 +17,10 @@
       "path": "apps/web"
     },
     {
+      "name": "🚀 @novu/dashboard",
+      "path": "apps/dashboard"
+    },
+    {
       "name": "🚀 @novu/ws",
       "path": "apps/ws"
     },
