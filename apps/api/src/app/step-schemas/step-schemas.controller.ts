@@ -4,6 +4,7 @@ import { UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { StepType } from '@novu/framework';
 
+import { ApiOperation, ApiParam } from '@nestjs/swagger';
 import { GetStepSchemaCommand } from './usecases/get-step-schema/get-step-schema.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetStepSchema } from './usecases/get-step-schema/get-step-schema.usecase';
@@ -16,6 +17,15 @@ export class StepSchemasController {
   constructor(private getStepDefaultSchemaUsecase: GetStepSchema) {}
 
   @Get('/:stepType')
+  @ApiOperation({
+    summary: 'Get step schema',
+    description: 'Get the schema for a step type',
+  })
+  @ApiParam({
+    name: 'stepType',
+    type: String,
+    description: 'The type of step to get the schema for.',
+  })
   @ExternalApiAccessible()
   async getStepSchema(
     @UserSession() user: UserSessionData,
