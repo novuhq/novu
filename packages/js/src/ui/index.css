@@ -308,6 +308,27 @@
     --tw-contain-paint: ;
     --tw-contain-style: ;
   }
+
+  /* Scrollbar */
+  scrollbar-color: var(--nv-color-secondary-foreground-alpha-300) transparent;
+
+  /* Webkit Safari */
+  ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--nv-color-secondary-foreground-alpha-300);
+    border-radius: 0.25rem;
+    background-clip: 'padding-box',
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+
 }
 
 @tailwind base;
