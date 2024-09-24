@@ -1,6 +1,6 @@
 import { autoUpdate, flip, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
-import { Accessor, createContext, createSignal, JSX, Setter, useContext } from 'solid-js';
+import { Accessor, createContext, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
 
 type PopoverRootProps = {
   open?: boolean;
@@ -32,7 +32,13 @@ export function PopoverRoot(props: PopoverRootProps) {
 
   const position = useFloating(reference, floating, {
     placement: props.placement || 'bottom-start',
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: (reference, floating, update) =>
+      autoUpdate(reference, floating, update, {
+        elementResize: false,
+        ancestorScroll: false,
+        animationFrame: false,
+        layoutShift: false,
+      }),
     middleware: [
       offset(10),
       flip({
@@ -41,6 +47,11 @@ export function PopoverRoot(props: PopoverRootProps) {
       shift(),
     ],
   });
+  const floatingStyles = createMemo(() => ({
+    position: position.strategy,
+    top: `${position.y ?? 0}px`,
+    left: `${position.x ?? 0}px`,
+  }));
 
   const onClose = () => {
     onOpenChange()(false);
@@ -60,11 +71,7 @@ export function PopoverRoot(props: PopoverRootProps) {
         floating,
         setFloating,
         open,
-        floatingStyles: () => ({
-          position: position.strategy,
-          top: `${position.y ?? 0}px`,
-          left: `${position.x ?? 0}px`,
-        }),
+        floatingStyles,
       }}
     >
       {props.children}
