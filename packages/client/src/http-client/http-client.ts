@@ -58,8 +58,8 @@ export class HttpClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    const hasEmptyContent = this.checkEmptyResponse(response);
-    if (hasEmptyContent) {
+    const hasEmptyResponse = this.checkEmptyResponse(response);
+    if (hasEmptyResponse) {
       return;
     }
 
@@ -88,8 +88,8 @@ export class HttpClient {
       method: 'DELETE',
       body: JSON.stringify(body),
     });
-    const hasEmptyContent = this.checkEmptyResponse(response);
-    if (hasEmptyContent) {
+    const hasEmptyResponse = this.checkEmptyResponse(response);
+    if (hasEmptyResponse) {
       return;
     }
 
