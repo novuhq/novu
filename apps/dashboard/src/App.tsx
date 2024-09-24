@@ -19,6 +19,9 @@ function App() {
       <h1>Vite + React</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>count is {count}</button>
+        <a href="/legacy/workflows?page=1&size=10" target="_self">
+          Old Web App
+        </a>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
