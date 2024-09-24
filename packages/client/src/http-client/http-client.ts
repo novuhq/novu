@@ -58,9 +58,10 @@ export class HttpClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    const data = await response.json();
+    const data = await response.text();
+    const parsedData = data ? JSON.parse(data) : null;
 
-    return data.data;
+    return parsedData?.data;
   }
 
   async patch(url: string, body = {}) {
@@ -68,9 +69,10 @@ export class HttpClient {
       method: 'PATCH',
       body: JSON.stringify(body),
     });
-    const data = await response.json();
+    const data = await response.text();
+    const parsedData = data ? JSON.parse(data) : null;
 
-    return data.data;
+    return parsedData?.data;
   }
 
   async delete(url: string, body = {}) {
@@ -78,9 +80,10 @@ export class HttpClient {
       method: 'DELETE',
       body: JSON.stringify(body),
     });
-    const data = await response.json();
+    const data = await response.text();
+    const parsedData = data ? JSON.parse(data) : null;
 
-    return data.data;
+    return parsedData?.data;
   }
 
   private getQueryString(params?: CustomDataType) {
