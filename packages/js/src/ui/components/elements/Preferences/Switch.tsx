@@ -14,7 +14,7 @@ export const Switch = (props: SwitchProps) => {
       class={style(
         'channelSwitch',
         `nt-relative
-    nt-inline-flex nt-cursor-pointer nt-items-center`
+    nt-inline-flex nt-cursor-pointer nt-items-center data-[disabled=true]:nt-cursor-not-allowed`
       )}
       data-disabled={props.disabled}
     >
