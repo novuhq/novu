@@ -17,10 +17,12 @@ const switchClassNames = {
       bg: { _dark: 'legacy.B40 !important', base: 'legacy.B80 !important' },
     },
     '& input:checked + label': {
+      // eslint-disable-next-line @pandacss/no-hardcoded-color
       bg: 'colorPalette.middle !important',
     },
   }),
   thumb: css({
+    // eslint-disable-next-line @pandacss/no-hardcoded-color
     bg: 'legacy.white !important',
     border: 'none !important',
   }),
@@ -169,9 +171,10 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
 function ChannelCell(props) {
   const Icon = CHANNEL_SETTINGS_LOGO_LOOKUP[props.getValue()];
 
-  const colorToken: ColorToken = props.row.original.enabled ? 'typography.text.main' : 'typography.text.secondary';
+  const colorToken = props.row.original.enabled ? 'typography.text.main' : 'typography.text.secondary';
 
   return (
+    // eslint-disable-next-line @pandacss/no-dynamic-styling, @pandacss/no-property-renaming
     <HStack color={colorToken} opacity={props.row.original.disabled ? 'disabled' : undefined}>
       {<Icon title="switch-channel-icon" color={'inherit'} />}
       <Text color={'inherit'}>{CHANNEL_LABELS_LOOKUP[props.getValue()]}</Text>
