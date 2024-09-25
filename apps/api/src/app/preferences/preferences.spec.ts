@@ -315,26 +315,57 @@ describe('Preferences', function () {
       });
 
       expect(preferences).to.deep.equal({
-        all: {
-          enabled: false,
-          readOnly: false,
+        preferences: {
+          all: {
+            enabled: false,
+            readOnly: false,
+          },
+          channels: {
+            in_app: {
+              enabled: false,
+            },
+            sms: {
+              enabled: false,
+            },
+            email: {
+              enabled: false,
+            },
+            push: {
+              enabled: false,
+            },
+            chat: {
+              enabled: false,
+            },
+          },
         },
-        channels: {
-          in_app: {
-            enabled: false,
+        type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
+        source: {
+          [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
+            all: {
+              enabled: false,
+              readOnly: false,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          sms: {
-            enabled: false,
-          },
-          email: {
-            enabled: false,
-          },
-          push: {
-            enabled: false,
-          },
-          chat: {
-            enabled: false,
-          },
+          [PreferencesTypeEnum.USER_WORKFLOW]: null,
+          [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: null,
+          [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: null,
         },
       });
 
@@ -378,26 +409,79 @@ describe('Preferences', function () {
       });
 
       expect(preferences).to.deep.equal({
-        all: {
-          enabled: false,
-          readOnly: true,
+        preferences: {
+          all: {
+            enabled: false,
+            readOnly: true,
+          },
+          channels: {
+            in_app: {
+              enabled: false,
+            },
+            sms: {
+              enabled: false,
+            },
+            email: {
+              enabled: false,
+            },
+            push: {
+              enabled: false,
+            },
+            chat: {
+              enabled: false,
+            },
+          },
         },
-        channels: {
-          in_app: {
-            enabled: false,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
+        source: {
+          [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
+            all: {
+              enabled: false,
+              readOnly: false,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          sms: {
-            enabled: false,
+          [PreferencesTypeEnum.USER_WORKFLOW]: {
+            all: {
+              enabled: false,
+              readOnly: true,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          email: {
-            enabled: false,
-          },
-          push: {
-            enabled: false,
-          },
-          chat: {
-            enabled: false,
-          },
+          [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: null,
+          [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: null,
         },
       });
 
@@ -441,26 +525,101 @@ describe('Preferences', function () {
       });
 
       expect(preferences).to.deep.equal({
-        all: {
-          enabled: false,
-          readOnly: true,
+        preferences: {
+          all: {
+            enabled: false,
+            readOnly: true,
+          },
+          channels: {
+            in_app: {
+              enabled: false,
+            },
+            sms: {
+              enabled: false,
+            },
+            email: {
+              enabled: false,
+            },
+            push: {
+              enabled: false,
+            },
+            chat: {
+              enabled: false,
+            },
+          },
         },
-        channels: {
-          in_app: {
-            enabled: false,
+        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+        source: {
+          [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
+            all: {
+              enabled: false,
+              readOnly: false,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          sms: {
-            enabled: false,
+          [PreferencesTypeEnum.USER_WORKFLOW]: {
+            all: {
+              enabled: false,
+              readOnly: true,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          email: {
-            enabled: false,
+          [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: {
+            all: {
+              enabled: false,
+              readOnly: true,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          push: {
-            enabled: false,
-          },
-          chat: {
-            enabled: false,
-          },
+          [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: null,
         },
       });
 
@@ -505,25 +664,122 @@ describe('Preferences', function () {
       });
 
       expect(preferences).to.deep.equal({
-        all: {
-          enabled: false,
-          readOnly: true,
+        preferences: {
+          all: {
+            enabled: false,
+            readOnly: true,
+          },
+          channels: {
+            in_app: {
+              enabled: false,
+            },
+            sms: {
+              enabled: false,
+            },
+            email: {
+              enabled: false,
+            },
+            push: {
+              enabled: false,
+            },
+            chat: {
+              enabled: false,
+            },
+          },
         },
-        channels: {
-          in_app: {
-            enabled: false,
+        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        source: {
+          [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
+            all: {
+              enabled: false,
+              readOnly: false,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          sms: {
-            enabled: false,
+          [PreferencesTypeEnum.USER_WORKFLOW]: {
+            all: {
+              enabled: false,
+              readOnly: true,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          email: {
-            enabled: false,
+          [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: {
+            all: {
+              enabled: false,
+              readOnly: true,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          push: {
-            enabled: false,
-          },
-          chat: {
-            enabled: false,
+          [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: {
+            all: {
+              enabled: false,
+              readOnly: true,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
         },
       });
@@ -568,26 +824,57 @@ describe('Preferences', function () {
       const { body } = await session.testAgent.get(`/v1/preferences?workflowId=${workflowId}`).send();
 
       expect(body.data).to.deep.equal({
-        all: {
-          enabled: false,
-          readOnly: false,
+        preferences: {
+          all: {
+            enabled: false,
+            readOnly: false,
+          },
+          channels: {
+            in_app: {
+              enabled: false,
+            },
+            sms: {
+              enabled: false,
+            },
+            email: {
+              enabled: false,
+            },
+            push: {
+              enabled: false,
+            },
+            chat: {
+              enabled: false,
+            },
+          },
         },
-        channels: {
-          in_app: {
-            enabled: false,
+        type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
+        source: {
+          [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
+            all: {
+              enabled: false,
+              readOnly: false,
+            },
+            channels: {
+              in_app: {
+                enabled: false,
+              },
+              sms: {
+                enabled: false,
+              },
+              email: {
+                enabled: false,
+              },
+              push: {
+                enabled: false,
+              },
+              chat: {
+                enabled: false,
+              },
+            },
           },
-          sms: {
-            enabled: false,
-          },
-          email: {
-            enabled: false,
-          },
-          push: {
-            enabled: false,
-          },
-          chat: {
-            enabled: false,
-          },
+          [PreferencesTypeEnum.USER_WORKFLOW]: null,
+          [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: null,
+          [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: null,
         },
       });
     });
