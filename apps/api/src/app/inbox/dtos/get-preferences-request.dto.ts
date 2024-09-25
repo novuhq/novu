@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class GetPreferencesRequestDto {
@@ -8,5 +9,6 @@ export class GetPreferencesRequestDto {
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   critical?: boolean;
 }
