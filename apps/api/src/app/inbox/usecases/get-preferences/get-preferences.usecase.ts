@@ -47,6 +47,7 @@ export class GetPreferences {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: command.tags,
+        critical: command.critical,
       })) || [];
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {

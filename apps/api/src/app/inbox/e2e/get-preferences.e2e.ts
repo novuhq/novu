@@ -78,4 +78,99 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
       expect(workflowPreference.workflow.tags[0]).to.be.oneOf([newsletterTag, securityTag]);
     });
   });
+
+  it('should not fetch critical workflows when ?critical=false', async function () {
+    await session.createTemplate({
+      noFeedId: true,
+      critical: true,
+    });
+
+    await session.createTemplate({
+      noFeedId: true,
+      critical: false,
+    });
+
+    const response = await session.testAgent
+      .get('/v1/inbox/preferences?critical=false')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.body.data.length).to.equal(2);
+
+    const globalPreference = response.body.data[0];
+
+    expect(globalPreference.channels.email).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(true);
+    expect(globalPreference.level).to.equal('global');
+
+    const nonCriticalWorkflowPreference = response.body.data[1];
+
+    expect(nonCriticalWorkflowPreference.channels.email).to.equal(true);
+    expect(nonCriticalWorkflowPreference.channels.in_app).to.equal(true);
+    expect(nonCriticalWorkflowPreference.level).to.equal('template');
+    expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(false);
+  });
+
+  it('should fetch critical workflows when ?critical=true', async function () {
+    await session.createTemplate({
+      noFeedId: true,
+      critical: true,
+    });
+
+    const response = await session.testAgent
+      .get('/v1/inbox/preferences?critical=true')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.body.data.length).to.equal(2);
+
+    const globalPreference = response.body.data[0];
+
+    expect(globalPreference.channels.email).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(true);
+    expect(globalPreference.level).to.equal('global');
+
+    const workflowPreference = response.body.data[1];
+
+    expect(workflowPreference.channels.email).to.equal(true);
+    expect(workflowPreference.channels.in_app).to.equal(true);
+    expect(workflowPreference.level).to.equal('template');
+    expect(workflowPreference.workflow.critical).to.equal(true);
+  });
+
+  it('should fetch both critical and non-critical workflows when ?critical query parameter is not passed', async function () {
+    await session.createTemplate({
+      noFeedId: true,
+      critical: true,
+    });
+
+    await session.createTemplate({
+      noFeedId: true,
+      critical: false,
+    });
+
+    const response = await session.testAgent
+      .get('/v1/inbox/preferences')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.body.data.length).to.equal(3);
+
+    const globalPreference = response.body.data[0];
+
+    expect(globalPreference.channels.email).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(true);
+    expect(globalPreference.level).to.equal('global');
+
+    const criticalWorkflowPreference = response.body.data[1];
+
+    expect(criticalWorkflowPreference.channels.email).to.equal(true);
+    expect(criticalWorkflowPreference.channels.in_app).to.equal(true);
+    expect(criticalWorkflowPreference.level).to.equal('template');
+    expect(criticalWorkflowPreference.workflow.critical).to.equal(true);
+
+    const nonCriticalWorkflowPreference = response.body.data[2];
+
+    expect(nonCriticalWorkflowPreference.channels.email).to.equal(true);
+    expect(nonCriticalWorkflowPreference.channels.in_app).to.equal(true);
+    expect(nonCriticalWorkflowPreference.level).to.equal('template');
+    expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(false);
+  });
 });

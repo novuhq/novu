@@ -1,4 +1,4 @@
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class GetPreferencesCommand extends EnvironmentWithSubscriber {
@@ -6,4 +6,8 @@ export class GetPreferencesCommand extends EnvironmentWithSubscriber {
   @IsArray()
   @IsString({ each: true })
   readonly tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  readonly critical?: boolean;
 }
