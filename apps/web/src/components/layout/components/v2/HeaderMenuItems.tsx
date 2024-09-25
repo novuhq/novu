@@ -9,8 +9,6 @@ import { ProfileMenuItem } from './ProfileMenuItem';
 
 const FALLBACK_AVATAR = `${CONTEXT_PATH}/static/images/avatar.webp`;
 
-const IS_SELF_HOSTED = IS_SELF_HOSTED;
-
 const menuItems = [
   {
     title: 'Settings',
