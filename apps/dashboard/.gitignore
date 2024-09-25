@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 legacy/*
 !legacy/.gitkeep
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
