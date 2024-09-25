@@ -229,7 +229,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     }
 
     if (critical !== undefined) {
-      requestQuery.critical = critical;
+      requestQuery.critical = { $eq: critical };
     }
 
     const items = await this.MongooseModel.find(requestQuery)
