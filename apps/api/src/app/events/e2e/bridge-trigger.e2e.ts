@@ -852,7 +852,7 @@ contexts.forEach((context: Context) => {
         },
         {
           preferences: {
-            workflow: {
+            all: {
               enabled: false,
             },
             channels: {
@@ -893,7 +893,7 @@ contexts.forEach((context: Context) => {
         },
         {
           preferences: {
-            workflow: {
+            all: {
               enabled: false,
             },
           },
