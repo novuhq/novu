@@ -8,7 +8,7 @@ import {
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
   IPreferenceChannels,
-  WorkflowChannelPreferences,
+  WorkflowPreferences,
 } from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
@@ -21,9 +21,7 @@ export class GetPreferences {
     private getFeatureFlag: GetFeatureFlag,
   ) {}
 
-  async execute(
-    command: GetPreferencesCommand,
-  ): Promise<WorkflowChannelPreferences> {
+  async execute(command: GetPreferencesCommand): Promise<WorkflowPreferences> {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         userId: 'system',
@@ -59,20 +57,22 @@ export class GetPreferences {
     subscriberId: string;
     templateId?: string;
   }): Promise<IPreferenceChannels | undefined> {
-    const result = await this.getWorkflowChannelPreferences(command);
+    const result = await this.getWorkflowPreferences(command);
 
-    return GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
-      result,
-    );
+    if (!result) {
+      return undefined;
+    }
+
+    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(result);
   }
 
-  /** Safely get WorkflowChannelPreferences by returning undefined if none are found */
-  public async getWorkflowChannelPreferences(command: {
+  /** Safely get WorkflowPreferences by returning undefined if none are found */
+  public async getWorkflowPreferences(command: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
     templateId?: string;
-  }): Promise<WorkflowChannelPreferences | undefined> {
+  }): Promise<WorkflowPreferences | undefined> {
     try {
       return await this.execute(
         GetPreferencesCommand.create({
@@ -91,41 +91,37 @@ export class GetPreferences {
     }
   }
 
-  /** Transform WorkflowChannelPreferences into IPreferenceChannels */
-  public static mapWorkflowChannelPreferencesToChannelPreferences(
-    workflowPreferences: WorkflowChannelPreferences,
-  ): IPreferenceChannels | undefined {
-    if (!workflowPreferences) {
-      return undefined;
-    }
-
+  /** Transform WorkflowPreferences into IPreferenceChannels */
+  public static mapWorkflowPreferencesToChannelPreferences(
+    workflowPreferences: WorkflowPreferences,
+  ): IPreferenceChannels {
     return {
       in_app:
-        workflowPreferences.channels.in_app.defaultValue !== undefined
-          ? workflowPreferences.channels.in_app.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.in_app.enabled !== undefined
+          ? workflowPreferences.channels.in_app.enabled
+          : workflowPreferences.workflow.enabled,
       sms:
-        workflowPreferences.channels.sms.defaultValue !== undefined
-          ? workflowPreferences.channels.sms.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.sms.enabled !== undefined
+          ? workflowPreferences.channels.sms.enabled
+          : workflowPreferences.workflow.enabled,
       email:
-        workflowPreferences.channels.email.defaultValue !== undefined
-          ? workflowPreferences.channels.email.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.email.enabled !== undefined
+          ? workflowPreferences.channels.email.enabled
+          : workflowPreferences.workflow.enabled,
       push:
-        workflowPreferences.channels.push.defaultValue !== undefined
-          ? workflowPreferences.channels.push.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.push.enabled !== undefined
+          ? workflowPreferences.channels.push.enabled
+          : workflowPreferences.workflow.enabled,
       chat:
-        workflowPreferences.channels.chat.defaultValue !== undefined
-          ? workflowPreferences.channels.chat.defaultValue
-          : workflowPreferences.workflow.defaultValue,
+        workflowPreferences.channels.chat.enabled !== undefined
+          ? workflowPreferences.channels.chat.enabled
+          : workflowPreferences.workflow.enabled,
     };
   }
 
   /** Determine if Workflow Preferences should be marked as critical / readOnly at the top level */
   public static checkIfWorkflowPreferencesIsReadOnly(
-    workflowPreferences?: WorkflowChannelPreferences,
+    workflowPreferences?: WorkflowPreferences,
   ): boolean {
     if (!workflowPreferences) {
       return false;
@@ -142,12 +138,13 @@ export class GetPreferences {
   private mergePreferences(
     items: PreferencesEntity[],
     workflowId?: string,
-  ): WorkflowChannelPreferences | undefined {
-    const workflowPreferences = this.getWorkflowPreferences(items);
-    const userPreferences = this.getUserPreferences(items);
+  ): WorkflowPreferences | undefined {
+    const workflowResourcePreferences =
+      this.getWorkflowResourcePreferences(items);
+    const workflowUserPreferences = this.getWorkflowUserPreferences(items);
 
-    const resourcePreferences = deepMerge(
-      [workflowPreferences, userPreferences]
+    const workflowPreferences = deepMerge(
+      [workflowResourcePreferences, workflowUserPreferences]
         .filter((preference) => preference !== undefined)
         .map((item) => item.preferences),
     );
@@ -172,8 +169,8 @@ export class GetPreferences {
      * we use subscribers workflow preferences
      */
     const preferences = [
-      workflowPreferences,
-      userPreferences,
+      workflowResourcePreferences,
+      workflowUserPreferences,
       subscriberGlobalPreferences,
       subscriberWorkflowPreferences,
     ]
@@ -192,8 +189,8 @@ export class GetPreferences {
     const orderedPreferencesForReadOnly = [
       subscriberWorkflowPreferences,
       subscriberGlobalPreferences,
-      workflowPreferences,
-      userPreferences,
+      workflowResourcePreferences,
+      workflowUserPreferences,
     ]
       .filter((preference) => preference !== undefined)
       .map((item) => item.preferences);
@@ -209,27 +206,27 @@ export class GetPreferences {
           push: { readOnly: channels.push.readOnly },
         },
       }),
-    ) as WorkflowChannelPreferences[];
+    ) as WorkflowPreferences[];
 
     // by merging only the read-only values after the full objects, we ensure that only the readOnly field is affected.
     const readOnlyPreference = deepMerge([...readOnlyPreferences]);
 
     // if there is no subscriber preferences, we return the resource preferences
     if (Object.keys(subscriberPreferences).length === 0) {
-      return resourcePreferences;
+      return workflowPreferences;
     }
 
     // if the workflow should be readonly, we return the resource preferences default value for workflow.
     if (readOnlyPreference?.workflow?.readOnly) {
-      subscriberPreferences.workflow.defaultValue =
-        resourcePreferences?.workflow?.defaultValue;
+      subscriberPreferences.workflow.enabled =
+        workflowPreferences?.workflow?.enabled;
     }
 
     // if the workflow channel should be readonly, we return the resource preferences default value for channel.
     for (const channel of Object.values(ChannelTypeEnum)) {
       if (readOnlyPreference?.channels[channel]?.readOnly) {
-        subscriberPreferences.channels[channel].defaultValue =
-          resourcePreferences?.channels[channel]?.defaultValue;
+        subscriberPreferences.channels[channel].enabled =
+          workflowPreferences?.channels[channel]?.enabled;
       }
     }
 
@@ -254,13 +251,13 @@ export class GetPreferences {
     );
   }
 
-  private getUserPreferences(items: PreferencesEntity[]) {
+  private getWorkflowUserPreferences(items: PreferencesEntity[]) {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
     );
   }
 
-  private getWorkflowPreferences(items: PreferencesEntity[]) {
+  private getWorkflowResourcePreferences(items: PreferencesEntity[]) {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
     );

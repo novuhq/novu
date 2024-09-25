@@ -1,4 +1,4 @@
-import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum, ITenantDefine } from '@novu/shared';
+import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum, ITenantDefine, WorkflowPreferences } from '@novu/shared';
 import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
@@ -41,6 +41,7 @@ export class JobEntity {
   _actorId?: string;
   actorId?: string;
   stepOutput?: Record<string, unknown>;
+  preferences?: WorkflowPreferences;
 }
 
 export type JobDBModel = ChangePropsValueType<

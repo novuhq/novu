@@ -43,28 +43,28 @@ describe('Preferences', function () {
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -88,28 +88,28 @@ describe('Preferences', function () {
         UpsertUserWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -134,28 +134,28 @@ describe('Preferences', function () {
         UpsertSubscriberGlobalPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -179,28 +179,28 @@ describe('Preferences', function () {
         UpsertSubscriberWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -225,28 +225,28 @@ describe('Preferences', function () {
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -268,28 +268,28 @@ describe('Preferences', function () {
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: true,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -311,28 +311,28 @@ describe('Preferences', function () {
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -351,28 +351,28 @@ describe('Preferences', function () {
 
       expect(preferences).to.deep.equal({
         workflow: {
-          defaultValue: false,
+          enabled: false,
           readOnly: false,
         },
         channels: {
           in_app: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           sms: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           email: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           push: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           chat: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
         },
@@ -383,28 +383,28 @@ describe('Preferences', function () {
         UpsertUserWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: true,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -424,28 +424,28 @@ describe('Preferences', function () {
 
       expect(preferences).to.deep.equal({
         workflow: {
-          defaultValue: false,
+          enabled: false,
           readOnly: true,
         },
         channels: {
           in_app: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           sms: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           email: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           push: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           chat: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
         },
@@ -456,28 +456,28 @@ describe('Preferences', function () {
         UpsertSubscriberGlobalPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: true,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -497,28 +497,28 @@ describe('Preferences', function () {
 
       expect(preferences).to.deep.equal({
         workflow: {
-          defaultValue: false,
+          enabled: false,
           readOnly: true,
         },
         channels: {
           in_app: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           sms: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           email: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           push: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           chat: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
         },
@@ -529,28 +529,28 @@ describe('Preferences', function () {
         UpsertSubscriberWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: true,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: true,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: true,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -571,28 +571,28 @@ describe('Preferences', function () {
 
       expect(preferences).to.deep.equal({
         workflow: {
-          defaultValue: false,
+          enabled: false,
           readOnly: true,
         },
         channels: {
           in_app: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           sms: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           email: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           push: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           chat: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
         },
@@ -608,28 +608,28 @@ describe('Preferences', function () {
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
             workflow: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             channels: {
               in_app: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               sms: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               email: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               push: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
               chat: {
-                defaultValue: false,
+                enabled: false,
                 readOnly: false,
               },
             },
@@ -644,28 +644,28 @@ describe('Preferences', function () {
 
       expect(body.data).to.deep.equal({
         workflow: {
-          defaultValue: false,
+          enabled: false,
           readOnly: false,
         },
         channels: {
           in_app: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           sms: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           email: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           push: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           chat: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
         },
@@ -677,28 +677,28 @@ describe('Preferences', function () {
         workflowId,
         preferences: {
           workflow: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           channels: {
             in_app: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             sms: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             email: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             push: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
             chat: {
-              defaultValue: false,
+              enabled: false,
               readOnly: false,
             },
           },
@@ -707,28 +707,28 @@ describe('Preferences', function () {
 
       expect(body.data.preferences).to.deep.equal({
         workflow: {
-          defaultValue: false,
+          enabled: false,
           readOnly: false,
         },
         channels: {
           in_app: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           sms: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           email: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           push: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
           chat: {
-            defaultValue: false,
+            enabled: false,
             readOnly: false,
           },
         },

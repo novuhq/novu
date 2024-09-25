@@ -58,6 +58,11 @@ export class HttpClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+    const hasEmptyResponse = this.checkEmptyResponse(response);
+    if (hasEmptyResponse) {
+      return;
+    }
+
     const data = await response.json();
 
     return data.data;
@@ -68,6 +73,11 @@ export class HttpClient {
       method: 'PATCH',
       body: JSON.stringify(body),
     });
+    const hasEmptyResponse = this.checkEmptyResponse(response);
+    if (hasEmptyResponse) {
+      return;
+    }
+
     const data = await response.json();
 
     return data.data;
@@ -78,6 +88,11 @@ export class HttpClient {
       method: 'DELETE',
       body: JSON.stringify(body),
     });
+    const hasEmptyResponse = this.checkEmptyResponse(response);
+    if (hasEmptyResponse) {
+      return;
+    }
+
     const data = await response.json();
 
     return data.data;
@@ -108,5 +123,13 @@ export class HttpClient {
         `HTTP error! Status: ${response.status}, Message: ${errorData.message}`,
       );
     }
+  }
+
+  private checkEmptyResponse(response: Response) {
+    if (response.status === 204) {
+      return true;
+    }
+
+    return false;
   }
 }

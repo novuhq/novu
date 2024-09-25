@@ -70,7 +70,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
     <a
       class={style(
         'notification',
-        cn('nt-w-full nt-text-sm hover:nt-bg-neutral-100 nt-group nt-relative nt-flex nt-py-4 nt-px-6 nt-gap-2', {
+        cn('nt-w-full nt-text-sm hover:nt-bg-neutral-alpha-50 nt-group nt-relative nt-flex nt-py-4 nt-px-6 nt-gap-2', {
           'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
         })
       )}
@@ -80,7 +80,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         <span
           class={style(
             'notificationDot',
-            'nt-absolute -nt-translate-x-[1.0625rem] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border'
+            'nt-absolute -nt-translate-x-[1.0625rem] nt-translate-y-1/2 nt-size-2.5 nt-bg-primary nt-rounded-full nt-border nt-border-neutral-alpha-200'
           )}
         />
       </Show>
@@ -104,7 +104,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
               'notificationDefaultActions',
               `nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 
               nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center 
-              nt-absolute nt-top-0 nt-right-0 nt-bg-neutral-100 nt-py-0.5 nt-rounded nt-z-50`
+              nt-absolute nt-top-0 nt-right-0 nt-bg-neutral-alpha-50 nt-py-0.5 nt-rounded`
             )}
           >
             <Show when={status() !== NotificationStatus.ARCHIVED}>
@@ -123,7 +123,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                             e.stopPropagation();
                             props.notification.read();
                           }}
-                          class="hover:nt-bg-neutral-200"
+                          class="hover:nt-bg-neutral-alpha-50"
                         >
                           <ReadAll />
                         </Button>
@@ -147,7 +147,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           e.stopPropagation();
                           props.notification.unread();
                         }}
-                        class="hover:nt-bg-neutral-200"
+                        class="hover:nt-bg-neutral-alpha-50"
                       >
                         <Unread />
                       </Button>
@@ -174,7 +174,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                           e.stopPropagation();
                           props.notification.archive();
                         }}
-                        class="hover:nt-bg-neutral-200"
+                        class="hover:nt-bg-neutral-alpha-50"
                       >
                         <Archive />
                       </Button>
@@ -198,7 +198,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
                         e.stopPropagation();
                         props.notification.unarchive();
                       }}
-                      class="hover:nt-bg-neutral-200"
+                      class="hover:nt-bg-neutral-alpha-50"
                     >
                       <Unarchive />
                     </Button>
