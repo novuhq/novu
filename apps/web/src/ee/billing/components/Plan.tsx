@@ -8,6 +8,7 @@ import { planList } from '../utils/planList';
 import { PlanFooter } from './PlanFooter';
 import { FreeTrialPlanWidget } from './FreeTrialPlanWidget';
 import { useSubscriptionContext } from './SubscriptionProvider';
+import { ActivePlanBanner } from './ActivePlanBanner';
 
 export const Plan = () => {
   const { colorScheme } = useMantineTheme();
@@ -25,6 +26,7 @@ export const Plan = () => {
   return (
     <>
       <FreeTrialPlanWidget isDark={isDark} />
+      <ActivePlanBanner />
       <PlanWrapper isDark={isDark}>
         <PlanHeader />
         {planList.map((row, index) => (
