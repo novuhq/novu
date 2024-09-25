@@ -5,6 +5,7 @@ import {
   IPreferenceChannels,
   WorkflowPreferences,
   PreferencesTypeEnum,
+  buildWorkflowPreferences,
 } from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
@@ -96,28 +97,17 @@ export class GetPreferences {
   public static mapWorkflowPreferencesToChannelPreferences(
     workflowPreferences: WorkflowPreferences,
   ): IPreferenceChannels {
-    return {
-      in_app:
-        workflowPreferences.channels.in_app.enabled !== undefined
-          ? workflowPreferences.channels.in_app.enabled
-          : workflowPreferences.all.enabled,
-      sms:
-        workflowPreferences.channels.sms.enabled !== undefined
-          ? workflowPreferences.channels.sms.enabled
-          : workflowPreferences.all.enabled,
-      email:
-        workflowPreferences.channels.email.enabled !== undefined
-          ? workflowPreferences.channels.email.enabled
-          : workflowPreferences.all.enabled,
-      push:
-        workflowPreferences.channels.push.enabled !== undefined
-          ? workflowPreferences.channels.push.enabled
-          : workflowPreferences.all.enabled,
-      chat:
-        workflowPreferences.channels.chat.enabled !== undefined
-          ? workflowPreferences.channels.chat.enabled
-          : workflowPreferences.all.enabled,
-    };
+    const builtPreferences = buildWorkflowPreferences(workflowPreferences);
+
+    const mappedPreferences = Object.entries(builtPreferences.channels).reduce(
+      (acc, [channel, preference]) => ({
+        ...acc,
+        [channel]: preference.enabled,
+      }),
+      {} as IPreferenceChannels,
+    );
+
+    return mappedPreferences;
   }
 
   private mergePreferences(
