@@ -33,20 +33,28 @@ const PREFERENCES_COLUMNS = [
 ];
 
 export type WorkflowSubscriptionPreferencesProps = {
-  preferences: WorkflowPreferences;
+  workflowUserPreferences: WorkflowPreferences | null;
+  workflowResourcePreferences: WorkflowPreferences | null;
   updateWorkflowPreferences: (prefs: WorkflowPreferences | null) => void;
   arePreferencesDisabled?: boolean;
-  hasWorkflowPreferences?: boolean;
 };
 
 export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferencesProps> = ({
-  preferences,
+  workflowUserPreferences,
+  workflowResourcePreferences,
   updateWorkflowPreferences,
   arePreferencesDisabled,
-  hasWorkflowPreferences,
 }) => {
-  const [isOverridingPreferences, setIsOverridingPreferences] = useState(hasWorkflowPreferences === true);
+  const [isOverridingPreferences, setIsOverridingPreferences] = useState(false);
+  // Use the user preferences if they exist, otherwise fall back to the resource preferences
+  const [preferences, setPreferences] = useState<WorkflowPreferences>(
+    workflowUserPreferences || workflowResourcePreferences!
+  );
   const isDisabled = arePreferencesDisabled || !isOverridingPreferences;
+
+  useEffect(() => {
+    setPreferences(workflowUserPreferences || workflowResourcePreferences!);
+  }, [workflowUserPreferences, workflowResourcePreferences]);
 
   const onChange = useCallback(
     (channel: PreferenceChannelName, key: string, value: boolean) => {
@@ -91,9 +99,15 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
   );
 
   useEffect(() => {
-    if (isOverridingPreferences === false) {
+    setIsOverridingPreferences(workflowUserPreferences !== null);
+  }, [workflowUserPreferences]);
+
+  useEffect(() => {
+    // Don't dirty the form if the user didn't make any changes
+    if (workflowUserPreferences !== null && isOverridingPreferences === false) {
       updateWorkflowPreferences(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOverridingPreferences, updateWorkflowPreferences]);
 
   const preferenceRows = useMemo(

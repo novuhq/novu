@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { buildWorkflowPreferences, PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
 import { AxiosError, HttpStatusCode } from 'axios';
@@ -8,40 +9,49 @@ export const useCloudWorkflowPreferences = (
   workflowId: string
 ): {
   isLoading: boolean;
-  workflowChannelPreferences: WorkflowPreferences | undefined;
-  hasWorkflowPreferences: boolean | undefined;
+  workflowUserPreferences: WorkflowPreferences | null;
+  workflowResourcePreferences: WorkflowPreferences | null;
   refetch: () => void;
 } => {
   const api = useNovuAPI();
+  const [workflowUserPreferences, setWorkflowUserPreferences] = useState<WorkflowPreferences | null>(null);
+  const [workflowResourcePreferences, setWorkflowResourcePreferences] = useState<WorkflowPreferences | null>(null);
 
-  const { data, isLoading, refetch } = useQuery<{ preferences: WorkflowPreferences; hasWorkflowPreferences: boolean }>(
-    [QueryKeys.getWorkflowPreferences(workflowId)],
-    async () => {
-      try {
-        const result = await api.getPreferences(workflowId as string);
+  const { data, isLoading, refetch } = useQuery<{
+    workflowUserPreferences: WorkflowPreferences;
+    workflowResourcePreferences: WorkflowPreferences;
+  }>([QueryKeys.getWorkflowPreferences(workflowId)], async () => {
+    try {
+      const result = await api.getPreferences(workflowId as string);
 
-        return {
-          preferences: result?.data?.preferences,
-          hasWorkflowPreferences: result?.data?.type === PreferencesTypeEnum.USER_WORKFLOW,
-        };
-      } catch (err: unknown) {
-        if (!checkIsAxiosError(err) || err.response?.status !== HttpStatusCode.NotFound) {
-          throw err;
-        }
-
-        // if preferences aren't found (404), use default so that user can modify them to upsert properly.
-        return {
-          preferences: buildWorkflowPreferences(undefined),
-          hasWorkflowPreferences: false,
-        };
+      return {
+        workflowUserPreferences: result?.data?.source[PreferencesTypeEnum.USER_WORKFLOW],
+        workflowResourcePreferences: result?.data?.source[PreferencesTypeEnum.WORKFLOW_RESOURCE],
+      };
+    } catch (err: unknown) {
+      if (!checkIsAxiosError(err) || err.response?.status !== HttpStatusCode.NotFound) {
+        throw err;
       }
+
+      // if preferences aren't found (404), use default so that user can modify them to upsert properly.
+      return {
+        workflowUserPreferences: buildWorkflowPreferences(undefined),
+        workflowResourcePreferences: buildWorkflowPreferences(undefined),
+      };
     }
-  );
+  });
+
+  useEffect(() => {
+    if (data) {
+      setWorkflowUserPreferences(data.workflowUserPreferences);
+      setWorkflowResourcePreferences(data.workflowResourcePreferences);
+    }
+  }, [data]);
 
   return {
     isLoading,
-    workflowChannelPreferences: data?.preferences,
-    hasWorkflowPreferences: data?.hasWorkflowPreferences,
+    workflowUserPreferences,
+    workflowResourcePreferences,
     refetch,
   };
 };

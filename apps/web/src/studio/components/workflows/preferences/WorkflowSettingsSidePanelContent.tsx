@@ -6,7 +6,7 @@ import { IconDynamicFeed, IconManageAccounts } from '@novu/novui/icons';
 import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { Controller, useFormContext } from 'react-hook-form';
-import { isBridgeWorkflow, WorkflowTypeEnum } from '@novu/shared';
+import { isBridgeWorkflow, WorkflowPreferences, WorkflowTypeEnum } from '@novu/shared';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStudioState } from '../../../StudioStateProvider';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
@@ -21,13 +21,13 @@ export enum WorkflowSettingsPanelTab {
 type WorkflowSettingsSidePanelContentProps = {
   isLoading?: boolean;
   workflowType?: WorkflowTypeEnum;
-  hasWorkflowPreferences?: boolean;
+  workflowResourcePreferences: WorkflowPreferences | null;
 };
 
 export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelContentProps> = ({
   isLoading,
   workflowType,
-  hasWorkflowPreferences,
+  workflowResourcePreferences,
 }) => {
   const { isLocalStudio } = useStudioState() || {};
   const { control } = useFormContext<WorkflowDetailFormContext>();
@@ -100,10 +100,10 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
                 render={({ field }) => {
                   return (
                     <WorkflowSubscriptionPreferences
-                      preferences={field.value}
+                      workflowUserPreferences={field.value}
                       updateWorkflowPreferences={field.onChange}
                       arePreferencesDisabled={isLocalStudio}
-                      hasWorkflowPreferences={hasWorkflowPreferences}
+                      workflowResourcePreferences={workflowResourcePreferences}
                     />
                   );
                 }}

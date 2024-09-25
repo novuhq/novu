@@ -10,7 +10,7 @@ export const useUpdateWorkflowPreferences = (
   >
 ): {
   isLoading: boolean;
-  updateWorkflowPreferences: (data: WorkflowPreferences | null) => void;
+  updateWorkflowPreferences: (data: WorkflowPreferences | null) => Promise<WorkflowPreferences | null>;
 } => {
   const api = useNovuAPI();
 

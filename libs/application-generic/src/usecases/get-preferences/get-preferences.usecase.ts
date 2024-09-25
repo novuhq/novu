@@ -10,6 +10,7 @@ import {
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { GetPreferencesCommand } from './get-preferences.command';
+import { GetPreferencesResponseDto } from './get-preferences.dto';
 
 @Injectable()
 export class GetPreferences {
@@ -18,10 +19,9 @@ export class GetPreferences {
     private getFeatureFlag: GetFeatureFlag,
   ) {}
 
-  async execute(command: GetPreferencesCommand): Promise<{
-    preferences: WorkflowPreferences | undefined;
-    type: PreferencesTypeEnum | undefined;
-  }> {
+  async execute(
+    command: GetPreferencesCommand,
+  ): Promise<GetPreferencesResponseDto> {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         userId: 'system',
@@ -113,10 +113,7 @@ export class GetPreferences {
   private mergePreferences(
     items: PreferencesEntity[],
     workflowId?: string,
-  ): {
-    preferences: WorkflowPreferences | undefined;
-    type: PreferencesTypeEnum | undefined;
-  } {
+  ): GetPreferencesResponseDto {
     const workflowResourcePreferences =
       this.getWorkflowResourcePreferences(items);
     const workflowUserPreferences = this.getWorkflowUserPreferences(items);
@@ -146,18 +143,32 @@ export class GetPreferences {
      * then subscribers global preferences and the once that should be used if it says other then anything before it
      * we use subscribers workflow preferences
      */
-    const preferences = [
+    const preferencesEntities = [
       workflowResourcePreferences,
       workflowUserPreferences,
       subscriberGlobalPreferences,
       subscriberWorkflowPreferences,
-    ]
+    ];
+    const source = Object.values(PreferencesTypeEnum).reduce(
+      (acc, type) => {
+        const preference = items.find((item) => item.type === type);
+        if (preference) {
+          acc[type] = preference.preferences;
+        } else {
+          acc[type] = null;
+        }
+
+        return acc;
+      },
+      {} as GetPreferencesResponseDto['source'],
+    );
+    const preferences = preferencesEntities
       .filter((preference) => preference !== undefined)
       .map((item) => item.preferences);
 
     // ensure we don't merge on an empty list
     if (preferences.length === 0) {
-      return { preferences: undefined, type: undefined };
+      return { preferences: undefined, type: undefined, source };
     }
 
     /**
@@ -197,6 +208,7 @@ export class GetPreferences {
       return {
         preferences: workflowPreferences,
         type: mostSpecificPreference,
+        source,
       };
     }
     // if the workflow should be readonly, we return the resource preferences default value for workflow.
@@ -210,7 +222,11 @@ export class GetPreferences {
       readOnlyPreference,
     ]);
 
-    return { preferences: mergedPreferences, type: mostSpecificPreference };
+    return {
+      preferences: mergedPreferences,
+      type: mostSpecificPreference,
+      source,
+    };
   }
 
   private getSubscriberWorkflowPreferences(
@@ -224,25 +240,33 @@ export class GetPreferences {
     );
   }
 
-  private getSubscriberGlobalPreferences(items: PreferencesEntity[]) {
+  private getSubscriberGlobalPreferences(
+    items: PreferencesEntity[],
+  ): PreferencesEntity | undefined {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     );
   }
 
-  private getWorkflowUserPreferences(items: PreferencesEntity[]) {
+  private getWorkflowUserPreferences(
+    items: PreferencesEntity[],
+  ): PreferencesEntity | undefined {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
     );
   }
 
-  private getWorkflowResourcePreferences(items: PreferencesEntity[]) {
+  private getWorkflowResourcePreferences(
+    items: PreferencesEntity[],
+  ): PreferencesEntity | undefined {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
     );
   }
 
-  private async getPreferencesFromDb(command: GetPreferencesCommand) {
+  private async getPreferencesFromDb(
+    command: GetPreferencesCommand,
+  ): Promise<PreferencesEntity[]> {
     const items: PreferencesEntity[] = [];
 
     /*
