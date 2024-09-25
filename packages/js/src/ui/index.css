@@ -1,9 +1,9 @@
 .novu {
-  :where(.novu *),
-  :where(.novu *) ::before,
-  :where(.novu *) ::after,
-  :where(.novu)::before,
-  :where(.novu)::after {
+  :where(*),
+  :where(*) ::before,
+  :where(*) ::after,
+  :where(*)::before,
+  :where(*)::after {
     box-sizing: border-box;
     border-width: 0;
     border-style: solid;
@@ -120,7 +120,8 @@
     vertical-align: baseline;
   }
 
-  :where(::-webkit-inner-spin-button, ::-webkit-outer-spin-button) {
+  :where(*)::-webkit-inner-spin-button,
+  :where(*)::-webkit-outer-spin-button {
     height: auto;
   }
 
@@ -129,11 +130,11 @@
     outline-offset: -2px; /* 2 */
   }
 
-  :where(::-webkit-search-decoration) {
+  :where(*)::-webkit-search-decoration {
     -webkit-appearance: none;
   }
 
-  :where(::-webkit-file-upload-button) {
+  :where(*)::-webkit-file-upload-button {
     -webkit-appearance: button; /* 1 */
     font: inherit; /* 2 */
   }
@@ -169,15 +170,18 @@
     resize: vertical;
   }
 
-  :where(input::-moz-placeholder, textarea::-moz-placeholder) {
+  :where(input)::-moz-placeholder,
+  :where(textarea)::-moz-placeholder {
     opacity: 1; /* 1 */
     color: #9ca3af; /* 2 */
   }
 
-  :where(input::placeholder, textarea::placeholder) {
+  :where(input)::placeholder,
+  :where(textarea)::placeholder  {
     opacity: 1; /* 1 */
     color: #9ca3af; /* 2 */
   }
+
 
   :where(button, [role='button']) {
     cursor: pointer;
@@ -201,7 +205,11 @@
     display: none;
   }
 
-  :where(*, ::before, ::after) {
+  :where(*),
+  :where(*) ::before,
+  :where(*) ::after,
+  :where(*)::before,
+  :where(*)::after {
     --tw-border-spacing-x: 0;
     --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
@@ -255,7 +263,7 @@
     --tw-contain-style: ;
   }
 
-  :where(::backdrop) {
+  :where(*) ::backdrop {
     --tw-border-spacing-x: 0;
     --tw-border-spacing-y: 0;
     --tw-translate-x: 0;
@@ -308,6 +316,27 @@
     --tw-contain-paint: ;
     --tw-contain-style: ;
   }
+
+  /* Scrollbar */
+  scrollbar-color: var(--nv-color-secondary-foreground-alpha-300) transparent;
+
+  /* Webkit Safari */
+  ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--nv-color-secondary-foreground-alpha-300);
+    border-radius: 0.25rem;
+    background-clip: 'padding-box',
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+
 }
 
 @tailwind base;

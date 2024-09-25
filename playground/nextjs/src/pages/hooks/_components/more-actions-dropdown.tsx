@@ -1,22 +1,16 @@
 'use-client';
 
 import { useNovu } from '@novu/react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu/dropdown-menu';
-import { cn } from '../../../utils/tw';
-import { buttonVariants } from './button';
 import { Archive, ArchiveRead, Dots, ReadAll } from './icons';
 import { StatusItem } from './status-dropdown';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export const MoreActionsDropdown = () => {
   const novu = useNovu();
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'gap-2')}>
+      <DropdownMenuTrigger className={'gap-2'}>
         <Dots />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-[#f5f5f4] text-[#726F77] min-w-content">

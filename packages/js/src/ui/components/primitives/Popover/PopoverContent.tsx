@@ -41,8 +41,9 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   );
 };
 
-type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey; portal?: boolean };
 export const PopoverContent = (props: PopoverContentProps) => {
+  const [local, rest] = splitProps(props, ['portal']);
   const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
 
@@ -81,11 +82,13 @@ export const PopoverContent = (props: PopoverContentProps) => {
 
   return (
     <Show when={open()}>
-      <Portal>
-        <Root>
-          <PopoverContentBody {...props} />
-        </Root>
-      </Portal>
+      <Show when={local.portal} fallback={<PopoverContentBody {...rest} />}>
+        <Portal>
+          <Root>
+            <PopoverContentBody {...rest} />
+          </Root>
+        </Portal>
+      </Show>
     </Show>
   );
 };

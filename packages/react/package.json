@@ -1,6 +1,6 @@
 {
   "name": "@novu/react",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React SDK for building custom inbox notification experiences",
   "author": "",
@@ -32,6 +32,16 @@
         "types": "./dist/hooks/index.d.ts",
         "default": "./dist/hooks/index.js"
       }
+    },
+     "./themes": {
+      "import": {
+        "types": "./dist/themes/index.d.mts",
+        "default": "./dist/themes/index.mjs"
+      },
+      "require": {
+        "types": "./dist/themes/index.d.ts",
+        "default": "./dist/themes/index.js"
+      }
     }
   },
   "files": [
@@ -39,7 +49,9 @@
     "dist/client/**/*",
     "dist/server/**/*",
     "dist/hooks/**/*",
-    "hooks/**/*"
+    "dist/themes/**/*",
+    "hooks/**/*",
+    "themes/**/*"
   ],
   "sideEffects": false,
   "private": false,
