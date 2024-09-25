@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts"],"version":"5.6.2"}
+{"root":["./src/main.tsx","./src/vite-env.d.ts","./src/components/error-page.tsx","./src/components/primitives/button.tsx","./src/components/primitives/form.tsx","./src/components/primitives/label.tsx","./src/routes/root.tsx","./src/routes/workflows.tsx","./src/utils/ui.ts"],"version":"5.6.2"}

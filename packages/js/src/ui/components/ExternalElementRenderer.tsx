@@ -1,14 +1,15 @@
-import { onCleanup, createEffect, ParentProps } from 'solid-js';
+import { createEffect, JSX, onCleanup, splitProps } from 'solid-js';
 
-type ExternalElementMounterProps = ParentProps<{
+type ExternalElementMounterProps = JSX.HTMLAttributes<HTMLDivElement> & {
   render: (el: HTMLDivElement) => () => void;
-}>;
+};
 
-export const ExternalElementRenderer = ({ render, ...rest }: ExternalElementMounterProps) => {
+export const ExternalElementRenderer = (props: ExternalElementMounterProps) => {
   let ref: HTMLDivElement;
+  const [local, rest] = splitProps(props, ['render']);
 
   createEffect(() => {
-    const unmount = render(ref);
+    const unmount = local.render(ref);
 
     onCleanup(() => {
       unmount();

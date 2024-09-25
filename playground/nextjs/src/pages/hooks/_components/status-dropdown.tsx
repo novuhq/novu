@@ -5,9 +5,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import { cn } from '../../../utils/tw';
-import { buttonVariants } from './button';
 import { Archive, ArrowDropDown, Check, InboxIcon, Unread } from './icons';
 import { Show } from './show';
 import { useStatus } from './status-context';
@@ -56,7 +55,7 @@ export const StatusDropdown = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={cn(buttonVariants({ variant: 'unstyled', size: 'none' }), 'gap-2')}>
+      <DropdownMenuTrigger className={'gap-2 flex'}>
         <span className={'text-md font-semibold'}>{STATUS_TEXT[status]}</span>
         <span className={'text-foreground-alpha-600'}>
           <ArrowDropDown />
