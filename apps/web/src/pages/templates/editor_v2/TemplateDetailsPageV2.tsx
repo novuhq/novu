@@ -33,7 +33,7 @@ export const TemplateDetailsPageV2 = () => {
     workflow,
   });
 
-  const [isPanelOpen, setPanelOpen] = useState<boolean>(searchParams.get('settings') !== null);
+  const [isPanelOpen, setPanelOpen] = useState<boolean>(searchParams.has('settings'));
 
   const togglePanel = useCallback(() => {
     setPanelOpen((prev) => {
