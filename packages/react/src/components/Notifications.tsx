@@ -1,8 +1,10 @@
 import React from 'react';
 import type { NotificationClickHandler, NotificationActionClickHandler } from '@novu/js/ui';
-import { useRenderer } from '../context/RenderContext';
 import { Mounter } from './Mounter';
 import { NotificationsRenderer } from '../utils/types';
+import { useRenderer } from '../context/RendererContext';
+import { useNovuUI } from '../context/NovuUIContext';
+import { withRenderer } from './Renderer';
 
 export type NotificationProps = {
   renderNotification?: NotificationsRenderer;
@@ -11,9 +13,10 @@ export type NotificationProps = {
   onSecondaryActionClick?: NotificationActionClickHandler;
 };
 
-export const Notifications = React.memo((props: NotificationProps) => {
+const _Notifications = React.memo((props: NotificationProps) => {
   const { onNotificationClick, onPrimaryActionClick, renderNotification, onSecondaryActionClick } = props;
-  const { novuUI, mountElement } = useRenderer();
+  const { novuUI } = useNovuUI();
+  const { mountElement } = useRenderer();
 
   const mount = React.useCallback(
     (element: HTMLElement) => {
@@ -35,3 +38,5 @@ export const Notifications = React.memo((props: NotificationProps) => {
 
   return <Mounter mount={mount} />;
 });
+
+export const Notifications = withRenderer(_Notifications);

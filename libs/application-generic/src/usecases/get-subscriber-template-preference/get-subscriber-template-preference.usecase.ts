@@ -105,8 +105,10 @@ export class GetSubscriberTemplatePreference {
 
     const template = mapTemplateConfiguration({
       ...command.template,
-      // determine if any readOnly constraints have been set by the Workflow owner
-      critical: subscriberWorkflowPreferences?.all?.readOnly === true,
+      // Use the critical flag from the V2 Preference object if it exists
+      ...(subscriberWorkflowPreferences && {
+        critical: subscriberWorkflowPreferences?.all?.readOnly === true,
+      }),
     });
 
     return {
