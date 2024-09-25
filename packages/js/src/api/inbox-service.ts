@@ -141,10 +141,14 @@ export class InboxService {
     });
   }
 
-  fetchPreferences(tags?: string[]): Promise<PreferencesResponse[]> {
+  fetchPreferences({ tags, critical }: { tags?: string[]; critical?: boolean }): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
       tags.forEach((tag) => queryParams.append('tags[]', tag));
+    }
+
+    if (critical !== undefined) {
+      queryParams.append('critical', `${critical}`);
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

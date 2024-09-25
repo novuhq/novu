@@ -38,7 +38,7 @@ export class Preferences extends BaseModule {
         this._emitter.emit('preferences.list.pending', { args, data });
 
         if (!data) {
-          const response = await this._inboxService.fetchPreferences(args.tags);
+          const response = await this._inboxService.fetchPreferences({ tags: args.tags, critical: args.critical });
           data = response.map(
             (el) =>
               new Preference(el, {
