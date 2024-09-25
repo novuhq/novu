@@ -38,11 +38,13 @@ describe('CreateUsageRecords', () => {
     track: sinon.stub(),
   };
   const upsertSubscriptionUsecase = { execute: () => Promise.resolve() };
+  const createSubscriptionUsecase = { execute: () => Promise.resolve() };
   const getCustomerUsecase = { execute: () => Promise.resolve() };
   const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
+  let createSubscriptionStub: sinon.SinonStub;
   let getCustomerStub: sinon.SinonStub;
   let getFeatureFlagStub: sinon.SinonStub;
 
@@ -61,6 +63,9 @@ describe('CreateUsageRecords', () => {
     upsertSubscriptionStub = sinon.stub(upsertSubscriptionUsecase, 'execute').resolves({
       licensed: mockMonthlyBusinessSubscription,
       metered: mockMonthlyBusinessSubscription,
+    } as any);
+    createSubscriptionStub = sinon.stub(createSubscriptionUsecase, 'execute').resolves({
+      id: 'subscription_id',
     } as any);
     getCustomerStub = sinon.stub(getCustomerUsecase, 'execute').resolves({
       id: 'customer_id',
@@ -81,8 +86,10 @@ describe('CreateUsageRecords', () => {
     createUsageRecordStub.reset();
     getCustomerStub.reset();
     upsertSubscriptionStub.reset();
+    createSubscriptionStub.reset();
     getPlatformNotificationUsageStub.reset();
     analyticsServiceStub.track.reset();
+    getFeatureFlagStub.reset();
   });
 
   const createUseCase = () => {
@@ -90,6 +97,7 @@ describe('CreateUsageRecords', () => {
       stripeStub,
       getCustomerUsecase,
       upsertSubscriptionUsecase,
+      createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
       analyticsServiceStub,
       getFeatureFlagStub
