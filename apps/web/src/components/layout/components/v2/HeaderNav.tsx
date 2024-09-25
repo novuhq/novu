@@ -22,7 +22,7 @@ export function HeaderNav() {
   const { bridgeURL } = useStudioState();
 
   const isSelfHosted = IS_SELF_HOSTED;
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const shouldShowNewNovuExperience = isV2ExperienceEnabled && bridgeURL;
 
