@@ -122,14 +122,16 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
         </HStack>
       </When>
       <HStack justify="space-between">
-        <HStack
-          color={preferences?.all?.readOnly ? 'typography.text.main' : 'typography.text.secondary'}
-          opacity={isDisabled ? 'disabled' : undefined}
-        >
-          <Text color="inherit">Critical</Text>
+        <HStack>
+          <Text
+            color={preferences?.all?.readOnly ? 'typography.text.main' : 'typography.text.secondary'}
+            opacity={isDisabled ? 'disabled' : undefined}
+          >
+            Critical
+          </Text>
           <Tooltip label={'Mark the workflow as critical, preventing Subscribers from editing their preference'}>
             <span>
-              <IconInfoOutline size={16} color="inherit" />
+              <IconInfoOutline size={16} />
             </span>
           </Tooltip>
         </HStack>
