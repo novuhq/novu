@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "pnpm legacy:clean && pnpm legacy:copy && vite",
+    "start:static:build": "node proxy-server.js",
     "dev": "pnpm start",
     "build": "pnpm legacy:prepare && tsc -b && vite build",
     "legacy:prepare": "pnpm legacy:clean && pnpm legacy:build && pnpm legacy:copy",
@@ -12,7 +13,14 @@
     "legacy:build": "cd ../.. && pnpm build:web-for-dashboard",
     "legacy:copy": "cp -r ../web/build/* ./legacy",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:install": "playwright install --with-deps",
+    "test:e2e:codegen": "playwright codegen",
+    "test:e2e:show-report": "npx playwright show-report",
+    "test:e2e:merge-report": "playwright merge-reports --reporter html"
   },
   "dependencies": {
     "@hookform/resolvers": "^2.9.1",
@@ -33,6 +41,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^22.7.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -40,8 +50,10 @@
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
+    "express": "^4.21.0",
     "globals": "^15.9.0",
     "rimraf": "^3.0.2",
+    "http-proxy-middleware": "^3.0.2",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",

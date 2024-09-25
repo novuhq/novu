@@ -1,0 +1,57 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy DEV DASHBOARD
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - next
+      - main
+    paths:
+      - 'apps/web/**'
+      - 'apps/dashboard/**'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test_dashboard:
+    uses: ./.github/workflows/reusable-dashboard-e2e.yml
+    with:
+      ee: true
+    secrets: inherit
+
+  deploy_dashboard:
+    needs: test_dashboard
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    uses: ./.github/workflows/reusable-dashboard-deploy.yml
+    with:
+      environment: Development
+      react_app_api_url: https://api.novu-staging.co
+      react_app_ws_url: https://dev.ws.novu.co
+      react_app_webhook_url: https://dev.webhook.novu.co
+      react_app_widget_embed_path: https://dev.embed.novu.co/embed.umd.min.js
+      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
+      react_app_environment: dev
+      react_app_mail_server_domain: dev.inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
+      netlify_deploy_message: Dev deployment
+      netlify_alias: dev
+      netlify_gh_env: development
+      netlify_site_id: 5b9c0332-3423-42d9-abd6-c3a322ba71dc
+      clerk_publishable_key: pk_live_Y2xlcmsubm92dS1zdGFnaW5nLmNvJA
+      clerk_is_ee_auth_enabled: true
+    secrets: inherit
+
+  publish_docker_image_web:
+    needs: test_dashboard
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      environment: Development
+      package_name: novu/dashboard
+      project_path: apps/dashboard
+      local_tag: novu-dashboard
+      env_tag: dev
+    secrets: inherit
