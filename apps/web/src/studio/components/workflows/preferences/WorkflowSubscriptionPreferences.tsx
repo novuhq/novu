@@ -107,15 +107,10 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
         <HStack justify="space-between">
           <HStack>
             <Text>Override Preferences</Text>
-            <Tooltip
-              classNames={{
-                tooltip: css({
-                  zIndex: 'tooltip',
-                }),
-              }}
-              label={'Override the default preferences for this workflow'}
-            >
-              <IconInfoOutline size={16} />
+            <Tooltip label={'Override the default preferences for this workflow'}>
+              <span>
+                <IconInfoOutline size={16} />
+              </span>
             </Tooltip>
           </HStack>
           <Switch
@@ -132,8 +127,10 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
           opacity={isDisabled ? 'disabled' : undefined}
         >
           <Text color="inherit">Critical</Text>
-          <Tooltip label={'Mark the workflow as critical, disabling modification of its preferences'}>
-            <IconInfoOutline size={16} color="inherit" />
+          <Tooltip label={'Mark the workflow as critical, preventing Subscribers from editing their preference'}>
+            <span>
+              <IconInfoOutline size={16} color="inherit" />
+            </span>
           </Tooltip>
         </HStack>
         <Switch
