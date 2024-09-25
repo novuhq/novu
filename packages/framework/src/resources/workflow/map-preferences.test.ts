@@ -30,24 +30,24 @@ describe('mapPreferences', () => {
 
   it('should return the the mapped equivalent of a full preference object', () => {
     const result = mapPreferences({
-      workflow: { enabled: true, readOnly: false },
+      all: { enabled: true, readOnly: false },
       channels: {
-        email: { enabled: true, readOnly: false },
-        sms: { enabled: true, readOnly: false },
-        push: { enabled: true, readOnly: false },
-        inApp: { enabled: true, readOnly: true },
-        chat: { enabled: true, readOnly: false },
+        email: { enabled: true },
+        sms: { enabled: true },
+        push: { enabled: true },
+        inApp: { enabled: true },
+        chat: { enabled: true },
       },
     });
 
     expect(result).to.deep.equal({
-      workflow: { enabled: true, readOnly: false },
+      all: { enabled: true, readOnly: false },
       channels: {
-        email: { enabled: true, readOnly: false },
-        sms: { enabled: true, readOnly: false },
-        push: { enabled: true, readOnly: false },
-        in_app: { enabled: true, readOnly: true },
-        chat: { enabled: true, readOnly: false },
+        email: { enabled: true },
+        sms: { enabled: true },
+        push: { enabled: true },
+        in_app: { enabled: true },
+        chat: { enabled: true },
       },
     });
   });
