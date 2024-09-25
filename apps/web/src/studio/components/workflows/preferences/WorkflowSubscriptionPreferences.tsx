@@ -107,7 +107,7 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
         <HStack justify="space-between">
           <HStack>
             <Text>Override Preferences</Text>
-            <Tooltip label={'Override the default preferences for this workflow'}>
+            <Tooltip label={'Override the default channels for this workflow'}>
               <span>
                 <IconInfoOutline size={16} />
               </span>
@@ -129,7 +129,7 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
           >
             Critical
           </Text>
-          <Tooltip label={'Mark the workflow as critical, preventing Subscribers from editing their preference'}>
+          <Tooltip label={'Mark the workflow as critical, preventing Subscribers from modifying their channels'}>
             <span>
               <IconInfoOutline size={16} />
             </span>
