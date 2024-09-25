@@ -5,7 +5,7 @@ import { colors, shadows, Text } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { getApiKeys } from '../../../api/environment';
 import { When } from '../../../components/utils/When';
-import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
+import { API_ROOT, ENV, IS_SELF_HOSTED, WS_URL } from '../../../config';
 import { useEnvironment, useFeatureFlag } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
@@ -110,7 +110,7 @@ const LoaderWrapper = styled.div`
 `;
 
 function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
-  const concatUrls = ENV !== 'production' || !!IS_DOCKER_HOSTED;
+  const concatUrls = ENV !== 'production' || !!IS_SELF_HOSTED;
 
   return codeSnippet
     .replace(APPLICATION_IDENTIFIER, environmentIdentifier)

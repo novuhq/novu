@@ -4,7 +4,7 @@ import { Tooltip } from '@novu/design-system';
 import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { IS_EE_AUTH_ENABLED, IS_DOCKER_HOSTED } from '../../../../config';
+import { IS_EE_AUTH_ENABLED, IS_SELF_HOSTED } from '../../../../config';
 import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
@@ -21,7 +21,7 @@ export function HeaderNav() {
   const { currentUser } = useAuth();
   const { bridgeURL } = useStudioState();
 
-  const isSelfHosted = IS_DOCKER_HOSTED;
+  const isSelfHosted = IS_SELF_HOSTED;
   const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
 
   const shouldShowNewNovuExperience = isV2ExperienceEnabled && bridgeURL;
