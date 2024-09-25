@@ -4,9 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite",
+    "start": "pnpm legacy:clean && pnpm legacy:copy && vite",
     "dev": "pnpm start",
-    "build": "tsc -b && vite build",
+    "build": "pnpm legacy:prepare && tsc -b && vite build",
+    "legacy:prepare": "pnpm legacy:clean && pnpm legacy:build && pnpm legacy:copy",
+    "legacy:clean": "rimraf legacy/*",
+    "legacy:build": "cd ../.. && pnpm build:web-for-dashboard",
+    "legacy:copy": "cp -r ../web/build/* ./legacy",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -37,12 +41,14 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "rimraf": "^3.0.2",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^3.4.13",
     "typescript": "5.6.2",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vite-plugin-static-copy": "^1.0.6"
   }
 }
