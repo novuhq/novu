@@ -19,8 +19,8 @@ export function mapPreferences(preferences?: WorkflowPreferences): WorkflowPrefe
 
   const output: WorkflowPreferencesPartial = {};
 
-  if (preferences.workflow) {
-    output.workflow = preferences.workflow;
+  if (preferences.all) {
+    output.all = preferences.all;
   }
 
   // map between framework user-friendly enum (with camelCasing) to shared ChannelTypeEnum if the entry exists
