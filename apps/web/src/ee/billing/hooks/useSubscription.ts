@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
 import { useAuth } from '../../../hooks/useAuth';
 import { api } from '../../../api';
+import { ApiServiceLevelEnum } from '@novu/shared';
 
 const today = new Date();
 
@@ -30,6 +31,18 @@ export const useSubscription = () => {
     }
   );
 
+  const { data: usage, isLoading: isLoadingUsage } = useQuery(
+    ['usage', currentOrganization?._id],
+    () => api.get('/v1/billing/usage'),
+    {
+      enabled: !!currentOrganization,
+      initialData: {
+        remaining: 0,
+        limit: 0,
+      },
+    }
+  );
+
   // TODO: Move these calculations to server side
   const daysTotal = useMemo(() => {
     return subscription.trialStart && subscription.trialEnd
@@ -48,10 +61,17 @@ export const useSubscription = () => {
     daysTotal,
     daysLeft,
     isFreeTrialActive,
-    isLoading: isLoadingSubscription || isLoadingPlan,
+    isLoading: isLoadingSubscription || isLoadingPlan || isLoadingUsage,
     hasPaymentMethod: subscription.hasPaymentMethod,
+    // status: subscription.status,
+    status: 'active',
     trialStart: subscription.trialStart,
     trialEnd: subscription.trialEnd,
-    apiServiceLevel: plan?.apiServiceLevel,
+    // apiServiceLevel: plan?.apiServiceLevel,
+    apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+    // currentEvents: usage?.limit - usage?.remaining,
+    // maxEvents: usage?.limit,
+    currentEvents: 250000,
+    maxEvents: 250000,
   };
 };

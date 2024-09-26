@@ -4,7 +4,6 @@ import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
-import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
 import { UpgradeModal } from './UpgradeModal';
@@ -23,8 +22,11 @@ const columnStyle = {
 export const PlanHeader = () => {
   const segment = useSegment();
 
-  const { hasPaymentMethod } = useSubscriptionContext();
-  const { isLoading: isLoadingSubscriptionData, apiServiceLevel: subscriptionApiServiceLevel } = useSubscription();
+  const {
+    hasPaymentMethod,
+    isLoading: isLoadingSubscriptionData,
+    apiServiceLevel: subscriptionApiServiceLevel,
+  } = useSubscriptionContext();
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
   const [intentSecret, setIntentSecret] = useState('');
