@@ -11,7 +11,7 @@ export function PolishingBanner() {
     key: 'polishingBannerDismissed',
     defaultValue: 'false',
   });
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const selfHosted = process.env.REACT_APP_IS_SELF_HOSTED === 'true';
 
   if (selfHosted || polishingBannerDismissed === 'true') return null;
 
