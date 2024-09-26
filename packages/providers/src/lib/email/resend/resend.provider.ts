@@ -50,6 +50,8 @@ export class ResendEmailProvider
         attachments: options.attachments?.map((attachment) => ({
           filename: attachment?.name,
           content: attachment.file,
+          contentId: attachment.cid,
+          disposition: attachment.disposition ?? (Boolean(attachment.cid) ? 'inline' : undefined),
         })),
         bcc: options.bcc,
         headers: options.headers,

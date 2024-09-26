@@ -76,7 +76,13 @@ export class MailgunEmailProvider
       html: emailOptions.html,
       cc: emailOptions.cc?.join(','),
       bcc: emailOptions.bcc?.join(','),
-      attachment: emailOptions.attachments?.map((attachment) => {
+      attachment: emailOptions.attachments?.filter(x => !Boolean(x.cid))?.map((attachment) => {
+        return {
+          data: attachment.file,
+          filename: attachment.name,
+        };
+      }),
+      inline: emailOptions.attachments?.filter(x => Boolean(x.cid))?.map((attachment) => {
         return {
           data: attachment.file,
           filename: attachment.name,

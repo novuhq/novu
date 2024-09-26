@@ -87,9 +87,11 @@ export class Outlook365Provider extends BaseProvider implements IEmailProvider {
       html: options.html,
       text: options.text,
       attachments: options.attachments?.map((attachment) => ({
-        filename: attachment?.name,
+        filename: attachment.name,
         content: attachment.file,
         contentType: attachment.mime,
+        cid: attachment.cid,
+        contentDisposition: attachment.disposition ?? (Boolean(attachment.cid) ? 'inline' : undefined),
       })),
     };
 

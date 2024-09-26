@@ -77,6 +77,7 @@ export class EmailJsProvider extends BaseProvider implements IEmailProvider {
             name: attachment.name,
             data: attachment.file.toString('base64'),
             type: attachment.mime,
+            inline: Boolean(attachment.cid),
           };
         })
       : [];

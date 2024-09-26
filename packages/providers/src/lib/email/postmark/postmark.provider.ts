@@ -94,6 +94,9 @@ export class PostmarkEmailProvider
             attachment.name,
             attachment.file.toString('base64'),
             attachment.mime,
+            attachment.cid,
+            undefined,
+            attachment.disposition ?? (Boolean(attachment.cid) ? 'inline' : undefined),
           ),
       ),
     };
