@@ -1,31 +1,26 @@
 import React, { useContext } from 'react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useSubscription, UseSubscriptionType } from '../hooks/useSubscription';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
-const SubscriptionContext = React.createContext<{
-  daysTotal: number;
-  daysLeft: number;
-  isLoading: boolean;
-  isFreeTrialActive: boolean;
-  hasPaymentMethod: boolean;
-  status: string | null;
-  trialStart: Date;
-  trialEnd: Date;
-  apiServiceLevel: ApiServiceLevelEnum;
-  currentEvents: number;
-  maxEvents: number;
-}>({
-  daysTotal: 0,
-  daysLeft: 0,
+const SubscriptionContext = React.createContext<UseSubscriptionType>({
   isLoading: false,
-  isFreeTrialActive: false,
-  hasPaymentMethod: false,
-  status: null,
-  trialStart: new Date(),
-  trialEnd: new Date(),
   apiServiceLevel: ApiServiceLevelEnum.FREE,
-  currentEvents: 0,
-  maxEvents: 0,
+  isActive: false,
+  status: 'trialing',
+  currentPeriodStart: null,
+  currentPeriodEnd: null,
+  billingInterval: null,
+  events: {
+    current: 0,
+    included: 0,
+  },
+  trial: {
+    isActive: false,
+    start: new Date().toISOString(),
+    end: new Date().toISOString(),
+    daysTotal: 0,
+    daysLeft: 0,
+  },
 });
 
 export const useSubscriptionContext = () => useContext(SubscriptionContext);

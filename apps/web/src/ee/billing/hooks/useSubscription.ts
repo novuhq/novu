@@ -3,75 +3,55 @@ import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
 import { useAuth } from '../../../hooks/useAuth';
 import { api } from '../../../api';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 
 const today = new Date();
 
+export type UseSubscriptionType = GetSubscriptionDto & { trial: { daysLeft: number }; isLoading: boolean };
+
 export const useSubscription = () => {
   const { currentOrganization } = useAuth();
-  const { data: subscription, isLoading: isLoadingSubscription } = useQuery(
+
+  const { data: subscription, isLoading: isLoadingSubscription } = useQuery<GetSubscriptionDto>(
     ['billing-subscription', currentOrganization?._id],
     () => api.get('/v1/billing/subscription'),
     {
       enabled: !!currentOrganization,
       initialData: {
-        trialStart: today.toISOString(),
-        trialEnd: today.toISOString(),
-        hasPaymentMethod: false,
-        status: null,
+        apiServiceLevel: ApiServiceLevelEnum.FREE,
+        isActive: false,
+        status: 'trialing',
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        billingInterval: null,
+        events: {
+          current: 0,
+          included: 0,
+        },
+        trial: {
+          isActive: false,
+          start: today.toISOString(),
+          end: today.toISOString(),
+          daysTotal: 0,
+        },
       },
     }
   );
 
-  const { data: plan, isLoading: isLoadingPlan } = useQuery(
-    ['plan', currentOrganization?._id],
-    () => api.get('/v1/billing/plan'),
-    {
-      enabled: !!currentOrganization,
-    }
-  );
-
-  const { data: usage, isLoading: isLoadingUsage } = useQuery(
-    ['usage', currentOrganization?._id],
-    () => api.get('/v1/billing/usage'),
-    {
-      enabled: !!currentOrganization,
-      initialData: {
-        remaining: 0,
-        limit: 0,
-      },
-    }
-  );
-
-  // TODO: Move these calculations to server side
-  const daysTotal = useMemo(() => {
-    return subscription.trialStart && subscription.trialEnd
-      ? differenceInDays(new Date(subscription.trialEnd), new Date(subscription.trialStart))
-      : 0;
-  }, [subscription.trialStart, subscription.trialEnd]);
   const daysLeft = useMemo(() => {
-    return isSameDay(new Date(subscription.trialEnd), today)
-      ? 0
-      : differenceInDays(new Date(subscription.trialEnd), today);
-  }, [subscription.trialEnd]);
+    if (!subscription?.trial.end) return 0;
 
-  const isFreeTrialActive = subscription.status === 'trialing';
+    return isSameDay(new Date(subscription.trial.end), today)
+      ? 0
+      : differenceInDays(new Date(subscription.trial.end), today);
+  }, [subscription.trial.end]);
 
   return {
-    daysTotal,
-    daysLeft,
-    isFreeTrialActive,
-    isLoading: isLoadingSubscription || isLoadingPlan || isLoadingUsage,
-    hasPaymentMethod: subscription.hasPaymentMethod,
-    // status: subscription.status,
-    status: 'active',
-    trialStart: subscription.trialStart,
-    trialEnd: subscription.trialEnd,
-    // apiServiceLevel: plan?.apiServiceLevel,
-    apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-    // currentEvents: usage?.limit - usage?.remaining,
-    // maxEvents: usage?.limit,
-    currentEvents: 250000,
-    maxEvents: 250000,
+    isLoading: isLoadingSubscription,
+    ...subscription,
+    trial: {
+      ...subscription.trial,
+      daysLeft,
+    },
   };
 };

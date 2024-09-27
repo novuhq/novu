@@ -15,10 +15,10 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 export const Plan = () => {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
-  const { isLoading, daysLeft } = useSubscriptionContext();
+  const { isLoading, trial } = useSubscriptionContext();
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (isLoading || daysLeft === null) {
+  if (isLoading || trial.daysLeft === null) {
     return (
       <Center>
         <Loader color={colors.error} size={32} />

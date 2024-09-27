@@ -14,7 +14,7 @@ import { useFeatureFlag } from '../../../hooks';
 export function FreeTrialBanner() {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
-  const { isFreeTrialActive, daysLeft, hasPaymentMethod, apiServiceLevel } = useSubscription();
+  const { trial, isActive, apiServiceLevel } = useSubscription();
   const [freeTrialDismissed, setFreeTrialDismissed] = useLocalStorage({
     key: 'freeTrialDismissed',
     defaultValue: 'false',
@@ -26,9 +26,9 @@ export function FreeTrialBanner() {
 
   if (
     freeTrialDismissed === 'true' ||
-    !isFreeTrialActive ||
-    daysLeft > warningLimitDays(isImprovedBillingEnabled) ||
-    hasPaymentMethod
+    !trial.isActive ||
+    trial.daysLeft > warningLimitDays(isImprovedBillingEnabled) ||
+    isActive
   ) {
     return null;
   }
@@ -56,7 +56,8 @@ export function FreeTrialBanner() {
           <Group spacing={8}>
             <Warning color={colors.black} />
             <Text color={colors.black}>
-              Trial period expires in {pluralizeDaysLeft(daysLeft)}. Upgrade for continued access to {plan} features.
+              Trial period expires in {pluralizeDaysLeft(trial.daysLeft)}. Upgrade for continued access to {plan}{' '}
+              features.
             </Text>
           </Group>
           <Group spacing={20}>

@@ -9,18 +9,17 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useSubscriptionContext } from './SubscriptionProvider';
 
 export const ActivePlanBanner = () => {
-  const { apiServiceLevel, isFreeTrialActive, daysLeft, currentEvents, maxEvents, trialEnd, status } =
-    useSubscriptionContext();
+  const { apiServiceLevel, status, events, trial } = useSubscriptionContext();
 
   return (
     <div className={styles.activePlanWrapper}>
       <Title variant="section">Active Plan</Title>
       <div className={styles.banner}>
         <div className={styles.content}>
-          <PlanHeader apiServiceLevel={apiServiceLevel} isFreeTrialActive={isFreeTrialActive} daysLeft={daysLeft} />
-          <PlanInfo apiServiceLevel={apiServiceLevel} currentEvents={currentEvents} maxEvents={maxEvents} />
+          <PlanHeader apiServiceLevel={apiServiceLevel} isFreeTrialActive={trial.isActive} daysLeft={trial.daysLeft} />
+          <PlanInfo apiServiceLevel={apiServiceLevel} currentEvents={events.current} maxEvents={events.included} />
         </div>
-        <PlanActions trialEnd={trialEnd} status={status} />
+        <PlanActions trialEnd={trial.end} status={status} />
       </div>
     </div>
   );
@@ -30,7 +29,6 @@ const PlanHeader = ({ apiServiceLevel, isFreeTrialActive, daysLeft }) => {
   const color = getColorByDaysLeft(daysLeft);
   const theme = useMantineTheme();
 
-  console.log(theme.colorScheme);
   return (
     <div className={styles.header}>
       <Title variant="section">{capitalizeFirstLetter(apiServiceLevel)}</Title>

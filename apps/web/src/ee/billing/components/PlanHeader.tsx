@@ -23,9 +23,10 @@ export const PlanHeader = () => {
   const segment = useSegment();
 
   const {
-    hasPaymentMethod,
+    isActive,
     isLoading: isLoadingSubscriptionData,
     apiServiceLevel: subscriptionApiServiceLevel,
+    billingInterval: subscriptionBillingInterval,
   } = useSubscriptionContext();
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
@@ -36,7 +37,7 @@ export const PlanHeader = () => {
   const [apiServiceLevel, setApiServiceLevel] = useState(
     isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
-  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>(subscriptionBillingInterval || 'month');
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export const PlanHeader = () => {
                   </Text>
                 </When>
               </Group>
-              <When truthy={!hasPaymentMethod}>
+              <When truthy={!isActive}>
                 <div style={{ marginBottom: 12 }}>
                   <BillingIntervalControl value={billingInterval} onChange={setBillingInterval} />
                 </div>
@@ -172,7 +173,7 @@ export const PlanHeader = () => {
               </Button>
             </When>
             <When truthy={apiServiceLevel === ApiServiceLevelEnum.BUSINESS}>
-              <When truthy={hasPaymentMethod}>
+              <When truthy={isActive}>
                 <Button
                   variant="outline"
                   loading={isGoingToPortal}
@@ -186,7 +187,7 @@ export const PlanHeader = () => {
                   Manage subscription
                 </Button>
               </When>
-              <When truthy={!hasPaymentMethod}>
+              <When truthy={!isActive}>
                 <Button
                   variant="outline"
                   data-test-id="plan-business-add-payment"
