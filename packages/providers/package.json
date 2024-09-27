@@ -23,8 +23,7 @@
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "vitest",
     "reset-hard": "git clean -dfx && git reset --hard && yarn",
-    "prepare-release": "run-s reset-hard test",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "prepare-release": "run-s reset-hard test"
   },
   "publishConfig": {
     "access": "public"
