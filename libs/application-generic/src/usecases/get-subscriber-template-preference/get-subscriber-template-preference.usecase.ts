@@ -107,9 +107,7 @@ export class GetSubscriberTemplatePreference {
       ...command.template,
       // Use the critical flag from the V2 Preference object if it exists
       ...(subscriberWorkflowPreferences && {
-        critical: GetPreferences.checkIfWorkflowPreferencesIsReadOnly(
-          subscriberWorkflowPreferences,
-        ),
+        critical: subscriberWorkflowPreferences?.all?.readOnly === true,
       }),
     });
 

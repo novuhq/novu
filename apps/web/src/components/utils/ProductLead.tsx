@@ -4,7 +4,7 @@ import { CSSProperties, ReactNode, useEffect } from 'react';
 import styled from '@emotion/styled';
 
 import { Button, colors, Text, Calendar, Close } from '@novu/design-system';
-import { IS_DOCKER_HOSTED } from '../../config';
+import { IS_SELF_HOSTED } from '../../config';
 import { useAuth } from '../../hooks/useAuth';
 import { useSegment } from '../providers/SegmentProvider';
 import { When } from './When';
@@ -46,7 +46,7 @@ export const ProductLead = ({
   const segment = useSegment();
   const theme = useMantineTheme();
   const dark = theme.colorScheme === 'dark';
-  const isSelfHosted = IS_DOCKER_HOSTED;
+  const isSelfHosted = IS_SELF_HOSTED;
 
   useEffect(() => {
     segment.track('Banner seen - [Product lead]', {

@@ -1,8 +1,8 @@
-import { IS_DOCKER_HOSTED } from '../config';
+import { IS_SELF_HOSTED } from '../config';
 import { Routes } from '../ee/billing';
 
 export const BillingRoutes = () => {
-  if (IS_DOCKER_HOSTED) {
+  if (IS_SELF_HOSTED) {
     return null;
   }
 

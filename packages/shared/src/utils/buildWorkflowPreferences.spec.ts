@@ -1,17 +1,21 @@
 import { expect, describe, it } from 'vitest';
 import { buildWorkflowPreferences } from './buildWorkflowPreferences';
-import { ChannelPreference, WorkflowPreferencesPartial, WorkflowPreferences } from '../types';
+import { ChannelPreference, WorkflowPreferencesPartial, WorkflowPreferences, WorkflowPreference } from '../types';
 
 const WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_VALUE = true;
 const WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY = false;
 
-const DEFAULT_CHANNEL_PREFERENCE: ChannelPreference = {
+const DEFAULT_WORKFLOW_PREFERENCE: WorkflowPreference = {
   enabled: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_VALUE,
   readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
 };
 
+const DEFAULT_CHANNEL_PREFERENCE: ChannelPreference = {
+  enabled: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_VALUE,
+};
+
 const testDefaultPreferences: WorkflowPreferences = {
-  workflow: DEFAULT_CHANNEL_PREFERENCE,
+  all: DEFAULT_WORKFLOW_PREFERENCE,
   channels: {
     in_app: DEFAULT_CHANNEL_PREFERENCE,
     sms: DEFAULT_CHANNEL_PREFERENCE,
@@ -28,20 +32,24 @@ describe('buildWorkflowPreferences', () => {
   });
 
   it('should return the input object if a complete preferences object is supplied', () => {
-    const testPreference: ChannelPreference = {
+    const testWorkflowPreference: WorkflowPreference = {
       enabled: false,
       readOnly: true,
     };
 
+    const testChannelPreference: ChannelPreference = {
+      enabled: false,
+    };
+
     // opposite of default
     const testPreferences: WorkflowPreferencesPartial = {
-      workflow: testPreference,
+      all: testWorkflowPreference,
       channels: {
-        in_app: testPreference,
-        sms: testPreference,
-        email: testPreference,
-        push: testPreference,
-        chat: testPreference,
+        in_app: testChannelPreference,
+        sms: testChannelPreference,
+        email: testChannelPreference,
+        push: testChannelPreference,
+        chat: testChannelPreference,
       },
     };
 
@@ -50,24 +58,9 @@ describe('buildWorkflowPreferences', () => {
   });
 
   describe('should populate the remainder of the object with default values', () => {
-    it('using just a single, partial channel with readOnly', () => {
-      const testPreferences: WorkflowPreferencesPartial = {
-        channels: { in_app: { readOnly: true } },
-      };
-
-      const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
-      expect(result).toEqual({
-        ...testDefaultPreferences,
-        channels: {
-          ...testDefaultPreferences.channels,
-          in_app: { enabled: true, readOnly: true },
-        },
-      });
-    });
-
     it('using just a full, single channel', () => {
       const testPreferences: WorkflowPreferencesPartial = {
-        channels: { in_app: { enabled: false, readOnly: false } },
+        channels: { in_app: { enabled: false } },
       };
 
       const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
@@ -75,43 +68,38 @@ describe('buildWorkflowPreferences', () => {
         ...testDefaultPreferences,
         channels: {
           ...testDefaultPreferences.channels,
-          in_app: { enabled: false, readOnly: false },
+          in_app: { enabled: false },
         },
       });
     });
 
     it('using a combination of channels and workflow-level preferences', () => {
       const testPreferences: WorkflowPreferencesPartial = {
-        workflow: { enabled: true, readOnly: true },
+        all: { enabled: true, readOnly: true },
         channels: {
-          in_app: { enabled: false, readOnly: false },
+          in_app: { enabled: false },
           chat: { enabled: false },
         },
       };
 
       const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
       expect(result).toEqual({
-        workflow: testPreferences.workflow,
+        all: testPreferences.all,
         channels: {
           in_app: {
             enabled: false,
-            readOnly: false,
           },
           chat: {
             enabled: false,
-            readOnly: testPreferences.workflow?.readOnly,
           },
           sms: {
-            enabled: testPreferences.workflow?.enabled,
-            readOnly: testPreferences.workflow?.readOnly,
+            enabled: testPreferences.all?.enabled,
           },
           email: {
-            enabled: testPreferences.workflow?.enabled,
-            readOnly: testPreferences.workflow?.readOnly,
+            enabled: testPreferences.all?.enabled,
           },
           push: {
-            enabled: testPreferences.workflow?.enabled,
-            readOnly: testPreferences.workflow?.readOnly,
+            enabled: testPreferences.all?.enabled,
           },
         },
       });
@@ -121,36 +109,31 @@ describe('buildWorkflowPreferences', () => {
   it('should use the `workflow`-level preferences to define defaults for all channel-level preferences', () => {
     const expectedDefaultValue = false;
     const testPreferences: WorkflowPreferencesPartial = {
-      workflow: { enabled: expectedDefaultValue },
+      all: { enabled: expectedDefaultValue },
     };
 
     const result = buildWorkflowPreferences(testPreferences, testDefaultPreferences);
 
     const expectedResult: WorkflowPreferences = {
-      workflow: {
+      all: {
         enabled: expectedDefaultValue,
         readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
       },
       channels: {
         in_app: {
           enabled: expectedDefaultValue,
-          readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
         },
         sms: {
           enabled: expectedDefaultValue,
-          readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
         },
         email: {
           enabled: expectedDefaultValue,
-          readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
         },
         push: {
           enabled: expectedDefaultValue,
-          readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
         },
         chat: {
           enabled: expectedDefaultValue,
-          readOnly: WORKFLOW_CHANNEL_PREFERENCE_DEFAULT_READ_ONLY,
         },
       },
     };

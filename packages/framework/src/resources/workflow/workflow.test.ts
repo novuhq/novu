@@ -110,7 +110,7 @@ describe('workflow function', () => {
       {
         preferences: {
           channels: {
-            email: { enabled: true, readOnly: true },
+            email: { enabled: true },
           },
         },
       }
@@ -118,7 +118,7 @@ describe('workflow function', () => {
 
     expect(definition.preferences).to.deep.equal({
       channels: {
-        email: { enabled: true, readOnly: true },
+        email: { enabled: true },
       },
     });
   });
