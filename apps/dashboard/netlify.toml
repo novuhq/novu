@@ -1,0 +1,31 @@
+[build.environment]
+  DISABLE_ESLINT_PLUGIN="true"
+
+[build]
+  # default build command
+  command = "pnpm run build:dashboard --skip-nx-cache"
+
+[context.deploy-preview]
+  command = "pnpm run build:dashboard --skip-nx-cache"
+
+[[redirects]]
+  from = "/legacy/*"
+  to = "/legacy/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "no-referrer-when-downgrade"
+    X-Content-Type-Options = "nosniff"
+    Permissions-Policy = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()"
+    Strict-Transport-Security = '''
+    max-age=63072000;
+    includeSubDomains;
+    preload'''

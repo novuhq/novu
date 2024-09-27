@@ -53,6 +53,11 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "build:web-for-dashboard": {
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

@@ -3,8 +3,8 @@ import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow, IconSave, IconSettings } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
@@ -17,10 +17,14 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { useTemplateController } from '../components/useTemplateController';
 import { CloudWorkflowSettingsSidePanel } from './CloudWorkflowSettingsSidePanel';
 import { useWorkflowDetailPageForm } from './useWorkflowDetailPageForm';
+import { WorkflowSettingsPanelTab } from '../../../studio/components/workflows/preferences';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const track = useTelemetry();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { template: workflow } = useTemplateController(templateId);
   const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
@@ -29,10 +33,28 @@ export const TemplateDetailsPageV2 = () => {
     workflow,
   });
 
-  const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
+  const [isPanelOpen, setPanelOpen] = useState<boolean>(searchParams.has('settings'));
+
+  const togglePanel = useCallback(() => {
+    setPanelOpen((prev) => {
+      const newSearchParams = new URLSearchParams(searchParams);
+
+      if (prev) {
+        newSearchParams.delete('settings');
+      } else {
+        newSearchParams.set('settings', WorkflowSettingsPanelTab.GENERAL);
+      }
+
+      navigate({
+        pathname: location.pathname,
+        search: newSearchParams.toString(),
+      });
+
+      return !prev;
+    });
+  }, [location.pathname, navigate, searchParams]);
 
   const title = workflowName || workflow?.name || '';
-  const navigate = useNavigate();
 
   const workflowBackgroundWrapperClass = css({
     mx: '0',
@@ -66,7 +88,7 @@ export const TemplateDetailsPageV2 = () => {
             <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
               Test workflow
             </OutlineButton>
-            {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={() => setPanelOpen(true)} />}
+            {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={togglePanel} />}
           </HStack>
         }
       >
@@ -106,7 +128,7 @@ export const TemplateDetailsPageV2 = () => {
             right: '50',
           })}
         />
-        {isPanelOpen && <CloudWorkflowSettingsSidePanel onClose={() => setPanelOpen(false)} />}
+        {isPanelOpen && <CloudWorkflowSettingsSidePanel onClose={togglePanel} />}
       </WorkflowsPageTemplate>
     </form>
   );

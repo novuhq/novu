@@ -4,7 +4,7 @@ import { EnvironmentCommand } from '../../commands';
 
 export class UpsertWorkflowPreferencesCommand extends EnvironmentCommand {
   @IsOptional()
-  readonly preferences?: WorkflowPreferencesPartial;
+  readonly preferences?: WorkflowPreferencesPartial | null;
 
   @IsNotEmpty()
   templateId: string;

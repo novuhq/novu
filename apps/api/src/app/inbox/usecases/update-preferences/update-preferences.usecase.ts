@@ -238,7 +238,7 @@ export class UpdatePreferences {
     templateId?: string;
   }) {
     const preferences: WorkflowPreferencesPartial = {
-      workflow: {
+      all: {
         enabled: PREFERENCE_DEFAULT_VALUE,
         readOnly: false,
       },

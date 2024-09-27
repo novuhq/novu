@@ -12,7 +12,7 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { PreferenceChannelName } from './types';
 
 export const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannelName, IconType> = {
-  workflow: IconDynamicFeed,
+  all: IconDynamicFeed,
   [ChannelTypeEnum.IN_APP]: IconNotificationsNone,
   [ChannelTypeEnum.EMAIL]: IconOutlineMailOutline,
   [ChannelTypeEnum.SMS]: IconOutlineSms,
@@ -22,5 +22,5 @@ export const CHANNEL_SETTINGS_LOGO_LOOKUP: Record<PreferenceChannelName, IconTyp
 
 export const CHANNEL_LABELS_LOOKUP: Record<PreferenceChannelName, string> = {
   ...CHANNEL_TYPE_TO_STRING,
-  workflow: 'Workflow',
+  all: 'All',
 };

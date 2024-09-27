@@ -29,12 +29,12 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
       setValue('general.workflowId', workflow.workflowId);
       setValue('preferences', buildWorkflowPreferences(workflow.preferences));
     }
-  }, [workflow]);
+  }, [setValue, workflow]);
 
   return (
     <Sidebar customHeader={<Title variant="section">Workflow settings</Title>} isOpened onClose={onClose}>
       <div className={css({ colorPalette: 'mode.local' })}>
-        <WorkflowSettingsSidePanelContent isLoading={isLoading} />
+        <WorkflowSettingsSidePanelContent isLoading={isLoading} workflowResourcePreferences={null} />
       </div>
     </Sidebar>
   );

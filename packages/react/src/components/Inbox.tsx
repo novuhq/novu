@@ -38,7 +38,7 @@ const _DefaultInbox = (props: DefaultInboxProps) => {
   return <Mounter mount={mount} />;
 };
 
-export const DefaultInbox = withRenderer(_DefaultInbox);
+const DefaultInbox = withRenderer(_DefaultInbox);
 
 export const Inbox = React.memo((props: InboxProps) => {
   const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } = props;
@@ -61,7 +61,7 @@ export const Inbox = React.memo((props: InboxProps) => {
   );
 });
 
-export const InboxChild = React.memo((props: InboxProps) => {
+const InboxChild = React.memo((props: InboxProps) => {
   const {
     localization,
     appearance,
