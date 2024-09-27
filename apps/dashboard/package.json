@@ -4,13 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "pnpm legacy:clean && pnpm legacy:copy && vite",
+    "start": "vite",
     "dev": "pnpm start",
-    "build": "pnpm legacy:prepare && tsc -b && vite build",
-    "legacy:prepare": "pnpm legacy:clean && pnpm legacy:build && pnpm legacy:copy",
-    "legacy:clean": "rimraf legacy/*",
-    "legacy:build": "cd ../.. && pnpm build:web-for-dashboard",
-    "legacy:copy": "cp -r ../web/build/* ./legacy",
+    "build": "pnpm build:legacy && tsc -b && vite build",
+    "build:legacy": "rimraf legacy/* && pnpm nx build:web:for-dashboard @novu/web",
     "lint": "eslint .",
     "preview": "vite preview"
   },
