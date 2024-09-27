@@ -1,6 +1,6 @@
-import { AnalyticsBrowser } from "@segment/analytics-next";
-import { IUserEntity } from "@novu/shared";
-import * as mixpanel from "mixpanel-browser";
+import { AnalyticsBrowser } from '@segment/analytics-next';
+import { IUserEntity } from '@novu/shared';
+import * as mixpanel from 'mixpanel-browser';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -27,7 +27,7 @@ export class SegmentService {
       }
       this._segment.addSourceMiddleware(({ payload, next }) => {
         try {
-          if (payload.type() === "track" || payload.type() === "page") {
+          if (payload.type() === 'track' || payload.type() === 'page') {
             const segmentDeviceId = payload.obj.anonymousId;
             mixpanel.register({ $device_id: segmentDeviceId });
             const sessionReplayProperties =
@@ -39,11 +39,10 @@ export class SegmentService {
             };
           }
           const { userId } = payload.obj;
-          if (payload.type() === "identify" && userId) {
+          if (payload.type() === 'identify' && userId) {
             mixpanel.identify(userId);
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.error(e);
         }
         next(payload);
@@ -58,7 +57,7 @@ export class SegmentService {
 
     this._segment?.identify(user?._id, {
       email: user.email,
-      name: user.firstName + " " + user.lastName,
+      name: user.firstName + ' ' + user.lastName,
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.profilePicture,
@@ -85,6 +84,7 @@ export class SegmentService {
     this._segment?.setAnonymousId(anonymousId);
   }
 
+  // @ts-expect-error event is unused at the moment until we do the /v1/telemetry/measure API call
   async track(event: string, data?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;
@@ -126,10 +126,6 @@ export class SegmentService {
   }
 
   isSegmentEnabled(): boolean {
-    return (
-      this._segmentEnabled &&
-      this._segment !== null &&
-      typeof window !== "undefined"
-    );
+    return this._segmentEnabled && this._segment !== null && typeof window !== 'undefined';
   }
 }
