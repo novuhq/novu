@@ -5,6 +5,7 @@ import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { injectDocumentComponents } from './injection';
 import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
+import metadata from '../../../../metadata';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'apiKey',
