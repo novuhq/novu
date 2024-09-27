@@ -216,7 +216,7 @@ export class WorkflowControllerV1 {
         __source: query?.__source,
         type: WorkflowTypeEnum.REGULAR,
         origin: WorkflowOriginEnum.NOVU,
-      } as CreateWorkflowCommand)
+      })
     );
   }
 

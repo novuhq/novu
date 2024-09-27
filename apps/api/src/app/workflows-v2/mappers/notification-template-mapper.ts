@@ -4,9 +4,9 @@ import { GetPreferencesResponseDto } from '@novu/application-generic';
 
 import {
   ControlsSchema,
-  MinifiedResponseWorkflowDto,
   PreferencesResponseDto,
   StepResponseDto,
+  WorkflowListResponseDto,
 } from '../dto/workflow-commons-fields';
 import { WorkflowResponseDto } from '../dto/workflow-response-dto';
 
@@ -52,7 +52,7 @@ export class NotificationTemplateMapper {
     return steps;
   }
 
-  static toMinifiedWorkflowDto(template: NotificationTemplateEntity): MinifiedResponseWorkflowDto {
+  static toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowListResponseDto {
     return {
       _id: template._id,
       name: template.name,
@@ -65,9 +65,10 @@ export class NotificationTemplateMapper {
     };
   }
 
-  static toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[]): MinifiedResponseWorkflowDto[] {
+  static toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[]): WorkflowListResponseDto[] {
     return templates.map(NotificationTemplateMapper.toMinifiedWorkflowDto);
   }
+
   static toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
     return {
       name: step.name || 'Missing Name',

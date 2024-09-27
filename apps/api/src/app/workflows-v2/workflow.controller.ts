@@ -60,6 +60,7 @@ export class WorkflowController {
       })
     );
   }
+
   @Put(':workflowId')
   @UseGuards(UserAuthGuard)
   update(
@@ -110,7 +111,7 @@ export class WorkflowController {
         limit: Number(query.limit || '50'),
         orderDirection: query.orderDirection ?? DirectionEnum.DESC,
         orderByField: query.orderByField ?? 'createdAt',
-        searchQuery: query.searchQuery,
+        searchQuery: query.query,
         user,
       })
     );

@@ -11,11 +11,11 @@ import { randomBytes } from 'crypto';
 import { JsonSchema } from '@novu/framework';
 import {
   ListWorkflowResponse,
-  MinifiedResponseWorkflowDto,
   StepCreateDto,
   StepDto,
   StepUpdateDto,
   WorkflowCommonsFields,
+  WorkflowListResponseDto,
 } from './dto/workflow-commons-fields';
 import { WorkflowResponseDto } from './dto/workflow-response-dto';
 import { UpdateWorkflowDto } from './dto/update-workflow-dto';
@@ -450,7 +450,7 @@ async function getAllAndValidate({
   limit = 50,
   expectedTotalResults,
   expectedArraySize,
-}: AllAndValidate): Promise<MinifiedResponseWorkflowDto[]> {
+}: AllAndValidate): Promise<WorkflowListResponseDto[]> {
   const listWorkflowResponse: ListWorkflowResponse = await getListWorkflows(searchQuery, offset, limit);
   const summery: string = buildLogMsg(
     {
@@ -463,11 +463,11 @@ async function getAllAndValidate({
     },
     listWorkflowResponse
   );
-  expect(listWorkflowResponse.workflowSummaries).to.be.an('array', summery);
-  expect(listWorkflowResponse.workflowSummaries).lengthOf(expectedArraySize, ` workflowSummaries length${summery}`);
+  expect(listWorkflowResponse.workflows).to.be.an('array', summery);
+  expect(listWorkflowResponse.workflows).lengthOf(expectedArraySize, ` workflowSummaries length${summery}`);
   expect(listWorkflowResponse.totalResults).to.be.equal(expectedTotalResults, `total Results don't match${summery}`);
 
-  return listWorkflowResponse.workflowSummaries;
+  return listWorkflowResponse.workflows;
 }
 
 function deleteWorkflowRest(_id: string) {
@@ -479,13 +479,13 @@ async function deleteWorkflowAndValidateDeletion(_id: string) {
   await validateWorkflowDeleted(_id);
 }
 
-function extractIDs(workflowSummaries: MinifiedResponseWorkflowDto[]) {
+function extractIDs(workflowSummaries: WorkflowListResponseDto[]) {
   return workflowSummaries.map((workflow) => workflow._id);
 }
 
 function buildIdSet(
-  listWorkflowResponse1: MinifiedResponseWorkflowDto[],
-  listWorkflowResponse2: MinifiedResponseWorkflowDto[]
+  listWorkflowResponse1: WorkflowListResponseDto[],
+  listWorkflowResponse2: WorkflowListResponseDto[]
 ) {
   return new Set([...extractIDs(listWorkflowResponse1), ...extractIDs(listWorkflowResponse2)]);
 }

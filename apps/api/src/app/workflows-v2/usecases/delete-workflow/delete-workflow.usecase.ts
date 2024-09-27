@@ -38,6 +38,7 @@ export class DeleteWorkflowUseCase {
     await this.removeMessageTemplatesIfNeeded(workflow, command);
     await this.notificationTemplateRepository.delete(buildDeleteQuery(command));
   }
+
   private async removeMessageTemplatesIfNeeded(workflow: NotificationTemplateEntity, command: DeleteWorkflowCommand) {
     if (workflow.steps.length > 0) {
       await this.messageTemplateRepository.deleteById({

@@ -19,14 +19,11 @@ export type StepUpdateDto = StepDto & {
 export type StepCreateDto = StepDto;
 
 export type ListWorkflowResponse = {
-  workflowSummaries: MinifiedResponseWorkflowDto[];
+  workflows: WorkflowListResponseDto[];
   totalResults: number;
 };
 
-export type MinifiedResponseWorkflowDto = Pick<
-  WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id'
-> & {
+export type WorkflowListResponseDto = Pick<WorkflowResponseDto, 'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id'> & {
   stepTypeOverviews: StepTypeEnum[];
 };
 

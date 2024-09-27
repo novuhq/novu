@@ -196,7 +196,7 @@ export class NotificationTemplateController {
         __source: query?.__source,
         type: WorkflowTypeEnum.REGULAR,
         origin: WorkflowOriginEnum.NOVU,
-      } as CreateWorkflowCommand)
+      })
     );
   }
 

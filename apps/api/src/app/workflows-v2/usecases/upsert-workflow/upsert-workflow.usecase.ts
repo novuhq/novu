@@ -154,14 +154,6 @@ export class UpsertWorkflowUseCase {
     );
   }
 
-  private async validateEnvironment(command: UpsertWorkflowCommand) {
-    const environment = await this.environmentRepository.findOne({ _id: command.user.environmentId });
-
-    if (!environment) {
-      throw new BadRequestException('Environment not found');
-    }
-  }
-
   private async buildCreateWorkflowGenericCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
     const { user } = command;
     // It's safe to assume we're dealing with CreateWorkflowDto on the creation path
@@ -277,13 +269,12 @@ export class UpsertWorkflowUseCase {
     persistedWorkflow: NotificationTemplateEntity | undefined,
     stepUpdateRequest: StepUpdateDto | StepCreateDto
   ) {
-    if (persistedWorkflow?.steps) {
-      for (const persistedStep of persistedWorkflow.steps) {
-        if (this.isStepUpdateDto(stepUpdateRequest)) {
-          if (persistedStep._templateId === stepUpdateRequest.stepUuid) {
-            return persistedStep;
-          }
-        }
+    if (!persistedWorkflow?.steps) {
+      return;
+    }
+    for (const persistedStep of persistedWorkflow.steps) {
+      if (this.isStepUpdateDto(stepUpdateRequest) && persistedStep._templateId === stepUpdateRequest.stepUuid) {
+        return persistedStep;
       }
     }
   }
