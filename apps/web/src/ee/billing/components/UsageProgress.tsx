@@ -57,7 +57,7 @@ const getWarningContent = (usagePercentage: number, apiServiceLevel: string) => 
 const getColorByUsagePercentage = (usagePercentage: number) => {
   if (usagePercentage >= 100) return '#F2555A';
   if (usagePercentage >= 90) return '#FFB224';
-  return undefined;
+  return 'green';
 };
 
 const styles = {

@@ -102,9 +102,11 @@ const PlanActions = ({ trialEnd, status }) => {
           Manage subscription
         </Button>
       ) : null}
-      <Text variant="secondary" fontSize="14px" color="typography.text.secondary">
-        Trial ends on {formatDate(trialEnd)}
-      </Text>
+      {status === 'trialing' ? (
+        <Text variant="secondary" fontSize="14px" color="typography.text.secondary">
+          Trial ends on {formatDate(trialEnd)}
+        </Text>
+      ) : null}
     </div>
   );
 };
