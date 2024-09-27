@@ -174,7 +174,7 @@ services:
     ports:
       - 4200:4200
     healthcheck:
-      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:4200 || exit 1'] # Changed from wget to curl
+      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:4200 || exit 1'] 
       interval: 30s
       timeout: 10s
       retries: 3
