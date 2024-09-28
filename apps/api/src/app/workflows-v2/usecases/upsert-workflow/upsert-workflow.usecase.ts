@@ -27,7 +27,6 @@ import { PreferencesEntity } from '@novu/dal/src';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepCreateDto, StepDto, StepUpdateDto } from '../../dto/workflow-commons-fields';
-import { NotificationTemplateMapper } from '../../mappers/notification-template-mapper';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { CreateWorkflowDto } from '../../dto/create-workflow-dto';
 import { WorkflowResponseDto } from '../../dto/workflow-response-dto';
@@ -64,7 +63,7 @@ export class UpsertWorkflowUseCase {
     const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
     const preferences = await this.upsertPreference(command, workflow);
 
-    return NotificationTemplateMapper.toResponseWorkflowDto(workflow, preferences, stepIdToControlValuesMap);
+    return toResponseWorkflowDto(workflow, preferences, stepIdToControlValuesMap);
   }
 
   private async upsertControlValues(workflow: NotificationTemplateEntity, command: UpsertWorkflowCommand) {

@@ -10,7 +10,6 @@ import { ControlVariablesLevelEnum } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand, GetPreferencesResponseDto } from '@novu/application-generic';
 
 import { GetWorkflowCommand } from './get-workflow.command';
-import { NotificationTemplateMapper } from '../../mappers/notification-template-mapper';
 import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
 import { WorkflowResponseDto } from '../../dto/workflow-response-dto';
 
@@ -33,11 +32,7 @@ export class GetWorkflowUseCase {
     const stepIdToControlValuesMap = await this.getControlsValuesMap(notificationTemplateEntity.steps, command);
     const preferences = await this.getPreferencesForWorkflow(command);
 
-    return NotificationTemplateMapper.toResponseWorkflowDto(
-      notificationTemplateEntity,
-      preferences,
-      stepIdToControlValuesMap
-    );
+    return toResponseWorkflowDto(notificationTemplateEntity, preferences, stepIdToControlValuesMap);
   }
 
   private async getPreferencesForWorkflow(

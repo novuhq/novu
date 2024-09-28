@@ -10,84 +10,77 @@ import {
 } from '../dto/workflow-commons-fields';
 import { WorkflowResponseDto } from '../dto/workflow-response-dto';
 
-export class NotificationTemplateMapper {
-  static toResponseWorkflowDto(
-    template: NotificationTemplateEntity,
-    preferences: GetPreferencesResponseDto | undefined,
-    stepIdToControlValuesMap: { [p: string]: ControlValuesEntity }
-  ): WorkflowResponseDto {
-    const preferencesDto: PreferencesResponseDto = {
-      user: preferences?.source[PreferencesTypeEnum.USER_WORKFLOW] || null,
-      default: preferences?.source[PreferencesTypeEnum.WORKFLOW_RESOURCE] || DEFAULT_WORKFLOW_PREFERENCES,
-    };
+function toResponseWorkflowDto(
+  template: NotificationTemplateEntity,
+  preferences: GetPreferencesResponseDto | undefined,
+  stepIdToControlValuesMap: { [p: string]: ControlValuesEntity }
+): WorkflowResponseDto {
+  const preferencesDto: PreferencesResponseDto = {
+    user: preferences?.source[PreferencesTypeEnum.USER_WORKFLOW] || null,
+    default: preferences?.source[PreferencesTypeEnum.WORKFLOW_RESOURCE] || DEFAULT_WORKFLOW_PREFERENCES,
+  };
 
-    return {
-      _id: template._id,
-      tags: template.tags,
-      active: template.active,
-      preferences: preferencesDto,
-      steps: NotificationTemplateMapper.getSteps(template, stepIdToControlValuesMap),
-      name: template.name,
-      description: template.description,
-      origin: template.origin || WorkflowOriginEnum.NOVU,
-      updatedAt: template.updatedAt || 'Missing Updated At',
-      createdAt: template.createdAt || 'Missing Create At',
-    };
-  }
+  return {
+    _id: template._id,
+    tags: template.tags,
+    active: template.active,
+    preferences: preferencesDto,
+    steps: getSteps(template, stepIdToControlValuesMap),
+    name: template.name,
+    description: template.description,
+    origin: template.origin || WorkflowOriginEnum.NOVU,
+    updatedAt: template.updatedAt || 'Missing Updated At',
+    createdAt: template.createdAt || 'Missing Create At',
+  };
+}
 
-  private static getSteps(
-    template: NotificationTemplateEntity,
-    controlValuesMap: { [p: string]: ControlValuesEntity }
-  ) {
-    const steps: StepResponseDto[] = [];
-    for (const step of template.steps) {
-      const toStepResponseDto = NotificationTemplateMapper.toStepResponseDto(step);
-      const controlValues = controlValuesMap[step._templateId];
-      if (controlValues?.controls && Object.entries(controlValues?.controls).length) {
-        toStepResponseDto.controlValues = controlValues.controls;
-      }
-      steps.push(toStepResponseDto);
+function getSteps(template: NotificationTemplateEntity, controlValuesMap: { [p: string]: ControlValuesEntity }) {
+  const steps: StepResponseDto[] = [];
+  for (const step of template.steps) {
+    const stepResponseDto = toStepResponseDto(step);
+    const controlValues = controlValuesMap[step._templateId];
+    if (controlValues?.controls && Object.entries(controlValues?.controls).length) {
+      stepResponseDto.controlValues = controlValues.controls;
     }
-
-    return steps;
+    steps.push(stepResponseDto);
   }
 
-  static toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowListResponseDto {
-    return {
-      _id: template._id,
-      name: template.name,
-      tags: template.tags,
-      updatedAt: template.updatedAt || 'Missing Updated At',
-      stepTypeOverviews: template.steps
-        .map(NotificationTemplateMapper.buildStepTypeOverview)
-        .filter((stepTypeEnum) => !!stepTypeEnum),
-      createdAt: template.createdAt || 'Missing Create At',
-    };
-  }
+  return steps;
+}
 
-  static toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[]): WorkflowListResponseDto[] {
-    return templates.map(NotificationTemplateMapper.toMinifiedWorkflowDto);
-  }
+function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowListResponseDto {
+  return {
+    _id: template._id,
+    name: template.name,
+    tags: template.tags,
+    updatedAt: template.updatedAt || 'Missing Updated At',
+    stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
+    createdAt: template.createdAt || 'Missing Create At',
+  };
+}
 
-  static toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
-    return {
-      name: step.name || 'Missing Name',
-      stepUuid: step._templateId,
-      type: step.template?.type || StepTypeEnum.EMAIL,
-      controls: NotificationTemplateMapper.convertControls(step),
-      controlValues: step.controlVariables || {},
-    };
-  }
+export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[]): WorkflowListResponseDto[] {
+  return templates.map(toMinifiedWorkflowDto);
+}
 
-  private static convertControls(step: NotificationStepEntity): ControlsSchema | undefined {
-    if (step.template?.controls) {
-      return { schema: step.template.controls.schema };
-    } else {
-      return undefined;
-    }
-  }
+function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
+  return {
+    name: step.name || 'Missing Name',
+    stepUuid: step._templateId,
+    type: step.template?.type || StepTypeEnum.EMAIL,
+    controls: convertControls(step),
+    controlValues: step.controlVariables || {},
+  };
+}
 
-  private static buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | undefined {
-    return step.template?.type;
+function convertControls(step: NotificationStepEntity): ControlsSchema | undefined {
+  if (step.template?.controls) {
+    return { schema: step.template.controls.schema };
+  } else {
+    return undefined;
   }
+}
+
+function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | undefined {
+  return step.template?.type;
 }

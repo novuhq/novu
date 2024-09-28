@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ListWorkflowsCommand } from './list-workflows.command';
 import { ListWorkflowResponse } from '../../dto/workflow-commons-fields';
-import { NotificationTemplateMapper } from '../../mappers/notification-template-mapper';
+import { toWorkflowsMinifiedDtos } from '../../mappers/notification-template-mapper';
 
 @Injectable()
 export class ListWorkflowsUseCase {
@@ -24,7 +24,7 @@ export class ListWorkflowsUseCase {
     }
 
     return {
-      workflows: NotificationTemplateMapper.toWorkflowsMinifiedDtos(res.data),
+      workflows: toWorkflowsMinifiedDtos(res.data),
       totalResults: res.totalCount,
     };
   }

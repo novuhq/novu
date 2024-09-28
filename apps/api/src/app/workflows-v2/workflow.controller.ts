@@ -49,7 +49,7 @@ export class WorkflowController {
 
   @Post('')
   @UseGuards(UserAuthGuard)
-  create(
+  async create(
     @UserSession() user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
@@ -63,12 +63,12 @@ export class WorkflowController {
 
   @Put(':workflowId')
   @UseGuards(UserAuthGuard)
-  update(
+  async update(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    return this.upsertWorkflowUseCase.execute(
+    return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: updateWorkflowDto,
         user,
@@ -79,7 +79,7 @@ export class WorkflowController {
 
   @Get(':workflowId')
   @UseGuards(UserAuthGuard)
-  getWorkflow(
+  async getWorkflow(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowResponseDto> {
@@ -88,18 +88,18 @@ export class WorkflowController {
 
   @Delete(':workflowId')
   @ExternalApiAccessible()
-  removeWorkflow(
+  async removeWorkflow(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
     @Res({ passthrough: true }) response: Response
   ) {
-    this.deleteWorkflowUsecase.execute(DeleteWorkflowCommand.create({ workflowId, user }));
+    await this.deleteWorkflowUsecase.execute(DeleteWorkflowCommand.create({ workflowId, user }));
     response.status(HttpStatus.NO_CONTENT).send();
   }
 
   @Get('')
   @UseGuards(UserAuthGuard)
-  searchWorkflows(
+  async searchWorkflows(
     @UserSession() user: UserSessionData,
     @Query() query: GetListQueryParams
   ): Promise<ListWorkflowResponse> {
