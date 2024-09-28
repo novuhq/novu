@@ -8,7 +8,7 @@ on:
       - '!prod'
 
 jobs:
-  release_packages_preview:
+  publish_preview_packages:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,9 +30,8 @@ jobs:
         run: pnpm run packages:set-latest
 
       - name: Build
-        run: pnpm run build:affected
-        if: ${{ success() }}
+        run: pnpm run preview:pkg:build
           
       - name: Release package previews to pkg.pr.new
-        run: pnpm run release:previews
+        run: pnpm run preview:pkg:publish
         if: ${{ success() }}
