@@ -156,6 +156,7 @@ describe('GetPreferences', () => {
         environmentId: command.environmentId,
         template: mockedWorkflow,
         subscriber: mockedSubscriber,
+        readOnly: false,
       },
     ]);
 
@@ -259,6 +260,7 @@ describe('GetPreferences', () => {
         environmentId: command.environmentId,
         template: workflowsWithTags[0],
         subscriber: mockedSubscriber,
+        readOnly: false,
       },
     ]);
     expect(getSubscriberWorkflowMock.execute.secondCall.args).to.deep.equal([
@@ -268,6 +270,7 @@ describe('GetPreferences', () => {
         environmentId: command.environmentId,
         template: workflowsWithTags[1],
         subscriber: mockedSubscriber,
+        readOnly: false,
       },
     ]);
 
