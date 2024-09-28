@@ -1,7 +1,8 @@
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { IsDefined, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsBoolean, IsDefined, IsNotEmpty, IsOptional } from 'class-validator';
 
 import { ITenantDefine } from '@novu/shared';
+import { Transform } from 'class-transformer';
 import { EnvironmentWithSubscriber } from '../../commands';
 
 export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubscriber {
@@ -14,4 +15,9 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
 
   @IsOptional()
   tenant?: ITenantDefine;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  readOnly?: boolean;
 }

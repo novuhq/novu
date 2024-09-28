@@ -9,5 +9,5 @@ export class GetPreferencesCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsBoolean()
-  readonly critical?: boolean;
+  readonly readOnly?: boolean;
 }

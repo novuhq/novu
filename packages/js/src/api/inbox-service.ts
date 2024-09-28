@@ -141,14 +141,14 @@ export class InboxService {
     });
   }
 
-  fetchPreferences({ tags, critical }: { tags?: string[]; critical?: boolean }): Promise<PreferencesResponse[]> {
+  fetchPreferences({ tags, readOnly }: { tags?: string[]; readOnly?: boolean }): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
       tags.forEach((tag) => queryParams.append('tags[]', tag));
     }
 
-    if (critical !== undefined) {
-      queryParams.append('critical', `${critical}`);
+    if (readOnly !== undefined) {
+      queryParams.append('readOnly', `${readOnly}`);
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

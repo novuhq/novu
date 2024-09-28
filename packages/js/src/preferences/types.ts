@@ -3,12 +3,12 @@ import { ChannelPreference, PreferenceLevel, Workflow } from '../types';
 export type FetchPreferencesArgs = {
   level?: PreferenceLevel;
   tags?: string[];
-  critical?: boolean;
+  readOnly?: boolean;
 };
 
 export type ListPreferencesArgs = {
   tags?: string[];
-  critical?: boolean;
+  readOnly?: boolean;
 };
 
 export type UpdatePreferencesArgs = {

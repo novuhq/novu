@@ -10,5 +10,5 @@ export class GetPreferencesRequestDto {
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  critical?: boolean;
+  readOnly?: boolean;
 }

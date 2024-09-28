@@ -16,7 +16,7 @@ export const Preferences = () => {
   const style = useStyle();
   const { preferencesFilter } = useInboxContext();
 
-  const { preferences, loading } = usePreferences({ tags: preferencesFilter()?.tags, critical: false });
+  const { preferences, loading } = usePreferences({ tags: preferencesFilter()?.tags, readOnly: false });
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);

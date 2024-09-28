@@ -33,6 +33,7 @@ export class GetSubscriberPreference {
       {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        critical: command.readOnly,
       },
     );
 
@@ -52,6 +53,7 @@ export class GetSubscriberPreference {
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
+            readOnly: command.readOnly,
             template,
             subscriber,
           }),
