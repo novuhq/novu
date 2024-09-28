@@ -1,6 +1,6 @@
 import { ApiServiceLevelEnum } from '../../types';
 
-export interface GetSubscriptionDto {
+export type GetSubscriptionDto = {
   /**
    * The API service level of the subscription.
    */
@@ -57,4 +57,4 @@ export interface GetSubscriptionDto {
      */
     daysTotal: number;
   };
-}
+};
