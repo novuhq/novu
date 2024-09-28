@@ -164,13 +164,13 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     expect(criticalWorkflowPreference.channels.email).to.equal(true);
     expect(criticalWorkflowPreference.channels.in_app).to.equal(true);
     expect(criticalWorkflowPreference.level).to.equal('template');
-    expect(criticalWorkflowPreference.workflow.critical).to.equal(true);
+    expect(criticalWorkflowPreference.workflow.critical).to.equal(false);
 
     const nonCriticalWorkflowPreference = response.body.data[2];
 
     expect(nonCriticalWorkflowPreference.channels.email).to.equal(true);
     expect(nonCriticalWorkflowPreference.channels.in_app).to.equal(true);
     expect(nonCriticalWorkflowPreference.level).to.equal('template');
-    expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(false);
+    expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(true);
   });
 });
