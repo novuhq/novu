@@ -79,7 +79,7 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     });
   });
 
-  it('should not fetch critical workflows when ?critical=false', async function () {
+  it('should not fetch critical/readOnly workflows when ?readOnly=false', async function () {
     await session.createTemplate({
       noFeedId: true,
       critical: true,
@@ -91,7 +91,7 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     });
 
     const response = await session.testAgent
-      .get('/v1/inbox/preferences?critical=false')
+      .get('/v1/inbox/preferences?readOnly=false')
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.body.data.length).to.equal(2);
@@ -110,14 +110,14 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(false);
   });
 
-  it('should fetch critical workflows when ?critical=true', async function () {
+  it('should fetch critical/readOnly workflows when ?readOnly=true', async function () {
     await session.createTemplate({
       noFeedId: true,
       critical: true,
     });
 
     const response = await session.testAgent
-      .get('/v1/inbox/preferences?critical=true')
+      .get('/v1/inbox/preferences?readOnly=true')
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.body.data.length).to.equal(2);
@@ -136,7 +136,7 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     expect(workflowPreference.workflow.critical).to.equal(true);
   });
 
-  it('should fetch both critical and non-critical workflows when ?critical query parameter is not passed', async function () {
+  it('should fetch both critical and non-critical workflows when ?readOnly query parameter is not passed', async function () {
     await session.createTemplate({
       noFeedId: true,
       critical: true,
