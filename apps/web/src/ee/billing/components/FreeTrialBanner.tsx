@@ -14,7 +14,7 @@ import { useFeatureFlag } from '../../../hooks';
 export function FreeTrialBanner() {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
-  const { trial, isActive, apiServiceLevel } = useSubscription();
+  const { trial, apiServiceLevel } = useSubscription();
   const [freeTrialDismissed, setFreeTrialDismissed] = useLocalStorage({
     key: 'freeTrialDismissed',
     defaultValue: 'false',
@@ -24,12 +24,7 @@ export function FreeTrialBanner() {
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (
-    freeTrialDismissed === 'true' ||
-    !trial.isActive ||
-    trial.daysLeft > warningLimitDays(isImprovedBillingEnabled) ||
-    isActive
-  ) {
+  if (freeTrialDismissed === 'true' || !trial.isActive || trial.daysLeft > warningLimitDays(isImprovedBillingEnabled)) {
     return null;
   }
 

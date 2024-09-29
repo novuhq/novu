@@ -83,7 +83,7 @@ test.describe('Billing', () => {
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanBusinessCurrent();
-    await billingPage.waitForPlanBusinessAndPayment();
+    await billingPage.waitForUpgradeButton();
     await billingPage.waitForFreeTrialWidget();
     await billingPage.assertTrialWidgetText('10 days left on your trial');
     await billingPage.waitForFreeTrialBanner();

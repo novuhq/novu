@@ -24,6 +24,7 @@ export const PlanHeader = () => {
 
   const {
     isActive,
+    trial,
     isLoading: isLoadingSubscriptionData,
     apiServiceLevel: subscriptionApiServiceLevel,
     billingInterval: subscriptionBillingInterval,
@@ -39,6 +40,8 @@ export const PlanHeader = () => {
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>(subscriptionBillingInterval || 'month');
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
+
+  const isPaidSubscriptionActive = isActive && !trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE;
 
   useEffect(() => {
     if (!isLoadingSubscriptionData) {
@@ -139,7 +142,7 @@ export const PlanHeader = () => {
                   </Text>
                 </When>
               </Group>
-              <When truthy={!isActive}>
+              <When truthy={!isPaidSubscriptionActive}>
                 <div style={{ marginBottom: 12 }}>
                   <BillingIntervalControl value={billingInterval} onChange={setBillingInterval} />
                 </div>
@@ -157,51 +160,34 @@ export const PlanHeader = () => {
                 included
               </Text>
             </div>
-            <When truthy={apiServiceLevel === ApiServiceLevelEnum.FREE}>
+            <When truthy={isPaidSubscriptionActive}>
               <Button
+                variant="outline"
+                loading={isGoingToPortal}
+                data-test-id="plan-business-manage"
+                onClick={() => {
+                  segment.track('Manage Subscription Clicked - Plans List');
+
+                  goToPortal({});
+                }}
+              >
+                Manage subscription
+              </Button>
+            </When>
+            <When truthy={!isPaidSubscriptionActive}>
+              <Button
+                variant="outline"
                 data-test-id="plan-business-upgrade"
                 loading={isCheckingOut}
                 onClick={() => {
-                  segment.track('Upgrade Now Clicked - Plans List');
                   checkout({
                     billingInterval,
                     apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
                   });
                 }}
               >
-                {isImprovedBillingEnabled ? 'Upgrade' : 'Add payment method'}
+                {isImprovedBillingEnabled ? 'Upgrade' : trial.isActive ? 'Add payment method' : 'Upgrade'}
               </Button>
-            </When>
-            <When truthy={apiServiceLevel === ApiServiceLevelEnum.BUSINESS}>
-              <When truthy={isActive}>
-                <Button
-                  variant="outline"
-                  loading={isGoingToPortal}
-                  data-test-id="plan-business-manage"
-                  onClick={() => {
-                    segment.track('Manage Subscription Clicked - Plans List');
-
-                    goToPortal({});
-                  }}
-                >
-                  Manage subscription
-                </Button>
-              </When>
-              <When truthy={!isActive}>
-                <Button
-                  variant="outline"
-                  data-test-id="plan-business-add-payment"
-                  loading={isCheckingOut}
-                  onClick={() => {
-                    checkout({
-                      billingInterval,
-                      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-                    });
-                  }}
-                >
-                  Upgrade
-                </Button>
-              </When>
             </When>
           </Stack>
         </div>
