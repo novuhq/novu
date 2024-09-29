@@ -1,14 +1,14 @@
 {
   "name": "root",
   "private": true,
-  "packageManager": "pnpm@9.1.4",
+  "packageManager": "pnpm@9.11.0",
   "scripts": {
     "bootstrap": "npm run setup:dev",
     "start": "npm run jarvis",
     "preinstall": "npx only-allow pnpm",
     "publish": "nx release version && git add . && git commit -m 'chore: release' && pnpm publish:npm",
     "publish:npm": "lerna publish from-package",
-    "setup:project": "npx --yes pnpm@9.1.4 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx --yes pnpm@9.11.0 i && node scripts/setup-env-files.js && pnpm build",
     "clean": "lerna clean --yes && rimraf node_modules",
     "commit": "cz",
     "nx": "nx",
@@ -173,9 +173,8 @@
     "mississippi": "^4.0.0",
     "ora": "~5.4.1",
     "pkg-pr-new": "^0.0.24",
-    "pnpm": "9.1.4",
+    "pnpm": "9.11.0",
     "prettier": "~3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.5",
     "process": "^0.11.10",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
@@ -218,7 +217,7 @@
   },
   "engines": {
     "node": ">=20 <21",
-    "pnpm": "^9.1.4"
+    "pnpm": "^9.11.0"
   },
   "dependencies": {
     "nx": "19.8.2",
