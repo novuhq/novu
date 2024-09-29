@@ -74,6 +74,10 @@ try {
     return memo;
   }, []);
 
+  if (affectedPackagePaths.length === 0) {
+    process.exit(0);
+  }
+
   const command = `pnpx pkg-pr-new publish ${affectedPackagePaths.join(' ')}`;
   console.log(await myExec(command));
 } catch (err) {
