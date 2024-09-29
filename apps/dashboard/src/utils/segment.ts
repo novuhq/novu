@@ -8,11 +8,11 @@ export class SegmentService {
   public _mixpanelEnabled: boolean;
 
   constructor() {
-    this._segmentEnabled = !!import.meta.env.REACT_APP_SEGMENT_KEY;
-    this._mixpanelEnabled = !!import.meta.env.REACT_APP_MIXPANEL_KEY;
+    this._segmentEnabled = !!import.meta.env.VITE_SEGMENT_KEY;
+    this._mixpanelEnabled = !!import.meta.env.VITE_MIXPANEL_KEY;
 
     if (this._mixpanelEnabled) {
-      mixpanel.init(import.meta.env.REACT_APP_MIXPANEL_KEY as string, {
+      mixpanel.init(import.meta.env.VITE_MIXPANEL_KEY as string, {
         //@ts-expect-error missing from types
         record_sessions_percent: 100,
       });
@@ -20,7 +20,7 @@ export class SegmentService {
 
     if (this._segmentEnabled) {
       this._segment = AnalyticsBrowser.load({
-        writeKey: import.meta.env.REACT_APP_SEGMENT_KEY as string,
+        writeKey: import.meta.env.VITE_SEGMENT_KEY as string,
       });
       if (!this._mixpanelEnabled) {
         return;
