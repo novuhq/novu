@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
