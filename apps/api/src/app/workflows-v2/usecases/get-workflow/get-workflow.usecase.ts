@@ -12,6 +12,7 @@ import { GetPreferences, GetPreferencesCommand, GetPreferencesResponseDto } from
 import { GetWorkflowCommand } from './get-workflow.command';
 import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
 import { WorkflowResponseDto } from '../../dto/workflow-response-dto';
+import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
 @Injectable()
 export class GetWorkflowUseCase {

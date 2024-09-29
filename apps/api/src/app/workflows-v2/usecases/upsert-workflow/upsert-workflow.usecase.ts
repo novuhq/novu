@@ -30,6 +30,7 @@ import { StepCreateDto, StepDto, StepUpdateDto } from '../../dto/workflow-common
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { CreateWorkflowDto } from '../../dto/create-workflow-dto';
 import { WorkflowResponseDto } from '../../dto/workflow-response-dto';
+import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
 function buildUpsertControlValuesCommand(command: UpsertWorkflowCommand, persistedStep, persistedWorkflow, stepInDto) {
   return UpsertControlValuesCommand.create({
@@ -113,10 +114,10 @@ export class UpsertWorkflowUseCase {
     }
     await this.upsertPreferences(workflow, command);
 
-    return await this.getPresistedPreferences(workflow);
+    return await this.getPersistedPreferences(workflow);
   }
 
-  private async getPresistedPreferences(workflow) {
+  private async getPersistedPreferences(workflow) {
     return await this.getPreferencesUseCase.execute(
       GetPreferencesCommand.create({
         environmentId: workflow._environmentId,
@@ -172,7 +173,7 @@ export class UpsertWorkflowUseCase {
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
       type: WorkflowTypeEnum.BRIDGE,
-      origin: WorkflowOriginEnum.NOVU,
+      origin: WorkflowOriginEnum.NOVU_CLOUD,
       steps: this.mapSteps(workflowDto.steps),
       payloadSchema: {},
       active: isWorkflowActive,
@@ -271,6 +272,7 @@ export class UpsertWorkflowUseCase {
     if (!persistedWorkflow?.steps) {
       return;
     }
+
     for (const persistedStep of persistedWorkflow.steps) {
       if (this.isStepUpdateDto(stepUpdateRequest) && persistedStep._templateId === stepUpdateRequest.stepUuid) {
         return persistedStep;

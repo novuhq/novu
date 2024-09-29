@@ -215,7 +215,7 @@ export class WorkflowControllerV1 {
         data: body.data,
         __source: query?.__source,
         type: WorkflowTypeEnum.REGULAR,
-        origin: WorkflowOriginEnum.NOVU,
+        origin: WorkflowOriginEnum.NOVU_CLOUD,
       })
     );
   }

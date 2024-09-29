@@ -44,11 +44,11 @@ export enum WorkflowTypeEnum {
  *
  * The `WorkflowOriginEnum` is used to specify the source of the workflow,
  * which helps determine which endpoint to call during the Preview & Execution phase.
- * * - 'novu' indicates that the workflow originates from Novu's platform, so the Novu-hosted endpoint is used.
+ * * - 'novu-cloud' indicates that the workflow originates from Novu's platform, so the Novu-hosted endpoint is used.
  * * - 'external' indicates that the workflow originates from an external source, requiring a call to a customer-hosted Bridge endpoint.
  */
 export enum WorkflowOriginEnum {
-  NOVU = 'novu',
+  NOVU_CLOUD = 'novu-cloud',
   EXTERNAL = 'external',
 }
 

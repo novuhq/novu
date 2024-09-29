@@ -10,7 +10,7 @@ import {
 } from '../dto/workflow-commons-fields';
 import { WorkflowResponseDto } from '../dto/workflow-response-dto';
 
-function toResponseWorkflowDto(
+export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
   preferences: GetPreferencesResponseDto | undefined,
   stepIdToControlValuesMap: { [p: string]: ControlValuesEntity }
@@ -28,7 +28,7 @@ function toResponseWorkflowDto(
     steps: getSteps(template, stepIdToControlValuesMap),
     name: template.name,
     description: template.description,
-    origin: template.origin || WorkflowOriginEnum.NOVU,
+    origin: template.origin || WorkflowOriginEnum.NOVU_CLOUD,
     updatedAt: template.updatedAt || 'Missing Updated At',
     createdAt: template.createdAt || 'Missing Create At',
   };

@@ -28,7 +28,7 @@ const variantSchemePart = {
   },
   origin: {
     type: Schema.Types.String,
-    default: WorkflowOriginEnum.NOVU,
+    default: WorkflowOriginEnum.NOVU_CLOUD,
   },
   filters: [
     {
