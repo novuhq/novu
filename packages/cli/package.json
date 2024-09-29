@@ -36,7 +36,7 @@
     "start:test": "cross-env NODE_ENV=test PORT=1336 nodemon init",
     "start:debug": "cross-env nodemon --config nodemon-debug.json",
     "start:prod": "cross-env node dist/src/index.js",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "print:project-path": "echo \"$PWD\" | sed 's|.*/novu/||'"
   },
   "keywords": [
     "novu",

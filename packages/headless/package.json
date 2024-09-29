@@ -19,8 +19,7 @@
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "lint:fix": "eslint src --fix",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "test:watch": "jest --watch"
   },
   "publishConfig": {
     "access": "public"

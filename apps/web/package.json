@@ -6,7 +6,7 @@
     "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 DISABLE_ESLINT_PLUGIN=true PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "pnpm panda && cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
-    "build:web-for-dashboard": "pnpm panda && cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true PUBLIC_URL=/legacy/ react-app-rewired --max_old_space_size=4096 build && pnpm envsetup:dashboard",
+    "build:web:for-dashboard": "pnpm panda && cross-env BUILD_PATH=../../apps/dashboard/legacy NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true PUBLIC_URL=/legacy/ react-app-rewired --max_old_space_size=4096 build && pnpm envsetup:dashboard",
     "build:test": "pnpm panda && cross-env REACT_APP_HUBSPOT_EMBED=44416662 REACT_APP_API_URL=http://127.0.0.1:1336 NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
     "docker:build": "docker buildx build --load -f ./Dockerfile -t novu-web ./../.. $DOCKER_BUILD_ARGUMENTS",
