@@ -4,7 +4,7 @@ RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@9.1.4
+RUN npm --no-update-notifier --no-fund --global install pnpm@9.11.0
 RUN pnpm --version
 
 USER 1000

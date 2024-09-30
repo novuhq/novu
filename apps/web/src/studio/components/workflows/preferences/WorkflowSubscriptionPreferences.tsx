@@ -47,7 +47,7 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
   updateWorkflowPreferences,
   arePreferencesDisabled,
 }) => {
-  const [isOverridingPreferences, setIsOverridingPreferences] = useState(false);
+  const [isOverridingPreferences, setIsOverridingPreferences] = useState(workflowUserPreferences !== null);
   // Use the user preferences if they exist, otherwise fall back to the resource preferences
   const [preferences, setPreferences] = useState<WorkflowPreferences>(
     workflowUserPreferences || workflowResourcePreferences!

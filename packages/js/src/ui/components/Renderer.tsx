@@ -88,8 +88,10 @@ export const Renderer = (props: RendererProps) => {
                     const Component = novuComponents[novuComponent().name];
 
                     onMount(() => {
-                      // return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
-                      // due to the extra divs being introduces by the renderer/mounter
+                      /*
+                       * return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
+                       * due to the extra divs being introduces by the renderer/mounter
+                       */
                       if (!['Notifications', 'Preferences'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
