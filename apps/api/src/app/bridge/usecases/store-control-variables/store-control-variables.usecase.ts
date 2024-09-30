@@ -40,7 +40,7 @@ export class StoreControlVariablesUseCase {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         notificationStepEntity: step,
-        workflowId: command.workflowId,
+        workflowId: workflowExist._id,
         newControlValues: command.variables,
         controlSchemas: { schema: stepDefaultControls },
       })
