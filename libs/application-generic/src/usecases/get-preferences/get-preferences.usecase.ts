@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -52,7 +48,7 @@ export class GetPreferences {
     const mergedPreferences = this.mergePreferences(items, command.templateId);
 
     if (!mergedPreferences.preferences) {
-      throw new NotFoundException('We could not find any preferences');
+      throw new PreferencesNotFoundException(command);
     }
 
     return mergedPreferences;
@@ -83,7 +79,7 @@ export class GetPreferences {
     subscriberId: string;
     templateId?: string;
   }): Promise<IPreferenceChannels | undefined> {
-    const result = await this.getWorkflowPreferences(command);
+    const result = await this.safeExecute(command);
 
     if (!result) {
       return undefined;
@@ -94,15 +90,11 @@ export class GetPreferences {
     );
   }
 
-  /** Safely get WorkflowPreferences by returning undefined if none are found */
-  public async getWorkflowPreferences(command: {
-    environmentId: string;
-    organizationId: string;
-    subscriberId: string;
-    templateId?: string;
-  }): Promise<GetPreferencesResponseDto> {
+  public async safeExecute(
+    command: GetPreferencesCommand,
+  ): Promise<GetPreferencesResponseDto> {
     try {
-      const result = await this.execute(
+      return await this.execute(
         GetPreferencesCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -110,11 +102,9 @@ export class GetPreferences {
           templateId: command.templateId,
         }),
       );
-
-      return result;
     } catch (e) {
       // If we cant find preferences lets return undefined instead of throwing it up to caller to make it easier for caller to handle.
-      if ((e as Error).name === NotFoundException.name) {
+      if ((e as Error).name === PreferencesNotFoundException.name) {
         return undefined;
       }
       throw e;

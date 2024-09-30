@@ -118,7 +118,7 @@ export class UpsertWorkflowUseCase {
   }
 
   private async getPersistedPreferences(workflow) {
-    return await this.getPreferencesUseCase.execute(
+    return await this.getPreferencesUseCase.safeExecute(
       GetPreferencesCommand.create({
         environmentId: workflow._environmentId,
         organizationId: workflow._organizationId,

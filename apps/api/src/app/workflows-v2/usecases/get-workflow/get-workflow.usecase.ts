@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import {
   ControlValuesEntity,
@@ -7,7 +7,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { ControlVariablesLevelEnum } from '@novu/shared';
-import { GetPreferences, GetPreferencesCommand, GetPreferencesResponseDto } from '@novu/application-generic';
+import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
 
 import { GetWorkflowCommand } from './get-workflow.command';
 import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
@@ -31,29 +31,14 @@ export class GetWorkflowUseCase {
       throw new WorkflowNotFoundException(command._workflowId);
     }
     const stepIdToControlValuesMap = await this.getControlsValuesMap(notificationTemplateEntity.steps, command);
-    const preferences = await this.getPreferencesForWorkflow(command);
+    const preferences = await this.getPreferencesUseCase.safeExecute(
+      GetPreferencesCommand.create({
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
+      })
+    );
 
     return toResponseWorkflowDto(notificationTemplateEntity, preferences, stepIdToControlValuesMap);
-  }
-
-  private async getPreferencesForWorkflow(
-    getWorkflowCommand: GetWorkflowCommand
-  ): Promise<GetPreferencesResponseDto | undefined> {
-    const command = {
-      environmentId: getWorkflowCommand.user.environmentId,
-      organizationId: getWorkflowCommand.user.organizationId,
-      templateId: getWorkflowCommand._workflowId,
-    } as GetPreferencesCommand;
-
-    try {
-      const workflowPreferences = await this.getPreferencesUseCase.execute(GetPreferencesCommand.create(command));
-
-      return workflowPreferences;
-    } catch (e) {
-      Logger.error('Error getting preferences for workflow', e);
-
-      return undefined;
-    }
   }
 
   private async getControlsValuesMap(
