@@ -1,12 +1,6 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import {
-  ChannelTypeEnum,
-  DEFAULT_WORKFLOW_PREFERENCES,
-  StepTypeEnum,
-  WorkflowCreationSourceEnum,
-  WorkflowPreferences,
-} from '@novu/shared';
+import { DEFAULT_WORKFLOW_PREFERENCES, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { JsonSchema } from '@novu/framework';
 import {
@@ -62,6 +56,8 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
 
 describe('Workflow Controller E2E API Testing', () => {
   beforeEach(async () => {
+    // @ts-ignore
+    process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
   });
