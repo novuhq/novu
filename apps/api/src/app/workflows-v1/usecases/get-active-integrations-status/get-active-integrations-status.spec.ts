@@ -4,7 +4,7 @@ import { IntegrationService, NotificationTemplateService, UserSession } from '@n
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
 import { WorkflowResponse } from '../../dto/workflow-response.dto';
-import { WorkflowModuleV1Deprecated } from '../../workflowModuleV1Deprecated';
+import { WorkflowModuleV1 } from '../../workflow-v1.module';
 import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-status.command';
 import { GetActiveIntegrationsStatus } from './get-active-integrations-status.usecase';
 
@@ -14,7 +14,7 @@ describe('Get Active Integrations Status', function () {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [WorkflowModuleV1Deprecated, SharedModule],
+      imports: [WorkflowModuleV1, SharedModule],
       providers: [],
     }).compile();
 
