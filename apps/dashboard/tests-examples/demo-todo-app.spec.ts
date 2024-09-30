@@ -312,7 +312,6 @@ test.describe('Routing', () => {
     await createDefaultTodos(page);
     // make sure the app had a chance to save updated todos in storage
     // before navigating to a new view, otherwise the items can get lost :(
-    // in some frameworks like Durandal
     await checkTodosInLocalStorage(page, TODO_ITEMS[0]);
   });
 
