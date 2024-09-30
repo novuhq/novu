@@ -15,5 +15,3 @@ if (!CLERK_PUBLISHABLE_KEY) {
 }
 
 export const API_ROOT = import.meta.env.VITE_APP_API_URL;
-
-export const IS_SELF_HOSTED = import.meta.env.VITE_APP_IS_SELF_HOSTED === 'true';

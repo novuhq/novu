@@ -3,15 +3,14 @@ import type { IEnvironment } from '@novu/shared';
 import { useNovuAPI } from '@/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironmentContext } from './environment-context';
-import { IS_SELF_HOSTED } from '@/config';
 
 export function useEnvironment({ bridge }: { bridge?: boolean } = {}) {
   const { readOnly, ...rest } = useEnvironmentContext();
 
   return {
     ...rest,
-    readOnly: readOnly || (!IS_SELF_HOSTED && bridge) || false,
-    bridge: (!IS_SELF_HOSTED && bridge) || false,
+    readOnly: readOnly || bridge || false,
+    bridge: bridge || false,
   };
 }
 
