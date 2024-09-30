@@ -737,9 +737,6 @@ importers:
       globals:
         specifier: ^15.9.0
         version: 15.9.0
-      http-proxy-middleware:
-        specifier: ^3.0.2
-        version: 3.0.2
       postcss:
         specifier: ^8.4.47
         version: 8.4.47
@@ -15830,9 +15827,6 @@ packages:
   '@types/http-proxy@1.17.10':
     resolution: {integrity: sha512-Qs5aULi+zV1bwKAg5z1PWnDXWmsn+LxIvUGv6E2+OOMYhclZMO+OXd9pYVf2gLykf2I7IV2u7oTHwChPNsvJ7g==}
 
-  '@types/http-proxy@1.17.15':
-    resolution: {integrity: sha512-25g5atgiVNTIv0LBDTg1H74Hvayx0ajtJPLLcYE3whFv75J0pWNtOBzaXJQgDTmrX1bx5U9YC2w/n65BN1HwRQ==}
-
   '@types/iframe-resizer@3.5.9':
     resolution: {integrity: sha512-RQUBI75F+uXruB95BFpC/8V8lPgJg4MQ6HxOCtAZYBB/h0FNCfrFfb4I+u2pZJIV7sKeszZbFqy1UnGeBMrvsA==}
 
@@ -22665,10 +22659,6 @@ packages:
     peerDependenciesMeta:
       '@types/express':
         optional: true
-
-  http-proxy-middleware@3.0.2:
-    resolution: {integrity: sha512-fBLFpmvDzlxdckwZRjM0wWtwDZ4KBtQ8NFqhrFKoEtK4myzuiumBuNTxD+F4cVbXfOZljIbrynmvByofDzT7Ag==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
   http-proxy@1.18.1:
     resolution: {integrity: sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==}
@@ -54298,10 +54288,6 @@ snapshots:
     dependencies:
       '@types/node': 20.16.5
 
-  '@types/http-proxy@1.17.15':
-    dependencies:
-      '@types/node': 20.16.5
-
   '@types/iframe-resizer@3.5.9': {}
 
   '@types/inline-css@3.0.3':
@@ -62890,10 +62876,6 @@ snapshots:
     optionalDependencies:
       debug: 4.3.4(supports-color@8.1.1)
 
-  follow-redirects@1.15.6(debug@4.3.6):
-    optionalDependencies:
-      debug: 4.3.6(supports-color@8.1.1)
-
   for-each@0.3.3:
     dependencies:
       is-callable: 1.2.7
@@ -64314,29 +64296,10 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  http-proxy-middleware@3.0.2:
-    dependencies:
-      '@types/http-proxy': 1.17.15
-      debug: 4.3.6(supports-color@8.1.1)
-      http-proxy: 1.18.1(debug@4.3.6)
-      is-glob: 4.0.3
-      is-plain-object: 5.0.0
-      micromatch: 4.0.8
-    transitivePeerDependencies:
-      - supports-color
-
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
       follow-redirects: 1.15.6(debug@4.3.4)
-      requires-port: 1.0.0
-    transitivePeerDependencies:
-      - debug
-
-  http-proxy@1.18.1(debug@4.3.6):
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.15.6(debug@4.3.6)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
