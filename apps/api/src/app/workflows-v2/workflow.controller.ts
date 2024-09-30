@@ -4,8 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpStatus,
-  Logger,
   Param,
   Post,
   Put,
@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
+
 import { ApiTags } from '@nestjs/swagger';
 import { DirectionEnum, UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
@@ -88,13 +88,13 @@ export class WorkflowController {
 
   @Delete(':workflowId')
   @ExternalApiAccessible()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async removeWorkflow(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
     @Res({ passthrough: true }) response: Response
   ) {
     await this.deleteWorkflowUsecase.execute(DeleteWorkflowCommand.create({ workflowId, user }));
-    response.status(HttpStatus.NO_CONTENT).send();
   }
 
   @Get('')
@@ -103,8 +103,6 @@ export class WorkflowController {
     @UserSession() user: UserSessionData,
     @Query() query: GetListQueryParams
   ): Promise<ListWorkflowResponse> {
-    Logger.log('searchWorkflows', query);
-
     return this.listWorkflowsUseCase.execute(
       ListWorkflowsCommand.create({
         offset: Number(query.offset || '0'),

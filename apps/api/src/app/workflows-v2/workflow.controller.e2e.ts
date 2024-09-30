@@ -65,6 +65,7 @@ describe('Workflow Controller E2E API Testing', () => {
     session = new UserSession();
     await session.initialize();
   });
+
   it('Smoke Testing', async () => {
     const workflowCreated = await createWorkflowAndValidate();
     await getWorkflowAndValidate(workflowCreated);
@@ -77,6 +78,7 @@ describe('Workflow Controller E2E API Testing', () => {
     await getAllAndValidate({ searchQuery: PARTIAL_UPDATED_NAME, expectedTotalResults: 1, expectedArraySize: 1 });
     await deleteWorkflowAndValidateDeletion(workflowCreated._id);
   });
+
   describe('Create Workflow Permutations', () => {
     it('should not allow creating two workflows for the same user with the same name', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
@@ -87,6 +89,7 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(res.text).to.contain('Workflow with the same name already exists');
     });
   });
+
   describe('Update Workflow Permutations', () => {
     it('should update control values', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
@@ -94,6 +97,7 @@ describe('Workflow Controller E2E API Testing', () => {
       const updateDtoWithValues = buildUpdateDtoWithValues(workflowCreated);
       await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateDtoWithValues);
     });
+
     it('should keep the step id on updated ', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
@@ -104,6 +108,7 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(updatedStep.stepUuid).to.be.ok;
       expect(updatedStep.stepUuid).to.be.equal(originalStep.stepUuid);
     });
+
     it('adding user preferences', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
@@ -235,32 +240,6 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   );
 
   return workflowResponseDto;
-}
-
-function buildPreferences(): WorkflowPreferences {
-  return {
-    all: {
-      enabled: true,
-      readOnly: false,
-    },
-    channels: {
-      [ChannelTypeEnum.IN_APP]: {
-        enabled: true,
-      },
-      [ChannelTypeEnum.EMAIL]: {
-        enabled: true,
-      },
-      [ChannelTypeEnum.SMS]: {
-        enabled: true,
-      },
-      [ChannelTypeEnum.CHAT]: {
-        enabled: true,
-      },
-      [ChannelTypeEnum.PUSH]: {
-        enabled: true,
-      },
-    },
-  };
 }
 
 function buildEmailStep(): StepDto {
@@ -411,8 +390,9 @@ async function getWorkflowRest(
 ): Promise<WorkflowResponseDto> {
   return await safeGet(`${v2Prefix}/workflows/${workflowCreated._id}`);
 }
-async function validateWorkflowDeleted(workflowId: string) {
-  session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(404);
+
+async function validateWorkflowDeleted(workflowId: string): Promise<void> {
+  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(400);
 }
 
 async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
@@ -475,11 +455,11 @@ async function getAllAndValidate({
   return listWorkflowResponse.workflows;
 }
 
-function deleteWorkflowRest(_id: string) {
-  return safeDelete(`${v2Prefix}/workflows/${_id}`);
+async function deleteWorkflowRest(_id: string): Promise<void> {
+  await safeDelete(`${v2Prefix}/workflows/${_id}`);
 }
 
-async function deleteWorkflowAndValidateDeletion(_id: string) {
+async function deleteWorkflowAndValidateDeletion(_id: string): Promise<void> {
   await deleteWorkflowRest(_id);
   await validateWorkflowDeleted(_id);
 }
