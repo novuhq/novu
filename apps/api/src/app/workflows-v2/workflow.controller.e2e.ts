@@ -265,11 +265,11 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
   };
 }
 
-function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
   console.log(`updateWorkflow- ${id}: 
   ${JSON.stringify(workflow, null, 2)}`);
 
-  return safePut(`${v2Prefix}/workflows/${id}`, workflow);
+  return await safePut(`${v2Prefix}/workflows/${id}`, workflow);
 }
 
 function convertToDate(dateString: string) {
@@ -330,7 +330,11 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
   return updatedWorkflowWoUpdated;
 }
 
-async function updateWorkflowAndValidate(id: string, updatedAt: string, updateRequest: UpdateWorkflowDto) {
+async function updateWorkflowAndValidate(
+  id: string,
+  updatedAt: string,
+  updateRequest: UpdateWorkflowDto
+): Promise<void> {
   console.log('updateRequest:::'.toUpperCase(), JSON.stringify(updateRequest.steps, null, 2));
   const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(id, updateRequest);
   const updatedWorkflowWithResponseFieldsRemoved = validateUpdatedWorkflowAndRemoveResponseFields(
