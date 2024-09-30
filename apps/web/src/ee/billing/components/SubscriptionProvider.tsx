@@ -6,6 +6,7 @@ const SubscriptionContext = React.createContext<UseSubscriptionType>({
   isLoading: false,
   apiServiceLevel: ApiServiceLevelEnum.FREE,
   isActive: false,
+  hasPaymentMethod: false,
   status: 'trialing',
   currentPeriodStart: null,
   currentPeriodEnd: null,

@@ -8,7 +8,7 @@ import { planList } from '../utils/planList';
 import { PlanFooter } from './PlanFooter';
 import { FreeTrialPlanWidget } from './FreeTrialPlanWidget';
 import { useSubscriptionContext } from './SubscriptionProvider';
-import { ActivePlanBanner } from './ActivePlanBanner';
+import { ActivePlanBanner } from './billingV2/ActivePlanBanner';
 import { useFeatureFlag } from '../../../hooks';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 

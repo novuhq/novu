@@ -25,6 +25,7 @@ export const PlanHeader = () => {
   const {
     isActive,
     trial,
+    hasPaymentMethod,
     isLoading: isLoadingSubscriptionData,
     apiServiceLevel: subscriptionApiServiceLevel,
     billingInterval: subscriptionBillingInterval,
@@ -186,7 +187,12 @@ export const PlanHeader = () => {
                   });
                 }}
               >
-                {isImprovedBillingEnabled ? 'Upgrade' : trial.isActive ? 'Add payment method' : 'Upgrade'}
+                <When truthy={!isImprovedBillingEnabled}>
+                  <When truthy={!trial.isActive}>Upgrade</When>
+                  <When truthy={trial.isActive && !hasPaymentMethod}>Add payment method</When>
+                  <When truthy={trial.isActive && hasPaymentMethod}>Update payment method</When>
+                </When>
+                <When truthy={isImprovedBillingEnabled}>Upgrade</When>
               </Button>
             </When>
           </Stack>

@@ -10,11 +10,12 @@ import { warningLimitDays, COLOR_WARNING, pluralizeDaysLeft } from '../utils/fre
 import { ContactSalesModal } from './ContactSalesModal';
 import { capitalize } from '../utils/capitalize';
 import { useFeatureFlag } from '../../../hooks';
+import { ROUTES } from '../../../constants/routes';
 
 export function FreeTrialBanner() {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
-  const { trial, apiServiceLevel } = useSubscription();
+  const { trial, apiServiceLevel, hasPaymentMethod } = useSubscription();
   const [freeTrialDismissed, setFreeTrialDismissed] = useLocalStorage({
     key: 'freeTrialDismissed',
     defaultValue: 'false',
@@ -24,7 +25,12 @@ export function FreeTrialBanner() {
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (freeTrialDismissed === 'true' || !trial.isActive || trial.daysLeft > warningLimitDays(isImprovedBillingEnabled)) {
+  if (
+    freeTrialDismissed === 'true' ||
+    !trial.isActive ||
+    trial.daysLeft > warningLimitDays(isImprovedBillingEnabled) ||
+    hasPaymentMethod
+  ) {
     return null;
   }
 
@@ -58,7 +64,7 @@ export function FreeTrialBanner() {
           <Group spacing={20}>
             <Button
               onClick={() => {
-                navigate('/settings/billing');
+                navigate(ROUTES.MANAGE_ACCOUNT_BILLING);
               }}
               size="md"
               style={{

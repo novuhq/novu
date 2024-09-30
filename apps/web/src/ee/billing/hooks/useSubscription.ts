@@ -20,6 +20,7 @@ export const useSubscription = () => {
       initialData: {
         apiServiceLevel: ApiServiceLevelEnum.FREE,
         isActive: false,
+        hasPaymentMethod: false,
         status: 'trialing',
         currentPeriodStart: null,
         currentPeriodEnd: null,

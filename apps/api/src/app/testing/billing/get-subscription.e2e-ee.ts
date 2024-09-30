@@ -36,6 +36,9 @@ const mockedStripeSubscriptionItems: DeepPartial<Stripe.ApiList<Stripe.Subscript
 
 const mockedStripeCustomer: DeepPartial<Stripe.Customer> = {
   id: 'customer_id',
+  invoice_settings: {
+    default_payment_method: 'payment_method_id',
+  },
   subscriptions: {
     data: [
       {
@@ -74,10 +77,21 @@ describe('GetSubscription', async () => {
   let getOrCreateCustomer = {
     execute: () => Promise.resolve(mockedStripeCustomer),
   };
+  let communityOrganizationRepo = {
+    findById: () =>
+      Promise.resolve({
+        _id: session.organization._id,
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      }),
+  };
   let getPlatformNotificationUsageSpy: sinon.SinonSpy;
 
   const createUseCase = () => {
-    const useCase = new GetSubscription(getOrCreateCustomer as any, getPlatformNotificationUsage as any);
+    const useCase = new GetSubscription(
+      getOrCreateCustomer as any,
+      getPlatformNotificationUsage as any,
+      communityOrganizationRepo
+    );
 
     return useCase;
   };
@@ -103,6 +117,7 @@ describe('GetSubscription', async () => {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
       isActive: true,
       status: 'active',
+      hasPaymentMethod: true,
       currentPeriodStart: '2024-04-05T00:00:00.000Z',
       currentPeriodEnd: '2024-05-05T00:00:00.000Z',
       billingInterval: 'month',

@@ -10,6 +10,10 @@ export type GetSubscriptionDto = {
    */
   isActive: boolean;
   /**
+   * Whether the customer has a default payment method.
+   */
+  hasPaymentMethod: boolean;
+  /**
    * The status of the subscription.
    * @see https://stripe.com/docs/api/subscriptions/object#subscription_object-status
    * (not typed to avoid importing stripe types)

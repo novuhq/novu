@@ -4,9 +4,10 @@ import { css } from '@novu/novui/css';
 import { UsageProgress } from './UsageProgress';
 import { errorMessage } from '@novu/design-system';
 import { useMutation } from '@tanstack/react-query';
-import { api } from '../../../api';
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useSubscriptionContext } from './SubscriptionProvider';
+import { api } from '../../../../api';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useSubscriptionContext } from '../SubscriptionProvider';
+import { capitalizeFirstLetter } from '../../../../utils/string';
 
 export const ActivePlanBanner = () => {
   const { apiServiceLevel, status, events, trial } = useSubscriptionContext();
@@ -110,9 +111,6 @@ const PlanActions = ({ trialEnd, status }) => {
     </div>
   );
 };
-
-// Helper functions
-const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 const getColorByEventsUsed = (eventsUsed: number, maxEvents: number) => {
   const percentage = (eventsUsed / maxEvents) * 100;

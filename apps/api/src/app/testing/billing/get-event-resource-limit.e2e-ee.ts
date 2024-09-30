@@ -20,6 +20,7 @@ describe('GetEventResourceUsage', async () => {
     apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
     isActive: true,
     status: 'trialing',
+    hasPaymentMethod: false,
     currentPeriodStart: new Date('2021-01-01').toISOString(),
     currentPeriodEnd: new Date('2021-02-01').toISOString(),
     billingInterval: 'month',
