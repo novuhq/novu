@@ -11,7 +11,7 @@ export const UpgradeSubmitButton = ({ intervalChanging }: { intervalChanging: bo
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
-  const { isFreeTrialActive } = useSubscription();
+  const { trial } = useSubscription();
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
   const handleSubmit = async (event) => {
@@ -41,8 +41,8 @@ export const UpgradeSubmitButton = ({ intervalChanging }: { intervalChanging: bo
     <Button loading={loading} disabled={intervalChanging} onClick={handleSubmit} fullWidth>
       <When truthy={isImprovedBillingEnabled}>Upgrade now</When>
       <When truthy={!isImprovedBillingEnabled}>
-        <When truthy={!isFreeTrialActive}>Upgrade now</When>
-        <When truthy={isFreeTrialActive}>Save payment method</When>
+        <When truthy={!trial.isActive}>Upgrade now</When>
+        <When truthy={trial.isActive}>Save payment method</When>
       </When>
     </Button>
   );

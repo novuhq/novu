@@ -6,10 +6,10 @@ import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
 import { useSubscriptionContext } from './SubscriptionProvider';
 
 export const FreeTrialPlanWidget = ({ isDark }: { isDark: boolean }) => {
-  const { isFreeTrialActive, daysLeft } = useSubscriptionContext();
+  const { trial } = useSubscriptionContext();
 
   return (
-    <When truthy={isFreeTrialActive}>
+    <When truthy={trial.isActive}>
       <Group data-test-id="free-trial-plan-widget" spacing={0}>
         <div style={{ width: PLANS_COLUMN_WIDTH.plan }} />
         <div style={{ width: PLANS_COLUMN_WIDTH.free }} />
@@ -32,7 +32,7 @@ export const FreeTrialPlanWidget = ({ isDark }: { isDark: boolean }) => {
             size={14}
             gradient={true}
           >
-            {pluralizeDaysLeft(daysLeft)} left on your trial
+            {pluralizeDaysLeft(trial.daysLeft)} left on your trial
           </Text>
         </div>
       </Group>
