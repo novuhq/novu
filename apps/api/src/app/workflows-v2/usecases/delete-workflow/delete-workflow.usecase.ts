@@ -41,14 +41,15 @@ export class DeleteWorkflowUseCase {
 
   private async removeMessageTemplatesIfNeeded(workflow: NotificationTemplateEntity, command: DeleteWorkflowCommand) {
     if (workflow.steps.length > 0) {
-      await this.messageTemplateRepository.deleteById({
-        _id: command.workflowId,
-        _environmentId: command.user.environmentId,
-      });
+      for (const step of workflow.steps) {
+        await this.messageTemplateRepository.deleteById({
+          _id: step._templateId,
+          _environmentId: command.user.environmentId,
+        });
+      }
     }
   }
 }
-
 function buildDeleteQuery(command: DeleteWorkflowCommand) {
   return {
     _id: command.workflowId,

@@ -214,12 +214,17 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
   const workflowResponseDto: WorkflowResponseDto = res.body.data;
   expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto._id, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
     '_id',
     'origin',
     'preferences',
-    'updatedAt'
+    'updatedAt',
+    'createdAt'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
     removeFields(step, 'stepUuid')
@@ -416,7 +421,7 @@ async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
 }
 
 async function getListWorkflows(query: string, offset: number, limit: number): Promise<ListWorkflowResponse> {
-  return await safeGet(`${v2Prefix}/workflows?searchQuery=${query}&offset=${offset}&limit=${limit}`);
+  return await safeGet(`${v2Prefix}/workflows?query=${query}&offset=${offset}&limit=${limit}`);
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
