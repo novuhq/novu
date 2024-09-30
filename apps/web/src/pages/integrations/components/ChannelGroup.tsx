@@ -6,7 +6,7 @@ import { ProviderCard } from './ProviderCard';
 import type { IIntegratedProvider } from '../types';
 import { NovuIntegrationCard } from './NovuIntegrationCard';
 import { When } from '../../../components/utils/When';
-import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../../../config';
+import { CONTEXT_PATH, IS_SELF_HOSTED } from '../../../config';
 
 export function ChannelGroup({
   title,
@@ -28,7 +28,7 @@ export function ChannelGroup({
       <Grid.Col span={12} data-test-id={`integration-group-${title.toLowerCase()}`}>
         <Title size={2}>{title}</Title>
       </Grid.Col>
-      <When truthy={channel === ChannelTypeEnum.EMAIL && !IS_DOCKER_HOSTED}>
+      <When truthy={channel === ChannelTypeEnum.EMAIL && !IS_SELF_HOSTED}>
         <Grid.Col sm={12} xs={6} md={4} lg={3}>
           <NovuIntegrationCard
             provider={{
@@ -56,7 +56,7 @@ export function ChannelGroup({
         </Grid.Col>
       </When>
 
-      <When truthy={channel === ChannelTypeEnum.SMS && !IS_DOCKER_HOSTED}>
+      <When truthy={channel === ChannelTypeEnum.SMS && !IS_SELF_HOSTED}>
         <Grid.Col sm={12} xs={6} md={4} lg={3}>
           <NovuIntegrationCard
             provider={{

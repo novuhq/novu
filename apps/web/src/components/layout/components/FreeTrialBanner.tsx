@@ -1,8 +1,8 @@
 import { FreeTrialBanner as Component } from '../../../ee/billing';
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_SELF_HOSTED } from '../../../config';
 
 export function FreeTrialBanner() {
-  if (IS_DOCKER_HOSTED) {
+  if (IS_SELF_HOSTED) {
     return null;
   }
 

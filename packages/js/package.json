@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -65,8 +65,7 @@
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "jest",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "test": "jest"
   },
   "browserslist": {
     "production": [

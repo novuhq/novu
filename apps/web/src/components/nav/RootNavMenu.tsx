@@ -47,7 +47,7 @@ export const RootNavMenu: React.FC = () => {
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const [isLocalStudioModalOpen, toggleLocalStudioModalOpen] = useToggle();
   const { navigateToLocalStudio } = useNavigateToLocalStudio({ fallbackFn: toggleLocalStudioModalOpen });
 

@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Post,
@@ -59,6 +60,22 @@ export class PreferencesController {
         userId: user._id,
         preferences: data.preferences,
         templateId: data.workflowId,
+      })
+    );
+  }
+
+  @Delete('/')
+  @UseGuards(UserAuthGuard)
+  async delete(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
+    await this.verifyPreferencesApiAvailability(user);
+
+    return this.upsertPreferences.upsertUserWorkflowPreferences(
+      UpsertUserWorkflowPreferencesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId: workflowId,
+        preferences: null,
       })
     );
   }

@@ -33,12 +33,18 @@ export type Execute<T_Payload extends Record<string, unknown>, T_Controls extend
   event: ExecuteInput<T_Payload, T_Controls>
 ) => Promise<void>;
 
-/** A preference for a notification delivery channel. */
-export type ChannelPreference = {
+/**
+ * A preference for a notification delivery workflow.
+ *
+ * This provides a shortcut to setting all channels to the same preference.
+ */
+export type WorkflowPreference = {
   /**
-   * A flag specifying if notification delivery is enabled for the channel.
+   * A flag specifying if notification delivery is enabled for the workflow.
    *
-   * If `true`, notification delivery is enabled.
+   * If `true`, notification delivery is enabled by default for all channels.
+   *
+   * This setting can be overridden by the channel preferences.
    *
    * @default true
    */
@@ -53,20 +59,32 @@ export type ChannelPreference = {
   readOnly: boolean;
 };
 
+/** A preference for a notification delivery channel. */
+export type ChannelPreference = {
+  /**
+   * A flag specifying if notification delivery is enabled for the channel.
+   *
+   * If `true`, notification delivery is enabled.
+   *
+   * @default true
+   */
+  enabled: boolean;
+};
+
 /**
  * A partial set of workflow preferences.
  */
 export type WorkflowPreferences = DeepPartial<{
   /**
-   * A preference for the workflow.
+   * A default preference for the channels.
    *
    * The values specified here will be used if no preference is specified for a channel.
    */
-  workflow: ChannelPreference;
+  all: WorkflowPreference;
   /**
    * A preference for each notification delivery channel.
    *
-   * If no preference is specified for a channel, the `workflow` preference will be used.
+   * If no preference is specified for a channel, the `all` preference will be used.
    */
   channels: Record<WorkflowChannelEnum, ChannelPreference>;
 }>;
@@ -88,13 +106,13 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
   /**
    * The preferences for the notification workflow.
    *
-   * If no preference is specified for a channel, the `workflow` preference will be used.
+   * If no preference is specified for a channel, the `all` preference will be used.
    *
    * @example
    * ```ts
    * // Enable notification delivery for only the in-app channel by default.
    * {
-   *   workflow: { enabled: false },
+   *   all: { enabled: false },
    *   channels: {
    *     inApp: { enabled: true },
    *   },
@@ -105,7 +123,7 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * ```ts
    * // Enable notification delivery for all channels by default.
    * {
-   *   workflow: { enabled: true }
+   *   all: { enabled: true }
    * }
    * ```
    *
@@ -114,7 +132,7 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * // Enable notification delivery for all channels by default,
    * // disallowing the Subscriber to change the preference.
    * {
-   *   workflow: { enabled: true, readOnly: true },
+   *   all: { enabled: true, readOnly: true },
    * }
    * ```
    *
@@ -123,7 +141,7 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * // Disable notification delivery for all channels by default,
    * // allowing the Subscriber to change the preference.
    * {
-   *   workflow: { enabled: false, readOnly: false },
+   *   all: { enabled: false, readOnly: false },
    * }
    * ```
    *
@@ -132,8 +150,9 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * // Disable notification delivery for only the in-app channel by default,
    * // allowing the Subscriber to change the preference.
    * {
+   *   all: { readOnly: false },
    *   channels: {
-   *     inApp: { enabled: false, readOnly: false },
+   *     inApp: { enabled: false },
    *   },
    * }
    * ```

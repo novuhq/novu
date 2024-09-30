@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CustomDataType } from '@novu/shared';
+import { CustomDataType, WorkflowPreferences } from '@novu/shared';
 import { API_ROOT } from '../config';
 import { getToken } from '../components/providers/AuthProvider';
 import { getEnvironmentId } from '../components/providers/EnvironmentProvider';
@@ -142,6 +142,18 @@ export function buildApiHttpClient({
     }
   };
 
+  const del = async (url, data = {}) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      const response = await httpClient.delete(url, data);
+
+      return response.data;
+    } catch (error) {
+      // TODO: Handle error?.response?.data || error?.response || error;
+      throw error;
+    }
+  };
+
   return {
     async getNotifications(params?: { page?: number; transactionId?: string }) {
       return get(`/v1/notifications`, params);
@@ -165,8 +177,12 @@ export function buildApiHttpClient({
       return get(`/v1/preferences?workflowId=${workflowId}`);
     },
 
-    async upsertPreferences(workflowId: string, preferences: any) {
+    async upsertPreferences(workflowId: string, preferences: WorkflowPreferences) {
       return post('/v1/preferences', { workflowId, preferences });
+    },
+
+    async deletePreferences(workflowId: string) {
+      return del(`/v1/preferences?workflowId=${workflowId}`);
     },
 
     async postTelemetry(event: string, data?: Record<string, unknown>) {

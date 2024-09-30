@@ -15,8 +15,7 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "vitest",
-    "watch:test": "pnpm test --watch",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "watch:test": "pnpm test --watch"
   },
   "author": "",
   "license": "ISC",

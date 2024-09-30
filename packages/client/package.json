@@ -35,8 +35,7 @@
     "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
     "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
-    "prepare-release": "run-s reset-hard test",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "prepare-release": "run-s reset-hard test"
   },
   "publishConfig": {
     "access": "public"
