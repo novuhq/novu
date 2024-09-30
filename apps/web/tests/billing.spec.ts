@@ -3,6 +3,7 @@ import { test } from './utils/baseTest';
 import { initializeSession } from './utils/browser';
 import { BillingPage } from './page-models/billingPage';
 import { BillingRouteMocks } from './rest-mocks/BillingRouteMocks';
+import { ApiServiceLevelEnum } from '@novu/shared';
 
 const GREEN = 'rgb(77, 153, 128)';
 const YELLOW = 'rgb(253, 224, 68)';
@@ -50,7 +51,6 @@ test.describe('Billing', () => {
 
   test('should display free trail info on billing page', async ({ page }) => {
     await BillingRouteMocks.mockSubscriptionTrial(page, 0);
-    await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertBillingPlansTitle('Plans');
     await billingPage.assertTrialWidgetText('30 days left on your trial');
@@ -58,7 +58,6 @@ test.describe('Billing', () => {
 
   test('should be able to manage subscription', async ({ page }) => {
     await BillingRouteMocks.mockActiveSubscription(page);
-    await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanBusinessCurrent();
@@ -67,7 +66,7 @@ test.describe('Billing', () => {
 
   test('should be able to upgrade from free', async ({ page }) => {
     await BillingRouteMocks.mockActiveSubscription(page);
-    await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'free' });
+    await BillingRouteMocks.mockSubscriptionWithApiServiceLevel(page, ApiServiceLevelEnum.FREE);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanFreeCurrent();
@@ -80,18 +79,16 @@ test.describe('Billing', () => {
   });
 
   async function assertStateOnTrial(page: Page) {
-    await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
     await BillingRouteMocks.mockSubscriptionTrial(page, 20);
     const billingPage = await BillingPage.goTo(page);
     await billingPage.assertPlansIsTitle();
     await billingPage.waitForPlanBusinessCurrent();
-    await billingPage.waitForPlanBusinessAndPayment();
+    await billingPage.waitForUpgradeButton();
     await billingPage.waitForFreeTrialWidget();
     await billingPage.assertTrialWidgetText('10 days left on your trial');
     await billingPage.waitForFreeTrialBanner();
   }
   async function testDynamicBannersInTrial(page: Page, timeInTrial: number) {
-    await BillingRouteMocks.mockPlanRestCall(page, { apiServiceLevel: 'business' });
     await BillingRouteMocks.mockSubscriptionTrial(page, timeInTrial);
     const billingPage = await BillingPage.goTo(page);
     await assertDynamicTimeLeftLabel(billingPage, timeInTrial);
