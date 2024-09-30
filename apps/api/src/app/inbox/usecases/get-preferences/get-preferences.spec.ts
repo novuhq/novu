@@ -145,7 +145,7 @@ describe('GetPreferences', () => {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: undefined,
-        critical: undefined,
+        critical: false,
       },
     ]);
     expect(getSubscriberWorkflowMock.execute.calledOnce).to.be.true;
@@ -156,7 +156,6 @@ describe('GetPreferences', () => {
         environmentId: command.environmentId,
         template: mockedWorkflow,
         subscriber: mockedSubscriber,
-        readOnly: undefined,
       },
     ]);
 
@@ -249,7 +248,7 @@ describe('GetPreferences', () => {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: command.tags,
-        critical: undefined,
+        critical: false,
       },
     ]);
     expect(getSubscriberWorkflowMock.execute.calledTwice).to.be.true;
@@ -260,7 +259,6 @@ describe('GetPreferences', () => {
         environmentId: command.environmentId,
         template: workflowsWithTags[0],
         subscriber: mockedSubscriber,
-        readOnly: undefined,
       },
     ]);
     expect(getSubscriberWorkflowMock.execute.secondCall.args).to.deep.equal([
@@ -270,7 +268,6 @@ describe('GetPreferences', () => {
         environmentId: command.environmentId,
         template: workflowsWithTags[1],
         subscriber: mockedSubscriber,
-        readOnly: undefined,
       },
     ]);
 

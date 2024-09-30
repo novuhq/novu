@@ -79,7 +79,7 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     });
   });
 
-  it('should not fetch critical/readOnly workflows when ?readOnly=false', async function () {
+  it('should fetch only non-critical/readOnly=false workflows', async function () {
     await session.createTemplate({
       noFeedId: true,
       critical: true,
@@ -91,33 +91,7 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     });
 
     const response = await session.testAgent
-      .get('/v1/inbox/preferences?readOnly=false')
-      .set('Authorization', `Bearer ${session.subscriberToken}`);
-
-    expect(response.body.data.length).to.equal(2);
-
-    const globalPreference = response.body.data[0];
-
-    expect(globalPreference.channels.email).to.equal(true);
-    expect(globalPreference.channels.in_app).to.equal(true);
-    expect(globalPreference.level).to.equal('global');
-
-    const nonCriticalWorkflowPreference = response.body.data[1];
-
-    expect(nonCriticalWorkflowPreference.channels.email).to.equal(true);
-    expect(nonCriticalWorkflowPreference.channels.in_app).to.equal(true);
-    expect(nonCriticalWorkflowPreference.level).to.equal('template');
-    expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(false);
-  });
-
-  it('should fetch critical/readOnly workflows when ?readOnly=true', async function () {
-    await session.createTemplate({
-      noFeedId: true,
-      critical: true,
-    });
-
-    const response = await session.testAgent
-      .get('/v1/inbox/preferences?readOnly=true')
+      .get('/v1/inbox/preferences')
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     expect(response.body.data.length).to.equal(2);
@@ -133,46 +107,6 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     expect(workflowPreference.channels.email).to.equal(true);
     expect(workflowPreference.channels.in_app).to.equal(true);
     expect(workflowPreference.level).to.equal('template');
-    expect(workflowPreference.workflow.critical).to.equal(true);
-  });
-
-  it('should fetch both critical and non-critical workflows when ?readOnly query parameter is not passed', async function () {
-    const criticalTemplate = await session.createTemplate({
-      noFeedId: true,
-      critical: true,
-    });
-
-    const nonCriticalTemplate = await session.createTemplate({
-      noFeedId: true,
-      critical: false,
-    });
-
-    const response = await session.testAgent
-      .get('/v1/inbox/preferences')
-      .set('Authorization', `Bearer ${session.subscriberToken}`);
-
-    expect(response.body.data.length).to.equal(3);
-
-    const globalPreference = response.body.data[0];
-
-    expect(globalPreference.channels.email).to.equal(true);
-    expect(globalPreference.channels.in_app).to.equal(true);
-    expect(globalPreference.level).to.equal('global');
-
-    const workflowPreferences = response.body.data.slice(1);
-    const criticalWorkflowPreference = workflowPreferences.find((item) => item.workflow.id === criticalTemplate._id);
-    const nonCriticalWorkflowPreference = workflowPreferences.find(
-      (item) => item.workflow.id === nonCriticalTemplate._id
-    );
-
-    expect(criticalWorkflowPreference.channels.email).to.equal(true);
-    expect(criticalWorkflowPreference.channels.in_app).to.equal(true);
-    expect(criticalWorkflowPreference.level).to.equal('template');
-    expect(criticalWorkflowPreference.workflow.critical).to.equal(true);
-
-    expect(nonCriticalWorkflowPreference.channels.email).to.equal(true);
-    expect(nonCriticalWorkflowPreference.channels.in_app).to.equal(true);
-    expect(nonCriticalWorkflowPreference.level).to.equal('template');
-    expect(nonCriticalWorkflowPreference.workflow.critical).to.equal(false);
+    expect(workflowPreference.workflow.critical).to.equal(false);
   });
 });
