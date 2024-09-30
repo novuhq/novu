@@ -7,6 +7,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  PreferencesEntity,
 } from '@novu/dal';
 import {
   CreateWorkflow as CreateWorkflowGeneric,
@@ -23,7 +24,6 @@ import {
   UpsertUserWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
-import { PreferencesEntity } from '@novu/dal/src';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepCreateDto, StepDto, StepUpdateDto } from '../../dto/workflow-commons-fields';
