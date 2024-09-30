@@ -10,6 +10,10 @@ export const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY 
 
 export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
-if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
+if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
+
+export const API_ROOT = import.meta.env.VITE_APP_API_URL;
+
+export const IS_SELF_HOSTED = import.meta.env.VITE_APP_IS_SELF_HOSTED === 'true';

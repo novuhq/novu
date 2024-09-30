@@ -1,0 +1,24 @@
+import { OrganizationList as OrganizationListForm } from '@clerk/clerk-react';
+import { PageMeta } from '@/components/page-meta';
+import { ROUTES } from '@/utils/routes';
+
+export const OrganizationList = () => {
+  return (
+    <>
+      <PageMeta title="Select or create organization" />
+      <OrganizationListForm
+        appearance={{
+          elements: {
+            organizationAvatarUploaderContainer: {
+              display: 'none',
+            },
+          },
+        }}
+        hidePersonal
+        skipInvitationScreen
+        afterSelectOrganizationUrl={ROUTES.WORKFLOWS}
+        afterCreateOrganizationUrl={ROUTES.WORKFLOWS}
+      />
+    </>
+  );
+};
