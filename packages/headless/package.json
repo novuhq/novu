@@ -46,5 +46,8 @@
   },
   "prettier": {
     "singleQuote": true
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

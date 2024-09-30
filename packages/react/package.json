@@ -95,5 +95,8 @@
   },
   "dependencies": {
     "@novu/js": "workspace:*"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }
