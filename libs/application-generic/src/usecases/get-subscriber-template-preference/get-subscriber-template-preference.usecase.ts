@@ -79,13 +79,14 @@ export class GetSubscriberTemplatePreference {
     /**
      * V2 preference object.
      */
-    const subscriberWorkflowPreferences =
-      await this.getPreferences.getWorkflowPreferences({
+    const subscriberWorkflowPreferences = await this.getPreferences.safeExecute(
+      {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-      });
+      },
+    );
 
     const subscriberPreferenceChannels = subscriberWorkflowPreferences
       ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(
