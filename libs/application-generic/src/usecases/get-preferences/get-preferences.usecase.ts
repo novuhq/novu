@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
+  buildWorkflowPreferences,
   FeatureFlagsKeysEnum,
   IPreferenceChannels,
-  WorkflowPreferences,
   PreferencesTypeEnum,
-  buildWorkflowPreferences,
+  WorkflowPreferences,
 } from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
@@ -26,7 +26,7 @@ class PreferencesNotEnabledException extends BadRequestException {
 }
 
 class PreferencesNotFoundException extends BadRequestException {
-  constructor(featureFlagCommand: object) {
+  constructor(featureFlagCommand: GetPreferencesCommand) {
     super({ message: 'Preferences not found', ...featureFlagCommand });
   }
 }
@@ -41,6 +41,24 @@ export class GetPreferences {
   async execute(
     command: GetPreferencesCommand,
   ): Promise<GetPreferencesResponseDto> {
+    await this.validateFeatureFlag(command);
+
+    const items = await this.getPreferencesFromDb(command);
+
+    if (items.length === 0) {
+      throw new PreferencesNotFoundException(command);
+    }
+
+    const mergedPreferences = this.mergePreferences(items, command.templateId);
+
+    if (!mergedPreferences.preferences) {
+      throw new NotFoundException('We could not find any preferences');
+    }
+
+    return mergedPreferences;
+  }
+
+  private async validateFeatureFlag(command: GetPreferencesCommand) {
     const featureFlagCommand = {
       userId: 'system',
       environmentId: command.environmentId,
@@ -55,19 +73,7 @@ export class GetPreferences {
       throw new PreferencesNotEnabledException(featureFlagCommand);
     }
 
-    const items = await this.getPreferencesFromDb(command);
-
-    if (items.length === 0) {
-      throw new PreferencesNotFoundException(featureFlagCommand);
-    }
-
-    const mergedPreferences = this.mergePreferences(items, command.templateId);
-
-    if (!mergedPreferences.preferences) {
-      throw new NotFoundException('We could not find any preferences');
-    }
-
-    return mergedPreferences;
+    return featureFlagCommand;
   }
 
   /** Get only simple, channel-level enablement flags */
