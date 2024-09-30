@@ -141,7 +141,7 @@ export class InboxService {
     });
   }
 
-  fetchPreferences({ tags }: { tags?: string[] }): Promise<PreferencesResponse[]> {
+  fetchPreferences(tags?: string[]): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
       tags.forEach((tag) => queryParams.append('tags[]', tag));
