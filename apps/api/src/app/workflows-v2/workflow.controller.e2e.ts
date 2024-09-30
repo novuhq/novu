@@ -470,7 +470,7 @@ async function getAllAndValidate({
   );
   expect(listWorkflowResponse.workflows).to.be.an('array', summery);
   expect(listWorkflowResponse.workflows).lengthOf(expectedArraySize, ` workflowSummaries length${summery}`);
-  expect(listWorkflowResponse.totalResults).to.be.equal(expectedTotalResults, `total Results don't match${summery}`);
+  expect(listWorkflowResponse.totalCount).to.be.equal(expectedTotalResults, `total Results don't match${summery}`);
 
   return listWorkflowResponse.workflows;
 }

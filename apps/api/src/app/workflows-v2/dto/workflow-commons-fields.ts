@@ -20,7 +20,7 @@ export type StepCreateDto = StepDto;
 
 export type ListWorkflowResponse = {
   workflows: WorkflowListResponseDto[];
-  totalResults: number;
+  totalCount: number;
 };
 
 export type WorkflowListResponseDto = Pick<WorkflowResponseDto, 'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id'> & {
