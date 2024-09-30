@@ -72,7 +72,6 @@ export class GetSubscriberTemplatePreference {
         'enabled channels',
         { readPreference: 'secondaryPreferred' },
       );
-
     const workflowOverride = await this.getWorkflowOverride(command);
 
     const templateChannelPreference = command.template.preferenceSettings;
