@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@9.1.4 --loglevel notice
+RUN npm install -g pnpm@9.11.0 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
@@ -36,7 +36,7 @@ RUN NX_DAEMON=false pnpm build:web
 FROM node:20-alpine
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@9.1.4 http-server --loglevel notice
+RUN npm install -g pnpm@9.11.0 http-server --loglevel notice
 
 USER 1000
 WORKDIR /app

@@ -44,7 +44,7 @@ test.describe('Invites', () => {
     await signUpPage.fillUseCaseData();
     await signUpPage.clickGetStartedButton();
 
-    await signUpPage.assertNavigationPath('/get-started**');
+    await signUpPage.assertNavigationPath('/workflows**');
 
     const sidebarPage = await SidebarPage.goTo(pageForInvitedUser);
     await expect(sidebarPage.getOrganizationSwitch()).toHaveValue(new RegExp(invitation.organization.name, 'i'));
