@@ -141,14 +141,10 @@ export class InboxService {
     });
   }
 
-  fetchPreferences({ tags, readOnly }: { tags?: string[]; readOnly?: boolean }): Promise<PreferencesResponse[]> {
+  fetchPreferences({ tags }: { tags?: string[] }): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
       tags.forEach((tag) => queryParams.append('tags[]', tag));
-    }
-
-    if (readOnly !== undefined) {
-      queryParams.append('readOnly', `${readOnly}`);
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

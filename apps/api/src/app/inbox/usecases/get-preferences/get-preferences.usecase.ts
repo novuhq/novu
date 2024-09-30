@@ -47,7 +47,7 @@ export class GetPreferences {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: command.tags,
-        critical: command.readOnly,
+        critical: false,
       })) || [];
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
@@ -63,7 +63,6 @@ export class GetPreferences {
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
-            readOnly: command.readOnly,
             template: workflow,
             subscriber,
           })

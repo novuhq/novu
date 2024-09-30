@@ -16,11 +16,11 @@ import { GetPreferencesResponseDto } from './get-preferences.dto';
 export class GetPreferences {
   constructor(
     private preferencesRepository: PreferencesRepository,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
   ) {}
 
   async execute(
-    command: GetPreferencesCommand
+    command: GetPreferencesCommand,
   ): Promise<GetPreferencesResponseDto> {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
@@ -28,7 +28,7 @@ export class GetPreferences {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      })
+      }),
     );
 
     if (!isEnabled) {
@@ -64,7 +64,7 @@ export class GetPreferences {
     }
 
     return GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-      result.preferences
+      result.preferences,
     );
   }
 
@@ -74,7 +74,6 @@ export class GetPreferences {
     organizationId: string;
     subscriberId: string;
     templateId?: string;
-    readOnly?: boolean;
   }): Promise<GetPreferencesResponseDto> {
     try {
       const result = await this.execute(
@@ -83,8 +82,7 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
-          readOnly: command.readOnly,
-        })
+        }),
       );
 
       return result;
@@ -99,7 +97,7 @@ export class GetPreferences {
 
   /** Transform WorkflowPreferences into IPreferenceChannels */
   public static mapWorkflowPreferencesToChannelPreferences(
-    workflowPreferences: WorkflowPreferences
+    workflowPreferences: WorkflowPreferences,
   ): IPreferenceChannels {
     const builtPreferences = buildWorkflowPreferences(workflowPreferences);
 
@@ -108,7 +106,7 @@ export class GetPreferences {
         ...acc,
         [channel]: preference.enabled,
       }),
-      {} as IPreferenceChannels
+      {} as IPreferenceChannels,
     );
 
     return mappedPreferences;
@@ -116,7 +114,7 @@ export class GetPreferences {
 
   private mergePreferences(
     items: PreferencesEntity[],
-    workflowId?: string
+    workflowId?: string,
   ): GetPreferencesResponseDto {
     const workflowResourcePreferences =
       this.getWorkflowResourcePreferences(items);
@@ -125,20 +123,20 @@ export class GetPreferences {
     const workflowPreferences = deepMerge(
       [workflowResourcePreferences, workflowUserPreferences]
         .filter((preference) => preference !== undefined)
-        .map((item) => item.preferences)
+        .map((item) => item.preferences),
     );
 
     const subscriberGlobalPreferences =
       this.getSubscriberGlobalPreferences(items);
     const subscriberWorkflowPreferences = this.getSubscriberWorkflowPreferences(
       items,
-      workflowId
+      workflowId,
     );
 
     const subscriberPreferences = deepMerge(
       [subscriberGlobalPreferences, subscriberWorkflowPreferences]
         .filter((preference) => preference !== undefined)
-        .map((item) => item.preferences)
+        .map((item) => item.preferences),
     );
 
     /**
@@ -153,16 +151,19 @@ export class GetPreferences {
       subscriberGlobalPreferences,
       subscriberWorkflowPreferences,
     ];
-    const source = Object.values(PreferencesTypeEnum).reduce((acc, type) => {
-      const preference = items.find((item) => item.type === type);
-      if (preference) {
-        acc[type] = preference.preferences;
-      } else {
-        acc[type] = null;
-      }
+    const source = Object.values(PreferencesTypeEnum).reduce(
+      (acc, type) => {
+        const preference = items.find((item) => item.type === type);
+        if (preference) {
+          acc[type] = preference.preferences;
+        } else {
+          acc[type] = null;
+        }
 
-      return acc;
-    }, {} as GetPreferencesResponseDto['source']);
+        return acc;
+      },
+      {} as GetPreferencesResponseDto['source'],
+    );
     const preferences = preferencesEntities
       .filter((preference) => preference !== undefined)
       .map((item) => item.preferences);
@@ -211,7 +212,7 @@ export class GetPreferences {
     const readOnlyPreferences = orderedPreferencesForReadOnly.map(
       ({ all }) => ({
         all: { readOnly: all?.readOnly },
-      })
+      }),
     ) as WorkflowPreferences[];
 
     const readOnlyPreference = deepMerge([...readOnlyPreferences]);
@@ -243,51 +244,43 @@ export class GetPreferences {
 
   private getSubscriberWorkflowPreferences(
     items: PreferencesEntity[],
-    templateId: string
+    templateId: string,
   ) {
     return items.find(
       (item) =>
         item.type === PreferencesTypeEnum.SUBSCRIBER_WORKFLOW &&
-        item._templateId === templateId
+        item._templateId === templateId,
     );
   }
 
   private getSubscriberGlobalPreferences(
-    items: PreferencesEntity[]
+    items: PreferencesEntity[],
   ): PreferencesEntity | undefined {
     return items.find(
-      (item) => item.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL
+      (item) => item.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     );
   }
 
   private getWorkflowUserPreferences(
-    items: PreferencesEntity[]
+    items: PreferencesEntity[],
   ): PreferencesEntity | undefined {
     return items.find(
-      (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW
+      (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
     );
   }
 
   private getWorkflowResourcePreferences(
-    items: PreferencesEntity[]
+    items: PreferencesEntity[],
   ): PreferencesEntity | undefined {
     return items.find(
-      (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE
+      (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
     );
   }
 
   private async getPreferencesFromDb(
-    command: GetPreferencesCommand
+    command: GetPreferencesCommand,
   ): Promise<PreferencesEntity[]> {
     const items: PreferencesEntity[] = [];
-
-    const commonQuery = {
-      _environmentId: command.environmentId,
-    };
-
-    if (command.readOnly !== undefined) {
-      commonQuery['preferences.all.readOnly'] = { $eq: command.readOnly };
-    }
 
     /*
      * Fetch the Workflow Preferences. This includes:
@@ -296,7 +289,8 @@ export class GetPreferences {
      */
     if (command.templateId) {
       const workflowPreferences = await this.preferencesRepository.find({
-        ...commonQuery,
+        _environmentId: command.environmentId,
+        'preferences.all.readOnly': false,
         _templateId: command.templateId,
         type: {
           $in: [
@@ -313,7 +307,8 @@ export class GetPreferences {
     if (command.subscriberId) {
       const subscriberGlobalPreference = await this.preferencesRepository.find({
         _subscriberId: command.subscriberId,
-        _environmentId: commonQuery._environmentId,
+        _environmentId: command.environmentId,
+        'preferences.all.readOnly': false,
         type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       });
 
@@ -326,7 +321,8 @@ export class GetPreferences {
         await this.preferencesRepository.find({
           _subscriberId: command.subscriberId,
           _templateId: command.templateId,
-          ...commonQuery,
+          _environmentId: command.environmentId,
+          'preferences.all.readOnly': false,
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
         });
 

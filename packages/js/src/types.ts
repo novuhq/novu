@@ -125,7 +125,6 @@ export type Workflow = {
   id: string;
   identifier: string;
   name: string;
-  readOnly: boolean;
   tags?: string[];
 };
 

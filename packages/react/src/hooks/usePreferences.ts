@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNovu } from './NovuProvider';
 
 type UsePreferencesProps = {
-  filter?: { tags?: string[]; readOnly?: boolean };
+  filter?: { tags?: string[] };
   onSuccess?: (data: Preference[]) => void;
   onError?: (error: NovuError) => void;
 };

@@ -86,7 +86,6 @@ export class GetSubscriberTemplatePreference {
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-        readOnly: command.readOnly,
       });
 
     const subscriberPreferenceChannels = subscriberWorkflowPreferences
