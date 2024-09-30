@@ -29,6 +29,25 @@ import { FlatCompat } from '@eslint/eslintrc';
 
 const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
+/**
+ * REUSED RULE CONFIGURATIONS
+ *
+ * This is necessary because Eslint doesn't merge rule configurations
+ * when they are targeting different paths.
+ */
+
+/**
+ * This rule ensures that "multi-level" imports are not used for `@novu/*` packages.
+ */
+const noRestrictedImportsMultiLevelNovuPattern = {
+  group: [
+    '@novu/*/**/*',
+    // These packages have legitimate exports 1 path part below the root level
+    ...['framework', 'js', 'novui'].flatMap((pkg) => [`!@novu/${pkg}/**/*`, `@novu/${pkg}/*/**/*`]),
+  ],
+  message: "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/node';' instead of 'import { Client } from '@novu/node/src';'",
+};
+
 export default tsEslint.config(
   /* ******************** RECOMMENDED CONFIG ******************** */
   jsEslint.configs.recommended,
@@ -155,12 +174,7 @@ export default tsEslint.config(
         'error',
         {
           patterns: [
-            '@novu/shared/*',
-            '!@novu/shared/utils',
-            '@novu/dal/*',
-            '*../libs/dal/*',
-            '*../packages/shared/*',
-            '*../libs/stateless/*',
+            noRestrictedImportsMultiLevelNovuPattern,
           ],
         },
       ],
@@ -275,6 +289,7 @@ export default tsEslint.config(
         'error',
         {
           patterns: [
+            noRestrictedImportsMultiLevelNovuPattern,
             {
               /**
                * This rule ensures that the overridden Swagger decorators are used,
