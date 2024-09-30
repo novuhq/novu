@@ -2,6 +2,8 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { DEFAULT_WORKFLOW_PREFERENCES, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { randomBytes } from 'crypto';
+import axios from 'axios';
+
 import { JsonSchema } from '@novu/framework';
 import {
   ListWorkflowResponse,
@@ -22,6 +24,7 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 
 const TEST_TAGS = ['test'];
 let session: UserSession;
+let axiosInstance;
 
 const SCHEMA_WITH_TEXT: JsonSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
@@ -60,19 +63,31 @@ describe('Workflow Controller E2E API Testing', () => {
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
+    axiosInstance = axios.create({
+      baseURL: `${session.serverUrl}${v2Prefix}`,
+      headers: {
+        authorization: `${session.token}`,
+      },
+    });
   });
 
   it('Smoke Testing', async () => {
-    const workflowCreated = await createWorkflowAndValidate();
-    await getWorkflowAndValidate(workflowCreated);
-    const updateRequest = buildUpdateRequest(workflowCreated);
-    await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateRequest);
-    await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, {
-      ...updateRequest,
-      description: 'Updated Description',
-    });
-    await getAllAndValidate({ searchQuery: PARTIAL_UPDATED_NAME, expectedTotalResults: 1, expectedArraySize: 1 });
-    await deleteWorkflowAndValidateDeletion(workflowCreated._id);
+    try {
+      const workflowCreated = await createWorkflowAndValidate();
+      await getWorkflowAndValidate(workflowCreated);
+      const updateRequest = buildUpdateRequest(workflowCreated);
+      await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateRequest);
+      await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, {
+        ...updateRequest,
+        description: 'Updated Description',
+      });
+      await getAllAndValidate({ searchQuery: PARTIAL_UPDATED_NAME, expectedTotalResults: 1, expectedArraySize: 1 });
+      await deleteWorkflowAndValidateDeletion(workflowCreated._id);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log(error);
+      throw error;
+    }
   });
 
   describe('Create Workflow Permutations', () => {
@@ -80,9 +95,12 @@ describe('Workflow Controller E2E API Testing', () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       await createWorkflowAndValidate(nameSuffix);
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-      const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
-      expect(res.status).to.be.equal(400);
-      expect(res.text).to.contain('Workflow with the same name already exists');
+      try {
+        await axiosInstance.post('/workflows', createWorkflowDto);
+      } catch (error) {
+        expect(error.response.status).to.be.equal(400);
+        expect(error.response.data).to.contain('Workflow with the same name already exists');
+      }
     });
   });
 
@@ -140,6 +158,7 @@ describe('Workflow Controller E2E API Testing', () => {
       });
       expect(workflowSummaries).to.be.empty;
     });
+
     it('should not return workflows if offset is bigger than the amount of available workflows', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
@@ -151,6 +170,7 @@ describe('Workflow Controller E2E API Testing', () => {
         expectedArraySize: 0,
       });
     });
+
     it('should return all results within range', async () => {
       const uuid = generateUUID();
 
@@ -211,9 +231,10 @@ function buildErrorMsg(createWorkflowDto: Omit<WorkflowCommonsFields, '_id'>, cr
 
 async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
   const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
+  // eslint-disable-next-line no-console
   console.log('createWorkflowDto', JSON.stringify(createWorkflowDto, null, 2));
-  const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
-  const workflowResponseDto: WorkflowResponseDto = res.body.data;
+  const res = await axiosInstance.post('/workflows', createWorkflowDto);
+  const workflowResponseDto: WorkflowResponseDto = res.data;
   expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto._id, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
@@ -266,10 +287,11 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
 }
 
 async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+  // eslint-disable-next-line no-console
   console.log(`updateWorkflow- ${id}: 
   ${JSON.stringify(workflow, null, 2)}`);
 
-  return await safePut(`${v2Prefix}/workflows/${id}`, workflow);
+  return (await axiosInstance.put(`/workflows/${id}`, workflow)).data;
 }
 
 function convertToDate(dateString: string) {
@@ -335,6 +357,7 @@ async function updateWorkflowAndValidate(
   updatedAt: string,
   updateRequest: UpdateWorkflowDto
 ): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log('updateRequest:::'.toUpperCase(), JSON.stringify(updateRequest.steps, null, 2));
   const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(id, updateRequest);
   const updatedWorkflowWithResponseFieldsRemoved = validateUpdatedWorkflowAndRemoveResponseFields(
@@ -347,52 +370,18 @@ async function updateWorkflowAndValidate(
   expect(convertToDate(updatedWorkflow.updatedAt)).to.be.greaterThan(convertToDate(updatedAt));
 }
 
-function parseAndReturnJson(res: ApiResponse, url: string) {
-  let parse: any;
-  try {
-    parse = JSON.parse(res.text);
-  } catch (e) {
-    expect.fail(
-      '',
-      '',
-      `'Expected response to be JSON' text: ${res.text}, url: ${url}, method: ${res.req.method}, status: ${res.status}`
-    );
-  }
-  expect(parse).to.be.ok;
-
-  return parse.data;
-}
-
-async function safeRest<T>(
-  url: string,
-  method: () => Promise<ApiResponse>,
-  expectedStatus: number = 200
-): Promise<unknown> {
-  const res: ApiResponse = await method();
-  expect(res.status).to.eq(
-    expectedStatus,
-    `[${res.req.method}]  Failed for URL: ${url} 
-    with text: 
-    ${res.text}
-     full response:
-      ${JSON.stringify(res, null, 2)}`
-  ); // Check if the status code is 200
-
-  if (res.status !== 200) {
-    return res.text;
-  }
-
-  return parseAndReturnJson(res, url);
-}
-
 async function getWorkflowRest(
   workflowCreated: WorkflowCommonsFields & { updatedAt: string }
 ): Promise<WorkflowResponseDto> {
-  return await safeGet(`${v2Prefix}/workflows/${workflowCreated._id}`);
+  return (await axiosInstance.get(`/workflows/${workflowCreated._id}`)).data;
 }
 
 async function validateWorkflowDeleted(workflowId: string): Promise<void> {
-  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(400);
+  try {
+    await axiosInstance.get(`/workflows/${workflowId}`);
+  } catch (error) {
+    expect(error.response.status).to.equal(400);
+  }
 }
 
 async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
@@ -401,7 +390,7 @@ async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
 }
 
 async function getListWorkflows(query: string, offset: number, limit: number): Promise<ListWorkflowResponse> {
-  return await safeGet(`${v2Prefix}/workflows?query=${query}&offset=${offset}&limit=${limit}`);
+  return (await axiosInstance.get(`/workflows?query=${query}&offset=${offset}&limit=${limit}`)).data;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -456,7 +445,7 @@ async function getAllAndValidate({
 }
 
 async function deleteWorkflowRest(_id: string): Promise<void> {
-  await safeDelete(`${v2Prefix}/workflows/${_id}`);
+  await axiosInstance.delete(`/workflows/${_id}`);
 }
 
 async function deleteWorkflowAndValidateDeletion(_id: string): Promise<void> {
@@ -481,6 +470,7 @@ async function create10Workflows(prefix: string) {
     await createWorkflowAndValidate(`${prefix}-ABC${i}`);
   }
 }
+
 function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
   const objCopy = JSON.parse(JSON.stringify(obj));
   keysToRemove.forEach((key) => {
@@ -489,53 +479,7 @@ function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
 
   return objCopy;
 }
-// eslint-disable-next-line @typescript-eslint/naming-convention
-interface ApiResponse {
-  req: {
-    method: string; // e.g., "GET"
-    url: string; // e.g., "http://127.0.0.1:1337/v1/v2/workflows/66e929c6667852862a1e5145"
-    headers: {
-      authorization: string; // e.g., "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX5cJ9..."
-      'novu-environment-id': string; // e.g., "66e929c6667852862a1e50e4"
-    };
-  };
-  header: {
-    'content-security-policy': string;
-    'cross-origin-embedder-policy': string;
-    'cross-origin-opener-policy': string;
-    'cross-origin-resource-policy': string;
-    'x-dns-prefetch-control': string;
-    'x-frame-options': string;
-    'strict-transport-security': string;
-    'x-download-options': string;
-    'x-content-type-options': string;
-    'origin-agent-cluster': string;
-    'x-permitted-cross-domain-policies': string;
-    'referrer-policy': string;
-    'x-xss-protection': string;
-    'access-control-allow-origin': string;
-    'content-type': string;
-    'content-length': string;
-    etag: string;
-    vary: string;
-    date: string;
-    connection: string;
-  };
-  status: number; // e.g., 400
-  text: string; // e.g., "{\"message\":\"Workflow not found with id: 66e929c6667852862a1e5145\",\"error\":\"Bad Request\",\"statusCode\":400}"
-}
-async function safeGet<T>(url: string): Promise<T> {
-  return (await safeRest(url, () => session.testAgent.get(url) as unknown as Promise<ApiResponse>)) as T;
-}
-async function safePut<T>(url: string, data: object): Promise<T> {
-  return (await safeRest(url, () => session.testAgent.put(url).send(data) as unknown as Promise<ApiResponse>)) as T;
-}
-async function safePost<T>(url: string, data: object): Promise<T> {
-  return (await safeRest(url, () => session.testAgent.post(url).send(data) as unknown as Promise<ApiResponse>)) as T;
-}
-async function safeDelete<T>(url: string): Promise<void> {
-  await safeRest(url, () => session.testAgent.delete(url) as unknown as Promise<ApiResponse>, 204);
-}
+
 function generateUUID(): string {
   // Generate a random 4-byte hex string
   const randomHex = () => randomBytes(2).toString('hex');
@@ -566,6 +510,7 @@ function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateW
   const updateDto = convertResponseToUpdateDto(workflowCreated);
   const updatedStep = addValueToExistingStep(updateDto.steps);
   const newStep = buildInAppStepWithValues();
+  // eslint-disable-next-line no-console
   console.log('newStep:::', JSON.stringify(newStep, null, 2));
 
   const stoWithValues: UpdateWorkflowDto = {
@@ -574,6 +519,7 @@ function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateW
     steps: [updatedStep, newStep],
   };
 
+  // eslint-disable-next-line no-console
   console.log('updateDto:::', JSON.stringify(stoWithValues, null, 2));
 
   return stoWithValues;
