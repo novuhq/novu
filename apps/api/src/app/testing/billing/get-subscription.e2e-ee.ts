@@ -64,6 +64,13 @@ describe('GetSubscription', async () => {
 
   const { GetPlatformNotificationUsageCommand, GetSubscription, GetSubscriptionCommand } = eeBilling;
 
+  const communityOrganizationRepo = {
+    findById: () =>
+      Promise.resolve({
+        _id: session.organization._id,
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      }),
+  };
   const getPlatformNotificationUsage = {
     execute: () =>
       Promise.resolve([
@@ -76,13 +83,6 @@ describe('GetSubscription', async () => {
   };
   let getOrCreateCustomer = {
     execute: () => Promise.resolve(mockedStripeCustomer),
-  };
-  let communityOrganizationRepo = {
-    findById: () =>
-      Promise.resolve({
-        _id: session.organization._id,
-        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-      }),
   };
   let getPlatformNotificationUsageSpy: sinon.SinonSpy;
 
