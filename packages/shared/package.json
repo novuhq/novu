@@ -15,8 +15,7 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "vitest",
-    "watch:test": "pnpm test --watch",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "watch:test": "pnpm test --watch"
   },
   "author": "",
   "license": "ISC",
@@ -50,5 +49,8 @@
     "rimraf": "^3.0.2",
     "typescript": "5.6.2",
     "vitest": "^2.0.5"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

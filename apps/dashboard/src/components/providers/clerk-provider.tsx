@@ -1,4 +1,4 @@
-import { CLERK_PUBLISHABLE_KEY, IS_EE_AUTH_ENABLED } from '@/config';
+import { CLERK_PUBLISHABLE_KEY } from '@/config';
 import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,10 +32,6 @@ export const ClerkProvider = (props: ClerkProviderProps) => {
   const { children } = props;
 
   const navigate = useNavigate();
-
-  if (!IS_EE_AUTH_ENABLED) {
-    return <>{children}</>;
-  }
 
   return (
     <_ClerkProvider

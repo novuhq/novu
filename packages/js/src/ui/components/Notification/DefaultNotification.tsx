@@ -93,8 +93,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           <p
             class={style(
               'notificationDate',
-              `nt-transition nt-duration-100 nt-ease-out nt-text-foreground-alpha-400 nt-shrink-0 
-              nt-float-right nt-text-right group-hover:nt-opacity-0`
+              'nt-transition nt-duration-100 nt-ease-out nt-text-foreground-alpha-400 nt-shrink-0 nt-float-right nt-text-right group-hover:nt-opacity-0'
             )}
           >
             {date()}
@@ -102,9 +101,7 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           <div
             class={style(
               'notificationDefaultActions',
-              `nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 
-              nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center 
-              nt-absolute nt-top-0 nt-right-0 nt-bg-neutral-alpha-50 nt-py-0.5 nt-rounded`
+              'nt-transition nt-duration-100 nt-ease-out nt-gap-2 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 nt-justify-center nt-items-center nt-absolute nt-top-0 nt-right-0 nt-bg-neutral-alpha-50 nt-py-0.5 nt-rounded'
             )}
           >
             <Show when={status() !== NotificationStatus.ARCHIVED}>
