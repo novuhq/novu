@@ -124,5 +124,8 @@
     "solid-js": "^1.8.11",
     "solid-motionone": "^1.0.1",
     "tailwind-merge": "^2.4.0"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }
