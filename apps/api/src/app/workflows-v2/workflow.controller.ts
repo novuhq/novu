@@ -10,7 +10,6 @@ import {
   Post,
   Put,
   Query,
-  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -89,11 +88,7 @@ export class WorkflowController {
   @Delete(':workflowId')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeWorkflow(
-    @UserSession() user: UserSessionData,
-    @Param('workflowId') workflowId: string,
-    @Res({ passthrough: true }) response: Response
-  ) {
+  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string) {
     await this.deleteWorkflowUsecase.execute(DeleteWorkflowCommand.create({ workflowId, user }));
   }
 
