@@ -16,10 +16,10 @@ export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelPr
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
   const [searchParams] = useSearchParams();
   const { isLoading, workflowUserPreferences, workflowResourcePreferences } = useCloudWorkflowPreferences(workflowId);
-  const { setValue } = useFormContext<WorkflowDetailFormContext>();
+  const { setValue, getValues } = useFormContext<WorkflowDetailFormContext>();
 
   useEffect(() => {
-    if (workflowUserPreferences !== undefined) {
+    if (workflowUserPreferences !== undefined && getValues('preferences') === undefined) {
       setValue('preferences', workflowUserPreferences, { shouldDirty: false });
     }
   }, [setValue, workflowUserPreferences]);
