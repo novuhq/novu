@@ -22,10 +22,8 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@segment/analytics-next": "^1.73.0",
     "@tanstack/react-query": "^4.20.4",
-    "axios": "^1.6.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "js-cookie": "^3.0.5",
     "lucide-react": "^0.439.0",
     "mixpanel-browser": "^2.52.0",
     "react": "^18.3.1",
@@ -40,7 +38,6 @@
   "devDependencies": {
     "@clerk/types": "^4.6.1",
     "@eslint/js": "^9.9.0",
-    "@types/js-cookie": "^3.0.6",
     "@types/mixpanel-browser": "^2.49.0",
     "@types/node": "^22.7.0",
     "@types/react": "^18.3.3",

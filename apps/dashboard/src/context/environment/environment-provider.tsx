@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useFetchCurrentEnvironment, useFetchEnvironments } from './hooks';
 import { useAuth } from '../auth';
 import { EnvironmentContext } from './environment-context';
+import { saveEnvironmentId } from '@/utils/local-storage';
 
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const { currentOrganization } = useAuth();
@@ -10,7 +11,10 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     organizationId: currentOrganization?._id,
   });
 
-  const { currentEnvironment } = useFetchCurrentEnvironment({ organizationId: currentOrganization?._id });
+  const { currentEnvironment } = useFetchCurrentEnvironment({
+    organizationId: currentOrganization?._id,
+    onSuccess: (env) => saveEnvironmentId(env._id),
+  });
 
   const value = useMemo(
     () => ({

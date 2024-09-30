@@ -20,13 +20,4 @@ type OrganizationState =
       currentOrganization: undefined;
     };
 
-export type AuthContextValue = UserState &
-  OrganizationState & {
-    login: (newToken: string, redirectUrl?: string) => Promise<void>;
-    logout: () => void;
-    redirectToLogin: (params: { redirectURL?: string }) => void;
-    // TODO: Make redirectToSignUp agnostic to business logic and accept { queryParams: { [key: string]: string }}
-    redirectToSignUp: (params: { redirectURL?: string; origin?: string; anonymousId?: string }) => void;
-    switchOrganization: (organizationId: string) => Promise<void>;
-    reloadOrganization: () => Promise<void>;
-  };
+export type AuthContextValue = UserState & OrganizationState;

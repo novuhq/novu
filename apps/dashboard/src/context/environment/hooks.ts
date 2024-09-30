@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { IEnvironment } from '@novu/shared';
-import { useNovuAPI } from '@/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironmentContext } from './environment-context';
+import { getCurrentEnvironment, getEnvironments } from '@/api/environments';
 
 export function useEnvironment({ bridge }: { bridge?: boolean } = {}) {
   const { readOnly, ...rest } = useEnvironmentContext();
@@ -21,8 +21,6 @@ export const useFetchEnvironments = ({
   organizationId?: string;
   onSuccess?: (args: IEnvironment[]) => void;
 }) => {
-  const novuApi = useNovuAPI();
-
   /*
    * Loading environments depends on the current organization. Fetching should start only when the current
    * organization is set and it should happens once, on full page reload, until the cache is invalidated on-demand
@@ -32,7 +30,7 @@ export const useFetchEnvironments = ({
     data: environments,
     isInitialLoading: areEnvironmentsInitialLoading,
     refetch: refetchEnvironments,
-  } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, organizationId], novuApi.getEnvironments, {
+  } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, organizationId], getEnvironments, {
     enabled: !!organizationId,
     retry: false,
     staleTime: Infinity,
@@ -46,16 +44,21 @@ export const useFetchEnvironments = ({
   };
 };
 
-export const useFetchCurrentEnvironment = ({ organizationId }: { organizationId?: string }) => {
-  const novuApi = useNovuAPI();
-
+export const useFetchCurrentEnvironment = ({
+  organizationId,
+  onSuccess,
+}: {
+  organizationId?: string;
+  onSuccess?: (args: IEnvironment) => void;
+}) => {
   const { data: currentEnvironment, isInitialLoading: isCurrentEnvironmentInitialLoading } = useQuery<IEnvironment>(
     [QueryKeys.currentEnvironment, organizationId],
-    novuApi.getCurrentEnvironment,
+    getCurrentEnvironment,
     {
       enabled: !!organizationId,
       retry: false,
       staleTime: Infinity,
+      onSuccess,
     }
   );
 

@@ -655,18 +655,12 @@ importers:
       '@tanstack/react-query':
         specifier: ^4.20.4
         version: 4.29.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      axios:
-        specifier: ^1.6.8
-        version: 1.7.7
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      js-cookie:
-        specifier: ^3.0.5
-        version: 3.0.5
       lucide-react:
         specifier: ^0.439.0
         version: 0.439.0(react@18.3.1)
@@ -704,9 +698,6 @@ importers:
       '@eslint/js':
         specifier: ^9.9.0
         version: 9.9.1
-      '@types/js-cookie':
-        specifier: ^3.0.6
-        version: 3.0.6
       '@types/mixpanel-browser':
         specifier: ^2.49.0
         version: 2.49.0

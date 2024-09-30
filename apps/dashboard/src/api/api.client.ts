@@ -1,79 +1,70 @@
-import axios from 'axios';
+import { getToken } from '@/utils/auth';
 import { API_ROOT } from '../config';
+import { getEnvironmentId } from '@/utils/local-storage';
 
-export function buildApiHttpClient({
-  baseURL = API_ROOT || 'https://api.novu.co',
-  secretKey,
-  jwt,
-  environmentId,
-}: {
-  baseURL?: string;
-  secretKey?: string;
-  jwt?: string;
-  environmentId?: string;
-}) {
-  if (!secretKey && !jwt) {
-    throw new Error('A secretKey or jwt is required to create a Novu API client.');
+class NovuApiError extends Error {
+  constructor(
+    message: string,
+    public error: unknown,
+    public status: number
+  ) {
+    super(message);
   }
+}
 
-  const authHeader = jwt ? `Bearer ${jwt}` : `ApiKey ${secretKey}`;
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-  const httpClient = axios.create({
-    baseURL,
-    headers: {
-      Authorization: authHeader,
-      'Content-Type': 'application/json',
-      'Novu-Environment-Id': environmentId,
-    },
-  });
+const request = async <T>(
+  endpoint: string,
+  method: HttpMethod = 'GET',
+  data?: unknown,
+  headers?: HeadersInit
+): Promise<T> => {
+  try {
+    const jwt = await getToken();
+    const environmentId = getEnvironmentId();
+    const config: RequestInit = {
+      method,
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        'Content-Type': 'application/json',
+        ...(environmentId && { 'Novu-Environment-Id': environmentId }),
+        ...headers,
+      },
+    };
 
-  const get = async (url: string, params?: Record<string, string | string[] | number>) => {
-    // eslint-disable-next-line no-useless-catch
-    try {
-      const response = await httpClient.get(url, { params });
+    if (data) {
+      config.body = JSON.stringify(data);
+    }
 
-      return response.data;
-    } catch (error) {
-      // TODO: Handle error?.response?.data || error?.response || error;
+    const baseUrl = API_ROOT ?? 'https://api.novu.co';
+    const response = await fetch(`${baseUrl}/v1${endpoint}`, config);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new NovuApiError(`Novu API error`, errorData, response.status);
+    }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof NovuApiError) {
       throw error;
     }
-  };
+    if (typeof error === 'object' && error && 'message' in error) {
+      throw new Error(`Fetch error: ${error.message}`);
+    }
+    throw new Error(`Fetch error: ${JSON.stringify(error)}`);
+  }
+};
 
-  // // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // const post = async <T>(url: string, data = {}): Promise<T> => {
-  //   // eslint-disable-next-line no-useless-catch
-  //   try {
-  //     const response = await httpClient.post(url, data);
+export const get = <T>(endpoint: string) => request<T>(endpoint, 'GET');
 
-  //     return response.data;
-  //   } catch (error) {
-  //     // TODO: Handle error?.response?.data || error?.response || error;
-  //     throw error;
-  //   }
-  // };
+export const post = <T>(endpoint: string, data: unknown) => request<T>(endpoint, 'POST', data);
 
-  // // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // const del = async (url: string, data = {}) => {
-  //   // eslint-disable-next-line no-useless-catch
-  //   try {
-  //     const response = await httpClient.delete(url, data);
+export const put = <T>(endpoint: string, data: unknown) => request<T>(endpoint, 'PUT', data);
 
-  //     return response.data;
-  //   } catch (error) {
-  //     // TODO: Handle error?.response?.data || error?.response || error;
-  //     throw error;
-  //   }
-  // };
-
-  return {
-    async getEnvironments() {
-      return get('/v1/environments');
-    },
-    async getCurrentEnvironment() {
-      return get('/v1/environments/me');
-    },
-    async getDefaultLocale() {
-      return get(`/v1/translations/defaultLocale`);
-    },
-  };
-}
+export const del = <T>(endpoint: string) => request<T>(endpoint, 'DELETE');

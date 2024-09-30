@@ -1,5 +1,10 @@
-import { eeAuthTokenCookie } from './cookies';
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace Clerk {
+  export const session: {
+    getToken: () => Promise<string | null>;
+  };
+}
 
-export function getToken(): string {
-  return eeAuthTokenCookie.get() || '';
+export async function getToken(): Promise<string> {
+  return (await Clerk.session?.getToken()) || '';
 }
