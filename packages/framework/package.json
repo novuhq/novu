@@ -163,5 +163,8 @@
     "liquidjs": "^10.13.1",
     "ora": "^5.4.1",
     "sanitize-html": "^2.13.0"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

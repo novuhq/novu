@@ -50,5 +50,8 @@
       "node_modules",
       "dist"
     ]
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

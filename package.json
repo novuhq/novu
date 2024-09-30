@@ -61,7 +61,7 @@
     "release:preminor": "nx release version preminor --no-push",
     "release:prerelease": "nx release version prerelease --no-push",
     "release:submodules": "ts-node scripts/release-with-submodules.ts",
-    "preview:pkg:build": "nx affected -t build --base=origin/next --head=HEAD --exclude=nextjs",
+    "preview:pkg:build": "nx affected -t build --base=origin/next --head=HEAD --exclude='*,!tag:package:public'",
     "preview:pkg:publish": "node scripts/publish-preview-packages.mjs",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:e2e:api": "cd apps/api && pnpm run test:e2e",
