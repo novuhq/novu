@@ -24,7 +24,6 @@ const TEST_TAGS = ['test'];
 let session: UserSession;
 
 const SCHEMA_WITH_TEXT: JsonSchema = {
-  $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
   properties: {
     text: {
@@ -34,27 +33,7 @@ const SCHEMA_WITH_TEXT: JsonSchema = {
   required: ['text'],
 };
 
-function createStep(): StepCreateDto {
-  return {
-    name: 'someStep',
-    type: StepTypeEnum.SMS,
-    controls: {
-      schema: SCHEMA_WITH_TEXT,
-    },
-    controlValues: {
-      text: '{SOME_TEXT_VARIABLE}',
-    },
-  };
-}
-
-function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  const steps = [createStep()];
-  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin') as UpdateWorkflowDto;
-
-  return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
-}
-
-describe.only('Workflow Controller E2E API Testing', () => {
+describe('Workflow Controller E2E API Testing', () => {
   beforeEach(async () => {
     // @ts-ignore
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
@@ -579,4 +558,23 @@ function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateW
   console.log('updateDto:::', JSON.stringify(stoWithValues, null, 2));
 
   return stoWithValues;
+}
+function createStep(): StepCreateDto {
+  return {
+    name: 'someStep',
+    type: StepTypeEnum.SMS,
+    controls: {
+      schema: SCHEMA_WITH_TEXT,
+    },
+    controlValues: {
+      text: '{SOME_TEXT_VARIABLE}',
+    },
+  };
+}
+
+function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
+  const steps = [createStep()];
+  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin') as UpdateWorkflowDto;
+
+  return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
 }
