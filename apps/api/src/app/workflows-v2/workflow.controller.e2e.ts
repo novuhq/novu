@@ -63,6 +63,8 @@ describe('Workflow Controller E2E API Testing', () => {
   });
 
   it('Smoke Testing', async () => {
+    // @ts-ignore
+    process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     const workflowCreated = await createWorkflowAndValidate();
     await getWorkflowAndValidate(workflowCreated);
     const updateRequest = buildUpdateRequest(workflowCreated);
