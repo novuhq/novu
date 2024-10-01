@@ -23,7 +23,7 @@ export const INBOX_TOKENS = {
   'Inbox/margin/message/txt/buttons': '1rem',
 } as const;
 
-const parseText = (text?: string) => {
+const renderText = (text?: string) => {
   if (!text) {
     return null;
   }
