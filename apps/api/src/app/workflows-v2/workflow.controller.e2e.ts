@@ -234,7 +234,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   // eslint-disable-next-line no-console
   console.log('createWorkflowDto', JSON.stringify(createWorkflowDto, null, 2));
   const res = await axiosInstance.post('/workflows', createWorkflowDto);
-  const workflowResponseDto: WorkflowResponseDto = res.data.data;
+  const workflowResponseDto: WorkflowResponseDto = res.data;
   expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto._id, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
@@ -291,7 +291,7 @@ async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Prom
   console.log(`updateWorkflow- ${id}: 
   ${JSON.stringify(workflow, null, 2)}`);
 
-  return (await axiosInstance.put(`/workflows/${id}`, workflow)).data.data;
+  return (await axiosInstance.put(`/workflows/${id}`, workflow)).data;
 }
 
 function convertToDate(dateString: string) {
@@ -373,7 +373,7 @@ async function updateWorkflowAndValidate(
 async function getWorkflowRest(
   workflowCreated: WorkflowCommonsFields & { updatedAt: string }
 ): Promise<WorkflowResponseDto> {
-  return (await axiosInstance.get(`/workflows/${workflowCreated._id}`)).data.data;
+  return (await axiosInstance.get(`/workflows/${workflowCreated._id}`)).data;
 }
 
 async function validateWorkflowDeleted(workflowId: string): Promise<void> {
@@ -390,7 +390,7 @@ async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
 }
 
 async function getListWorkflows(query: string, offset: number, limit: number): Promise<ListWorkflowResponse> {
-  return (await axiosInstance.get(`/workflows?query=${query}&offset=${offset}&limit=${limit}`)).data.data;
+  return (await axiosInstance.get(`/workflows?query=${query}&offset=${offset}&limit=${limit}`)).data;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
