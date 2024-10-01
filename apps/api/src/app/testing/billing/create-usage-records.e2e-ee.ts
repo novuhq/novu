@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
+import { GetFeatureFlag } from '@novu/application-generic';
 
 const mockMonthlyBusinessSubscription = {
   id: 'subscription_id',
@@ -37,12 +38,17 @@ describe('CreateUsageRecords', () => {
     track: sinon.stub(),
   };
   const upsertSubscriptionUsecase = { execute: () => Promise.resolve() };
+  const createSubscriptionUsecase = { execute: () => Promise.resolve() };
   const getCustomerUsecase = { execute: () => Promise.resolve() };
+  const IS_STRIPE_CHECKOUT_ENABLED = false;
+  const getFeatureFlag = { execute: () => Promise.resolve(IS_STRIPE_CHECKOUT_ENABLED) };
   const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
+  let createSubscriptionStub: sinon.SinonStub;
   let getCustomerStub: sinon.SinonStub;
+  let getFeatureFlagStub: sinon.SinonStub;
 
   beforeEach(() => {
     createUsageRecordStub = sinon.stub(stripeStub.subscriptionItems, 'createUsageRecord').resolves({
@@ -60,6 +66,9 @@ describe('CreateUsageRecords', () => {
       licensed: mockMonthlyBusinessSubscription,
       metered: mockMonthlyBusinessSubscription,
     } as any);
+    createSubscriptionStub = sinon.stub(createSubscriptionUsecase, 'execute').resolves({
+      id: 'subscription_id',
+    } as any);
     getCustomerStub = sinon.stub(getCustomerUsecase, 'execute').resolves({
       id: 'customer_id',
       deleted: false,
@@ -76,6 +85,7 @@ describe('CreateUsageRecords', () => {
     createUsageRecordStub.reset();
     getCustomerStub.reset();
     upsertSubscriptionStub.reset();
+    createSubscriptionStub.reset();
     getPlatformNotificationUsageStub.reset();
     analyticsServiceStub.track.reset();
   });
@@ -85,8 +95,10 @@ describe('CreateUsageRecords', () => {
       stripeStub,
       getCustomerUsecase,
       upsertSubscriptionUsecase,
+      createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
-      analyticsServiceStub
+      analyticsServiceStub,
+      getFeatureFlag
     );
 
     return useCase;

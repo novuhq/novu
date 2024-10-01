@@ -1,10 +1,11 @@
 import { ReactNode } from 'react';
 import { UserProfile } from '@/components/user-profile';
+import { InboxButton } from '@/components/inbox-button';
 
 export const DashboardLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="relative min-h-dvh">
-      <div className="fixed left-0 top-0 flex h-16 w-full items-center justify-center bg-green-200 p-4">
+      <div className="fixed left-0 top-0 flex h-16 w-full items-center justify-between bg-green-200 p-4">
         <a
           href="/legacy/integrations"
           target="_self"
@@ -12,7 +13,8 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
         >
           Integrations
         </a>
-        <div className="ml-auto">
+        <div className="flex gap-4">
+          <InboxButton />
           <UserProfile />
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
-  ControlVariablesRepository,
+  ControlValuesRepository,
   NotificationTemplateEntity,
   EnvironmentRepository,
   JobRepository,
@@ -37,7 +37,7 @@ export class ExecuteBridgeJob {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageRepository: MessageRepository,
     private environmentRepository: EnvironmentRepository,
-    private controlVariablesRepository: ControlVariablesRepository,
+    private controlValuesRepository: ControlValuesRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest
   ) {}
@@ -135,7 +135,7 @@ export class ExecuteBridgeJob {
   }
 
   private async findControlVariables(command: ExecuteBridgeJobCommand, workflow: NotificationTemplateEntity) {
-    const controls = await this.controlVariablesRepository.findOne({
+    const controls = await this.controlValuesRepository.findOne({
       _organizationId: command.organizationId,
       _workflowId: workflow._id,
       _stepId: command.job.step._id,

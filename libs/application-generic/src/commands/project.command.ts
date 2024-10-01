@@ -1,4 +1,13 @@
-import { IsNotEmpty } from 'class-validator';
+import {
+  IsDefined,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
+
+import { DirectionEnum, UserSessionData } from '@novu/shared';
+
 import { BaseCommand } from './base.command';
 
 export abstract class EnvironmentLevelCommand extends BaseCommand {
@@ -44,6 +53,29 @@ export abstract class EnvironmentWithUserCommand extends BaseCommand {
 
   @IsNotEmpty()
   readonly userId: string;
+}
+
+export abstract class EnvironmentWithUserObjectCommand extends BaseCommand {
+  @IsNotEmpty()
+  user: UserSessionData;
+}
+
+export abstract class PaginatedListCommand extends EnvironmentWithUserObjectCommand {
+  @IsDefined()
+  @IsNumber()
+  offset: number;
+
+  @IsDefined()
+  @IsNumber()
+  limit: number;
+
+  @IsDefined()
+  @IsEnum(DirectionEnum)
+  orderDirection: DirectionEnum;
+
+  @IsDefined()
+  @IsString()
+  orderByField: string;
 }
 
 export abstract class EnvironmentWithSubscriber extends BaseCommand {

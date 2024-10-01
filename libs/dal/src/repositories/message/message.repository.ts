@@ -1,15 +1,15 @@
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery, Types } from 'mongoose';
 import {
-  MessagesStatusEnum,
-  ChannelTypeEnum,
   ActorTypeEnum,
   ButtonTypeEnum,
+  ChannelTypeEnum,
   MessageActionStatusEnum,
+  MessagesStatusEnum,
 } from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
-import { MessageEntity, MessageDBModel } from './message.entity';
+import { MessageDBModel, MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
@@ -653,8 +653,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   async deleteMany(query: MessageQuery) {
     try {
       return await this.message.delete({ ...query, deleted: false });
-    } catch (e) {
-      throw new DalException(e);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        throw new DalException(e.message);
+      } else {
+        throw new DalException('An unknown error occurred');
+      }
     }
   }
 

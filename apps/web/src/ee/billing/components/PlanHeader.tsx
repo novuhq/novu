@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
-import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
+import { Button, Text, When, colors, errorMessage, successMessage } from '@novu/design-system';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
-import { useSubscription } from '../hooks/useSubscription';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
 import { UpgradeModal } from './UpgradeModal';
@@ -23,8 +22,14 @@ const columnStyle = {
 export const PlanHeader = () => {
   const segment = useSegment();
 
-  const { hasPaymentMethod } = useSubscriptionContext();
-  const { isLoading: isLoadingSubscriptionData, apiServiceLevel: subscriptionApiServiceLevel } = useSubscription();
+  const {
+    isActive,
+    trial,
+    hasPaymentMethod,
+    isLoading: isLoadingSubscriptionData,
+    apiServiceLevel: subscriptionApiServiceLevel,
+    billingInterval: subscriptionBillingInterval,
+  } = useSubscriptionContext();
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
   const [intentSecret, setIntentSecret] = useState('');
@@ -34,8 +39,28 @@ export const PlanHeader = () => {
   const [apiServiceLevel, setApiServiceLevel] = useState(
     isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
-  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>(subscriptionBillingInterval || 'month');
   const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
+  const isStripeCheckoutEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_STRIPE_CHECKOUT_ENABLED);
+
+  const checkoutUrl = isStripeCheckoutEnabled ? '/v1/billing/checkout-session' : '/v1/billing/checkout';
+
+  const checkoutOnSuccess = (data) => {
+    if (isStripeCheckoutEnabled) {
+      window.location.href = data.stripeCheckoutUrl;
+
+      return;
+    }
+
+    if (upgradeOpen) {
+      return;
+    }
+
+    setIntentSecret(data.clientSecret);
+    setUpgradeOpen(true);
+  };
+
+  const isPaidSubscriptionActive = isActive && !trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE;
 
   useEffect(() => {
     if (!isLoadingSubscriptionData) {
@@ -47,27 +72,37 @@ export const PlanHeader = () => {
     any,
     any,
     { billingInterval: 'month' | 'year'; apiServiceLevel: ApiServiceLevelEnum }
-  >((data) => api.post('/v1/billing/checkout', data), {
-    onSuccess: (data) => {
-      if (upgradeOpen) {
-        return;
-      }
-
-      setIntentSecret(data.clientSecret);
-      setUpgradeOpen(true);
-    },
+  >((data) => api.post(checkoutUrl, data), {
+    onSuccess: checkoutOnSuccess,
     onError: (e: any) => {
       errorMessage(e.message || 'Unexpected error');
     },
   });
 
   useEffect(() => {
-    if (intentSecret === '') {
-      return;
+    if (!isStripeCheckoutEnabled) {
+      if (intentSecret === '') {
+        return;
+      }
+      checkout({ billingInterval, apiServiceLevel: ApiServiceLevelEnum.BUSINESS });
     }
-    checkout({ billingInterval, apiServiceLevel: ApiServiceLevelEnum.BUSINESS });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingInterval, intentSecret, apiServiceLevel]);
+
+  useEffect(() => {
+    if (isStripeCheckoutEnabled) {
+      const checkoutResult = new URLSearchParams(window.location.search).get('result');
+
+      if (checkoutResult === 'success') {
+        setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
+        successMessage('Payment was successful.');
+      }
+
+      if (checkoutResult === 'canceled') {
+        errorMessage('Order canceled.');
+      }
+    }
+  }, []);
 
   const { mutateAsync: goToPortal, isLoading: isGoingToPortal } = useMutation<any, any, any>(
     () => api.get('/v1/billing/portal'),
@@ -136,7 +171,7 @@ export const PlanHeader = () => {
                   </Text>
                 </When>
               </Group>
-              <When truthy={!hasPaymentMethod}>
+              <When truthy={!isPaidSubscriptionActive}>
                 <div style={{ marginBottom: 12 }}>
                   <BillingIntervalControl value={billingInterval} onChange={setBillingInterval} />
                 </div>
@@ -154,51 +189,39 @@ export const PlanHeader = () => {
                 included
               </Text>
             </div>
-            <When truthy={apiServiceLevel === ApiServiceLevelEnum.FREE}>
+            <When truthy={isPaidSubscriptionActive}>
               <Button
+                variant="outline"
+                loading={isGoingToPortal}
+                data-test-id="plan-business-manage"
+                onClick={() => {
+                  segment.track('Manage Subscription Clicked - Plans List');
+
+                  goToPortal({});
+                }}
+              >
+                Manage subscription
+              </Button>
+            </When>
+            <When truthy={!isPaidSubscriptionActive}>
+              <Button
+                variant="outline"
                 data-test-id="plan-business-upgrade"
                 loading={isCheckingOut}
                 onClick={() => {
-                  segment.track('Upgrade Now Clicked - Plans List');
                   checkout({
                     billingInterval,
                     apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
                   });
                 }}
               >
-                {isImprovedBillingEnabled ? 'Upgrade' : 'Add payment method'}
+                <When truthy={!isImprovedBillingEnabled}>
+                  <When truthy={!trial.isActive}>Upgrade</When>
+                  <When truthy={trial.isActive && !hasPaymentMethod}>Add payment method</When>
+                  <When truthy={trial.isActive && hasPaymentMethod}>Update payment method</When>
+                </When>
+                <When truthy={isImprovedBillingEnabled}>Upgrade</When>
               </Button>
-            </When>
-            <When truthy={apiServiceLevel === ApiServiceLevelEnum.BUSINESS}>
-              <When truthy={hasPaymentMethod}>
-                <Button
-                  variant="outline"
-                  loading={isGoingToPortal}
-                  data-test-id="plan-business-manage"
-                  onClick={() => {
-                    segment.track('Manage Subscription Clicked - Plans List');
-
-                    goToPortal({});
-                  }}
-                >
-                  Manage subscription
-                </Button>
-              </When>
-              <When truthy={!hasPaymentMethod}>
-                <Button
-                  variant="outline"
-                  data-test-id="plan-business-add-payment"
-                  loading={isCheckingOut}
-                  onClick={() => {
-                    checkout({
-                      billingInterval,
-                      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-                    });
-                  }}
-                >
-                  Upgrade
-                </Button>
-              </When>
             </When>
           </Stack>
         </div>
@@ -254,25 +277,27 @@ export const PlanHeader = () => {
           </Stack>
         </div>
       </Group>
-      <UpgradeModal
-        loading={isCheckingOut}
-        billingInterval={billingInterval}
-        setBillingInterval={setBillingInterval}
-        intentSecret={intentSecret}
-        open={upgradeOpen}
-        onClose={() => {
-          setUpgradeOpen(false);
-        }}
-        onSucceeded={() => {
-          setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
-          setUpgradeOpen(false);
-        }}
-        onContactSales={() => {
-          setUpgradeOpen(false);
-          setIntendedApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
-          setIsContactSalesModalOpen(true);
-        }}
-      />
+      {!isStripeCheckoutEnabled ? (
+        <UpgradeModal
+          loading={isCheckingOut}
+          billingInterval={billingInterval}
+          setBillingInterval={setBillingInterval}
+          intentSecret={intentSecret}
+          open={upgradeOpen}
+          onClose={() => {
+            setUpgradeOpen(false);
+          }}
+          onSucceeded={() => {
+            setApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
+            setUpgradeOpen(false);
+          }}
+          onContactSales={() => {
+            setUpgradeOpen(false);
+            setIntendedApiServiceLevel(ApiServiceLevelEnum.BUSINESS);
+            setIsContactSalesModalOpen(true);
+          }}
+        />
+      ) : null}
       <ContactSalesModal
         isOpen={isContactSalesModalOpen}
         onClose={() => {
