@@ -61,6 +61,7 @@
     "@mantine/spotlight": "^5.7.1",
     "@monaco-editor/react": "^4.6.0",
     "@novu/design-system": "workspace:*",
+    "@novu/js": "workspace:*",
     "@novu/notification-center": "workspace:*",
     "@novu/novui": "workspace:*",
     "@novu/shared": "workspace:*",
