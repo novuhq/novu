@@ -23,13 +23,12 @@ import {
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import { WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowResponseDto, WorkflowTypeEnum } from '@novu/shared';
+import { StepCreateDto, StepDto, StepUpdateDto } from '@novu/shared/src/dto/workflows/workflow-commons-fields';
+import { CreateWorkflowDto } from '@novu/shared/src/dto/workflows/create-workflow-dto';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
-import { StepCreateDto, StepDto, StepUpdateDto } from '../../dto/workflow-commons-fields';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
-import { CreateWorkflowDto } from '../../dto/create-workflow-dto';
-import { WorkflowResponseDto } from '../../dto/workflow-response-dto';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
 function buildUpsertControlValuesCommand(command: UpsertWorkflowCommand, persistedStep, persistedWorkflow, stepInDto) {

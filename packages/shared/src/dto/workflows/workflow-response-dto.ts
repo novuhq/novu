@@ -1,6 +1,6 @@
-import { WorkflowOriginEnum } from '@novu/shared';
 import { IsArray, IsDefined, IsEnum, IsObject, IsString } from 'class-validator';
 import { PreferencesResponseDto, StepResponseDto, WorkflowCommonsFields } from './workflow-commons-fields';
+import { WorkflowOriginEnum } from '../../types';
 
 export class WorkflowResponseDto extends WorkflowCommonsFields {
   @IsString()

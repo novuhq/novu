@@ -9,9 +9,9 @@ import {
 import { ControlVariablesLevelEnum } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
 
+import { WorkflowResponseDto } from '@novu/shared/src/dto/workflows/workflow-response-dto';
 import { GetWorkflowCommand } from './get-workflow.command';
 import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
-import { WorkflowResponseDto } from '../../dto/workflow-response-dto';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
 @Injectable()
