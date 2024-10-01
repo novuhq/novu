@@ -184,13 +184,13 @@ export function InboxPreviewContent({
           <Stack gap={INBOX_TOKENS['Inbox/margin/message/txt/buttons']} flexGrow={1}>
             <Stack gap="0.25rem">
               <HStack justifyContent="space-between">
-                <Text variant="main">{parseText(parsedPreviewState.subject)}</Text>
+                <Text variant="main">{renderText(parsedPreviewState.subject)}</Text>
 
                 <Text variant="main" color="typography.text.secondary">
                   5 min
                 </Text>
               </HStack>
-              <Text variant="main">{parseText(parsedPreviewState.content)}</Text>
+              <Text variant="main">{renderText(parsedPreviewState.content)}</Text>
             </Stack>
 
             {/* Actions Section */}
