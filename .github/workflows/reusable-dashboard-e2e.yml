@@ -114,7 +114,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: blob-report-${{ matrix.containers }}
+          name: dashboard-blob-report-${{ matrix.containers }}
           path: apps/dashboard/blob-report
           retention-days: 1
 
@@ -132,12 +132,12 @@ jobs:
     - name: Download blob reports from GitHub Actions Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: all-blob-reports
-        pattern: blob-report-*
+        path: dashboard-all-blob-reports
+        pattern: dashboard-blob-report-*
         merge-multiple: true
 
     - name: Merge into HTML Report
-      run: npx playwright merge-reports --reporter html ./all-blob-reports
+      run: npx playwright merge-reports --reporter html ./dashboard-all-blob-reports
 
     - name: Upload HTML report
       uses: actions/upload-artifact@v4
