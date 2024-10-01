@@ -16,6 +16,7 @@ import {
   ISubscriberPreferenceResponse,
   ITemplateConfiguration,
   PreferenceOverrideSourceEnum,
+  PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
 
@@ -88,7 +89,7 @@ export class GetSubscriberTemplatePreference {
 
     const subscriberPreferenceChannels = subscriberWorkflowPreferences
       ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-          subscriberWorkflowPreferences,
+          subscriberWorkflowPreferences.preferences,
         )
       : subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
@@ -107,7 +108,8 @@ export class GetSubscriberTemplatePreference {
       ...command.template,
       // Use the critical flag from the V2 Preference object if it exists
       ...(subscriberWorkflowPreferences && {
-        critical: subscriberWorkflowPreferences?.all?.readOnly === true,
+        critical:
+          subscriberWorkflowPreferences.preferences?.all?.readOnly === true,
       }),
     });
 
@@ -118,6 +120,13 @@ export class GetSubscriberTemplatePreference {
         channels,
         overrides,
       },
+      /*
+       * TODO: Remove the fallback after we deprecate V1 preferences, as
+       * a type is always present for V2 preferences
+       */
+      type:
+        subscriberWorkflowPreferences?.type ||
+        PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
     };
   }
 

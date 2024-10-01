@@ -144,8 +144,7 @@ const PreferencesRow = (props: {
       <div
         class={style(
           'workflowContainer',
-          `nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch 
-          hover:nt-bg-neutral-alpha-50 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
+          `nt-p-4 nt-flex nt-flex-col nt-gap-1 nt-items-start nt-self-stretch hover:nt-bg-neutral-alpha-50 nt-rounded-lg data-[disabled=true]:nt-bg-neutral-alpha-50`
         )}
         data-disabled={props.isCritical}
         data-open={isOpen()}

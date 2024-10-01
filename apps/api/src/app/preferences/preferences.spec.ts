@@ -548,7 +548,7 @@ describe('Preferences', function () {
             },
           },
         },
-        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
         source: {
           [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
             all: {
@@ -687,7 +687,7 @@ describe('Preferences', function () {
             },
           },
         },
-        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
         source: {
           [PreferencesTypeEnum.WORKFLOW_RESOURCE]: {
             all: {

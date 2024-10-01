@@ -63,7 +63,9 @@ export class GetPreferences {
       return undefined;
     }
 
-    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(result);
+    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(
+      result.preferences,
+    );
   }
 
   /** Safely get WorkflowPreferences by returning undefined if none are found */
@@ -72,7 +74,7 @@ export class GetPreferences {
     organizationId: string;
     subscriberId: string;
     templateId?: string;
-  }): Promise<WorkflowPreferences | undefined> {
+  }): Promise<GetPreferencesResponseDto> {
     try {
       const result = await this.execute(
         GetPreferencesCommand.create({
@@ -83,7 +85,7 @@ export class GetPreferences {
         }),
       );
 
-      return result.preferences;
+      return result;
     } catch (e) {
       // If we cant find preferences lets return undefined instead of throwing it up to caller to make it easier for caller to handle.
       if ((e as Error).name === NotFoundException.name) {
@@ -171,6 +173,29 @@ export class GetPreferences {
       return { preferences: undefined, type: undefined, source };
     }
 
+    const readOnlyFlag = workflowPreferences?.all?.readOnly;
+
+    // Determine the most specific preference applied
+    let mostSpecificPreference: PreferencesTypeEnum | undefined;
+    if (subscriberWorkflowPreferences && !readOnlyFlag) {
+      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_WORKFLOW;
+    } else if (subscriberGlobalPreferences && !readOnlyFlag) {
+      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_GLOBAL;
+    } else if (workflowUserPreferences) {
+      mostSpecificPreference = PreferencesTypeEnum.USER_WORKFLOW;
+    } else if (workflowResourcePreferences) {
+      mostSpecificPreference = PreferencesTypeEnum.WORKFLOW_RESOURCE;
+    }
+
+    // If workflowPreferences have readOnly flag set to true, disregard subscriber preferences
+    if (readOnlyFlag) {
+      return {
+        preferences: workflowPreferences,
+        type: mostSpecificPreference,
+        source,
+      };
+    }
+
     /**
      * Order is (almost exactly) reversed of that above because 'readOnly' should be prioritized
      * by the Dashboard (userPreferences) the most.
@@ -191,18 +216,6 @@ export class GetPreferences {
     ) as WorkflowPreferences[];
 
     const readOnlyPreference = deepMerge([...readOnlyPreferences]);
-
-    // Determine the most specific preference applied
-    let mostSpecificPreference: PreferencesTypeEnum | undefined;
-    if (subscriberWorkflowPreferences) {
-      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_WORKFLOW;
-    } else if (subscriberGlobalPreferences) {
-      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_GLOBAL;
-    } else if (workflowUserPreferences) {
-      mostSpecificPreference = PreferencesTypeEnum.USER_WORKFLOW;
-    } else if (workflowResourcePreferences) {
-      mostSpecificPreference = PreferencesTypeEnum.WORKFLOW_RESOURCE;
-    }
 
     if (Object.keys(subscriberPreferences).length === 0) {
       return {

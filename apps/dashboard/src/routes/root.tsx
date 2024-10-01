@@ -12,7 +12,7 @@ export default function Root() {
       <ClerkProvider>
         <SegmentProvider>
           <div className="relative min-h-dvh">
-            <div className="fixed left-0 top-0 flex h-12 w-full justify-between bg-green-200">
+            <div className="fixed left-0 top-0 z-10 flex h-12 w-full justify-between bg-green-200">
               <a
                 href="/legacy/"
                 target="_self"
