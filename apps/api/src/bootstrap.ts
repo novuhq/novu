@@ -7,7 +7,7 @@ import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestj
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
 import { Handlers, init, Integrations } from '@sentry/node';
-import { BullMqService, Logger as PinoLogger, getErrorInterceptor } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
@@ -120,7 +120,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   await setupSwagger(app);
 
-  Logger.log('BOOTSTRAPPED SUCCESSFULLY');
+  Logger.verbose('BOOTSTRAPPED SUCCESSFULLY');
 
   if (expressApp) {
     await app.init();
@@ -130,7 +130,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.enableShutdownHooks();
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  Logger.verbose(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
 }

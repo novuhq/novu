@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import {
   ControlValuesEntity,
@@ -56,17 +56,30 @@ export class UpsertWorkflowUseCase {
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
+    Logger.verbose('Executing UpsertWorkflowCommand', command); // Log the incoming command
+
     const workflowForUpdate = await this.getWorkflowIfUpdateAndExist(command);
+    Logger.verbose('Workflow for update:', workflowForUpdate); // Log the workflow for update
+
     if (!workflowForUpdate && (await this.workflowExistByExternalId(command))) {
+      Logger.verbose('Workflow already exists, throwing exception for command:', command); // Log before throwing exception
       throw new WorkflowAlreadyExistException(command);
     }
+
     const workflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
+    Logger.verbose('Created or updated workflow:', workflow); // Log the created/updated workflow
+
     const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
+    Logger.verbose('Step ID to control values map:', stepIdToControlValuesMap); // Log the control values map
+
     const preferences = await this.upsertPreference(command, workflow);
+    Logger.verbose('Preferences upserted:', preferences); // Log the preferences
 
-    return toResponseWorkflowDto(workflow, preferences, stepIdToControlValuesMap);
+    const responseDto = toResponseWorkflowDto(workflow, preferences, stepIdToControlValuesMap);
+    Logger.verbose('Returning response DTO:', responseDto); // Log the response DTO
+
+    return responseDto;
   }
-
   private async upsertControlValues(workflow: NotificationTemplateEntity, command: UpsertWorkflowCommand) {
     const stepIdToControlValuesMap: { [p: string]: ControlValuesEntity } = {};
     for (const persistedStep of workflow.steps) {
