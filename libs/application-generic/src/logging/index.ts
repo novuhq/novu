@@ -46,6 +46,8 @@ export function getLogLevel() {
 
     logLevel = 'info';
   }
+  // eslint-disable-next-line no-console
+  console.log(`Log Level Chosen: ${logLevel}`);
 
   return logLevel;
 }
@@ -78,7 +80,7 @@ function getLoggingVariables(): ILoggingVariables {
 export function createNestLoggingModuleOptions(
   settings: ILoggerSettings,
 ): Params {
-  const values = getLoggingVariables();
+  const values: ILoggingVariables = getLoggingVariables();
 
   let redactFields: string[] = sensitiveFields.map((val) => val);
 
@@ -100,6 +102,7 @@ export function createNestLoggingModuleOptions(
     ? { target: 'pino-pretty' }
     : undefined;
 
+  // eslint-disable-next-line no-console
   console.log(loggingLevelSet);
 
   // eslint-disable-next-line no-console
