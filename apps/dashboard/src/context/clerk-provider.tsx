@@ -29,9 +29,8 @@ const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
 
 type ClerkProviderProps = PropsWithChildren;
 export const ClerkProvider = (props: ClerkProviderProps) => {
-  const { children } = props;
-
   const navigate = useNavigate();
+  const { children } = props;
 
   return (
     <_ClerkProvider

@@ -1,6 +1,6 @@
 import { Button } from '@/components/primitives/button';
 
-export const Home = () => {
+export const HomeRoute = () => {
   return (
     <div className="flex min-h-[2000px] w-full flex-col gap-8">
       <h1>Home page</h1>

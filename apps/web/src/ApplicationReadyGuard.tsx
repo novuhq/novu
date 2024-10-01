@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { type PropsWithChildren, useLayoutEffect } from 'react';
 import { useAuth, useEnvironment, useMonitoring, useRouteScopes } from './hooks';
 import { ROUTES } from './constants/routes';
-import { IS_EE_AUTH_ENABLED } from './config/index';
+import { IS_EE_AUTH_ENABLED, IS_UNDER_DASHBOARD } from './config/index';
 import { navigateToAuthApplication } from './utils';
 
 export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
@@ -64,7 +64,7 @@ export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
     return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
   }
 
-  if (!isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {
+  if (IS_UNDER_DASHBOARD !== 'true' && !isOnboardingComplete() && location.pathname !== ROUTES.AUTH_APPLICATION) {
     navigateToAuthApplication();
 
     return null;
