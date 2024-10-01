@@ -1,16 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
+  buildWorkflowPreferences,
   FeatureFlagsKeysEnum,
   IPreferenceChannels,
-  WorkflowPreferences,
   PreferencesTypeEnum,
-  buildWorkflowPreferences,
+  WorkflowPreferences,
 } from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { GetPreferencesCommand } from './get-preferences.command';
 import { GetPreferencesResponseDto } from './get-preferences.dto';
+
+class PreferencesNotEnabledException extends BadRequestException {
+  constructor(featureFlagCommand: object) {
+    super({
+      message: 'Preferences Feature Flag are not enabled',
+      ...featureFlagCommand,
+    });
+  }
+}
+
+class PreferencesNotFoundException extends BadRequestException {
+  constructor(featureFlagCommand: GetPreferencesCommand) {
+    super({ message: 'Preferences not found', ...featureFlagCommand });
+  }
+}
 
 @Injectable()
 export class GetPreferences {
@@ -22,32 +37,39 @@ export class GetPreferences {
   async execute(
     command: GetPreferencesCommand,
   ): Promise<GetPreferencesResponseDto> {
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      }),
-    );
-
-    if (!isEnabled) {
-      throw new NotFoundException();
-    }
+    await this.validateFeatureFlag(command);
 
     const items = await this.getPreferencesFromDb(command);
 
     if (items.length === 0) {
-      throw new NotFoundException('We could not find any preferences');
+      throw new PreferencesNotFoundException(command);
     }
 
     const mergedPreferences = this.mergePreferences(items, command.templateId);
 
     if (!mergedPreferences.preferences) {
-      throw new NotFoundException('We could not find any preferences');
+      throw new PreferencesNotFoundException(command);
     }
 
     return mergedPreferences;
+  }
+
+  private async validateFeatureFlag(command: GetPreferencesCommand) {
+    const featureFlagCommand = {
+      userId: 'system',
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
+    };
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create(featureFlagCommand),
+    );
+
+    if (!isEnabled) {
+      throw new PreferencesNotEnabledException(featureFlagCommand);
+    }
+
+    return featureFlagCommand;
   }
 
   /** Get only simple, channel-level enablement flags */
@@ -57,7 +79,7 @@ export class GetPreferences {
     subscriberId: string;
     templateId?: string;
   }): Promise<IPreferenceChannels | undefined> {
-    const result = await this.getWorkflowPreferences(command);
+    const result = await this.safeExecute(command);
 
     if (!result) {
       return undefined;
@@ -68,15 +90,11 @@ export class GetPreferences {
     );
   }
 
-  /** Safely get WorkflowPreferences by returning undefined if none are found */
-  public async getWorkflowPreferences(command: {
-    environmentId: string;
-    organizationId: string;
-    subscriberId: string;
-    templateId?: string;
-  }): Promise<GetPreferencesResponseDto> {
+  public async safeExecute(
+    command: GetPreferencesCommand,
+  ): Promise<GetPreferencesResponseDto> {
     try {
-      const result = await this.execute(
+      return await this.execute(
         GetPreferencesCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -84,11 +102,9 @@ export class GetPreferences {
           templateId: command.templateId,
         }),
       );
-
-      return result;
     } catch (e) {
       // If we cant find preferences lets return undefined instead of throwing it up to caller to make it easier for caller to handle.
-      if ((e as Error).name === NotFoundException.name) {
+      if ((e as Error).name === PreferencesNotFoundException.name) {
         return undefined;
       }
       throw e;

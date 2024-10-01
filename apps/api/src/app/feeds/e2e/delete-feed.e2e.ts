@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
-import { CreateWorkflowRequestDto } from '../../workflows/dto';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
 
 describe('Delete A Feed - /feeds (POST)', async () => {
   let session: UserSession;
@@ -49,7 +49,8 @@ describe('Delete A Feed - /feeds (POST)', async () => {
       _id: newFeedId,
     });
 
-    expect(feed.name).to.equal(`Test name`);
+    expect(feed).to.be.ok;
+    expect(feed?.name).to.equal(`Test name`);
     const { body: deletedBody } = await session.testAgent.delete(`/v1/feeds/${newFeedId}`).send();
 
     expect(deletedBody.data).to.be.ok;

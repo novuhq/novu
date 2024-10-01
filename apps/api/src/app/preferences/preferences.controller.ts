@@ -16,9 +16,9 @@ import {
   GetPreferences,
   GetPreferencesCommand,
   UpsertPreferences,
+  UpsertUserWorkflowPreferencesCommand,
   UserAuthGuard,
   UserSession,
-  UpsertUserWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
