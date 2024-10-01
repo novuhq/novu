@@ -120,7 +120,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   await setupSwagger(app);
 
-  Logger.verbose('BOOTSTRAPPED SUCCESSFULLY');
+  Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
   if (expressApp) {
     await app.init();
@@ -130,7 +130,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.enableShutdownHooks();
 
-  Logger.verbose(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
 }

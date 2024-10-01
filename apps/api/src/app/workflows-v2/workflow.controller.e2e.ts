@@ -54,7 +54,7 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
   return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
 }
 
-describe('Workflow Controller E2E API Testing', () => {
+describe.only('Workflow Controller E2E API Testing', () => {
   beforeEach(async () => {
     // @ts-ignore
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
