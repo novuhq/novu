@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -53,18 +52,12 @@ export class WorkflowController {
     @UserSession() user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    try {
-      const result = await this.upsertWorkflowUseCase.execute(
-        UpsertWorkflowCommand.create({
-          workflowDto: createWorkflowDto,
-          user,
-        })
-      );
-
-      return result;
-    } catch (error) {
-      throw new NotFoundException(`Failed to create workflow: ${error?.message} `);
-    }
+    return this.upsertWorkflowUseCase.execute(
+      UpsertWorkflowCommand.create({
+        workflowDto: createWorkflowDto,
+        user,
+      })
+    );
   }
 
   @Put(':workflowId')
@@ -74,17 +67,13 @@ export class WorkflowController {
     @Param('workflowId') workflowId: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    try {
-      return await this.upsertWorkflowUseCase.execute(
-        UpsertWorkflowCommand.create({
-          workflowDto: updateWorkflowDto,
-          user,
-          workflowDatabaseIdForUpdate: workflowId,
-        })
-      );
-    } catch (error) {
-      throw new NotFoundException(`Failed to create workflow: ${error?.message} `);
-    }
+    return await this.upsertWorkflowUseCase.execute(
+      UpsertWorkflowCommand.create({
+        workflowDto: updateWorkflowDto,
+        user,
+        workflowDatabaseIdForUpdate: workflowId,
+      })
+    );
   }
 
   @Get(':workflowId')
@@ -93,7 +82,7 @@ export class WorkflowController {
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowResponseDto> {
-    return await this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ _workflowId: workflowId, user }));
+    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ _workflowId: workflowId, user }));
   }
 
   @Delete(':workflowId')
@@ -109,7 +98,7 @@ export class WorkflowController {
     @UserSession() user: UserSessionData,
     @Query() query: GetListQueryParams
   ): Promise<ListWorkflowResponse> {
-    return await this.listWorkflowsUseCase.execute(
+    return this.listWorkflowsUseCase.execute(
       ListWorkflowsCommand.create({
         offset: Number(query.offset || '0'),
         limit: Number(query.limit || '50'),
