@@ -40,6 +40,8 @@ describe('CreateUsageRecords', () => {
   const upsertSubscriptionUsecase = { execute: () => Promise.resolve() };
   const createSubscriptionUsecase = { execute: () => Promise.resolve() };
   const getCustomerUsecase = { execute: () => Promise.resolve() };
+  const IS_STRIPE_CHECKOUT_ENABLED = false;
+  const getFeatureFlag = { execute: () => Promise.resolve(IS_STRIPE_CHECKOUT_ENABLED) };
   const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
@@ -77,9 +79,6 @@ describe('CreateUsageRecords', () => {
         data: [mockMonthlyBusinessSubscription],
       },
     } as any);
-
-    const IS_STRIPE_CHECKOUT_ENABLED = false;
-    getFeatureFlagStub = sinon.stub(GetFeatureFlag.prototype, 'execute').resolves(IS_STRIPE_CHECKOUT_ENABLED);
   });
 
   afterEach(() => {
@@ -89,7 +88,6 @@ describe('CreateUsageRecords', () => {
     createSubscriptionStub.reset();
     getPlatformNotificationUsageStub.reset();
     analyticsServiceStub.track.reset();
-    getFeatureFlagStub.reset();
   });
 
   const createUseCase = () => {
@@ -100,7 +98,7 @@ describe('CreateUsageRecords', () => {
       createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
       analyticsServiceStub,
-      getFeatureFlagStub
+      getFeatureFlag
     );
 
     return useCase;
