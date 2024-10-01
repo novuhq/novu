@@ -4,8 +4,10 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IPreferenceChannels,
+  PreferencesTypeEnum,
   StepTypeEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
@@ -19,6 +21,8 @@ import {
   DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
   GetPreferences,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -75,7 +79,8 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private executeBridgeJob: ExecuteBridgeJob
+    private executeBridgeJob: ExecuteBridgeJob,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   @InstrumentUsecase()
@@ -301,33 +306,52 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
-    const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
-      GetSubscriberGlobalPreferenceCommand.create({
-        organizationId: job._organizationId,
-        environmentId: job._environmentId,
-        subscriberId: job.subscriberId,
+    const isWorkflowPreferencesEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        userId: 'system',
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
       })
     );
 
-    const globalPreferenceResult = this.stepPreferred(globalPreference, job);
-
-    if (!globalPreferenceResult) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.SUCCESS,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(globalPreference),
+    /*
+     * TODO: Remove this after we deprecate V1 preferences, global subscriber
+     * preferences are handled in `GetPreferences` for V2 preferences.
+     *
+     * This is actually a bug because it can allow for Global Preferences to disable
+     * delivery of Workflows with read-only preferences.
+     */
+    if (!isWorkflowPreferencesEnabled) {
+      const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
+        GetSubscriberGlobalPreferenceCommand.create({
+          organizationId: job._organizationId,
+          environmentId: job._environmentId,
+          subscriberId: job.subscriberId,
         })
       );
 
-      return false;
+      const globalPreferenceResult = this.stepPreferred(globalPreference, job);
+
+      if (!globalPreferenceResult) {
+        await this.executionLogRoute.execute(
+          ExecutionLogRouteCommand.create({
+            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+            detail: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.SUCCESS,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify(globalPreference),
+          })
+        );
+
+        return false;
+      }
     }
 
     let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
+    let subscriberPreferenceType: PreferencesTypeEnum;
     if (command.statelessPreferences) {
       /*
        * Stateless Workflow executions do not have their definitions stored in the database.
@@ -342,12 +366,13 @@ export class SendMessage {
         enabled: true,
         channels: workflowPreference,
       };
+      subscriberPreferenceType = PreferencesTypeEnum.WORKFLOW_RESOURCE;
     } else {
       if (!workflow) {
         throw new PlatformException(`Workflow with id '${job._templateId}' was not found`);
       }
 
-      const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
+      const { preference, type } = await this.getSubscriberTemplatePreferenceUsecase.execute(
         GetSubscriberTemplatePreferenceCommand.create({
           organizationId: job._organizationId,
           subscriberId: subscriber.subscriberId,
@@ -358,15 +383,23 @@ export class SendMessage {
         })
       );
       subscriberPreference = preference;
+      subscriberPreferenceType = type;
     }
 
     const result = this.stepPreferred(subscriberPreference, job);
+
+    const preferenceDetailFromPreferenceType: Record<PreferencesTypeEnum, DetailEnum> = {
+      [PreferencesTypeEnum.WORKFLOW_RESOURCE]: DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES,
+      [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES,
+      [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
+      [PreferencesTypeEnum.USER_WORKFLOW]: DetailEnum.STEP_FILTERED_BY_USER_WORKFLOW_PREFERENCES,
+    };
 
     if (!result) {
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
+          detail: preferenceDetailFromPreferenceType[subscriberPreferenceType],
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,

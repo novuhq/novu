@@ -15,9 +15,9 @@ describe('Resource Limiting', () => {
     authHeader?: string
   ) => Promise<Awaited<ReturnType<typeof UserSession.prototype.testAgent.get>>>;
 
-  describe('IS_DOCKER_HOSTED is true', () => {
+  describe('IS_SELF_HOSTED is true', () => {
     beforeEach(async () => {
-      process.env.IS_DOCKER_HOSTED = 'true';
+      process.env.IS_SELF_HOSTED = 'true';
       session = new UserSession();
       await session.initialize();
 
@@ -31,9 +31,9 @@ describe('Resource Limiting', () => {
     });
   });
 
-  describe('IS_DOCKER_HOSTED is false', () => {
+  describe('IS_SELF_HOSTED is false', () => {
     beforeEach(async () => {
-      process.env.IS_DOCKER_HOSTED = 'false';
+      process.env.IS_SELF_HOSTED = 'false';
       session = new UserSession();
       await session.initialize();
 

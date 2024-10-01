@@ -21,7 +21,7 @@ export function MembersTable({
 }) {
   const { classes, theme } = useTextStyles();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const selfHosted = process.env.REACT_APP_IS_SELF_HOSTED === 'true';
 
   function isEnableMemberActions(currentMember): boolean {
     const currentUserRoles = members?.find((memberEntity) => memberEntity._userId === currentUser?._id)?.roles || [];

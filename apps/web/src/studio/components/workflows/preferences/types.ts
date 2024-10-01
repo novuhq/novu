@@ -1,6 +1,6 @@
-import { ChannelPreference, ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChannelPreference } from '@novu/shared';
 
-export type PreferenceChannelName = `${ChannelTypeEnum}` | 'workflow';
+export type PreferenceChannelName = `${ChannelTypeEnum}` | 'all';
 export type SubscriptionPreferenceRow = {
   channel: PreferenceChannelName;
   onChange: (channel: PreferenceChannelName, key: string, value: boolean) => void;

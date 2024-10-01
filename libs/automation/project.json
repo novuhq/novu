@@ -21,7 +21,7 @@
     "lint": {
       "executor": "@nx/eslint:lint",
       "options": {
-        "lintFilePatterns": ["./src", "{projectRoot}/package.json", "./package.json", "generators.json"]
+        "lintFilePatterns": ["./src", "./package.json", "generators.json"]
       }
     }
   }

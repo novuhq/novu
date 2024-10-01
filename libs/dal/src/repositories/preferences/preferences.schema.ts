@@ -29,7 +29,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
     },
     type: Schema.Types.String,
     preferences: {
-      workflow: {
+      all: {
         enabled: {
           type: Schema.Types.Boolean,
           default: true,
@@ -45,19 +45,11 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             type: Schema.Types.Boolean,
             default: true,
           },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
-          },
         },
         [ChannelTypeEnum.SMS]: {
           enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
         [ChannelTypeEnum.IN_APP]: {
@@ -65,29 +57,17 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             type: Schema.Types.Boolean,
             default: true,
           },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
-          },
         },
         [ChannelTypeEnum.CHAT]: {
           enabled: {
             type: Schema.Types.Boolean,
             default: true,
           },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
-          },
         },
         [ChannelTypeEnum.PUSH]: {
           enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
       },

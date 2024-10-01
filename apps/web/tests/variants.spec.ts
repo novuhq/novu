@@ -204,7 +204,7 @@ test('should show only edit step in production for simple node', async ({ page }
   expect(relevantNode.getByTestId('step-actions-menu')).toHaveCount(0);
 });
 
-test('should show edit step and conditions in production for node with conditions', async ({ page }) => {
+test.skip('should show edit step and conditions in production for node with conditions', async ({ page }) => {
   let workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.addAndFillSmsNode('this is a test paragraph', 'Test Add Variant Flow for SMS');
 

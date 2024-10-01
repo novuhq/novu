@@ -31,7 +31,7 @@ function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
 
 export function QuestionnaireForm() {
   const { isSupported } = useWebContainerSupported();
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {
