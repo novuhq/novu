@@ -1,11 +1,10 @@
-import React from 'react';
 import { Group } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { Modal, Text, colors, Button } from '@novu/design-system';
-import { useAuth } from '../../../hooks';
 import { useFetchLocales } from '../hooks/useFetchLocales';
 import { FlagIcon } from './shared';
 import { Warning } from '../icons';
+import { useGetDefaultLocale } from '../hooks/useGetDefaultLocale';
 
 export const DeleteLocaleModal = ({
   localeToDelete,
@@ -17,7 +16,7 @@ export const DeleteLocaleModal = ({
   readonly: boolean;
 }) => {
   const { getLocale } = useFetchLocales();
-  const { currentOrganization } = useAuth();
+  const { defaultLocale } = useGetDefaultLocale();
   const form = useFormContext();
 
   if (!localeToDelete) {
@@ -41,7 +40,7 @@ export const DeleteLocaleModal = ({
       <Text size={14} weight="normal" color={colors.B60}>
         Deleting a language removes its JSON file, and notifications using keys from that file will switch to the
         {}
-        default {getLocale(currentOrganization!.defaultLocale!)?.langName} language.
+        default {getLocale(defaultLocale!)?.langName} language.
       </Text>
       <Group position="right" spacing={24} mt={30}>
         <Button

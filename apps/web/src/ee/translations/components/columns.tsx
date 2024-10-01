@@ -14,22 +14,23 @@ import {
   withCellLoading,
 } from '@novu/design-system';
 import { format } from 'date-fns';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FlagMap } from '../icons/flags';
 
-import { useAuth, useEnvironment } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { ITranslation, useFetchLocales } from '../hooks';
 import { useEditTranslationFileContext } from '../context/useEditTranslationFileContext';
 import { ReuploadIcon, Star, Warning } from '../icons';
 import { DeleteTranslationModal } from './TranslationGroup/DeleteTranslationModal';
+import { useGetDefaultLocale } from '../hooks/useGetDefaultLocale';
 
 const LanguageCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITranslation>) => {
   const { getLocale } = useFetchLocales();
-  const { currentOrganization } = useAuth();
   const { isoLanguage, fileName } = original;
   const langName = getLocale(isoLanguage)?.langName;
-  const isDefaultLocale = currentOrganization?.defaultLocale === isoLanguage;
+  const { defaultLocale } = useGetDefaultLocale();
+  const isDefaultLocale = defaultLocale === isoLanguage;
   const Icon = FlagMap[isoLanguage];
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
