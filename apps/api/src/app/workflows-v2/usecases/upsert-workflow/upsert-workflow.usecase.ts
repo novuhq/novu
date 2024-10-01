@@ -23,9 +23,16 @@ import {
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowResponseDto, WorkflowTypeEnum } from '@novu/shared';
-import { StepCreateDto, StepDto, StepUpdateDto } from '@novu/shared/src/dto/workflows/workflow-commons-fields';
-import { CreateWorkflowDto } from '@novu/shared/src/dto/workflows/create-workflow-dto';
+import {
+  CreateWorkflowDto,
+  StepCreateDto,
+  StepDto,
+  StepUpdateDto,
+  WorkflowCreationSourceEnum,
+  WorkflowOriginEnum,
+  WorkflowResponseDto,
+  WorkflowTypeEnum,
+} from '@novu/shared';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';

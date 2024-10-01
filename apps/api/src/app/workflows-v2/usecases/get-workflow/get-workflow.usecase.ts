@@ -6,10 +6,9 @@ import {
   NotificationStepEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { ControlVariablesLevelEnum } from '@novu/shared';
+import { ControlVariablesLevelEnum, WorkflowResponseDto } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
 
-import { WorkflowResponseDto } from '@novu/shared/src/dto/workflows/workflow-response-dto';
 import { GetWorkflowCommand } from './get-workflow.command';
 import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';

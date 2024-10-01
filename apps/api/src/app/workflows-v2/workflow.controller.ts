@@ -15,12 +15,15 @@ import {
 } from '@nestjs/common';
 
 import { ApiTags } from '@nestjs/swagger';
-import { DirectionEnum, UserSessionData } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  DirectionEnum,
+  ListWorkflowResponse,
+  UpdateWorkflowDto,
+  UserSessionData,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
-import { ListWorkflowResponse } from '@novu/shared/src/dto/workflows/workflow-commons-fields';
-import { CreateWorkflowDto } from '@novu/shared/src/dto/workflows/create-workflow-dto';
-import { UpdateWorkflowDto } from '@novu/shared/src/dto/workflows/update-workflow-dto';
-import { WorkflowResponseDto } from '@novu/shared/src/dto/workflows/workflow-response-dto';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
