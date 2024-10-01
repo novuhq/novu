@@ -1,6 +1,7 @@
 export const ROUTES = {
-  AUTH_SIGN_IN: '/auth/sign-in',
-  AUTH_SIGN_UP: '/auth/sign-up',
-  AUTH_SIGNUP_ORGANIZATION_LIST: '/auth/sign-up/organization-list',
+  SIGN_IN: '/sign-in',
+  SIGN_UP: '/sign-up',
+  SIGNUP_ORGANIZATION_LIST: '/sign-up/organization-list',
+  ROOT: '/',
   WORKFLOWS: '/workflows',
 };

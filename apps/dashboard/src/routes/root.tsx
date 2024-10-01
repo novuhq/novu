@@ -5,7 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 
 const queryClient = new QueryClient();
 
-export const Root = () => {
+export const RootRoute = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ClerkProvider>

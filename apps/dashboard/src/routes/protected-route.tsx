@@ -3,9 +3,9 @@ import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import { EnvironmentProvider } from '@/context';
 import { ROUTES } from '@/utils/routes';
 
-export const ProtectedRoutes = ({ children }: { children: React.ReactNode }) => {
+export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { pathname } = useLocation();
-  if (pathname === '/') {
+  if (pathname === ROUTES.ROOT) {
     return <Navigate to={ROUTES.WORKFLOWS} replace />;
   }
 
@@ -15,7 +15,7 @@ export const ProtectedRoutes = ({ children }: { children: React.ReactNode }) => 
         <EnvironmentProvider>{children}</EnvironmentProvider>
       </SignedIn>
       <SignedOut>
-        <Navigate to={ROUTES.AUTH_SIGN_IN} replace />
+        <Navigate to={ROUTES.SIGN_IN} replace />
       </SignedOut>
     </>
   );

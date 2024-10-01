@@ -14,4 +14,4 @@ if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
 
-export const API_ROOT = import.meta.env.VITE_APP_API_URL;
+export const API_HOSTNAME = import.meta.env.VITE_API_HOSTNAME;

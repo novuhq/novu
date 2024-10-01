@@ -1,7 +1,7 @@
+import { ReactNode } from 'react';
 import { UserProfile } from '@/components/user-profile';
-import { Outlet } from 'react-router-dom';
 
-export const DashboardLayout = () => {
+export const DashboardLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="relative min-h-dvh">
       <div className="fixed left-0 top-0 flex h-16 w-full items-center justify-center bg-green-200 p-4">
@@ -17,9 +17,7 @@ export const DashboardLayout = () => {
         </div>
       </div>
 
-      <div className="pt-16">
-        <Outlet />
-      </div>
+      <div className="pt-16">{children}</div>
     </div>
   );
 };

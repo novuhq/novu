@@ -2,15 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import type { IEnvironment } from '@novu/shared';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironmentContext } from './environment-context';
-import { getCurrentEnvironment, getEnvironments } from '@/api/environments';
+import { getEnvironments } from '@/api/environments';
 
-export function useEnvironment({ bridge }: { bridge?: boolean } = {}) {
+export function useEnvironment() {
   const { readOnly, ...rest } = useEnvironmentContext();
 
   return {
     ...rest,
-    readOnly: readOnly || bridge || false,
-    bridge: bridge || false,
+    readOnly: readOnly || false,
   };
 }
 
@@ -41,29 +40,5 @@ export const useFetchEnvironments = ({
     environments,
     areEnvironmentsInitialLoading,
     refetchEnvironments,
-  };
-};
-
-export const useFetchCurrentEnvironment = ({
-  organizationId,
-  onSuccess,
-}: {
-  organizationId?: string;
-  onSuccess?: (args: IEnvironment) => void;
-}) => {
-  const { data: currentEnvironment, isInitialLoading: isCurrentEnvironmentInitialLoading } = useQuery<IEnvironment>(
-    [QueryKeys.currentEnvironment, organizationId],
-    getCurrentEnvironment,
-    {
-      enabled: !!organizationId,
-      retry: false,
-      staleTime: Infinity,
-      onSuccess,
-    }
-  );
-
-  return {
-    currentEnvironment,
-    isCurrentEnvironmentInitialLoading,
   };
 };

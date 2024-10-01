@@ -1,6 +1,6 @@
 import { getToken } from '@/utils/auth';
-import { API_ROOT } from '../config';
-import { getEnvironmentId } from '@/utils/local-storage';
+import { API_HOSTNAME } from '../config';
+import { getEnvironmentId } from '@/utils/environment';
 
 class NovuApiError extends Error {
   constructor(
@@ -37,7 +37,7 @@ const request = async <T>(
       config.body = JSON.stringify(data);
     }
 
-    const baseUrl = API_ROOT ?? 'https://api.novu.co';
+    const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
     const response = await fetch(`${baseUrl}/v1${endpoint}`, config);
 
     if (!response.ok) {

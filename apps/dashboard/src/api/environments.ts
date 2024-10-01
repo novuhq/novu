@@ -6,9 +6,3 @@ export async function getEnvironments() {
 
   return data;
 }
-
-export async function getCurrentEnvironment() {
-  const { data } = await get<{ data: IEnvironment }>('/environments/me');
-
-  return data;
-}

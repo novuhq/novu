@@ -2,45 +2,44 @@ import { StrictMode } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { createRoot } from 'react-dom/client';
 import ErrorPage from '@/components/error-page';
-import { Root, AuthLayout, DashboardLayout } from './layout';
-import { Workflows, SignIn, SignUp, OrganizationList } from '@/pages';
-import { ProtectedRoutes } from './components/protected-routes';
+import { RootRoute, AuthRoute, DashboardRoute, CatchAllRoute } from './routes';
+import { WorkflowsPage, SignInPage, SignUpPage, OrganizationListPage } from '@/pages';
 import './index.css';
+import { ROUTES } from './utils/routes';
 
 const router = createBrowserRouter([
   {
-    element: <Root />,
+    element: <RootRoute />,
     errorElement: <ErrorPage />,
     children: [
       {
-        path: 'auth',
-        element: <AuthLayout />,
+        element: <AuthRoute />,
         children: [
           {
-            path: 'sign-in/*',
-            element: <SignIn />,
+            path: `${ROUTES.SIGN_IN}/*`,
+            element: <SignInPage />,
           },
           {
-            path: 'sign-up/*',
-            element: <SignUp />,
+            path: `${ROUTES.SIGN_UP}/*`,
+            element: <SignUpPage />,
           },
           {
-            path: 'sign-up/organization-list',
-            element: <OrganizationList />,
+            path: ROUTES.SIGNUP_ORGANIZATION_LIST,
+            element: <OrganizationListPage />,
           },
         ],
       },
       {
-        path: '/',
-        element: (
-          <ProtectedRoutes>
-            <DashboardLayout />
-          </ProtectedRoutes>
-        ),
+        path: ROUTES.ROOT,
+        element: <DashboardRoute />,
         children: [
           {
-            path: 'workflows',
-            element: <Workflows />,
+            path: ROUTES.WORKFLOWS,
+            element: <WorkflowsPage />,
+          },
+          {
+            path: '*',
+            element: <CatchAllRoute />,
           },
         ],
       },
