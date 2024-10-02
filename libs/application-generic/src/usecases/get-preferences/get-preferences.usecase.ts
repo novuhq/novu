@@ -227,7 +227,7 @@ export class GetPreferences {
 
     const readOnlyPreferences = orderedPreferencesForReadOnly.map(
       ({ all }) => ({
-        all: { readOnly: all.readOnly },
+        all: { readOnly: all?.readOnly || false },
       }),
     ) as WorkflowPreferences[];
 
