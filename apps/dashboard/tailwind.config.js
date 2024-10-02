@@ -3,9 +3,14 @@ export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    boxShadow: {
+      xs: '0px 1px 2px 0px #0A0D1408',
+      sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
+      DEFAULT: '0px 16px 32px -12px #0E121B1A',
+    },
     extend: {
-      borderWidth: {
-        1.5: 1.5,
+      opacity: {
+        2.5: 0.025,
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -30,10 +35,6 @@ export default {
         novu: {
           DEFAULT: 'hsl(var(--novu))',
           foreground: 'hsl(var(--novu-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
         },
         accent: {
           DEFAULT: 'hsl(var(--accent))',
