@@ -4,15 +4,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/ui';
 
 const stepVariants = cva(
-  'inline-flex items-center rounded-full border-1.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-full border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
-        default: 'border-muted-foreground/5 bg-muted/50 text-muted-foreground/50',
-        feature: 'border-feature/30 bg-transparent text-feature/30',
-        information: 'border-information/30 bg-transparent text-information/30',
-        highlighted: 'border-highlighted/30 bg-transparent text-highlighted/30',
-        stable: 'border-stable/30 bg-transparent text-stable/30',
+        default: 'border-primary/5 bg-primary/2.5 text-primary/30',
+        feature: 'border-feature/30  bg-foreground/2.5 text-feature/30',
+        information: 'border-information/30 bg-foreground/2.5 text-information/30',
+        highlighted: 'border-highlighted/30  bg-foreground/2.5 text-highlighted/30',
+        stable: 'border-stable/30  bg-foreground/2.5 text-stable/30',
       },
       size: {
         default: 'p-2 [&>svg]:size-3.5',
