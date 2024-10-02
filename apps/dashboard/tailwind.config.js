@@ -4,6 +4,9 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      borderWidth: {
+        1.5: 1.5,
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -39,6 +42,24 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+        },
+        feature: {
+          DEFAULT: 'hsl(var(--feature))',
+        },
+        information: {
+          DEFAULT: 'hsl(var(--information))',
+        },
+        highlighted: {
+          DEFAULT: 'hsl(var(--highlighted))',
+        },
+        stable: {
+          DEFAULT: 'hsl(var(--stable))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
