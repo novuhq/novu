@@ -20,7 +20,7 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { workflow, channelStepSchemas } from '@novu/framework';
+import { channelStepSchemas, workflow } from '@novu/framework';
 
 import { DetailEnum } from '@novu/application-generic';
 import { BridgeServer } from '../../../../e2e/bridge.server';

@@ -6,6 +6,14 @@ import { GetEnvironment } from './get-environment';
 import { GetMyEnvironments } from './get-my-environments/get-my-environments.usecase';
 import { UpdateEnvironment } from './update-environment/update-environment.usecase';
 import { GetMxRecord } from '../../inbound-parse/usecases/get-mx-record/get-mx-record.usecase';
+import {
+  ChatOutputRendererUsecase,
+  EmailOutputRendererUsecase,
+  ExpandEmailEditorSchemaUsecase,
+  InAppOutputRendererUsecase,
+  PushOutputRendererUsecase,
+  SmsOutputRendererUsecase,
+} from './output-renderers';
 
 export const USE_CASES = [
   GetMxRecord,
@@ -16,4 +24,11 @@ export const USE_CASES = [
   RegenerateApiKeys,
   GetEnvironment,
   GetMyEnvironments,
+  InAppOutputRendererUsecase,
+  EmailOutputRendererUsecase,
+  SmsOutputRendererUsecase,
+  ChatOutputRendererUsecase,
+  PushOutputRendererUsecase,
+  EmailOutputRendererUsecase,
+  ExpandEmailEditorSchemaUsecase,
 ];

@@ -17,9 +17,13 @@ import { GetWorkflowUseCase } from './usecases/get-workflow/get-workflow.usecase
 import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.usecase';
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { GetWorkflowByIdsUseCase } from './usecases/get-workflow-by-ids/get-workflow-by-ids.usecase';
+import { GetStepSchemaUseCase } from '../step-schemas/usecases/get-step-schema/get-step-schema.usecase';
+import { BridgeModule } from '../bridge';
+import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview-usecase';
+import { CreateMockPayloadUseCase } from './usecases/placeholder-enrichment/payload-preview-value-generator-usecase';
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
+  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
   controllers: [WorkflowController],
   providers: [
     CreateWorkflow,
@@ -32,6 +36,11 @@ import { GetWorkflowByIdsUseCase } from './usecases/get-workflow-by-ids/get-work
     UpsertControlValuesUseCase,
     GetPreferences,
     GetWorkflowByIdsUseCase,
+    GetStepSchemaUseCase,
+    GeneratePreviewUsecase,
+    GetWorkflowUseCase,
+    GetPreferences,
+    CreateMockPayloadUseCase,
   ],
 })
 export class WorkflowModule implements NestModule {

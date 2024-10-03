@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import type { WorkflowResponseDto } from '@novu/shared';
 import { QueryKeys } from '@/utils/query-keys';
 import { fetchWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
+import { WorkflowResponseDto } from '@novu/shared';
 
 export const useFetchWorkflow = ({
   workflowId,

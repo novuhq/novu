@@ -8,7 +8,6 @@ import {
 } from '@novu/dal';
 import { ControlValuesLevelEnum, WorkflowResponseDto } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
-
 import { GetWorkflowCommand } from './get-workflow.command';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
