@@ -20,6 +20,6 @@ const OrganizationSwitcherAppearance: OrganizationSwitcherTheme = {
   },
 };
 
-export const OrganizationSwitchTrigger = () => {
+export const OrganizationDropdown = () => {
   return <ClerkOrganizationSwitcher hidePersonal appearance={OrganizationSwitcherAppearance} />;
 };

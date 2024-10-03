@@ -6,7 +6,7 @@ import { cn } from '@/utils/ui';
 import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { useEnvironment } from '@/context/environment/hooks';
-import { OrganizationSwitchTrigger } from './organization-switch-trigger';
+import { OrganizationDropdown } from './organization-dropdown';
 import { navitationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
 
@@ -99,7 +99,7 @@ export const SideNavigation = () => {
 
   return (
     <aside className="bg-card flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
-      <OrganizationSwitchTrigger />
+      <OrganizationDropdown />
       <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
       <nav className="flex flex-1 flex-col gap-4">
         {navitationItems.map((group, idx) => (
