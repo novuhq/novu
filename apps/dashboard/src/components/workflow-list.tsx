@@ -11,7 +11,7 @@ import {
   RiPauseCircleLine,
   RiDeleteBin2Line,
 } from 'react-icons/ri';
-import type { ListWorkflowResponse } from '@novu/shared';
+import { ListWorkflowResponse } from '@novu/shared-internal';
 
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';

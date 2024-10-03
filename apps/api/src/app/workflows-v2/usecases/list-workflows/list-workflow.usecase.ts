@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { NotificationTemplateRepository } from '@novu/dal';
-import { ListWorkflowResponse } from '@novu/shared';
+import { ListWorkflowResponse } from '@novu/shared-internal';
 import { ListWorkflowsCommand } from './list-workflows.command';
 import { toWorkflowsMinifiedDtos } from '../../mappers/notification-template-mapper';
 

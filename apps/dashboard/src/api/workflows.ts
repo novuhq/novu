@@ -1,4 +1,4 @@
-import type { WorkflowResponseDto } from '@novu/shared';
+import type { WorkflowResponseDto } from '@novu/shared-internal';
 import { getV2 } from './api.client';
 
 export const fetchWorkflow = async ({ workflowId }: { workflowId?: string }): Promise<WorkflowResponseDto> => {

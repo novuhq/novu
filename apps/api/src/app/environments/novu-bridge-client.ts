@@ -1,7 +1,8 @@
-import { Injectable, Inject, Scope } from '@nestjs/common';
-import type { Request, Response } from 'express';
+// @ts-ignore
 
-import { Client, PostActionEnum, NovuRequestHandler, Workflow } from '@novu/framework';
+import { Inject, Injectable, Scope } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { Client, NovuRequestHandler, PostActionEnum, Workflow } from '@novu/framework';
 // @ts-expect-error - TODO: bundle CJS with @novu/framework
 import { NovuHandler } from '@novu/framework/nest';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
@@ -28,6 +29,7 @@ export class NovuBridgeClient {
   ) {}
 
   public async handleRequest(req: Request, res: Response) {
+    console.log('handleRequest', req.body);
     const secretKey = await this.getDecryptedSecretKey.execute(
       GetDecryptedSecretKeyCommand.create({
         environmentId: req.params.environmentId,
@@ -46,12 +48,15 @@ export class NovuBridgeClient {
         ConstructFrameworkWorkflowCommand.create({
           environmentId: req.params.environmentId,
           workflowId: req.query.workflowId as string,
+          controlValues: req.body.controls,
+          stepId: req.body.stepId,
         })
       );
 
+      console.log('workflow Log', JSON.stringify(programmaticallyConstructedWorkflow.definition.steps, null, 2));
+
       workflows.push(programmaticallyConstructedWorkflow);
     }
-
     this.novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       workflows,
