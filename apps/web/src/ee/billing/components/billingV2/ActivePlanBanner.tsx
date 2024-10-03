@@ -1,15 +1,13 @@
 import { Text, Title } from '@novu/novui';
-import { Badge, Button, useMantineTheme } from '@mantine/core';
+import { MantineTheme } from '@mantine/core';
 import { css } from '@novu/novui/css';
 import { UsageProgress } from './UsageProgress';
-import { errorMessage } from '@novu/design-system';
-import { useMutation } from '@tanstack/react-query';
-import { api } from '../../../../api';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useSubscriptionContext } from '../SubscriptionProvider';
 import { capitalizeFirstLetter } from '../../../../utils/string';
+import { Badge } from './Badge';
+import { PlanActionButton } from './PlanActionButton';
 
-export const ActivePlanBanner = () => {
+export const ActivePlanBanner = ({ selectedBillingInterval }: { selectedBillingInterval: 'month' | 'year' }) => {
   const { apiServiceLevel, status, events, trial } = useSubscriptionContext();
 
   return (
@@ -20,7 +18,7 @@ export const ActivePlanBanner = () => {
           <PlanHeader apiServiceLevel={apiServiceLevel} isFreeTrialActive={trial.isActive} daysLeft={trial.daysLeft} />
           <PlanInfo apiServiceLevel={apiServiceLevel} currentEvents={events.current} maxEvents={events.included} />
         </div>
-        <PlanActions trialEnd={trial.end} status={status} />
+        <PlanActions trialEnd={trial.end} status={status} selectedBillingInterval={selectedBillingInterval} />
       </div>
     </div>
   );
@@ -28,16 +26,13 @@ export const ActivePlanBanner = () => {
 
 const PlanHeader = ({ apiServiceLevel, isFreeTrialActive, daysLeft }) => {
   const color = getColorByDaysLeft(daysLeft);
-  const theme = useMantineTheme();
 
   return (
     <div className={styles.header}>
       <Title variant="section">{capitalizeFirstLetter(apiServiceLevel)}</Title>
       {isFreeTrialActive && (
         <>
-          <Badge size="sm" className={styles.trialBadge(theme)}>
-            Trial
-          </Badge>
+          <Badge label="Trial" />
           <div className={styles.daysLeft}>
             <Text className={styles.daysNumber} style={{ color }}>
               {daysLeft}
@@ -72,37 +67,10 @@ const PlanInfo = ({ apiServiceLevel, currentEvents, maxEvents }) => {
   );
 };
 
-const PlanActions = ({ trialEnd, status }) => {
-  const segment = useSegment();
-
-  const handleManageSubscription = () => {
-    segment.track('Manage Subscription Clicked - Plans List');
-    goToPortal({});
-  };
-
-  const { mutateAsync: goToPortal, isLoading: isGoingToPortal } = useMutation<any, any, any>(
-    () => api.get('/v1/billing/portal'),
-    {
-      onSuccess: (url) => {
-        window.location.href = url;
-      },
-      onError: (e: any) => {
-        errorMessage(e.message || 'Unexpected error');
-      },
-    }
-  );
-
+const PlanActions = ({ trialEnd, status, selectedBillingInterval }) => {
   return (
     <div className={styles.actions}>
-      {status === 'active' ? (
-        <Button
-          classNames={styles.manageSubscriptionButton}
-          onClick={handleManageSubscription}
-          loading={isGoingToPortal}
-        >
-          Manage subscription
-        </Button>
-      ) : null}
+      <PlanActionButton selectedBillingInterval={selectedBillingInterval} />
       {status === 'trialing' ? (
         <Text variant="secondary" fontSize="14px" color="typography.text.secondary">
           Trial ends on {formatDate(trialEnd)}
@@ -116,12 +84,14 @@ const getColorByEventsUsed = (eventsUsed: number, maxEvents: number) => {
   const percentage = (eventsUsed / maxEvents) * 100;
   if (percentage >= 100) return '#F2555A';
   if (percentage >= 90) return '#FFB224';
+
   return undefined;
 };
 
 const getColorByDaysLeft = (daysLeft: number) => {
   if (daysLeft <= 0) return '#F2555A';
   if (daysLeft <= 3) return '#FFB224';
+
   return undefined;
 };
 
@@ -163,7 +133,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
   }),
-  trialBadge: (theme) =>
+  trialBadge: (theme: MantineTheme) =>
     css({
       // TODO: replace with 'mauve.80' color token when legacy tokens are removed
       background: theme.colorScheme === 'dark' ? '#2E2E32 !important' : '#e9e8eaff !important',
