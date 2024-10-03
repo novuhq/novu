@@ -41,7 +41,7 @@ export const useSubscription = () => {
           ...data,
           events: {
             ...data.events,
-            // if included is null, customer doesn't have a valid metered subcription, default to 0
+            // if included is null, customer doesn't have a valid metered subscription, default to 0
             included: data.events.included ?? 0,
           },
         };
