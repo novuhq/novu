@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
+import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 import { useAuth } from '../../../hooks/useAuth';
 import { api } from '../../../api';
-import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 
 const today = new Date();
 
@@ -35,6 +35,16 @@ export const useSubscription = () => {
           end: today.toISOString(),
           daysTotal: 0,
         },
+      },
+      select: (data) => {
+        return {
+          ...data,
+          events: {
+            ...data.events,
+            // if included is null, customer doesn't have a valid metered subcription, default to 0
+            included: data.events.included ?? 0,
+          },
+        };
       },
     }
   );

@@ -60,7 +60,7 @@ const PlanInfo = ({ apiServiceLevel, currentEvents, maxEvents }) => {
       <div className={styles.eventsUsage}>
         <div className={styles.eventsCount}>
           <Text className={styles.eventsNumber} style={{ color }}>
-            {currentEvents.toLocaleString()}
+            {currentEvents?.toLocaleString()}
           </Text>
           <Text className={styles.eventsLabel}>events</Text>
         </div>
