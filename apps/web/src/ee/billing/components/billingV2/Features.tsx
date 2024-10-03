@@ -59,35 +59,54 @@ type Feature = {
 
 const features: Feature[] = [
   {
-    label: 'Geographic data residency',
+    label: 'Platform',
     isContrast: false,
+    isTitle: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.FREE]: { value: '' },
+      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
     },
   },
   {
     label: 'Monthly events',
-    isContrast: true,
+    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Up to 30,000' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Up to 250,000' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: '5,000,000' },
     },
   },
   {
-    label: 'Trigger rate limit',
-    isContrast: false,
+    label: 'Additional Events',
+    isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: '60RPS' },
-      [SupportedPlansEnum.BUSINESS]: { value: '600RPS' },
+      [SupportedPlansEnum.FREE]: { value: '-' },
+      [SupportedPlansEnum.BUSINESS]: { value: '$0.0012 per event' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
   {
-    label: 'Content',
+    label: 'Email, InApp, SMS, Chat, Push Channels',
+    isContrast: false,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+    },
+  },
+  {
+    label: 'Notification subscribers',
     isContrast: true,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+    },
+  },
+  {
+    label: 'Framework',
+    isContrast: false,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -96,7 +115,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Workflows',
+    label: 'Total workflows',
     isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
@@ -105,7 +124,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Providers',
+    label: 'Provider integrations',
     isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
@@ -114,71 +133,34 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Subscribers',
+    label: 'Activity retention',
     isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+      [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.BUSINESS]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <Badge label="Coming soon" /> },
     },
   },
   {
-    label: 'Team size',
+    label: 'Digests',
     isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Up to 2 members' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Up to 15 members' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Topics',
+    label: 'Step controls',
     isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
+      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
     label: 'Inbox',
-    isTitle: true,
-    isContrast: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '' },
-      [SupportedPlansEnum.BUSINESS]: { value: '' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
-    },
-  },
-  {
-    label: 'Topics',
-    isContrast: false,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
-    },
-  },
-  {
-    label: 'Remove branding',
-    isContrast: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Feed retention',
-    isContrast: false,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '90 days' },
-      [SupportedPlansEnum.BUSINESS]: { value: '1 year' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
-    },
-  },
-  {
-    label: 'Features',
     isContrast: true,
     isTitle: true,
     values: {
@@ -188,7 +170,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Subscriber Preference API',
+    label: 'Inbox component',
     isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
@@ -197,7 +179,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Digest Engine',
+    label: 'User preferences component',
     isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
@@ -206,7 +188,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Translation management',
+    label: 'Remove Novu branding',
     isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
@@ -215,7 +197,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Role-based access control',
+    label: 'Notifications retention',
     isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
@@ -224,7 +206,26 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Inbound reply email',
+    label: 'Account administration and security',
+    isContrast: false,
+    isTitle: true,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '' },
+      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    },
+  },
+  {
+    label: 'Team members',
+    isContrast: true,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.BUSINESS]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <Badge label="Coming soon" /> },
+    },
+  },
+  {
+    label: 'RBAC',
     isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
@@ -233,7 +234,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Google and Github OAuth',
+    label: 'GDPR compliance',
     isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
@@ -247,79 +248,81 @@ const features: Feature[] = [
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: '-' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '-' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
-    label: 'Support',
+    label: 'Support and account management',
     isContrast: true,
+    isTitle: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Chat' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Chat and Email' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated support' },
+      [SupportedPlansEnum.FREE]: { value: '' },
+      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
     },
   },
   {
     label: 'Support SLA',
     isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: '5 business days' },
-      [SupportedPlansEnum.BUSINESS]: { value: '2 business days' },
+      [SupportedPlansEnum.FREE]: { value: 'Community & Intercom' },
+      [SupportedPlansEnum.BUSINESS]: { value: '48 hours' },
       [SupportedPlansEnum.ENTERPRISE]: { value: '24 hours' },
     },
   },
   {
-    label: 'Uptime SLA',
+    label: 'Support channels',
     isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: '99.9%' },
-      [SupportedPlansEnum.BUSINESS]: { value: '99.9%' },
+      [SupportedPlansEnum.FREE]: { value: 'Community & Intercom' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Chat and Email' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated support' },
+    },
+  },
+  {
+    label: 'Legal & Vendor management',
+    isContrast: false,
+    isTitle: true,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: '' },
+      [SupportedPlansEnum.BUSINESS]: { value: '' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: '' },
+    },
+  },
+  {
+    label: 'Payment method',
+    isContrast: true,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: 'N/A' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Credit card only' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'PO and Invoicing' },
+    },
+  },
+  {
+    label: 'Terms of service',
+    isContrast: false,
+    values: {
+      [SupportedPlansEnum.FREE]: { value: 'Standard' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
   {
-    label: 'Audit logs',
-    isContrast: false,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '-' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '-' },
-    },
-  },
-  {
-    label: 'SOC II, ISO27001, GDPR',
+    label: 'DPA',
     isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.FREE]: { value: 'Standard' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
   {
-    label: 'Data warehouse connections',
+    label: 'Security review',
     isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '-' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
-    },
-  },
-  {
-    label: 'Data processing agreement',
-    isContrast: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: '-' },
-      [SupportedPlansEnum.BUSINESS]: { value: '-' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: '-' },
-    },
-  },
-  {
-    label: 'Provider webhook integration',
-    isContrast: false,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.FREE]: { value: 'SOC 2 and ISO 27001 upon request' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Custom' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Custom' },
     },
   },
 ];
