@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import type { IEnvironment } from '@novu/shared';
 import { useFetchEnvironments } from './hooks';
@@ -7,7 +7,11 @@ import { EnvironmentContext } from './environment-context';
 import { getEnvironmentId, saveEnvironmentId } from '@/utils/environment';
 import { BaseEnvironmentEnum } from '@/utils/types';
 
-function selectEnvironment(environments: IEnvironment[], selectedEnvironmentId?: string | null) {
+function selectEnvironment(environments?: IEnvironment[], selectedEnvironmentId?: string | null) {
+  if (!environments) {
+    return null;
+  }
+
   let environment: IEnvironment | undefined;
 
   // Find the environment based on the current user's last environment
@@ -40,14 +44,20 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     },
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const switchEnvironment = useCallback((newEnvironment: string) => {
+    // TODO: in the next PR
+  }, []);
+
   const value = useMemo(
     () => ({
       currentEnvironment,
       environments,
-      isLoaded: !areEnvironmentsInitialLoading,
+      areEnvironmentsInitialLoading,
       readOnly: currentEnvironment?._parentId !== undefined,
+      switchEnvironment,
     }),
-    [currentEnvironment, environments, areEnvironmentsInitialLoading]
+    [currentEnvironment, environments, areEnvironmentsInitialLoading, switchEnvironment]
   );
 
   return <EnvironmentContext.Provider value={value}>{children}</EnvironmentContext.Provider>;
