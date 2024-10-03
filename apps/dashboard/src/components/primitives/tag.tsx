@@ -8,7 +8,7 @@ const tagVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary/5 text-primary/50',
+        default: 'border-transparent bg-secondary-alpha-100 text-secondary-alpha-500',
         feature: 'border-transparent bg-feature/10 text-feature',
         information: 'border-transparent bg-information/10 text-information',
       },
