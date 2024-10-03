@@ -50,5 +50,4 @@ export enum WorkflowOriginEnum {
   NOVU_CLOUD = 'novu-cloud',
   EXTERNAL = 'external',
 }
-
 export * from './workflow-creation-source.enum';

@@ -11,6 +11,8 @@ export class ControlsSchema {
 export type StepResponseDto = StepDto & {
   stepUuid: string;
   stepId: string;
+  slug: string;
+  controls: ControlsSchema;
 };
 
 export type StepUpdateDto = StepDto & {
