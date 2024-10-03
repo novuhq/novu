@@ -22,7 +22,7 @@ export const PlanSwitcher = ({
             Monthly
           </Tabs.Tab>
           <Tabs.Tab className={styles.tab(theme)} value="year">
-            Anually <span>10% off</span>
+            Annually <span>10% off</span>
           </Tabs.Tab>
         </Tabs.List>
       </Tabs>
