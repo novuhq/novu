@@ -1,3 +1,5 @@
+import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { GetPreferencesResponseDto } from '@novu/application-generic';
 import {
   ControlsSchema,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -11,9 +13,9 @@ import {
   WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
+import { BadRequestException } from '@nestjs/common';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
-import { BadRequestException } from '@nestjs/common';
 
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
