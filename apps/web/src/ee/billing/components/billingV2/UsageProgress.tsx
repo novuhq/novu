@@ -14,7 +14,7 @@ export const UsageProgress = ({ apiServiceLevel, currentEvents, maxEvents }) => 
       <Progress size="xs" value={usagePercentage} color={color} className={styles.progressBar} />
       <div className={styles.progressLegend}>
         <Text className={styles.legendItem}>0</Text>
-        <Text className={styles.legendItem}>{maxEvents.toLocaleString()}</Text>
+        <Text className={styles.legendItem}>{maxEvents?.toLocaleString()}</Text>
       </div>
     </div>
   );
