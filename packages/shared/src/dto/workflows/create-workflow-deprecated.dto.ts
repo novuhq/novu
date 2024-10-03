@@ -2,6 +2,9 @@ import { NotificationStepDto } from './workflow.dto';
 import { IPreferenceChannels } from '../../entities/subscriber-preference';
 import { NotificationTemplateCustomData } from '../../types';
 
+/**
+ * @deprecated use CreateWorkflowDto instead
+ */
 export interface ICreateWorkflowDto {
   name: string;
 

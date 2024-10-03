@@ -1,19 +1,21 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { DEFAULT_WORKFLOW_PREFERENCES, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { randomBytes } from 'crypto';
-import { JsonSchema } from '@novu/framework';
 import {
+  CreateWorkflowDto,
+  DEFAULT_WORKFLOW_PREFERENCES,
   ListWorkflowResponse,
   StepCreateDto,
   StepDto,
+  StepTypeEnum,
   StepUpdateDto,
+  UpdateWorkflowDto,
   WorkflowCommonsFields,
+  WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
-} from './dto/workflow-commons-fields';
-import { WorkflowResponseDto } from './dto/workflow-response-dto';
-import { UpdateWorkflowDto } from './dto/update-workflow-dto';
-import { CreateWorkflowDto } from './dto/create-workflow-dto';
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { randomBytes } from 'crypto';
+import { JsonSchema } from '@novu/framework';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';

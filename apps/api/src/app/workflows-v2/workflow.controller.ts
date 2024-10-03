@@ -15,7 +15,14 @@ import {
 } from '@nestjs/common';
 
 import { ApiTags } from '@nestjs/swagger';
-import { DirectionEnum, UserSessionData } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  DirectionEnum,
+  ListWorkflowResponse,
+  UpdateWorkflowDto,
+  UserSessionData,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -25,13 +32,9 @@ import { UpsertWorkflowCommand } from './usecases/upsert-workflow/upsert-workflo
 import { GetWorkflowUseCase } from './usecases/get-workflow/get-workflow.usecase';
 import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.usecase';
 import { ListWorkflowsCommand } from './usecases/list-workflows/list-workflows.command';
-import { ListWorkflowResponse } from './dto/workflow-commons-fields';
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 import { GetListQueryParams } from './params/get-list-query-params';
-import { CreateWorkflowDto } from './dto/create-workflow-dto';
-import { UpdateWorkflowDto } from './dto/update-workflow-dto';
-import { WorkflowResponseDto } from './dto/workflow-response-dto';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })

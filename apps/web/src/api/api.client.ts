@@ -8,13 +8,18 @@ interface IOptions {
   absoluteUrl: boolean;
 }
 
+axios.interceptors.request.use(async (config) => {
+  config.headers.set('Novu-Environment-Id', getEnvironmentId());
+  config.headers.set('Authorization', `Bearer ${await getToken()}`);
+
+  return config;
+});
+
 // @deprecated Migrate all api methods to the new buildApiHttpClient that allows runtime configuration on the client object.
 export const api = {
   get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
-      .get(buildUrl(url, options.absoluteUrl), {
-        headers: getHeaders(),
-      })
+      .get(buildUrl(url, options.absoluteUrl))
       .then((response) => {
         return response.data?.data;
       })
@@ -24,10 +29,7 @@ export const api = {
   },
   getFullResponse(url: string, params?: { [key: string]: string | string[] | number }) {
     return axios
-      .get(`${API_ROOT}${url}`, {
-        params,
-        headers: getHeaders(),
-      })
+      .get(`${API_ROOT}${url}`, { params })
       .then((response) => response.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
@@ -35,9 +37,7 @@ export const api = {
   },
   put(url: string, payload) {
     return axios
-      .put(`${API_ROOT}${url}`, payload, {
-        headers: getHeaders(),
-      })
+      .put(`${API_ROOT}${url}`, payload)
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
@@ -45,17 +45,15 @@ export const api = {
   },
   post(url: string, payload, params?: CustomDataType) {
     return axios
-      .post(`${API_ROOT}${url}`, payload, { params, headers: getHeaders() })
+      .post(`${API_ROOT}${url}`, payload, { params })
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
-  patch(url: string, payload) {
+  patch(url: string, payload, params?: CustomDataType) {
     return axios
-      .patch(`${API_ROOT}${url}`, payload, {
-        headers: getHeaders(),
-      })
+      .patch(`${API_ROOT}${url}`, payload, { params })
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
@@ -63,10 +61,7 @@ export const api = {
   },
   delete(url: string, payload = {}) {
     return axios
-      .delete(`${API_ROOT}${url}`, {
-        ...payload,
-        headers: getHeaders(),
-      })
+      .delete(`${API_ROOT}${url}`, payload)
       .then((response) => response.data?.data)
       .catch((error) => {
         return Promise.reject(error?.response?.data || error?.response || error);
@@ -78,44 +73,37 @@ function buildUrl(url: string, absoluteUrl: boolean) {
   return absoluteUrl ? url : `${API_ROOT}${url}`;
 }
 
-function getHeaders() {
-  // TODO: change the way we get the clerk token
-  const token = getToken();
-  const lastEnvironmentId = getEnvironmentId();
-
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-        'Novu-Environment-Id': lastEnvironmentId || '',
-      }
-    : {};
-}
-
 // WIP: The static API client needs to be replaced by a dynamic API client where api keys are injected.
 export function buildApiHttpClient({
   baseURL = API_ROOT || 'https://api.novu.co',
   secretKey,
-  jwt,
-  environmentId,
+  environmentId = getEnvironmentId(),
 }: {
   baseURL?: string;
   secretKey?: string;
-  jwt?: string;
   environmentId?: string;
 }) {
-  if (!secretKey && !jwt) {
-    throw new Error('A secretKey or jwt is required to create a Novu API client.');
-  }
-
-  const authHeader = jwt ? `Bearer ${jwt}` : `ApiKey ${secretKey}`;
-
   const httpClient = axios.create({
     baseURL,
     headers: {
-      Authorization: authHeader,
       'Content-Type': 'application/json',
-      'Novu-Environment-Id': environmentId,
     },
+  });
+
+  httpClient.interceptors.request.use(async (config) => {
+    let authHeaderValue = '';
+
+    if (secretKey) {
+      authHeaderValue = `ApiKey ${secretKey}`;
+    } else {
+      const token = await getToken();
+      authHeaderValue = `Bearer ${token}`;
+      config.headers.set('Novu-Environment-Id', environmentId);
+    }
+
+    config.headers.set('Authorization', authHeaderValue);
+
+    return config;
   });
 
   const get = async (url, params?: Record<string, string | string[] | number>) => {

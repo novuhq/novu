@@ -1,13 +1,13 @@
 import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { colors, PageContainer, Text, Title, When, IRow } from '@novu/design-system';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Flex } from '@novu/novui/jsx';
-import { useAuth, useEnvironment } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
+import { useGetDefaultLocale, ITranslationGroup, useFetchLocales, useFetchTranslationGroups } from '../hooks';
 import { FlagIcon } from '../components/shared';
 
-import { ITranslationGroup, useFetchLocales, useFetchTranslationGroups } from '../hooks';
 import { DefaultLocaleModal } from '../components/DefaultLocaleModal';
 import { TranslationGroupEmptyList } from '../components/TranslationGroup/TranslationGroupEmptyList';
 import { TranslationGroupListToolbar } from '../components/TranslationGroup/TranslationGroupListToolbar';
@@ -16,7 +16,7 @@ import { ROUTES } from '../routes';
 
 export const TranslationGroupsPage = () => {
   const [page, setPage] = useState(0);
-  const { currentOrganization } = useAuth();
+  const { defaultLocale } = useGetDefaultLocale();
   const navigate = useNavigate();
   const { translationGroups, isLoading, totalCount, pageSize } = useFetchTranslationGroups(page);
   const { getLocale } = useFetchLocales();
@@ -28,7 +28,7 @@ export const TranslationGroupsPage = () => {
   };
 
   const handleAddGroupButtonClick = () => {
-    if (!currentOrganization!.defaultLocale) {
+    if (!defaultLocale) {
       openDefaultLocale();
 
       return;
@@ -51,7 +51,7 @@ export const TranslationGroupsPage = () => {
           </Title>
         </Flex>
 
-        <When truthy={currentOrganization && hasTranslationGroups}>
+        <When truthy={hasTranslationGroups}>
           <Group spacing={12} align="center">
             <Text color={colors.B60}>Default:</Text>
             <UnstyledButton
@@ -61,8 +61,8 @@ export const TranslationGroupsPage = () => {
               disabled={readonly}
             >
               <Group spacing={4} align="center">
-                <FlagIcon locale={currentOrganization?.defaultLocale || ''} />
-                <Text>{getLocale(currentOrganization?.defaultLocale || '')?.langName}</Text>
+                <FlagIcon locale={defaultLocale || ''} />
+                <Text>{getLocale(defaultLocale || '')?.langName}</Text>
               </Group>
             </UnstyledButton>
           </Group>

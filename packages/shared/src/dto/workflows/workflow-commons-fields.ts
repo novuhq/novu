@@ -1,11 +1,11 @@
 import { IsArray, IsBoolean, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 
-import { JsonSchema } from '@novu/framework';
-import { StepTypeEnum, WorkflowPreferences } from '@novu/shared';
+import { JSONSchema } from 'json-schema-to-ts';
 import { WorkflowResponseDto } from './workflow-response-dto';
+import { StepTypeEnum, WorkflowPreferences } from '../../types';
 
 export class ControlsSchema {
-  schema: JsonSchema;
+  schema: JSONSchema;
 }
 
 export type StepResponseDto = StepDto & {

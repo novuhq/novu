@@ -1,14 +1,16 @@
-import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
-import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { GetPreferencesResponseDto } from '@novu/application-generic';
-
 import {
   ControlsSchema,
+  DEFAULT_WORKFLOW_PREFERENCES,
   PreferencesResponseDto,
+  PreferencesTypeEnum,
   StepResponseDto,
+  StepTypeEnum,
   WorkflowListResponseDto,
-} from '../dto/workflow-commons-fields';
-import { WorkflowResponseDto } from '../dto/workflow-response-dto';
+  WorkflowOriginEnum,
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { GetPreferencesResponseDto } from '@novu/application-generic';
 
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,

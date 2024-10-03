@@ -1,16 +1,25 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
 import { Group } from '@mantine/core';
 import slugify from 'slugify';
 import { Control, FormProvider, useForm } from 'react-hook-form';
-import { useAuth, useEnvironment } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { api } from '../../../api';
+import { useGetDefaultLocale } from '../hooks/useGetDefaultLocale';
 
 import { TranslationFolderIconSmall } from '../icons';
 
 import { GroupFormCommonFields } from './GroupFormCommonFields';
 import { ICreateGroup } from './shared';
+
+function defaultValues(defaultLocale = '') {
+  return {
+    name: '',
+    identifier: '',
+    locales: [defaultLocale],
+  };
+}
 
 export const CreateGroupSidebar = ({
   open,
@@ -21,10 +30,9 @@ export const CreateGroupSidebar = ({
   onClose: () => void;
   onGroupCreated: (id: string) => void;
 }) => {
-  const { currentOrganization } = useAuth();
   const queryClient = useQueryClient();
-
   const { readonly } = useEnvironment();
+  const { defaultLocale } = useGetDefaultLocale();
 
   const { mutateAsync: createTranslationGroup, isLoading: isSaving } = useMutation<
     any,
@@ -43,31 +51,33 @@ export const CreateGroupSidebar = ({
 
   const methods = useForm({
     mode: 'onChange',
-    defaultValues: {
-      name: '',
-      identifier: '',
-      locales: currentOrganization?.defaultLocale ? [currentOrganization?.defaultLocale] : [],
-    },
+    defaultValues: defaultValues(defaultLocale),
   });
+
   const {
     control,
     handleSubmit,
     watch,
     setValue,
     formState: { isValid, isDirty },
+    reset,
   } = methods;
+
   const name = watch('name');
   const identifier = watch('identifier');
   const localesForm = watch('locales');
 
   useEffect(() => {
-    if (!currentOrganization?.defaultLocale) return;
-
-    if (localesForm.length === 0) {
-      setValue('locales', [currentOrganization?.defaultLocale]);
+    if (defaultLocale) {
+      reset(defaultValues(defaultLocale));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrganization?.defaultLocale, localesForm]);
+  }, [defaultLocale, reset]);
+
+  useEffect(() => {
+    if (defaultLocale && localesForm.length === 0) {
+      setValue('locales', [defaultLocale]);
+    }
+  }, [defaultLocale, localesForm, setValue]);
 
   useEffect(() => {
     const newIdentifier = slugify(name, {
