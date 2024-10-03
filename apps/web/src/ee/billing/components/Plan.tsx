@@ -8,15 +8,11 @@ import { planList } from '../utils/planList';
 import { PlanFooter } from './PlanFooter';
 import { FreeTrialPlanWidget } from './FreeTrialPlanWidget';
 import { useSubscriptionContext } from './SubscriptionProvider';
-import { ActivePlanBanner } from './billingV2/ActivePlanBanner';
-import { useFeatureFlag } from '../../../hooks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export const Plan = () => {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
   const { isLoading, trial } = useSubscriptionContext();
-  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
   if (isLoading || trial.daysLeft === null) {
     return (
@@ -28,8 +24,7 @@ export const Plan = () => {
 
   return (
     <>
-      {!isImprovedBillingEnabled && <FreeTrialPlanWidget isDark={isDark} />}
-      {isImprovedBillingEnabled && <ActivePlanBanner />}
+      <FreeTrialPlanWidget isDark={isDark} />
       <PlanWrapper isDark={isDark}>
         <PlanHeader />
         {planList.map((row, index) => (
