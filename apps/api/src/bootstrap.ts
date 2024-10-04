@@ -114,7 +114,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  await setupSwagger(app);
+  // await setupSwagger(app);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 

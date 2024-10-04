@@ -3366,6 +3366,9 @@ importers:
       '@apidevtools/json-schema-ref-parser':
         specifier: 11.6.4
         version: 11.6.4
+      '@nestjs/common':
+        specifier: 10.4.1
+        version: 10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@sveltejs/kit':
         specifier: ^1.27.3
         version: 1.30.4(svelte@4.2.19)(vite@5.4.2(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6))

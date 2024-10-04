@@ -17,17 +17,17 @@ import { StepTypeEnum, WorkflowTypeEnum } from '@novu/shared';
 import { ApiTags } from '@nestjs/swagger';
 import { decryptApiKey } from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { Client, Event, workflow, Step, Workflow } from '@novu/framework';
+import { Client, Event, workflow, Step, Workflow, WorkflowChannelEnum } from '@novu/framework';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { NovuNestjsHandler } from './novu-nestjs-handler';
 
 // Unfortunately we need this mapper because the `in_app` step type uses `step.inApp()` in Framework.
 const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | StepTypeEnum.TRIGGER>, keyof Step> = {
-  [StepTypeEnum.IN_APP]: 'inApp',
-  [StepTypeEnum.EMAIL]: 'email',
-  [StepTypeEnum.SMS]: 'sms',
-  [StepTypeEnum.CHAT]: 'chat',
-  [StepTypeEnum.PUSH]: 'push',
+  [StepTypeEnum.IN_APP]: WorkflowChannelEnum.IN_APP,
+  [StepTypeEnum.EMAIL]: WorkflowChannelEnum.EMAIL,
+  [StepTypeEnum.SMS]: WorkflowChannelEnum.SMS,
+  [StepTypeEnum.CHAT]: WorkflowChannelEnum.CHAT,
+  [StepTypeEnum.PUSH]: WorkflowChannelEnum.PUSH,
   [StepTypeEnum.DIGEST]: 'digest',
   [StepTypeEnum.DELAY]: 'delay',
 };
