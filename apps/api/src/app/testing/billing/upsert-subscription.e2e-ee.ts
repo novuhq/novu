@@ -72,7 +72,6 @@ describe('UpsertSubscription', () => {
       ],
     } as any);
     updateServiceLevelStub = sinon.stub(UpdateServiceLevel.prototype, 'execute').resolves({});
-
     createSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'create');
     updateSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'update');
     deleteSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'del');

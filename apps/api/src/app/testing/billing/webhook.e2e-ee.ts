@@ -106,10 +106,10 @@ describe('Stripe webhooks', () => {
 
   describe('setup_intent.succeeded', () => {
     let updateCustomerStub: sinon.SinonStub;
-
     let verifyCustomerStub: sinon.SinonStub;
     let upsertSubscriptionStub: sinon.SinonStub;
     let getFeatureFlagStub: sinon.SinonStub;
+
     const analyticsServiceStub = {
       track: sinon.stub(),
     };
@@ -344,9 +344,6 @@ describe('Stripe webhooks', () => {
 
       const handler = createHandler();
       await handler.handle(event);
-
-      // check what arguments are passed to the updateServiceLevelStub
-      console.log(updateServiceLevelStub.args);
 
       expect(updateServiceLevelStub.lastCall.args.at(0)).to.deep.equal({
         organizationId: 'organization_id',
