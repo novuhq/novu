@@ -15,9 +15,9 @@ const linkVariants = cva(
   {
     variants: {
       variant: {
-        default: 'text-foreground/60 transition ease-out duration-300 hover:bg-accent',
-        selected: 'text-foreground/95 transition ease-out duration-300 hover:bg-accent',
-        disabled: 'text-foreground/30 cursor-not-allowed',
+        default: 'text-foreground-600/95 transition ease-out duration-300 hover:bg-accent',
+        selected: 'text-foreground-950 transition ease-out duration-300 hover:bg-accent',
+        disabled: 'text-foreground-300 cursor-not-allowed',
       },
     },
     defaultVariants: {
@@ -65,7 +65,7 @@ const NavigationItem = ({ item }: { item: NavItem }) => {
         <NavLink variant="disabled">
           <Icon className="size-4" />
           <span>{label}</span>
-          <Badge className="text-primary/30 ml-auto" kind="pill">
+          <Badge className="text-foreground-300 ml-auto" kind="pill">
             soon
           </Badge>
         </NavLink>
@@ -83,7 +83,7 @@ const NavigationItemsGroup = ({ group }: { group: NavItemsGroup }) => {
   return (
     <div className="flex flex-col last:mt-auto">
       <Show when={!!group.label}>
-        <span className="text-foreground/40 px-2 py-1 text-xs uppercase">{group.label}</span>
+        <span className="text-foreground-400 px-2 py-1 text-xs uppercase">{group.label}</span>
       </Show>
       {group.items.map((item, idx) => (
         <NavigationItem key={`${item.label}_${idx}`} item={item} />
@@ -98,7 +98,7 @@ export const SideNavigation = () => {
   const onEnvironmentChange = (value: string) => switchEnvironment(value);
 
   return (
-    <aside className="bg-card flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
+    <aside className="bg-secondary-alpha-50 flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
       <OrganizationDropdown />
       <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
       <nav className="flex flex-1 flex-col gap-4">

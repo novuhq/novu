@@ -8,7 +8,7 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
     <div className="relative flex h-screen w-full">
       <SideNavigation />
       <div className="flex min-h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        <div className="flex h-16 w-full items-center justify-between bg-green-200 p-4">
+        <div className="bg-background flex h-16 w-full items-center justify-between border-b p-4">
           <a
             href="/legacy/integrations"
             target="_self"

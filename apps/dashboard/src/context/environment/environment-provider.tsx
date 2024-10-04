@@ -44,8 +44,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const switchEnvironment = useCallback((newEnvironment: string) => {
+  const switchEnvironment = useCallback(() => {
     // TODO: in the next PR
   }, []);
 
