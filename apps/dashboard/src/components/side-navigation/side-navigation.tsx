@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cva, VariantProps } from 'class-variance-authority';
-import { Show } from '../show';
 import { cn } from '@/utils/ui';
 import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -58,33 +57,26 @@ const NavigationItem = ({ item }: { item: NavItem }) => {
   const { pathname } = useLocation();
   const isSelected = pathname === to;
 
-  return (
-    <Show
-      when={!disabled}
-      fallback={
-        <NavLink variant="disabled">
-          <Icon className="size-4" />
-          <span>{label}</span>
-          <Badge className="text-foreground-300 ml-auto" kind="pill">
-            soon
-          </Badge>
-        </NavLink>
-      }
-    >
-      <NavLink to={to} isExternal={isExternal} variant={isSelected ? 'selected' : 'default'}>
-        <Icon className="size-4" />
-        <span>{label}</span>
-      </NavLink>
-    </Show>
+  return disabled ? (
+    <NavLink variant="disabled">
+      <Icon className="size-4" />
+      <span>{label}</span>
+      <Badge className="text-foreground-300 ml-auto" kind="pill">
+        soon
+      </Badge>
+    </NavLink>
+  ) : (
+    <NavLink to={to} isExternal={isExternal} variant={isSelected ? 'selected' : 'default'}>
+      <Icon className="size-4" />
+      <span>{label}</span>
+    </NavLink>
   );
 };
 
 const NavigationItemsGroup = ({ group }: { group: NavItemsGroup }) => {
   return (
     <div className="flex flex-col last:mt-auto">
-      <Show when={!!group.label}>
-        <span className="text-foreground-400 px-2 py-1 text-xs uppercase">{group.label}</span>
-      </Show>
+      {!!group.label && <span className="text-foreground-400 px-2 py-1 text-xs uppercase">{group.label}</span>}
       {group.items.map((item, idx) => (
         <NavigationItem key={`${item.label}_${idx}`} item={item} />
       ))}
