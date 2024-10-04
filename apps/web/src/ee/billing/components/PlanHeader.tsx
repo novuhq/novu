@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
-import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
+import { Button, Text, When, colors, errorMessage, successMessage } from '@novu/design-system';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../../../api';
@@ -11,7 +11,6 @@ import { includedEventQuotaFromApiServiceLevel } from '../utils/plan.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { BillingIntervalControl } from './BillingIntervalControl';
 import { useSubscriptionContext } from './SubscriptionProvider';
-import { useFeatureFlag } from '../../../hooks';
 
 const black = colors.BGDark;
 
@@ -40,7 +39,15 @@ export const PlanHeader = () => {
     isLoadingSubscriptionData ? subscriptionApiServiceLevel : ApiServiceLevelEnum.FREE
   );
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>(subscriptionBillingInterval || 'month');
-  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
+
+  const checkoutOnSuccess = (data) => {
+    if (upgradeOpen) {
+      return;
+    }
+
+    setIntentSecret(data.clientSecret);
+    setUpgradeOpen(true);
+  };
 
   const isPaidSubscriptionActive = isActive && !trial.isActive && apiServiceLevel !== ApiServiceLevelEnum.FREE;
 
@@ -55,14 +62,7 @@ export const PlanHeader = () => {
     any,
     { billingInterval: 'month' | 'year'; apiServiceLevel: ApiServiceLevelEnum }
   >((data) => api.post('/v1/billing/checkout', data), {
-    onSuccess: (data) => {
-      if (upgradeOpen) {
-        return;
-      }
-
-      setIntentSecret(data.clientSecret);
-      setUpgradeOpen(true);
-    },
+    onSuccess: checkoutOnSuccess,
     onError: (e: any) => {
       errorMessage(e.message || 'Unexpected error');
     },
@@ -187,12 +187,9 @@ export const PlanHeader = () => {
                   });
                 }}
               >
-                <When truthy={!isImprovedBillingEnabled}>
-                  <When truthy={!trial.isActive}>Upgrade</When>
-                  <When truthy={trial.isActive && !hasPaymentMethod}>Add payment method</When>
-                  <When truthy={trial.isActive && hasPaymentMethod}>Update payment method</When>
-                </When>
-                <When truthy={isImprovedBillingEnabled}>Upgrade</When>
+                <When truthy={!trial.isActive}>Upgrade</When>
+                <When truthy={trial.isActive && !hasPaymentMethod}>Add payment method</When>
+                <When truthy={trial.isActive && hasPaymentMethod}>Update payment method</When>
               </Button>
             </When>
           </Stack>

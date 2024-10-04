@@ -1,21 +1,20 @@
-import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import slugify from 'slugify';
-import { FormProvider, useForm, useFieldArray, FieldErrors } from 'react-hook-form';
+import { FieldErrors, FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
 import cloneDeep from 'lodash.clonedeep';
 import {
+  ActorTypeEnum,
   DelayTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
+  EmailBlockTypeEnum,
+  IEmailBlock,
   INotificationTemplate,
   INotificationTrigger,
   isBridgeWorkflow,
-  WorkflowTypeEnum,
   StepTypeEnum,
-  ActorTypeEnum,
-  EmailBlockTypeEnum,
-  IEmailBlock,
   TextAlignEnum,
 } from '@novu/shared';
 import { captureException } from '@sentry/react';
@@ -23,7 +22,7 @@ import { captureException } from '@sentry/react';
 import { v4 as uuid4 } from 'uuid';
 import type { IForm, IFormStep, ITemplates } from './formTypes';
 import { useTemplateController } from './useTemplateController';
-import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
+import { mapFormToCreateNotificationTemplate, mapNotificationTemplateToForm } from './templateToFormMappers';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { useEffectOnce, useNotificationGroup } from '../../../hooks';
@@ -155,28 +154,26 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   deleteVariant: () => {},
 });
 
-const defaultValues: IForm = {
-  name: 'Untitled',
-  notificationGroupId: '',
-  description: '',
-  identifier: '',
-  tags: [],
-  critical: true,
-  steps: [],
-  preferenceSettings: {
-    email: true,
-    sms: true,
-    in_app: true,
-    chat: true,
-    push: true,
-  },
-};
-
 const TemplateEditorFormProvider = ({ children }) => {
   const { templateId = '' } = useParams<{ templateId?: string }>();
   const methods = useForm<IForm>({
     resolver: zodResolver(schema as any),
-    defaultValues,
+    defaultValues: {
+      name: 'Untitled',
+      notificationGroupId: '',
+      description: '',
+      identifier: '',
+      tags: [],
+      critical: true,
+      steps: [],
+      preferenceSettings: {
+        email: true,
+        sms: true,
+        in_app: true,
+        chat: true,
+        push: true,
+      },
+    },
     mode: 'onChange',
   });
   const [trigger, setTrigger] = useState<INotificationTrigger>();

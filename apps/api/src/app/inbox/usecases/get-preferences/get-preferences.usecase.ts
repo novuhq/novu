@@ -47,6 +47,7 @@ export class GetPreferences {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: command.tags,
+        critical: false,
       })) || [];
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
@@ -90,6 +91,8 @@ export class GetPreferences {
       })
     );
 
-    return [updatedGlobalPreference, ...workflowPreferences];
+    const nonCriticalWorkflows = workflowPreferences.filter((preference) => preference.workflow.critical === false);
+
+    return [updatedGlobalPreference, ...nonCriticalWorkflows];
   }
 }

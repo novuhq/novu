@@ -4,14 +4,14 @@ import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  IMessage,
+  IMessageAction,
+  IMessageCTA,
   MessageActionStatusEnum,
   TextAlignEnum,
-  IMessage,
-  IMessageCTA,
-  IMessageAction,
 } from '@novu/shared';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
-import { WorkflowResponse } from '../../workflows/dto/workflow-response.dto';
+import { WorkflowResponse } from '../../workflows-v1/dto/workflow-response.dto';
 
 class EmailBlockStyles {
   @ApiProperty({

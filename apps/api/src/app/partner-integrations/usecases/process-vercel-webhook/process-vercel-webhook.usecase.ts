@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-  EnvironmentRepository,
-  EnvironmentEntity,
-  CommunityOrganizationRepository,
-  MemberRepository,
-  CommunityUserRepository,
-} from '@novu/dal';
 import crypto from 'node:crypto';
+
+import {
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  MemberRepository,
+} from '@novu/dal';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { Sync } from '../../../bridge/usecases/sync';

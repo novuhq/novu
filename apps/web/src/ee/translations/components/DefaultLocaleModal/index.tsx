@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Group, Stack } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,7 +18,7 @@ import { api } from '../../../../api';
 import { useAuth } from '../../../../hooks/useAuth';
 
 import { LocaleIcon } from '../../icons/LocaleIcon';
-import { useFetchLocales } from '../../hooks/useFetchLocales';
+import { useFetchLocales, useGetDefaultLocale } from '../../hooks';
 import { FlagIcon, SelectItem } from '../shared';
 import { GlobeIcon } from '../../icons/GlobeIcon';
 
@@ -33,14 +33,15 @@ export const DefaultLocaleModal = ({
 }) => {
   const queryClient = useQueryClient();
   const { locales, isLoading } = useFetchLocales();
-  const { currentOrganization, reloadOrganization } = useAuth();
+  const { defaultLocale } = useGetDefaultLocale();
+  const { currentOrganization } = useAuth();
 
   const { mutateAsync: saveDefaultLocale, isLoading: isSaving } = useMutation<any, any, any>(
     (args) => api.patch('/v1/translations/language', args),
     {
       onSuccess: async () => {
-        await reloadOrganization();
-        queryClient.refetchQueries([`translationGroups`]);
+        queryClient.refetchQueries([`translations/defaultLocale, ${currentOrganization?._id}`]);
+        queryClient.refetchQueries(['translationGroups']);
         queryClient.refetchQueries(['changesCount']);
 
         successMessage(`Default language has been set`);
@@ -73,13 +74,13 @@ export const DefaultLocaleModal = ({
   };
 
   useEffect(() => {
-    if (currentOrganization?.defaultLocale) {
+    if (defaultLocale) {
       reset({
-        defaultLocale: currentOrganization.defaultLocale,
+        defaultLocale,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrganization?.defaultLocale]);
+  }, [defaultLocale]);
 
   return (
     <Modal
@@ -88,7 +89,7 @@ export const DefaultLocaleModal = ({
       title={
         <Group spacing={8}>
           <LocaleIcon />
-          <Title size={2}>{currentOrganization?.defaultLocale ? 'Change' : 'Specify'} default language</Title>
+          <Title size={2}>{defaultLocale ? 'Change' : 'Specify'} default language</Title>
         </Group>
       }
       onClose={onClose}
@@ -100,7 +101,7 @@ export const DefaultLocaleModal = ({
             Notifications without specified translations will use the default language for all notifications within the
             current currentOrganization.
           </Text>
-          <When truthy={currentOrganization?.defaultLocale && isDirty}>
+          <When truthy={defaultLocale && isDirty}>
             <Group spacing={8} style={{ width: `100%`, alignItems: 'flex-start' }} noWrap>
               <WarningIcon color="#eaa900" width="16px" height="16px" />
               <div style={{ flex: 1 }}>
@@ -150,7 +151,7 @@ export const DefaultLocaleModal = ({
             Cancel
           </Button>
           <Button loading={isSaving} type="submit" data-test-id="default-language-submit-btn" disabled={!isDirty}>
-            {currentOrganization?.defaultLocale ? 'Change language' : 'Specify'}
+            {defaultLocale ? 'Change language' : 'Specify'}
           </Button>
         </Group>
       </form>

@@ -1,8 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
-
-import { CreateWorkflowRequestDto } from '../../workflows/dto/create-workflow.request.dto';
+import { CreateWorkflowRequestDto } from '../../workflows-v1/dto';
 
 describe('Environment - Check Root Environment Guard', async () => {
   let session: UserSession;

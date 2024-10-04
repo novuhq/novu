@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Text, colors, Input, Select, When } from '@novu/design-system';
 import { Group, CloseButton, Box, MultiSelectValueProps, useMantineTheme, Stack } from '@mantine/core';
 import { Control, Controller } from 'react-hook-form';
 
 import { FlagIcon, ICreateGroup, SelectItem } from './shared';
-import { useFetchLocales } from '../hooks';
-import { useAuth } from '../../../hooks';
+import { useFetchLocales, useGetDefaultLocale } from '../hooks';
 import { DeleteLocaleModal } from './DeleteLocaleModal';
 
 export const GroupFormCommonFields = ({
@@ -18,8 +17,10 @@ export const GroupFormCommonFields = ({
   readonly: boolean;
 }) => {
   const { locales, isLoading } = useFetchLocales();
-  const { currentOrganization } = useAuth();
+  const { defaultLocale } = useGetDefaultLocale();
   const [localeToDelete, setLocaleToDelete] = useState<undefined | { label: string; value: string }>(undefined);
+
+  console.log('Default locale', defaultLocale);
 
   return (
     <Stack spacing={32}>
@@ -62,33 +63,35 @@ export const GroupFormCommonFields = ({
       />
       <Controller
         rules={{
-          validate: (value) => value.includes(currentOrganization!.defaultLocale!) || 'Default locale must be included',
+          validate: (value) => value.includes(defaultLocale!) || 'Default locale must be included',
         }}
-        render={({ field, fieldState }) => (
-          <Select
-            type="multiselect"
-            placeholder="Select languages you want to add translations for..."
-            label="Target languages"
-            itemComponent={SelectItem}
-            searchable
-            loading={isLoading}
-            data={
-              locales
-                ? locales.map((locale) => {
-                    return {
-                      value: locale.langIso,
-                      label: locale.langName,
-                    };
-                  })
-                : []
-            }
-            valueComponent={(props) => <Value {...props} edit={edit} setLocaleToDelete={setLocaleToDelete} />}
-            error={fieldState.error?.message}
-            {...field}
-            data-test-id="group-target-languages-select"
-            disabled={readonly}
-          />
-        )}
+        render={({ field, fieldState }) => {
+          return (
+            <Select
+              type="multiselect"
+              placeholder="Select languages you want to add translations for..."
+              label="Target languages"
+              itemComponent={SelectItem}
+              searchable
+              loading={isLoading}
+              data={
+                locales
+                  ? locales.map((locale) => {
+                      return {
+                        value: locale.langIso,
+                        label: locale.langName,
+                      };
+                    })
+                  : []
+              }
+              valueComponent={(props) => <Value {...props} edit={edit} setLocaleToDelete={setLocaleToDelete} />}
+              error={fieldState.error?.message}
+              {...field}
+              data-test-id="group-target-languages-select"
+              disabled={readonly}
+            />
+          );
+        }}
         control={control}
         name="locales"
       />
@@ -115,7 +118,7 @@ function Value({
   setLocaleToDelete: (item: { label: string; value: string }) => void;
   edit: boolean;
 }) {
-  const { currentOrganization } = useAuth();
+  const { defaultLocale } = useGetDefaultLocale();
   const theme = useMantineTheme();
   const dark = theme.colorScheme === 'dark';
   const backgroundColor = dark ? colors.B20 : colors.BGLight;
@@ -135,13 +138,13 @@ function Value({
       <Group
         spacing={6}
         style={{
-          margin: value !== currentOrganization?.defaultLocale ? '6.5px 0px 6.5px 10px' : '6.5px 10px 6.5px 10px',
+          margin: value !== defaultLocale ? '6.5px 0px 6.5px 10px' : '6.5px 10px 6.5px 10px',
         }}
       >
         <FlagIcon locale={value} />
         <Text rows={1}>{label}</Text>
       </Group>
-      <When truthy={value !== currentOrganization?.defaultLocale}>
+      <When truthy={value !== defaultLocale}>
         <CloseButton
           style={{ color }}
           onMouseDown={(e) => {
