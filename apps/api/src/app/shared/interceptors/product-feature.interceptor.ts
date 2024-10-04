@@ -51,6 +51,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
     );
 
     if (!enabled) {
+      // TODO: Reuse PaymentRequiredException from EE billing module.
       throw new HttpException('Payment Required', 402);
     }
 
