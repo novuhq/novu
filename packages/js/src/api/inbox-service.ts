@@ -22,6 +22,7 @@ export class InboxService {
     this.#httpClient = new HttpClient(options);
     this.#httpClient.updateHeaders({
       'Novu-API-Version': NOVU_API_VERSION,
+      'Novu-User-Agent': options.userAgent || '@novu/js',
     });
   }
 
