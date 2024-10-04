@@ -131,13 +131,7 @@ export function QuestionnaireForm() {
       }
     }
 
-    if (isV2Enabled) {
-      navigate(ROUTES.GET_STARTED);
-
-      return;
-    }
-
-    navigate(`${ROUTES.GET_STARTED}`);
+    navigate(ROUTES.GET_STARTED);
   };
 
   /**
