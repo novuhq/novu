@@ -4,22 +4,52 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222 32% 8%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 222 32% 8%;
+    --foreground-0: 210 10% 100%;
+    --foreground-50: 210 10% 96%;
+    --foreground-100: 210 30% 96%;
+    --foreground-200: 220 18% 90%;
+    --foreground-300: 219 15% 82%;
+    --foreground-400: 220 11% 64%;
+    --foreground-500: 221 8% 48%;
+    --foreground-600: 222 11% 36%;
+    --foreground-700: 221 16% 20%;
+    --foreground-800: 227 17% 16%;
+    --foreground-900: 226 21% 12%;
+    --foreground-950: 222 32% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 32% 8%;
-
-    --novu: 346 73% 50%;
-    --novu-foreground: 0 0% 100%;
-
-    --primary: 222 32% 8%;
+    --primary: 346 73% 50%;
     --primary-foreground: 0 0% 100%;
 
+    --secondary-0: 210 10% 100%;
+    --secondary-50: 210 10% 96%;
+    --secondary-100: 210 30% 96%;
+    --secondary-200: 220 18% 90%;
+    --secondary-300: 219 15% 82%;
+    --secondary-400: 220 11% 64%;
+    --secondary-500: 221 8% 48%;
+    --secondary-600: 222 11% 36%;
+    --secondary-700: 221 16% 20%;
+    --secondary-800: 227 17% 16%;
+    --secondary-900: 226 21% 12%;
+    --secondary-950: 222 32% 8%;
+    --secondary: 0 0 0%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Secondary scale in alpha that looks the same on white background */
+    --secondary-alpha-50: 0 0% 69% / 0.05;
+    --secondary-alpha-100: 210 30% 61% / 0.1;
+    --secondary-alpha-200: 220 18% 50% / 0.2;
+    --secondary-alpha-300: 218 23% 40% / 0.3;
+    --secondary-alpha-400: 220 100% 10% / 0.4;
+    --secondary-alpha-500: 240 100% 2% / 0.5;
+    --secondary-alpha-600: 0 0% 0% / 0.6;
+    --secondary-alpha-700: 0 0% 0% / 0.7;
+    --secondary-alpha-800: 0 0% 0% / 0.8;
+    --secondary-alpha-900: 231 100% 3% / 0.9;
+    --secondary-alpha-950: 219 88% 3% / 0.95;
+
     --accent: 0 0% 96.1%;
-    --accent-foreground: 222 32% 8%;
 
     --destructive: 355 96% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -42,12 +72,6 @@
     --input: 0 0% 89.8%;
     --ring: 222 32% 8%;
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
     --radius: 0.5rem;
   }
 }
@@ -56,6 +80,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground-950;
   }
 }

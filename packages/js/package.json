@@ -38,6 +38,16 @@
         "types": "./dist/cjs/themes/index.js",
         "default": "./dist/cjs/themes/index.d.ts"
       }
+    },
+    "./internal": {
+      "import": {
+        "types": "./dist/esm/internal/index.d.mts",
+        "default": "./dist/esm/internal/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/internal/index.js",
+        "default": "./dist/cjs/internal/index.d.ts"
+      }
     }
   },
   "files": [
@@ -47,7 +57,8 @@
     "dist/novu.min.js",
     "dist/novu.min.js.gz",
     "ui/**/*",
-    "themes/**/*"
+    "themes/**/*",
+    "internal/**/*"
   ],
   "sideEffects": false,
   "private": false,

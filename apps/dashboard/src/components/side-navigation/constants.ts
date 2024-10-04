@@ -11,7 +11,7 @@ import {
 import { NavItemsGroup } from './types';
 import { LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 
-export const navitationItems: NavItemsGroup[] = [
+export const navigationItems: NavItemsGroup[] = [
   {
     items: [
       {
@@ -22,6 +22,8 @@ export const navitationItems: NavItemsGroup[] = [
       {
         label: 'Subscribers',
         icon: RiGroup2Line,
+        isExternal: true,
+        to: 'https://docs.novu.co/api-reference/subscribers/get-subscribers',
         disabled: true,
       },
     ],

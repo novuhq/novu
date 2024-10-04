@@ -1,24 +1,22 @@
 import { useMemo } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cva, VariantProps } from 'class-variance-authority';
-import { Show } from '../show';
 import { cn } from '@/utils/ui';
 import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
-import { navitationItems } from './constants';
+import { navigationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
-import { FreeTrialCard } from './free-trial-card';
 
 const linkVariants = cva(
   `flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring `,
   {
     variants: {
       variant: {
-        default: 'text-foreground/60 transition ease-out duration-300 hover:bg-accent',
-        selected: 'text-foreground/95 transition ease-out duration-300 hover:bg-accent',
-        disabled: 'text-foreground/30 cursor-not-allowed',
+        default: 'text-foreground-600/95 transition ease-out duration-300 hover:bg-accent',
+        selected: 'text-foreground-950 transition ease-out duration-300 hover:bg-accent',
+        disabled: 'text-foreground-300 cursor-help',
       },
     },
     defaultVariants: {
@@ -42,7 +40,12 @@ const NavLink = ({ to, isExternal, className, variant, children }: NavLinkProps)
 
   if (isExternal) {
     return (
-      <a href={to} className={classNames} target="_self" rel="noreferrer noopener">
+      <a
+        href={to}
+        className={classNames}
+        target={to.startsWith('https') ? '_blank' : '_self'}
+        rel="noreferrer noopener"
+      >
         {children}
       </a>
     );
@@ -58,34 +61,25 @@ const NavigationItem = ({ item }: { item: NavItem }) => {
   const { label, to, icon: Icon, disabled, isExternal } = item;
   const { pathname } = useLocation();
   const isSelected = pathname === to;
+  const variant = disabled ? 'disabled' : isSelected ? 'selected' : 'default';
 
   return (
-    <Show
-      when={!disabled}
-      fallback={
-        <NavLink variant="disabled">
-          <Icon className="size-4" />
-          <span>{label}</span>
-          <Badge className="text-primary/30 ml-auto" kind="pill">
-            soon
-          </Badge>
-        </NavLink>
-      }
-    >
-      <NavLink to={to} isExternal={isExternal} variant={isSelected ? 'selected' : 'default'}>
-        <Icon className="size-4" />
-        <span>{label}</span>
-      </NavLink>
-    </Show>
+    <NavLink to={to} isExternal={isExternal} variant={variant}>
+      <Icon className="size-4" />
+      <span>{label}</span>
+      {disabled && (
+        <Badge className="text-foreground-300 ml-auto" kind="pill">
+          soon
+        </Badge>
+      )}
+    </NavLink>
   );
 };
 
 const NavigationItemsGroup = ({ group }: { group: NavItemsGroup }) => {
   return (
     <div className="flex flex-col last:mt-auto">
-      <Show when={!!group.label}>
-        <span className="text-foreground/40 px-2 py-1 text-xs uppercase">{group.label}</span>
-      </Show>
+      {!!group.label && <span className="text-foreground-400 px-2 py-1 text-xs uppercase">{group.label}</span>}
       {group.items.map((item, idx) => (
         <NavigationItem key={`${item.label}_${idx}`} item={item} />
       ))}
@@ -99,12 +93,12 @@ export const SideNavigation = () => {
   const onEnvironmentChange = (value: string) => switchEnvironment(value);
 
   return (
-    <aside className="bg-card relative flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
+    <aside className="bg-secondary-alpha-50 relative flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
       <FreeTrialCard />
       <OrganizationDropdown />
       <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
       <nav className="flex flex-1 flex-col gap-4">
-        {navitationItems.map((group, idx) => (
+        {navigationItems.map((group, idx) => (
           <NavigationItemsGroup key={`${group.label}_${idx}`} group={group} />
         ))}
       </nav>
