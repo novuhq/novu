@@ -14,9 +14,6 @@ import { registerControllerPath } from './nest.decorator';
  * import { NovuModule } from "@novu/framework/nest";
  * import { myWorkflow } from "./src/novu/workflows"; // Your workflows
  *
- * // Important:  ensure you add JSON middleware to process incoming JSON POST payloads.
- * app.use(express.json());
- *
  * @Module({
  *   imports: [
  *     // Expose the middleware on our recommended path at `/api/novu`.
@@ -26,6 +23,11 @@ import { registerControllerPath } from './nest.decorator';
  *   ]
  * })
  * export class AppModule {}
+ *
+ * const app = await NestFactory.create(AppModule);
+ *
+ * // Important:  ensure you add JSON middleware to process incoming JSON POST payloads.
+ * app.use(express.json());
  * ```
  */
 @Module({})
