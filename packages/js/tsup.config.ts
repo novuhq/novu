@@ -48,6 +48,7 @@ const baseModuleConfig: Options = {
     index: './src/index.ts',
     'ui/index': './src/ui/index.ts',
     'themes/index': './src/ui/themes/index.ts',
+    'internal/index': './src/ui/internal/index.ts',
   },
 };
 
