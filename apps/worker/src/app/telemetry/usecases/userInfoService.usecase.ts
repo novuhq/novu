@@ -22,7 +22,7 @@ export class UserInfoService {
     private readonly notificationRepository: NotificationRepository,
     private readonly topicRepository: TopicRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly integrationReposioty: IntegrationRepository,
+    private readonly integrationRepository: IntegrationRepository,
     private readonly httpService: HttpService
   ) {}
 
@@ -34,7 +34,7 @@ export class UserInfoService {
       this.notificationRepository.estimatedDocumentCount(),
       this.topicRepository.estimatedDocumentCount(),
       this.subscriberRepository.estimatedDocumentCount(),
-      this.integrationReposioty.sumByProviderId(),
+      this.integrationRepository.sumByProviderId(),
       this.notificationTemplateRepository.getTotalSteps(),
     ]);
 
