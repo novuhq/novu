@@ -3,7 +3,13 @@ import { BoltOutlinedGradient, Button, colors, Playground, shadows, Text, Title 
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
 import type { INotificationTemplate, IResponseError } from '@novu/shared';
-import { ActorTypeEnum, ICreateNotificationTemplateDto, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+import {
+  ActorTypeEnum,
+  ICreateNotificationTemplateDto,
+  StepTypeEnum,
+  SystemAvatarIconEnum,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -18,7 +24,6 @@ import {
 import { NodeStep } from '../../workflow';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
-import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
 import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';
 
 const useStyles = createStyles((theme) => ({
@@ -101,7 +106,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
     createNotificationTemplate({
       template: payloadToCreate as unknown as ICreateNotificationTemplateDto,
-      params: { __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP },
+      params: { __source: WorkflowCreationSourceEnum.ONBOARDING_IN_APP },
     });
   }, hasToCreateOnboardingTemplate);
 

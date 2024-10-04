@@ -23,7 +23,7 @@ import {
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services/cache';
+import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { GetPreferences } from '../get-preferences';
 
 const PRIORITY_ORDER = [
@@ -79,13 +79,14 @@ export class GetSubscriberTemplatePreference {
     /**
      * V2 preference object.
      */
-    const subscriberWorkflowPreferences =
-      await this.getPreferences.getWorkflowPreferences({
+    const subscriberWorkflowPreferences = await this.getPreferences.safeExecute(
+      {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-      });
+      },
+    );
 
     const subscriberPreferenceChannels = subscriberWorkflowPreferences
       ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(

@@ -1,32 +1,32 @@
 /* eslint-disable global-require */
-import { DynamicModule, Logger, Module, Provider, OnApplicationShutdown } from '@nestjs/common';
+import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider } from '@nestjs/common';
 import {
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
+  CompileInAppTemplate,
   CompileTemplate,
+  ConditionsFilter,
   CreateExecutionDetails,
+  ExecutionLogRoute,
   GetDecryptedIntegrations,
+  getFeatureFlag,
   GetLayoutUseCase,
   GetNovuLayout,
   GetNovuProviderCredentials,
-  GetSubscriberPreference,
+  GetPreferences,
   GetSubscriberGlobalPreference,
+  GetSubscriberPreference,
   GetSubscriberTemplatePreference,
+  GetTopicSubscribersUseCase,
+  NormalizeVariables,
   ProcessTenant,
   SelectIntegration,
-  ConditionsFilter,
-  NormalizeVariables,
-  TriggerEvent,
   SelectVariant,
-  GetTopicSubscribersUseCase,
-  getFeatureFlag,
   TriggerBroadcast,
+  TriggerEvent,
   TriggerMulticast,
-  CompileInAppTemplate,
   WorkflowInMemoryProviderService,
-  ExecutionLogRoute,
-  GetPreferences,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository, PreferencesRepository } from '@novu/dal';
 
@@ -34,6 +34,13 @@ import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { JobTopicNameEnum } from '@novu/shared';
 import {
+  Digest,
+  ExecuteBridgeJob,
+  GetDigestEventsBackoff,
+  GetDigestEventsRegular,
+  HandleLastFailedJob,
+  QueueNextJob,
+  RunJob,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -41,17 +48,10 @@ import {
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
-  Digest,
-  GetDigestEventsBackoff,
-  GetDigestEventsRegular,
-  HandleLastFailedJob,
-  QueueNextJob,
-  RunJob,
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
-  ExecuteBridgeJob,
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';

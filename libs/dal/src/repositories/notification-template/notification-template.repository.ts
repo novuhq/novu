@@ -9,6 +9,11 @@ import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { EnvironmentRepository } from '../environment';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface FindByIdQuery {
+  id: string;
+  environmentId: string;
+}
 
 export class NotificationTemplateRepository extends BaseRepository<
   NotificationTemplateDBModel,
@@ -35,12 +40,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findById(id: string, environmentId: string) {
-    const requestQuery: NotificationTemplateQuery = {
-      _id: id,
-      _environmentId: environmentId,
-    };
-
-    const item = await this.MongooseModel.findOne(requestQuery)
+    return this.findByIdQuery({ id, environmentId });
+  }
+  async findByIdQuery(query: FindByIdQuery) {
+    const item = await this.MongooseModel.findOne({
+      _id: query.id,
+      _environmentId: query.environmentId,
+    })
       .populate('steps.template')
       .populate('steps.variants.template');
 
@@ -211,10 +217,12 @@ export class NotificationTemplateRepository extends BaseRepository<
     organizationId,
     environmentId,
     tags,
+    critical,
   }: {
     organizationId: string;
     environmentId: string;
     tags?: string[];
+    critical?: boolean;
   }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -224,6 +232,10 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     if (tags && tags?.length > 0) {
       requestQuery.tags = { $in: tags };
+    }
+
+    if (critical !== undefined) {
+      requestQuery.critical = { $eq: critical };
     }
 
     const items = await this.MongooseModel.find(requestQuery)

@@ -1,22 +1,49 @@
 import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import './index.css';
+import { createRoot } from 'react-dom/client';
 import ErrorPage from '@/components/error-page';
-import Root from '@/routes/root';
-import { Workflows } from '@/routes/workflows';
-import { Home } from '@/routes/home';
+import { RootRoute, AuthRoute, DashboardRoute, CatchAllRoute } from './routes';
+import { WorkflowsPage, SignInPage, SignUpPage, OrganizationListPage } from '@/pages';
+import './index.css';
+import { ROUTES } from './utils/routes';
+import { Primitives } from '@/routes/primitives';
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Root />,
+    element: <RootRoute />,
     errorElement: <ErrorPage />,
     children: [
-      { path: '/', element: <Home /> },
+      { path: '/primitives', element: <Primitives /> },
       {
-        path: 'workflows',
-        element: <Workflows />,
+        element: <AuthRoute />,
+        children: [
+          {
+            path: `${ROUTES.SIGN_IN}/*`,
+            element: <SignInPage />,
+          },
+          {
+            path: `${ROUTES.SIGN_UP}/*`,
+            element: <SignUpPage />,
+          },
+          {
+            path: ROUTES.SIGNUP_ORGANIZATION_LIST,
+            element: <OrganizationListPage />,
+          },
+        ],
+      },
+      {
+        path: ROUTES.ROOT,
+        element: <DashboardRoute />,
+        children: [
+          {
+            path: ROUTES.WORKFLOWS,
+            element: <WorkflowsPage />,
+          },
+          {
+            path: '*',
+            element: <CatchAllRoute />,
+          },
+        ],
       },
     ],
   },

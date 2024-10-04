@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
-  ControlVariablesRepository,
+  ControlValuesRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -18,6 +18,7 @@ import {
   NotificationRepository,
   NotificationTemplateRepository,
   OrganizationRepository,
+  PreferencesRepository,
   SubscriberPreferenceRepository,
   SubscriberRepository,
   TenantRepository,
@@ -31,22 +32,22 @@ import {
   cacheService,
   CacheServiceHealthIndicator,
   ComputeJobWaitDurationService,
+  CreateExecutionDetails,
   createNestLoggingModuleOptions,
   DalServiceHealthIndicator,
   distributedLockService,
+  ExecuteBridgeRequest,
+  ExecutionLogRoute,
   featureFlagsService,
   getFeatureFlag,
+  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
   storageService,
-  ExecutionLogRoute,
-  CreateExecutionDetails,
-  injectCommunityAuthProviders,
-  ExecuteBridgeRequest,
 } from '@novu/application-generic';
 
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
+import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
 
 function getDynamicAuthProviders() {
@@ -82,7 +83,8 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
-  ControlVariablesRepository,
+  ControlValuesRepository,
+  PreferencesRepository,
   ...getDynamicAuthProviders(),
 ];
 

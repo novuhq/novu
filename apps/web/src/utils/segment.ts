@@ -60,6 +60,7 @@ export class SegmentService {
       firstName: user.firstName,
       lastName: user.lastName,
       avatar: user.profilePicture,
+      createdAt: user.createdAt,
     });
   }
 

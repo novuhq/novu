@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
-  ControlVariablesRepository,
+  ControlValuesRepository,
   DalService,
   EnvironmentRepository,
   ExecutionDetailsRepository,
@@ -88,7 +88,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
-  ControlVariablesRepository,
+  ControlValuesRepository,
   ...getDynamicAuthProviders(),
 ];
 

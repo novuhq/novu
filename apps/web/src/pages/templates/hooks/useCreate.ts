@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INotificationTrigger } from '@novu/shared';
+import { INotificationTrigger, WorkflowCreationSourceEnum } from '@novu/shared';
 import { IForm } from '../components/formTypes';
 import { mapFormToCreateNotificationTemplate } from '../components/templateToFormMappers';
 import { useTemplateController } from '../components/useTemplateController';
-import { TemplateCreationSourceEnum } from '../shared';
 
 export const useCreate = (
   templateId: string,
@@ -35,7 +34,7 @@ export const useCreate = (
           draft: false,
         },
         params: {
-          __source: TemplateCreationSourceEnum.EDITOR,
+          __source: WorkflowCreationSourceEnum.EDITOR,
         },
       });
       setTrigger(response.triggers[0]);

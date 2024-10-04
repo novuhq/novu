@@ -255,6 +255,15 @@ jobs:
     with:
       ee: true
 
+  test_e2e_dashboard:
+    name: E2E test Dashboard app
+    needs: [get-affected]
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/dashboard') }}
+    uses: ./.github/workflows/reusable-dashboard-e2e.yml
+    secrets: inherit
+    with:
+      ee: true
+
   test_e2e_widget:
     name: E2E test Widget
     needs: [get-affected]
