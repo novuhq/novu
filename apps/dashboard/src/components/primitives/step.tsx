@@ -8,7 +8,7 @@ const stepVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-primary/5 bg-primary/2.5 text-primary/30',
+        default: 'border-secondary-alpha-100 bg-secondary-alpha-50 text-secondary-alpha-400',
         feature: 'border-feature/30  bg-foreground/2.5 text-feature/30',
         information: 'border-information/30 bg-foreground/2.5 text-information/30',
         highlighted: 'border-highlighted/30  bg-foreground/2.5 text-highlighted/30',
