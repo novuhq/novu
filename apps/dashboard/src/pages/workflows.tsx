@@ -1,3 +1,3 @@
 export const WorkflowsPage = () => {
-  return <div className="h-[2000px] w-full bg-red-200">Workflows</div>;
+  return <div className="bg-background h-[2000px] w-full">Workflows</div>;
 };

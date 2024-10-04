@@ -84,7 +84,10 @@ export default {
       stable: {
         DEFAULT: 'hsl(var(--stable))',
       },
-      border: 'hsl(var(--border))',
+      border: {
+        DEFAULT: 'hsl(var(--border))',
+        stroke: 'hsl(var(--stroke))',
+      },
       input: 'hsl(var(--input))',
       ring: 'hsl(var(--ring))',
     },
