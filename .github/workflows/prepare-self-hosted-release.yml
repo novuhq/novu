@@ -94,9 +94,9 @@ jobs:
         run: |
           cd apps/$SERVICE_COMMON_NAME
           
-          if [ "$SERVICE_NAME" == "worker" ]; then
+          if [ "${{ env.SERVICE_NAME }}" == "worker" ]; then
             cd src/ && echo -e "\nIS_SELF_HOSTED=true\nOS_TELEMETRY_URL=\"${{ secrets.OS_TELEMETRY_URL }}\"" >> .example.env && cd ..
-          elif [ "$SERVICE_NAME" == "web" ]; then
+          elif [ "${{ env.SERVICE_NAME }}" == "web" ]; then
             cd src/ && echo -e "\nIS_V2_ENABLED=true" >> .env.sample && cd ..
           fi
           
