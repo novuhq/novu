@@ -290,7 +290,6 @@ export class GetPreferences {
     if (command.templateId) {
       const workflowPreferences = await this.preferencesRepository.find({
         _environmentId: command.environmentId,
-        'preferences.all.readOnly': false,
         _templateId: command.templateId,
         type: {
           $in: [
@@ -308,7 +307,6 @@ export class GetPreferences {
       const subscriberGlobalPreference = await this.preferencesRepository.find({
         _subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
-        'preferences.all.readOnly': false,
         type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
       });
 
@@ -322,7 +320,6 @@ export class GetPreferences {
           _subscriberId: command.subscriberId,
           _templateId: command.templateId,
           _environmentId: command.environmentId,
-          'preferences.all.readOnly': false,
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
         });
 
