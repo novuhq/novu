@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { getMachineInfo, loadOrCreateMachineId } from '../utils/machine.utils';
 import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class MachineInfoService {

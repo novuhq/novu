@@ -1,17 +1,17 @@
-import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
-  UserRepository,
-  OrganizationRepository,
-  NotificationTemplateRepository,
-  NotificationRepository,
-  TopicRepository,
-  SubscriberRepository,
   IntegrationRepository,
+  NotificationRepository,
+  NotificationTemplateRepository,
+  OrganizationRepository,
+  SubscriberRepository,
+  TopicRepository,
+  UserRepository,
 } from '@novu/dal';
-import { HttpService } from '@nestjs/axios';
-import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 import { loadOrCreateMachineId } from '../utils/machine.utils';
+import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 
 @Injectable()
 export class UserInfoService {

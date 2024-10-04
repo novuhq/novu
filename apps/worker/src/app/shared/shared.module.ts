@@ -1,5 +1,35 @@
 import { Module } from '@nestjs/common';
 import {
+  analyticsService,
+  BulkCreateExecutionDetails,
+  cacheService,
+  ComputeJobWaitDurationService,
+  CreateExecutionDetails,
+  createNestLoggingModuleOptions,
+  CreateNotificationJobs,
+  CreateSubscriber,
+  CreateTenant,
+  DalServiceHealthIndicator,
+  DigestFilterSteps,
+  distributedLockService,
+  EventsDistributedLockService,
+  ExecuteBridgeRequest,
+  featureFlagsService,
+  GetTenant,
+  injectCommunityAuthProviders,
+  InvalidateCacheService,
+  LoggerModule,
+  MetricsModule,
+  ProcessSubscriber,
+  ProcessTenant,
+  QueuesModule,
+  StorageHelperService,
+  storageService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+  UpdateTenant,
+} from '@novu/application-generic';
+import {
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
@@ -22,42 +52,12 @@ import {
   UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
-import {
-  analyticsService,
-  BulkCreateExecutionDetails,
-  cacheService,
-  ComputeJobWaitDurationService,
-  CreateExecutionDetails,
-  createNestLoggingModuleOptions,
-  CreateNotificationJobs,
-  CreateSubscriber,
-  CreateTenant,
-  DalServiceHealthIndicator,
-  DigestFilterSteps,
-  distributedLockService,
-  EventsDistributedLockService,
-  featureFlagsService,
-  GetTenant,
-  InvalidateCacheService,
-  LoggerModule,
-  MetricsModule,
-  ProcessSubscriber,
-  ProcessTenant,
-  QueuesModule,
-  StorageHelperService,
-  storageService,
-  UpdateSubscriber,
-  UpdateSubscriberChannel,
-  UpdateTenant,
-  injectCommunityAuthProviders,
-  ExecuteBridgeRequest,
-} from '@novu/application-generic';
 
-import { JobTopicNameEnum, isClerkEnabled } from '@novu/shared';
+import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
-import { CreateLog } from './logs';
-import { ActiveJobsMetricService } from '../workflow/services';
 import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
+import { ActiveJobsMetricService } from '../workflow/services';
+import { CreateLog } from './logs';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {

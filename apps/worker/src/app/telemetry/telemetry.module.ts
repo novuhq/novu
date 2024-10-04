@@ -1,8 +1,6 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { MachineInfoService } from './usecases/machineInfoService.usecase';
 import { ScheduleModule } from '@nestjs/schedule';
-import { UserInfoService } from './usecases/userInfoService.usecase';
-import { SharedModule } from '../shared/shared.module';
 import {
   IntegrationRepository,
   NotificationRepository,
@@ -12,7 +10,9 @@ import {
   TopicRepository,
   UserRepository,
 } from '@novu/dal';
-import { HttpModule } from '@nestjs/axios';
+import { SharedModule } from '../shared/shared.module';
+import { MachineInfoService } from './usecases/machineInfoService.usecase';
+import { UserInfoService } from './usecases/userInfoService.usecase';
 
 const REPOSITORIES = [
   UserRepository,
