@@ -1,9 +1,12 @@
 /* eslint-disable global-require */
 import sinon from 'sinon';
-import { CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
+import {
+  StripeBillingIntervalEnum,
+  StripeUsageTypeEnum,
+  StripeSubscriptionStatusEnum,
+} from '@novu/ee-billing/src/stripe/types';
 
 describe('UpsertSubscription', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -11,7 +14,7 @@ describe('UpsertSubscription', () => {
     throw new Error('ee-billing does not exist');
   }
 
-  const { UpsertSubscription, GetPrices, UpsertSubscriptionCommand } = eeBilling;
+  const { UpsertSubscription, GetPrices, UpdateServiceLevel, UpsertSubscriptionCommand } = eeBilling;
 
   const stripeStub = {
     subscriptions: {
@@ -25,8 +28,7 @@ describe('UpsertSubscription', () => {
   let deleteSubscriptionStub: sinon.SinonStub;
 
   let getPricesStub: sinon.SinonStub;
-  const repo = new CommunityOrganizationRepository();
-  let updateOrgStub: sinon.SinonStub;
+  let updateServiceLevelStub: sinon.SinonStub;
 
   const mockCustomerBase = {
     id: 'customer_id',
@@ -38,6 +40,7 @@ describe('UpsertSubscription', () => {
       data: [
         {
           id: 'subscription_id',
+          status: StripeSubscriptionStatusEnum.ACTIVE,
           billing_cycle_anchor: 123456789,
           items: {
             data: [
@@ -68,8 +71,8 @@ describe('UpsertSubscription', () => {
         },
       ],
     } as any);
-    updateOrgStub = sinon.stub(repo, 'update').resolves({ matched: 1, modified: 1 });
-    (repo as any).integrationRepository = sinon.createStubInstance(IntegrationRepository);
+    updateServiceLevelStub = sinon.stub(UpdateServiceLevel.prototype, 'execute').resolves({});
+
     createSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'create');
     updateSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'update');
     deleteSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'del');
@@ -77,14 +80,18 @@ describe('UpsertSubscription', () => {
 
   afterEach(() => {
     getPricesStub.reset();
-    updateOrgStub.reset();
+    updateServiceLevelStub.reset();
     createSubscriptionStub.reset();
     updateSubscriptionStub.reset();
     deleteSubscriptionStub.reset();
   });
 
   const createUseCase = () => {
-    const useCase = new UpsertSubscription(stripeStub as any, repo, { execute: getPricesStub } as any);
+    const useCase = new UpsertSubscription(
+      stripeStub as any,
+      { execute: updateServiceLevelStub } as any,
+      { execute: getPricesStub } as any
+    );
 
     return useCase;
   };
@@ -605,7 +612,6 @@ describe('UpsertSubscription', () => {
     describe('Organization entity update', () => {
       it('should update the organization with the new apiServiceLevel', async () => {
         const useCase = createUseCase();
-        const customer = { ...mockCustomerBase, subscriptions: { data: [{}, {}] } };
 
         await useCase.execute(
           UpsertSubscriptionCommand.create({
@@ -615,9 +621,8 @@ describe('UpsertSubscription', () => {
           })
         );
 
-        expect(updateOrgStub.lastCall.args).to.deep.equal([
-          { _id: 'organization_id' },
-          { $set: { apiServiceLevel: ApiServiceLevelEnum.BUSINESS } },
+        expect(updateServiceLevelStub.lastCall.args).to.deep.equal([
+          { organizationId: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.BUSINESS, isTrial: false },
         ]);
       });
     });

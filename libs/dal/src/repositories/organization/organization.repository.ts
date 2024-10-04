@@ -22,10 +22,6 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.renameOrganization(organizationId, payload);
   }
 
-  updateServiceLevel(organizationId: string, apiServiceLevel: ApiServiceLevelEnum) {
-    return this.organizationRepository.updateServiceLevel(organizationId, apiServiceLevel);
-  }
-
   updateDefaultLocale(organizationId: string, defaultLocale: string): Promise<{ matched: number; modified: number }> {
     return this.organizationRepository.updateDefaultLocale(organizationId, defaultLocale);
   }

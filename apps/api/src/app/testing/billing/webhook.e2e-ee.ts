@@ -96,8 +96,13 @@ describe('Stripe webhooks', () => {
     throw new Error('ee-billing does not exist');
   }
 
-  const { SetupIntentSucceededHandler, CustomerSubscriptionCreatedHandler, UpsertSubscription, VerifyCustomer } =
-    eeBilling;
+  const {
+    SetupIntentSucceededHandler,
+    CustomerSubscriptionCreatedHandler,
+    UpsertSubscription,
+    VerifyCustomer,
+    UpdateServiceLevel,
+  } = eeBilling;
 
   describe('setup_intent.succeeded', () => {
     let updateCustomerStub: sinon.SinonStub;
@@ -198,10 +203,8 @@ describe('Stripe webhooks', () => {
 
   describe('customer.subscription.created', () => {
     let verifyCustomerStub: sinon.SinonStub;
-    const organizationRepositoryStub = {
-      update: sinon.stub().resolves({ matched: 1, modified: 1 }),
-      updateServiceLevel: sinon.stub().resolves({ matched: 1, modified: 1 }),
-    };
+    let updateServiceLevelStub: sinon.SinonStub;
+
     const analyticsServiceStub = {
       track: sinon.stub(),
       upsertGroup: sinon.stub(),
@@ -304,18 +307,15 @@ describe('Stripe webhooks', () => {
         },
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
-    });
-
-    afterEach(() => {
-      organizationRepositoryStub.updateServiceLevel.reset();
+      updateServiceLevelStub = sinon.stub(UpdateServiceLevel.prototype, 'execute').resolves({});
     });
 
     const createHandler = () => {
       const handler = new CustomerSubscriptionCreatedHandler(
         { execute: verifyCustomerStub } as any,
-        organizationRepositoryStub,
         analyticsServiceStub as any,
-        invalidateCacheServiceStub as any
+        invalidateCacheServiceStub as any,
+        { execute: updateServiceLevelStub } as any
       );
 
       return handler;
@@ -345,8 +345,14 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.updateServiceLevel.calledWith('organization_id', ApiServiceLevelEnum.BUSINESS))
-        .to.be.true;
+      // check what arguments are passed to the updateServiceLevelStub
+      console.log(updateServiceLevelStub.args);
+
+      expect(updateServiceLevelStub.lastCall.args.at(0)).to.deep.equal({
+        organizationId: 'organization_id',
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        isTrial: false,
+      });
     });
 
     it('should exit early with unknown organization', async () => {
@@ -378,7 +384,7 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.updateServiceLevel.called).to.be.false;
+      expect(updateServiceLevelStub.called).to.be.false;
     });
 
     it('should handle event with known organization and licensed subscription', async () => {
@@ -415,8 +421,11 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.updateServiceLevel.calledWith('organization_id', ApiServiceLevelEnum.BUSINESS))
-        .to.be.true;
+      expect(updateServiceLevelStub.lastCall.args.at(0)).to.deep.equal({
+        organizationId: 'organization_id',
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        isTrial: false,
+      });
     });
 
     it('should invalidate the subscription cache with known organization and licensed subscription', async () => {
@@ -490,8 +499,7 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.updateServiceLevel.calledWith('organization_id', ApiServiceLevelEnum.BUSINESS))
-        .to.be.true;
+      expect(updateServiceLevelStub.called).to.be.true;
     });
 
     it('should exit early with known organization and invalid apiServiceLevel', async () => {
@@ -565,7 +573,7 @@ describe('Stripe webhooks', () => {
       const handler = createHandler();
       await handler.handle(event);
 
-      expect(organizationRepositoryStub.updateServiceLevel.called).to.be.false;
+      expect(updateServiceLevelStub.called).to.be.false;
     });
   });
 });

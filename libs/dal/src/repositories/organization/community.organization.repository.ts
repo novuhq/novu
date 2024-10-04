@@ -1,17 +1,14 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { CommunityMemberRepository } from '../member';
 import { IOrganizationRepository } from './organization-repository.interface';
-import { IntegrationRepository } from '../integration';
 
 export class CommunityOrganizationRepository
   extends BaseRepository<OrganizationDBModel, OrganizationEntity, object>
   implements IOrganizationRepository
 {
   private memberRepository = new CommunityMemberRepository();
-  private integrationRepository = new IntegrationRepository();
 
   constructor() {
     super(Organization, OrganizationEntity);
@@ -59,23 +56,6 @@ export class CommunityOrganizationRepository
       {
         $set: {
           name: payload.name,
-        },
-      }
-    );
-  }
-
-  async updateServiceLevel(organizationId: string, apiServiceLevel: ApiServiceLevelEnum) {
-    if (apiServiceLevel === ApiServiceLevelEnum.FREE) {
-      await this.integrationRepository.setRemoveNovuBranding(organizationId, false);
-    }
-
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          apiServiceLevel,
         },
       }
     );
