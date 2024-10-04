@@ -23,9 +23,12 @@ export class PreviewStep {
     try {
       const payload = this.mapPayload(command);
       const novuSignatureHeader = this.buildNovuSignature(environment, payload);
-      const url = `${bridgeUrl}?action=preview&workflowId=${command.workflowId}&stepId=${command.stepId}`;
+      const bridgeActionUrl = new URL(bridgeUrl);
+      bridgeActionUrl.searchParams.set('action', 'preview');
+      bridgeActionUrl.searchParams.set('workflowId', command.workflowId);
+      bridgeActionUrl.searchParams.set('stepId', command.stepId);
 
-      const response = await axiosInstance.post(url, payload, {
+      const response = await axiosInstance.post(bridgeActionUrl.toString(), payload, {
         headers: {
           'content-type': 'application/json',
           'x-novu-signature': novuSignatureHeader,

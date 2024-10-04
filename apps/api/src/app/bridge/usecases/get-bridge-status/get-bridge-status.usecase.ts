@@ -9,7 +9,10 @@ const axiosInstance = axios.create();
 export class GetBridgeStatus {
   async execute(command: GetBridgeStatusCommand): Promise<HealthCheck> {
     try {
-      const response = await axiosInstance.get<HealthCheck>(`${command.bridgeUrl}?action=health-check`, {
+      const bridgeActionUrl = new URL(command.bridgeUrl);
+      bridgeActionUrl.searchParams.set('action', 'health-check');
+
+      const response = await axiosInstance.get<HealthCheck>(bridgeActionUrl.toString(), {
         headers: {
           'Bypass-Tunnel-Reminder': 'true',
           'content-type': 'application/json',
