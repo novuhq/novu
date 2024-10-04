@@ -29,26 +29,26 @@ export const FreeTrialCard = () => {
     >
       <div className="flex items-center gap-1.5">
         <div
-          className={`bg-primary flex h-4 w-4 items-center justify-center rounded-full ${transition} group-hover:bg-transparent`}
+          className={`flex h-4 w-4 items-center justify-center rounded-full bg-neutral-700 ${transition} group-hover:bg-neutral-0`}
         >
           <LogoCircle className={`h-3 w-3 ${transition} group-hover:h-4 group-hover:w-4`} />
         </div>
-        <span className="text-foreground text-sm">{pluralizedDays} left on trial</span>
+        <span className="text-foreground-950 text-sm">{pluralizedDays} left on trial</span>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger className="ml-auto">
               <span className="relative flex size-4 items-center justify-center">
                 <RiArrowRightDoubleLine
-                  className={`text-foreground/40 size-4 opacity-100 ${transition} group-hover:opacity-0`}
+                  className={`text-foreground-400 size-4 opacity-100 ${transition} group-hover:opacity-0`}
                 />
                 <RiInformationFill
-                  className={`text-foreground/40 absolute left-0 top-0 size-4 opacity-0 ${transition} group-hover:opacity-100`}
+                  className={`text-foreground-400 absolute left-0 top-0 size-4 opacity-0 ${transition} group-hover:opacity-100`}
                 />
               </span>
             </TooltipTrigger>
             <TooltipContent variant="light" size="lg" side="right" className="w-48">
               <TooltipArrow variant="light" className="-translate-y-[1px]" />
-              <span className="text-foreground/60 text-xs">
+              <span className="text-foreground-600 text-xs">
                 After the trial ends, continue to enjoy novu's free tier with unlimited workflows and up to 30k
                 events/month.
               </span>
@@ -56,7 +56,7 @@ export const FreeTrialCard = () => {
           </Tooltip>
         </TooltipProvider>
       </div>
-      <span className="text-foreground/60 text-xs">
+      <span className="text-foreground-600 text-xs">
         Experience novu without any limits for free for the next {pluralizedDays}.
       </span>
       <div className={`max-h-3 overflow-hidden opacity-100 ${transition} group-hover:max-h-0 group-hover:opacity-0`}>

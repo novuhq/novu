@@ -8,6 +8,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
 import { navigationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
+import { FreeTrialCard } from './free-trial-card';
 
 const linkVariants = cva(
   `flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring `,
