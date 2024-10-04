@@ -6,7 +6,7 @@ export type EnvironmentContextValue = {
   environments?: IEnvironment[];
   areEnvironmentsInitialLoading: boolean;
   readOnly: boolean;
-  switchEnvironment: (newEnvironment: string) => void;
+  switchEnvironment: (newEnvironment?: string) => void;
 };
 
 const [EnvironmentContext, useEnvironmentContext] =
