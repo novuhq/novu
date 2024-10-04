@@ -19,6 +19,7 @@ import {
   TenantRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
@@ -89,6 +90,7 @@ const DAL_MODELS = [
   TenantRepository,
   WorkflowOverrideRepository,
   ControlValuesRepository,
+  UserRepository,
   ...getDynamicAuthProviders(),
 ];
 
