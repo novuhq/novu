@@ -4,6 +4,7 @@ export type NavItem = {
   to?: string;
   disabled?: boolean;
   isExternal?: boolean;
+  isLegacy?: boolean;
 };
 
 export type NavItemsGroup = {

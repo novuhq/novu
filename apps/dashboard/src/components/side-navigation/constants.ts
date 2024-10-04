@@ -22,6 +22,8 @@ export const navigationItems: NavItemsGroup[] = [
       {
         label: 'Subscribers',
         icon: RiGroup2Line,
+        isExternal: true,
+        to: 'https://docs.novu.co/api-reference/subscribers/get-subscribers',
         disabled: true,
       },
     ],

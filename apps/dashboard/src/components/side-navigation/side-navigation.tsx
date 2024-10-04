@@ -16,7 +16,7 @@ const linkVariants = cva(
       variant: {
         default: 'text-foreground-600/95 transition ease-out duration-300 hover:bg-accent',
         selected: 'text-foreground-950 transition ease-out duration-300 hover:bg-accent',
-        disabled: 'text-foreground-300 cursor-not-allowed',
+        disabled: 'text-foreground-300 cursor-help',
       },
     },
     defaultVariants: {
@@ -40,11 +40,17 @@ const NavLink = ({ to, isExternal, className, variant, children }: NavLinkProps)
 
   if (isExternal) {
     return (
-      <a href={to} className={classNames} target="_self" rel="noreferrer noopener">
+      <a
+        href={to}
+        className={classNames}
+        target={to.startsWith('https') ? '_blank' : '_self'}
+        rel="noreferrer noopener"
+      >
         {children}
       </a>
     );
   }
+
   return (
     <RouterLink to={to ?? '/'} className={classNames}>
       {children}
@@ -56,19 +62,17 @@ const NavigationItem = ({ item }: { item: NavItem }) => {
   const { label, to, icon: Icon, disabled, isExternal } = item;
   const { pathname } = useLocation();
   const isSelected = pathname === to;
+  const variant = disabled ? 'disabled' : isSelected ? 'selected' : 'default';
 
-  return disabled ? (
-    <NavLink variant="disabled">
+  return (
+    <NavLink to={to} isExternal={isExternal} variant={variant}>
       <Icon className="size-4" />
       <span>{label}</span>
-      <Badge className="text-foreground-300 ml-auto" kind="pill">
-        soon
-      </Badge>
-    </NavLink>
-  ) : (
-    <NavLink to={to} isExternal={isExternal} variant={isSelected ? 'selected' : 'default'}>
-      <Icon className="size-4" />
-      <span>{label}</span>
+      {disabled && (
+        <Badge className="text-foreground-300 ml-auto" kind="pill">
+          soon
+        </Badge>
+      )}
     </NavLink>
   );
 };
