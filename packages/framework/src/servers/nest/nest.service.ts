@@ -21,22 +21,19 @@ export class NovuService {
   }
 
   private handler(
-    requestMethod: 'GET' | 'POST' | 'OPTIONS' | undefined,
     incomingRequest: Either<VercelRequest, Request>,
     response: Either<Response, VercelResponse>
   ): ReturnType<INovuRequestHandlerOptions['handler']> {
-    const request = incomingRequest as Either<Request, Request>;
-
     const extractHeader = (key: string): string | null | undefined => {
-      const header = request.headers[key.toLowerCase()];
+      const header = incomingRequest.headers[key.toLowerCase()];
 
       return Array.isArray(header) ? header[0] : header;
     };
 
     return {
-      body: () => request.body,
+      body: () => incomingRequest.body,
       headers: extractHeader,
-      method: () => requestMethod || request.method || '',
+      method: () => incomingRequest.method || 'GET',
       queryString: (key) => {
         const qs = incomingRequest.query[key];
 
@@ -62,7 +59,7 @@ export class NovuService {
     };
   }
 
-  public async handleRequest(req: Request, res: Response, method: 'GET' | 'POST' | 'OPTIONS') {
-    await this.novuHandler.createHandler()(method, req, res);
+  public async handleRequest(req: Request, res: Response) {
+    await this.novuHandler.createHandler()(req, res);
   }
 }
