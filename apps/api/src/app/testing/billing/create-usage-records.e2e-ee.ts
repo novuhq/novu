@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+// eslint-disable-next-line no-restricted-imports
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
 import { GetFeatureFlag } from '@novu/application-generic';
 
