@@ -53,7 +53,7 @@ export class AnalyticService {
       userId: user._id,
       traits: {
         email: user.email,
-        name: user.firstName + ' ' + user.lastName,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         firstName: user.firstName,
         lastName: user.lastName,
         avatar: user.profilePicture,
