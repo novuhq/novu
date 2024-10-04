@@ -91,6 +91,8 @@ export class GetPreferences {
       })
     );
 
-    return [updatedGlobalPreference, ...workflowPreferences];
+    const nonCriticalWorkflows = workflowPreferences.filter((preference) => preference.workflow.critical === false);
+
+    return [updatedGlobalPreference, ...nonCriticalWorkflows];
   }
 }
