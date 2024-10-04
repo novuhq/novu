@@ -93,6 +93,7 @@ jobs:
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
           cd apps/$SERVICE_COMMON_NAME
+          cd src/ && echo -e "\nIS_SELF_HOSTED=true\nOS_TELEMETRY_URL=\"${{ secrets.OS_TELEMETRY_URL }}\"" >> .example.env && cd ..
           pnpm run docker:build
           docker images
       - name: Check for EE files
