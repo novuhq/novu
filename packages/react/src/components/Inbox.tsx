@@ -3,7 +3,7 @@ import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/typ
 import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
 import { useRenderer } from '../context/RendererContext';
-import { NovuProvider, useNovu, useUnsafeNovu } from '../hooks/NovuProvider';
+import { InternalNovuProvider, NovuProvider, useNovu, useUnsafeNovu } from '../hooks/NovuProvider';
 import { NovuUI } from './NovuUI';
 import { withRenderer } from './Renderer';
 
@@ -49,15 +49,16 @@ export const Inbox = React.memo((props: InboxProps) => {
   }
 
   return (
-    <NovuProvider
+    <InternalNovuProvider
       applicationIdentifier={applicationIdentifier}
       subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
+      userAgentType="components"
     >
       <InboxChild {...props} />
-    </NovuProvider>
+    </InternalNovuProvider>
   );
 });
 
