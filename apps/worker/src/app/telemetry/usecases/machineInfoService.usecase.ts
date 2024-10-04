@@ -30,7 +30,7 @@ export class MachineInfoService {
     }
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_HOUR)
   private async sendRegularTelemetry() {
     if (process.env.IS_SELF_HOSTED === 'true') {
       await this.sendMachineTelemetry('Regular Beacon - [OS Telemetry]');

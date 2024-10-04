@@ -51,7 +51,7 @@ export class UserInfoService {
     };
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async sendDailyUserTelemetry() {
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
     const telemetryEnabled = process.env.NOVU_TELEMETRY !== 'false';
