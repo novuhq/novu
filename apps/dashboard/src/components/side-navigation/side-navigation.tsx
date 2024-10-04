@@ -8,6 +8,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
 import { navigationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
+import { FreeTrialCard } from './free-trial-card';
 
 const linkVariants = cva(
   `flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring `,
@@ -50,7 +51,6 @@ const NavLink = ({ to, isExternal, className, variant, children }: NavLinkProps)
       </a>
     );
   }
-
   return (
     <RouterLink to={to ?? '/'} className={classNames}>
       {children}
@@ -94,7 +94,8 @@ export const SideNavigation = () => {
   const onEnvironmentChange = (value: string) => switchEnvironment(value);
 
   return (
-    <aside className="bg-secondary-alpha-50 flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
+    <aside className="bg-secondary-alpha-50 relative flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
+      <FreeTrialCard />
       <OrganizationDropdown />
       <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
       <nav className="flex flex-1 flex-col gap-4">
