@@ -1,4 +1,4 @@
-import { Controller, All, Req, Res, Inject } from '@nestjs/common';
+import { Controller, Req, Res, Inject, Get, Post, Options } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { NovuService } from './nest.service';
 
@@ -6,7 +6,9 @@ import { NovuService } from './nest.service';
 export class NovuController {
   constructor(@Inject(NovuService) private novuService: NovuService) {}
 
-  @All()
+  @Get()
+  @Post()
+  @Options()
   async handle(@Req() req: Request, @Res() res: Response) {
     await this.novuService.handleRequest(req, res);
   }
