@@ -6,6 +6,7 @@
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "module": "commonjs",
+    "moduleResolution": "Node16",
     "skipLibCheck": true,
     "sourceMap": true,
     "strictNullChecks": true,
