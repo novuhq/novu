@@ -11,7 +11,7 @@ import {
 import { NavItemsGroup } from './types';
 import { LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 
-export const navitationItems: NavItemsGroup[] = [
+export const navigationItems: NavItemsGroup[] = [
   {
     items: [
       {

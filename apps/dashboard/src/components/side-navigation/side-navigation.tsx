@@ -6,7 +6,7 @@ import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
-import { navitationItems } from './constants';
+import { navigationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
 
 const linkVariants = cva(
@@ -94,7 +94,7 @@ export const SideNavigation = () => {
       <OrganizationDropdown />
       <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
       <nav className="flex flex-1 flex-col gap-4">
-        {navitationItems.map((group, idx) => (
+        {navigationItems.map((group, idx) => (
           <NavigationItemsGroup key={`${group.label}_${idx}`} group={group} />
         ))}
       </nav>
