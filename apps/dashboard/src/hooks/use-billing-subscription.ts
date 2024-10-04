@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
-import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
+import { GetSubscriptionDto } from '@novu/shared';
 import { useAuth } from '@/context';
 import { getBillingSubscription } from '@/api/billing';
 import { QueryKeys } from '@/utils/query-keys';
 
 const today = new Date();
 
-export type UseSubscriptionType = GetSubscriptionDto & { trial: { daysLeft: number }; isLoading: boolean };
+export type UseSubscriptionType = GetSubscriptionDto & { daysLeft: number; isLoading: boolean };
 
 export const useBillingSubscription = () => {
   const { currentOrganization } = useAuth();
@@ -18,25 +18,6 @@ export const useBillingSubscription = () => {
     getBillingSubscription,
     {
       enabled: !!currentOrganization,
-      initialData: {
-        apiServiceLevel: ApiServiceLevelEnum.FREE,
-        isActive: false,
-        hasPaymentMethod: false,
-        status: 'trialing',
-        currentPeriodStart: null,
-        currentPeriodEnd: null,
-        billingInterval: null,
-        events: {
-          current: 0,
-          included: 0,
-        },
-        trial: {
-          isActive: false,
-          start: today.toISOString(),
-          end: today.toISOString(),
-          daysTotal: 0,
-        },
-      },
     }
   );
 
@@ -46,16 +27,11 @@ export const useBillingSubscription = () => {
     return isSameDay(new Date(subscription.trial.end), today)
       ? 0
       : differenceInDays(new Date(subscription.trial.end), today);
-  }, [subscription.trial.end]);
+  }, [subscription?.trial.end]);
 
   return {
     isLoading: isLoadingSubscription,
-    subscription: {
-      ...subscription,
-      trial: {
-        ...subscription.trial,
-        daysLeft,
-      },
-    },
+    subscription,
+    daysLeft,
   };
 };

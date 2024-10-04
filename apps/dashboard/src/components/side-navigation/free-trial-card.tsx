@@ -13,14 +13,13 @@ const pluralizeDaysLeft = (numberOfDays: number) => {
 };
 
 export const FreeTrialCard = () => {
-  const { subscription, isLoading } = useBillingSubscription();
-  const { trial, hasPaymentMethod } = subscription;
+  const { subscription, daysLeft, isLoading } = useBillingSubscription();
 
-  if (isLoading || !trial.isActive || hasPaymentMethod) {
+  if (isLoading || !subscription || !subscription.trial.isActive || subscription?.hasPaymentMethod) {
     return null;
   }
 
-  const pluralizedDays = pluralizeDaysLeft(trial.daysLeft);
+  const pluralizedDays = pluralizeDaysLeft(daysLeft);
 
   return (
     <a
@@ -60,7 +59,7 @@ export const FreeTrialCard = () => {
         Experience novu without any limits for free for the next {pluralizedDays}.
       </span>
       <div className={`max-h-3 overflow-hidden opacity-100 ${transition} group-hover:max-h-0 group-hover:opacity-0`}>
-        <Progress value={trial.daysLeft} max={trial.daysTotal > 0 ? trial.daysTotal : 100} />
+        <Progress value={daysLeft} max={subscription.trial.daysTotal > 0 ? subscription.trial.daysTotal : 100} />
       </div>
       <div
         className={`-mt-2 max-h-0 overflow-hidden opacity-0 ${transition} group-hover:max-h-8 group-hover:opacity-100`}
