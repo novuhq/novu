@@ -13,10 +13,13 @@ const OrganizationSwitcherAppearance: OrganizationSwitcherTheme = {
     organizationPreviewMainIdentifier: 'text-foreground text-base',
     organizationPreviewAvatarContainer: 'size-6 rounded-full',
     organizationPreviewAvatarBox: 'rounded-full size-6',
-    organizationPreview: 'py-1.5 px-3',
-    organizationSwitcherPopoverActionButton: 'py-3 px-3',
+    organizationPreview: 'py-1.5 px-4 gap-2',
+    organizationSwitcherPopoverActionButton: 'py-1.5 px-4 -ml-1.5 text-sm gap-0',
     organizationSwitcherPopoverCard: 'w-64',
-    organizationSwitcherPreviewButton: 'p-0 [&>svg]:mr-2',
+    organizationSwitcherPreviewButton: 'p-0 [&>svg]:mr-2 !border-0',
+    organizationPreviewSecondaryIdentifier: 'hidden',
+    organizationSwitcherPopoverActions:
+      'py-2 [&_.cl-organizationPreviewMainIdentifier]:text-sm [&>div:nth-child(2)]:!border-0',
   },
 };
 
