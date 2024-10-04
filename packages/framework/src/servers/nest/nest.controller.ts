@@ -8,6 +8,6 @@ export class NovuController {
 
   @All()
   async handle(@Req() req: Request, @Res() res: Response) {
-    await this.novuService.handleRequest(req, res, req.method as 'GET' | 'POST' | 'OPTIONS');
+    await this.novuService.handleRequest(req, res);
   }
 }
