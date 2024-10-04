@@ -28,8 +28,6 @@ export function createCookieHandler(cookieName: string) {
   };
 }
 
-export const eeAuthTokenCookie = createCookieHandler('__session');
-
 export const novuRedirectURLCookie = createCookieHandler('nv_redirect_url');
 
 /*

@@ -1,4 +1,7 @@
 import { ROUTES } from '../constants/routes';
+import { CONTEXT_PATH } from '../config';
+
+const basePath = CONTEXT_PATH.slice(0, -1);
 
 /**
  * Note: Do not use client-side navigation (react-router-dom),
@@ -6,7 +9,7 @@ import { ROUTES } from '../constants/routes';
  * @param params
  */
 export const navigateToAuthApplication = (params = '') => {
-  window.location.replace(window.location.origin + ROUTES.AUTH_APPLICATION + params);
+  window.location.replace(window.location.origin + basePath + ROUTES.AUTH_APPLICATION + params);
 };
 
 /**
@@ -14,7 +17,7 @@ export const navigateToAuthApplication = (params = '') => {
  * because we need to create new default headers for the dashboard.
  */
 export const navigateToWorkflows = () => {
-  window.location.replace(window.location.origin + ROUTES.WORKFLOWS);
+  window.location.replace(window.location.origin + basePath + ROUTES.WORKFLOWS);
 };
 
 /**
@@ -22,5 +25,5 @@ export const navigateToWorkflows = () => {
  * because we need to create new default headers for the onboarding playground.
  */
 export const navigatePlayground = () => {
-  window.location.replace(window.location.origin + ROUTES.DASHBOARD_PLAYGROUND);
+  window.location.replace(window.location.origin + basePath + ROUTES.DASHBOARD_PLAYGROUND);
 };

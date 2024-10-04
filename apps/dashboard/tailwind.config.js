@@ -3,7 +3,15 @@ export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    boxShadow: {
+      xs: '0px 1px 2px 0px #0A0D1408',
+      sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
+      DEFAULT: '0px 16px 32px -12px #0E121B1A',
+    },
     extend: {
+      opacity: {
+        2.5: 0.025,
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -28,10 +36,6 @@ export default {
           DEFAULT: 'hsl(var(--novu))',
           foreground: 'hsl(var(--novu-foreground))',
         },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
@@ -39,6 +43,24 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+        },
+        feature: {
+          DEFAULT: 'hsl(var(--feature))',
+        },
+        information: {
+          DEFAULT: 'hsl(var(--information))',
+        },
+        highlighted: {
+          DEFAULT: 'hsl(var(--highlighted))',
+        },
+        stable: {
+          DEFAULT: 'hsl(var(--stable))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

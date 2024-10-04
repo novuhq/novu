@@ -78,26 +78,27 @@ describe('Promote Layout Changes', () => {
     });
 
     const prodEnv = await getProductionEnvironment();
+    expect(prodEnv).to.be.ok;
 
     const prodLayout = await layoutRepository.findOne({
-      _environmentId: prodEnv._id,
+      _environmentId: prodEnv?._id!,
       _parentId: layoutId,
     });
 
     expect(prodLayout).to.be.ok;
-    expect(prodLayout._parentId).to.eql(devLayout._id);
-    expect(prodLayout._environmentId).to.eql(prodEnv._id);
-    expect(prodLayout._organizationId).to.eql(session.organization._id);
-    expect(prodLayout._creatorId).to.eql(session.user._id);
-    expect(prodLayout.name).to.eql(layoutName);
-    expect(prodLayout.identifier).to.eql(layoutIdentifier);
-    expect(prodLayout.content).to.eql(content);
+    expect(prodLayout?._parentId).to.eql(devLayout._id);
+    expect(prodLayout?._environmentId).to.eql(prodEnv?._id);
+    expect(prodLayout?._organizationId).to.eql(session.organization._id);
+    expect(prodLayout?._creatorId).to.eql(session.user._id);
+    expect(prodLayout?.name).to.eql(layoutName);
+    expect(prodLayout?.identifier).to.eql(layoutIdentifier);
+    expect(prodLayout?.content).to.eql(content);
     // TODO: Awful but it comes from the repository directly.
-    const { _id: _, ...prodVariables } = prodLayout.variables?.[0] as any;
+    const { _id: _, ...prodVariables } = prodLayout?.variables?.[0] as any;
     expect(prodVariables).to.deep.include(variables[0]);
-    expect(prodLayout.contentType).to.eql(devLayout.contentType);
-    expect(prodLayout.isDefault).to.eql(isDefault);
-    expect(prodLayout.channel).to.eql(devLayout.channel);
+    expect(prodLayout?.contentType).to.eql(devLayout.contentType);
+    expect(prodLayout?.isDefault).to.eql(isDefault);
+    expect(prodLayout?.channel).to.eql(devLayout.channel);
   });
 
   it('should promote the updates done to a layout existing to production', async () => {
@@ -212,26 +213,27 @@ describe('Promote Layout Changes', () => {
     });
 
     const prodEnv = await getProductionEnvironment();
+    expect(prodEnv).to.be.ok;
 
     const prodLayout = await layoutRepository.findOne({
-      _environmentId: prodEnv._id,
+      _environmentId: prodEnv?._id!,
       _parentId: layoutId,
     });
 
     expect(prodLayout).to.be.ok;
-    expect(prodLayout._parentId).to.eql(patchedLayout._id);
-    expect(prodLayout._environmentId).to.eql(prodEnv._id);
-    expect(prodLayout._organizationId).to.eql(session.organization._id);
-    expect(prodLayout._creatorId).to.eql(session.user._id);
-    expect(prodLayout.name).to.eql(updatedLayoutName);
-    expect(prodLayout.identifier).to.eql(updatedLayoutIdentifier);
-    expect(prodLayout.content).to.eql(updatedContent);
+    expect(prodLayout?._parentId).to.eql(patchedLayout._id);
+    expect(prodLayout?._environmentId).to.eql(prodEnv?._id!);
+    expect(prodLayout?._organizationId).to.eql(session.organization._id);
+    expect(prodLayout?._creatorId).to.eql(session.user._id);
+    expect(prodLayout?.name).to.eql(updatedLayoutName);
+    expect(prodLayout?.identifier).to.eql(updatedLayoutIdentifier);
+    expect(prodLayout?.content).to.eql(updatedContent);
     // TODO: Awful but it comes from the repository directly.
-    const { _id, ...prodVariables } = prodLayout.variables?.[0] as any;
+    const { _id, ...prodVariables } = prodLayout?.variables?.[0] as any;
     expect(prodVariables).to.deep.include(updatedVariables[0]);
-    expect(prodLayout.contentType).to.eql(patchedLayout.contentType);
-    expect(prodLayout.isDefault).to.eql(updatedIsDefault);
-    expect(prodLayout.channel).to.eql(patchedLayout.channel);
+    expect(prodLayout?.contentType).to.eql(patchedLayout.contentType);
+    expect(prodLayout?.isDefault).to.eql(updatedIsDefault);
+    expect(prodLayout?.channel).to.eql(patchedLayout.channel);
   });
 
   it('should promote the deletion of a layout to production', async () => {
@@ -315,9 +317,10 @@ describe('Promote Layout Changes', () => {
     });
 
     const prodEnv = await getProductionEnvironment();
+    expect(prodEnv).to.be.ok;
 
     const prodLayout = await layoutRepository.findOne({
-      _environmentId: prodEnv._id,
+      _environmentId: prodEnv?._id!,
       _parentId: layoutId,
     });
 

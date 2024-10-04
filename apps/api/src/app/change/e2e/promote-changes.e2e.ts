@@ -20,8 +20,7 @@ import {
   TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -224,9 +223,9 @@ describe('Promote changes', () => {
       let { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const updateData: UpdateWorkflowRequestDto = {
-        name: testTemplate.name,
-        tags: testTemplate.tags,
-        description: testTemplate.description,
+        name: testTemplate.name || '',
+        tags: testTemplate.tags || [],
+        description: testTemplate.description || '',
         steps: [],
         notificationGroupId: session.notificationGroups[0]._id,
       };

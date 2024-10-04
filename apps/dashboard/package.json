@@ -5,11 +5,19 @@
   "type": "module",
   "scripts": {
     "start": "vite",
+    "start:static:build": "pm2 start proxy-server.js",
     "dev": "pnpm start",
     "build": "pnpm build:legacy && tsc -b && vite build",
     "build:legacy": "rimraf legacy/* && pnpm nx build:web:for-dashboard @novu/web",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:install": "playwright install --with-deps",
+    "test:e2e:codegen": "playwright codegen",
+    "test:e2e:show-report": "npx playwright show-report",
+    "test:e2e:merge-report": "playwright merge-reports --reporter html"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.2.5",
@@ -28,6 +36,7 @@
     "mixpanel-browser": "^2.52.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^1.3.0",
     "react-hook-form": "7.43.9",
     "react-router-dom": "6.26.2",
     "tailwind-merge": "^2.4.0",
@@ -37,6 +46,8 @@
   "devDependencies": {
     "@clerk/types": "^4.6.1",
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^22.7.0",
     "@types/mixpanel-browser": "^2.49.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -45,7 +56,10 @@
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
+    "express": "^4.21.0",
     "globals": "^15.9.0",
+    "http-proxy-middleware": "^3.0.2",
+    "pm2": "^5.4.2",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
@@ -55,5 +69,8 @@
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
     "vite-plugin-static-copy": "^1.0.6"
+  },
+  "peerDependencies": {
+    "@novu/web": "workspace:*"
   }
 }

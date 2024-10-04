@@ -59,6 +59,7 @@ export class MessageTemplateEntity implements IMessageTemplate {
   inputs?: {
     schema: JSONSchema;
   };
+
   controls?: {
     schema: JSONSchema;
   };
