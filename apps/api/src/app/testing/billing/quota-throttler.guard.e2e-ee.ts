@@ -51,6 +51,11 @@ describe('Resource Limiting', () => {
           const response = await request(pathEvent);
 
           expect(response.status).to.equal(402);
+          expect(response.body.status).to.equal(402);
+          expect(response.body.error).to.equal('Payment required');
+          expect(response.body.message).to.match(
+            /You have exceeded the number of allowed requests for this resource\. Please visit http.+ to upgrade your subscription./
+          );
         });
       });
 
