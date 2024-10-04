@@ -2,9 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 
-export async function sendDataToMixpanel(httpService: HttpService, event: string, properties: any) {
+export async function sendDataToNovuTrace(httpService: HttpService, event: string, properties: any) {
   try {
-    Logger.debug(`Sending '${event}' event to Mixpanel`);
     const dataToSend = {
       event,
       properties: {
@@ -14,9 +13,7 @@ export async function sendDataToMixpanel(httpService: HttpService, event: string
     };
 
     const res = await firstValueFrom(httpService.post(process.env.OS_TELEMETRY_URL as string, dataToSend));
-    Logger.debug(`Response from Mixpanel: ${JSON.stringify(res.data)}`);
-    Logger.debug(`'${event}' event sent to Mixpanel successfully.`);
   } catch (error) {
-    Logger.error(`Error sending '${event}' event to Mixpanel:`, error);
+    Logger.error(`Error sending '${event}' event to Novu Trace:`, error);
   }
 }

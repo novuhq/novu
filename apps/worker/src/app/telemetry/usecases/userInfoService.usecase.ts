@@ -10,7 +10,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { HttpService } from '@nestjs/axios';
-import { sendDataToMixpanel } from '../utils/sendDataToMixpanel.utils';
+import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 import { loadOrCreateMachineId } from '../utils/machine.utils';
 
 @Injectable()
@@ -58,7 +58,7 @@ export class UserInfoService {
 
     if (isSelfHosted && telemetryEnabled) {
       const userData = await this.getUserData();
-      await sendDataToMixpanel(this.httpService, 'User Info - [OS Telemetry]', userData);
+      await sendDataToNovuTrace(this.httpService, 'User Info - [OS Telemetry]', userData);
     }
   }
 }

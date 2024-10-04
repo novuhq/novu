@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { getMachineInfo, loadOrCreateMachineId } from '../utils/machine.utils';
-import { sendDataToMixpanel } from '../utils/sendDataToMixpanel.utils';
+import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
@@ -17,16 +17,13 @@ export class MachineInfoService {
       ...getMachineInfo(),
     };
 
-    await sendDataToMixpanel(this.httpService, eventName, telemetryData);
+    await sendDataToNovuTrace(this.httpService, eventName, telemetryData);
   }
 
   async onApplicationBootstrap() {
     if (process.env.IS_SELF_HOSTED === 'true') {
       this.machineId = loadOrCreateMachineId();
       await this.sendMachineTelemetry('Initial Setup - [OS Telemetry]');
-    } else {
-      Logger.log('Skipping this');
-      Logger;
     }
   }
 
