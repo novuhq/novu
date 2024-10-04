@@ -3,8 +3,6 @@ import { useStripe, useElements } from '@stripe/react-stripe-js';
 import { errorMessage, Button, When } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useSubscription } from '../hooks/useSubscription';
-import { useFeatureFlag } from '../../../hooks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export const UpgradeSubmitButton = ({ intervalChanging }: { intervalChanging: boolean }) => {
   const segment = useSegment();
@@ -12,7 +10,6 @@ export const UpgradeSubmitButton = ({ intervalChanging }: { intervalChanging: bo
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const { trial } = useSubscription();
-  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
   const handleSubmit = async (event) => {
     segment.track('Submit Payment Checkout Clicked - Billing');
@@ -39,11 +36,8 @@ export const UpgradeSubmitButton = ({ intervalChanging }: { intervalChanging: bo
 
   return (
     <Button loading={loading} disabled={intervalChanging} onClick={handleSubmit} fullWidth>
-      <When truthy={isImprovedBillingEnabled}>Upgrade now</When>
-      <When truthy={!isImprovedBillingEnabled}>
-        <When truthy={!trial.isActive}>Upgrade now</When>
-        <When truthy={trial.isActive}>Save payment method</When>
-      </When>
+      <When truthy={!trial.isActive}>Upgrade now</When>
+      <When truthy={trial.isActive}>Save payment method</When>
     </Button>
   );
 };
