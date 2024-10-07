@@ -12,6 +12,7 @@ import {
   PaginationEnd,
 } from '@/components/primitives/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { Skeleton } from '@/components/primitives/skeleton';
 import {
   Table,
   TableBody,
@@ -30,7 +31,7 @@ import { useState } from 'react';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
-  const [limit, setLimit] = useState(6);
+  const [limit, setLimit] = useState(12);
   const workflowsQuery = useQuery({
     queryKey: ['workflows', { environmentId: currentEnvironment?._id, limit }],
     queryFn: async () => {
@@ -57,7 +58,28 @@ export const WorkflowList = () => {
         </TableHeader>
         <TableBody>
           {workflowsQuery.isLoading ? (
-            <>loading</>
+            <>
+              {new Array(limit).fill(0).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell className="flex flex-col gap-1 font-medium">
+                    <Skeleton className="h-5 w-[20ch]" />
+                    <Skeleton className="h-3 w-[15ch] rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[6ch] rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[8ch] rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[7ch] rounded-full" />
+                  </TableCell>
+                  <TableCell className="text-foreground-600 text-sm font-medium">
+                    <Skeleton className="h-5 w-[14ch] rounded-full" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </>
           ) : (
             <>
               {workflowsQuery.data.workflows.map((workflow) => (
