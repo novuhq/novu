@@ -1,20 +1,20 @@
-import { join } from "path";
-import { Module } from "@nestjs/common";
-import { ServeStaticModule } from "@nestjs/serve-static";
+import { join } from 'path';
+import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import {
   createNestLoggingModuleOptions,
   LoggerModule,
   ProfilingModule,
-  TracingModule
-} from "@novu/application-generic";
+  TracingModule,
+} from '@novu/application-generic';
 
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
-import { SharedModule } from "./shared/shared.module";
-import { HealthModule } from "./health/health.module";
-import { SocketModule } from "./socket/socket.module";
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { SharedModule } from './shared/shared.module';
+import { HealthModule } from './health/health.module';
+import { SocketModule } from './socket/socket.module';
 
-import packageJson from "../package.json";
+import packageJson from '../package.json';
 
 const modules = [
   SharedModule,
