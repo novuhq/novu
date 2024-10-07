@@ -88,4 +88,8 @@ export class UserRepository implements IUserRepository {
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
     return this.userRepository.bulkWrite(bulkOperations, ordered);
   }
+
+  estimatedDocumentCount(): Promise<number> {
+    return this.userRepository.estimatedDocumentCount();
+  }
 }

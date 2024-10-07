@@ -2,6 +2,7 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+// eslint-disable-next-line no-restricted-imports
 import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
 
 describe('GetPrices', () => {

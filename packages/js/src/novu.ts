@@ -8,6 +8,12 @@ import { PRODUCTION_BACKEND_URL } from './utils/config';
 import type { NovuOptions } from './types';
 import { InboxService } from './api';
 
+// @ts-ignore
+const version = PACKAGE_VERSION;
+// @ts-ignore
+const name = PACKAGE_NAME;
+const userAgent = `${name}@${version}`;
+
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #session: Session;
@@ -20,7 +26,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   public off: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
 
   constructor(options: NovuOptions) {
-    this.#inboxService = new InboxService({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
+    this.#inboxService = new InboxService({
+      backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL,
+      userAgent: options.__userAgent ?? userAgent,
+    });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
       {

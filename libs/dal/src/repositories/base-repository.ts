@@ -46,6 +46,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     });
   }
 
+  async estimatedDocumentCount(): Promise<number> {
+    return this.MongooseModel.estimatedDocumentCount();
+  }
+
   async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
     return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
   }

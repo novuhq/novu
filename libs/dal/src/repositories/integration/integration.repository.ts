@@ -2,7 +2,7 @@ import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { ApiServiceLevelEnum, ChannelTypeEnum, NOVU_PROVIDERS } from '@novu/shared';
 
-import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
+import { IntegrationEntity, IntegrationDBModel, ProviderCount } from './integration.entity';
 import { Integration } from './integration.schema';
 
 import { BaseRepository } from '../base-repository';
@@ -160,5 +160,25 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
       )
     );
     await Promise.all(promises);
+  }
+
+  async sumByProviderId(): Promise<ProviderCount[]> {
+    const res = await this.integration.aggregate<ProviderCount[]>([
+      {
+        $group: {
+          _id: '$providerId',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          providerId: '$_id',
+          count: 1,
+        },
+      },
+    ]);
+
+    return res;
   }
 }
