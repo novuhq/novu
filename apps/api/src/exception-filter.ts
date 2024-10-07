@@ -41,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   ) {
     const uuid = this.getUuid(exception);
-    this.logger.error({ err: exception }, `[${uuid}] unexpected exception thrown`);
+    this.logger.error({ exception, errorId: uuid }, `unexpected exception thrown`, 'Exception');
 
     return { ...responseBody, errorId: uuid };
   }
@@ -67,8 +67,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: `Internal server error, contact support and provide them with the error_id
-      }]`,
+      message: `Internal server error, contact support and provide them with the errorId`,
     };
   }
   private getUuid(exception: unknown) {
