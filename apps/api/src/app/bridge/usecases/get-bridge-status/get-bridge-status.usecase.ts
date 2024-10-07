@@ -20,7 +20,11 @@ export class GetBridgeStatus {
 
       return response.data;
     } catch (err: any) {
-      Logger.error(`Failed to verify Bridge endpoint: ${(err as Error).message || err}`, LOG_CONTEXT);
+      Logger.error(
+        `Failed to verify Bridge endpoint: ${(err as Error).message || err}`,
+        (err as Error).stack,
+        LOG_CONTEXT
+      );
       throw new BadRequestException(`Bridge is not accessible. ${err.message}`);
     }
   }
