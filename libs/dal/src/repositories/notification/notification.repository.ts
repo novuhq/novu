@@ -192,4 +192,8 @@ export class NotificationRepository extends BaseRepository<
       monthly: stats.monthly || 0,
     };
   }
+
+  estimatedDocumentCount() {
+    return this.MongooseModel.estimatedDocumentCount();
+  }
 }

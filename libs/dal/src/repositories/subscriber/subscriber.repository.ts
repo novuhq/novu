@@ -195,6 +195,10 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
 
     return this.mapEntity(res);
   }
+
+  async estimatedDocumentCount(): Promise<number> {
+    return this.subscriber.estimatedDocumentCount();
+  }
 }
 function mapToSubscriberObject(subscriberId: string) {
   return { subscriberId };
