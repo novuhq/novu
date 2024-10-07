@@ -62,4 +62,5 @@ export interface IOrganizationRepositoryMongo {
   upsertMany(data: any): Promise<any>;
   upsert(query: any, data: any): Promise<any>;
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any>;
+  estimatedDocumentCount(): Promise<number>;
 }

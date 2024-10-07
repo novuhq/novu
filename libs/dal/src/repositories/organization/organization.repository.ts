@@ -95,4 +95,8 @@ export class OrganizationRepository implements IOrganizationRepository {
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
     return this.organizationRepository.bulkWrite(bulkOperations, ordered);
   }
+
+  estimatedDocumentCount(): Promise<number> {
+    return this.organizationRepository.estimatedDocumentCount();
+  }
 }

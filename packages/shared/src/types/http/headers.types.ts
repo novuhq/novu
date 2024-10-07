@@ -8,6 +8,7 @@ export enum HttpRequestHeaderKeysEnum {
   SENTRY_TRACE = 'Sentry-Trace',
   NOVU_ENVIRONMENT_ID = 'Novu-Environment-Id',
   NOVU_API_VERSION = 'Novu-API-Version',
+  NOVU_USER_AGENT = 'Novu-User-Agent',
 }
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 

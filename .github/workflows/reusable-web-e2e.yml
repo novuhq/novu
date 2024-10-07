@@ -96,7 +96,9 @@ jobs:
           # Disable LaunchDarkly client-side SDK in the test environment to reduce E2E flakiness
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ''
           NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
-        run: pnpm start:static:build &
+        run: |
+          pnpm run envsetup:docker
+          pnpm start:static:build &
 
       - name: Wait on Services
         run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:4200/
