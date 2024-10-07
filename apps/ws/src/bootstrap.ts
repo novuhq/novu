@@ -1,14 +1,14 @@
-import "./config/env.config";
-import "./instrument";
-import "newrelic";
-import helmet from "helmet";
-import { NestFactory } from "@nestjs/core";
-import { BullMqService, getErrorInterceptor, Logger } from "@novu/application-generic";
+import './config/env.config';
+import './instrument';
+import 'newrelic';
+import helmet from 'helmet';
+import { NestFactory } from '@nestjs/core';
+import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
 
-import { CONTEXT_PATH, validateEnv } from "./config";
-import { AppModule } from "./app.module";
-import { InMemoryIoAdapter } from "./shared/framework/in-memory-io.adapter";
-import { prepareAppInfra, startAppInfra } from "./socket/services";
+import { CONTEXT_PATH, validateEnv } from './config';
+import { AppModule } from './app.module';
+import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
+import { prepareAppInfra, startAppInfra } from './socket/services';
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
