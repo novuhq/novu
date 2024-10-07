@@ -4148,8 +4148,8 @@ importers:
   packages/react-native:
     dependencies:
       '@novu/react':
-        specifier: workspace:*
-        version: link:../react
+        specifier: ^2.3.1
+        version: 2.3.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(reflect-metadata@0.2.2)
       react:
         specifier: '>=17'
         version: 18.3.1
@@ -9984,12 +9984,24 @@ packages:
   '@novu/js@2.3.0':
     resolution: {integrity: sha512-HkLeWa1L/adizBManmQETsWifJCgRydUiEd4AKVp7ACiKLGhabTfU7VyzMKOC1+WQ+266e39mYcWkSdm/lkrEw==}
 
+  '@novu/js@2.3.1':
+    resolution: {integrity: sha512-fUUHPNxAp6FzsldvL10vZtNeSfuJjHRTL3It27YpvbHwrXM1SpnNmRgwIMPr487jcThtsPWo4lECrH4mng2uRw==}
+
   '@novu/ntfr-client@0.0.4':
     resolution: {integrity: sha512-/9q+qGFHHFwMsuqoLwTADMjSx2JPagpJpm7jOZRzQZgSEDg9kwNAhADneRzVYhMyjdEXIQyjTmX/oP8ABAavFw==}
     engines: {node: '>=18.0.0'}
 
   '@novu/react@2.3.0':
     resolution: {integrity: sha512-UQLD1nm2KX2n0p6iztAQwOJwqInbKcV23gF6ESaEhMG0TcyiLCNfhcpBmL5QXK/0xEzwsvMJmtXcYdU0NQWmLg==}
+    peerDependencies:
+      react: '>=17'
+      react-dom: '>=17'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+
+  '@novu/react@2.3.1':
+    resolution: {integrity: sha512-//9/Hpr3b9ED33PSvuLKitksJPvLsocecAOAQrGm6VtsVsf9+ebJr1SWXRlYPAVekm5nRkyj217eMB4xkMFMoQ==}
     peerDependencies:
       react: '>=17'
       react-dom: '>=17'
@@ -45170,6 +45182,27 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@novu/js@2.3.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(reflect-metadata@0.2.2)':
+    dependencies:
+      '@floating-ui/dom': 1.6.7
+      '@novu/client': 2.0.0(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(reflect-metadata@0.2.2)
+      class-variance-authority: 0.7.0
+      clsx: 2.1.1
+      mitt: 3.0.1
+      socket.io-client: 4.7.2
+      solid-floating-ui: 0.3.1(@floating-ui/dom@1.6.7)(solid-js@1.8.17)
+      solid-js: 1.8.17
+      solid-motionone: 1.0.1(solid-js@1.8.17)
+      tailwind-merge: 2.4.0
+    transitivePeerDependencies:
+      - '@fastify/static'
+      - '@nestjs/common'
+      - '@nestjs/core'
+      - bufferutil
+      - reflect-metadata
+      - supports-color
+      - utf-8-validate
+
   '@novu/ntfr-client@0.0.4':
     dependencies:
       https: 1.0.0
@@ -45186,6 +45219,21 @@ snapshots:
   '@novu/react@2.3.0(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(reflect-metadata@0.2.2)':
     dependencies:
       '@novu/js': 2.3.0(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(reflect-metadata@0.2.2)
+      react: 18.3.1
+    optionalDependencies:
+      react-dom: 18.3.1(react@18.3.1)
+    transitivePeerDependencies:
+      - '@fastify/static'
+      - '@nestjs/common'
+      - '@nestjs/core'
+      - bufferutil
+      - reflect-metadata
+      - supports-color
+      - utf-8-validate
+
+  '@novu/react@2.3.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(reflect-metadata@0.2.2)':
+    dependencies:
+      '@novu/js': 2.3.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.1(@nestjs/common@10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.1)(@nestjs/websockets@10.4.1)(encoding@0.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.1))(reflect-metadata@0.2.2)
       react: 18.3.1
     optionalDependencies:
       react-dom: 18.3.1(react@18.3.1)
