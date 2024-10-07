@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { captureException } from '@sentry/node';
 
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly pinoLogger: PinoLogger) {}
+  constructor(private readonly logger: PinoLogger) {}
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -41,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   ) {
     const uuid = this.getUuid(exception);
-    this.pinoLogger.error({ err: exception }, `[${uuid}] unexpected exception thrown`);
+    this.logger.error({ err: exception }, `[${uuid}] unexpected exception thrown`);
 
     return { ...responseBody, errorId: uuid };
   }
