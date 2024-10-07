@@ -1,5 +1,4 @@
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
-import { flushSync } from 'react-dom';
 import type { IEnvironment } from '@novu/shared';
 import { useFetchEnvironments } from './hooks';
 import { useAuth } from '../auth';

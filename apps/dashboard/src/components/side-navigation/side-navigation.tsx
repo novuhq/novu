@@ -6,7 +6,7 @@ import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
-import { buildNavigationItems, navigationItems } from './constants';
+import { buildNavigationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
 import { FreeTrialCard } from './free-trial-card';
 
