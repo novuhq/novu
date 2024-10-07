@@ -12,9 +12,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const { status, message } = this.getResponseMetadata(exception);
-    const responseBOdy = this.buildResponseBody(status, request, message, exception);
+    const responseBody = this.buildResponseBody(status, request, message, exception);
 
-    response.status(status).json(responseBOdy);
+    response.status(status).json(responseBody);
   }
 
   private buildResponseBody(
@@ -23,18 +23,27 @@ export class AllExceptionsFilter implements ExceptionFilter {
     message: string | object | Object,
     exception: unknown
   ): ErrorDto {
-    let responseBody = this.buildBaseResponseBody(status, request, message);
-    if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
-      const uuid = getUuid(exception);
-      this.pinoLogger.error(`[${uuid}] Service thrown an unexpected exception: `, formatError(exception));
-
-      return { ...responseBody, errorId: uuid };
-    }
-    if (message instanceof Object) {
-      responseBody = { ...responseBody, ...message };
+    const responseBody = this.buildBaseResponseBody(status, request, message);
+    if (status !== HttpStatus.INTERNAL_SERVER_ERROR) {
+      return message instanceof Object ? { ...responseBody, ...message } : responseBody;
     }
 
-    return responseBody;
+    return this.build500Error(exception, responseBody);
+  }
+
+  private build500Error(
+    exception: unknown,
+    responseBody: {
+      path: string;
+      message: string | object | Object;
+      statusCode: number;
+      timestamp: string;
+    }
+  ) {
+    const uuid = this.getUuid(exception);
+    this.pinoLogger.error({ err: exception }, `[${uuid}] unexpected exception thrown`);
+
+    return { ...responseBody, errorId: uuid };
   }
 
   private buildBaseResponseBody(status: number, request: Request, message: string | object | Object) {
@@ -62,32 +71,33 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }]`,
     };
   }
+  private getUuid(exception: unknown) {
+    if (process.env.SENTRY_DSN) {
+      try {
+        return captureException(exception);
+      } catch (e) {
+        return randomUUID();
+      }
+    } else {
+      return randomUUID();
+    }
+  }
 }
 
-function formatError(error: unknown): string {
-  if (error instanceof Error) {
-    return `
-      Error: ${error.message}
-      Stack: ${error.stack || 'No stack trace available'}
-    `;
-  } else {
-    return `
-      Unknown error: ${JSON.stringify(error, null, 2)}
-    `;
-  }
-}
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface ErrorDto {
+/**
+ * Interface representing the structure of an error response.
+ */
+export class ErrorDto {
   statusCode: number;
+
   timestamp: string;
+
+  /**
+   * Optional unique identifier for the error, useful for tracking using sentry and newrelic, only available for 500
+   */
   errorId?: string;
+
   path: string;
+
   message: string | object;
-}
-function getUuid(exception: unknown) {
-  if (process.env.SENTRY_DSN) {
-    return captureException(exception);
-  } else {
-    return randomUUID();
-  }
 }

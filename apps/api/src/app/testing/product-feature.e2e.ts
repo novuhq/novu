@@ -28,5 +28,6 @@ describe('Product feature Test @skip-in-ee', async () => {
   it('should return a 402 response when required api service level does not exists on organization for feature', async () => {
     const { body } = await session.testAgent.get(path).set('authorization', `ApiKey ${session.apiKey}`).expect(402);
     expect(body.statusCode).to.equal(402);
+    expect(body.message).to.equal('Payment Required');
   });
 });

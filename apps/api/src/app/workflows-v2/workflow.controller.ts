@@ -55,8 +55,6 @@ export class WorkflowController {
     @UserSession() user: UserSessionData,
     @Body() createWorkflowDto: CreateWorkflowDto
   ): Promise<WorkflowResponseDto> {
-    throw new Error('testWithRechardError2');
-
     return this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: createWorkflowDto,
