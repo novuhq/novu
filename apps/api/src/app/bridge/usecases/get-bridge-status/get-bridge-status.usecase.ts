@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Logger, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { HealthCheck } from '@novu/framework';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';
 
 const axiosInstance = axios.create();
+
+export const LOG_CONTEXT = 'GetBridgeStatusUsecase';
 
 @Injectable()
 export class GetBridgeStatus {
@@ -18,6 +20,7 @@ export class GetBridgeStatus {
 
       return response.data;
     } catch (err: any) {
+      Logger.error(`Failed to verify Bridge endpoint: ${(err as Error).message || err}`, LOG_CONTEXT);
       throw new BadRequestException(`Bridge is not accessible. ${err.message}`);
     }
   }
