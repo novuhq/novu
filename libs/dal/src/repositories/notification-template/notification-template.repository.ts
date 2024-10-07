@@ -217,10 +217,12 @@ export class NotificationTemplateRepository extends BaseRepository<
     organizationId,
     environmentId,
     tags,
+    critical,
   }: {
     organizationId: string;
     environmentId: string;
     tags?: string[];
+    critical?: boolean;
   }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -230,6 +232,10 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     if (tags && tags?.length > 0) {
       requestQuery.tags = { $in: tags };
+    }
+
+    if (critical !== undefined) {
+      requestQuery.critical = { $eq: critical };
     }
 
     const items = await this.MongooseModel.find(requestQuery)
@@ -259,6 +265,34 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   public static getBlueprintOrganizationId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
+  }
+
+  async estimatedDocumentCount(): Promise<any> {
+    return this.notificationTemplate.estimatedDocumentCount();
+  }
+
+  async getTotalSteps(): Promise<number> {
+    const res = await this.notificationTemplate.aggregate<{ totalSteps: number }>([
+      {
+        $group: {
+          _id: null,
+          totalSteps: {
+            $sum: {
+              $cond: {
+                if: { $isArray: '$steps' },
+                then: { $size: '$steps' },
+                else: 0,
+              },
+            },
+          },
+        },
+      },
+    ]);
+    if (res.length > 0) {
+      return res[0].totalSteps;
+    } else {
+      return 0;
+    }
   }
 }
 

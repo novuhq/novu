@@ -52,10 +52,12 @@ export class AnalyticService {
     this._analytics.identify({
       userId: user._id,
       traits: {
+        email: user.email,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.email,
-        created: user.createdAt,
+        avatar: user.profilePicture,
+        createdAt: user.createdAt,
       },
     });
   }
