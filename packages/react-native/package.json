@@ -1,11 +1,11 @@
 {
   "name": "@novu/react-native",
-  "version": "2.2.0-rc.1",
+  "version": "2.2.0-rc.3",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's React Native SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/client/client.js",
+  "main": "dist/client/index.js",
   "module": "dist/client/index.mjs",
   "types": "dist/client/index.d.ts",
   "files": [
@@ -36,6 +36,6 @@
     "react": ">=17"
   },
   "dependencies": {
-    "@novu/react": "workspace:*"
+    "@novu/react": "^2.3.1"
   }
 }
