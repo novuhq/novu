@@ -73,6 +73,13 @@ jobs:
      
       - uses: ./.github/actions/setup-qemu
         name: Setup QEMU and Docker Buildx
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build ${{ env.SERVICE_NAME }} Community Docker Image
         shell: bash
