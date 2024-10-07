@@ -1,4 +1,3 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { Types } from 'mongoose';
 import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 
@@ -15,13 +14,6 @@ export interface IOrganizationRepository extends IOrganizationRepositoryMongo {
   renameOrganization(
     organizationId: string,
     payload: { name: string }
-  ): Promise<{
-    matched: number;
-    modified: number;
-  }>;
-  updateServiceLevel(
-    organizationId: string,
-    apiServiceLevel: ApiServiceLevelEnum
   ): Promise<{
     matched: number;
     modified: number;
