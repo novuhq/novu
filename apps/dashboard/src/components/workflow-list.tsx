@@ -59,10 +59,10 @@ export const WorkflowList = () => {
           ) : (
             <>
               {workflowsQuery.data.workflows.map((workflow) => (
-                <TableRow>
+                <TableRow key={workflow._id}>
                   <TableCell className="font-medium">
-                    <p>{workflow.name}</p>
-                    <p className="text-foreground-400 font-code text-xs">{workflow._id}</p>
+                    {workflow.name}
+                    <span className="text-foreground-400 font-code block text-xs">{workflow._id}</span>
                   </TableCell>
                   <TableCell>
                     <Badge variant={'success'}>Active</Badge>
@@ -73,7 +73,13 @@ export const WorkflowList = () => {
                   <TableCell>
                     <WorkflowTags tags={workflow.tags || []} />
                   </TableCell>
-                  <TableCell>{workflow.updatedAt}</TableCell>
+                  <TableCell className="text-foreground-600 text-sm font-medium">
+                    {new Date(workflow.updatedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </TableCell>
                 </TableRow>
               ))}
             </>
