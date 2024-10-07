@@ -326,7 +326,6 @@ async function updateWorkflowAndValidate(
   updatedAt: string,
   updateRequest: UpdateWorkflowDto
 ): Promise<void> {
-  console.log('updateRequest:::'.toUpperCase(), JSON.stringify(updateRequest.steps, null, 2));
   const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(id, updateRequest);
   const updatedWorkflowWithResponseFieldsRemoved = validateUpdatedWorkflowAndRemoveResponseFields(
     updatedWorkflow,
@@ -584,7 +583,7 @@ function createStep(): StepCreateDto {
 
 function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
-  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin') as UpdateWorkflowDto;
+  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status') as UpdateWorkflowDto;
 
   return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
 }
