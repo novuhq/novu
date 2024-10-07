@@ -1,5 +1,6 @@
 import { join } from 'path';
 import { Module } from '@nestjs/common';
+import { SentryModule } from '@sentry/nestjs/setup';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import {
   createNestLoggingModuleOptions,
