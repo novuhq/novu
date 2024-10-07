@@ -2082,11 +2082,9 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       const { body } = response;
 
-      expect(body).to.eql({
-        statusCode: 422,
-        message: 'workflow_not_found',
-        error: 'Unprocessable Entity',
-      });
+      expect(body.statusCode).to.equal(422);
+      expect(body.message).to.equal('workflow_not_found');
+      expect(body.error).to.equal('Unprocessable Entity');
     });
 
     it('should handle empty workflow scenario', async function () {

@@ -68,7 +68,7 @@
     "@opentelemetry/semantic-conventions": "~1.19.0",
     "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
-    "@sentry/node": "^7.12.1",
+    "@sentry/node": "^8.33.1",
     "axios": "^1.6.8",
     "bullmq": "^3.10.2",
     "class-transformer": "0.5.1",
