@@ -202,13 +202,15 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
     '_id',
     'origin',
     'preferences',
     'updatedAt',
-    'createdAt'
+    'createdAt',
+    'status'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
     removeFields(step, 'stepUuid')
@@ -296,7 +298,13 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
   workflowResponse: WorkflowResponseDto,
   workflowUpdateRequest: UpdateWorkflowDto
 ): UpdateWorkflowDto {
-  const updatedWorkflowWoUpdated: UpdateWorkflowDto = removeFields(workflowResponse, 'updatedAt', 'origin', '_id');
+  const updatedWorkflowWoUpdated: UpdateWorkflowDto = removeFields(
+    workflowResponse,
+    'updatedAt',
+    'origin',
+    '_id',
+    'status'
+  );
   const augmentedStep: (StepUpdateDto | StepCreateDto)[] = [];
   for (const stepInResponse of workflowResponse.steps) {
     expect(stepInResponse.stepUuid).to.be.ok;
