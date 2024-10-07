@@ -1,6 +1,6 @@
 import { init } from '@sentry/nestjs';
-import { version } from '../package.json';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import { version } from '../package.json';
 
 if (process.env.SENTRY_DSN) {
   init({
