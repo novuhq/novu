@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ import { Button, inputStyles, Select } from '@novu/design-system';
 import styled from '@emotion/styled/macro';
 import { api } from '../../../api/api.client';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeatureFlag, useVercelIntegration, useVercelParams, useEffectOnce, useContainer } from '../../../hooks';
+import { useFeatureFlag, useVercelIntegration } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { BRIDGE_SYNC_SAMPLE_ENDPOINT } from '../../../config/index';
@@ -31,7 +31,6 @@ function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
 
 export function QuestionnaireForm() {
   const { isSupported } = useWebContainerSupported();
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
   const [loading, setLoading] = useState<boolean>();
   const {

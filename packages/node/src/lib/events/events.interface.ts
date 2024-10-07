@@ -139,7 +139,7 @@ export type ITriggerOverrideSMS = {
   content?: string;
   from?: string;
   customData?: Record<string, any>;
-};
+} & IIntegrationOverride;
 
 export type ITriggerOverrideExpo = {
   to?: string | string[];
