@@ -3772,6 +3772,40 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  packages/nextjs:
+    dependencies:
+      '@novu/react':
+        specifier: workspace:*
+        version: link:../react
+      next:
+        specifier: '>=13'
+        version: 13.5.6(@babel/core@7.24.3)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.77.8)
+      react:
+        specifier: '>=17'
+        version: 18.3.1
+      react-dom:
+        specifier: '>=17'
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.15.4
+        version: 0.15.4
+      '@types/node':
+        specifier: ^20.14.12
+        version: 20.16.5
+      '@types/react':
+        specifier: '*'
+        version: 18.3.3
+      '@types/react-dom':
+        specifier: '*'
+        version: 18.3.0
+      tsup:
+        specifier: ^8.2.1
+        version: 8.2.1(@microsoft/api-extractor@7.47.7(@types/node@20.16.5))(@swc/core@1.7.21(@swc/helpers@0.5.12))(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.0)(typescript@5.6.2)(yaml@2.5.0)
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
   packages/node:
     dependencies:
       '@novu/shared':
@@ -4415,6 +4449,9 @@ importers:
 
   playground/nextjs:
     dependencies:
+      '@novu/nextjs':
+        specifier: workspace:*
+        version: link:../../packages/nextjs
       '@novu/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -70678,7 +70715,7 @@ snapshots:
       '@next/env': 13.5.6
       '@swc/helpers': 0.5.2
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001589
+      caniuse-lite: 1.0.30001653
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)

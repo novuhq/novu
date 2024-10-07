@@ -1,0 +1,98 @@
+{
+  "name": "@novu/nextjs",
+  "version": "2.3.1",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's Next.js SDK for building custom inbox notification experiences",
+  "author": "",
+  "license": "ISC",
+  "main": "dist/client/client.js",
+  "module": "dist/client/index.mjs",
+  "types": "dist/client/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/client/index.d.mts",
+        "default": "./dist/client/client.mjs"
+      },
+      "require": {
+        "types": "./dist/client/index.d.ts",
+        "default": "./dist/client/client.js"
+      }
+    },
+    "./hooks": {
+      "import": {
+        "types": "./dist/hooks/index.d.mts",
+        "default": "./dist/hooks/index.mjs"
+      },
+      "require": {
+        "types": "./dist/hooks/index.d.ts",
+        "default": "./dist/hooks/index.js"
+      }
+    },
+    "./themes": {
+      "import": {
+        "types": "./dist/themes/index.d.mts",
+        "default": "./dist/themes/index.mjs"
+      },
+      "require": {
+        "types": "./dist/themes/index.d.ts",
+        "default": "./dist/themes/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "dist/client/**/*",
+    "dist/hooks/**/*",
+    "dist/themes/**/*",
+    "hooks/**/*",
+    "themes/**/*"
+  ],
+  "sideEffects": false,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:watch": "tsup --watch",
+    "build": "tsup && pnpm run check-exports",
+    "lint": "eslint src",
+    "check-exports": "attw --pack ."
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.15.4",
+    "@types/node": "^20.14.12",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "tsup": "^8.2.1",
+    "typescript": "5.6.2"
+  },
+  "peerDependencies": {
+    "react": ">=17",
+    "react-dom": ">=17",
+    "next": ">=13"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@novu/react": "workspace:*"
+  },
+  "nx": {
+    "tags": ["package:public"]
+  }
+}
