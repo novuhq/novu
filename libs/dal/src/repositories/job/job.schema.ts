@@ -40,7 +40,7 @@ const jobSchema = new Schema<JobDBModel>(
       ref: 'Notification',
     },
     _mergedDigestId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: 'Job',
     },
     subscriberId: {

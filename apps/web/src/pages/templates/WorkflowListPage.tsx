@@ -19,7 +19,7 @@ import {
   Tooltip,
   SearchInput,
 } from '@novu/design-system';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 
 import { css } from '@novu/novui/css';
 import { Button } from '@novu/novui';
@@ -41,7 +41,6 @@ import { useFetchBlueprints, useCreateTemplateFromBlueprint } from '../../api/ho
 import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 import { IBlueprintTemplate } from '../../api/types';
 import { errorMessage } from '../../utils/notifications';
-import { TemplateCreationSourceEnum } from './shared';
 import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
@@ -226,7 +225,7 @@ function WorkflowListPage() {
   const handleOnBlueprintClick = (blueprint: IBlueprintTemplate) => {
     createTemplateFromBlueprint({
       blueprint: { ...blueprint },
-      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+      params: { __source: WorkflowCreationSourceEnum.TEMPLATE_STORE },
     });
   };
 

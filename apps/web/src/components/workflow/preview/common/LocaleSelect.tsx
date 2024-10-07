@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { SelectItemProps, Group } from '@mantine/core';
 import { Select, ISelectProps, Text } from '@novu/design-system';
 import { forwardRef } from 'react';
-import { IS_DOCKER_HOSTED } from '../../../../config';
+import { IS_SELF_HOSTED } from '../../../../config';
 import { FlagIcon } from '../../../../ee/translations';
 
 const rightSectionWidth = 20;
@@ -23,7 +23,7 @@ export function LocaleSelect({
   dropdownPosition?: ISelectProps['dropdownPosition'];
 }) {
   // Do not render locale select if self-hosted or no locale or only one locale
-  if (IS_DOCKER_HOSTED || locales.length < 2) {
+  if (IS_SELF_HOSTED || locales.length < 2) {
     return null;
   }
 

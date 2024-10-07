@@ -1,15 +1,23 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
 import { Group } from '@mantine/core';
 import { Control, FormProvider, useForm } from 'react-hook-form';
 import { api } from '../../../api';
-import { useAuth, useEnvironment } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 
 import { GroupFormCommonFields } from './GroupFormCommonFields';
 import { ICreateGroup } from './shared';
-import { useFetchTranslationGroup } from '../hooks';
+import { useFetchTranslationGroup, useGetDefaultLocale } from '../hooks';
 import { TranslationFolderEditIcon } from '../icons';
+
+function defaultValues(defaultLocale = '') {
+  return {
+    name: '',
+    identifier: '',
+    locales: [defaultLocale],
+  };
+}
 
 export const EditGroupSidebar = ({
   open,
@@ -24,8 +32,8 @@ export const EditGroupSidebar = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const { currentOrganization } = useAuth();
   const { group } = useFetchTranslationGroup(groupIdentifier);
+  const { defaultLocale } = useGetDefaultLocale();
 
   const { mutateAsync: updateTranslationGroup, isLoading: isUpdating } = useMutation<
     any,
@@ -45,11 +53,7 @@ export const EditGroupSidebar = ({
 
   const methods = useForm({
     mode: 'onChange',
-    defaultValues: {
-      name: '',
-      identifier: '',
-      locales: currentOrganization?.defaultLocale ? [currentOrganization?.defaultLocale] : [],
-    },
+    defaultValues: defaultValues(defaultLocale),
   });
   const {
     control,
@@ -71,13 +75,15 @@ export const EditGroupSidebar = ({
   const localesForm = watch('locales');
 
   useEffect(() => {
-    if (!currentOrganization?.defaultLocale) return;
+    if (!defaultLocale) return;
+
+    reset(defaultValues(defaultLocale));
 
     if (localesForm.length === 0) {
-      setValue('locales', [currentOrganization?.defaultLocale]);
+      setValue('locales', [defaultLocale]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrganization?.defaultLocale, localesForm]);
+  }, [defaultLocale, localesForm]);
 
   const onUpdateGroup = async (form) => {
     await updateTranslationGroup({

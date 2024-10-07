@@ -5,17 +5,15 @@ import * as mixpanel from 'mixpanel-browser';
 import { buildApiHttpClient } from '../api/api.client';
 
 import { useStudioState } from '../studio/StudioStateProvider';
-import { getToken } from '../components/providers/AuthProvider';
 import { useEnvironment } from './useEnvironment';
 
 export function useNovuAPI() {
   const { devSecretKey } = useStudioState();
   const { currentEnvironment } = useEnvironment();
-  const token = getToken();
 
   return useMemo(
-    () => buildApiHttpClient({ secretKey: devSecretKey, jwt: token, environmentId: currentEnvironment?._id }),
-    [currentEnvironment?._id, devSecretKey, token]
+    () => buildApiHttpClient({ secretKey: devSecretKey, environmentId: currentEnvironment?._id }),
+    [currentEnvironment?._id, devSecretKey]
   );
 }
 

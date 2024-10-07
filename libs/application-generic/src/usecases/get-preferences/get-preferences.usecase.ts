@@ -1,18 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import {
-  PreferencesEntity,
-  PreferencesRepository,
-  PreferencesTypeEnum,
-} from '@novu/dal';
-import {
-  ChannelTypeEnum,
+  buildWorkflowPreferences,
   FeatureFlagsKeysEnum,
   IPreferenceChannels,
+  PreferencesTypeEnum,
   WorkflowPreferences,
 } from '@novu/shared';
 import { deepMerge } from '../../utils';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { GetPreferencesCommand } from './get-preferences.command';
+import { GetPreferencesResponseDto } from './get-preferences.dto';
+
+class PreferencesNotEnabledException extends BadRequestException {
+  constructor(featureFlagCommand: object) {
+    super({
+      message: 'Preferences Feature Flag are not enabled',
+      ...featureFlagCommand,
+    });
+  }
+}
+
+class PreferencesNotFoundException extends BadRequestException {
+  constructor(featureFlagCommand: GetPreferencesCommand) {
+    super({ message: 'Preferences not found', ...featureFlagCommand });
+  }
+}
 
 @Injectable()
 export class GetPreferences {
@@ -21,33 +34,42 @@ export class GetPreferences {
     private getFeatureFlag: GetFeatureFlag,
   ) {}
 
-  async execute(command: GetPreferencesCommand): Promise<WorkflowPreferences> {
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      }),
-    );
-
-    if (!isEnabled) {
-      throw new NotFoundException();
-    }
+  async execute(
+    command: GetPreferencesCommand,
+  ): Promise<GetPreferencesResponseDto> {
+    await this.validateFeatureFlag(command);
 
     const items = await this.getPreferencesFromDb(command);
 
     if (items.length === 0) {
-      throw new NotFoundException('We could not find any preferences');
+      throw new PreferencesNotFoundException(command);
     }
 
     const mergedPreferences = this.mergePreferences(items, command.templateId);
 
-    if (!mergedPreferences) {
-      throw new NotFoundException('We could not find any preferences');
+    if (!mergedPreferences.preferences) {
+      throw new PreferencesNotFoundException(command);
     }
 
     return mergedPreferences;
+  }
+
+  private async validateFeatureFlag(command: GetPreferencesCommand) {
+    const featureFlagCommand = {
+      userId: 'system',
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
+    };
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create(featureFlagCommand),
+    );
+
+    if (!isEnabled) {
+      throw new PreferencesNotEnabledException(featureFlagCommand);
+    }
+
+    return featureFlagCommand;
   }
 
   /** Get only simple, channel-level enablement flags */
@@ -57,22 +79,20 @@ export class GetPreferences {
     subscriberId: string;
     templateId?: string;
   }): Promise<IPreferenceChannels | undefined> {
-    const result = await this.getWorkflowPreferences(command);
+    const result = await this.safeExecute(command);
 
     if (!result) {
       return undefined;
     }
 
-    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(result);
+    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(
+      result.preferences,
+    );
   }
 
-  /** Safely get WorkflowPreferences by returning undefined if none are found */
-  public async getWorkflowPreferences(command: {
-    environmentId: string;
-    organizationId: string;
-    subscriberId: string;
-    templateId?: string;
-  }): Promise<WorkflowPreferences | undefined> {
+  public async safeExecute(
+    command: GetPreferencesCommand,
+  ): Promise<GetPreferencesResponseDto> {
     try {
       return await this.execute(
         GetPreferencesCommand.create({
@@ -84,7 +104,7 @@ export class GetPreferences {
       );
     } catch (e) {
       // If we cant find preferences lets return undefined instead of throwing it up to caller to make it easier for caller to handle.
-      if ((e as Error).name === NotFoundException.name) {
+      if ((e as Error).name === PreferencesNotFoundException.name) {
         return undefined;
       }
       throw e;
@@ -95,50 +115,23 @@ export class GetPreferences {
   public static mapWorkflowPreferencesToChannelPreferences(
     workflowPreferences: WorkflowPreferences,
   ): IPreferenceChannels {
-    return {
-      in_app:
-        workflowPreferences.channels.in_app.enabled !== undefined
-          ? workflowPreferences.channels.in_app.enabled
-          : workflowPreferences.workflow.enabled,
-      sms:
-        workflowPreferences.channels.sms.enabled !== undefined
-          ? workflowPreferences.channels.sms.enabled
-          : workflowPreferences.workflow.enabled,
-      email:
-        workflowPreferences.channels.email.enabled !== undefined
-          ? workflowPreferences.channels.email.enabled
-          : workflowPreferences.workflow.enabled,
-      push:
-        workflowPreferences.channels.push.enabled !== undefined
-          ? workflowPreferences.channels.push.enabled
-          : workflowPreferences.workflow.enabled,
-      chat:
-        workflowPreferences.channels.chat.enabled !== undefined
-          ? workflowPreferences.channels.chat.enabled
-          : workflowPreferences.workflow.enabled,
-    };
-  }
+    const builtPreferences = buildWorkflowPreferences(workflowPreferences);
 
-  /** Determine if Workflow Preferences should be marked as critical / readOnly at the top level */
-  public static checkIfWorkflowPreferencesIsReadOnly(
-    workflowPreferences?: WorkflowPreferences,
-  ): boolean {
-    if (!workflowPreferences) {
-      return false;
-    }
-
-    return (
-      workflowPreferences.workflow.readOnly ||
-      Object.values(workflowPreferences.channels).some(
-        ({ readOnly }) => readOnly,
-      )
+    const mappedPreferences = Object.entries(builtPreferences.channels).reduce(
+      (acc, [channel, preference]) => ({
+        ...acc,
+        [channel]: preference.enabled,
+      }),
+      {} as IPreferenceChannels,
     );
+
+    return mappedPreferences;
   }
 
   private mergePreferences(
     items: PreferencesEntity[],
     workflowId?: string,
-  ): WorkflowPreferences | undefined {
+  ): GetPreferencesResponseDto {
     const workflowResourcePreferences =
       this.getWorkflowResourcePreferences(items);
     const workflowUserPreferences = this.getWorkflowUserPreferences(items);
@@ -168,18 +161,55 @@ export class GetPreferences {
      * then subscribers global preferences and the once that should be used if it says other then anything before it
      * we use subscribers workflow preferences
      */
-    const preferences = [
+    const preferencesEntities = [
       workflowResourcePreferences,
       workflowUserPreferences,
       subscriberGlobalPreferences,
       subscriberWorkflowPreferences,
-    ]
+    ];
+    const source = Object.values(PreferencesTypeEnum).reduce(
+      (acc, type) => {
+        const preference = items.find((item) => item.type === type);
+        if (preference) {
+          acc[type] = preference.preferences;
+        } else {
+          acc[type] = null;
+        }
+
+        return acc;
+      },
+      {} as GetPreferencesResponseDto['source'],
+    );
+    const preferences = preferencesEntities
       .filter((preference) => preference !== undefined)
       .map((item) => item.preferences);
 
     // ensure we don't merge on an empty list
     if (preferences.length === 0) {
-      return;
+      return { preferences: undefined, type: undefined, source };
+    }
+
+    const readOnlyFlag = workflowPreferences?.all?.readOnly;
+
+    // Determine the most specific preference applied
+    let mostSpecificPreference: PreferencesTypeEnum | undefined;
+    if (subscriberWorkflowPreferences && !readOnlyFlag) {
+      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_WORKFLOW;
+    } else if (subscriberGlobalPreferences && !readOnlyFlag) {
+      mostSpecificPreference = PreferencesTypeEnum.SUBSCRIBER_GLOBAL;
+    } else if (workflowUserPreferences) {
+      mostSpecificPreference = PreferencesTypeEnum.USER_WORKFLOW;
+    } else if (workflowResourcePreferences) {
+      mostSpecificPreference = PreferencesTypeEnum.WORKFLOW_RESOURCE;
+    }
+
+    // If workflowPreferences have readOnly flag set to true, disregard subscriber preferences
+    if (readOnlyFlag) {
+      return {
+        preferences: workflowPreferences,
+        type: mostSpecificPreference,
+        source,
+      };
     }
 
     /**
@@ -196,42 +226,36 @@ export class GetPreferences {
       .map((item) => item.preferences);
 
     const readOnlyPreferences = orderedPreferencesForReadOnly.map(
-      ({ workflow, channels }) => ({
-        workflow: { readOnly: workflow.readOnly },
-        channels: {
-          in_app: { readOnly: channels.in_app.readOnly },
-          email: { readOnly: channels.email.readOnly },
-          sms: { readOnly: channels.sms.readOnly },
-          chat: { readOnly: channels.chat.readOnly },
-          push: { readOnly: channels.push.readOnly },
-        },
+      ({ all }) => ({
+        all: { readOnly: all?.readOnly || false },
       }),
     ) as WorkflowPreferences[];
 
-    // by merging only the read-only values after the full objects, we ensure that only the readOnly field is affected.
     const readOnlyPreference = deepMerge([...readOnlyPreferences]);
 
-    // if there is no subscriber preferences, we return the resource preferences
     if (Object.keys(subscriberPreferences).length === 0) {
-      return workflowPreferences;
+      return {
+        preferences: workflowPreferences,
+        type: mostSpecificPreference,
+        source,
+      };
     }
-
     // if the workflow should be readonly, we return the resource preferences default value for workflow.
-    if (readOnlyPreference?.workflow?.readOnly) {
-      subscriberPreferences.workflow.enabled =
-        workflowPreferences?.workflow?.enabled;
-    }
-
-    // if the workflow channel should be readonly, we return the resource preferences default value for channel.
-    for (const channel of Object.values(ChannelTypeEnum)) {
-      if (readOnlyPreference?.channels[channel]?.readOnly) {
-        subscriberPreferences.channels[channel].enabled =
-          workflowPreferences?.channels[channel]?.enabled;
-      }
+    if (readOnlyPreference?.all?.readOnly) {
+      subscriberPreferences.all.enabled = workflowPreferences?.all?.enabled;
     }
 
     // making sure we respond with correct readonly values.
-    return deepMerge([subscriberPreferences, readOnlyPreference]);
+    const mergedPreferences = deepMerge([
+      subscriberPreferences,
+      readOnlyPreference,
+    ]);
+
+    return {
+      preferences: mergedPreferences,
+      type: mostSpecificPreference,
+      source,
+    };
   }
 
   private getSubscriberWorkflowPreferences(
@@ -245,25 +269,33 @@ export class GetPreferences {
     );
   }
 
-  private getSubscriberGlobalPreferences(items: PreferencesEntity[]) {
+  private getSubscriberGlobalPreferences(
+    items: PreferencesEntity[],
+  ): PreferencesEntity | undefined {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     );
   }
 
-  private getWorkflowUserPreferences(items: PreferencesEntity[]) {
+  private getWorkflowUserPreferences(
+    items: PreferencesEntity[],
+  ): PreferencesEntity | undefined {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.USER_WORKFLOW,
     );
   }
 
-  private getWorkflowResourcePreferences(items: PreferencesEntity[]) {
+  private getWorkflowResourcePreferences(
+    items: PreferencesEntity[],
+  ): PreferencesEntity | undefined {
     return items.find(
       (item) => item.type === PreferencesTypeEnum.WORKFLOW_RESOURCE,
     );
   }
 
-  private async getPreferencesFromDb(command: GetPreferencesCommand) {
+  private async getPreferencesFromDb(
+    command: GetPreferencesCommand,
+  ): Promise<PreferencesEntity[]> {
     const items: PreferencesEntity[] = [];
 
     /*

@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.2.1",
+  "version": "2.3.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -38,6 +38,16 @@
         "types": "./dist/cjs/themes/index.js",
         "default": "./dist/cjs/themes/index.d.ts"
       }
+    },
+    "./internal": {
+      "import": {
+        "types": "./dist/esm/internal/index.d.mts",
+        "default": "./dist/esm/internal/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/internal/index.js",
+        "default": "./dist/cjs/internal/index.d.ts"
+      }
     }
   },
   "files": [
@@ -47,7 +57,8 @@
     "dist/novu.min.js",
     "dist/novu.min.js.gz",
     "ui/**/*",
-    "themes/**/*"
+    "themes/**/*",
+    "internal/**/*"
   ],
   "sideEffects": false,
   "private": false,
@@ -65,8 +76,7 @@
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "jest",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "test": "jest"
   },
   "browserslist": {
     "production": [
@@ -125,5 +135,8 @@
     "solid-js": "^1.8.11",
     "solid-motionone": "^1.0.1",
     "tailwind-merge": "^2.4.0"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

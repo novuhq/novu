@@ -80,7 +80,7 @@ export const tabsStyles = {
   panel: css({
     padding: '150',
     borderRadius: 'l',
-    backgroundColor: 'surface.panelSubsection',
+    backgroundColor: 'surface.page',
     overflowY: 'auto',
   }),
   tabsList: css({

@@ -26,7 +26,7 @@ export const createContextAndHook = <CtxVal>(
 
   const useCtx = () => {
     const ctx = React.useContext(Ctx);
-    assertCtxFn(ctx, `Component must be wrapped with the <Inbox /> Component`);
+    assertCtxFn(ctx, `Component must be wrapped with ${Ctx.displayName}`);
 
     return (ctx as any).value as CtxVal;
   };

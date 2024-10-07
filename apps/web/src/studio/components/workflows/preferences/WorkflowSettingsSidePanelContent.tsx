@@ -6,13 +6,14 @@ import { IconDynamicFeed, IconManageAccounts } from '@novu/novui/icons';
 import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { Controller, useFormContext } from 'react-hook-form';
-import { isBridgeWorkflow, WorkflowTypeEnum } from '@novu/shared';
+import { isBridgeWorkflow, WorkflowPreferences, WorkflowTypeEnum } from '@novu/shared';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStudioState } from '../../../StudioStateProvider';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
 import { WorkflowGeneralSettingsFieldName, WorkflowGeneralSettingsForm } from './WorkflowGeneralSettingsForm';
 import { WorkflowSubscriptionPreferences } from './WorkflowSubscriptionPreferences';
 
-enum WorkflowSettingsPanelTab {
+export enum WorkflowSettingsPanelTab {
   GENERAL = 'general',
   PREFERENCES = 'preferences',
 }
@@ -20,14 +21,20 @@ enum WorkflowSettingsPanelTab {
 type WorkflowSettingsSidePanelContentProps = {
   isLoading?: boolean;
   workflowType?: WorkflowTypeEnum;
+  workflowResourcePreferences: WorkflowPreferences | null;
 };
 
 export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelContentProps> = ({
   isLoading,
   workflowType,
+  workflowResourcePreferences,
 }) => {
   const { isLocalStudio } = useStudioState() || {};
   const { control } = useFormContext<WorkflowDetailFormContext>();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  const settingsTab = searchParams.get('settings') || WorkflowSettingsPanelTab.GENERAL;
 
   const checkShouldHideField = (fieldName: WorkflowGeneralSettingsFieldName) => {
     switch (fieldName) {
@@ -52,8 +59,15 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
 
   return (
     <Tabs
-      defaultValue={WorkflowSettingsPanelTab.GENERAL}
+      defaultValue={settingsTab}
       colorPalette={isLocalStudio ? 'mode.local' : 'mode.cloud'}
+      onTabChange={(tab) => {
+        searchParams.set('settings', tab);
+        navigate({
+          pathname,
+          search: searchParams.toString(),
+        });
+      }}
       tabConfigs={[
         {
           value: WorkflowSettingsPanelTab.GENERAL,
@@ -86,9 +100,10 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
                 render={({ field }) => {
                   return (
                     <WorkflowSubscriptionPreferences
-                      preferences={field.value}
+                      workflowUserPreferences={field.value}
                       updateWorkflowPreferences={field.onChange}
                       arePreferencesDisabled={isLocalStudio}
+                      workflowResourcePreferences={workflowResourcePreferences}
                     />
                   );
                 }}

@@ -4,20 +4,30 @@ import { useNovuAPI } from '../useNovuAPI';
 
 export const useUpdateWorkflowPreferences = (
   workflowId: string,
-  options: Omit<UseMutationOptions<WorkflowPreferences, IResponseError, WorkflowPreferences>, 'mutationFn'>
+  options: Omit<
+    UseMutationOptions<WorkflowPreferences | null, IResponseError, WorkflowPreferences | null>,
+    'mutationFn'
+  >
 ): {
   isLoading: boolean;
-  updateWorkflowPreferences: (data: WorkflowPreferences) => void;
+  updateWorkflowPreferences: (data: WorkflowPreferences | null) => Promise<WorkflowPreferences | null>;
 } => {
   const api = useNovuAPI();
 
   const { mutateAsync: updateWorkflowPreferences, isLoading } = useMutation<
-    WorkflowPreferences,
+    WorkflowPreferences | null,
     IResponseError,
-    WorkflowPreferences
-  >((data) => api.upsertPreferences(workflowId, data), {
-    ...options,
-  });
+    WorkflowPreferences | null
+  >(
+    (data) => {
+      if (data === null) {
+        return api.deletePreferences(workflowId);
+      } else {
+        return api.upsertPreferences(workflowId, data);
+      }
+    },
+    { ...options }
+  );
 
   return {
     isLoading,

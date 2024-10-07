@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
+import { DynamicModule, HttpException, Logger, Module, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -15,7 +15,6 @@ import { HealthModule } from './app/health/health.module';
 import { OrganizationModule } from './app/organization/organization.module';
 import { EnvironmentsModule } from './app/environments/environments.module';
 import { ExecutionDetailsModule } from './app/execution-details/execution-details.module';
-import { WorkflowModule } from './app/workflows/workflow.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
 import { NotificationModule } from './app/notifications/notification.module';
@@ -43,6 +42,9 @@ import { AnalyticsModule } from './app/analytics/analytics.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 import { PreferencesModule } from './app/preferences';
+import { StepSchemasModule } from './app/step-schemas/step-schemas.module';
+import { WorkflowModule } from './app/workflows-v2/workflow.module';
+import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -70,13 +72,14 @@ const enterpriseQuotaThrottlerInterceptor =
     : [];
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+  StepSchemasModule,
   AuthModule,
   InboundParseModule,
   SharedModule,
   HealthModule,
   EnvironmentsModule,
   ExecutionDetailsModule,
-  WorkflowModule,
+  WorkflowModuleV1,
   EventsModule,
   WidgetsModule,
   InboxModule,
@@ -103,6 +106,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TracingModule.register(packageJson.name, packageJson.version),
   BridgeModule,
   PreferencesModule,
+  WorkflowModule,
 ];
 
 const enterpriseModules = enterpriseImports();

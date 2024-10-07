@@ -3,7 +3,7 @@ import { Button, errorMessage, Invite, successMessage } from '@novu/design-syste
 import { IResponseError } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_SELF_HOSTED } from '../../../config';
 
 import { inviteMember } from '../../../api/organization';
 
@@ -36,14 +36,14 @@ export function MemberInviteForm({
     const { email } = data;
     if (!email) return;
 
-    if (IS_DOCKER_HOSTED) {
+    if (IS_SELF_HOSTED) {
       inviteByLink(email);
     }
 
     try {
       await sendInvite(email);
       onSuccess();
-      if (!IS_DOCKER_HOSTED) {
+      if (!IS_SELF_HOSTED) {
         successMessage(`Invite sent to ${email}`);
       }
     } catch (err: unknown) {

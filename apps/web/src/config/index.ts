@@ -49,8 +49,8 @@ export const WIDGET_EMBED_PATH =
   process.env.REACT_APP_WIDGET_EMBED_PATH ||
   'http://localhost:4701/embed.umd.min.js';
 
-export const IS_DOCKER_HOSTED =
-  window._env_.REACT_APP_DOCKER_HOSTED_ENV === 'true' || process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+export const IS_SELF_HOSTED =
+  window._env_.REACT_APP_IS_SELF_HOSTED === 'true' || process.env.REACT_APP_IS_SELF_HOSTED === 'true';
 
 export const REACT_APP_VERSION = process.env.NOVU_VERSION;
 
@@ -87,6 +87,9 @@ export const IS_EE_AUTH_ENABLED =
 
 export const CLERK_PUBLISHABLE_KEY =
   window._env_.REACT_APP_CLERK_PUBLISHABLE_KEY || process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || '';
+
+export const IS_UNDER_DASHBOARD =
+  window._env_.REACT_IS_UNDER_DASHBOARD || process.env.REACT_IS_UNDER_DASHBOARD || 'false';
 
 if (IS_EE_AUTH_ENABLED && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');

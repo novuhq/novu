@@ -12,9 +12,9 @@ import { useSubscriptionContext } from './SubscriptionProvider';
 export const Plan = () => {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
-  const { isLoading, daysLeft } = useSubscriptionContext();
+  const { isLoading, trial } = useSubscriptionContext();
 
-  if (isLoading || daysLeft === null) {
+  if (isLoading || trial.daysLeft === null) {
     return (
       <Center>
         <Loader color={colors.error} size={32} />

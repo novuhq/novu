@@ -8,8 +8,7 @@ import {
   FieldOperatorEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dto';
 
 describe('Get changes', () => {
   let session: UserSession;
@@ -58,9 +57,9 @@ describe('Get changes', () => {
     await session.applyChanges();
 
     const updateData: UpdateWorkflowRequestDto = {
-      name: testTemplate.name,
-      tags: testTemplate.tags,
-      description: testTemplate.description,
+      name: testTemplate.name || '',
+      tags: testTemplate.tags || [],
+      description: testTemplate.description || '',
       steps: [],
       notificationGroupId: session.notificationGroups[0]._id,
     };

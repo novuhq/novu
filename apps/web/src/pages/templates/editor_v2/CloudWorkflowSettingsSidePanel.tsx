@@ -15,14 +15,14 @@ type CloudWorkflowSettingsSidePanelProps = { onClose: () => void };
 export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelProps> = ({ onClose }) => {
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
   const [searchParams] = useSearchParams();
-  const { isLoading, workflowChannelPreferences } = useCloudWorkflowPreferences(workflowId);
-  const { setValue } = useFormContext<WorkflowDetailFormContext>();
+  const { isLoading, workflowUserPreferences, workflowResourcePreferences } = useCloudWorkflowPreferences(workflowId);
+  const { setValue, getValues } = useFormContext<WorkflowDetailFormContext>();
 
   useEffect(() => {
-    if (workflowChannelPreferences) {
-      setValue('preferences', workflowChannelPreferences);
+    if (workflowUserPreferences !== undefined && getValues('preferences') === undefined) {
+      setValue('preferences', workflowUserPreferences, { shouldDirty: false });
     }
-  }, [workflowChannelPreferences]);
+  }, [setValue, workflowUserPreferences]);
 
   return (
     <Sidebar customHeader={<Title variant="section">Workflow settings</Title>} isOpened onClose={onClose}>
@@ -30,6 +30,7 @@ export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelPr
         <WorkflowSettingsSidePanelContent
           isLoading={isLoading}
           workflowType={searchParams.get('type') as WorkflowTypeEnum}
+          workflowResourcePreferences={workflowResourcePreferences}
         />
       </div>
     </Sidebar>

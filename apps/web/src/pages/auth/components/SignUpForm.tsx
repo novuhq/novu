@@ -178,7 +178,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
           />
         </PasswordRequirementPopover>
         <Checkbox
-          onChange={(prev) => setAccepted(prev.target.checked)}
+          onChange={() => setAccepted(!accepted)}
           required
           label={<Accept />}
           data-test-id="accept-cb"

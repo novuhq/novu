@@ -5,9 +5,11 @@ rm -rf ./env-config.js
 
 touch ./env-config.js
 
+envFile=${1:-.env.sample}
+
 if [ ! -f .env ]; then
-  echo "Copying .env.sample to .env..."
-  cp .env.sample .env
+  echo "Copying ${envFile} to .env..."
+  cp ${envFile} .env
 fi
 
 # Add assignment

@@ -7,15 +7,7 @@ interface IWorkflowDetailFormContextProviderProps {}
 
 export type WorkflowDetailFormContext = {
   general: WorkflowGeneralSettings;
-  preferences: WorkflowPreferences;
-};
-
-const DEFAULT_FORM_VALUES: WorkflowDetailFormContext = {
-  general: {
-    workflowId: '',
-    name: '',
-  },
-  preferences: buildWorkflowPreferences(undefined),
+  preferences: WorkflowPreferences | null;
 };
 
 export const WorkflowDetailFormContextProvider: FC<PropsWithChildren<IWorkflowDetailFormContextProviderProps>> = ({
@@ -23,7 +15,6 @@ export const WorkflowDetailFormContextProvider: FC<PropsWithChildren<IWorkflowDe
 }) => {
   const formValues = useForm<WorkflowDetailFormContext>({
     mode: 'onChange',
-    defaultValues: DEFAULT_FORM_VALUES,
   });
 
   return <FormProvider {...formValues}>{children}</FormProvider>;
