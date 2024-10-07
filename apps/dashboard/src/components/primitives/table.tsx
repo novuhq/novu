@@ -1,18 +1,35 @@
 import * as React from 'react';
 
 import { cn } from '@/utils/ui';
+import { ClassNameValue } from 'tailwind-merge';
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-hidden rounded-md border shadow-sm">
-      <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
-    </div>
-  )
-);
+const Table = React.forwardRef<
+  HTMLTableElement,
+  React.HTMLAttributes<HTMLDivElement> & { containerClassname?: ClassNameValue }
+>(({ className, containerClassname, ...props }, ref) => (
+  <div
+    className={cn(
+      'border-neutral-alpha-200 relative w-full overflow-x-auto rounded-md border shadow-sm',
+      containerClassname
+    )}
+  >
+    <table
+      ref={ref}
+      className={cn('relative w-full caption-bottom border-separate border-spacing-0 text-sm', className)}
+      {...props}
+    />
+  </div>
+));
 Table.displayName = 'Table';
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => <thead ref={ref} className={cn('bg-card [&>tr]:border-0', className)} {...props} />
+  ({ className, ...props }, ref) => (
+    <thead
+      ref={ref}
+      className={cn('sticky top-0 bg-neutral-50 shadow-[0_0_0_1px_hsl(var(--neutral-alpha-200))]', className)}
+      {...props}
+    />
+  )
 );
 TableHeader.displayName = 'TableHeader';
 
@@ -22,7 +39,13 @@ const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes
 TableBody.displayName = 'TableBody';
 
 const TableFooter = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => <tfoot ref={ref} className={cn('font-medium', className)} {...props} />
+  ({ className, ...props }, ref) => (
+    <tfoot
+      ref={ref}
+      className={cn('bg-background sticky bottom-0 shadow-[0_0_0_1px_hsl(var(--neutral-alpha-200))]', className)}
+      {...props}
+    />
+  )
 );
 TableFooter.displayName = 'TableFooter';
 
@@ -30,7 +53,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-border/50 first-of-type:border-border border-t transition-colors', className)}
+      className={cn('[&>td]:border-neutral-alpha-100 [&>td]:border-b [&>td]:last-of-type:border-0', className)}
       {...props}
     />
   )
@@ -42,7 +65,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        'text-foreground/60 h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        'text-foreground-600 h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         className
       )}
       {...props}

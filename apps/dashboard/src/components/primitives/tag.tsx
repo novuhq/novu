@@ -4,13 +4,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/ui';
 
 const tagVariants = cva(
-  'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-secondary-alpha-100 text-secondary-alpha-500',
-        feature: 'border-transparent bg-feature/10 text-feature',
-        information: 'border-transparent bg-information/10 text-information',
+        default: 'bg-neutral-alpha-100 text-neutral-alpha-500',
+        feature: 'bg-feature/10 text-feature',
+        information: 'bg-information/10 text-information',
       },
     },
     defaultVariants: {
