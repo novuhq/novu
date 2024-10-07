@@ -12,14 +12,13 @@ import {
   CreateWorkflowCommand,
   ExecuteBridgeRequest,
   GetFeatureFlag,
-  GetFeatureFlagCommand,
   NotificationStep,
   UpdateWorkflow,
   UpdateWorkflowCommand,
   UpsertPreferences,
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import { WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import { SyncCommand } from './sync.command';
@@ -207,27 +206,14 @@ export class Sync {
           );
         }
 
-        const isWorkflowPreferencesEnabled = await this.getFeatureFlag.execute(
-          GetFeatureFlagCommand.create({
-            key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
+        await this.upsertPreferences.upsertWorkflowPreferences(
+          UpsertWorkflowPreferencesCommand.create({
+            environmentId: savedWorkflow._environmentId,
+            organizationId: savedWorkflow._organizationId,
+            templateId: savedWorkflow._id,
+            preferences: workflow.preferences,
           })
         );
-
-        if (isWorkflowPreferencesEnabled) {
-          await this.upsertPreferences.upsertWorkflowPreferences(
-            UpsertWorkflowPreferencesCommand.create({
-              environmentId: savedWorkflow._environmentId,
-              organizationId: savedWorkflow._organizationId,
-              templateId: savedWorkflow._id,
-              preferences: workflow.preferences,
-            })
-          );
-        }
-
-        return savedWorkflow;
       })
     );
   }

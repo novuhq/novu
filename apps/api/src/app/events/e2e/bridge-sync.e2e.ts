@@ -22,8 +22,6 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
   let bridgeServer: BridgeServer;
   beforeEach(async () => {
-    // @ts-ignore
-    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
     session = new UserSession();
     await session.initialize();
     bridgeServer = new BridgeServer();
@@ -31,8 +29,6 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
 
   afterEach(async () => {
     await bridgeServer.stop();
-    // @ts-ignore
-    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'false';
   });
 
   it('should update bridge url', async () => {

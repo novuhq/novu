@@ -2,11 +2,9 @@ import { Button, IconButton } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow, IconSave, IconSettings } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { useTelemetry } from '../../../hooks/useNovuAPI';
 import { OutlineButton } from '../../../studio/components/OutlineButton';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
@@ -26,7 +24,6 @@ export const TemplateDetailsPageV2 = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { template: workflow } = useTemplateController(templateId);
-  const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
 
   const { submitWorkflow, isSubmitting, hasChanges, workflowName, isValid } = useWorkflowDetailPageForm({
     templateId,
@@ -80,15 +77,13 @@ export const TemplateDetailsPageV2 = () => {
         title={title}
         actions={
           <HStack gap="75">
-            {areWorkflowPreferencesEnabled && (
-              <Button type={'submit'} disabled={!hasChanges || !isValid} Icon={IconSave} loading={isSubmitting}>
-                Save
-              </Button>
-            )}
+            <Button type={'submit'} disabled={!hasChanges || !isValid} Icon={IconSave} loading={isSubmitting}>
+              Save
+            </Button>
             <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
               Test workflow
             </OutlineButton>
-            {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={togglePanel} />}
+            <IconButton Icon={IconSettings} onClick={togglePanel} />
           </HStack>
         }
       >
