@@ -1,11 +1,10 @@
-/* eslint-disable global-require */
-import { DynamicModule, HttpException, Logger, Module, Provider } from '@nestjs/common';
-import { RavenInterceptor, RavenModule } from 'nest-raven';
+/* eslint-disable global-require */ import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { ProfilingModule, TracingModule } from '@novu/application-generic';
 import { isClerkEnabled } from '@novu/shared';
+import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
@@ -135,20 +134,7 @@ const providers: Provider[] = [
 ];
 
 if (process.env.SENTRY_DSN) {
-  modules.push(RavenModule);
-  providers.push({
-    provide: APP_INTERCEPTOR,
-    useValue: new RavenInterceptor({
-      filters: [
-        /*
-         * Filter exceptions to type HttpException. Ignore those that
-         * have status code of less than 500
-         */
-        { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
-      ],
-      user: ['_id', 'firstName', 'organizationId', 'environmentId', 'roles', 'domain'],
-    }),
-  });
+  modules.unshift(SentryModule.forRoot());
 }
 
 if (process.env.SEGMENT_TOKEN) {

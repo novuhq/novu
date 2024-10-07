@@ -1,22 +1,20 @@
 import './config/env.config';
+import './instrument';
 import 'newrelic';
-import '@sentry/tracing';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
-import { Handlers, init, Integrations } from '@sentry/node';
+
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
-
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AppModule } from './app.module';
-
-import packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
+import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
 const compression = require('compression');
@@ -29,19 +27,6 @@ const extendedBodySizeRoutes = [
   '/v1/bridge/sync',
   '/v1/bridge/diff',
 ];
-
-if (process.env.SENTRY_DSN) {
-  init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV,
-    release: `v${packageJson.version}`,
-    ignoreErrors: ['Non-Error exception captured'],
-    integrations: [
-      // enable HTTP calls tracing
-      new Integrations.Http({ tracing: true }),
-    ],
-  });
-}
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
@@ -88,11 +73,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   server.headersTimeout = 65 * 1000;
   Logger.verbose(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
 
-  if (process.env.SENTRY_DSN) {
-    app.use(Handlers.requestHandler());
-    app.use(Handlers.tracingHandler());
-  }
-
   app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
@@ -120,8 +100,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   await setupSwagger(app);
 
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
-
   if (expressApp) {
     await app.init();
   } else {
