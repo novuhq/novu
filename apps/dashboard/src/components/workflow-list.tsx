@@ -26,13 +26,15 @@ import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ListWorkflowResponse } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
+  const [limit, setLimit] = useState(6);
   const workflowsQuery = useQuery({
-    queryKey: ['workflows', { environmentId: currentEnvironment?._id }],
+    queryKey: ['workflows', { environmentId: currentEnvironment?._id, limit }],
     queryFn: async () => {
-      const { data } = await getV2<{ data: ListWorkflowResponse }>('/workflows');
+      const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?limit=${limit}`);
       return data;
     },
   });
@@ -42,8 +44,8 @@ export const WorkflowList = () => {
   }
 
   return (
-    <div className="px-6 py-2">
-      <Table containerClassname="max-h-[750px]">
+    <div className="flex h-full flex-col px-6 py-2">
+      <Table containerClassname="overflow-auto">
         <TableHeader>
           <TableRow>
             <TableHead>Workflows</TableHead>
@@ -121,14 +123,14 @@ export const WorkflowList = () => {
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
-                <Select>
+                <Select onValueChange={(v) => setLimit(parseInt(v))} defaultValue={limit.toString()}>
                   <SelectTrigger className="w-fit">
-                    <SelectValue placeholder="12 / page" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="6">6 / page</SelectItem>
                     <SelectItem value="12">12 / page</SelectItem>
-                    <SelectItem value="14">14 / page</SelectItem>
-                    <SelectItem value="16">16 / page</SelectItem>
+                    <SelectItem value="24">24 / page</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
