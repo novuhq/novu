@@ -74,14 +74,6 @@ jobs:
       - uses: ./.github/actions/setup-qemu
         name: Setup QEMU and Docker Buildx
 
-      - name: Login To Registry
-        shell: bash
-        env:
-          GH_ACTOR: ${{ github.actor }}
-          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-        run: |
-          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-
       - name: Build ${{ env.SERVICE_NAME }} Community Docker Image
         shell: bash
         env:
