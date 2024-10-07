@@ -266,6 +266,34 @@ export class NotificationTemplateRepository extends BaseRepository<
   public static getBlueprintOrganizationId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
   }
+
+  async estimatedDocumentCount(): Promise<any> {
+    return this.notificationTemplate.estimatedDocumentCount();
+  }
+
+  async getTotalSteps(): Promise<number> {
+    const res = await this.notificationTemplate.aggregate<{ totalSteps: number }>([
+      {
+        $group: {
+          _id: null,
+          totalSteps: {
+            $sum: {
+              $cond: {
+                if: { $isArray: '$steps' },
+                then: { $size: '$steps' },
+                else: 0,
+              },
+            },
+          },
+        },
+      },
+    ]);
+    if (res.length > 0) {
+      return res[0].totalSteps;
+    } else {
+      return 0;
+    }
+  }
 }
 
 function regExpEscape(literalString: string): string {
