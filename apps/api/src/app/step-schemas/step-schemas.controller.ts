@@ -8,7 +8,6 @@ import { ApiOperation, ApiParam } from '@nestjs/swagger';
 import {
   GetStepTypeSchemaCommand,
   GetExistingStepSchemaCommand,
-  GetStepSchemaCommand,
 } from './usecases/get-step-schema/get-step-schema.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetStepSchema } from './usecases/get-step-schema/get-step-schema.usecase';
@@ -71,19 +70,19 @@ export class StepSchemasController {
   }
 
   private createCommand(user: UserSessionData, stepType: StepType, workflowId: string, stepId: string) {
-    return stepType
-      ? GetStepTypeSchemaCommand.create({
-          organizationId: user.organizationId,
-          environmentId: user.environmentId,
-          userId: user._id,
-          stepType,
-        })
-      : GetExistingStepSchemaCommand.create({
+    return workflowId && stepId
+      ? GetExistingStepSchemaCommand.create({
           organizationId: user.organizationId,
           environmentId: user.environmentId,
           userId: user._id,
           workflowId,
           stepId,
+        })
+      : GetStepTypeSchemaCommand.create({
+          organizationId: user.organizationId,
+          environmentId: user.environmentId,
+          userId: user._id,
+          stepType,
         });
   }
 }

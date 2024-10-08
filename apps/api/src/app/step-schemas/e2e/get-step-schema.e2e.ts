@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { StepTypeEnum, WorkflowResponseDto } from '@novu/shared';
 
-describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&stepType=:stepType (GET)', async () => {
+describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&stepType=:stepType (GET)', async () => {
   let session: UserSession;
   let createdWorkflow: WorkflowResponseDto;
 
@@ -268,7 +268,7 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
       expect(res.body.statusCode).to.equal(400);
     });
 
-    it('should get step schema for invalid workflow id', async function () {
+    it('should get error for invalid workflow id', async function () {
       const invalidWorkflowId = createdWorkflow.steps[0].stepUuid;
 
       const res = await session.testAgent.get(
