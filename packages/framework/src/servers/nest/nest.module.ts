@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { NovuService } from './nest.service';
 import { NovuController } from './nest.controller';
-import { NOVU_OPTIONS } from './nest.constants';
 import { registerApiPath } from './nest.decorator';
-import { ASYNC_OPTIONS_TYPE, NovuBaseModule, OPTIONS_TYPE } from './nest-base.module';
+import { ASYNC_OPTIONS_TYPE, NovuBaseModule, OPTIONS_TYPE } from './nest.module-definition';
 
 /**
  * In NestJS, serve and register any declared workflows with Novu, making
@@ -30,7 +29,11 @@ import { ASYNC_OPTIONS_TYPE, NovuBaseModule, OPTIONS_TYPE } from './nest-base.mo
  * app.use(express.json());
  * ```
  */
-@Module({})
+@Module({
+  controllers: [NovuController],
+  providers: [registerApiPath, NovuService],
+  exports: [NovuService],
+})
 export class NovuModule extends NovuBaseModule {
   /**
    * Register the Novu module
@@ -39,34 +42,22 @@ export class NovuModule extends NovuBaseModule {
    * @returns The Novu module
    */
   static register(options: typeof OPTIONS_TYPE) {
-    return {
-      ...super.register(options),
-      controllers: [NovuController],
-      providers: [
-        {
-          provide: NOVU_OPTIONS,
-          useValue: options,
-        },
-        registerApiPath,
-        NovuService,
-      ],
-      exports: [NovuService],
-    };
+    const superModule = super.register(options);
+
+    superModule.controllers = [NovuController];
+    superModule.providers?.push(registerApiPath, NovuService);
+    superModule.exports = [NovuService];
+
+    return superModule;
   }
 
   static registerAsync(options: typeof ASYNC_OPTIONS_TYPE) {
-    return {
-      ...super.registerAsync(options),
-      controllers: [NovuController],
-      providers: [
-        {
-          provide: NOVU_OPTIONS,
-          useValue: options,
-        },
-        registerApiPath,
-        NovuService,
-      ],
-      exports: [NovuService],
-    };
+    const superModule = super.registerAsync(options);
+
+    superModule.controllers = [NovuController];
+    superModule.providers?.push(registerApiPath, NovuService);
+    superModule.exports = [NovuService];
+
+    return superModule;
   }
 }
