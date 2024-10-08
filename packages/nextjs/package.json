@@ -1,22 +1,22 @@
 {
   "name": "@novu/nextjs",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's Next.js SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/client/client.js",
+  "main": "dist/client/index.js",
   "module": "dist/client/index.mjs",
   "types": "dist/client/index.d.ts",
   "exports": {
     ".": {
       "import": {
         "types": "./dist/client/index.d.mts",
-        "default": "./dist/client/client.mjs"
+        "default": "./dist/client/index.mjs"
       },
       "require": {
         "types": "./dist/client/index.d.ts",
-        "default": "./dist/client/client.js"
+        "default": "./dist/client/index.js"
       }
     },
     "./hooks": {
