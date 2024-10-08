@@ -1,7 +1,8 @@
 import { FactoryProvider } from '@nestjs/common';
 import { PATH_METADATA } from '@nestjs/common/constants';
 import { NovuController } from './nest.controller';
-import { API_PATH, REGISTER_CONTROLLER_PATH } from './nest.constants';
+import { REGISTER_API_PATH, NOVU_OPTIONS } from './nest.constants';
+import { OPTIONS_TYPE } from './nest-base.module';
 
 /**
  * Workaround to dynamically set the path for the controller.
@@ -12,14 +13,14 @@ import { API_PATH, REGISTER_CONTROLLER_PATH } from './nest.constants';
  *
  * @see https://github.com/nestjs/nest/issues/1438#issuecomment-863446608
  */
-export const registerControllerPath: FactoryProvider = {
-  provide: REGISTER_CONTROLLER_PATH,
-  useFactory: (apiPath: string) => {
-    if (!apiPath) {
+export const registerApiPath: FactoryProvider = {
+  provide: REGISTER_API_PATH,
+  useFactory: (options: typeof OPTIONS_TYPE) => {
+    if (!options.apiPath) {
       throw new Error('`apiPath` must be provided to set the controller path');
     }
 
-    Reflect.defineMetadata(PATH_METADATA, apiPath, NovuController);
+    Reflect.defineMetadata(PATH_METADATA, options.apiPath, NovuController);
   },
-  inject: [API_PATH],
+  inject: [NOVU_OPTIONS],
 };

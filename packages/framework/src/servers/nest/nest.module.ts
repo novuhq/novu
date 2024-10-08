@@ -1,9 +1,9 @@
-import { Module, DynamicModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { NovuService } from './nest.service';
 import { NovuController } from './nest.controller';
-import { ServeHandlerOptions } from '../../handler';
-import { API_PATH, SERVE_HANDLER_OPTIONS } from './nest.constants';
-import { registerControllerPath } from './nest.decorator';
+import { NOVU_OPTIONS } from './nest.constants';
+import { registerApiPath } from './nest.decorator';
+import { ASYNC_OPTIONS_TYPE, NovuBaseModule, OPTIONS_TYPE } from './nest-base.module';
 
 /**
  * In NestJS, serve and register any declared workflows with Novu, making
@@ -31,28 +31,39 @@ import { registerControllerPath } from './nest.decorator';
  * ```
  */
 @Module({})
-export class NovuModule {
+export class NovuModule extends NovuBaseModule {
   /**
    * Register the Novu module
    *
-   * @param apiPath - The path to serve
    * @param options - The options to register the Novu module
    * @returns The Novu module
    */
-  static register(apiPath: string, options: ServeHandlerOptions): DynamicModule {
+  static register(options: typeof OPTIONS_TYPE) {
     return {
-      module: NovuModule,
+      ...super.register(options),
       controllers: [NovuController],
       providers: [
         {
-          provide: API_PATH,
-          useValue: apiPath,
-        },
-        {
-          provide: SERVE_HANDLER_OPTIONS,
+          provide: NOVU_OPTIONS,
           useValue: options,
         },
-        registerControllerPath,
+        registerApiPath,
+        NovuService,
+      ],
+      exports: [NovuService],
+    };
+  }
+
+  static registerAsync(options: typeof ASYNC_OPTIONS_TYPE) {
+    return {
+      ...super.registerAsync(options),
+      controllers: [NovuController],
+      providers: [
+        {
+          provide: NOVU_OPTIONS,
+          useValue: options,
+        },
+        registerApiPath,
         NovuService,
       ],
       exports: [NovuService],

@@ -1,3 +1,3 @@
-export const SERVE_HANDLER_OPTIONS = 'SERVE_HANDLER_OPTIONS';
 export const API_PATH = 'API_PATH';
-export const REGISTER_CONTROLLER_PATH = 'REGISTER_CONTROLLER_PATH';
+export const REGISTER_API_PATH = 'REGISTER_API_PATH';
+export { NOVU_OPTIONS } from './nest-base.module';

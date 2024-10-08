@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 
 import { type INovuRequestHandlerOptions, NovuRequestHandler, type ServeHandlerOptions } from '../../handler';
 import type { Either, SupportedFrameworkName } from '../../types';
-import { SERVE_HANDLER_OPTIONS } from './nest.constants';
+import { NOVU_OPTIONS } from './nest.constants';
 
 export const frameworkName: SupportedFrameworkName = 'nest';
 
@@ -12,7 +12,7 @@ export const frameworkName: SupportedFrameworkName = 'nest';
 export class NovuService {
   public novuHandler: NovuRequestHandler;
 
-  constructor(@Inject(SERVE_HANDLER_OPTIONS) private options: ServeHandlerOptions) {
+  constructor(@Inject(NOVU_OPTIONS) private options: ServeHandlerOptions) {
     this.novuHandler = new NovuRequestHandler({
       frameworkName,
       ...this.options,
