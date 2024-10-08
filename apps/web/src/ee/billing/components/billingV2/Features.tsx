@@ -219,9 +219,9 @@ const features: Feature[] = [
     label: 'Team members',
     isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.FREE]: { value: '3' },
+      [SupportedPlansEnum.BUSINESS]: { value: '50' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
