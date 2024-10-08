@@ -52,6 +52,12 @@ export class NovuModule extends NovuBaseModule {
     return superModule;
   }
 
+  /**
+   * Register the Novu module asynchronously
+   *
+   * @param options - The options to register the Novu module
+   * @returns The Novu module
+   */
   static registerAsync(options: typeof ASYNC_OPTIONS_TYPE) {
     const superModule = super.registerAsync(options);
 
