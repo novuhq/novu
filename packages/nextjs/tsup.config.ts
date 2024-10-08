@@ -17,15 +17,6 @@ export default defineConfig([
     platform: 'browser',
     outDir: 'dist/client', // Output directory for client-side build
   },
-  // {
-  //   ...baseConfig,
-  //   entry: ['src/server.ts'], // Entry point for server-side code
-  //   format: ['esm', 'cjs'],
-  //   target: 'node14', // Target environment for server-side build
-  //   platform: 'node',
-  //   outDir: 'dist/server', // Output directory for server-side build
-  //   splitting: false,
-  // },
   {
     ...baseConfig,
     entry: ['src/hooks/index.ts'],
