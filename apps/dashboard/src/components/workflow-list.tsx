@@ -1,5 +1,4 @@
 import { getV2 } from '@/api/api.client';
-import { Badge } from '@/components/primitives/badge';
 import {
   Pagination,
   PaginationContent,
@@ -23,6 +22,7 @@ import {
   TableRow,
 } from '@/components/primitives/table';
 import TruncatedText from '@/components/truncated-text';
+import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -110,7 +110,7 @@ export const WorkflowList = () => {
                     <span className="text-foreground-400 font-code block text-xs">{workflow._id}</span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={'success'}>Active</Badge>
+                    <WorkflowStatus status={workflow.status} />
                   </TableCell>
                   <TableCell>
                     <WorkflowSteps steps={workflow.stepTypeOverviews} />
@@ -139,7 +139,7 @@ export const WorkflowList = () => {
                     Page {currentPage} of {Math.ceil(workflowsQuery.data.totalCount / limit)}
                   </p>
                 ) : (
-                  <Skeleton className="h-5 w-[2ch]" />
+                  <Skeleton className="h-5 w-[20ch]" />
                 )}
                 {workflowsQuery.data ? (
                   <Pagination>
