@@ -21,16 +21,11 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+    return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!');
   });
 
   it('/api/novu (GET)', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/api/novu?action=health-check')
-      .expect(200);
+    const response = await request(app.getHttpServer()).get('/api/novu?action=health-check').expect(200);
 
     expect(response.body).toEqual(
       expect.objectContaining({
@@ -38,7 +33,7 @@ describe('AppController (e2e)', () => {
         sdkVersion: expect.any(String),
         frameworkVersion: expect.any(String),
         discovered: { workflows: 1, steps: 1 },
-      }),
+      })
     );
   });
 });

@@ -25,14 +25,14 @@ export class NotificationService {
             controlSchema: z.object({
               greeting: z.string().default('Welcome to our platform'),
             }),
-          },
+          }
         );
       },
       {
         payloadSchema: z.object({
           userId: z.string(),
         }),
-      },
+      }
     );
   }
 }

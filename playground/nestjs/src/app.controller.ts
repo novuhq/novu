@@ -8,7 +8,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly notificationService: NotificationService,
-    private readonly userService: UserService,
+    private readonly userService: UserService
   ) {}
 
   @Get()
