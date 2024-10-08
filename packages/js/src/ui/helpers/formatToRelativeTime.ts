@@ -42,6 +42,6 @@ export function formatToRelativeTime({
   }
   // Otherwise, return the date formatted with month and day. i.e Dec 3
   else {
-    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(toDate);
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(fromDate);
   }
 }

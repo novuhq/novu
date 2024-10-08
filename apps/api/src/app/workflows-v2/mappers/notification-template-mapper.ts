@@ -8,6 +8,8 @@ import {
   WorkflowListResponseDto,
   WorkflowOriginEnum,
   WorkflowResponseDto,
+  WorkflowStatusEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
@@ -31,8 +33,10 @@ export function toResponseWorkflowDto(
     name: template.name,
     description: template.description,
     origin: template.origin || WorkflowOriginEnum.NOVU_CLOUD,
+    type: template.type || WorkflowTypeEnum.BRIDGE,
     updatedAt: template.updatedAt || 'Missing Updated At',
     createdAt: template.createdAt || 'Missing Create At',
+    status: WorkflowStatusEnum.ACTIVE,
   };
 }
 
@@ -52,12 +56,15 @@ function getSteps(template: NotificationTemplateEntity, controlValuesMap: { [p: 
 
 function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowListResponseDto {
   return {
+    origin: template.origin || WorkflowOriginEnum.NOVU_CLOUD,
+    type: template.type || WorkflowTypeEnum.BRIDGE,
     _id: template._id,
     name: template.name,
     tags: template.tags,
     updatedAt: template.updatedAt || 'Missing Updated At',
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
     createdAt: template.createdAt || 'Missing Create At',
+    status: WorkflowStatusEnum.ACTIVE,
   };
 }
 

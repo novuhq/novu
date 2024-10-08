@@ -34,6 +34,6 @@ export class OrganizationService {
   }
 
   async updateServiceLevel(organizationId: string, serviceLevel: ApiServiceLevelEnum) {
-    await this.organizationRepository.updateServiceLevel(organizationId, serviceLevel);
+    await this.organizationRepository.update({ _id: organizationId }, { apiServiceLevel: serviceLevel });
   }
 }

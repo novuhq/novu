@@ -21,7 +21,12 @@
   "dependencies": {
     "@novu/application-generic": "workspace:*",
     "@novu/shared": "workspace:*",
-    "@sentry/node": "^7.12.1",
+    "@sentry/browser": "^8.33.1",
+    "@sentry/hub": "^7.114.0",
+    "@sentry/node": "^8.33.1",
+    "@sentry/nestjs": "^8.33.1",
+    "@sentry/profiling-node": "^8.33.1",
+    "@sentry/tracing": "^7.40.0",
     "bluebird": "^2.9.30",
     "dotenv": "^16.4.5",
     "envalid": "^8.0.0",

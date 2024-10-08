@@ -144,4 +144,8 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
 
     return updatedTopic;
   }
+
+  estimatedDocumentCount() {
+    return this.MongooseModel.estimatedDocumentCount();
+  }
 }

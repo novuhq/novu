@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
+import { catchError, lastValueFrom } from 'rxjs';
 import {
   CommunityUserRepository,
   EnvironmentEntity,
@@ -95,6 +95,7 @@ export class CompleteVercelIntegration {
         success: true,
       };
     } catch (error) {
+      Logger.error(error);
       throw new ApiException(error.message);
     }
   }
@@ -190,7 +191,6 @@ export class CompleteVercelIntegration {
     teamId,
     token,
   }: ISetEnvironment): Promise<void> {
-    const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
     const target = name?.toLowerCase() === 'production' ? ['production'] : ['preview', 'development'];
     const type = 'encrypted';
 
@@ -215,18 +215,33 @@ export class CompleteVercelIntegration {
       },
     ];
 
-    await Promise.all(
-      projectIds.map((projectId) =>
-        lastValueFrom(
-          this.httpService.post(`${projectApiUrl}/${projectId}/env${teamId ? `?teamId=${teamId}` : ''}`, apiKeys, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          })
-        )
-      )
-    );
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const getUrl = (projectId: string) => {
+      const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v10/projects`;
+      const baseUrl = `${projectApiUrl}/${projectId}/env`;
+      const teamIdParam = teamId ? `teamId=${teamId}` : '';
+
+      return `${baseUrl}?upsert=true&${teamIdParam}`;
+    };
+
+    const createEnvVariable = async (projectId: string, apiKey: (typeof apiKeys)[0]) => {
+      return lastValueFrom(this.httpService.post(getUrl(projectId), [apiKey], { headers }));
+    };
+
+    const setEnvVariable = async (projectId: string, apiKey: (typeof apiKeys)[0]) => {
+      try {
+        await createEnvVariable(projectId, apiKey);
+      } catch (error) {
+        console.error('Error setting environment variable:', error.response?.data?.error || error.response?.data);
+        throw error;
+      }
+    };
+
+    await Promise.all(projectIds.flatMap((projectId) => apiKeys.map((apiKey) => setEnvVariable(projectId, apiKey))));
   }
 
   private async saveProjectIds(command: CompleteVercelIntegrationCommand) {
