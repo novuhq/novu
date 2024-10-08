@@ -7,9 +7,5 @@ import { useRouter } from 'next/navigation';
 export const Inbox = React.memo((props: InboxProps) => {
   const router = useRouter();
 
-  return (
-    <RInbox {...props} routerPush={props.routerPush ?? router.push}>
-      {props.children}
-    </RInbox>
-  );
+  return <RInbox routerPush={router.push} {...props} />;
 });
