@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NovuService } from './nest.service';
 import { NovuController } from './nest.controller';
-import { registerApiPath } from './nest.decorator';
+import { registerApiPath } from './nest.register-api-path';
 import { ASYNC_OPTIONS_TYPE, NovuBaseModule, OPTIONS_TYPE } from './nest.module-definition';
 
 /**
@@ -16,7 +16,8 @@ import { ASYNC_OPTIONS_TYPE, NovuBaseModule, OPTIONS_TYPE } from './nest.module-
  * @Module({
  *   imports: [
  *     // Expose the middleware on our recommended path at `/api/novu`.
- *     NovuModule.register('/api/novu', {
+ *     NovuModule.register({
+ *       apiPath: '/api/novu',
  *       workflows: [myWorkflow]
  *     })
  *   ]
