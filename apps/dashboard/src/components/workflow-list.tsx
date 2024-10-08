@@ -1,4 +1,5 @@
 import { getV2 } from '@/api/api.client';
+import { Badge } from '@/components/primitives/badge';
 import {
   Pagination,
   PaginationContent,
@@ -26,9 +27,10 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { ListWorkflowResponse } from '@novu/shared';
+import { ListWorkflowResponse, WorkflowOriginEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import { FaCode } from 'react-icons/fa6';
 import { useSearchParams } from 'react-router-dom';
 
 export const WorkflowList = () => {
@@ -106,7 +108,14 @@ export const WorkflowList = () => {
               {workflowsQuery.data.workflows.map((workflow) => (
                 <TableRow key={workflow._id}>
                   <TableCell className="font-medium">
-                    <TruncatedText text={workflow.name} />
+                    <div className="flex items-center gap-1">
+                      {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
+                        <Badge className="rounded-full px-1.5" variant={'warning'}>
+                          <FaCode className="size-3" />
+                        </Badge>
+                      )}
+                      <TruncatedText text={workflow.name} />
+                    </div>
                     <span className="text-foreground-400 font-code block text-xs">{workflow._id}</span>
                   </TableCell>
                   <TableCell>
