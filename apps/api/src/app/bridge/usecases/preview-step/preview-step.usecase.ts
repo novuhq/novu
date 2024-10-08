@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
 import axios from 'axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { PostActionEnum, HttpQueryKeysEnum } from '@novu/framework';
 
 import { EnvironmentRepository } from '@novu/dal';
 import { decryptApiKey } from '@novu/application-generic';
@@ -24,9 +25,9 @@ export class PreviewStep {
       const payload = this.mapPayload(command);
       const novuSignatureHeader = this.buildNovuSignature(environment, payload);
       const bridgeActionUrl = new URL(bridgeUrl);
-      bridgeActionUrl.searchParams.set('action', 'preview');
-      bridgeActionUrl.searchParams.set('workflowId', command.workflowId);
-      bridgeActionUrl.searchParams.set('stepId', command.stepId);
+      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, PostActionEnum.PREVIEW);
+      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.WORKFLOW_ID, command.workflowId);
+      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.STEP_ID, command.stepId);
 
       const response = await axiosInstance.post(bridgeActionUrl.toString(), payload, {
         headers: {

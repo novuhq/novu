@@ -1,6 +1,6 @@
 import { BadRequestException, Logger, Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { HealthCheck } from '@novu/framework';
+import { HealthCheck, GetActionEnum, HttpQueryKeysEnum } from '@novu/framework';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';
 
 const axiosInstance = axios.create();
@@ -12,7 +12,7 @@ export class GetBridgeStatus {
   async execute(command: GetBridgeStatusCommand): Promise<HealthCheck> {
     try {
       const bridgeActionUrl = new URL(command.bridgeUrl);
-      bridgeActionUrl.searchParams.set('action', 'health-check');
+      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, GetActionEnum.HEALTH_CHECK);
 
       const response = await axiosInstance.get<HealthCheck>(bridgeActionUrl.toString(), {
         headers: {
