@@ -7,9 +7,17 @@ export class NovuController {
   constructor(@Inject(NovuService) private novuService: NovuService) {}
 
   @Get()
+  async handleGet(@Req() req: Request, @Res() res: Response) {
+    await this.novuService.handleRequest(req, res);
+  }
+
   @Post()
+  async handlePost(@Req() req: Request, @Res() res: Response) {
+    await this.novuService.handleRequest(req, res);
+  }
+
   @Options()
-  async handle(@Req() req: Request, @Res() res: Response) {
+  async handleOptions(@Req() req: Request, @Res() res: Response) {
     await this.novuService.handleRequest(req, res);
   }
 }
