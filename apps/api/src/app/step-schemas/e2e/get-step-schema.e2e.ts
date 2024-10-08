@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 
 import { UserSession } from '@novu/testing';
-import { CreateWorkflowDto, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowResponseDto } from '@novu/shared';
 
 describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&stepType=:stepType (GET)', async () => {
   let session: UserSession;
-  let createdWorkflow: CreateWorkflowDto;
+  let createdWorkflow: WorkflowResponseDto;
 
-  before(async () => {
+  beforeEach(async () => {
     // @ts-ignore
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
@@ -37,7 +37,7 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
     createdWorkflow = workflowDataRes.body.data;
   });
 
-  after(async () => {
+  afterEach(async () => {
     // @ts-ignore
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'false';
   });
@@ -132,7 +132,7 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
     it('should get step schema for existing step', async function () {
       const { data } = (
         await session.testAgent.get(
-          `/v1/step-schemas?workflowId=${(createdWorkflow as any)._id}&stepId=${(createdWorkflow as any).steps[0].stepUuid}`
+          `/v1/step-schemas?workflowId=${createdWorkflow._id}&stepId=${createdWorkflow.steps[0].stepUuid}`
         )
       ).body;
 
@@ -209,7 +209,7 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
     it('should get step schema for existing step no previous steps', async function () {
       const { data } = (
         await session.testAgent.get(
-          `/v1/step-schemas?workflowId=${(createdWorkflow as any)._id}&stepId=${(createdWorkflow as any).steps[0].stepUuid}`
+          `/v1/step-schemas?workflowId=${createdWorkflow._id}&stepId=${createdWorkflow.steps[0].stepUuid}`
         )
       ).body;
 
@@ -219,7 +219,7 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
     it('should get step schema for existing step with previous steps', async function () {
       const { data } = (
         await session.testAgent.get(
-          `/v1/step-schemas?workflowId=${(createdWorkflow as any)._id}&stepId=${(createdWorkflow as any).steps[1].stepUuid}`
+          `/v1/step-schemas?workflowId=${createdWorkflow._id}&stepId=${createdWorkflow.steps[1].stepUuid}`
         )
       ).body;
 
@@ -227,11 +227,9 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
       const variableStepKeys = Object.keys(data.variables.properties.steps.properties);
       expect(variableStepKeys).to.have.length(1);
       const variableStepKey = variableStepKeys[0];
-      const createdWorkflowPreviousSteps = (createdWorkflow as any).steps.slice(
+      const createdWorkflowPreviousSteps = createdWorkflow.steps.slice(
         0,
-        (createdWorkflow as any).steps.findIndex(
-          (stepItem) => stepItem.stepUuid === (createdWorkflow as any).steps[1].stepUuid
-        )
+        createdWorkflow.steps.findIndex((stepItem) => stepItem.stepUuid === createdWorkflow.steps[1].stepUuid)
       );
       const variableStepKeyFoundInCreatedWorkflow = createdWorkflowPreviousSteps.find(
         (step) => step.stepUuid === variableStepKey
@@ -259,10 +257,10 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
     });
 
     it('should get error for invalid step id', async function () {
-      const invalidStepUuid = (createdWorkflow as any).steps[0].stepUuid + 0;
+      const invalidStepUuid = `${createdWorkflow.steps[0].stepUuid}0`;
 
       const res = await session.testAgent.get(
-        `/v1/step-schemas?workflowId=${(createdWorkflow as any)._id}&stepId=${invalidStepUuid}`
+        `/v1/step-schemas?workflowId=${createdWorkflow._id}&stepId=${invalidStepUuid}`
       );
       expect(res.status).to.equal(400);
       expect(res.body.message).to.equal(`No step found with the given id ${invalidStepUuid}`);
@@ -271,10 +269,10 @@ describe('Get Control Schema - /step-schemas?workflowId=:workflowId&stepId=:step
     });
 
     it('should get step schema for invalid workflow id', async function () {
-      const invalidWorkflowId = (createdWorkflow as any).steps[0].stepUuid;
+      const invalidWorkflowId = createdWorkflow.steps[0].stepUuid;
 
       const res = await session.testAgent.get(
-        `/v1/step-schemas?workflowId=${invalidWorkflowId}&stepId=${(createdWorkflow as any).steps[0].stepUuid}`
+        `/v1/step-schemas?workflowId=${invalidWorkflowId}&stepId=${createdWorkflow.steps[0].stepUuid}`
       );
       expect(res.status).to.equal(400);
       expect(res.body.message).to.equal(`No workflow found with the given id ${invalidWorkflowId}`);
