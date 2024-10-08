@@ -11,7 +11,6 @@ import {
   InboxContent,
   InboxContentProps,
   InboxProps,
-  InternalNovuProvider,
   Notification,
   NotificationProps,
   Notifications,
@@ -22,7 +21,7 @@ import {
 
 export * from './Inbox';
 
-export { Bell, InboxContent, InternalNovuProvider, Notification, Notifications, Preferences };
+export { Bell, InboxContent, Notifications, Preferences };
 
 export type {
   BaseProps,
@@ -35,4 +34,5 @@ export type {
   NotificationProps,
   NotificationsRenderer,
   WithChildrenProps,
+  Notification,
 };
