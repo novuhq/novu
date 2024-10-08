@@ -14,7 +14,7 @@ const version = PACKAGE_VERSION;
 const name = PACKAGE_NAME;
 const userAgent = `${name}@${version}`;
 
-export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
+export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #socket: Socket;
@@ -22,8 +22,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
-  public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
-  public off: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
+  public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
 
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
@@ -62,10 +61,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
         this.#socket.initialize();
       }
       this.#emitter.on(eventName, listener);
-    };
 
-    this.off = (eventName, listener) => {
-      this.#emitter.off(eventName, listener);
+      return () => {
+        this.#emitter.off(eventName, listener);
+      };
     };
   }
 }

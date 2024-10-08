@@ -20,12 +20,16 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   };
 
   useEffect(() => {
+    let cleanup: () => void;
     const resolveLock = requestLock(`nv.${webSocketEvent}`, () => {
-      novu.on(webSocketEvent, updateReadCount);
+      cleanup = novu.on(webSocketEvent, updateReadCount);
     });
 
     return () => {
-      novu.off(webSocketEvent, updateReadCount);
+      if (cleanup) {
+        cleanup();
+      }
+
       resolveLock();
     };
   }, []);
