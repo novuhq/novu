@@ -19,9 +19,9 @@ import { UserService } from './user.service';
     }),
     NovuModule.registerAsync({
       imports: [AppModule],
-      useFactory: (workflowsService: NotificationService) => ({
+      useFactory: (notificationService: NotificationService) => ({
         apiPath: '/api/novu',
-        workflows: [workflowsService.welcomeWorkflow()],
+        workflows: [notificationService.welcomeWorkflow()],
       }),
       inject: [NotificationService],
     }),
