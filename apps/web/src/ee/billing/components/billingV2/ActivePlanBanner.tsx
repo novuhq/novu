@@ -61,8 +61,10 @@ const PlanInfo = ({ apiServiceLevel, currentEvents, maxEvents }) => {
         </div>
         <Text className={styles.usageText}>used this month</Text>
       </div>
-
       <UsageProgress apiServiceLevel={apiServiceLevel} currentEvents={currentEvents} maxEvents={maxEvents} />
+      <Text variant="secondary" fontSize="12px" color="typography.text.secondary">
+        Updates every hour
+      </Text>
     </div>
   );
 };
@@ -72,7 +74,7 @@ const PlanActions = ({ trialEnd, status, selectedBillingInterval }) => {
     <div className={styles.actions}>
       <PlanActionButton selectedBillingInterval={selectedBillingInterval} />
       {status === 'trialing' ? (
-        <Text variant="secondary" fontSize="14px" color="typography.text.secondary">
+        <Text variant="secondary" fontSize="12px" color="typography.text.secondary">
           Trial ends on {formatDate(trialEnd)}
         </Text>
       ) : null}
@@ -191,6 +193,12 @@ const styles = {
     fontSize: '14px',
     fontWeight: '400',
     lineHeight: '20px',
+  }),
+  usageFootnote: css({
+    color: 'typography.text.secondary',
+    fontSize: '12px',
+    fontWeight: '400',
+    lineHeight: '12px',
   }),
   actions: css({
     display: 'flex',

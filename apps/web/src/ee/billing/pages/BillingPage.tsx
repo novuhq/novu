@@ -15,5 +15,5 @@ export const BillingPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <SubscriptionProvider>{isImprovedBillingEnabled ? <PlanV2 /> : <Plan />}</SubscriptionProvider>;
+  return <SubscriptionProvider>{isImprovedBillingEnabled ? <PlanV2 /> : <PlanV2 />}</SubscriptionProvider>;
 };
