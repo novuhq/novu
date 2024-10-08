@@ -5,3 +5,4 @@ export * from './update-workflow-deprecated.dto';
 export * from './workflow-commons-fields';
 export * from './workflow-response-dto';
 export * from './workflow.dto';
+export * from './workflow-status-enum';
