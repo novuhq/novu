@@ -6,7 +6,9 @@
       <script value="start:dev" />
     </scripts>
     <node-interpreter value="project" />
-    <envs />
+    <envs>
+      <env name="SENTRY_DSN" value="https://a6b737085638b662e753e813028a845f@o1161119.ingest.us.sentry.io/4505630980243456" />
+    </envs>
     <method v="2" />
   </configuration>
 </component>

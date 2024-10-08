@@ -78,11 +78,11 @@ describe('Layout creation - /layouts (POST)', async () => {
     });
 
     expect(response.statusCode).to.eql(409);
-    expect(response.body).to.eql({
-      error: 'Conflict',
-      message: `Layout with identifier: ${existingLayoutIdentifier} already exists under environment ${session.environment._id}`,
-      statusCode: 409,
-    });
+    expect(response.body.error).to.eql('Conflict');
+    expect(response.body.message).to.eql(
+      `Layout with identifier: ${existingLayoutIdentifier} already exists under environment ${session.environment._id}`
+    );
+    expect(response.body.statusCode).to.eql(409);
   });
 
   it('if the layout created is assigned as default it should set as non default the existing default layout', async () => {

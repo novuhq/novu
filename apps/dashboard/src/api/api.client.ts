@@ -16,10 +16,14 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 const request = async <T>(
   endpoint: string,
-  method: HttpMethod = 'GET',
-  data?: unknown,
-  headers?: HeadersInit
+  options?: {
+    data?: unknown;
+    method?: HttpMethod;
+    headers?: HeadersInit;
+    version?: 'v1' | 'v2';
+  }
 ): Promise<T> => {
+  const { data, headers, method = 'GET', version = 'v1' } = options || {};
   try {
     const jwt = await getToken();
     const environmentId = getEnvironmentId();
@@ -38,7 +42,7 @@ const request = async <T>(
     }
 
     const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-    const response = await fetch(`${baseUrl}/v1${endpoint}`, config);
+    const response = await fetch(`${baseUrl}/${version}${endpoint}`, config);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -61,10 +65,14 @@ const request = async <T>(
   }
 };
 
-export const get = <T>(endpoint: string) => request<T>(endpoint, 'GET');
+export const get = <T>(endpoint: string) => request<T>(endpoint, { method: 'GET' });
+export const post = <T>(endpoint: string, data: unknown) => request<T>(endpoint, { method: 'POST', data });
+export const put = <T>(endpoint: string, data: unknown) => request<T>(endpoint, { method: 'PUT', data });
+export const del = <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' });
 
-export const post = <T>(endpoint: string, data: unknown) => request<T>(endpoint, 'POST', data);
-
-export const put = <T>(endpoint: string, data: unknown) => request<T>(endpoint, 'PUT', data);
-
-export const del = <T>(endpoint: string) => request<T>(endpoint, 'DELETE');
+export const getV2 = <T>(endpoint: string) => request<T>(endpoint, { version: 'v2', method: 'GET' });
+export const postV2 = <T>(endpoint: string, data: unknown) =>
+  request<T>(endpoint, { version: 'v2', method: 'POST', data });
+export const putV2 = <T>(endpoint: string, data: unknown) =>
+  request<T>(endpoint, { version: 'v2', method: 'PUT', data });
+export const delV2 = <T>(endpoint: string) => request<T>(endpoint, { version: 'v2', method: 'DELETE' });
