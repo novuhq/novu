@@ -1,10 +1,23 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { ActionStepEnum, ChannelStepEnum, StepType } from '@novu/framework';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 const StepTypeValue = { ...ChannelStepEnum, ...ActionStepEnum };
 
-export class GetStepSchemaCommand extends EnvironmentWithUserCommand {
+export class GetStepTypeSchemaCommand extends EnvironmentWithUserCommand {
   @IsEnum(StepTypeValue)
+  @IsNotEmpty()
   stepType: StepType;
 }
+
+export class GetExistingStepSchemaCommand extends EnvironmentWithUserCommand {
+  @IsString()
+  @IsNotEmpty()
+  workflowId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  stepId: string;
+}
+
+export type GetStepSchemaCommand = GetStepTypeSchemaCommand | GetExistingStepSchemaCommand;
