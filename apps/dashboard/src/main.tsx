@@ -36,8 +36,17 @@ const router = createBrowserRouter([
         element: <DashboardRoute />,
         children: [
           {
-            path: ROUTES.WORKFLOWS,
-            element: <WorkflowsPage />,
+            path: ROUTES.ENV,
+            children: [
+              {
+                path: ROUTES.WORKFLOWS,
+                element: <WorkflowsPage />,
+              },
+              {
+                path: '*',
+                element: <CatchAllRoute />,
+              },
+            ],
           },
           {
             path: '*',
