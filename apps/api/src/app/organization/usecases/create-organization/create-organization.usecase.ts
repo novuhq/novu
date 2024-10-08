@@ -104,9 +104,7 @@ export class CreateOrganization {
       })
     );
 
-    if (organizationAfterChanges !== null) {
-      await this.startFreeTrial(user._id, organizationAfterChanges._id);
-    }
+    await this.startFreeTrial(user._id, createdOrganization._id);
 
     return organizationAfterChanges as OrganizationEntity;
   }
