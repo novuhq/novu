@@ -35,7 +35,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { environmentId: paramsEnvironmentId } = useParams<{ environmentId?: string }>();
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(null);
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment>();
 
   const switchEnvironmentInternal = useCallback(
     (allEnvironments: IEnvironment[], environmentId?: string | null) => {

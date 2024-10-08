@@ -15,7 +15,7 @@ import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 export const buildNavigationItems = ({
   currentEnvironment,
 }: {
-  currentEnvironment?: IEnvironment | null;
+  currentEnvironment?: IEnvironment;
 }): NavItemsGroup[] => {
   return [
     {
