@@ -5,24 +5,24 @@ import { Title } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { useFormContext } from 'react-hook-form';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useCloudWorkflowChannelPreferences } from '../../../hooks/workflowChannelPreferences/useCloudWorkflowChannelPreferences';
+import { WorkflowTypeEnum } from '@novu/shared';
+import { useCloudWorkflowPreferences } from '../../../hooks/workflowPreferences/useCloudWorkflowPreferences';
 import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
 import { WorkflowSettingsSidePanelContent } from '../../../studio/components/workflows/preferences/WorkflowSettingsSidePanelContent';
-import { WorkflowTypeEnum } from '@novu/shared';
 
 type CloudWorkflowSettingsSidePanelProps = { onClose: () => void };
 
 export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelProps> = ({ onClose }) => {
   const { templateId: workflowId = '' } = useParams<{ templateId: string }>();
   const [searchParams] = useSearchParams();
-  const { isLoading, workflowChannelPreferences } = useCloudWorkflowChannelPreferences(workflowId);
-  const { setValue } = useFormContext<WorkflowDetailFormContext>();
+  const { isLoading, workflowUserPreferences, workflowResourcePreferences } = useCloudWorkflowPreferences(workflowId);
+  const { setValue, getValues } = useFormContext<WorkflowDetailFormContext>();
 
   useEffect(() => {
-    if (workflowChannelPreferences) {
-      setValue('preferences', workflowChannelPreferences);
+    if (workflowUserPreferences !== undefined && getValues('preferences') === undefined) {
+      setValue('preferences', workflowUserPreferences, { shouldDirty: false });
     }
-  }, [workflowChannelPreferences]);
+  }, [setValue, workflowUserPreferences]);
 
   return (
     <Sidebar customHeader={<Title variant="section">Workflow settings</Title>} isOpened onClose={onClose}>
@@ -30,6 +30,7 @@ export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelPr
         <WorkflowSettingsSidePanelContent
           isLoading={isLoading}
           workflowType={searchParams.get('type') as WorkflowTypeEnum}
+          workflowResourcePreferences={workflowResourcePreferences}
         />
       </div>
     </Sidebar>

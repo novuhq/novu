@@ -101,7 +101,7 @@ export const Inbox = (props: InboxProps) => {
           </Button>
         )}
       />
-      <Popover.Content appearanceKey="inbox__popoverContent">
+      <Popover.Content appearanceKey="inbox__popoverContent" portal>
         <InboxContent
           renderNotification={props.renderNotification}
           onNotificationClick={props.onNotificationClick}

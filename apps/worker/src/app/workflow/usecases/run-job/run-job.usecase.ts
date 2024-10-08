@@ -99,6 +99,7 @@ export class RunJob {
           events: job.digest?.events,
           job,
           tags: notification.tags || [],
+          statelessPreferences: job.preferences,
         })
       );
 
@@ -110,7 +111,7 @@ export class RunJob {
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
-      throw new PlatformException(error.message);
+      throw error;
     } finally {
       if (shouldQueueNextJob) {
         const newJob = await this.queueNextJob.execute(

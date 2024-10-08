@@ -65,14 +65,6 @@ function pnpmRun(...args) {
   });
 }
 
-function commaSeparatedListToArray(str) {
-  return str
-    .trim()
-    .split(',')
-    .map((element) => element.trim())
-    .filter((element) => !!element.length);
-}
-
 function getAffectedCommandResult(str) {
   const outputLines = str.trim().split(/\r?\n/);
   if (outputLines.length > 2) {

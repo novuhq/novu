@@ -9,8 +9,8 @@ import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
   cn(
-    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background ',
-    'nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
+    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
+    'nt-shadow-popover nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
   );
 
 const PopoverContentBody = (props: PopoverContentProps) => {
@@ -41,8 +41,9 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   );
 };
 
-type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey; portal?: boolean };
 export const PopoverContent = (props: PopoverContentProps) => {
+  const [local, rest] = splitProps(props, ['portal']);
   const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
 
@@ -81,11 +82,13 @@ export const PopoverContent = (props: PopoverContentProps) => {
 
   return (
     <Show when={open()}>
-      <Portal>
-        <Root>
-          <PopoverContentBody {...props} />
-        </Root>
-      </Portal>
+      <Show when={local.portal} fallback={<PopoverContentBody {...rest} />}>
+        <Portal>
+          <Root>
+            <PopoverContentBody {...rest} />
+          </Root>
+        </Portal>
+      </Show>
     </Show>
   );
 };

@@ -34,7 +34,12 @@
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/testing": "workspace:*",
-    "@sentry/node": "^7.30.0",
+    "@sentry/browser": "^8.33.1",
+    "@sentry/hub": "^7.114.0",
+    "@sentry/node": "^8.33.1",
+    "@sentry/nestjs": "^8.33.1",
+    "@sentry/profiling-node": "^8.33.1",
+    "@sentry/tracing": "^7.40.0",
     "@socket.io/admin-ui": "^0.5.1",
     "@socket.io/redis-adapter": "^7.2.0",
     "class-transformer": "0.5.1",
@@ -61,7 +66,7 @@
     "@types/express": "^4.17.8",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/mocha": "^10.0.2",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "@types/socket.io": "^3.0.2",
     "@types/supertest": "^2.0.10",
     "chai": "^4.2.0",
@@ -72,7 +77,7 @@
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
-    "typescript": "4.9.5"
+    "typescript": "5.6.2"
   },
   "workspaces": {
     "nohoist": [

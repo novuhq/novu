@@ -1,3 +1,3 @@
-export * from './controlVariables.entity';
+export * from './controlValuesEntity';
 export * from './controlVariables.schema';
-export * from './controlVariables.repository';
+export * from './controlValuesRepository';

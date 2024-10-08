@@ -16,13 +16,14 @@ import {
   ISubscriberPreferenceResponse,
   ITemplateConfiguration,
   PreferenceOverrideSourceEnum,
+  PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
 
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services/cache';
+import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { GetPreferences } from '../get-preferences';
 
 const PRIORITY_ORDER = [
@@ -57,6 +58,10 @@ export class GetSubscriberTemplatePreference {
     }
 
     const initialActiveChannels = await this.getActiveChannels(command);
+
+    /**
+     * V1 preference object.
+     */
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne(
         {
@@ -71,18 +76,23 @@ export class GetSubscriberTemplatePreference {
 
     const templateChannelPreference = command.template.preferenceSettings;
 
-    const subscriberWorkflowPreferences =
-      await this.getPreferences.getWorkflowChannelPreferences({
+    /**
+     * V2 preference object.
+     */
+    const subscriberWorkflowPreferences = await this.getPreferences.safeExecute(
+      {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-      });
+      },
+    );
 
-    const subscriberPreferenceChannels =
-      GetPreferences.mapWorkflowChannelPreferencesToChannelPreferences(
-        subscriberWorkflowPreferences,
-      ) || subscriberPreference?.channels;
+    const subscriberPreferenceChannels = subscriberWorkflowPreferences
+      ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(
+          subscriberWorkflowPreferences.preferences,
+        )
+      : subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
       workflowOverride?.preferenceSettings;
 
@@ -97,10 +107,11 @@ export class GetSubscriberTemplatePreference {
 
     const template = mapTemplateConfiguration({
       ...command.template,
-      // determine if any readOnly constraints have been set by the Workflow owner
-      critical: GetPreferences.checkIfWorkflowPreferencesIsReadOnly(
-        subscriberWorkflowPreferences,
-      ),
+      // Use the critical flag from the V2 Preference object if it exists
+      ...(subscriberWorkflowPreferences && {
+        critical:
+          subscriberWorkflowPreferences.preferences?.all?.readOnly === true,
+      }),
     });
 
     return {
@@ -110,6 +121,13 @@ export class GetSubscriberTemplatePreference {
         channels,
         overrides,
       },
+      /*
+       * TODO: Remove the fallback after we deprecate V1 preferences, as
+       * a type is always present for V2 preferences
+       */
+      type:
+        subscriberWorkflowPreferences?.type ||
+        PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
     };
   }
 

@@ -1,0 +1,153 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Test DASHBOARD
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_dispatch:
+    inputs:
+      ee:
+        description: 'use the ee version of worker'
+        required: false
+        default: true
+        type: boolean
+  workflow_call:
+    inputs:
+      ee:
+        description: 'use the ee version of worker'
+        required: false
+        default: false
+        type: boolean
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  e2e_dashboard:
+    strategy:
+      fail-fast: false
+      matrix:
+        # run 4 copies of the current job in parallel
+        containers: [1, 2, 3, 4]
+        total: [4]
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
+    steps:
+      - id: determine_run_type
+        name: Determing community vs enterprise run
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "enterprise_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "enterprise_run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - id: checkout-enterprise-code
+        name: Checkout enterprise code from the submodule
+        uses: actions/checkout@v4
+        if: steps.determine_run_type.outputs.enterprise_run == 'true'
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+          
+      - id: checkout-community-code
+        name: Checkout community code
+        uses: actions/checkout@v4
+        if: steps.determine_run_type.outputs.enterprise_run != 'true'
+
+      - uses: ./.github/actions/setup-project
+        with:
+          submodules: true
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: build
+          projects: '@novu/dashboard,@novu/api,@novu/worker'
+          args: --skip-nx-cache
+
+      - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/setup-redis-cluster
+
+      - uses: ./.github/actions/run-backend
+        with:
+          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          ci_ee_test: ${{ steps.determine_run_type.outputs.enterprise_run }}
+
+      - name: Start WS
+        run: |
+          cd apps/ws && pnpm start:test &
+
+      - name: Start Novu Dashboard
+        working-directory: apps/dashboard
+        env:
+          REACT_APP_API_URL: http://127.0.0.1:1336
+          REACT_APP_WS_URL: http://127.0.0.1:1340
+          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
+          # Disable LaunchDarkly client-side SDK in the test environment to reduce E2E flakiness
+          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ''
+          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
+        run: pnpm start:static:build
+
+      - name: Wait on Services
+        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:8080/
+
+      - name: Install Playwright
+        working-directory: apps/dashboard
+        run: pnpm test:e2e:install
+
+      - name: Run E2E tests
+        working-directory: apps/dashboard
+        env:
+          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
+        run: pnpm test:e2e --shard=${{ matrix.containers }}/${{ matrix.total }}
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: dashboard-blob-report-${{ matrix.containers }}
+          path: apps/dashboard/blob-report
+          retention-days: 1
+
+  merge-reports:
+    # Merge reports after playwright-tests, even if some shards have failed
+    if: ${{ !cancelled() }}
+    needs: [e2e_dashboard]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.8.1
+
+    - name: Download blob reports from GitHub Actions Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dashboard-all-blob-reports
+        pattern: dashboard-blob-report-*
+        merge-multiple: true
+
+    - name: Merge into HTML Report
+      run: npx playwright merge-reports --reporter html ./dashboard-all-blob-reports
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v4
+      with:
+        name: dashboard-html-report--attempt-${{ github.run_attempt }}
+        path: playwright-report
+        retention-days: 14
+
+    - name: Send Slack notifications
+      uses: ./.github/actions/slack-notify-on-failure
+      if: failure()
+      with:
+        slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

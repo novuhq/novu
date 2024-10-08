@@ -39,7 +39,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
    */
   private returnWholeObject(data) {
     const isPaginatedResult = data?.data;
-    const isEntityObject = data?._id;
+    const isEntityObject = data?._id || data?.id;
 
     return isPaginatedResult && !isEntityObject;
   }

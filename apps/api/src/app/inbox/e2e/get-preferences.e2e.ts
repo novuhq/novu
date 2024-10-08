@@ -78,4 +78,35 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
       expect(workflowPreference.workflow.tags[0]).to.be.oneOf([newsletterTag, securityTag]);
     });
   });
+
+  it('should fetch only non-critical/readOnly=false workflows', async function () {
+    await session.createTemplate({
+      noFeedId: true,
+      critical: true,
+    });
+
+    await session.createTemplate({
+      noFeedId: true,
+      critical: false,
+    });
+
+    const response = await session.testAgent
+      .get('/v1/inbox/preferences')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.body.data.length).to.equal(2);
+
+    const globalPreference = response.body.data[0];
+
+    expect(globalPreference.channels.email).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(true);
+    expect(globalPreference.level).to.equal('global');
+
+    const workflowPreference = response.body.data[1];
+
+    expect(workflowPreference.channels.email).to.equal(true);
+    expect(workflowPreference.channels.in_app).to.equal(true);
+    expect(workflowPreference.level).to.equal('template');
+    expect(workflowPreference.workflow.critical).to.equal(false);
+  });
 });

@@ -5,7 +5,7 @@ import { colors, GitHub, Text } from '@novu/design-system';
 
 import { PropsWithChildren } from 'react';
 import { When } from '../../../components/utils/When';
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_SELF_HOSTED } from '../../../config';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 import { useVercelParams } from '../../../hooks';
 
@@ -23,7 +23,7 @@ export function OAuth({
     : buildGithubLink({ invitationToken, isLoginPage });
 
   return (
-    <When truthy={!IS_DOCKER_HOSTED}>
+    <When truthy={!IS_SELF_HOSTED}>
       <>
         <Container>
           <OAuthButton

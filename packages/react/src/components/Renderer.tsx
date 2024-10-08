@@ -1,23 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { NovuUI } from '@novu/js/ui';
-import type { NovuUIOptions } from '@novu/js/ui';
-import { Novu } from '@novu/js';
-import { MountedElement, RendererProvider } from '../context/RenderContext';
-import { useDataRef } from '../hooks/internal/useDataRef';
+import { ComponentType, PropsWithChildren, useCallback, useState } from 'react';
+import { MountedElement, RendererProvider } from '../context/RendererContext';
+import { createPortal } from 'react-dom';
 
-type RendererProps = React.PropsWithChildren<{
-  options: NovuUIOptions;
-  novu?: Novu;
-}>;
-
-/**
- *
- * Renderer component that provides the NovuUI instance and mounts the elements on DOM in a portal
- */
-export const Renderer = ({ options, novu, children }: RendererProps) => {
-  const optionsRef = useDataRef({ ...options, novu });
-  const [novuUI, setNovuUI] = useState<NovuUI | undefined>();
+type RendererProps = PropsWithChildren;
+export const Renderer = (props: RendererProps) => {
+  const { children } = props;
   const [mountedElements, setMountedElements] = useState(new Map<HTMLElement, MountedElement>());
 
   const mountElement = useCallback(
@@ -41,38 +28,29 @@ export const Renderer = ({ options, novu, children }: RendererProps) => {
     [setMountedElements]
   );
 
-  useEffect(() => {
-    const novu = new NovuUI(optionsRef.current);
-    setNovuUI(novu);
-
-    return () => {
-      novu.unmount();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!novuUI) {
-      return;
-    }
-
-    novuUI.updateAppearance(options.appearance);
-    novuUI.updateLocalization(options.localization);
-    novuUI.updateTabs(options.tabs);
-    novuUI.updateOptions(options.options);
-    novuUI.updateRouterPush(options.routerPush);
-  }, [options]);
-
-  if (!novuUI) {
-    return null;
-  }
-
   return (
-    <RendererProvider value={{ mountElement, novuUI }}>
+    <RendererProvider value={{ mountElement }}>
       {[...mountedElements].map(([element, mountedElement]) => {
-        return ReactDOM.createPortal(mountedElement, element);
+        return createPortal(mountedElement, element);
       })}
 
       {children}
     </RendererProvider>
   );
+};
+
+export const withRenderer = <P extends object>(
+  WrappedComponent: ComponentType<P>
+): ComponentType<P & PropsWithChildren<{}>> => {
+  const HOC = (props: P) => {
+    return (
+      <Renderer>
+        <WrappedComponent {...props} />
+      </Renderer>
+    );
+  };
+
+  HOC.displayName = `WithRenderer(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return HOC;
 };

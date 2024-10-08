@@ -19,6 +19,7 @@ import {
 } from '@novu/shared';
 import { workflow } from '@novu/framework';
 
+import { DetailEnum } from '@novu/application-generic';
 import { BridgeServer } from '../../../../e2e/bridge.server';
 
 const eventTriggerPath = '/v1/events/trigger';
@@ -47,7 +48,7 @@ contexts.forEach((context: Context) => {
       session = new UserSession();
       await session.initialize();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
-      subscriber = await subscriberService.createSubscriber();
+      subscriber = await subscriberService.createSubscriber({ _id: session.subscriberId });
     });
 
     afterEach(async () => {
@@ -136,7 +137,7 @@ contexts.forEach((context: Context) => {
         }
       }
 
-      await triggerEvent(session, workflowId, subscriber, { name: 'test_name' }, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
       await session.awaitRunningJobs();
 
       const messages = await messageRepository.find({
@@ -196,7 +197,7 @@ contexts.forEach((context: Context) => {
         await syncWorkflow(session, workflowsRepository, workflowIdSkipByStatic, bridgeServer);
       }
 
-      await triggerEvent(session, workflowIdSkipByStatic, subscriber, null, bridge);
+      await triggerEvent(session, workflowIdSkipByStatic, subscriber.subscriberId, null, bridge);
       await session.awaitRunningJobs();
 
       const executedMessageByStatic = await messageRepository.find({
@@ -260,7 +261,7 @@ contexts.forEach((context: Context) => {
         await syncWorkflow(session, workflowsRepository, workflowIdSkipByVariable, bridgeServer);
       }
 
-      await triggerEvent(session, workflowIdSkipByVariable, subscriber, null, bridge);
+      await triggerEvent(session, workflowIdSkipByVariable, subscriber.subscriberId, null, bridge);
       await session.awaitRunningJobs();
 
       const executedMessage = await messageRepository.find({
@@ -311,7 +312,7 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
       await session.awaitRunningJobs(undefined);
 
@@ -334,7 +335,7 @@ contexts.forEach((context: Context) => {
 
       await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
-      await triggerEvent(session, workflowId, subscriber, { name: 4 }, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 4 }, bridge);
       await session.awaitRunningJobs();
 
       const executionDetailsInvalidType = await executionDetailsRepository.find({
@@ -392,7 +393,7 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
       await session.awaitRunningJobs();
 
@@ -470,8 +471,8 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, { name: 'John' }, bridge);
-      await triggerEvent(session, workflowId, subscriber, { name: 'Bela' }, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'John' }, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'Bela' }, bridge);
 
       await session.awaitRunningJobs();
 
@@ -552,7 +553,7 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, null, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, null, bridge);
 
       await session.awaitRunningJobs();
 
@@ -607,9 +608,9 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
       await session.awaitRunningJobs();
-      await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' }, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
       await session.awaitRunningJobs();
 
       const sentMessage = await messageRepository.find({
@@ -663,9 +664,9 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
       await session.awaitRunningJobs();
-      await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' }, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
       await session.awaitRunningJobs();
 
       const sentMessage = await messageRepository.find({
@@ -724,7 +725,7 @@ contexts.forEach((context: Context) => {
       }
 
       const controls = { steps: { [stepId]: { name: 'stored_control_name' } } };
-      await triggerEvent(session, workflowId, subscriber, undefined, bridge, controls);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, undefined, bridge, controls);
       await session.awaitRunningJobs();
 
       const sentMessage = await messageRepository.find({
@@ -750,7 +751,7 @@ contexts.forEach((context: Context) => {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
       await session.awaitRunningJobs();
 
       const sentMessages = await messageRepository.find({
@@ -764,6 +765,704 @@ contexts.forEach((context: Context) => {
       const messageBodies = sentMessages.map((message) => message.content);
       expect(messageBodies).to.include('Hello there 1');
       expect(messageBodies).to.include('Hello there 2');
+    });
+
+    it(`should deliver message if the Workflow Definition doesn't contain preferences [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `without-preferences-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
+        await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+      });
+
+      /*
+       * Delete `preferences` from the Workflow Definition to simulate an old
+       * Workflow Definition (i.e. from old Framework version) that doesn't have the `preferences` property.
+       */
+      delete newWorkflow.definition.preferences;
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(1);
+    });
+
+    it(`should deliver message if inApp is enabled via workflow preferences [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `enabled-inapp-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            channels: {
+              inApp: {
+                enabled: true,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(1);
+    });
+
+    it(`should NOT deliver message if inApp is disabled via workflow preferences [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-inapp-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            channels: {
+              inApp: {
+                enabled: false,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(0);
+
+      const executionDetailsFiltered = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+      });
+
+      const executionDetailsWorkflowFiltered = executionDetailsFiltered.filter(
+        (executionDetail) => executionDetail.detail === DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES
+      );
+
+      expect(executionDetailsWorkflowFiltered.length).to.be.eq(1);
+    });
+
+    it(`should deliver inApp message if workflow is disabled via workflow preferences and inApp is enabled [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            all: {
+              enabled: false,
+            },
+            channels: {
+              inApp: {
+                enabled: true,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(1);
+    });
+
+    it(`should NOT deliver inApp message if workflow is disabled via workflow preferences [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-workflow-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            all: {
+              enabled: false,
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(0);
+
+      const executionDetailsFiltered = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+      });
+
+      const executionDetailsWorkflowFiltered = executionDetailsFiltered.filter(
+        (executionDetail) => executionDetail.detail === DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES
+      );
+
+      expect(executionDetailsWorkflowFiltered.length).to.be.eq(1);
+    });
+
+    it(`should deliver inApp message if subscriber disabled inApp channel for readOnly workflow with inApp enabled [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `enabled-readonly-workflow-level-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            all: {
+              readOnly: true,
+            },
+            channels: {
+              inApp: {
+                enabled: true,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      const createdWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+
+      if (context.isStateful) {
+        // Set subscriber preference to disable inApp for the workflow
+        await session.testAgent
+          .patch(`/v1/inbox/preferences/${createdWorkflow?._id}`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: false,
+          });
+      }
+
+      await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: session.subscriberProfile?._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(1);
+    });
+
+    it(`should NOT deliver inApp message if subscriber enables inApp channel for readOnly workflow with inApp disabled [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-readonly-workflow-level-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            all: {
+              readOnly: true,
+            },
+            channels: {
+              inApp: {
+                enabled: false,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      const createdWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+
+      if (context.isStateful) {
+        // Set subscriber preference to enable inApp for the workflow
+        await session.testAgent
+          .patch(`/v1/inbox/preferences/${createdWorkflow?._id}`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: true,
+          });
+      }
+
+      await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: session.subscriberProfile?._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(0);
+
+      const executionDetailsFiltered = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+      });
+
+      const executionDetailsWorkflowFiltered = executionDetailsFiltered.filter(
+        (executionDetail) => executionDetail.detail === DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES
+      );
+
+      expect(executionDetailsWorkflowFiltered.length).to.be.eq(1);
+    });
+
+    it(`should deliver inApp message if subscriber disabled inApp channel globally for readOnly workflow with inApp enabled [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `enabled-readonly-global-level-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            all: {
+              readOnly: true,
+            },
+            channels: {
+              inApp: {
+                enabled: true,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      if (context.isStateful) {
+        // Set subscriber preference to disable inApp globally
+        await session.testAgent
+          .patch(`/v1/inbox/preferences`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: false,
+          });
+      }
+
+      await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: session.subscriberProfile?._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(1);
+    });
+
+    it(`should NOT deliver inApp message if subscriber enabled inApp channel globally for readOnly workflow with inApp disabled [${context.name}]`, async () => {
+      process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+      const workflowId = `disabled-readonly-global-level-${`${context.name}-${uuidv4()}`}`;
+      const newWorkflow = workflow(
+        workflowId,
+        async ({ step }) => {
+          await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+        },
+        {
+          preferences: {
+            all: {
+              readOnly: true,
+            },
+            channels: {
+              inApp: {
+                enabled: false,
+              },
+            },
+          },
+        }
+      );
+
+      await bridgeServer.start({ workflows: [newWorkflow] });
+
+      if (context.isStateful) {
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+      }
+
+      if (context.isStateful) {
+        // Set subscriber preference to enable inApp globally
+        await session.testAgent
+          .patch(`/v1/inbox/preferences`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: true,
+          });
+      }
+
+      await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+      await session.awaitRunningJobs();
+
+      const sentMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: session.subscriberProfile?._id,
+        templateIdentifier: workflowId,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(sentMessages.length).to.be.eq(0);
+
+      const executionDetailsFiltered = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+      });
+
+      const executionDetailsWorkflowFiltered = executionDetailsFiltered.filter(
+        (executionDetail) => executionDetail.detail === DetailEnum.STEP_FILTERED_BY_WORKFLOW_RESOURCE_PREFERENCES
+      );
+
+      expect(executionDetailsWorkflowFiltered.length).to.be.eq(1);
+    });
+
+    it(`should deliver inApp message if subscriber enabled inApp channel globally for workflow with inApp disabled [${context.name}]`, async () => {
+      if (!context.isStateful) {
+        /*
+         * Stateless executions don't respect subscriber preferences,
+         * so we skip the test.
+         */
+        expect(true).to.equal(true);
+      } else {
+        process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+        const workflowId = `disabled-editable-global-level-${`${context.name}-${uuidv4()}`}`;
+        const newWorkflow = workflow(
+          workflowId,
+          async ({ step }) => {
+            await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+          },
+          {
+            preferences: {
+              all: {
+                readOnly: false,
+              },
+              channels: {
+                inApp: {
+                  enabled: false,
+                },
+              },
+            },
+          }
+        );
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+        // Set subscriber preference to disable inApp globally
+        await session.testAgent
+          .patch(`/v1/inbox/preferences`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: true,
+          });
+
+        await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+        await session.awaitRunningJobs();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: session.subscriberProfile?._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(sentMessages.length).to.be.eq(1);
+      }
+    });
+
+    it(`should NOT deliver inApp message if subscriber disabled inApp channel globally for workflow with inApp enabled [${context.name}]`, async () => {
+      if (!context.isStateful) {
+        /*
+         * Stateless executions don't respect subscriber preferences,
+         * so we skip the test.
+         */
+        expect(true).to.equal(true);
+      } else {
+        process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+        const workflowId = `enabled-editable-global-level-${`${context.name}-${uuidv4()}`}`;
+        const newWorkflow = workflow(
+          workflowId,
+          async ({ step }) => {
+            await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+          },
+          {
+            preferences: {
+              all: {
+                readOnly: false,
+              },
+              channels: {
+                inApp: {
+                  enabled: true,
+                },
+              },
+            },
+          }
+        );
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+        // Set subscriber preference to disable inApp globally
+        await session.testAgent
+          .patch(`/v1/inbox/preferences`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: false,
+          });
+
+        await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+        await session.awaitRunningJobs();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: session.subscriberProfile?._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(sentMessages.length).to.be.eq(0);
+
+        const executionDetailsFiltered = await executionDetailsRepository.find({
+          _environmentId: session.environment._id,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+        });
+
+        const executionDetailsSubscriberGlobalFiltered = executionDetailsFiltered.filter(
+          (executionDetail) => executionDetail.detail === DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES
+        );
+
+        expect(executionDetailsSubscriberGlobalFiltered.length).to.be.eq(1);
+      }
+    });
+
+    it(`should deliver inApp message if subscriber disabled inApp channel globally but enabled inApp for workflow with inApp disabled [${context.name}]`, async () => {
+      if (!context.isStateful) {
+        /*
+         * Stateless executions don't respect subscriber preferences,
+         * so we skip the test.
+         */
+        expect(true).to.equal(true);
+      } else {
+        process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+        const workflowId = `disabled-editable-global-workflow-level-${`${context.name}-${uuidv4()}`}`;
+        const newWorkflow = workflow(
+          workflowId,
+          async ({ step }) => {
+            await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+          },
+          {
+            preferences: {
+              all: {
+                readOnly: false,
+              },
+              channels: {
+                inApp: {
+                  enabled: false,
+                },
+              },
+            },
+          }
+        );
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+        const createdWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+
+        // Set subscriber preference to disable inApp globally
+        await session.testAgent
+          .patch(`/v1/inbox/preferences`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: false,
+          });
+
+        // Set subscriber preference to enable inApp for the workflow
+        await session.testAgent
+          .patch(`/v1/inbox/preferences/${createdWorkflow?._id}`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: true,
+          });
+        await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+        await session.awaitRunningJobs();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: session.subscriberProfile?._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(sentMessages.length).to.be.eq(1);
+      }
+    });
+
+    it(`should NOT deliver inApp message if subscriber enabled inApp channel globally but disabled inApp for workflow with inApp enabled [${context.name}]`, async () => {
+      if (!context.isStateful) {
+        /*
+         * Stateless executions don't respect subscriber preferences,
+         * so we skip the test.
+         */
+        expect(true).to.equal(true);
+      } else {
+        process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
+        const workflowId = `enabled-editable-global-workflow-level-${`${context.name}-${uuidv4()}`}`;
+        const newWorkflow = workflow(
+          workflowId,
+          async ({ step }) => {
+            await step.inApp('send-in-app', () => ({ body: 'Hello there 1' }));
+          },
+          {
+            preferences: {
+              all: {
+                readOnly: false,
+              },
+              channels: {
+                inApp: {
+                  enabled: true,
+                },
+              },
+            },
+          }
+        );
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+        const createdWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+
+        // Set subscriber preference to enable inApp globally
+        await session.testAgent
+          .patch(`/v1/inbox/preferences`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: true,
+          });
+
+        // Set subscriber preference to disable inApp for the workflow
+        await session.testAgent
+          .patch(`/v1/inbox/preferences/${createdWorkflow?._id}`)
+          .set('Authorization', `Bearer ${session.subscriberToken}`)
+          .send({
+            in_app: false,
+          });
+
+        await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
+        await session.awaitRunningJobs();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: session.subscriberProfile?._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(sentMessages.length).to.be.eq(0);
+
+        const executionDetailsFiltered = await executionDetailsRepository.find({
+          _environmentId: session.environment._id,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+        });
+
+        const executionDetailsSubscriberWorkflowFiltered = executionDetailsFiltered.filter(
+          (executionDetail) => executionDetail.detail === DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES
+        );
+
+        expect(executionDetailsSubscriberWorkflowFiltered.length).to.be.eq(1);
+      }
     });
   });
 });
@@ -785,10 +1484,10 @@ async function syncWorkflow(
 }
 
 async function triggerEvent(
-  session,
+  session: UserSession,
   workflowId: string,
-  subscriber,
-  payload?: any,
+  subscriberId: string,
+  payload?: Record<string, unknown>,
   bridge?: { url: string },
   controls?: Record<string, unknown>
 ) {
@@ -801,7 +1500,7 @@ async function triggerEvent(
     {
       name: workflowId,
       to: {
-        subscriberId: subscriber.subscriberId,
+        subscriberId,
         email: 'test@subscriber.com',
       },
       payload: payload ?? defaultPayload,

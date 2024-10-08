@@ -9,7 +9,8 @@ export const defaultVariables: Required<Variables> = {
   colorCounterForeground: 'white',
   colorBackground: '#FCFCFC',
   colorForeground: '#1A1523',
-  colorNeutral: 'black',
+  colorNeutral: '#525252',
+  colorShadow: 'rgba(122,133,153,0.25)',
   fontSize: 'inherit',
   borderRadius: '0.375rem',
 };

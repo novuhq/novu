@@ -11,13 +11,13 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
-import type { Appearance, Localization, RouterPush, Tab } from '../types';
+import type { Appearance, Localization, PreferencesFilter, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
 
 export const novuComponents = {
   Inbox,
-  // InboxContent, //enable this to also allow the whole inbox content as a component
+  InboxContent,
   Bell,
   Notifications: (props: Omit<InboxContentProps, 'hideNav' | 'initialPage'>) => (
     <InboxContent {...props} hideNav={true} initialPage={InboxPage.Notifications} />
@@ -47,6 +47,7 @@ type RendererProps = {
   localization?: Localization;
   options: NovuOptions;
   tabs: Array<Tab>;
+  preferencesFilter?: PreferencesFilter;
   routerPush?: RouterPush;
   novu?: Novu;
 };
@@ -78,7 +79,7 @@ export const Renderer = (props: RendererProps) => {
       <LocalizationProvider localization={props.localization}>
         <AppearanceProvider id={props.novuUI.id} appearance={props.appearance}>
           <FocusManagerProvider>
-            <InboxProvider tabs={props.tabs} routerPush={props.routerPush}>
+            <InboxProvider tabs={props.tabs} preferencesFilter={props.preferencesFilter} routerPush={props.routerPush}>
               <CountProvider>
                 <For each={nodes()}>
                   {(node) => {
@@ -87,6 +88,10 @@ export const Renderer = (props: RendererProps) => {
                     const Component = novuComponents[novuComponent().name];
 
                     onMount(() => {
+                      /*
+                       * return here if not `<Notifications /> or `<Preferences />` since we only want to override some styles for those to work properly
+                       * due to the extra divs being introduces by the renderer/mounter
+                       */
                       if (!['Notifications', 'Preferences'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {

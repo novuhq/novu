@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useRef } from 'react';
 
 type MounterProps = {
   mount: (node: HTMLElement) => ((node: HTMLElement) => void) | void;
@@ -8,9 +8,9 @@ type MounterProps = {
  * Mounter allows you to mount a component to a DOM node.
  */
 export function Mounter({ mount }: MounterProps) {
-  const ref = React.useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let unmount: (node: HTMLDivElement) => void | undefined;
     const element = ref.current;
     if (element && mount) {

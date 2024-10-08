@@ -2,40 +2,45 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsBoolean, ValidateNested } from 'class-validator';
 
-export class Preference {
+export class WorkflowPreference {
   @IsBoolean()
-  defaultValue: boolean;
+  enabled: boolean;
 
   @IsBoolean()
   readOnly: boolean;
 }
 
+export class ChannelPreference {
+  @IsBoolean()
+  enabled: boolean;
+}
+
 export class Channels {
   @ValidateNested({ each: true })
-  @Type(() => Preference)
-  [ChannelTypeEnum.IN_APP]: Preference;
+  @Type(() => ChannelPreference)
+  [ChannelTypeEnum.IN_APP]: ChannelPreference;
 
   @ValidateNested({ each: true })
-  @Type(() => Preference)
-  [ChannelTypeEnum.EMAIL]: Preference;
+  @Type(() => ChannelPreference)
+  [ChannelTypeEnum.EMAIL]: ChannelPreference;
 
   @ValidateNested({ each: true })
-  @Type(() => Preference)
-  [ChannelTypeEnum.SMS]: Preference;
+  @Type(() => ChannelPreference)
+  [ChannelTypeEnum.SMS]: ChannelPreference;
 
   @ValidateNested({ each: true })
-  @Type(() => Preference)
-  [ChannelTypeEnum.CHAT]: Preference;
+  @Type(() => ChannelPreference)
+  [ChannelTypeEnum.CHAT]: ChannelPreference;
 
   @ValidateNested({ each: true })
-  @Type(() => Preference)
-  [ChannelTypeEnum.PUSH]: Preference;
+  @Type(() => ChannelPreference)
+  [ChannelTypeEnum.PUSH]: ChannelPreference;
 }
 
 export class PreferencesDto {
   @ValidateNested({ each: true })
-  @Type(() => Preference)
-  workflow: Preference;
+  @Type(() => WorkflowPreference)
+  workflow: WorkflowPreference;
 
   @ValidateNested({ each: true })
   @Type(() => Channels)

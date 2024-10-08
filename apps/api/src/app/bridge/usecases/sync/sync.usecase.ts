@@ -1,25 +1,25 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import {
-  NotificationTemplateRepository,
   EnvironmentRepository,
   NotificationGroupRepository,
   NotificationTemplateEntity,
+  NotificationTemplateRepository,
 } from '@novu/dal';
 import {
   AnalyticsService,
   CreateWorkflow,
   CreateWorkflowCommand,
+  ExecuteBridgeRequest,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
   NotificationStep,
   UpdateWorkflow,
   UpdateWorkflowCommand,
-  ExecuteBridgeRequest,
   UpsertPreferences,
   UpsertWorkflowPreferencesCommand,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, WorkflowTypeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import { SyncCommand } from './sync.command';
@@ -175,13 +175,14 @@ export class Sync {
 
           savedWorkflow = await this.createWorkflowUsecase.execute(
             CreateWorkflowCommand.create({
+              origin: WorkflowOriginEnum.EXTERNAL,
               notificationGroupId,
               draft: !isWorkflowActive,
               environmentId: command.environmentId,
               organizationId: command.organizationId,
               userId: command.userId,
               name: workflow.workflowId,
-              __source: 'bridge',
+              __source: WorkflowCreationSourceEnum.BRIDGE,
               type: WorkflowTypeEnum.BRIDGE,
               steps: this.mapSteps(workflow.steps),
               /** @deprecated */
@@ -215,7 +216,7 @@ export class Sync {
           })
         );
 
-        if (isWorkflowPreferencesEnabled && workflow.preferences) {
+        if (isWorkflowPreferencesEnabled) {
           await this.upsertPreferences.upsertWorkflowPreferences(
             UpsertWorkflowPreferencesCommand.create({
               environmentId: savedWorkflow._environmentId,

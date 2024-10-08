@@ -7,6 +7,7 @@ import {
   EnvironmentRepository,
 } from '@novu/dal';
 import {
+  buildWorkflowPreferences,
   ChannelTypeEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
@@ -136,6 +137,16 @@ export class SubscriberJobBound {
       userId,
       tenant,
       bridgeUrl: command.bridge?.url,
+      /*
+       * Only populate preferences if the command contains a `bridge` property,
+       * indicating that the execution is stateless.
+       *
+       * TODO: refactor the Worker execution to handle both stateless and stateful workflows
+       * transparently.
+       */
+      ...(command.bridge?.workflow && {
+        preferences: buildWorkflowPreferences(command.bridge?.workflow?.preferences),
+      }),
     };
 
     if (actor) {

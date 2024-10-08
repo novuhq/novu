@@ -1,0 +1,37 @@
+name: Publish NPM Packages Previews
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '*'
+      - '!prod'
+
+jobs:
+  publish_preview_packages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Teach Novu preview packages to work with latest dependencies
+        run: pnpm run packages:set-latest
+
+      - name: Build
+        run: pnpm run preview:pkg:build
+          
+      - name: Release package previews to pkg.pr.new
+        run: pnpm run preview:pkg:publish
+        if: ${{ success() }}

@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.0.3",
+  "version": "2.1.1",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -135,7 +135,7 @@
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",
     "aws-lambda": "^1.0.7",
@@ -146,7 +146,7 @@
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
     "tsx": "4.16.2",
-    "typescript": "4.9.5",
+    "typescript": "5.6.2",
     "vitest": "^1.2.1",
     "zod": "^3.23.0",
     "zod-to-json-schema": "^3.23.0"
@@ -163,5 +163,8 @@
     "liquidjs": "^10.13.1",
     "ora": "^5.4.1",
     "sanitize-html": "^2.13.0"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

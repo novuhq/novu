@@ -3,7 +3,15 @@ import { MountableElement, render } from 'solid-js/web';
 import type { NovuOptions } from '../types';
 import { NovuComponent, NovuComponentName, novuComponents, Renderer } from './components/Renderer';
 import { generateRandomString } from './helpers';
-import type { Appearance, BaseNovuProviderProps, Localization, NovuProviderProps, RouterPush, Tab } from './types';
+import type {
+  Appearance,
+  BaseNovuProviderProps,
+  Localization,
+  NovuProviderProps,
+  PreferencesFilter,
+  RouterPush,
+  Tab,
+} from './types';
 
 // @ts-ignore
 const isDev = __DEV__;
@@ -31,6 +39,8 @@ export class NovuUI {
   #setTabs;
   #routerPush: Accessor<RouterPush | undefined>;
   #setRouterPush: Setter<RouterPush | undefined>;
+  #preferencesFilter: Accessor<PreferencesFilter | undefined>;
+  #setPreferencesFilter: Setter<PreferencesFilter | undefined>;
   #predefinedNovu;
   id: string;
 
@@ -41,6 +51,7 @@ export class NovuUI {
     const [options, setOptions] = createSignal(props.options);
     const [mountedElements, setMountedElements] = createSignal(new Map<MountableElement, NovuComponent>());
     const [tabs, setTabs] = createSignal(props.tabs ?? []);
+    const [preferencesFilter, setPreferencesFilter] = createSignal(props.preferencesFilter);
     const [routerPush, setRouterPush] = createSignal(props.routerPush);
     this.#mountedElements = mountedElements;
     this.#setMountedElements = setMountedElements;
@@ -55,6 +66,8 @@ export class NovuUI {
     this.#routerPush = routerPush;
     this.#setRouterPush = setRouterPush;
     this.#predefinedNovu = props.novu;
+    this.#preferencesFilter = preferencesFilter;
+    this.#setPreferencesFilter = setPreferencesFilter;
 
     this.#mountComponentRenderer();
   }
@@ -78,6 +91,7 @@ export class NovuUI {
           appearance={this.#appearance()}
           localization={this.#localization()}
           tabs={this.#tabs()}
+          preferencesFilter={this.#preferencesFilter()}
           routerPush={this.#routerPush()}
           novu={this.#predefinedNovu}
         />
@@ -144,6 +158,10 @@ export class NovuUI {
 
   updateTabs(tabs?: Array<Tab>) {
     this.#setTabs(tabs ?? []);
+  }
+
+  updatePreferencesFilter(preferencesFilter?: PreferencesFilter) {
+    this.#setPreferencesFilter(preferencesFilter);
   }
 
   updateRouterPush(routerPush?: RouterPush) {

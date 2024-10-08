@@ -1,5 +1,5 @@
 # start build stage
-FROM node:20-alpine3.19 as builder
+FROM node:20-alpine3.19 AS builder
 RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@9.1.4 --loglevel notice
+RUN npm install -g pnpm@9.11.0 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
@@ -17,7 +17,6 @@ COPY libs ./libs
 COPY packages ./packages
 COPY enterprise ./enterprise
 COPY tsconfig.json .
-COPY tsconfig.base.json .
 
 COPY nx.json .
 COPY pnpm-workspace.yaml .
@@ -30,14 +29,14 @@ RUN pnpm add @babel/core -w
 
 COPY [".prettierrc",".prettierignore", "./"]
 
-RUN NX_DAEMON=false pnpm build:web
+RUN CI='' pnpm build:web --skip-nx-cache
 # end build stage
 
 # start production stage
 FROM node:20-alpine
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@9.1.4 http-server --loglevel notice
+RUN npm install -g pnpm@9.11.0 http-server --loglevel notice
 
 USER 1000
 WORKDIR /app
@@ -45,8 +44,9 @@ WORKDIR /app
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
 
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/build /app/build
-COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/public /app/public
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/.env.sample /app/.env.sample
 COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/package.json /app/package.json
 
+RUN pnpm run envsetup:docker
 CMD [ "pnpm", "start:static:build" ]
 # end production stage

@@ -98,7 +98,7 @@ describe('workflow function', () => {
     });
   });
 
-  it('should include preferences', async () => {
+  it('should include the defined preferences', async () => {
     const { definition } = workflow(
       'setup-workflow',
       async ({ step }) => {
@@ -110,20 +110,15 @@ describe('workflow function', () => {
       {
         preferences: {
           channels: {
-            email: { defaultValue: true, readOnly: true },
+            email: { enabled: true },
           },
         },
       }
     );
 
     expect(definition.preferences).to.deep.equal({
-      workflow: { defaultValue: true, readOnly: false },
       channels: {
-        email: { defaultValue: true, readOnly: true },
-        sms: { defaultValue: true, readOnly: false },
-        push: { defaultValue: true, readOnly: false },
-        in_app: { defaultValue: true, readOnly: false },
-        chat: { defaultValue: true, readOnly: false },
+        email: { enabled: true },
       },
     });
   });

@@ -1,6 +1,6 @@
 FROM node:20-alpine3.19
 
-RUN npm install -g pnpm@9.1.4 --loglevel notice --force
+RUN npm install -g pnpm@9.11.0 --loglevel notice --force
 RUN apk --update --no-cache add curl g++ make py3-pip
 
 USER 1000
@@ -18,8 +18,6 @@ COPY --chown=1000:1000 libs/embed ./libs/embed
 COPY --chown=1000:1000 packages/notification-center ./packages/notification-center
 
 COPY --chown=1000:1000 tsconfig.json .
-COPY --chown=1000:1000 tsconfig.base.json .
-
 COPY --chown=1000:1000 nx.json .
 COPY --chown=1000:1000 pnpm-workspace.yaml .
 COPY --chown=1000:1000 pnpm-lock.yaml .

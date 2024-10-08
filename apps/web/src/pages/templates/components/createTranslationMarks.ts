@@ -1,7 +1,7 @@
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_SELF_HOSTED } from '../../../config';
 
 export const createTranslationMarks = (newValue: string | undefined, variables: any) => {
-  if (IS_DOCKER_HOSTED) {
+  if (IS_SELF_HOSTED) {
     return [];
   }
 
