@@ -194,7 +194,6 @@ function buildErrorMsg(createWorkflowDto: Omit<WorkflowCommonsFields, '_id'>, cr
 
 async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
   const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-  console.log('createWorkflowDto', JSON.stringify(createWorkflowDto, null, 2));
   const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
   const workflowResponseDto: WorkflowResponseDto = res.body.data;
   expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
@@ -210,7 +209,8 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'preferences',
     'updatedAt',
     'createdAt',
-    'status'
+    'status',
+    'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
     removeFields(step, 'stepUuid')
@@ -251,9 +251,6 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
 }
 
 async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
-  console.log(`updateWorkflow- ${id}: 
-  ${JSON.stringify(workflow, null, 2)}`);
-
   return await safePut(`${v2Prefix}/workflows/${id}`, workflow);
 }
 
@@ -303,7 +300,8 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
     'updatedAt',
     'origin',
     '_id',
-    'status'
+    'status',
+    'type'
   );
   const augmentedStep: (StepUpdateDto | StepCreateDto)[] = [];
   for (const stepInResponse of workflowResponse.steps) {
@@ -549,24 +547,19 @@ function buildInAppStepWithValues() {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin') as UpdateWorkflowDto;
+  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type') as UpdateWorkflowDto;
 }
 
 function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const updateDto = convertResponseToUpdateDto(workflowCreated);
   const updatedStep = addValueToExistingStep(updateDto.steps);
   const newStep = buildInAppStepWithValues();
-  console.log('newStep:::', JSON.stringify(newStep, null, 2));
 
-  const stoWithValues: UpdateWorkflowDto = {
+  return {
     ...updateDto,
     name: `${TEST_WORKFLOW_UPDATED_NAME}-${generateUUID()}`,
     steps: [updatedStep, newStep],
   };
-
-  console.log('updateDto:::', JSON.stringify(stoWithValues, null, 2));
-
-  return stoWithValues;
 }
 function createStep(): StepCreateDto {
   return {
