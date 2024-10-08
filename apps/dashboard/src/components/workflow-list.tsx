@@ -135,9 +135,9 @@ export const WorkflowList = () => {
             <TableCell colSpan={5}>
               <div className="flex items-center justify-between">
                 {workflowsQuery.data ? (
-                  <p className="text-foreground-600 text-sm font-normal">
+                  <span className="text-foreground-600 block text-sm font-normal">
                     Page {currentPage} of {Math.ceil(workflowsQuery.data.totalCount / limit)}
-                  </p>
+                  </span>
                 ) : (
                   <Skeleton className="h-5 w-[20ch]" />
                 )}
