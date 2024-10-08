@@ -3,13 +3,13 @@ import { Badge } from '@/components/primitives/badge';
 import {
   Pagination,
   PaginationContent,
-  PaginationItem,
-  PaginationStart,
-  PaginationPrevious,
-  PaginationLink,
   PaginationEllipsis,
-  PaginationNext,
   PaginationEnd,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationStart,
 } from '@/components/primitives/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -27,18 +27,38 @@ import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ListWorkflowResponse } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
-  const [limit, setLimit] = useState(12);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const setOffset = useCallback(
+    (offset: number) =>
+      setSearchParams((searchParams) => {
+        searchParams.set('offset', offset.toString());
+        return searchParams;
+      }),
+    [setSearchParams]
+  );
+  const setLimit = useCallback(
+    (limit: number) =>
+      setSearchParams((searchParams) => {
+        searchParams.set('limit', limit.toString());
+        return searchParams;
+      }),
+    [setSearchParams]
+  );
+  const offset = useMemo(() => parseInt(searchParams.get('offset') || '0'), [searchParams]);
+  const limit = useMemo(() => parseInt(searchParams.get('limit') || '12'), [searchParams]);
   const workflowsQuery = useQuery({
-    queryKey: ['workflows', { environmentId: currentEnvironment?._id, limit }],
+    queryKey: ['workflows', { environmentId: currentEnvironment?._id, limit, offset }],
     queryFn: async () => {
-      const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?limit=${limit}`);
+      const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?limit=${limit}&offset=${offset}`);
       return data;
     },
   });
+  const currentPage = Math.floor(offset / limit) + 1;
 
   if (!workflowsQuery.isLoading && !workflowsQuery.data) {
     return null;
@@ -85,7 +105,7 @@ export const WorkflowList = () => {
               {workflowsQuery.data.workflows.map((workflow) => (
                 <TableRow key={workflow._id}>
                   <TableCell className="font-medium">
-                    {workflow.name}
+                    <span className="block truncate">{workflow.name}</span>
                     <span className="text-foreground-400 font-code block text-xs">{workflow._id}</span>
                   </TableCell>
                   <TableCell>
@@ -113,38 +133,109 @@ export const WorkflowList = () => {
           <TableRow>
             <TableCell colSpan={5}>
               <div className="flex items-center justify-between">
-                <p className="text-foreground-600 text-sm font-normal">Page X of Y</p>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationStart href="#" />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationPrevious href="#" />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">1</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">2</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">3</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationLink href="#">15</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationNext href="#" />
-                    </PaginationItem>
-                    <PaginationItem>
-                      <PaginationEnd href="#" />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                {workflowsQuery.data ? (
+                  <p className="text-foreground-600 text-sm font-normal">
+                    Page {currentPage} of {Math.ceil(workflowsQuery.data.totalCount / limit)}
+                  </p>
+                ) : (
+                  <Skeleton className="h-5 w-[2ch]" />
+                )}
+                {workflowsQuery.data ? (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationStart href="#" onClick={() => setOffset(0)} />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationPrevious href="#" onClick={() => setOffset(Math.max(0, offset - limit))} />
+                      </PaginationItem>
+                      {(() => {
+                        const currentPage = Math.floor(offset / limit) + 1;
+                        const totalPages = Math.ceil(workflowsQuery.data.totalCount / limit);
+                        const startPage = Math.max(1, currentPage - 2);
+                        const endPage = Math.min(totalPages, currentPage + 2);
+
+                        const pageItems = [];
+
+                        if (startPage > 1) {
+                          pageItems.push(
+                            <PaginationItem key={1}>
+                              <PaginationLink href="#" onClick={() => setOffset(0)}>
+                                1
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+
+                          if (startPage > 2) {
+                            pageItems.push(
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+                        }
+
+                        for (let i = startPage; i <= endPage; i++) {
+                          pageItems.push(
+                            <PaginationItem key={i}>
+                              <PaginationLink
+                                href="#"
+                                isActive={i === currentPage}
+                                onClick={() => setOffset((i - 1) * limit)}
+                              >
+                                {i}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+
+                        if (endPage < totalPages) {
+                          if (endPage < totalPages - 1) {
+                            pageItems.push(
+                              <PaginationItem key="ellipsis-end">
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+
+                          pageItems.push(
+                            <PaginationItem key={totalPages}>
+                              <PaginationLink href="#" onClick={() => setOffset((totalPages - 1) * limit)}>
+                                {totalPages}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        }
+
+                        pageItems.push(
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={() => {
+                                setOffset(Math.min(offset + limit, (totalPages - 1) * limit));
+                              }}
+                            />
+                          </PaginationItem>
+                        );
+
+                        pageItems.push(
+                          <PaginationItem>
+                            <PaginationEnd
+                              href="#"
+                              onClick={() => {
+                                setOffset((totalPages - 1) * limit);
+                              }}
+                            />
+                          </PaginationItem>
+                        );
+
+                        return pageItems;
+                      })()}
+                    </PaginationContent>
+                  </Pagination>
+                ) : (
+                  <Skeleton className="h-5 w-32" />
+                )}
                 <Select onValueChange={(v) => setLimit(parseInt(v))} defaultValue={limit.toString()}>
                   <SelectTrigger className="w-fit">
                     <SelectValue />

@@ -45,6 +45,7 @@ const PaginationLink = ({ className, isActive, size = 'icon', ...props }: Pagina
         variant: 'ghost',
         size,
       }),
+      { 'bg-neutral-50': isActive },
       'rounded-none',
       className
     )}
