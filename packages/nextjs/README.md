@@ -1,14 +1,14 @@
-# Novu's React SDK for building custom inbox notification experiences.
+# Novu's NextJS SDK for <Inbox />.
 
-Novu provides the `@novu/react` a React library that helps to add a fully functioning Inbox to your web application in minutes. Let's do a quick recap on how you can easily use it in your application.
+Novu provides the `@novu/nextjs` library that helps to add a fully functioning <Inbox /> to your web application in minutes.
 See full documentation [here](https://docs.novu.co/inbox/react/get-started).
 
 ## Installation
 
-- Install `@novu/react` npm package in your react app
+- Install `@novu/nextjs` npm package in your nextjs app
 
 ```bash
-npm install @novu/react
+npm install @novu/nextjs
 ```
 
 ## Getting Started
@@ -16,7 +16,7 @@ npm install @novu/react
 - Add the below code in the app.tsx file
 
 ```jsx
-import { Inbox } from '@novu/react';
+import { Inbox } from '@novu/nextjs';
 
 function Novu() {
   return (
@@ -35,7 +35,7 @@ function Novu() {
 By default, Novu's hosted services for API and socket are used. If you want, you can override them and configure your own.
 
 ```tsx
-import { Inbox } from '@novu/react';
+import { Inbox } from '@novu/nextjs';
 
 function Novu() {
   return (
@@ -56,7 +56,7 @@ function Novu() {
 You can use the `open` prop to manage the Inbox popover open state.
 
 ```jsx
-import { Inbox } from '@novu/react';
+import { Inbox } from '@novu/nextjs';
 
 function Novu() {
   const [open, setOpen] = useState(false);
@@ -82,7 +82,7 @@ function Novu() {
 You can pass the `localization` prop to the Inbox component to change the language of the Inbox.
 
 ```jsx
-import { Inbox } from '@novu/react';
+import { Inbox } from '@novu/nextjs';
 
 function Novu() {
   return (
