@@ -33,14 +33,13 @@ const highlights: PlanHighlights = {
   [ApiServiceLevelEnum.BUSINESS]: [
     { text: 'Up to 250,000 events per month' },
     { text: '50 teammates' },
-    { text: '90 days activity feed', badgeLabel: 'Coming soon' },
+    { text: '90 days activity feed' },
     { text: 'RBAC', badgeLabel: 'Coming soon' },
   ],
   [ApiServiceLevelEnum.ENTERPRISE]: [
     { text: 'Up to 5,000,000 events per month' },
     { text: 'Unlimited teammates' },
     { text: 'SAML SSO' },
-    { text: 'Custom time activity feed', badgeLabel: 'Coming soon' },
     { text: 'RBAC', badgeLabel: 'Coming soon' },
   ],
 };
