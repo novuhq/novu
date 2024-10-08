@@ -547,7 +547,7 @@ function buildInAppStepWithValues() {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type') as UpdateWorkflowDto;
+  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type', 'status') as UpdateWorkflowDto;
 }
 
 function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
@@ -576,7 +576,14 @@ function createStep(): StepCreateDto {
 
 function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
-  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status') as UpdateWorkflowDto;
+  const updateRequest = removeFields(
+    workflowCreated,
+    'updatedAt',
+    '_id',
+    'origin',
+    'status',
+    'type'
+  ) as UpdateWorkflowDto;
 
   return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
 }
