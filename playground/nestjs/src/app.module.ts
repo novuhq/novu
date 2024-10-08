@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NovuModule } from '@novu/framework/nest';
-import { Client } from '@novu/framework';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { WorkflowsService } from './workflows.service';
+import { NotificationService } from './notification.service';
 import { UserService } from './user.service';
 
 @Module({
@@ -20,15 +19,15 @@ import { UserService } from './user.service';
     }),
     NovuModule.registerAsync({
       imports: [AppModule],
-      useFactory: (workflowsService: WorkflowsService) => ({
+      useFactory: (workflowsService: NotificationService) => ({
         apiPath: '/api/novu',
         workflows: [workflowsService.welcomeWorkflow()],
       }),
-      inject: [WorkflowsService],
+      inject: [NotificationService],
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, WorkflowsService, UserService],
-  exports: [WorkflowsService],
+  providers: [AppService, NotificationService, UserService],
+  exports: [NotificationService],
 })
 export class AppModule {}
