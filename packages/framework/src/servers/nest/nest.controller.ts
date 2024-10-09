@@ -1,10 +1,10 @@
 import { Controller, Req, Res, Inject, Get, Post, Options } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { NovuService } from './nest.service';
+import { NovuClient } from './nest.client';
 
 @Controller()
 export class NovuController {
-  constructor(@Inject(NovuService) private novuService: NovuService) {}
+  constructor(@Inject(NovuClient) private novuService: NovuClient) {}
 
   @Get()
   async handleGet(@Req() req: Request, @Res() res: Response) {

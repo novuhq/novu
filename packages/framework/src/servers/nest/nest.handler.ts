@@ -1,26 +1,13 @@
 import { type VercelRequest, type VercelResponse } from '@vercel/node';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
-import { type INovuRequestHandlerOptions, NovuRequestHandler, type ServeHandlerOptions } from '../../handler';
-import type { Either, SupportedFrameworkName } from '../../types';
-import { NOVU_OPTIONS } from './nest.constants';
-
-export const frameworkName: SupportedFrameworkName = 'nest';
+import { type INovuRequestHandlerOptions } from '../../handler';
+import type { Either } from '../../types';
 
 @Injectable()
-export class NovuService {
-  public novuHandler: NovuRequestHandler;
-
-  constructor(@Inject(NOVU_OPTIONS) private options: ServeHandlerOptions) {
-    this.novuHandler = new NovuRequestHandler({
-      frameworkName,
-      ...this.options,
-      handler: this.handler.bind(this),
-    });
-  }
-
-  private handler(
+export class NovuHandler {
+  public handler(
     incomingRequest: Either<VercelRequest, Request>,
     response: Either<Response, VercelResponse>
   ): ReturnType<INovuRequestHandlerOptions['handler']> {
@@ -57,9 +44,5 @@ export class NovuService {
         return response.status(status).send(body);
       },
     };
-  }
-
-  public async handleRequest(req: Request, res: Response) {
-    await this.novuHandler.createHandler()(req, res);
   }
 }

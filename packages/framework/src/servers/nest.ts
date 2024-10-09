@@ -3,4 +3,5 @@ export * from './nest/nest.controller';
 export * from './nest/nest.interface';
 export * from './nest/nest.module';
 export * from './nest/nest.register-api-path';
-export * from './nest/nest.service';
+export * from './nest/nest.client';
+export * from './nest/nest.handler';
