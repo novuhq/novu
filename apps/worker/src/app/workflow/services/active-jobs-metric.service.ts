@@ -5,6 +5,7 @@ import {
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
+import { CronExpressionEnum } from '@novu/shared';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { checkingForCronJob } from '../../shared/utils';
@@ -65,7 +66,7 @@ export class ActiveJobsMetricService {
               repeatJobKey: METRIC_JOB_ID,
               repeat: {
                 immediately: true,
-                pattern: '*/30 * * * * *', // Every 30 seconds
+                pattern: CronExpressionEnum.EVERY_30_SECONDS,
               },
               removeOnFail: true,
               removeOnComplete: true,
