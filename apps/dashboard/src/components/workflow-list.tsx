@@ -152,9 +152,7 @@ export const WorkflowList = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="6">6 / page</SelectItem>
                     <SelectItem value="12">12 / page</SelectItem>
-                    <SelectItem value="24">24 / page</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
