@@ -29,31 +29,28 @@ import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ListWorkflowResponse, WorkflowOriginEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
 import { FaCode } from 'react-icons/fa6';
-import { useSearchParams } from 'react-router-dom';
+import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
-  const setOffset = useCallback(
-    (offset: number) =>
-      setSearchParams((searchParams) => {
-        searchParams.set('offset', offset.toString());
-        return searchParams;
-      }),
-    [setSearchParams]
-  );
-  const setLimit = useCallback(
-    (limit: number) =>
-      setSearchParams((searchParams) => {
-        searchParams.set('limit', limit.toString());
-        return searchParams;
-      }),
-    [setSearchParams]
-  );
-  const offset = useMemo(() => parseInt(searchParams.get('offset') || '0'), [searchParams]);
-  const limit = useMemo(() => parseInt(searchParams.get('limit') || '12'), [searchParams]);
+  const location = useLocation();
+  const pageFromOffset = (offset: number) => {
+    return `${location.pathname}?${createSearchParams({
+      ...searchParams,
+      offset: offset.toString(),
+    })}`;
+  };
+  const setLimit = (limit: number) => {
+    setSearchParams((searchParams) => {
+      searchParams.set('limit', limit.toString());
+      return searchParams;
+    });
+  };
+
+  const offset = parseInt(searchParams.get('offset') || '0');
+  const limit = parseInt(searchParams.get('limit') || '12');
   const workflowsQuery = useQuery({
     queryKey: ['workflows', { environmentId: currentEnvironment?._id, limit, offset }],
     queryFn: async () => {
@@ -154,10 +151,10 @@ export const WorkflowList = () => {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationStart href="#" onClick={() => setOffset(0)} />
+                        <PaginationStart to={pageFromOffset(0)} />
                       </PaginationItem>
                       <PaginationItem>
-                        <PaginationPrevious href="#" onClick={() => setOffset(Math.max(0, offset - limit))} />
+                        <PaginationPrevious to={pageFromOffset(Math.max(0, offset - limit))} />
                       </PaginationItem>
                       {(() => {
                         const currentPage = Math.floor(offset / limit) + 1;
@@ -170,9 +167,7 @@ export const WorkflowList = () => {
                         if (startPage > 1) {
                           pageItems.push(
                             <PaginationItem key={1}>
-                              <PaginationLink href="#" onClick={() => setOffset(0)}>
-                                1
-                              </PaginationLink>
+                              <PaginationLink to={pageFromOffset(0)}>1</PaginationLink>
                             </PaginationItem>
                           );
 
@@ -188,11 +183,7 @@ export const WorkflowList = () => {
                         for (let i = startPage; i <= endPage; i++) {
                           pageItems.push(
                             <PaginationItem key={i}>
-                              <PaginationLink
-                                href="#"
-                                isActive={i === currentPage}
-                                onClick={() => setOffset((i - 1) * limit)}
-                              >
+                              <PaginationLink to={pageFromOffset((i - 1) * limit)} isActive={i === currentPage}>
                                 {i}
                               </PaginationLink>
                             </PaginationItem>
@@ -210,7 +201,7 @@ export const WorkflowList = () => {
 
                           pageItems.push(
                             <PaginationItem key={totalPages}>
-                              <PaginationLink href="#" onClick={() => setOffset((totalPages - 1) * limit)}>
+                              <PaginationLink to={pageFromOffset((totalPages - 1) * limit)}>
                                 {totalPages}
                               </PaginationLink>
                             </PaginationItem>
@@ -219,23 +210,13 @@ export const WorkflowList = () => {
 
                         pageItems.push(
                           <PaginationItem>
-                            <PaginationNext
-                              href="#"
-                              onClick={() => {
-                                setOffset(Math.min(offset + limit, (totalPages - 1) * limit));
-                              }}
-                            />
+                            <PaginationNext to={pageFromOffset(Math.min(offset + limit, (totalPages - 1) * limit))} />
                           </PaginationItem>
                         );
 
                         pageItems.push(
                           <PaginationItem>
-                            <PaginationEnd
-                              href="#"
-                              onClick={() => {
-                                setOffset((totalPages - 1) * limit);
-                              }}
-                            />
+                            <PaginationEnd to={pageFromOffset((totalPages - 1) * limit)} />
                           </PaginationItem>
                         );
 
