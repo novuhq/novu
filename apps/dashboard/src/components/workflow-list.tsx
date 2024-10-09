@@ -1,16 +1,6 @@
 import { getV2 } from '@/api/api.client';
+import { DefaultPagination } from '@/components/default-pagination';
 import { Badge } from '@/components/primitives/badge';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationEnd,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationStart,
-} from '@/components/primitives/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
@@ -36,7 +26,7 @@ export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const pageFromOffset = (offset: number) => {
+  const hrefFromOffset = (offset: number) => {
     return `${location.pathname}?${createSearchParams({
       ...searchParams,
       offset: offset.toString(),
@@ -113,7 +103,7 @@ export const WorkflowList = () => {
                       )}
                       <TruncatedText text={workflow.name} />
                     </div>
-                    <span className="text-foreground-400 font-code block text-xs">{workflow._id}</span>
+                    <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
                   </TableCell>
                   <TableCell>
                     <WorkflowStatus status={workflow.status} />
@@ -148,91 +138,12 @@ export const WorkflowList = () => {
                   <Skeleton className="h-5 w-[20ch]" />
                 )}
                 {workflowsQuery.data ? (
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationStart to={pageFromOffset(0)} isDisabled={currentPage === 1} />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          to={pageFromOffset(Math.max(0, offset - limit))}
-                          isDisabled={currentPage === 1}
-                        />
-                      </PaginationItem>
-                      {(() => {
-                        const currentPage = Math.floor(offset / limit) + 1;
-                        const totalPages = Math.ceil(workflowsQuery.data.totalCount / limit);
-                        const startPage = Math.max(1, currentPage - 2);
-                        const endPage = Math.min(totalPages, currentPage + 2);
-
-                        const pageItems = [];
-
-                        if (startPage > 1) {
-                          pageItems.push(
-                            <PaginationItem key={1}>
-                              <PaginationLink to={pageFromOffset(0)}>1</PaginationLink>
-                            </PaginationItem>
-                          );
-
-                          if (startPage > 2) {
-                            pageItems.push(
-                              <PaginationItem>
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            );
-                          }
-                        }
-
-                        for (let i = startPage; i <= endPage; i++) {
-                          pageItems.push(
-                            <PaginationItem key={i}>
-                              <PaginationLink to={pageFromOffset((i - 1) * limit)} isActive={i === currentPage}>
-                                {i}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-
-                        if (endPage < totalPages) {
-                          if (endPage < totalPages - 1) {
-                            pageItems.push(
-                              <PaginationItem key="ellipsis-end">
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            );
-                          }
-
-                          pageItems.push(
-                            <PaginationItem key={totalPages}>
-                              <PaginationLink to={pageFromOffset((totalPages - 1) * limit)}>
-                                {totalPages}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-
-                        pageItems.push(
-                          <PaginationItem>
-                            <PaginationNext
-                              to={pageFromOffset(Math.min(offset + limit, (totalPages - 1) * limit))}
-                              isDisabled={currentPage === totalPages}
-                            />
-                          </PaginationItem>
-                        );
-
-                        pageItems.push(
-                          <PaginationItem>
-                            <PaginationEnd
-                              to={pageFromOffset((totalPages - 1) * limit)}
-                              isDisabled={currentPage === totalPages}
-                            />
-                          </PaginationItem>
-                        );
-
-                        return pageItems;
-                      })()}
-                    </PaginationContent>
-                  </Pagination>
+                  <DefaultPagination
+                    hrefFromOffset={hrefFromOffset}
+                    totalCount={workflowsQuery.data.totalCount}
+                    limit={limit}
+                    offset={offset}
+                  />
                 ) : (
                   <Skeleton className="h-5 w-32" />
                 )}
