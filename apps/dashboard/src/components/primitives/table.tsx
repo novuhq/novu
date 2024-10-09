@@ -75,7 +75,9 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
 TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => <td ref={ref} className={cn('p-2 align-middle', className)} {...props} />
+  ({ className, ...props }, ref) => (
+    <td ref={ref} className={cn('overflow-hidden p-2 align-middle', className)} {...props} />
+  )
 );
 TableCell.displayName = 'TableCell';
 
