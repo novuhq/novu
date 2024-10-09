@@ -136,9 +136,9 @@ const features: Feature[] = [
     label: 'Activity retention',
     isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.FREE]: { value: '30 days' },
+      [SupportedPlansEnum.BUSINESS]: { value: '90 days' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
@@ -219,9 +219,9 @@ const features: Feature[] = [
     label: 'Team members',
     isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Badge label="Coming soon" /> },
+      [SupportedPlansEnum.FREE]: { value: '3' },
+      [SupportedPlansEnum.BUSINESS]: { value: '50' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {

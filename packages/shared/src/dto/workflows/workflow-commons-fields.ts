@@ -23,7 +23,10 @@ export type ListWorkflowResponse = {
   totalCount: number;
 };
 
-export type WorkflowListResponseDto = Pick<WorkflowResponseDto, 'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id'> & {
+export type WorkflowListResponseDto = Pick<
+  WorkflowResponseDto,
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'status' | 'type' | 'origin'
+> & {
   stepTypeOverviews: StepTypeEnum[];
 };
 

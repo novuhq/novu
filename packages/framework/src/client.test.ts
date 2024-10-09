@@ -1244,7 +1244,7 @@ describe('Novu Client', () => {
       await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
     });
 
-    it('should sanitize the step result of all delivery channel step types', async () => {
+    it('should sanitize the step output of all channel step types by default', async () => {
       const script = `<script>alert('Hello there')</script>`;
 
       client.addWorkflows([
@@ -1274,8 +1274,83 @@ describe('Novu Client', () => {
       expect(executionResult.outputs.subject).toBe('Start of subject. ');
     });
 
-    it('should not sanitize the step result of custom step type', async () => {
+    it('should sanitize the step output of channel step types when `disableOutputSanitization: false`', async () => {
       const script = `<script>alert('Hello there')</script>`;
+
+      client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.email(
+            'send-email',
+            async () => ({
+              body: `Start of body. ${script}`,
+              subject: `Start of subject. ${script}`,
+            }),
+            {
+              disableOutputSanitization: false,
+            }
+          );
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.outputs).toBeDefined();
+      expect(executionResult.outputs.body).toBe('Start of body. ');
+      expect(executionResult.outputs.subject).toBe('Start of subject. ');
+    });
+
+    it('should NOT sanitize the step output of channel step type when `disableOutputSanitization: true`', async () => {
+      const link =
+        '/pipeline/Oee4d54-ca52-4d70-86b3-cd10a67b6810/requirements?requirementId=dc25a578-ecf1-4835-9310-2236f8244bd&commentId=e259b16b-68f9-43af-b252-fce68bc7cb2f';
+
+      client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.inApp(
+            'send-inapp',
+            async () => ({
+              body: `Start of body.`,
+              data: {
+                someVal: link,
+              },
+            }),
+            {
+              disableOutputSanitization: true,
+            }
+          );
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-inapp',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.outputs).toBeDefined();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((executionResult.outputs.data as any).someVal).toBe(link);
+    });
+
+    it('should not sanitize the step result of custom step type', async () => {
+      const script = `<script>alert('Hello there')</a>`;
 
       client.addWorkflows([
         workflow('test-workflow', async ({ step }) => {
