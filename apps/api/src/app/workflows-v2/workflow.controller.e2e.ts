@@ -16,6 +16,7 @@ import {
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { JsonSchema } from '@novu/framework';
+import slugify from 'slugify';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -147,7 +148,7 @@ describe('Workflow Controller E2E API Testing', () => {
       });
     });
 
-    it('should return  results without query', async () => {
+    it('should return results without query', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
       const listWorkflowResponse = await getAllAndValidate({
@@ -243,6 +244,10 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
+    triggerIdentifier: `${slugify(TEST_WORKFLOW_NAME + nameSuffix, {
+      lower: true,
+      strict: true,
+    })}`,
     description: 'This is a test workflow',
     active: true,
     tags: TEST_TAGS,
@@ -585,5 +590,13 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
     'type'
   ) as UpdateWorkflowDto;
 
-  return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
+  return {
+    ...updateRequest,
+    name: TEST_WORKFLOW_UPDATED_NAME,
+    triggerIdentifier: `${slugify(TEST_WORKFLOW_UPDATED_NAME, {
+      lower: true,
+      strict: true,
+    })}`,
+    steps,
+  };
 }

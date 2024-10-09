@@ -62,23 +62,7 @@ export class CreateWorkflow {
 
     this.validatePayload(command);
 
-    let triggerIdentifier: string;
-    if (command.type === WorkflowTypeEnum.BRIDGE)
-      /*
-       * Bridge workflows need to have the identifier preserved to ensure that
-       * the Framework-defined identifier is the source of truth.
-       */
-      triggerIdentifier = command.name;
-    else {
-      /**
-       * For non-bridge workflows, we use a slugified version of the workflow name
-       * as the trigger identifier to provide a better trigger DX.
-       */
-      triggerIdentifier = `${slugify(command.name, {
-        lower: true,
-        strict: true,
-      })}`;
-    }
+    const triggerIdentifier = this.generateTriggerIdentifier(command);
 
     const parentChangeId: string =
       NotificationTemplateRepository.createObjectId();
@@ -133,6 +117,32 @@ export class CreateWorkflow {
     }
 
     return storedWorkflow;
+  }
+
+  private generateTriggerIdentifier(command: CreateWorkflowCommand) {
+    if (command.triggerIdentifier) {
+      return command.triggerIdentifier;
+    }
+
+    let triggerIdentifier: string;
+    if (command.type === WorkflowTypeEnum.BRIDGE)
+      /*
+       * Bridge workflows need to have the identifier preserved to ensure that
+       * the Framework-defined identifier is the source of truth.
+       */
+      triggerIdentifier = command.name;
+    else {
+      /**
+       * For non-bridge workflows, we use a slugified version of the workflow name
+       * as the trigger identifier to provide a better trigger DX.
+       */
+      triggerIdentifier = `${slugify(command.name, {
+        lower: true,
+        strict: true,
+      })}`;
+    }
+
+    return triggerIdentifier;
   }
 
   private validatePayload(command: CreateWorkflowCommand) {

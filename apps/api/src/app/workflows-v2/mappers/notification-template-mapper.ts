@@ -31,6 +31,7 @@ export function toResponseWorkflowDto(
     preferences: preferencesDto,
     steps: getSteps(template, stepIdToControlValuesMap),
     name: template.name,
+    triggerIdentifier: template.triggers[0].identifier,
     description: template.description,
     origin: template.origin || WorkflowOriginEnum.NOVU_CLOUD,
     type: template.type || WorkflowTypeEnum.BRIDGE,
