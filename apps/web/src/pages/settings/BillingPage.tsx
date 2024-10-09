@@ -4,7 +4,7 @@ import { SettingsPageContainer } from './SettingsPageContainer';
 
 export const BillingPage: FC = () => {
   return (
-    <SettingsPageContainer title={'Billing'}>
+    <SettingsPageContainer title={'Plans & Billing'}>
       <BillingRoutes />
     </SettingsPageContainer>
   );
