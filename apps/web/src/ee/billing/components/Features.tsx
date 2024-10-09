@@ -116,7 +116,7 @@ const features: Feature[] = [
   },
   {
     label: 'Total workflows',
-    isContrast: false,
+    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
