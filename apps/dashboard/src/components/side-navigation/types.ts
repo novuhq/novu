@@ -1,6 +1,7 @@
 export type NavItem = {
   label: string;
   icon: (...args: any[]) => JSX.Element;
+  modal?: (...args: any[]) => JSX.Element;
   to?: string;
   disabled?: boolean;
   isExternal?: boolean;

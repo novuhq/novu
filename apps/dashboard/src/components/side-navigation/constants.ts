@@ -11,6 +11,7 @@ import {
 import type { IEnvironment } from '@novu/shared';
 import { NavItemsGroup } from './types';
 import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
+import { SubscribersStayTunedModal } from './subscribers-stay-tuned-modal';
 
 export const buildNavigationItems = ({
   currentEnvironment,
@@ -28,9 +29,7 @@ export const buildNavigationItems = ({
         {
           label: 'Subscribers',
           icon: RiGroup2Line,
-          isExternal: true,
-          to: 'https://docs.novu.co/api-reference/subscribers/get-subscribers',
-          disabled: true,
+          modal: SubscribersStayTunedModal,
         },
       ],
     },

@@ -11,7 +11,7 @@ import { NavItemsGroup, NavItem } from './types';
 import { FreeTrialCard } from './free-trial-card';
 
 const linkVariants = cva(
-  `flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring `,
+  `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer`,
   {
     variants: {
       variant: {
@@ -28,14 +28,22 @@ const linkVariants = cva(
 
 type NavLinkProps = {
   to?: string;
+  modal?: (...args: any[]) => JSX.Element;
   isExternal?: boolean;
   className?: string;
   children: React.ReactNode;
 } & VariantProps<typeof linkVariants>;
 
-const NavLink = ({ to, isExternal, className, variant, children }: NavLinkProps) => {
+const NavLink = ({ to, isExternal, className, variant, modal: Modal, children }: NavLinkProps) => {
   const classNames = cn(linkVariants({ variant, className }));
   if (!to) {
+    if (Modal) {
+      return (
+        <Modal>
+          <span className={classNames}>{children}</span>
+        </Modal>
+      );
+    }
     return <span className={classNames}>{children}</span>;
   }
 
@@ -59,13 +67,13 @@ const NavLink = ({ to, isExternal, className, variant, children }: NavLinkProps)
 };
 
 const NavigationItem = ({ item }: { item: NavItem }) => {
-  const { label, to, icon: Icon, disabled, isExternal } = item;
+  const { label, to, icon: Icon, disabled, isExternal, modal } = item;
   const { pathname } = useLocation();
   const isSelected = pathname === to;
   const variant = disabled ? 'disabled' : isSelected ? 'selected' : 'default';
 
   return (
-    <NavLink to={to} isExternal={isExternal} variant={variant}>
+    <NavLink to={to} modal={modal} isExternal={isExternal} variant={variant}>
       <Icon className="size-4" />
       <span>{label}</span>
       {disabled && (
@@ -80,7 +88,7 @@ const NavigationItem = ({ item }: { item: NavItem }) => {
 const NavigationItemsGroup = ({ group }: { group: NavItemsGroup }) => {
   return (
     <div className="flex flex-col last:mt-auto">
-      {!!group.label && <span className="text-foreground-400 px-2 py-1 text-xs uppercase">{group.label}</span>}
+      {!!group.label && <span className="text-foreground-400 px-2 py-1 text-sm">{group.label}</span>}
       {group.items.map((item, idx) => (
         <NavigationItem key={`${item.label}_${idx}`} item={item} />
       ))}
