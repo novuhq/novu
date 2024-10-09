@@ -15,8 +15,8 @@ const tooltipContentVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground',
-        light: 'border border-stroke/20 bg-background shadow-xs',
+        default: 'bg-neutral-950 text-foreground-0',
+        light: 'border border-neutral-alpha-400 bg-background shadow-xs',
       },
       size: {
         default: 'rounded-md',
@@ -26,6 +26,7 @@ const tooltipContentVariants = cva(
       },
     },
     defaultVariants: {
+      size: 'default',
       variant: 'default',
     },
   }
