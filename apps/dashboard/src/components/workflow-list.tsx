@@ -151,10 +151,13 @@ export const WorkflowList = () => {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationStart to={pageFromOffset(0)} />
+                        <PaginationStart to={pageFromOffset(0)} isDisabled={currentPage === 1} />
                       </PaginationItem>
                       <PaginationItem>
-                        <PaginationPrevious to={pageFromOffset(Math.max(0, offset - limit))} />
+                        <PaginationPrevious
+                          to={pageFromOffset(Math.max(0, offset - limit))}
+                          isDisabled={currentPage === 1}
+                        />
                       </PaginationItem>
                       {(() => {
                         const currentPage = Math.floor(offset / limit) + 1;
@@ -210,13 +213,19 @@ export const WorkflowList = () => {
 
                         pageItems.push(
                           <PaginationItem>
-                            <PaginationNext to={pageFromOffset(Math.min(offset + limit, (totalPages - 1) * limit))} />
+                            <PaginationNext
+                              to={pageFromOffset(Math.min(offset + limit, (totalPages - 1) * limit))}
+                              isDisabled={currentPage === totalPages}
+                            />
                           </PaginationItem>
                         );
 
                         pageItems.push(
                           <PaginationItem>
-                            <PaginationEnd to={pageFromOffset((totalPages - 1) * limit)} />
+                            <PaginationEnd
+                              to={pageFromOffset((totalPages - 1) * limit)}
+                              isDisabled={currentPage === totalPages}
+                            />
                           </PaginationItem>
                         );
 

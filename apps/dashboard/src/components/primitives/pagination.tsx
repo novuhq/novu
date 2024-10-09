@@ -35,10 +35,11 @@ PaginationItem.displayName = 'PaginationItem';
 
 type PaginationLinkProps = {
   isActive?: boolean;
+  isDisabled?: boolean;
 } & Pick<ButtonProps, 'size'> &
   LinkProps;
 
-const PaginationLink = ({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) => (
+const PaginationLink = ({ className, isActive, isDisabled, size = 'icon', ...props }: PaginationLinkProps) => (
   <Link
     aria-current={isActive ? 'page' : undefined}
     className={cn(
@@ -47,6 +48,7 @@ const PaginationLink = ({ className, isActive, size = 'icon', ...props }: Pagina
         size,
       }),
       { 'bg-neutral-50': isActive },
+      { 'pointer-events-none cursor-default opacity-50': isDisabled },
       'rounded-none',
       className
     )}
