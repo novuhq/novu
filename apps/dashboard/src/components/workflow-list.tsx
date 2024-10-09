@@ -1,6 +1,7 @@
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
 import { Badge } from '@/components/primitives/badge';
+import { Button, buttonVariants } from '@/components/primitives/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
@@ -13,14 +14,17 @@ import {
   TableRow,
 } from '@/components/primitives/table';
 import TruncatedText from '@/components/truncated-text';
+import { WorkflowCloud } from '@/components/workflow-cloud';
 import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
 import { ListWorkflowResponse, WorkflowOriginEnum } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FaCode } from 'react-icons/fa6';
-import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
+import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
+import { RiRouteFill } from 'react-icons/ri';
+import { RiBookMarkedLine } from 'react-icons/ri';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
@@ -47,16 +51,48 @@ export const WorkflowList = () => {
       const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?limit=${limit}&offset=${offset}`);
       return data;
     },
+    placeholderData: keepPreviousData,
   });
   const currentPage = Math.floor(offset / limit) + 1;
 
-  if (!workflowsQuery.isLoading && !workflowsQuery.data) {
+  if (workflowsQuery.isError) {
     return null;
+  }
+
+  if (!workflowsQuery.isPending && workflowsQuery.data.totalCount === 0) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-6">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <WorkflowCloud className="drop-shadow" />
+          <span className="text-foreground-900 block font-medium">
+            No workflows exist, create workflows to orchestrate notifications
+          </span>
+          <p className="text-foreground-600 max-w-[55ch] text-sm">
+            Workflows in Novu handle event-driven notifications across multiple channels in a single, version-controlled
+            flow, with the ability to manage preference for each subscriber.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-6">
+          <Link
+            to={'https://docs.novu.co/concepts/workflows'}
+            className={buttonVariants({ variant: 'link', className: 'text-foreground-600 gap-1' })}
+          >
+            <RiBookMarkedLine className="size-4" />
+            View docs
+          </Link>
+          <Button variant="primary" className="gap-2">
+            <RiRouteFill className="size-5" />
+            Create workflow
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex h-full flex-col px-6 py-2">
-      <Table containerClassname="overflow-auto">
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Workflows</TableHead>
@@ -67,7 +103,7 @@ export const WorkflowList = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {workflowsQuery.isLoading ? (
+          {workflowsQuery.isPending ? (
             <>
               {new Array(limit).fill(0).map((_, index) => (
                 <TableRow key={index}>
@@ -126,39 +162,41 @@ export const WorkflowList = () => {
             </>
           )}
         </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={5}>
-              <div className="flex items-center justify-between">
-                {workflowsQuery.data ? (
-                  <span className="text-foreground-600 block text-sm font-normal">
-                    Page {currentPage} of {Math.ceil(workflowsQuery.data.totalCount / limit)}
-                  </span>
-                ) : (
-                  <Skeleton className="h-5 w-[20ch]" />
-                )}
-                {workflowsQuery.data ? (
-                  <DefaultPagination
-                    hrefFromOffset={hrefFromOffset}
-                    totalCount={workflowsQuery.data.totalCount}
-                    limit={limit}
-                    offset={offset}
-                  />
-                ) : (
-                  <Skeleton className="h-5 w-32" />
-                )}
-                <Select onValueChange={(v) => setLimit(parseInt(v))} defaultValue={limit.toString()}>
-                  <SelectTrigger className="w-fit">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="12">12 / page</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </TableCell>
-          </TableRow>
-        </TableFooter>
+        {workflowsQuery.data && limit < workflowsQuery.data.totalCount && (
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={5}>
+                <div className="flex items-center justify-between">
+                  {workflowsQuery.data ? (
+                    <span className="text-foreground-600 block text-sm font-normal">
+                      Page {currentPage} of {Math.ceil(workflowsQuery.data.totalCount / limit)}
+                    </span>
+                  ) : (
+                    <Skeleton className="h-5 w-[20ch]" />
+                  )}
+                  {workflowsQuery.data ? (
+                    <DefaultPagination
+                      hrefFromOffset={hrefFromOffset}
+                      totalCount={workflowsQuery.data.totalCount}
+                      limit={limit}
+                      offset={offset}
+                    />
+                  ) : (
+                    <Skeleton className="h-5 w-32" />
+                  )}
+                  <Select onValueChange={(v) => setLimit(parseInt(v))} defaultValue={limit.toString()}>
+                    <SelectTrigger className="w-fit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12">12 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableFooter>
+        )}
       </Table>
     </div>
   );

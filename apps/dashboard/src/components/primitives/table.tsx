@@ -9,13 +9,13 @@ const Table = React.forwardRef<
 >(({ className, containerClassname, ...props }, ref) => (
   <div
     className={cn(
-      'border-neutral-alpha-200 relative w-full overflow-x-auto rounded-lg border shadow-sm',
+      'border-neutral-alpha-200 relative w-full overflow-x-auto rounded-md border shadow-sm',
       containerClassname
     )}
   >
     <table
       ref={ref}
-      className={cn('relative w-full table-fixed caption-bottom border-separate border-spacing-0 text-sm', className)}
+      className={cn('relative w-full caption-bottom border-separate border-spacing-0 text-sm', className)}
       {...props}
     />
   </div>
@@ -65,7 +65,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        'text-foreground-600 h-10 px-2 text-left align-middle text-xs font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        'text-foreground-600 h-10 px-2 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         className
       )}
       {...props}
@@ -75,17 +75,8 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
 TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn('overflow-hidden p-2 align-middle', className)} {...props} />
-  )
+  ({ className, ...props }, ref) => <td ref={ref} className={cn('px-6 py-2 align-middle', className)} {...props} />
 );
 TableCell.displayName = 'TableCell';
 
-const TableCaption = React.forwardRef<HTMLTableCaptionElement, React.HTMLAttributes<HTMLTableCaptionElement>>(
-  ({ className, ...props }, ref) => (
-    <caption ref={ref} className={cn('text-foreground/50 mt-4 text-sm', className)} {...props} />
-  )
-);
-TableCaption.displayName = 'TableCaption';
-
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell };

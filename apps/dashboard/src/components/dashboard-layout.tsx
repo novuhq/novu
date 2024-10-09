@@ -5,9 +5,9 @@ import { SideNavigation } from './side-navigation';
 
 export const DashboardLayout = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="relative flex h-screen w-full">
+    <div className="relative flex w-full">
       <SideNavigation />
-      <div className="flex min-h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <div className="bg-background flex h-16 w-full items-center justify-between border-b p-4">
           <a
             href="/legacy/integrations"
@@ -22,7 +22,7 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
-        <div className="overflow-y-auto overflow-x-hidden">{children}</div>
+        <div className="flex min-h-[calc(100dvh-4rem)] flex-col overflow-y-auto overflow-x-hidden">{children}</div>
       </div>
     </div>
   );
