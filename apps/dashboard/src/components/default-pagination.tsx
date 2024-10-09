@@ -28,7 +28,7 @@ export const DefaultPagination = (props: DefaultPaginationProps) => {
     <Pagination>
       <PaginationContent>
         <PaginationItem>
-          <PaginationStart to={hrefFromOffset(0)} isDisabled={currentPage === 1} />
+          <PaginationStart to={hrefFromOffset(0)} />
         </PaginationItem>
         <PaginationItem>
           <PaginationPrevious to={hrefFromOffset(Math.max(0, offset - limit))} isDisabled={currentPage === 1} />
@@ -45,7 +45,7 @@ export const DefaultPagination = (props: DefaultPaginationProps) => {
 
             if (startPage > 2) {
               pageItems.push(
-                <PaginationItem>
+                <PaginationItem key="ellipsis">
                   <PaginationEllipsis />
                 </PaginationItem>
               );
@@ -79,7 +79,7 @@ export const DefaultPagination = (props: DefaultPaginationProps) => {
           }
 
           pageItems.push(
-            <PaginationItem>
+            <PaginationItem key="next">
               <PaginationNext
                 to={hrefFromOffset(Math.min(offset + limit, (totalPages - 1) * limit))}
                 isDisabled={currentPage === totalPages}
@@ -88,7 +88,7 @@ export const DefaultPagination = (props: DefaultPaginationProps) => {
           );
 
           pageItems.push(
-            <PaginationItem>
+            <PaginationItem key="end">
               <PaginationEnd to={hrefFromOffset((totalPages - 1) * limit)} isDisabled={currentPage === totalPages} />
             </PaginationItem>
           );
