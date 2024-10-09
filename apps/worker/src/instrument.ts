@@ -1,4 +1,4 @@
-import { init } from '@sentry/node';
+import { init } from '@sentry/nestjs';
 import { version } from '../package.json';
 
 if (process.env.SENTRY_DSN) {
