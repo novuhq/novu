@@ -8,8 +8,6 @@ import {
 import { CronExpressionEnum } from '@novu/shared';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { checkingForCronJob } from '../../shared/utils';
-
 const nr = require('newrelic');
 
 const LOG_CONTEXT = 'ActiveJobMetricService';
