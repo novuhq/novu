@@ -5,7 +5,7 @@
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "module": "commonjs",
+    "module": "Node16",
     "moduleResolution": "Node16",
     "skipLibCheck": true,
     "sourceMap": true,
