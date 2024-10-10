@@ -5,9 +5,8 @@ import {
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
+import { CronExpressionEnum } from '@novu/shared';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
-import { checkingForCronJob } from '../../shared/utils';
 
 const nr = require('newrelic');
 
@@ -26,7 +25,6 @@ export class ActiveJobsMetricService {
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
       this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
-        await checkingForCronJob(process.env.ACTIVE_CRON_ID);
         Logger.log({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
       });
 
@@ -66,7 +64,7 @@ export class ActiveJobsMetricService {
               repeatJobKey: METRIC_JOB_ID,
               repeat: {
                 immediately: true,
-                pattern: '* * * * * *',
+                pattern: CronExpressionEnum.EVERY_30_SECONDS,
               },
               removeOnFail: true,
               removeOnComplete: true,

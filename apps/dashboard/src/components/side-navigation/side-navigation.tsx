@@ -6,7 +6,7 @@ import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
-import { navigationItems } from './constants';
+import { buildNavigationItems } from './constants';
 import { NavItemsGroup, NavItem } from './types';
 import { FreeTrialCard } from './free-trial-card';
 
@@ -91,7 +91,12 @@ const NavigationItemsGroup = ({ group }: { group: NavItemsGroup }) => {
 export const SideNavigation = () => {
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const environmentNames = useMemo(() => environments?.map((env) => env.name), [environments]);
-  const onEnvironmentChange = (value: string) => switchEnvironment(value);
+  const onEnvironmentChange = (value: string) => {
+    const environment = environments?.find((env) => env.name === value);
+    switchEnvironment(environment?._id);
+  };
+
+  const navigationItems = useMemo(() => buildNavigationItems({ currentEnvironment }), [currentEnvironment]);
 
   return (
     <aside className="bg-neutral-alpha-50 relative flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">

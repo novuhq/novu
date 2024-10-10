@@ -27,19 +27,18 @@ type PlanHighlights = {
 const highlights: PlanHighlights = {
   [ApiServiceLevelEnum.FREE]: [
     { text: 'Up to 30,000 events per month' },
+    { text: '3 teammates' },
     { text: '7 days activity feed' },
-    { text: '3 teammates', badgeLabel: 'Coming soon' },
   ],
   [ApiServiceLevelEnum.BUSINESS]: [
     { text: 'Up to 250,000 events per month' },
-    { text: '90 days activity feed', badgeLabel: 'Coming soon' },
-    { text: '50 teammates', badgeLabel: 'Coming soon' },
+    { text: '50 teammates' },
+    { text: '90 days activity feed' },
     { text: 'RBAC', badgeLabel: 'Coming soon' },
   ],
   [ApiServiceLevelEnum.ENTERPRISE]: [
     { text: 'Up to 5,000,000 events per month' },
-    { text: 'Custom time activity feed', badgeLabel: 'Coming soon' },
-    { text: 'Unlimited teammates', badgeLabel: 'Coming soon' },
+    { text: 'Unlimited teammates' },
     { text: 'SAML SSO' },
     { text: 'RBAC', badgeLabel: 'Coming soon' },
   ],
