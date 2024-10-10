@@ -18,7 +18,7 @@ const stepVariants = cva(
         destructive: 'border-destructive/30 bg-neutral-50 text-destructive/30',
       },
       size: {
-        default: 'p-2 [&>svg]:size-3.5',
+        default: 'p-1 [&>svg]:size-3.5',
       },
     },
     defaultVariants: {

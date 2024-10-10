@@ -23,7 +23,9 @@ export const useFetchEnvironments = ({ organizationId }: { organizationId?: stri
     data: environments,
     isInitialLoading: areEnvironmentsInitialLoading,
     refetch: refetchEnvironments,
-  } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, organizationId], getEnvironments, {
+  } = useQuery<IEnvironment[]>({
+    queryKey: [QueryKeys.myEnvironments, organizationId],
+    queryFn: getEnvironments,
     enabled: !!organizationId,
     retry: false,
     staleTime: Infinity,

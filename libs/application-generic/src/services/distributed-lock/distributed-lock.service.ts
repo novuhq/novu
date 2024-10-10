@@ -63,7 +63,7 @@ export class DistributedLockService {
        * when an "error" event is emitted in the absence of listeners.
        */
       this.distributedLock.on('error', (error) => {
-        Logger.error(
+        Logger.verbose(
           error,
           'There has been an error in the Distributed Lock service',
           LOG_CONTEXT,

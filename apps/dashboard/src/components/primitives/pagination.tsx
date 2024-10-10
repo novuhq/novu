@@ -9,6 +9,7 @@ import {
 
 import { cn } from '@/utils/ui';
 import { ButtonProps, buttonVariants } from '@/components/primitives/button';
+import { Link, LinkProps } from 'react-router-dom';
 
 const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
   <nav
@@ -34,17 +35,20 @@ PaginationItem.displayName = 'PaginationItem';
 
 type PaginationLinkProps = {
   isActive?: boolean;
+  isDisabled?: boolean;
 } & Pick<ButtonProps, 'size'> &
-  React.ComponentProps<'a'>;
+  LinkProps;
 
-const PaginationLink = ({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) => (
-  <a
+const PaginationLink = ({ className, isActive, isDisabled, size = 'icon', ...props }: PaginationLinkProps) => (
+  <Link
     aria-current={isActive ? 'page' : undefined}
     className={cn(
       buttonVariants({
         variant: 'ghost',
         size,
       }),
+      { 'bg-neutral-50': isActive },
+      { 'pointer-events-none cursor-default opacity-50': isDisabled },
       'rounded-none',
       className
     )}
