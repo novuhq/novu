@@ -16,7 +16,7 @@ import {
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { JsonSchema } from '@novu/framework';
-import slugify from 'slugify';
+import { slugifyIdentifier } from '@novu/application-generic';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -244,10 +244,7 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
-    triggerIdentifier: `${slugify(TEST_WORKFLOW_NAME + nameSuffix, {
-      lower: true,
-      strict: true,
-    })}`,
+    triggerIdentifier: `${slugifyIdentifier(TEST_WORKFLOW_NAME + nameSuffix)}`,
     description: 'This is a test workflow',
     active: true,
     tags: TEST_TAGS,
@@ -593,10 +590,7 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
   return {
     ...updateRequest,
     name: TEST_WORKFLOW_UPDATED_NAME,
-    triggerIdentifier: `${slugify(TEST_WORKFLOW_UPDATED_NAME, {
-      lower: true,
-      strict: true,
-    })}`,
+    triggerIdentifier: `${slugifyIdentifier(TEST_WORKFLOW_UPDATED_NAME)}`,
     steps,
   };
 }

@@ -7,7 +7,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import slugify from 'slugify';
 import shortid from 'shortid';
 
 import {
@@ -43,6 +42,7 @@ import {
   CreateMessageTemplateCommand,
 } from '../message-template';
 import { ApiException, PlatformException } from '../../utils/exceptions';
+import { slugifyIdentifier } from '../../utils';
 
 @Injectable()
 export class CreateWorkflow {
@@ -137,10 +137,9 @@ export class CreateWorkflow {
        * For non-bridge workflows, we use a slugified version of the workflow name
        * as the trigger identifier to provide a better trigger DX.
        */
-      triggerIdentifier = `${slugify(command.name, {
-        lower: true,
-        strict: true,
-      })}`;
+      triggerIdentifier = `${slugifyIdentifier(
+        command.name,
+      )}-${shortid.generate()}`;
     }
 
     return triggerIdentifier;

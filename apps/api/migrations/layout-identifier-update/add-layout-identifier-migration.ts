@@ -1,9 +1,9 @@
 // August 14th, 2023
 
 import shortid from 'shortid';
-import slugify from 'slugify';
 
 import { LayoutRepository, OrganizationRepository } from '@novu/dal';
+import { slugifyIdentifier } from '@novu/application-generic';
 
 export async function addLayoutIdentifierMigration() {
   // eslint-disable-next-line no-console
@@ -27,7 +27,7 @@ export async function addLayoutIdentifierMigration() {
     const bulkWriteOps = layouts
       .map((layout) => {
         const { _id, name } = layout;
-        const identifier = `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`;
+        const identifier = `${slugifyIdentifier(name)}-${shortid.generate()}`;
 
         return [
           {
