@@ -1,17 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { IEnvironment } from '@novu/shared';
 import { useFetchEnvironments } from './hooks';
 import { useAuth } from '../auth';
 import { EnvironmentContext } from './environment-context';
 import { getEnvironmentId, saveEnvironmentId } from '@/utils/environment';
 import { BaseEnvironmentEnum } from '@/utils/types';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
-function selectEnvironment(environments?: IEnvironment[], selectedEnvironmentId?: string | null) {
-  if (!environments) {
-    return null;
-  }
-
+function selectEnvironment(environments: IEnvironment[], selectedEnvironmentId?: string | null) {
   let environment: IEnvironment | undefined;
 
   // Find the environment based on the current user's last environment
@@ -35,18 +32,51 @@ function selectEnvironment(environments?: IEnvironment[], selectedEnvironmentId?
 
 export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
   const { currentOrganization } = useAuth();
-  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment | null>(null);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { environmentId: paramsEnvironmentId } = useParams<{ environmentId?: string }>();
+  const [currentEnvironment, setCurrentEnvironment] = useState<IEnvironment>();
+
+  const switchEnvironmentInternal = useCallback(
+    (allEnvironments: IEnvironment[], environmentId?: string | null) => {
+      const selectedEnvironment = selectEnvironment(allEnvironments, environmentId);
+      setCurrentEnvironment(selectedEnvironment);
+      const newEnvironmentId = selectedEnvironment._id;
+      const isNewEnvironmentDifferent = paramsEnvironmentId !== selectedEnvironment._id;
+
+      if (pathname === ROUTES.ROOT || pathname === ROUTES.ENV || pathname === `${ROUTES.ENV}/`) {
+        navigate(buildRoute(ROUTES.WORKFLOWS, { environmentId: newEnvironmentId }));
+      } else if (pathname.includes(ROUTES.ENV) && isNewEnvironmentDifferent) {
+        const newPath = pathname.replace(/\/env\/[^/]+(\/|$)/, `${ROUTES.ENV}/${newEnvironmentId}$1`);
+        navigate(newPath);
+      }
+    },
+    [navigate, pathname, paramsEnvironmentId]
+  );
 
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({
     organizationId: currentOrganization?._id,
-    onSuccess: (environments) => {
-      flushSync(() => setCurrentEnvironment(selectEnvironment(environments, getEnvironmentId())));
-    },
   });
 
-  const switchEnvironment = useCallback(() => {
-    // TODO: in the next PR
-  }, []);
+  useLayoutEffect(() => {
+    if (!environments) {
+      return;
+    }
+
+    const environmentId = paramsEnvironmentId ?? getEnvironmentId();
+    switchEnvironmentInternal(environments, environmentId);
+  }, [paramsEnvironmentId, environments, switchEnvironmentInternal]);
+
+  const switchEnvironment = useCallback(
+    (newEnvironmentId?: string) => {
+      if (!environments) {
+        return;
+      }
+
+      switchEnvironmentInternal(environments, newEnvironmentId);
+    },
+    [switchEnvironmentInternal, environments]
+  );
 
   const value = useMemo(
     () => ({

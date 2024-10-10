@@ -13,13 +13,7 @@ export function useEnvironment() {
   };
 }
 
-export const useFetchEnvironments = ({
-  organizationId,
-  onSuccess,
-}: {
-  organizationId?: string;
-  onSuccess?: (args: IEnvironment[]) => void;
-}) => {
+export const useFetchEnvironments = ({ organizationId }: { organizationId?: string }) => {
   /*
    * Loading environments depends on the current organization. Fetching should start only when the current
    * organization is set and it should happens once, on full page reload, until the cache is invalidated on-demand
@@ -29,11 +23,12 @@ export const useFetchEnvironments = ({
     data: environments,
     isInitialLoading: areEnvironmentsInitialLoading,
     refetch: refetchEnvironments,
-  } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments, organizationId], getEnvironments, {
+  } = useQuery<IEnvironment[]>({
+    queryKey: [QueryKeys.myEnvironments, organizationId],
+    queryFn: getEnvironments,
     enabled: !!organizationId,
     retry: false,
     staleTime: Infinity,
-    onSuccess,
   });
 
   return {

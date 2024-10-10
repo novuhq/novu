@@ -16,9 +16,7 @@ npm install @novu/react-native
 - Add the below code in the app.tsx file
 
 ```jsx
-import { NovuProvider } from '@novu/react-native';
-
-import { useNotifications } from '@novu/react';
+import { NovuProvider, useNotifications } from '@novu/react-native';
 
 function YourCustomInbox() {
   const { notifications, isLoading, fetchMore, hasMore } = useNotifications();

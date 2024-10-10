@@ -1,4 +1,4 @@
-import { WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import { WorkflowTypeEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -25,10 +25,6 @@ const variantSchemePart = {
   type: {
     type: Schema.Types.String,
     default: WorkflowTypeEnum.REGULAR,
-  },
-  origin: {
-    type: Schema.Types.String,
-    default: WorkflowOriginEnum.NOVU_CLOUD,
   },
   filters: [
     {
@@ -200,6 +196,9 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
         type: Schema.Types.Boolean,
         default: true,
       },
+    },
+    origin: {
+      type: Schema.Types.String,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,

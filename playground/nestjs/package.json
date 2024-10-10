@@ -1,0 +1,46 @@
+{
+  "name": "nestjs",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "dev:debug": "nest start --debug --watch",
+    "start": "node dist/main",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "lint:fix": "pnpm lint --fix",
+    "test": "vitest",
+    "test:debug": "vitest --inspect-brk --no-file-parallelism"
+  },
+  "dependencies": {
+    "@nestjs/common": "10.4.1",
+    "@nestjs/config": "^3.2.3",
+    "@nestjs/core": "10.4.1",
+    "@nestjs/platform-express": "10.4.1",
+    "@novu/framework": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "10.4.5",
+    "@nestjs/schematics": "10.1.4",
+    "@nestjs/testing": "10.4.1",
+    "@swc/core": "^1.7.26",
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.3.1",
+    "@types/supertest": "^6.0.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "5.6.2",
+    "unplugin-swc": "^1.5.1",
+    "vitest": "^2.1.2"
+  }
+}

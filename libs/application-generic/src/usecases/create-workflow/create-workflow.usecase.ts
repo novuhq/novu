@@ -28,6 +28,7 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 
+import { PinoLogger } from 'nestjs-pino';
 import {
   CreateWorkflowCommand,
   NotificationStep,
@@ -53,13 +54,13 @@ export class CreateWorkflow {
     private createChange: CreateChange,
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
+    private logger: PinoLogger,
     protected moduleRef: ModuleRef,
   ) {}
 
   async execute(usecaseCommand: CreateWorkflowCommand) {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
-
     this.validatePayload(command);
 
     const triggerIdentifier = this.generateTriggerIdentifier(command);
@@ -254,6 +255,8 @@ export class CreateWorkflow {
     trigger: INotificationTrigger,
     triggerIdentifier: string,
   ) {
+    this.logger.info(`Creating workflow ${JSON.stringify(command)}`);
+
     const savedWorkflow = await this.notificationTemplateRepository.create({
       _organizationId: command.organizationId,
       _creatorId: command.userId,

@@ -1,6 +1,9 @@
-import { ROUTES } from '@/utils/routes';
 import { Navigate } from 'react-router-dom';
+import { getEnvironmentId } from '@/utils/environment';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 export const CatchAllRoute = () => {
-  return <Navigate to={ROUTES.WORKFLOWS} />;
+  const environmentId = getEnvironmentId();
+
+  return <Navigate to={environmentId ? buildRoute(ROUTES.WORKFLOWS, { environmentId }) : ROUTES.ENV} />;
 };
