@@ -1,14 +1,23 @@
-import { useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { cva, VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
+import {
+  RiBarChartBoxLine,
+  RiGroup2Line,
+  RiKey2Line,
+  RiPaintBrushLine,
+  RiRouteFill,
+  RiSettings4Line,
+  RiStore3Line,
+  RiUserAddLine,
+} from 'react-icons/ri';
 import { cn } from '@/utils/ui';
-import { Badge } from '../primitives/badge';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { useEnvironment } from '@/context/environment/hooks';
 import { OrganizationDropdown } from './organization-dropdown';
-import { buildNavigationItems } from './constants';
-import { NavItemsGroup, NavItem } from './types';
 import { FreeTrialCard } from './free-trial-card';
+import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
+import { SubscribersStayTunedModal } from './subscribers-stay-tuned-modal';
 
 const linkVariants = cva(
   `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer`,
@@ -28,22 +37,18 @@ const linkVariants = cva(
 
 type NavLinkProps = {
   to?: string;
-  modal?: (...args: any[]) => JSX.Element;
   isExternal?: boolean;
   className?: string;
   children: React.ReactNode;
-} & VariantProps<typeof linkVariants>;
+};
 
-const NavLink = ({ to, isExternal, className, variant, modal: Modal, children }: NavLinkProps) => {
+const NavigationLink = ({ to, isExternal, className, children }: NavLinkProps) => {
+  const { pathname } = useLocation();
+  const isSelected = pathname === to;
+  const variant = isSelected ? 'selected' : 'default';
+
   const classNames = cn(linkVariants({ variant, className }));
   if (!to) {
-    if (Modal) {
-      return (
-        <Modal>
-          <span className={classNames}>{children}</span>
-        </Modal>
-      );
-    }
     return <span className={classNames}>{children}</span>;
   }
 
@@ -66,32 +71,11 @@ const NavLink = ({ to, isExternal, className, variant, modal: Modal, children }:
   );
 };
 
-const NavigationItem = ({ item }: { item: NavItem }) => {
-  const { label, to, icon: Icon, disabled, isExternal, modal } = item;
-  const { pathname } = useLocation();
-  const isSelected = pathname === to;
-  const variant = disabled ? 'disabled' : isSelected ? 'selected' : 'default';
-
-  return (
-    <NavLink to={to} modal={modal} isExternal={isExternal} variant={variant}>
-      <Icon className="size-4" />
-      <span>{label}</span>
-      {disabled && (
-        <Badge className="text-foreground-300 ml-auto" kind="pill">
-          soon
-        </Badge>
-      )}
-    </NavLink>
-  );
-};
-
-const NavigationItemsGroup = ({ group }: { group: NavItemsGroup }) => {
+const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
     <div className="flex flex-col last:mt-auto">
-      {!!group.label && <span className="text-foreground-400 px-2 py-1 text-sm">{group.label}</span>}
-      {group.items.map((item, idx) => (
-        <NavigationItem key={`${item.label}_${idx}`} item={item} />
-      ))}
+      {!!label && <span className="text-foreground-400 px-2 py-1 text-sm">{label}</span>}
+      {children}
     </div>
   );
 };
@@ -104,17 +88,58 @@ export const SideNavigation = () => {
     switchEnvironment(environment?._id);
   };
 
-  const navigationItems = useMemo(() => buildNavigationItems({ currentEnvironment }), [currentEnvironment]);
-
   return (
     <aside className="bg-neutral-alpha-50 relative flex w-[275px] flex-shrink-0 flex-col gap-3 px-2 pb-3 pt-1.5">
       <FreeTrialCard />
       <OrganizationDropdown />
       <EnvironmentDropdown value={currentEnvironment?.name} data={environmentNames} onChange={onEnvironmentChange} />
       <nav className="flex flex-1 flex-col gap-4">
-        {navigationItems.map((group, idx) => (
-          <NavigationItemsGroup key={`${group.label}_${idx}`} group={group} />
-        ))}
+        <NavigationGroup>
+          <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' })}>
+            <RiRouteFill className="size-4" />
+            <span>Workflows</span>
+          </NavigationLink>
+          <SubscribersStayTunedModal>
+            <span>
+              <NavigationLink>
+                <RiGroup2Line className="size-4" />
+                <span>Subscribers</span>
+              </NavigationLink>
+            </span>
+          </SubscribersStayTunedModal>
+        </NavigationGroup>
+        <NavigationGroup label="Monitor">
+          <NavigationLink to={LEGACY_ROUTES.ACTIVITY_FEED} isExternal>
+            <RiBarChartBoxLine className="size-4" />
+            <span>Activity Feed</span>
+          </NavigationLink>
+        </NavigationGroup>
+        <NavigationGroup label="Developer">
+          <NavigationLink to={LEGACY_ROUTES.INTEGRATIONS} isExternal>
+            <RiStore3Line className="size-4" />
+            <span>Integration Store</span>
+          </NavigationLink>
+          <NavigationLink to={LEGACY_ROUTES.API_KEYS} isExternal>
+            <RiKey2Line className="size-4" />
+            <span>API Keys</span>
+          </NavigationLink>
+        </NavigationGroup>
+        <NavigationGroup label="Application">
+          <NavigationLink to={LEGACY_ROUTES.BRANDING} isExternal>
+            <RiPaintBrushLine className="size-4" />
+            <span>Branding</span>
+          </NavigationLink>
+          <NavigationLink to={LEGACY_ROUTES.SETTINGS} isExternal>
+            <RiSettings4Line className="size-4" />
+            <span>Settings</span>
+          </NavigationLink>
+        </NavigationGroup>
+        <NavigationGroup>
+          <NavigationLink to={LEGACY_ROUTES.INVITE_TEAM_MEMBERS} isExternal>
+            <RiUserAddLine className="size-4" />
+            <span>Invite teammates</span>
+          </NavigationLink>
+        </NavigationGroup>
       </nav>
     </aside>
   );
