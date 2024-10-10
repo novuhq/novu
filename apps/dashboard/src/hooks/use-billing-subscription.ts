@@ -13,13 +13,11 @@ export type UseSubscriptionType = GetSubscriptionDto & { daysLeft: number; isLoa
 export const useBillingSubscription = () => {
   const { currentOrganization } = useAuth();
 
-  const { data: subscription, isLoading: isLoadingSubscription } = useQuery<GetSubscriptionDto>(
-    [QueryKeys.billingSubscription, currentOrganization?._id],
-    getBillingSubscription,
-    {
-      enabled: !!currentOrganization,
-    }
-  );
+  const { data: subscription, isLoading: isLoadingSubscription } = useQuery<GetSubscriptionDto>({
+    queryKey: [QueryKeys.billingSubscription, currentOrganization?._id],
+    queryFn: getBillingSubscription,
+    enabled: !!currentOrganization,
+  });
 
   const daysLeft = useMemo(() => {
     if (!subscription?.trial.end) return 0;

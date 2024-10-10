@@ -6,14 +6,12 @@ import { RootRoute, AuthRoute, DashboardRoute, CatchAllRoute } from './routes';
 import { WorkflowsPage, SignInPage, SignUpPage, OrganizationListPage } from '@/pages';
 import './index.css';
 import { ROUTES } from './utils/routes';
-import { Primitives } from '@/routes/primitives';
 
 const router = createBrowserRouter([
   {
     element: <RootRoute />,
     errorElement: <ErrorPage />,
     children: [
-      { path: '/primitives', element: <Primitives /> },
       {
         element: <AuthRoute />,
         children: [
