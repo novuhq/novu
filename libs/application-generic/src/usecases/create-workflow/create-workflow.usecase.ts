@@ -270,7 +270,6 @@ export class CreateWorkflow {
         : {}),
       ...(command.data ? { data: command.data } : {}),
     });
-    this.logger.info(`Created  workflow ${JSON.stringify(savedWorkflow)}`);
 
     const item = await this.notificationTemplateRepository.findById(
       savedWorkflow._id,
