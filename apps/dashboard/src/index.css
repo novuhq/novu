@@ -78,6 +78,9 @@
   * {
     @apply border-neutral-alpha-200;
   }
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
   body {
     @apply bg-background text-foreground-950;
   }
