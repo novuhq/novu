@@ -40,25 +40,14 @@ import {
   ExecutionLogRoute,
   featureFlagsService,
   getFeatureFlag,
-  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
   storageService,
 } from '@novu/application-generic';
 
-import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
+import { JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
-
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
 
 const DAL_MODELS = [
   UserRepository,
@@ -85,7 +74,6 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   ControlValuesRepository,
   PreferencesRepository,
-  ...getDynamicAuthProviders(),
 ];
 
 const dalService = {

@@ -16,6 +16,7 @@
   "dependencies": {
     "@novu/application-generic": "workspace:*",
     "@novu/ee-dal": "workspace:*",
+    "@novu/ee-auth": "workspace:*",
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
@@ -47,8 +48,5 @@
     "@nestjs/swagger": "7.4.0",
     "@nestjs/throttler": "6.2.1",
     "@novu/dal": "workspace:*"
-  },
-  "optionalDependencies": {
-    "@novu/ee-auth": "workspace:*"
   }
 }
