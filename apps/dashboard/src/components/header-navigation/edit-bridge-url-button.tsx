@@ -65,13 +65,10 @@ export const EditBridgeUrlButton = () => {
             <span
               className={cn(
                 'relative size-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
-                status === ConnectionStatus.DISCONNECTED ? 'bg-destructive' : 'bg-success'
+                status === ConnectionStatus.DISCONNECTED || status === ConnectionStatus.LOADING
+                  ? 'bg-destructive [--pulse-color:var(--destructive)]'
+                  : 'bg-success [--pulse-color:var(--destructive)]'
               )}
-              style={
-                {
-                  '--pulse-color': status === ConnectionStatus.DISCONNECTED ? 'var(--destructive)' : 'var(--success)',
-                } as React.CSSProperties
-              }
             />
             <span>Local Studio</span>
           </div>
