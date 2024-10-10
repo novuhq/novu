@@ -1,15 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { JSONSchema } from 'json-schema-to-ts';
 
-import { JsonSchema, Schema, StepType } from '@novu/framework';
+import { StepType } from '@novu/framework';
 import { NotificationStepEntity, NotificationTemplateRepository } from '@novu/dal';
 
 import {
-  GetStepTypeSchemaCommand,
   GetExistingStepSchemaCommand,
   GetStepSchemaCommand,
+  GetStepTypeSchemaCommand,
 } from './get-step-schema.command';
 import { StepSchemaDto } from '../../dtos/step-schema.dto';
-import { mapStepTypeToOutput, mapStepTypeToResult } from '../../types';
+import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
 
 @Injectable()
 export class GetStepSchema {
@@ -17,14 +18,14 @@ export class GetStepSchema {
 
   async execute(command: GetStepSchemaCommand): Promise<StepSchemaDto> {
     if (isGetByStepType(command)) {
-      return { controls: buildControlsSchema(command.stepType), variables: buildVariablesSchema() };
+      return { controls: buildControlsSchema({ stepType: command.stepType }), variables: buildVariablesSchema() };
     }
 
-    if (isGetByExistingStep(command)) {
+    if (isGetByStepId(command)) {
       const { currentStep, previousSteps } = await this.findSteps(command);
 
       return {
-        controls: buildControlsSchema(currentStep?.template?.type as StepType),
+        controls: buildControlsSchema({ controlsSchema: currentStep.template?.controls?.schema }),
         variables: buildVariablesSchema(previousSteps),
       };
     }
@@ -39,13 +40,20 @@ export class GetStepSchema {
     });
 
     if (!workflow) {
-      throw new BadRequestException(`No workflow found with the given id ${command.workflowId}`);
+      throw new BadRequestException({
+        message: 'No workflow found',
+        workflowId: command.workflowId,
+      });
     }
 
     const currentStep = workflow.steps.find((stepItem) => stepItem._id === command.stepId);
 
     if (!currentStep) {
-      throw new BadRequestException(`No step found with the given id ${command.stepId}`);
+      throw new BadRequestException({
+        message: 'No step found',
+        stepId: command.stepId,
+        workflowId: command.workflowId,
+      });
     }
 
     const previousSteps = workflow.steps.slice(
@@ -60,15 +68,32 @@ export class GetStepSchema {
 const isGetByStepType = (command: GetStepSchemaCommand): command is GetStepTypeSchemaCommand =>
   (command as GetStepTypeSchemaCommand).stepType !== undefined;
 
-const isGetByExistingStep = (command: GetStepSchemaCommand): command is GetExistingStepSchemaCommand =>
+const isGetByStepId = (command: GetStepSchemaCommand): command is GetExistingStepSchemaCommand =>
   (command as GetExistingStepSchemaCommand).stepId !== undefined &&
   (command as GetExistingStepSchemaCommand).workflowId !== undefined;
 
-export const buildControlsSchema = (stepType: StepType): Schema => {
-  return {
-    ...mapStepTypeToOutput[stepType],
-    description: 'Output of the step, including any controls defined in the Bridge App',
-  };
+export const buildControlsSchema = ({
+  stepType,
+  controlsSchema,
+}: {
+  stepType?: StepType;
+  controlsSchema?: JSONSchema;
+}): JSONSchema => {
+  if (controlsSchema && typeof controlsSchema === 'object') {
+    return {
+      ...controlsSchema,
+      description: 'Output of the step, including any controls defined in the Bridge App',
+    };
+  }
+
+  if (stepType) {
+    return {
+      ...mapStepTypeToOutput[stepType],
+      description: 'Output of the step, including any controls defined in the Bridge App',
+    };
+  }
+
+  throw new Error('No controls schema found');
 };
 
 const buildSubscriberSchema = () =>
@@ -92,58 +117,43 @@ const buildSubscriberSchema = () =>
     },
     required: ['firstName', 'lastName', 'email', 'subscriberId'],
     additionalProperties: false,
-  }) as const satisfies Schema;
+  }) as const satisfies JSONSchema;
 
-const buildPayloadSchema = () =>
-  ({
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: false,
-    description:
-      'Payload Schema - For Developers. Passed during the novu.trigger method, and controlled by the developer.',
-  }) as const satisfies Schema;
-
-const buildVariablesSchema = (previousSteps?: NotificationStepEntity[]): Schema => {
+const buildVariablesSchema = (previousSteps?: NotificationStepEntity[]): JSONSchema => {
   return {
     type: 'object',
     description:
       // eslint-disable-next-line max-len
-      'Variables that can be used with Liquid JS Template syntax. Includes subscriber attributes, payload variables, and supports liquid filters for formatting.',
+      'Variables that can be used with Liquid JS Template syntax. Includes subscriber attributes, steps variables, and supports liquid filters for formatting.',
     properties: {
       subscriber: buildSubscriberSchema(),
-      payload: buildPayloadSchema(),
       steps: buildPreviousStepsSchema(previousSteps),
     },
-    required: ['subscriber', 'payload'],
+    required: ['subscriber'],
     additionalProperties: false,
-  } as const satisfies Schema;
+  } as const satisfies JSONSchema;
 };
 
 function buildPreviousStepsSchema(previousSteps: NotificationStepEntity[] | undefined) {
   type StepUUID = string;
-  let previousStepsProperties: Record<StepUUID, JsonSchema> = {};
+  let previousStepsProperties: Record<StepUUID, JSONSchema> = {};
 
-  if (previousSteps) {
-    previousStepsProperties = previousSteps.reduce(
-      (acc, step) => {
-        if (step.template?._id) {
-          acc[step.template._id] = mapStepTypeToResult[step.template.type as StepType];
-        }
+  previousStepsProperties = (previousSteps || []).reduce(
+    (acc, step) => {
+      if (step.template?._id) {
+        acc[step.template._id] = mapStepTypeToResult[step.template.type as StepType];
+      }
 
-        return acc;
-      },
-      {} as Record<StepUUID, JsonSchema>
-    );
-  }
+      return acc;
+    },
+    {} as Record<StepUUID, JSONSchema>
+  );
 
-  const previousStepsSchema = {
+  return {
     type: 'object',
     properties: previousStepsProperties,
     required: [],
     additionalProperties: false,
     description: 'Previous Steps Results',
-  } as const satisfies Schema;
-
-  return previousStepsSchema;
+  } as const satisfies JSONSchema;
 }

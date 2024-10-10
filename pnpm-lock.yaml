@@ -482,6 +482,9 @@ importers:
       json-schema-defaults:
         specifier: ^0.4.0
         version: 0.4.0
+      json-schema-to-ts:
+        specifier: ^3.0.0
+        version: 3.1.0
       jsonwebtoken:
         specifier: 9.0.0
         version: 9.0.0

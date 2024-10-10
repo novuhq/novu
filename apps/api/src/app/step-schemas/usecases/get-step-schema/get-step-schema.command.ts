@@ -1,5 +1,6 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { ActionStepEnum, ChannelStepEnum, StepType } from '@novu/framework';
+import { UserSessionData } from '@novu/shared';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 const StepTypeValue = { ...ChannelStepEnum, ...ActionStepEnum };
@@ -21,3 +22,27 @@ export class GetExistingStepSchemaCommand extends EnvironmentWithUserCommand {
 }
 
 export type GetStepSchemaCommand = GetStepTypeSchemaCommand | GetExistingStepSchemaCommand;
+
+export function createGetStepSchemaCommand(
+  user: UserSessionData,
+  stepType: StepType,
+  workflowId: string,
+  stepId: string
+) {
+  if (workflowId && stepId) {
+    return GetExistingStepSchemaCommand.create({
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      userId: user._id,
+      workflowId,
+      stepId,
+    });
+  }
+
+  return GetStepTypeSchemaCommand.create({
+    organizationId: user.organizationId,
+    environmentId: user.environmentId,
+    userId: user._id,
+    stepType,
+  });
+}

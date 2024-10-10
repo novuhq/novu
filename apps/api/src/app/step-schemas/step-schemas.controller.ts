@@ -4,10 +4,7 @@ import { UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { StepType } from '@novu/framework';
 
-import {
-  GetStepTypeSchemaCommand,
-  GetExistingStepSchemaCommand,
-} from './usecases/get-step-schema/get-step-schema.command';
+import { createGetStepSchemaCommand } from './usecases/get-step-schema/get-step-schema.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetStepSchema } from './usecases/get-step-schema/get-step-schema.usecase';
 import { StepSchemaDto } from './dtos/step-schema.dto';
@@ -26,23 +23,8 @@ export class StepSchemasController {
     @Query('workflowId') workflowId: string,
     @Query('stepId') stepId: string
   ): Promise<StepSchemaDto> {
-    return await this.getStepDefaultSchemaUsecase.execute(this.createCommand(user, stepType, workflowId, stepId));
-  }
-
-  private createCommand(user: UserSessionData, stepType: StepType, workflowId: string, stepId: string) {
-    return workflowId && stepId
-      ? GetExistingStepSchemaCommand.create({
-          organizationId: user.organizationId,
-          environmentId: user.environmentId,
-          userId: user._id,
-          workflowId,
-          stepId,
-        })
-      : GetStepTypeSchemaCommand.create({
-          organizationId: user.organizationId,
-          environmentId: user.environmentId,
-          userId: user._id,
-          stepType,
-        });
+    return await this.getStepDefaultSchemaUsecase.execute(
+      createGetStepSchemaCommand(user, stepType, workflowId, stepId)
+    );
   }
 }

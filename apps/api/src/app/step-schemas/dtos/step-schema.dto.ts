@@ -1,6 +1,6 @@
-import { Schema } from '@novu/framework';
+import { JSONSchema } from 'json-schema-to-ts';
 
 export type StepSchemaDto = {
-  controls: Schema;
-  variables: Schema;
+  controls: JSONSchema;
+  variables: JSONSchema;
 };
