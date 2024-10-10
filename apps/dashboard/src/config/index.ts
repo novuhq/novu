@@ -15,3 +15,5 @@ if (!CLERK_PUBLISHABLE_KEY) {
 }
 
 export const API_HOSTNAME = import.meta.env.VITE_API_HOSTNAME;
+
+export const INTERCOM_APP_ID = import.meta.env.VITE_INTERCOM_APP_ID;

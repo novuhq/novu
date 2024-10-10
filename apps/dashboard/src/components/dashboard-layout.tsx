@@ -1,29 +1,27 @@
 import { ReactNode } from 'react';
-import { UserProfile } from '@/components/user-profile';
-import { InboxButton } from '@/components/inbox-button';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { IntercomProvider } from 'react-use-intercom';
 import { SideNavigation } from './side-navigation';
+import { HeaderNavigation } from './header-navigation';
+import { INTERCOM_APP_ID } from '@/config';
 
-export const DashboardLayout = ({ children }: { children: ReactNode }) => {
+export const DashboardLayout = ({
+  children,
+  headerStartItems,
+}: {
+  children: ReactNode;
+  headerStartItems?: ReactNode;
+}) => {
   return (
-    <div className="relative flex h-screen w-full">
-      <SideNavigation />
-      <div className="flex min-h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        <div className="bg-background flex h-16 w-full items-center justify-between border-b p-4">
-          <a
-            href="/legacy/integrations"
-            target="_self"
-            className="text-blue-600 visited:text-purple-600 hover:border-b hover:border-current"
-          >
-            Integrations
-          </a>
-          <div className="flex gap-4">
-            <InboxButton />
-            <UserProfile />
-          </div>
+    <IntercomProvider appId={INTERCOM_APP_ID}>
+      <div className="relative flex h-screen w-full">
+        <SideNavigation />
+        <div className="flex min-h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <HeaderNavigation startItems={headerStartItems} />
+          <div className="overflow-y-auto overflow-x-hidden">{children}</div>
         </div>
-
-        <div className="overflow-y-auto overflow-x-hidden">{children}</div>
       </div>
-    </div>
+    </IntercomProvider>
   );
 };
