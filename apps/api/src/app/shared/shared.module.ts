@@ -1,4 +1,3 @@
-/* eslint-disable global-require */
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
