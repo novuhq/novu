@@ -11,16 +11,14 @@ export const useBridgeHealthCheck = () => {
   const { currentEnvironment } = useEnvironment();
   const bridgeURL = currentEnvironment?.bridge?.url || '';
 
-  const { data, isLoading, error } = useQuery<BridgeStatus>(
-    [QueryKeys.bridgeHealthCheck, bridgeURL],
-    getBridgeHealthCheck,
-    {
-      enabled: !!bridgeURL,
-      networkMode: 'always',
-      refetchOnWindowFocus: true,
-      refetchInterval: BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS,
-    }
-  );
+  const { data, isLoading, error } = useQuery<BridgeStatus>({
+    queryKey: [QueryKeys.bridgeHealthCheck, bridgeURL],
+    queryFn: getBridgeHealthCheck,
+    enabled: !!bridgeURL,
+    networkMode: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS,
+  });
 
   const status = useMemo<ConnectionStatus>(() => {
     if (isLoading) {

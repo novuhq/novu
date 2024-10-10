@@ -32,8 +32,8 @@ export const EditBridgeUrlButton = () => {
   } = useForm<FormFields>({ mode: 'onSubmit', resolver: zodResolver(schema) });
   const { currentEnvironment, setBridgeUrl } = useEnvironment();
   const { status, bridgeURL: envBridgeUrl } = useBridgeHealthCheck();
-  const { validateBridgeUrl, isLoading: isValidatingBridgeUrl } = useValidateBridgeUrl();
-  const { updateBridgeUrl, isLoading: isUpdatingBridgeUrl } = useUpdateBridgeUrl();
+  const { validateBridgeUrl, isPending: isValidatingBridgeUrl } = useValidateBridgeUrl();
+  const { updateBridgeUrl, isPending: isUpdatingBridgeUrl } = useUpdateBridgeUrl();
 
   useLayoutEffect(() => {
     reset({ bridgeUrl: envBridgeUrl });
