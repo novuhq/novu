@@ -1,9 +1,9 @@
 // Source is taken from the un-maintained https://github.com/Flolagale/mailin and refactored
 
-import './config/env.config';
-import './instrument';
-import mailin from './server/index';
-import logger from './server/logger';
+import "./config/env.config";
+import "./instrument";
+import mailin from "./server/index";
+import logger from "./server/logger";
 
 const LOG_CONTEXT = 'Main';
 

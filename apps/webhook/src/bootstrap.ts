@@ -1,10 +1,11 @@
-import './config/env.config';
-import './instrument';
-import { INestApplication } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
-import { getErrorInterceptor, Logger } from '@novu/application-generic';
+import "./config/env.config";
+import "./instrument";
+import { INestApplication } from "@nestjs/common";
+import { NestFactory } from "@nestjs/core";
+import { getErrorInterceptor, Logger } from "@novu/application-generic";
 
-import { AppModule } from './app.module';
+import { AppModule } from "./app.module";
+
 
 export async function bootstrap(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
