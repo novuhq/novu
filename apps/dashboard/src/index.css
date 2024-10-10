@@ -21,33 +21,33 @@
     --primary: 346 73% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary-0: 210 10% 100%;
-    --secondary-50: 210 10% 96%;
-    --secondary-100: 210 30% 96%;
-    --secondary-200: 220 18% 90%;
-    --secondary-300: 219 15% 82%;
-    --secondary-400: 220 11% 64%;
-    --secondary-500: 221 8% 48%;
-    --secondary-600: 222 11% 36%;
-    --secondary-700: 221 16% 20%;
-    --secondary-800: 227 17% 16%;
-    --secondary-900: 226 21% 12%;
-    --secondary-950: 222 32% 8%;
-    --secondary: 0 0 0%;
-    --secondary-foreground: 0 0% 100%;
+    --neutral-0: 210 10% 100%;
+    --neutral-50: 0 0% 98%;
+    --neutral-100: 210 30% 96%;
+    --neutral-200: 220 18% 90%;
+    --neutral-300: 219 15% 82%;
+    --neutral-400: 220 11% 64%;
+    --neutral-500: 221 8% 48%;
+    --neutral-600: 222 11% 36%;
+    --neutral-700: 221 16% 20%;
+    --neutral-800: 227 17% 16%;
+    --neutral-900: 226 21% 12%;
+    --neutral-950: 222 32% 8%;
+    --neutral: 0 0 0%;
+    --neutral-foreground: 0 0% 100%;
 
-    /* Secondary scale in alpha that looks the same on white background */
-    --secondary-alpha-50: 0 0% 69% / 0.05;
-    --secondary-alpha-100: 210 30% 61% / 0.1;
-    --secondary-alpha-200: 220 18% 50% / 0.2;
-    --secondary-alpha-300: 218 23% 40% / 0.3;
-    --secondary-alpha-400: 220 100% 10% / 0.4;
-    --secondary-alpha-500: 240 100% 2% / 0.5;
-    --secondary-alpha-600: 0 0% 0% / 0.6;
-    --secondary-alpha-700: 0 0% 0% / 0.7;
-    --secondary-alpha-800: 0 0% 0% / 0.8;
-    --secondary-alpha-900: 231 100% 3% / 0.9;
-    --secondary-alpha-950: 219 88% 3% / 0.95;
+    /* Neutral scale in alpha that looks the same on white background */
+    --neutral-alpha-50: 0 0% 69% / 0.05;
+    --neutral-alpha-100: 210 30% 61% / 0.1;
+    --neutral-alpha-200: 220 18% 50% / 0.2;
+    --neutral-alpha-300: 218 23% 40% / 0.3;
+    --neutral-alpha-400: 220 100% 10% / 0.4;
+    --neutral-alpha-500: 240 100% 2% / 0.5;
+    --neutral-alpha-600: 0 0% 0% / 0.6;
+    --neutral-alpha-700: 0 0% 0% / 0.7;
+    --neutral-alpha-800: 0 0% 0% / 0.8;
+    --neutral-alpha-900: 231 100% 3% / 0.9;
+    --neutral-alpha-950: 219 88% 3% / 0.95;
 
     --accent: 0 0% 96.1%;
 
@@ -66,10 +66,9 @@
 
     --stable: 172 72% 48%;
 
-    --stroke: 222 32% 8%;
+    --verified: 200 100% 64%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
+    --input: 220 18% 90%;
     --ring: 222 32% 8%;
 
     --radius: 0.5rem;
@@ -77,7 +76,10 @@
 }
 @layer base {
   * {
-    @apply border-border;
+    @apply border-neutral-alpha-200;
+  }
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
   }
   body {
     @apply bg-background text-foreground-950;

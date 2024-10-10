@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import {
   ControlValuesEntity,
-  EnvironmentRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
@@ -58,7 +57,6 @@ export class UpsertWorkflowUseCase {
     private notificationGroupRepository: NotificationGroupRepository,
     private upsertPreferencesUsecase: UpsertPreferences,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private environmentRepository: EnvironmentRepository,
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {

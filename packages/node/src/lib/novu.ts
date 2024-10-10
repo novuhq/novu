@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { getEnvVariable } from '@novu/shared/utils';
+import { getEnvVariable } from '@novu/shared';
 import { EventEmitter } from 'events';
 import { Subscribers } from './subscribers/subscribers';
 import { Changes } from './changes/changes';

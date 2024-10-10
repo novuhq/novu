@@ -16,8 +16,8 @@ export const OrganizationListPage = () => {
         }}
         hidePersonal
         skipInvitationScreen
-        afterSelectOrganizationUrl={ROUTES.WORKFLOWS}
-        afterCreateOrganizationUrl={ROUTES.WORKFLOWS}
+        afterSelectOrganizationUrl={ROUTES.ENV}
+        afterCreateOrganizationUrl={ROUTES.ENV}
       />
     </>
   );

@@ -9,6 +9,7 @@ export enum HttpRequestHeaderKeysEnum {
   NOVU_ENVIRONMENT_ID = 'Novu-Environment-Id',
   NOVU_API_VERSION = 'Novu-API-Version',
   BYPASS_TUNNEL_REMINDER = 'Bypass-Tunnel-Reminder',
+  NOVU_USER_AGENT = 'Novu-User-Agent',
 }
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 

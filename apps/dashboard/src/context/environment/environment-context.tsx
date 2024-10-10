@@ -2,11 +2,11 @@ import type { IEnvironment } from '@novu/shared';
 import { createContextAndHook } from '@/utils/context';
 
 export type EnvironmentContextValue = {
-  currentEnvironment?: IEnvironment | null;
+  currentEnvironment?: IEnvironment;
   environments?: IEnvironment[];
   areEnvironmentsInitialLoading: boolean;
   readOnly: boolean;
-  switchEnvironment: (newEnvironment: string) => void;
+  switchEnvironment: (newEnvironment?: string) => void;
 };
 
 const [EnvironmentContext, useEnvironmentContext] =

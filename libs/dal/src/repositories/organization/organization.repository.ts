@@ -22,10 +22,6 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.renameOrganization(organizationId, payload);
   }
 
-  updateServiceLevel(organizationId: string, apiServiceLevel: ApiServiceLevelEnum) {
-    return this.organizationRepository.updateServiceLevel(organizationId, apiServiceLevel);
-  }
-
   updateDefaultLocale(organizationId: string, defaultLocale: string): Promise<{ matched: number; modified: number }> {
     return this.organizationRepository.updateDefaultLocale(organizationId, defaultLocale);
   }
@@ -98,5 +94,9 @@ export class OrganizationRepository implements IOrganizationRepository {
 
   bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
     return this.organizationRepository.bulkWrite(bulkOperations, ordered);
+  }
+
+  estimatedDocumentCount(): Promise<number> {
+    return this.organizationRepository.estimatedDocumentCount();
   }
 }

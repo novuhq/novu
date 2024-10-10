@@ -194,7 +194,6 @@ function buildErrorMsg(createWorkflowDto: Omit<WorkflowCommonsFields, '_id'>, cr
 
 async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<WorkflowResponseDto> {
   const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
-  console.log('createWorkflowDto', JSON.stringify(createWorkflowDto, null, 2));
   const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
   const workflowResponseDto: WorkflowResponseDto = res.body.data;
   expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
@@ -202,13 +201,16 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
     '_id',
     'origin',
     'preferences',
     'updatedAt',
-    'createdAt'
+    'createdAt',
+    'status',
+    'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
     removeFields(step, 'stepUuid')
@@ -249,9 +251,6 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
 }
 
 async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
-  console.log(`updateWorkflow- ${id}: 
-  ${JSON.stringify(workflow, null, 2)}`);
-
   return await safePut(`${v2Prefix}/workflows/${id}`, workflow);
 }
 
@@ -296,7 +295,14 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
   workflowResponse: WorkflowResponseDto,
   workflowUpdateRequest: UpdateWorkflowDto
 ): UpdateWorkflowDto {
-  const updatedWorkflowWoUpdated: UpdateWorkflowDto = removeFields(workflowResponse, 'updatedAt', 'origin', '_id');
+  const updatedWorkflowWoUpdated: UpdateWorkflowDto = removeFields(
+    workflowResponse,
+    'updatedAt',
+    'origin',
+    '_id',
+    'status',
+    'type'
+  );
   const augmentedStep: (StepUpdateDto | StepCreateDto)[] = [];
   for (const stepInResponse of workflowResponse.steps) {
     expect(stepInResponse.stepUuid).to.be.ok;
@@ -318,7 +324,6 @@ async function updateWorkflowAndValidate(
   updatedAt: string,
   updateRequest: UpdateWorkflowDto
 ): Promise<void> {
-  console.log('updateRequest:::'.toUpperCase(), JSON.stringify(updateRequest.steps, null, 2));
   const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(id, updateRequest);
   const updatedWorkflowWithResponseFieldsRemoved = validateUpdatedWorkflowAndRemoveResponseFields(
     updatedWorkflow,
@@ -542,24 +547,19 @@ function buildInAppStepWithValues() {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin') as UpdateWorkflowDto;
+  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type', 'status') as UpdateWorkflowDto;
 }
 
 function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const updateDto = convertResponseToUpdateDto(workflowCreated);
   const updatedStep = addValueToExistingStep(updateDto.steps);
   const newStep = buildInAppStepWithValues();
-  console.log('newStep:::', JSON.stringify(newStep, null, 2));
 
-  const stoWithValues: UpdateWorkflowDto = {
+  return {
     ...updateDto,
     name: `${TEST_WORKFLOW_UPDATED_NAME}-${generateUUID()}`,
     steps: [updatedStep, newStep],
   };
-
-  console.log('updateDto:::', JSON.stringify(stoWithValues, null, 2));
-
-  return stoWithValues;
 }
 function createStep(): StepCreateDto {
   return {
@@ -576,7 +576,14 @@ function createStep(): StepCreateDto {
 
 function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
-  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin') as UpdateWorkflowDto;
+  const updateRequest = removeFields(
+    workflowCreated,
+    'updatedAt',
+    '_id',
+    'origin',
+    'status',
+    'type'
+  ) as UpdateWorkflowDto;
 
   return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
 }
