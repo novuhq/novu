@@ -11,7 +11,7 @@ const InputGroup = ({ children }: { children: React.ReactNode }) => {
 InputGroup.displayName = 'InputGroup';
 
 const inputFieldVariants = cva(
-  'text-foreground-950 flex w-full flex-nowrap items-center gap-1.5 rounded-md border bg-transparent shadow-sm transition-colors focus-within:outline-none focus-visible:outline-none hover:bg-neutral-100 has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50 has-[input[value=""]]:text-foreground-400 has-[input:disabled]:bg-neutral-100 has-[input:disabled]:text-foreground-300',
+  'text-foreground-950 flex w-full flex-nowrap items-center gap-1.5 rounded-md border bg-transparent shadow-sm transition-colors focus-within:outline-none focus-visible:outline-none hover:bg-neutral-50 has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50 has-[input[value=""]]:text-foreground-400 has-[input:disabled]:bg-neutral-100 has-[input:disabled]:text-foreground-300',
   {
     variants: {
       variant: {
