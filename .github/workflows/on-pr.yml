@@ -263,12 +263,3 @@ jobs:
     secrets: inherit
     with:
       ee: true
-
-  test_e2e_widget:
-    name: E2E test Widget
-    needs: [get-affected]
-    uses: ./.github/workflows/reusable-widget-e2e.yml
-    with:
-      ee: true
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
-    secrets: inherit

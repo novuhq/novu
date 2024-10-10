@@ -29,20 +29,12 @@
       "path": "apps/webhook"
     },
     {
-      "name": "🚀 @novu/widget",
-      "path": "apps/widget"
-    },
-    {
       "name": "📦 @novu/dal",
       "path": "libs/dal"
     },
     {
       "name": "📦 @novu/design-system",
       "path": "libs/design-system"
-    },
-    {
-      "name": "📦 @novu/embed",
-      "path": "libs/embed"
     },
     {
       "name": "📦 @novu/novui",
@@ -79,18 +71,6 @@
     {
       "name": "📦 @novu/node",
       "path": "packages/node"
-    },
-    {
-      "name": "📦 @novu/notification-center",
-      "path": "packages/notification-center"
-    },
-    {
-      "name": "📦 @novu/notification-center-vue",
-      "path": "packages/notification-center-vue"
-    },
-    {
-      "name": "📦 @novu/notification-center-angular",
-      "path": "packages/notification-center-angular"
     },
     {
       "name": "📦 @novu/react-native",

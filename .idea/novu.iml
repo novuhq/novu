@@ -8,11 +8,9 @@
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/apps/api/dist" />
       <excludeFolder url="file://$MODULE_DIR$/apps/web/build" />
-      <excludeFolder url="file://$MODULE_DIR$/apps/widget/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/ws/dist" />
       <excludeFolder url="file://$MODULE_DIR$/docs/build" />
       <excludeFolder url="file://$MODULE_DIR$/libs/dal/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/libs/embed/dist" />
       <excludeFolder url="file://$MODULE_DIR$/libs/testing/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/node/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/web/storybook-static" />
@@ -21,7 +19,6 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/stateless/build" />
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/dist" />
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/.rpt2_cache" />
-      <excludeFolder url="file://$MODULE_DIR$/libs/embed/.rpt2_cache" />
       <excludeFolder url="file://$MODULE_DIR$/packages/shared/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/nest/build" />
       <excludeFolder url="file://$MODULE_DIR$/providers/mailersend/build" />

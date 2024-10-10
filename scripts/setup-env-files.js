@@ -19,7 +19,7 @@ const prePopulateEnv = (apps, folderBasePath, exampleEnvFilePath = 'src/.example
   const appsBasePath = `${__dirname}/../apps`;
   console.log('----------------------------------------');
   prePopulateEnv(['api', 'ws', 'worker'], appsBasePath);
-  prePopulateEnv(['web', 'widget'], appsBasePath, '.example.env', '.env');
+  prePopulateEnv(['web'], appsBasePath, '.example.env', '.env');
   console.log('Finished populating .env files');
   console.log('----------------------------------------');
 })();

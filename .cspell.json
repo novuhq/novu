@@ -758,10 +758,7 @@
     "pnpm-workspace.yaml",
     "novu.code-workspace",
     "libs/application-generic/src/.env.test",
-    "packages/notification-center/src/i18n/languages/**",
-    "packages/notification-center/rollup.config.mjs",
     "packages/js/tsup.config.ts",
-    "apps/widget/public/iframeResizer.contentWindow.js",
     ".vscode/settings.json",
     "*/**/.vscode/settings.json",
     "apps/worker/README.md",
@@ -783,6 +780,6 @@
     "apps/web/src/studio/components/workflows/step-editor/editor/files.ts",
     "apps/web/src/pages/playground/web-container-configuration/sandbox-vite/*.ts",
     "apps/api/src/app/analytics/usecases/hubspot-identify-form/hubspot-identify-form.usecase.ts",
-    "apps/dashboard/eslint.config.js",
+    "apps/dashboard/eslint.config.js"
   ]
 }

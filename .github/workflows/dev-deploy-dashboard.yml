@@ -31,7 +31,6 @@ jobs:
       react_app_api_url: https://api.novu-staging.co
       react_app_ws_url: https://dev.ws.novu.co
       react_app_webhook_url: https://dev.webhook.novu.co
-      react_app_widget_embed_path: https://dev.embed.novu.co/embed.umd.min.js
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: dev
       react_app_mail_server_domain: dev.inbound-mail.novu.co
