@@ -58,7 +58,7 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 DialogHeader.displayName = 'DialogHeader';
 
 const footerVariants = cva(
-  `-mx-5 flex flex-col-reverse p-5 pb-0 sm:flex-row sm:space-x-2 border-t border-neutral-200`,
+  `-mx-5 flex flex-col-reverse p-5 pb-0 sm:flex-row sm:space-x-2 border-t border-neutral-alpha-200`,
   {
     variants: {
       variant: {
@@ -95,7 +95,7 @@ const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description ref={ref} className={cn('text-muted-foreground text-sm', className)} {...props} />
+  <DialogPrimitive.Description ref={ref} className={cn('text-foreground text-sm', className)} {...props} />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 

@@ -14,7 +14,7 @@ export const SubscribersStayTunedModal = ({ children }: { children: ReactNode })
           </p>
         </div>
         <div className="flex flex-col gap-1">
-          <p className="text-foreground-950 text-md font-medium">New subscribers page is coming!</p>
+          <p className="text-foreground text-md font-medium">New subscribers page is coming!</p>
           <p className="text-foreground-600 text-sm">
             In the meantime, you can keep using Novu’s powerful APIs to access your subscribers.
           </p>

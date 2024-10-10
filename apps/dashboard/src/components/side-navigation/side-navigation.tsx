@@ -18,6 +18,8 @@ import { OrganizationDropdown } from './organization-dropdown';
 import { FreeTrialCard } from './free-trial-card';
 import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 import { SubscribersStayTunedModal } from './subscribers-stay-tuned-modal';
+import { useTelemetry } from '@/hooks';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const linkVariants = cva(
   `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer`,
@@ -82,6 +84,7 @@ const NavigationGroup = ({ children, label }: { children: ReactNode; label?: str
 
 export const SideNavigation = () => {
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+  const track = useTelemetry();
   const environmentNames = useMemo(() => environments?.map((env) => env.name), [environments]);
   const onEnvironmentChange = (value: string) => {
     const environment = environments?.find((env) => env.name === value);
@@ -100,7 +103,7 @@ export const SideNavigation = () => {
             <span>Workflows</span>
           </NavigationLink>
           <SubscribersStayTunedModal>
-            <span>
+            <span onClick={() => track(TelemetryEvent.SUBSCRIBERS_LINK_CLICKED)}>
               <NavigationLink>
                 <RiGroup2Line className="size-4" />
                 <span>Subscribers</span>
