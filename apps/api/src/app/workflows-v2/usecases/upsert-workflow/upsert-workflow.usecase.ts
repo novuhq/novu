@@ -211,7 +211,7 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description,
       tags: workflowDto.tags,
       active: workflowDto.active ?? true,
-      identifier: workflowDto.triggerIdentifier,
+      identifier: workflowDto.identifier,
     };
   }
 

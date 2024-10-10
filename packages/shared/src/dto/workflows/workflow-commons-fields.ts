@@ -66,7 +66,7 @@ export class WorkflowCommonsFields {
 
   @IsString()
   @IsDefined()
-  triggerIdentifier: string;
+  identifier: string;
 
   @IsString()
   @IsOptional()

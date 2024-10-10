@@ -244,7 +244,7 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
-    triggerIdentifier: `${slugifyIdentifier(TEST_WORKFLOW_NAME + nameSuffix)}`,
+    identifier: `${slugifyIdentifier(TEST_WORKFLOW_NAME + nameSuffix)}`,
     description: 'This is a test workflow',
     active: true,
     tags: TEST_TAGS,
@@ -590,7 +590,7 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
   return {
     ...updateRequest,
     name: TEST_WORKFLOW_UPDATED_NAME,
-    triggerIdentifier: `${slugifyIdentifier(TEST_WORKFLOW_UPDATED_NAME)}`,
+    identifier: `${slugifyIdentifier(TEST_WORKFLOW_UPDATED_NAME)}`,
     steps,
   };
 }
