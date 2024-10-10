@@ -74,13 +74,13 @@ export class Sync {
       });
     }
 
-    const createdWorkflows = await this.createWorkflows(command, discover.workflows);
+    const persistedWorkflowsInBridge = await this.createWorkflows(command, discover.workflows);
 
-    await this.disposeOldWorkflows(command, createdWorkflows);
+    await this.disposeOldWorkflows(command, persistedWorkflowsInBridge);
 
     await this.updateBridgeUrl(command);
 
-    return createdWorkflows;
+    return persistedWorkflowsInBridge;
   }
 
   private async updateBridgeUrl(command: SyncCommand) {
@@ -100,18 +100,12 @@ export class Sync {
   }
 
   private async disposeOldWorkflows(command: SyncCommand, createdWorkflows: NotificationTemplateEntity[]) {
-    const workflowIds = createdWorkflows.map((i) => i._id);
+    const persistedWorkflowIdsInBridge = createdWorkflows.map((i) => i._id);
 
-    const deletedWorkflows = await this.notificationTemplateRepository.find({
-      _environmentId: command.environmentId,
-      type: {
-        $in: [WorkflowTypeEnum.ECHO, WorkflowTypeEnum.BRIDGE],
-      },
-      _id: { $nin: workflowIds },
-    });
+    const workflowsToDelete = await this.findAllWorkflowsWithOtherIds(command, persistedWorkflowIdsInBridge);
 
     await Promise.all(
-      deletedWorkflows?.map((workflow) => {
+      workflowsToDelete?.map((workflow) => {
         return this.deleteWorkflow.execute(
           DeleteWorkflowCommand.create({
             environmentId: command.environmentId,
@@ -124,9 +118,22 @@ export class Sync {
     );
   }
 
-  private async createWorkflows(command: SyncCommand, workflows: DiscoverWorkflowOutput[]) {
+  private async findAllWorkflowsWithOtherIds(command: SyncCommand, persistedWorkflowIdsInBridge: string[]) {
+    return await this.notificationTemplateRepository.find({
+      _environmentId: command.environmentId,
+      type: {
+        $in: [WorkflowTypeEnum.ECHO, WorkflowTypeEnum.BRIDGE],
+      },
+      origin: {
+        $in: [WorkflowOriginEnum.EXTERNAL, undefined, null],
+      },
+      _id: { $nin: persistedWorkflowIdsInBridge },
+    });
+  }
+
+  private async createWorkflows(command: SyncCommand, workflowsFromBridge: DiscoverWorkflowOutput[]) {
     return Promise.all(
-      workflows.map(async (workflow) => {
+      workflowsFromBridge.map(async (workflow) => {
         const workflowExist = await this.notificationTemplateRepository.findByTriggerIdentifier(
           command.environmentId,
           workflow.workflowId
@@ -135,33 +142,7 @@ export class Sync {
         let savedWorkflow: NotificationTemplateEntity | undefined;
 
         if (workflowExist) {
-          savedWorkflow = await this.updateWorkflowUsecase.execute(
-            UpdateWorkflowCommand.create({
-              id: workflowExist._id,
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-              userId: command.userId,
-              name: workflow.workflowId,
-              steps: this.mapSteps(workflow.steps, workflowExist),
-              inputs: {
-                schema: workflow.controls?.schema || workflow.inputs.schema,
-              },
-              controls: {
-                schema: workflow.controls?.schema || workflow.inputs.schema,
-              },
-              rawData: workflow,
-              payloadSchema:
-                (workflow.payload?.schema as Record<string, unknown>) ||
-                (workflow.options?.payloadSchema as Record<string, unknown>),
-              type: WorkflowTypeEnum.BRIDGE,
-              description: this.castToAnyNotSupportedParam(workflow.options).description,
-              data: this.castToAnyNotSupportedParam(workflow.options)?.data,
-              tags: workflow.tags,
-              active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
-              critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
-              preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
-            })
-          );
+          savedWorkflow = await this.updateWorkflow(workflowExist, command, workflow);
         } else {
           const notificationGroupId = await this.getNotificationGroup(
             this.castToAnyNotSupportedParam(workflow.options)?.notificationGroupId,
@@ -173,38 +154,7 @@ export class Sync {
           }
           const isWorkflowActive = this.castToAnyNotSupportedParam(workflow.options)?.active ?? true;
 
-          savedWorkflow = await this.createWorkflowUsecase.execute(
-            CreateWorkflowCommand.create({
-              origin: WorkflowOriginEnum.EXTERNAL,
-              notificationGroupId,
-              draft: !isWorkflowActive,
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-              userId: command.userId,
-              name: workflow.workflowId,
-              __source: WorkflowCreationSourceEnum.BRIDGE,
-              type: WorkflowTypeEnum.BRIDGE,
-              steps: this.mapSteps(workflow.steps),
-              /** @deprecated */
-              inputs: {
-                schema: workflow.controls?.schema || workflow.inputs.schema,
-              },
-              controls: {
-                schema: workflow.controls?.schema || workflow.inputs.schema,
-              },
-              rawData: workflow as unknown as Record<string, unknown>,
-              payloadSchema:
-                (workflow.payload?.schema as Record<string, unknown>) ||
-                /** @deprecated */
-                (workflow.options?.payloadSchema as Record<string, unknown>),
-              active: isWorkflowActive,
-              description: this.castToAnyNotSupportedParam(workflow.options).description,
-              data: this.castToAnyNotSupportedParam(workflow).options?.data,
-              tags: workflow.tags || [],
-              critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
-              preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
-            })
-          );
+          savedWorkflow = await this.createWorkflow(notificationGroupId, isWorkflowActive, command, workflow);
         }
 
         const isWorkflowPreferencesEnabled = await this.getFeatureFlag.execute(
@@ -228,6 +178,71 @@ export class Sync {
         }
 
         return savedWorkflow;
+      })
+    );
+  }
+
+  private async createWorkflow(notificationGroupId: string, isWorkflowActive, command: SyncCommand, workflow) {
+    return await this.createWorkflowUsecase.execute(
+      CreateWorkflowCommand.create({
+        origin: WorkflowOriginEnum.EXTERNAL,
+        type: WorkflowTypeEnum.BRIDGE,
+        notificationGroupId,
+        draft: !isWorkflowActive,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        name: workflow.workflowId,
+        __source: WorkflowCreationSourceEnum.BRIDGE,
+        steps: this.mapSteps(workflow.steps),
+        /** @deprecated */
+        inputs: {
+          schema: workflow.controls?.schema || workflow.inputs.schema,
+        },
+        controls: {
+          schema: workflow.controls?.schema || workflow.inputs.schema,
+        },
+        rawData: workflow as unknown as Record<string, unknown>,
+        payloadSchema:
+          (workflow.payload?.schema as Record<string, unknown>) ||
+          /** @deprecated */
+          (workflow.options?.payloadSchema as Record<string, unknown>),
+        active: isWorkflowActive,
+        description: this.castToAnyNotSupportedParam(workflow.options).description,
+        data: this.castToAnyNotSupportedParam(workflow).options?.data,
+        tags: workflow.tags || [],
+        critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
+        preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
+      })
+    );
+  }
+
+  private async updateWorkflow(workflowExist, command: SyncCommand, workflow) {
+    return await this.updateWorkflowUsecase.execute(
+      UpdateWorkflowCommand.create({
+        id: workflowExist._id,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        name: workflow.workflowId,
+        steps: this.mapSteps(workflow.steps, workflowExist),
+        inputs: {
+          schema: workflow.controls?.schema || workflow.inputs.schema,
+        },
+        controls: {
+          schema: workflow.controls?.schema || workflow.inputs.schema,
+        },
+        rawData: workflow,
+        payloadSchema:
+          (workflow.payload?.schema as Record<string, unknown>) ||
+          (workflow.options?.payloadSchema as Record<string, unknown>),
+        type: WorkflowTypeEnum.BRIDGE,
+        description: this.castToAnyNotSupportedParam(workflow.options).description,
+        data: this.castToAnyNotSupportedParam(workflow.options)?.data,
+        tags: workflow.tags,
+        active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
+        critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
+        preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
       })
     );
   }
