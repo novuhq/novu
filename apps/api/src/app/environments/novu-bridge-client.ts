@@ -47,7 +47,7 @@ export class NovuBridgeClient {
     console.log({ reqQuery: req.query });
     console.log({ reqBody: req.body });
     console.log({ reqParams: req.params });
-    if (![...Object.values(GetActionEnum), undefined].includes(req.query.action as GetActionEnum)) {
+    if (!Object.values(GetActionEnum).includes(req.query.action as GetActionEnum)) {
       const foundWorkflow = await this.getWorkflow(req.params.environmentId, req.query.workflowId as string);
 
       const programmaticallyCreatedWorkflow = this.createWorkflow(foundWorkflow, req.body.controls);
