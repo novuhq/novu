@@ -120,11 +120,15 @@ export class AnalyticsService {
     });
   }
 
-  track(name: string, userId: string, data: Record<string, unknown> = {}) {
+  track(
+    name: string,
+    userId: string,
+    data: Record<string, unknown> = {},
+  ) {
     if (!this.segmentEnabled) {
       return;
     }
-
+    
     try {
       this.segment.track({
         anonymousId: userId,
