@@ -3,7 +3,6 @@ import tsEslint from 'typescript-eslint';
 import jsEslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import panda from '@pandacss/eslint-plugin';
-import pluginCypress from 'eslint-plugin-cypress/flat';
 import localRules from 'eslint-plugin-local-rules';
 
 // Eslint v8.0 and below plugins
@@ -335,7 +334,6 @@ export default tsEslint.config(
   /* ******************** WEB PACKAGES ******************** */
   {
     files: ['libs/design-system/**', 'libs/novui/**', 'apps/web/**'],
-    extends: [pluginCypress.configs.recommended],
     plugins: {
       '@pandacss': panda,
       'react-hooks': fixupPluginRules(reactHooks),

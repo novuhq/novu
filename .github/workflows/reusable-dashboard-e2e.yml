@@ -78,8 +78,6 @@ jobs:
 
       - uses: ./.github/actions/run-backend
         with:
-          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           ci_ee_test: ${{ steps.determine_run_type.outputs.enterprise_run }}
 

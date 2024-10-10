@@ -158,9 +158,6 @@ importers:
       eslint-plugin-const-case:
         specifier: ^1.2.2
         version: 1.2.2
-      eslint-plugin-cypress:
-        specifier: ^3.5.0
-        version: 3.5.0(eslint@8.57.1)
       eslint-plugin-deprecation:
         specifier: ^3.0.0
         version: 3.0.0(eslint@8.57.1)(typescript@5.6.2)
@@ -20608,11 +20605,6 @@ packages:
   eslint-plugin-const-case@1.2.2:
     resolution: {integrity: sha512-ON8VLOfGqXRW9Zck+lhgT5k6+jAW+lH7RRjH0YvA42trYhSq6Ayq8m3frqCJhlArDwfPKnjHVVyZhQurTDL3OQ==}
     engines: {node: '>=10'}
-
-  eslint-plugin-cypress@3.5.0:
-    resolution: {integrity: sha512-JZQ6XnBTNI8h1B9M7wJSFzc48SYbh7VMMKaNTQOFa3BQlnmXPrVc4PKen8R+fpv6VleiPeej6VxloGb42zdRvw==}
-    peerDependencies:
-      eslint: '>=7'
 
   eslint-plugin-deprecation@3.0.0:
     resolution: {integrity: sha512-JuVLdNg/uf0Adjg2tpTyYoYaMbwQNn/c78P1HcccokvhtRphgnRjZDKmhlxbxYptppex03zO76f97DD/yQHv7A==}
@@ -61183,11 +61175,6 @@ snapshots:
   eslint-plugin-const-case@1.2.2:
     dependencies:
       requireindex: 1.2.0
-
-  eslint-plugin-cypress@3.5.0(eslint@8.57.1):
-    dependencies:
-      eslint: 8.57.1
-      globals: 13.24.0
 
   eslint-plugin-deprecation@3.0.0(eslint@8.57.1)(typescript@5.6.2):
     dependencies:
