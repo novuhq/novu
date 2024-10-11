@@ -27,7 +27,7 @@ const formSchema = z.object({
   ),
 });
 
-export const EditWorkflow = () => {
+export const WorkflowEditor = () => {
   const { currentEnvironment } = useEnvironment();
   const { workflowId } = useParams<{ workflowId?: string }>();
   const navigate = useNavigate();
