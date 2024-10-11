@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState } from 'react';
 import { RiLinkM, RiPencilFill } from 'react-icons/ri';
 import { PopoverPortal } from '@radix-ui/react-popover';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 // eslint-disable-next-line
 // @ts-ignore
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,26 +10,24 @@ import * as z from 'zod';
 import { cn } from '@/utils/ui';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { Button } from '../primitives/button';
-import { Input, InputField, InputGroup, InputHint, InputLabel } from '../primitives/input';
+import { Input, InputField } from '../primitives/input';
 import { useBridgeHealthCheck, useUpdateBridgeUrl, useValidateBridgeUrl } from '@/hooks';
 import { ConnectionStatus } from '@/utils/types';
 import { useEnvironment } from '@/context/environment/hooks';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form';
 
-type FormFields = {
-  bridgeUrl: string;
-};
-
-const schema = z.object({ bridgeUrl: z.string().url() });
+const formSchema = z.object({ bridgeUrl: z.string().url() });
 
 export const EditBridgeUrlButton = () => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const form = useForm<z.infer<typeof formSchema>>({ mode: 'onSubmit', resolver: zodResolver(formSchema) });
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     setError,
     formState: { isDirty, errors },
-  } = useForm<FormFields>({ mode: 'onSubmit', resolver: zodResolver(schema) });
+  } = form;
   const { currentEnvironment, setBridgeUrl } = useEnvironment();
   const { status, bridgeURL: envBridgeUrl } = useBridgeHealthCheck();
   const { validateBridgeUrl, isPending: isValidatingBridgeUrl } = useValidateBridgeUrl();
@@ -39,7 +37,7 @@ export const EditBridgeUrlButton = () => {
     reset({ bridgeUrl: envBridgeUrl });
   }, [reset, envBridgeUrl]);
 
-  const onSubmit: SubmitHandler<FormFields> = async ({ bridgeUrl }) => {
+  const onSubmit = async ({ bridgeUrl }: z.infer<typeof formSchema>) => {
     const { isValid } = await validateBridgeUrl(bridgeUrl);
     if (isValid) {
       await updateBridgeUrl({ url: bridgeUrl, environmentId: currentEnvironment?._id ?? '' });
@@ -79,40 +77,46 @@ export const EditBridgeUrlButton = () => {
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent className="w-[362px] p-0" side="bottom" align="end">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="p-5">
-              <div className="flex flex-col gap-1">
-                <InputGroup>
-                  <InputLabel htmlFor="bridgeUrl">Bridge Endpoint URL</InputLabel>
-                  <InputField variant="xs" state={errors.bridgeUrl?.message ? 'error' : 'default'}>
-                    <RiLinkM className="size-5 min-w-5" />
-                    <Input id="bridgeUrl" {...register('bridgeUrl')} />
-                  </InputField>
-                  <InputHint state={errors.bridgeUrl?.message ? 'error' : 'default'}>
-                    {errors.bridgeUrl?.message ?? 'Full path URL (e.g., https://your.api.com/api/novu)'}
-                  </InputHint>
-                </InputGroup>
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="flex flex-col gap-1 p-5">
+                <FormField
+                  control={control}
+                  name="bridgeUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bridge Endpoint URL</FormLabel>
+                      <FormControl>
+                        <InputField variant="xs" state={errors.bridgeUrl?.message ? 'error' : 'default'}>
+                          <RiLinkM className="size-5 min-w-5" />
+                          <Input id="bridgeUrl" {...field} />
+                        </InputField>
+                      </FormControl>
+                      <FormMessage>Full path URL (e.g., https://your.api.com/api/novu)</FormMessage>
+                    </FormItem>
+                  )}
+                />
               </div>
-            </div>
-            <div className="flex items-center justify-between border-t border-neutral-200 px-5 py-3">
-              <a
-                href="https://docs.novu.co/concepts/endpoint#bridge-endpoint"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs"
-              >
-                How it works?
-              </a>
-              <Button
-                type="submit"
-                variant="primary"
-                size="xs"
-                disabled={!isDirty || isValidatingBridgeUrl || isUpdatingBridgeUrl}
-              >
-                Update endpoint
-              </Button>
-            </div>
-          </form>
+              <div className="flex items-center justify-between border-t border-neutral-200 px-5 py-3">
+                <a
+                  href="https://docs.novu.co/concepts/endpoint#bridge-endpoint"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs"
+                >
+                  How it works?
+                </a>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="xs"
+                  disabled={!isDirty || isValidatingBridgeUrl || isUpdatingBridgeUrl}
+                >
+                  Update endpoint
+                </Button>
+              </div>
+            </form>
+          </Form>
         </PopoverContent>
       </PopoverPortal>
     </Popover>
