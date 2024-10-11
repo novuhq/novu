@@ -635,7 +635,7 @@ importers:
         specifier: ^5.2.5
         version: 5.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@hookform/resolvers':
-        specifier: ^2.9.1
+        specifier: ^2.9.11
         version: 2.9.11(react-hook-form@7.43.9(react@18.3.1))
       '@novu/react':
         specifier: ^2.3.0
@@ -715,6 +715,9 @@ importers:
       react-router-dom:
         specifier: 6.26.2
         version: 6.26.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use-intercom:
+        specifier: ^2.0.0
+        version: 2.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.4.0

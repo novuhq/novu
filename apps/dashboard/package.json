@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.2.5",
-    "@hookform/resolvers": "^2.9.1",
+    "@hookform/resolvers": "^2.9.11",
     "@novu/react": "^2.3.0",
     "@novu/shared": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.2",
@@ -47,6 +47,7 @@
     "react-hook-form": "7.43.9",
     "react-icons": "^5.3.0",
     "react-router-dom": "6.26.2",
+    "react-use-intercom": "^2.0.0",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
