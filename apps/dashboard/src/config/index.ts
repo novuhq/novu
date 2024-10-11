@@ -15,3 +15,7 @@ if (!CLERK_PUBLISHABLE_KEY) {
 }
 
 export const API_HOSTNAME = import.meta.env.VITE_API_HOSTNAME;
+
+export const SEGMENT_KEY = import.meta.env.VITE_SEGMENT_KEY;
+
+export const MIXPANEL_KEY = import.meta.env.VITE_MIXPANEL_KEY;

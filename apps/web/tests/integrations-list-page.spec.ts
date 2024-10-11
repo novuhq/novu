@@ -812,7 +812,7 @@ test('should update the mailjet integration from the list', async ({ page }) => 
 
   await expect(updateButton).toBeEnabled();
   await updateButton.click();
-  await expect(updateButton).toBeEnabled();
+  await expect(updateButton).toBeDisabled();
 
   sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();

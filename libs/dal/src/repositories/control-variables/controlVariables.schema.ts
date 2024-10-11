@@ -29,8 +29,6 @@ const controlVariablesSchema = new Schema<ControlValuesModel>(
       index: true,
       type: Schema.Types.ObjectId,
     } as any,
-    workflowId: Schema.Types.String,
-    stepId: Schema.Types.String,
     level: Schema.Types.String,
     priority: Schema.Types.Number,
     inputs: Schema.Types.Mixed,
