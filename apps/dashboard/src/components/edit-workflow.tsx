@@ -34,7 +34,7 @@ export const EditWorkflow = () => {
   const form = useForm<z.infer<typeof formSchema>>({ mode: 'onSubmit', resolver: zodResolver(formSchema) });
   const { handleSubmit, reset } = form;
 
-  useFetchWorkflow({
+  const { workflow } = useFetchWorkflow({
     workflowId,
     onSuccess: (data) => {
       reset(data);
@@ -55,7 +55,7 @@ export const EditWorkflow = () => {
           <TabsList>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
           </TabsList>
-          <TabsContent value="workflow">Workflow Editor Canvas</TabsContent>
+          <TabsContent value="workflow">{`Workflow Editor Canvas - ${workflow?.name ?? ''}`}</TabsContent>
         </Tabs>
       </form>
     </Form>
