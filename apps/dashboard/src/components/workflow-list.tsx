@@ -19,12 +19,28 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { ListWorkflowResponse, WorkflowOriginEnum } from '@novu/shared';
+import { ListWorkflowResponse, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FaCode } from 'react-icons/fa6';
 import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
-import { RiRouteFill } from 'react-icons/ri';
-import { RiBookMarkedLine } from 'react-icons/ri';
+import {
+  RiRouteFill,
+  RiBookMarkedLine,
+  RiMore2Fill,
+  RiPlayCircleLine,
+  RiGitPullRequestFill,
+  RiPulseFill,
+  RiPauseCircleLine,
+  RiDeleteBin2Line,
+} from 'react-icons/ri';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
@@ -100,6 +116,7 @@ export const WorkflowList = () => {
             <TableHead>Steps</TableHead>
             <TableHead>Tags</TableHead>
             <TableHead>Last updated</TableHead>
+            <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -123,41 +140,82 @@ export const WorkflowList = () => {
                   <TableCell className="text-foreground-600 text-sm font-medium">
                     <Skeleton className="h-5 w-[14ch] rounded-full" />
                   </TableCell>
+                  <TableCell className="text-foreground-600 text-sm font-medium">
+                    <RiMore2Fill className="size-4 opacity-50" />
+                  </TableCell>
                 </TableRow>
               ))}
             </>
           ) : (
             <>
               {workflowsQuery.data.workflows.map((workflow) => (
-                <TableRow key={workflow._id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-1">
-                      {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-                        <Badge className="rounded-full px-1.5" variant={'warning'}>
-                          <FaCode className="size-3" />
-                        </Badge>
-                      )}
-                      <TruncatedText text={workflow.name} />
-                    </div>
-                    <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
-                  </TableCell>
-                  <TableCell>
-                    <WorkflowStatus status={workflow.status} />
-                  </TableCell>
-                  <TableCell>
-                    <WorkflowSteps steps={workflow.stepTypeOverviews} />
-                  </TableCell>
-                  <TableCell>
-                    <WorkflowTags tags={workflow.tags || []} />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 text-sm font-medium">
-                    {new Date(workflow.updatedAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </TableCell>
-                </TableRow>
+                <>
+                  <TableRow key={workflow._id} className="relative">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1">
+                        {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
+                          <Badge className="rounded-full px-1.5" variant={'warning'}>
+                            <FaCode className="size-3" />
+                          </Badge>
+                        )}
+                        <TruncatedText text={workflow.name} />
+                      </div>
+                      <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowStatus status={workflow.status} />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowSteps steps={workflow.stepTypeOverviews} />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowTags tags={workflow.tags || []} />
+                    </TableCell>
+                    <TableCell className="text-foreground-600 text-sm font-medium">
+                      {new Date(workflow.updatedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </TableCell>
+                    <TableCell className="w-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <RiMore2Fill />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <RiPlayCircleLine />
+                              Trigger workflow
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled={workflow.status === WorkflowStatusEnum.ERROR}>
+                              <RiGitPullRequestFill />
+                              Promote to Production
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <RiPulseFill />
+                              View activity
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <RiPauseCircleLine />
+                              Pause workflow
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <RiDeleteBin2Line />
+                              Delete workflow
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                </>
               ))}
             </>
           )}

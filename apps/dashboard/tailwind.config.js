@@ -6,6 +6,7 @@ export default {
     boxShadow: {
       xs: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)',
       sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
+      md: '0px 16px 32px -12px rgba(14, 18, 27, 0.10)',
       DEFAULT: '0px 16px 32px -12px #0E121B1A',
     },
     colors: {
