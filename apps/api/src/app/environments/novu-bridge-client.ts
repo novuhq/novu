@@ -14,7 +14,6 @@ import { NovuHandler } from '@novu/framework/nest';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { decryptApiKey } from '@novu/application-generic';
-import { REQUEST } from '@nestjs/core';
 
 export const frameworkName = 'novu-nest';
 
