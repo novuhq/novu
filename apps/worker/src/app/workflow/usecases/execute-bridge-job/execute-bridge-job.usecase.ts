@@ -137,13 +137,8 @@ export class ExecuteBridgeJob {
   private async findControlVariables(command: ExecuteBridgeJobCommand, workflow: NotificationTemplateEntity) {
     const controls = await this.controlValuesRepository.findOne({
       _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      /*
-       * TODO: something odd was happening with stepId incorrectly matching.
-       * Investigate why this is, it causes invalid state hydration errors in Framework.
-       */
-      workflowId: command.identifier,
-      stepId: command.job.step.name,
+      _workflowId: workflow._id,
+      _stepId: command.job.step._id,
       level: ControlVariablesLevelEnum.STEP_CONTROLS,
     });
 
