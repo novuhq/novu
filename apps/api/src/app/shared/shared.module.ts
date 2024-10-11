@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 import { Module } from '@nestjs/common';
 import {
   ChangeRepository,
@@ -38,6 +39,7 @@ import {
   ExecuteBridgeRequest,
   ExecutionLogRoute,
   featureFlagsService,
+  injectCommunityAuthProviders,
   getFeatureFlag,
   InvalidateCacheService,
   LoggerModule,
@@ -45,8 +47,18 @@ import {
   storageService,
 } from '@novu/application-generic';
 
-import { JobTopicNameEnum } from '@novu/shared';
+import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
+
+function getDynamicAuthProviders() {
+  if (isClerkEnabled()) {
+    const eeAuthPackage = require('@novu/ee-auth');
+
+    return eeAuthPackage.injectEEAuthProviders();
+  } else {
+    return injectCommunityAuthProviders();
+  }
+}
 
 const DAL_MODELS = [
   UserRepository,
@@ -73,6 +85,15 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   ControlValuesRepository,
   PreferencesRepository,
+  /**
+   * This is here only because of the tests. These providers are available at AppModule level,
+   * but since in tests we are often importing just the SharedModule and not the entire AppModule
+   * we need to make sure these providers are available.
+   *
+   * TODO: modify tests to either import all services they need explicitly, or remove repositories from SharedModule,
+   * and then import SharedModule + repositories explicitely.
+   */
+  ...getDynamicAuthProviders(),
 ];
 
 const dalService = {
