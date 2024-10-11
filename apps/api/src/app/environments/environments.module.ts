@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+// @ts-expect-error - TODO: package CJS with @novu/framework
 import { NovuModule, NovuClient } from '@novu/framework/nest';
 
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
