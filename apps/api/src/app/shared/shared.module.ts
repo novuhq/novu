@@ -91,7 +91,7 @@ const DAL_MODELS = [
    * we need to make sure these providers are available.
    *
    * TODO: modify tests to either import all services they need explicitly, or remove repositories from SharedModule,
-   * and then import SharedModule + repositories explicitely.
+   * and then import SharedModule + repositories explicitly.
    */
   ...getDynamicAuthProviders(),
 ];
