@@ -204,17 +204,6 @@
     {
       "type": "npm",
       "script": "build",
-      "label": "NOTIFICATION CENTER",
-      "path": "/packages/notification-center",
-      "problemMatcher": "$tsc",
-      "dependsOn": [
-        "NC CLIENT",
-        "SHARED"
-      ]
-    },
-    {
-      "type": "npm",
-      "script": "build",
       "label": "NC CLIENT",
       "path": "/packages/client",
       "problemMatcher": "$tsc",

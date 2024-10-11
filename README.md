@@ -78,6 +78,7 @@ There are two ways to get started:
 ```bash
 npx novu@latest dev
 ```
+
 2. [Create a free cloud account](https://dashboard.novu.co?utm_campaign=github-readme)
 
 ## 📚 Table of contents
@@ -130,7 +131,7 @@ await commentWorkflow.trigger({
 
 ```
 
-## Embeddable Inbox component
+## Embeddable <Inbox /> component
 
 Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme), or build your own via our API and SDK. React native, Vue, and Angular are coming soon.
 
@@ -138,6 +139,7 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://novu.co/static/6e670ba56ed7a65c7f5ccff5d58c56fb/a9e85/inbox.webp" alt-text="GIF of Novu's Embeddable Notification Center">
 
 Read more about how to add a [notification center Inbox](https://docs.novu.co/inbox/react/get-started?utm_campaign=github-readme) to your app.
+
 </div>
 
 ## Providers

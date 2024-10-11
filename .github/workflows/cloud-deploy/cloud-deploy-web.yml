@@ -13,7 +13,6 @@ jobs:
       react_app_api_url: https://eu.api.novu.co
       react_app_ws_url: https://eu.ws.novu.co
       react_app_webhook_url: https://eu.webhook.novu.co
-      react_app_widget_embed_path: https://eu.embed.novu.co/embed.umd.min.js
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: production
       react_app_mail_server_domain: eu.inbound-mail.novu.co
@@ -33,7 +32,6 @@ jobs:
       react_app_api_url: https://api.novu.co
       react_app_ws_url: https://ws.novu.co
       react_app_webhook_url: https://webhook.novu.co
-      react_app_widget_embed_path: https://embed.novu.co/embed.umd.min.js
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: production
       react_app_mail_server_domain: inbound-mail.novu.co

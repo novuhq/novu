@@ -55,7 +55,6 @@ jobs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
-      test-cypress: ${{ steps.get-projects-arrays.outputs.test-cypress }}
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
       test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
       test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
@@ -100,7 +99,6 @@ jobs:
             echo "test-unit=$(pnpm run get-affected test:unit --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-e2e=$(pnpm run get-affected test:e2e --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee --all | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-providers=$(pnpm run get-affected test --all providers | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test --all packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test --all libs | tail -n +5)" >> $GITHUB_OUTPUT
@@ -109,7 +107,6 @@ jobs:
             echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-e2e=$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
-            echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
@@ -263,12 +260,3 @@ jobs:
     secrets: inherit
     with:
       ee: true
-
-  test_e2e_widget:
-    name: E2E test Widget
-    needs: [get-affected]
-    uses: ./.github/workflows/reusable-widget-e2e.yml
-    with:
-      ee: true
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
-    secrets: inherit

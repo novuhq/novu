@@ -1,5 +1,4 @@
 const fs = require('fs');
-const shell = require('shelljs');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
@@ -34,8 +33,7 @@ const API_TESTS = 'API tests';
 const API_E2E_TESTS = 'API E2E tests';
 const API_INTEGRATION_TESTS = 'API integration tests';
 const DEV_ENVIRONMENT_SETUP = 'Development environment setup';
-const WEB_PROJECT_AND_WIDGET = 'Web project and Widget app';
-const WEB_PROJECT = 'Web project (Web, API, Worker, WS)';
+const WEB_PROJECT = 'Web project (Web, API, Worker)';
 const WEB_TESTS = 'WEB tests';
 
 const RUN_PLAYWRIGHT_UI = 'Open Playwright UI';
@@ -58,7 +56,7 @@ async function setupRunner() {
       type: 'list',
       name: 'runConfiguration',
       message: 'What section of the project you want to run?',
-      choices: [WEB_PROJECT, WEB_PROJECT_AND_WIDGET, API_AND_WORKER_ONLY],
+      choices: [WEB_PROJECT, API_AND_WORKER_ONLY],
       when(answers) {
         return answers.action === RUN_PROJECT;
       },
@@ -95,36 +93,6 @@ async function setupRunner() {
   inquirer.prompt(questions).then(async (answers) => {
     if (answers.action === DEV_ENVIRONMENT_SETUP) {
       shell.exec('npm run dev-environment-setup');
-    } else if (answers.runConfiguration === WEB_PROJECT_AND_WIDGET) {
-      shell.exec('nx run-many --target=build --projects=@novu/api,@novu/worker');
-      shell.exec('npm run start:dev', { async: true });
-
-      await waitPort({
-        host: 'localhost',
-        port: 3000,
-      });
-      await waitPort({
-        host: 'localhost',
-        port: 3004,
-      });
-      await waitPort({
-        host: 'localhost',
-        port: 4500,
-      });
-      await waitPort({
-        host: 'localhost',
-        port: 4200,
-      });
-
-      // eslint-disable-next-line no-console
-      console.log(`
-        Everything is running 🎊
-
-        Web: http://127.0.0.1:4200
-        Widget: http://127.0.0.1:4500
-        API: http://127.0.0.1:3000
-        Worker: http://127.0.0.1:3004
-      `);
     } else if (answers.runConfiguration === WEB_PROJECT) {
       try {
         shell.exec('nx run-many --target=build --projects=@novu/api,@novu/worker,@novu/ws');

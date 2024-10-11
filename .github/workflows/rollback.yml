@@ -12,7 +12,6 @@ on:
           - api
           - web
           - webhook
-          - widget
           - worker
           - ws
       environment:
@@ -193,7 +192,7 @@ jobs:
 
 
   netlify:
-    if: contains(fromJson('["web", "widget"]'), github.event.inputs.service)
+    if: contains(fromJson('["web"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -216,10 +215,7 @@ jobs:
       - name: Prepare variables
         id: variables
         run: |
-          if [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
-            echo "Using netlify_site_id: b9147448-b835-4eb1-a2f0-11102f611f5f"
-            echo "netlify_site_id=b9147448-b835-4eb1-a2f0-11102f611f5f" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
+          if [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
             echo "Using netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f"
             echo "netlify_site_id=45396446-dc86-4ad6-81e4-86d3eb78d06f" >> $GITHUB_ENV
           elif [[ "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "US" ]]; then
@@ -231,12 +227,6 @@ jobs:
           elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "US" ]]; then
             echo "Using netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff"
             echo "netlify_site_id=8639d8b9-81f9-44c3-b885-585a7fd2b5ff" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "EU" ]]; then
-            echo "Using netlify_site_id: 20a64bdd-1934-4284-875f-862410c69a3b"
-            echo "netlify_site_id=20a64bdd-1934-4284-875f-862410c69a3b" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "US" ]]; then
-            echo "Using netlify_site_id: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034"
-            echo "netlify_site_id=6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034" >> $GITHUB_ENV
           fi
 
       - name: Get Current Deploy ID

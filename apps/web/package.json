@@ -62,7 +62,7 @@
     "@monaco-editor/react": "^4.6.0",
     "@novu/design-system": "workspace:*",
     "@novu/js": "workspace:*",
-    "@novu/notification-center": "workspace:*",
+    "@novu/notification-center": "latest",
     "@novu/novui": "workspace:*",
     "@novu/shared": "workspace:*",
     "@rive-app/react-canvas": "^4.8.1",
