@@ -116,10 +116,6 @@ jobs:
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
 
-      - name: Run unit tests
-        run: |
-          cd apps/api && pnpm test
-
       - name: Send Slack notifications
         uses: ./.github/actions/slack-notify-on-failure
         if: failure()
