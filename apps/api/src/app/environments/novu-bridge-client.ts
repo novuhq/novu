@@ -25,8 +25,8 @@ const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | Ste
   [StepTypeEnum.SMS]: WorkflowChannelEnum.SMS,
   [StepTypeEnum.CHAT]: WorkflowChannelEnum.CHAT,
   [StepTypeEnum.PUSH]: WorkflowChannelEnum.PUSH,
-  [StepTypeEnum.DIGEST]: 'digest',
-  [StepTypeEnum.DELAY]: 'delay',
+  [StepTypeEnum.DIGEST]: StepTypeEnum.DIGEST,
+  [StepTypeEnum.DELAY]: StepTypeEnum.DELAY,
 };
 
 @Injectable({ scope: Scope.REQUEST })
@@ -98,8 +98,7 @@ export class NovuBridgeClient {
 
           const stepType = stepTemplate.type;
           const stepFn = stepFnFromStepType[stepType];
-
-          const stepControls = staticStep.controls;
+          const stepControls = stepTemplate.controls;
 
           if (!stepControls) {
             throw new NotFoundException('Step controls not found');
