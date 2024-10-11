@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, Query, Scope } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Scope } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
 import {
@@ -10,6 +10,7 @@ import {
   workflow,
   WorkflowChannelEnum,
 } from '@novu/framework';
+// @ts-expect-error - TODO: package CJS with @novu/framework
 import { NovuHandler } from '@novu/framework/nest';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
