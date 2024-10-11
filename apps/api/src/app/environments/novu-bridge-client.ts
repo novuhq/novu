@@ -75,7 +75,6 @@ export class NovuBridgeClient {
     return secretKey;
   }
 
-  // TODO: refactor this into a usecase, add caching.
   private async getWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
     const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
 
@@ -91,12 +90,23 @@ export class NovuBridgeClient {
       newWorkflow.name,
       async ({ step }) => {
         for await (const staticStep of newWorkflow.steps) {
-          const stepType = staticStep.template!.type;
+          const stepTemplate = staticStep.template;
+
+          if (!stepTemplate) {
+            throw new NotFoundException('Step template not found');
+          }
+
+          const stepType = stepTemplate.type;
           const stepFn = stepFnFromStepType[stepType];
 
+          const stepControls = staticStep.controls;
+
+          if (!stepControls) {
+            throw new NotFoundException('Step controls not found');
+          }
+
           await step[stepFn](staticStep.stepId, () => controls, {
-            // TODO: fix the step typings, `controls` lives on template property, not step
-            controlSchema: (staticStep.template as unknown as typeof staticStep).controls?.schema,
+            controlSchema: stepControls.schema,
             /*
              * TODO: add conditions
              * Used to construct conditions defined with https://react-querybuilder.js.org/ or similar
