@@ -1,7 +1,7 @@
 import { SoftDeleteModel } from 'mongoose-delete';
-import { ControlVariablesLevelEnum } from '@novu/shared';
-import { ControlValuesModel, ControlVariables } from './controlVariables.schema';
-import { ControlValuesEntity } from './controlValuesEntity';
+import { ControlValuesLevelEnum } from '@novu/shared';
+import { ControlValuesModel, ControlValues } from './controlValues.schema';
+import { ControlValuesEntity } from './controlValues.entity';
 import { BaseRepository } from '../base-repository';
 import { EnforceEnvOrOrgIds } from '../../types';
 
@@ -11,7 +11,7 @@ export interface DeleteManyValuesQuery {
   _organizationId: string;
   _workflowId: string;
   _stepId?: string;
-  level?: ControlVariablesLevelEnum;
+  level?: ControlValuesLevelEnum;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -20,7 +20,7 @@ export interface FindControlValuesQuery {
   _organizationId: string;
   _workflowId: string;
   _stepId: string;
-  level?: ControlVariablesLevelEnum;
+  level?: ControlValuesLevelEnum;
 }
 
 export class ControlValuesRepository extends BaseRepository<
@@ -28,11 +28,11 @@ export class ControlValuesRepository extends BaseRepository<
   ControlValuesEntity,
   EnforceEnvOrOrgIds
 > {
-  private controlVariables: SoftDeleteModel;
+  private controlValues: SoftDeleteModel;
 
   constructor() {
-    super(ControlVariables, ControlValuesEntity);
-    this.controlVariables = ControlVariables;
+    super(ControlValues, ControlValuesEntity);
+    this.controlValues = ControlValues;
   }
 
   async deleteMany(query: DeleteManyValuesQuery) {
