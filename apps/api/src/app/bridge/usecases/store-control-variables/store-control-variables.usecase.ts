@@ -1,10 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import defaults from 'json-schema-defaults';
-
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
-import { JsonSchema } from '@novu/framework';
 
-import { ApiException, UpsertControlValuesCommand, UpsertControlValuesUseCase } from '@novu/application-generic';
+import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '@novu/application-generic';
 import { StoreControlVariablesCommand } from './store-control-variables.command';
 
 @Injectable()
@@ -21,19 +18,14 @@ export class StoreControlVariablesUseCase {
     );
 
     if (!workflowExist) {
-      throw new ApiException('Workflow not found');
+      throw new NotFoundException('Workflow not found');
     }
 
     const step = workflowExist?.steps.find((item) => item.stepId === command.stepId);
 
     if (!step || !step._id) {
-      throw new ApiException('Step not found');
+      throw new NotFoundException('Step not found');
     }
-
-    const stepDefaultControls = defaults(
-      (step.template as any)?.controls?.schema || (step.template as any)?.inputs?.schema,
-      {}
-    ) as JsonSchema;
 
     return await this.upsertControlValuesUseCase.execute(
       UpsertControlValuesCommand.create({
@@ -42,7 +34,6 @@ export class StoreControlVariablesUseCase {
         notificationStepEntity: step,
         workflowId: workflowExist._id,
         newControlValues: command.variables,
-        controlSchemas: { schema: stepDefaultControls },
       })
     );
   }

@@ -1,9 +1,8 @@
 import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { JsonSchema } from '@novu/framework';
 import { NotificationStepEntity } from '@novu/dal';
-import { OrganizationLevelCommand } from '../../commands';
+import { EnvironmentCommand } from '../../commands';
 
-export class UpsertControlValuesCommand extends OrganizationLevelCommand {
+export class UpsertControlValuesCommand extends EnvironmentCommand {
   @IsObject()
   notificationStepEntity: NotificationStepEntity;
 
@@ -14,7 +13,4 @@ export class UpsertControlValuesCommand extends OrganizationLevelCommand {
   @IsObject()
   @IsOptional()
   newControlValues?: Record<string, unknown>;
-
-  @IsObject()
-  controlSchemas: { schema: JsonSchema };
 }

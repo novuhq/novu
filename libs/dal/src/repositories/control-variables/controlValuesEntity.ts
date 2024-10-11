@@ -12,6 +12,4 @@ export class ControlValuesEntity {
   controls: Record<string, unknown>;
   _workflowId: string;
   _stepId: string;
-  workflowId: string;
-  stepId: string;
 }
