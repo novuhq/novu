@@ -14,6 +14,11 @@ on:
         required: false
         default: true
         type: boolean
+      test-unit:
+        description: 'detect if we should run unit tests'
+        required: false
+        default: true
+        type: boolean
       ee:
         description: 'use the ee version of api'
         required: false
@@ -115,6 +120,11 @@ jobs:
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
+
+      - name: Run unit tests
+        if: inputs.test-unit
+        run: |
+          cd apps/api && pnpm test
 
       - name: Send Slack notifications
         uses: ./.github/actions/slack-notify-on-failure
