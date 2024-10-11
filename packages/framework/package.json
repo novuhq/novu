@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,8 +29,7 @@
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
-    "devtool": "tsx ./scripts/devtool.ts",
-    "release:preview": "pnpx pkg-pr-new publish"
+    "devtool": "tsx ./scripts/devtool.ts"
   },
   "keywords": [
     "novu",
@@ -60,6 +59,11 @@
       "require": "./dist/servers/express.js",
       "import": "./dist/servers/express.js",
       "types": "./dist/servers/express.d.ts"
+    },
+    "./nest": {
+      "require": "./dist/servers/nest.js",
+      "import": "./dist/servers/nest.js",
+      "types": "./dist/servers/nest.d.ts"
     },
     "./next": {
       "require": "./dist/servers/next.js",
@@ -93,6 +97,7 @@
     }
   },
   "peerDependencies": {
+    "@nestjs/common": ">=10.0.0",
     "@sveltejs/kit": ">=1.27.3",
     "@vercel/node": ">=2.15.9",
     "aws-lambda": ">=1.0.7",
@@ -103,6 +108,9 @@
     "zod-to-json-schema": ">=3.0.0"
   },
   "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
     "@sveltejs/kit": {
       "optional": true
     },
@@ -133,6 +141,7 @@
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
+    "@nestjs/common": "10.4.1",
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
@@ -164,5 +173,8 @@
     "liquidjs": "^10.13.1",
     "ora": "^5.4.1",
     "sanitize-html": "^2.13.0"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

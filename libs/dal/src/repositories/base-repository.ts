@@ -6,16 +6,7 @@ import {
   DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
-import {
-  Model,
-  Types,
-  ProjectionType,
-  FilterQuery,
-  UpdateQuery,
-  QueryOptions,
-  Query,
-  QueryWithHelpers,
-} from 'mongoose';
+import { FilterQuery, Model, ProjectionType, QueryOptions, QueryWithHelpers, Types, UpdateQuery } from 'mongoose';
 import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
@@ -53,6 +44,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.MongooseModel.countDocuments(query, {
       limit,
     });
+  }
+
+  async estimatedDocumentCount(): Promise<number> {
+    return this.MongooseModel.estimatedDocumentCount();
   }
 
   async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
@@ -269,8 +264,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     let result;
     try {
       result = await this.MongooseModel.insertMany(data, { ordered });
-    } catch (e) {
-      throw new DalException(e.message);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        throw new DalException(e.message);
+      } else {
+        throw new DalException('An unknown error occurred');
+      }
     }
 
     const insertedIds = result.map((inserted) => inserted._id);

@@ -244,6 +244,7 @@ jobs:
       test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') || contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/worker') }}
       test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') || contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/worker') }}
       job-name: ${{ matrix.name }}
+      test-unit: false
     secrets: inherit    
 
   test_e2e_web:
@@ -251,6 +252,15 @@ jobs:
     needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
+    secrets: inherit
+    with:
+      ee: true
+
+  test_e2e_dashboard:
+    name: E2E test Dashboard app
+    needs: [get-affected]
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/dashboard') }}
+    uses: ./.github/workflows/reusable-dashboard-e2e.yml
     secrets: inherit
     with:
       ee: true

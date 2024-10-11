@@ -197,6 +197,9 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
         default: true,
       },
     },
+    origin: {
+      type: Schema.Types.String,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

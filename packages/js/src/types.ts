@@ -179,4 +179,8 @@ export type NovuOptions = {
   backendUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
+  /**
+   * @internal Should be used internally
+   */
+  __userAgent?: string;
 };

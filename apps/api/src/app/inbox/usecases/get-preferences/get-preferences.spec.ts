@@ -145,6 +145,7 @@ describe('GetPreferences', () => {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: undefined,
+        critical: false,
       },
     ]);
     expect(getSubscriberWorkflowMock.execute.calledOnce).to.be.true;
@@ -247,6 +248,7 @@ describe('GetPreferences', () => {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         tags: command.tags,
+        critical: false,
       },
     ]);
     expect(getSubscriberWorkflowMock.execute.calledTwice).to.be.true;

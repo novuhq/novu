@@ -14,13 +14,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
+import { ControlVariablesLevelEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
-import { EnvironmentRepository, NotificationTemplateRepository, ControlVariablesRepository } from '@novu/dal';
+import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
 
-import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
+import { StoreControlVariablesCommand, StoreControlVariablesUseCase } from './usecases/store-control-variables';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
 import { Sync } from './usecases/sync/sync.usecase';
@@ -40,8 +40,8 @@ export class BridgeController {
     private validateBridgeUrlUsecase: GetBridgeStatus,
     private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private controlVariablesRepository: ControlVariablesRepository,
-    private storeControlVariables: StoreControlVariables,
+    private controlValuesRepository: ControlValuesRepository,
+    private storeControlVariablesUseCase: StoreControlVariablesUseCase,
     private previewStep: PreviewStep,
     private analyticsService: AnalyticsService
   ) {}
@@ -174,12 +174,17 @@ export class BridgeController {
     if (!workflowExist) {
       throw new NotFoundException('Workflow not found');
     }
+    const step = workflowExist?.steps.find((item) => item.stepId === stepId);
 
-    const result = await this.controlVariablesRepository.findOne({
+    if (!step || !step._id) {
+      throw new NotFoundException('Step not found');
+    }
+
+    const result = await this.controlValuesRepository.findOne({
       _environmentId: user.environmentId,
       _organizationId: user.organizationId,
       _workflowId: workflowExist._id,
-      stepId,
+      _stepId: step._id,
       level: ControlVariablesLevelEnum.STEP_CONTROLS,
     });
 
@@ -195,7 +200,7 @@ export class BridgeController {
     @UserSession() user: UserSessionData,
     @Body() body: any
   ) {
-    return this.storeControlVariables.execute(
+    return this.storeControlVariablesUseCase.execute(
       StoreControlVariablesCommand.create({
         stepId,
         workflowId,

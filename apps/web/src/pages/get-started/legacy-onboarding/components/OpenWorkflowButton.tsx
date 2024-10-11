@@ -1,12 +1,12 @@
 import { errorMessage } from '@novu/design-system';
 
-import { TemplateCreationSourceEnum } from '../../../templates/shared/index';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { OnboardingWorkflowRouteEnum } from '../consts/types';
 import { LinkButton } from '../consts/shared';
 import { useCreateWorkflowFromBlueprint } from '../../../../hooks/index';
 import { openInNewTab } from '../../../../utils/index';
 import { buildWorkflowEditorUrl } from '../utils/workflowEditorUrl';
+import { WorkflowCreationSourceEnum } from '@novu/shared';
 
 export function OpenWorkflowButton({
   blueprintIdentifier,
@@ -30,7 +30,7 @@ export function OpenWorkflowButton({
   const handleOpenWorkflowClick = () => {
     segment.track('[Get Started] Click Create Notification Template', {
       templateIdentifier: blueprintIdentifier,
-      location: TemplateCreationSourceEnum.ONBOARDING_GET_STARTED,
+      location: WorkflowCreationSourceEnum.ONBOARDING_GET_STARTED,
     });
     createWorkflowFromBlueprint({ blueprintIdentifier });
   };

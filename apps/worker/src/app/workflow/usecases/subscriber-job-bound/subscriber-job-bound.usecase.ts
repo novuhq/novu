@@ -137,7 +137,14 @@ export class SubscriberJobBound {
       userId,
       tenant,
       bridgeUrl: command.bridge?.url,
-      ...(command.bridge?.workflow?.preferences && {
+      /*
+       * Only populate preferences if the command contains a `bridge` property,
+       * indicating that the execution is stateless.
+       *
+       * TODO: refactor the Worker execution to handle both stateless and stateful workflows
+       * transparently.
+       */
+      ...(command.bridge?.workflow && {
         preferences: buildWorkflowPreferences(command.bridge?.workflow?.preferences),
       }),
     };

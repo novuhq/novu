@@ -132,7 +132,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private async handleAction({ actions }: { actions: HandlerResponse<Output> }): Promise<IActionResponse> {
     const url = await actions.url();
     const method = await actions.method();
-    const action = url.searchParams.get(HttpQueryKeysEnum.ACTION) || '';
+    const action = url.searchParams.get(HttpQueryKeysEnum.ACTION) || GetActionEnum.HEALTH_CHECK;
     const workflowId = url.searchParams.get(HttpQueryKeysEnum.WORKFLOW_ID) || '';
     const stepId = url.searchParams.get(HttpQueryKeysEnum.STEP_ID) || '';
     const signatureHeader =

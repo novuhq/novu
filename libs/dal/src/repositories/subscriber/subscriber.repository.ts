@@ -2,7 +2,7 @@ import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery } from 'mongoose';
 
 import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
-import { SubscriberEntity, SubscriberDBModel } from './subscriber.entity';
+import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
@@ -55,11 +55,15 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     let bulkResponse;
     try {
       bulkResponse = await this.bulkWrite(bulkWriteOps);
-    } catch (e) {
-      if (!e.writeErrors) {
-        throw new DalException(e.message);
+    } catch (e: unknown) {
+      if (isErrorWithWriteErrors(e)) {
+        if (!e.writeErrors) {
+          throw new DalException(e.message);
+        }
+        bulkResponse = e.result;
+      } else {
+        throw new DalException('An unknown error occurred');
       }
-      bulkResponse = e.result;
     }
     const created = bulkResponse.getUpsertedIds();
     const writeErrors = bulkResponse.getWriteErrors();
@@ -191,10 +195,17 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
 
     return this.mapEntity(res);
   }
+
+  async estimatedDocumentCount(): Promise<number> {
+    return this.subscriber.estimatedDocumentCount();
+  }
 }
 function mapToSubscriberObject(subscriberId: string) {
   return { subscriberId };
 }
 function regExpEscape(literalString: string): string {
   return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
+}
+function isErrorWithWriteErrors(e: unknown): e is { writeErrors?: any; message?: string; result?: any } {
+  return typeof e === 'object' && e !== null && 'writeErrors' in e;
 }

@@ -1,8 +1,8 @@
-import { IsString, ValidateNested } from 'class-validator';
+import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserCommand, IStepControl } from '@novu/application-generic';
-import { NotificationTemplateCustomData, IPreferenceChannels, StepType } from '@novu/shared';
+import { IPreferenceChannels, NotificationTemplateCustomData, StepType } from '@novu/shared';
 
 import { IStepOutput, IWorkflowDefineStep } from '../../shared';
 
@@ -103,8 +103,16 @@ export interface ICreateBridges {
 }
 
 export class SyncCommand extends EnvironmentWithUserCommand implements ICreateBridges {
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => WorkflowDefine)
   workflows?: WorkflowDefine[];
+
+  @IsString()
+  @IsDefined()
   bridgeUrl: string;
 
+  @IsOptional()
+  @IsString()
   source?: string;
 }

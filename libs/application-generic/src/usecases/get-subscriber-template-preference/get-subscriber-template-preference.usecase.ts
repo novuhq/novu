@@ -16,13 +16,14 @@ import {
   ISubscriberPreferenceResponse,
   ITemplateConfiguration,
   PreferenceOverrideSourceEnum,
+  PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
 
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services/cache';
+import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { GetPreferences } from '../get-preferences';
 
 const PRIORITY_ORDER = [
@@ -78,17 +79,18 @@ export class GetSubscriberTemplatePreference {
     /**
      * V2 preference object.
      */
-    const subscriberWorkflowPreferences =
-      await this.getPreferences.getWorkflowPreferences({
+    const subscriberWorkflowPreferences = await this.getPreferences.safeExecute(
+      {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         subscriberId: subscriber._id,
         templateId: command.template._id,
-      });
+      },
+    );
 
     const subscriberPreferenceChannels = subscriberWorkflowPreferences
       ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-          subscriberWorkflowPreferences,
+          subscriberWorkflowPreferences.preferences,
         )
       : subscriberPreference?.channels;
     const workflowOverrideChannelPreference =
@@ -107,7 +109,8 @@ export class GetSubscriberTemplatePreference {
       ...command.template,
       // Use the critical flag from the V2 Preference object if it exists
       ...(subscriberWorkflowPreferences && {
-        critical: subscriberWorkflowPreferences?.all?.readOnly === true,
+        critical:
+          subscriberWorkflowPreferences.preferences?.all?.readOnly === true,
       }),
     });
 
@@ -118,6 +121,13 @@ export class GetSubscriberTemplatePreference {
         channels,
         overrides,
       },
+      /*
+       * TODO: Remove the fallback after we deprecate V1 preferences, as
+       * a type is always present for V2 preferences
+       */
+      type:
+        subscriberWorkflowPreferences?.type ||
+        PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
     };
   }
 

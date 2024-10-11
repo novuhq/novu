@@ -100,10 +100,6 @@ export class BillingPage {
     await this.page.waitForSelector('[data-test-id="plan-business-upgrade"]');
   }
 
-  async waitForPlanBusinessAndPayment() {
-    await this.page.waitForSelector('[data-test-id="plan-business-add-payment"]');
-  }
-
   async waitForFreeTrialBanner() {
     await this.page.waitForSelector('[data-test-id="free-trial-banner"]');
   }

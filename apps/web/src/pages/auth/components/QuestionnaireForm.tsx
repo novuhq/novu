@@ -126,13 +126,13 @@ export function QuestionnaireForm() {
           navigate(ROUTES.DASHBOARD_ONBOARDING);
         }
       } else {
-        navigate(ROUTES.WORKFLOWS);
+        navigate(ROUTES.GET_STARTED);
       }
 
       return;
     }
 
-    navigate(`${ROUTES.GET_STARTED}`);
+    navigate(ROUTES.GET_STARTED);
   };
 
   /**

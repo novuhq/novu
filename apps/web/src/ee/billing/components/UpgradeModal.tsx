@@ -36,7 +36,7 @@ export const UpgradeModal = ({
   setBillingInterval: (value: 'year' | 'month') => void;
   loading: boolean;
 }) => {
-  const { isFreeTrialActive, trialEnd } = useSubscription();
+  const { trial } = useSubscription();
   const segment = useSegment();
   const { colorScheme } = useMantineTheme();
   const navigate = useNavigate();
@@ -233,10 +233,10 @@ export const UpgradeModal = ({
                     </Group>
                   </div>
                 </Stack>
-                <When truthy={isFreeTrialActive}>
+                <When truthy={trial.isActive}>
                   <Text style={{ paddingBottom: 8 }} color={isDark ? colors.B60 : colors.B40} size={12}>
                     Your payment method will be charged when your trial concludes on{' '}
-                    {new Date(trialEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.
+                    {new Date(trial.end || '').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.
                   </Text>
                 </When>
                 <UpgradeSubmitButton intervalChanging={loading} />
