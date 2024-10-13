@@ -1,0 +1,58 @@
+name: Deploy Widget to Netlify
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+jobs:
+  reusable_widget_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
+
+      - name: Create env file
+        working-directory: apps/widget
+        run: |
+          touch .env
+          echo REACT_APP_API_URL=${{ vars.WIDGET_REACT_APP_API_URL }} >> .env
+          echo REACT_APP_WS_URL=${{ vars.WIDGET_REACT_APP_WS_URL }} >> .env
+          echo REACT_APP_WEBHOOK_URL=${{ vars.WIDGET_REACT_APP_WEBHOOK_URL }} >> .env
+          echo REACT_APP_SENTRY_DSN=${{ vars.WIDGET_REACT_APP_SENTRY_DSN }} >> .env
+          echo REACT_APP_ENVIRONMENT=${{ vars.WIDGET_REACT_APP_ENVIRONMENT }} >> .env
+
+      - name: Envsetup
+        working-directory: apps/widget
+        run: npm run envsetup
+
+      - name: Build
+        run: CI='' pnpm build:widget
+
+      - name: Deploy Widget
+        uses: scopsy/actions-netlify@develop
+        with:
+          publish-dir: apps/widget/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: ${{ vars.WIDGET_NETLIFY_DEPLOY_MESSAGE }}
+          production-deploy: true
+          alias: ${{ vars.WIDGET_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ vars.WIDGET_NETLIFY_GH_ENV }}
+          github-deployment-description: Widget Deployment
+          netlify-config-path: apps/widget/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.WIDGET_NETLIFY_SITE_ID }}
+        timeout-minutes: 1

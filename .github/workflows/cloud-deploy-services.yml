@@ -1,0 +1,53 @@
+name: Deploy Service
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment - choose between staging and production'
+        required: true
+        type: string
+      service:
+        description: 'Service name'
+        required: true
+        type: string
+      package_name:
+        description: 'Docker package name'
+        required: true
+        type: string
+      project_path:
+        description: 'Path to the project directory'
+        required: true
+        type: string
+      test_port:
+        description: 'Service port for testing'
+        required: true
+        type: string
+      local_tag:
+        description: 'Local Docker image tag'
+        required: true
+        type: string
+
+jobs:
+  build_docker_image:
+    secrets: inherit
+    uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
+    with:
+      environment: ${{ inputs.environment }}
+      package_name: ${{ inputs.package_name }}
+      project_path: ${{ inputs.project_path }}
+      test_port: ${{ inputs.test_port }}
+      health_check: true
+      local_tag: ${{ inputs.local_tag }}
+      enterprise: true
+
+  deploy_to_aws:
+    needs:
+      - build_docker_image
+    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      environment: ${{ inputs.environment }}
+      service_name: ${{ inputs.service }}
+      docker_image: ghcr.io/novuhq/novu/${{ inputs.service }}-ee:${{ github.sha }}
+      sentry_project: ${{ inputs.service }}

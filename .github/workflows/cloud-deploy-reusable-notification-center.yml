@@ -19,7 +19,7 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: build and test
-        if: ${{ inputs.tests}}
+        if: ${{ !inputs.tests}}
         with:
           targets: build,test
           projects: '@novu/notification-center'
@@ -27,7 +27,7 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: build
-        if: ${{ !inputs.tests }}
+        if: ${{ inputs.tests }}
         with:
           targets: build
           projects: '@novu/notification-center'

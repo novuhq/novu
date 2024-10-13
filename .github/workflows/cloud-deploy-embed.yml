@@ -7,24 +7,7 @@ on:
       environment:
         required: true
         type: string
-      widget_url:
-        required: true
-        type: string
-      # Netlify inputs
-      netlify_deploy_message:
-        required: true
-        type: string
-      netlify_alias:
-        required: true
-        type: string
-      netlify_gh_env:
-        required: true
-        type: string
-      netlify_site_id:
-        required: true
-        type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   reusable_embed_deploy:
     runs-on: ubuntu-latest
@@ -47,7 +30,7 @@ jobs:
       - name: Build
         working-directory: libs/embed
         env:
-          WIDGET_URL: ${{ inputs.widget_url }}
+          WIDGET_URL: ${{ vars.WIDGET_URL }}
         run: CI='' npm run build:prod
 
       - name: Deploy Embed
@@ -55,12 +38,14 @@ jobs:
         with:
           publish-dir: libs/embed/dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: ${{ inputs.netlify_deploy_message }}
+          deploy-message: ${{ vars.EMBED_NETLIFY_DEPLOY_MESSAGE }}
           production-deploy: true
-          alias: ${{ inputs.netlify_alias }}
-          github-deployment-environment: ${{ inputs.netlify_gh_env }}
+          alias: ${{ vars.EMBED_NETLIFY_ALIAS }}
+          github-deployment-environment: ${{ vars.EMBED_NETLIFY_GH_ENV }}
           github-deployment-description: Embed Deployment
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ inputs.netlify_site_id }}
+          NETLIFY_SITE_ID: ${{ vars.EMBED_NETLIFY_SITE_ID }}
         timeout-minutes: 1
+
+
