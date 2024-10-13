@@ -39,6 +39,7 @@ import {
   ExecuteBridgeRequest,
   ExecutionLogRoute,
   featureFlagsService,
+  GetDecryptedSecretKey,
   getFeatureFlag,
   injectCommunityAuthProviders,
   InvalidateCacheService,
@@ -114,6 +115,7 @@ const PROVIDERS = [
   CreateExecutionDetails,
   ExecuteBridgeRequest,
   getFeatureFlag,
+  GetDecryptedSecretKey,
 ];
 
 @Module({

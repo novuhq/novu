@@ -6,9 +6,9 @@ import { GetEnvironment } from './get-environment';
 import { GetMyEnvironments } from './get-my-environments/get-my-environments.usecase';
 import { UpdateEnvironment } from './update-environment/update-environment.usecase';
 import { GetMxRecord } from '../../inbound-parse/usecases/get-mx-record/get-mx-record.usecase';
+import { CreateFrameworkWorkflow } from './create-framework-workflow';
 
 export const USE_CASES = [
-  //
   GetMxRecord,
   CreateEnvironment,
   UpdateEnvironment,
