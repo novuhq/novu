@@ -15,6 +15,7 @@ import {
   EventsDistributedLockService,
   ExecuteBridgeRequest,
   featureFlagsService,
+  GetDecryptedSecretKey,
   GetTenant,
   injectCommunityAuthProviders,
   InvalidateCacheService,
@@ -133,6 +134,7 @@ const PROVIDERS = [
   ...DAL_MODELS,
   ActiveJobsMetricService,
   ExecuteBridgeRequest,
+  GetDecryptedSecretKey,
 ];
 
 @Module({

@@ -30,8 +30,3 @@ export interface IWorkflowDefineStep {
 
   code: string;
 }
-
-export enum BridgeErrorCodeEnum {
-  BRIDGE_UNEXPECTED_RESPONSE = 'BRIDGE_UNEXPECTED_RESPONSE',
-  BRIDGE_ENDPOINT_NOT_FOUND = 'BRIDGE_ENDPOINT_NOT_FOUND',
-}

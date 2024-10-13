@@ -14,6 +14,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   JobStatusEnum,
+  WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { Event, State, PostActionEnum, ExecuteOutput } from '@novu/framework';
@@ -26,7 +27,6 @@ import {
   ExecuteBridgeRequestCommand,
 } from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
-import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'ExecuteBridgeJob';
 
@@ -109,9 +109,10 @@ export class ExecuteBridgeJob {
       : command.identifier;
 
     const bridgeResponse = await this.sendBridgeRequest({
-      bridgeUrl: command.job.step.bridgeUrl ?? environment.echo.url,
+      environmentId: command.environmentId,
+      workflowOrigin: workflow?.origin ?? WorkflowOriginEnum.EXTERNAL,
+      statelessBridgeUrl: command.job.step.bridgeUrl,
       event: bridgeEvent,
-      apiKey: environment.apiKeys[0].key,
       job: command.job,
       searchParams: {
         workflowId,
@@ -153,7 +154,7 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
-  private async generateState(payload, command: ExecuteBridgeJobCommand) {
+  private async generateState(payload, command: ExecuteBridgeJobCommand): Promise<State[]> {
     const previousJobs: State[] = [];
     let theJob = (await this.jobRepository.findOne({
       _id: command.job._parentId,
@@ -184,7 +185,7 @@ export class ExecuteBridgeJob {
   /*
    * Backward compatibility, If the first job is not a trigger, we need to add a trigger job to the state
    */
-  private normalizeFirstJob(firstJob: JobEntity, previousJobs: State[], payload) {
+  private normalizeFirstJob(firstJob: JobEntity, previousJobs: State[], payload?: Record<string, unknown>) {
     if (firstJob.type !== 'trigger') {
       previousJobs.push({
         stepId: 'trigger',
@@ -195,57 +196,57 @@ export class ExecuteBridgeJob {
   }
 
   private async sendBridgeRequest({
-    bridgeUrl,
+    statelessBridgeUrl,
     event,
-    apiKey,
     job,
     searchParams,
+    workflowOrigin,
+    environmentId,
   }: Omit<ExecuteBridgeRequestCommand, 'afterResponse' | 'action' | 'retriesLimit'> & {
     job: JobEntity;
   }): Promise<ExecuteOutput> {
     try {
-      const afterResponse = async (response) => {
-        const body = response?.body as string | undefined;
-
-        if (response.statusCode >= 400) {
-          const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-            detail: DetailEnum.FAILED_BRIDGE_RETRY,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.WARNING,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              url: bridgeUrl,
-              statusCode: response.statusCode,
-              retryCount: response.retryCount,
-              message: response.statusMessage,
-              ...(body && body?.length > 0 ? { raw: JSON.parse(body) } : {}),
-            }),
-          };
-
-          await this.createExecutionDetails.execute(createExecutionDetailsCommand);
-        }
-
-        return response;
-      };
-
       return this.executeBridgeRequest.execute({
-        bridgeUrl,
+        statelessBridgeUrl,
         event,
-        apiKey,
         action: PostActionEnum.EXECUTE,
         searchParams,
-        afterResponse: afterResponse.bind(this),
+        afterResponse: async (response) => {
+          const body = response?.body as string | undefined;
+
+          if (response.statusCode >= 400) {
+            const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+              ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+              detail: DetailEnum.FAILED_BRIDGE_RETRY,
+              source: ExecutionDetailsSourceEnum.INTERNAL,
+              status: ExecutionDetailsStatusEnum.WARNING,
+              isTest: false,
+              isRetry: false,
+              raw: JSON.stringify({
+                url: statelessBridgeUrl,
+                statusCode: response.statusCode,
+                retryCount: response.retryCount,
+                message: response.statusMessage,
+                ...(body && body?.length > 0 ? { raw: JSON.parse(body) } : {}),
+              }),
+            };
+
+            await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+          }
+
+          return response;
+        },
+        workflowOrigin,
+        environmentId,
       }) as Promise<ExecuteOutput>;
     } catch (error: any) {
       Logger.error(error, 'Error sending Bridge request:', LOG_CONTEXT);
 
-      let raw: { retryCount?: any; statusCode?: any; message: any; url: string };
+      let raw: { retryCount?: number; statusCode?: number; message: string; url?: string };
 
       if (error.response) {
         raw = {
-          url: bridgeUrl,
+          url: statelessBridgeUrl,
           statusCode: error.response?.statusCode,
           message: error.response?.statusMessage,
           ...(error.response?.retryCount ? { retryCount: error.response?.retryCount } : {}),
@@ -253,12 +254,12 @@ export class ExecuteBridgeJob {
         };
       } else if (error.message) {
         raw = {
-          url: bridgeUrl,
+          url: statelessBridgeUrl,
           message: error.message,
         };
       } else {
         raw = {
-          url: bridgeUrl,
+          url: statelessBridgeUrl,
           message: 'An Unexpected Error Occurred',
         };
       }
@@ -279,7 +280,7 @@ export class ExecuteBridgeJob {
     }
   }
 
-  private async mapState(job: JobEntity, payload: any) {
+  private async mapState(job: JobEntity, payload: Record<string, unknown>) {
     let output = {};
     let state: State['state'] | null = null;
     let stepId: string | null = null;
