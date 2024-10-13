@@ -8,16 +8,9 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
   let createdWorkflow: WorkflowResponseDto;
 
   beforeEach(async () => {
-    // @ts-ignore
-    process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     createdWorkflow = await createWorkflow(session, createdWorkflow);
-  });
-
-  afterEach(async () => {
-    // @ts-ignore
-    process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'false';
   });
 
   describe('Get Control Schema with stepType', () => {
