@@ -5,6 +5,8 @@ import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useF
 
 import { cn } from '@/utils/ui';
 import { Label } from '@/components/primitives/label';
+import { cva } from 'class-variance-authority';
+import { RiInformationFill } from 'react-icons/ri';
 
 const Form = FormProvider;
 
@@ -65,7 +67,7 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 
     return (
       <FormItemContext.Provider value={{ id }}>
-        <div ref={ref} className={cn('space-y-2', className)} {...props} />
+        <div ref={ref} className={cn('space-y-1', className)} {...props} />
       </FormItemContext.Provider>
     );
   }
@@ -76,9 +78,9 @@ const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  const { error, formItemId } = useFormField();
+  const { formItemId } = useFormField();
 
-  return <Label ref={ref} className={cn(error && 'text-destructive', className)} htmlFor={formItemId} {...props} />;
+  return <Label ref={ref} className={className} htmlFor={formItemId} {...props} />;
 });
 FormLabel.displayName = 'FormLabel';
 
@@ -110,6 +112,15 @@ const FormDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
 );
 FormDescription.displayName = 'FormDescription';
 
+const formMessageVariants = cva('flex items-center gap-1', {
+  variants: {
+    variant: {
+      default: '[&>svg]:text-neutral-400 [&>span]:text-foreground-600',
+      error: '[&>svg]:text-destructive [&>span]:text-destructive',
+    },
+  },
+});
+
 const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, children, ...props }, ref) => {
     const { error, formMessageId } = useFormField();
@@ -123,10 +134,11 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
       <p
         ref={ref}
         id={formMessageId}
-        className={cn('text-destructive text-[0.8rem] font-medium', className)}
+        className={formMessageVariants({ variant: error ? 'error' : 'default', className })}
         {...props}
       >
-        {body}
+        <RiInformationFill className="size-4" />
+        <span className="mt-[1px] text-xs leading-3">{body}</span>
       </p>
     );
   }

@@ -78,6 +78,17 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     [switchEnvironmentInternal, environments]
   );
 
+  const setBridgeUrl = useCallback(
+    (url: string) => {
+      if (!currentEnvironment) {
+        return;
+      }
+
+      setCurrentEnvironment({ ...currentEnvironment, bridge: { url } });
+    },
+    [currentEnvironment]
+  );
+
   const value = useMemo(
     () => ({
       currentEnvironment,
@@ -85,8 +96,9 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       areEnvironmentsInitialLoading,
       readOnly: currentEnvironment?._parentId !== undefined,
       switchEnvironment,
+      setBridgeUrl,
     }),
-    [currentEnvironment, environments, areEnvironmentsInitialLoading, switchEnvironment]
+    [currentEnvironment, environments, areEnvironmentsInitialLoading, switchEnvironment, setBridgeUrl]
   );
 
   return <EnvironmentContext.Provider value={value}>{children}</EnvironmentContext.Provider>;

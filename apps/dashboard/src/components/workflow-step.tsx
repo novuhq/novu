@@ -1,4 +1,4 @@
-import { Step, stepVariants } from '@/components/primitives/step';
+import { Step, StepProps, stepVariants } from '@/components/primitives/step';
 import { StepTypeEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import {
@@ -13,7 +13,7 @@ import {
 } from 'react-icons/ri';
 import { FaSms } from 'react-icons/fa';
 
-type WorkflowStepProps = {
+type WorkflowStepProps = StepProps & {
   step: StepTypeEnum;
 };
 
@@ -33,11 +33,11 @@ const stepRenderData: Record<
 };
 
 export const WorkflowStep = (props: WorkflowStepProps) => {
-  const { step } = props;
+  const { step, ...rest } = props;
   const Icon = stepRenderData[step].icon;
 
   return (
-    <Step variant={stepRenderData[step].variant}>
+    <Step variant={stepRenderData[step].variant} {...rest}>
       <Icon />
     </Step>
   );

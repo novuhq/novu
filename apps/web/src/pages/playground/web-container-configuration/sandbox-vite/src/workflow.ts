@@ -22,7 +22,7 @@ const helloWorld = workflow('hello-world', async ({ step, payload }) => {
        */
       controlSchema: z.object({
         subject: z.string().default('Welcome to Novu'),
-        title: z.string().default('Welcome to Novu'),
+        title: z.string().default('Welcome to Novu, {{payload.name}}'),
         text: z.string()
           .default(
             'This email is generated using Tailwind and React Email. ' +
