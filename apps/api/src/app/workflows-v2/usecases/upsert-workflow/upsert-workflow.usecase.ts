@@ -38,14 +38,18 @@ import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
-function buildUpsertControlValuesCommand(command: UpsertWorkflowCommand, persistedStep, persistedWorkflow, stepInDto) {
+function buildUpsertControlValuesCommand(
+  command: UpsertWorkflowCommand,
+  persistedStep: NotificationStepEntity,
+  persistedWorkflow: NotificationTemplateEntity,
+  stepInDto: StepDto
+): UpsertControlValuesCommand {
   return UpsertControlValuesCommand.create({
     organizationId: command.user.organizationId,
     environmentId: command.user.environmentId,
     notificationStepEntity: persistedStep,
     workflowId: persistedWorkflow._id,
     newControlValues: stepInDto.controlValues || {},
-    controlSchemas: stepInDto?.controls || { schema: {} },
   });
 }
 
