@@ -6,7 +6,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import got, { OptionsOfTextResponseBody, RequestError } from 'got';
-import { createHmac } from 'crypto';
+import { createHmac } from 'node:crypto';
 
 import {
   PostActionEnum,
@@ -25,6 +25,7 @@ import {
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
 } from '../get-decrypted-secret-key';
+import { BRIDGE_EXECUTION_ERROR } from '../../utils';
 
 export const DEFAULT_TIMEOUT = 15_000; // 15 seconds
 export const DEFAULT_RETRIES_LIMIT = 3;
@@ -120,7 +121,7 @@ export class ExecuteBridgeRequest {
     };
 
     const timestamp = Date.now();
-    const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacByApiKey(
+    const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacBySecretKey(
       secretKey,
       timestamp,
       command.event || {},
@@ -165,35 +166,25 @@ export class ExecuteBridgeRequest {
             `Could not establish tunnel connection for \`${url}\`. Error: \`${tunnelBody.message}\``,
             LOG_CONTEXT,
           );
-          throw new NotFoundException({
-            code: 'TUNNEL_NOT_FOUND',
-            // eslint-disable-next-line max-len
-            message: `Unable to reach Bridge Endpoint. Run npx novu@latest dev in Local mode, or ensure your Bridge app deployment is available.`,
-          });
+          throw new NotFoundException(BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND);
         } else if (error.response?.statusCode === 502) {
           /*
            * Tunnel was live, but the Bridge endpoint was down.
            * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
            */
-          throw new BadRequestException({
-            code: 'BRIDGE_ENDPOINT_UNAVAILABLE',
-            message: body.message,
-          });
+          throw new BadRequestException(
+            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE,
+          );
         } else if (error.response?.statusCode === 404) {
           // Bridge endpoint wasn't found.
-          throw new NotFoundException({
-            code: 'BRIDGE_ENDPOINT_NOT_FOUND',
-            // eslint-disable-next-line max-len
-            message: `Bridge Endpoint was not found or not accessible. Ensure your Bridge application is deployed and accessible over the internet.`,
-          });
+          throw new NotFoundException(
+            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND,
+          );
         } else if (error.response?.statusCode === 405) {
           // The Bridge endpoint didn't expose the required methods.
-          throw new BadRequestException({
-            code: 'BRIDGE_METHOD_NOT_CONFIGURED',
-            message:
-              // eslint-disable-next-line max-len
-              'Bridge Endpoint is not correctly configured. Ensure your `@novu/framework` integration exposes the `POST`, `GET`, and `OPTIONS` methods.',
-          });
+          throw new BadRequestException(
+            BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED,
+          );
         } else {
           // Unknown errors when calling the Bridge endpoint.
           Logger.error(
@@ -216,14 +207,14 @@ export class ExecuteBridgeRequest {
     }
   }
 
-  private createHmacByApiKey(
-    secret: string,
+  private createHmacBySecretKey(
+    secretKey: string,
     timestamp: number,
     payload: unknown,
   ) {
     const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
 
-    return createHmac('sha256', secret).update(publicKey).digest('hex');
+    return createHmac('sha256', secretKey).update(publicKey).digest('hex');
   }
 
   /**
@@ -235,6 +226,7 @@ export class ExecuteBridgeRequest {
    * @param environmentBridgeUrl - The URL of the bridge app.
    * @param environmentId - The ID of the environment.
    * @param workflowOrigin - The origin of the workflow.
+   * @param statelessBridgeUrl - The URL of the stateless bridge app.
    * @returns The correct bridge URL.
    */
   private getBridgeUrl(
@@ -252,6 +244,7 @@ export class ExecuteBridgeRequest {
         return `${this.getApiUrl()}/environments/${environmentId}/bridge`;
       case WorkflowOriginEnum.EXTERNAL:
       default:
+        // default is treated as an external workflow for backwards compatibility
         return environmentBridgeUrl;
     }
   }
