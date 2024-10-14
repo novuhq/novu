@@ -23,7 +23,7 @@ export class NovuBridgeClient {
 
   constructor(
     @Inject(NovuHandler) private novuHandler: NovuHandler,
-    private createFrameworkWorkflow: ConstructFrameworkWorkflow,
+    private constructFrameworkWorkflow: ConstructFrameworkWorkflow,
     private getDecryptedSecretKey: GetDecryptedSecretKey
   ) {}
 
@@ -42,7 +42,7 @@ export class NovuBridgeClient {
      * Those non-POST requests are handled for the purpose of returning a successful health-check.
      */
     if (Object.values(PostActionEnum).includes(req.query.action as PostActionEnum)) {
-      const programmaticallyConstructedWorkflow = await this.createFrameworkWorkflow.execute(
+      const programmaticallyConstructedWorkflow = await this.constructFrameworkWorkflow.execute(
         ConstructFrameworkWorkflowCommand.create({
           environmentId: req.params.environmentId,
           workflowId: req.query.workflowId as string,
