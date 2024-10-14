@@ -86,7 +86,7 @@ export class ConstructFrameworkWorkflow {
           stepId,
           // The step callback function. Takes controls and returns the step outputs
           async (controlValues) => {
-            // TODO: insert custom Maily.to hydration logic here.
+            // TODO: insert custom in-app hydration logic here.
             return controlValues as InAppOutput;
           },
           // Step options
@@ -105,7 +105,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom Maily.to hydration logic here.
+            // TODO: insert custom SMS hydration logic here.
             return controlValues as SmsOutput;
           },
           this.constructChannelStepOptions(staticStep)
@@ -114,7 +114,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom Maily.to hydration logic here.
+            // TODO: insert custom chat hydration logic here.
             return controlValues as ChatOutput;
           },
           this.constructChannelStepOptions(staticStep)
@@ -123,7 +123,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom Maily.to hydration logic here.
+            // TODO: insert custom push hydration logic here.
             return controlValues as PushOutput;
           },
           this.constructChannelStepOptions(staticStep)
