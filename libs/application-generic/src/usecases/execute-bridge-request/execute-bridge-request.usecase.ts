@@ -81,7 +81,7 @@ export class ExecuteBridgeRequest {
       }),
     );
     const bridgeUrl = this.getBridgeUrl(
-      environment.bridge.url,
+      environment.bridge?.url || environment.echo?.url,
       command.environmentId,
       command.workflowOrigin,
       command.statelessBridgeUrl,
