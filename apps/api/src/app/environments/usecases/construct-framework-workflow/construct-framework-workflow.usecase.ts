@@ -62,9 +62,7 @@ export class ConstructFrameworkWorkflow {
             staticStep.stepId,
             // We always return the supplied control values as the step outputs
             () => controlValues,
-            /*
-             * Step options
-             */
+            // Step options
             {
               // The control schema is used to validate the control values
               controlSchema: stepControls.schema,
