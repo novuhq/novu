@@ -154,6 +154,7 @@ export class ConstructFrameworkWorkflow {
   private constructChannelStepOptions(staticStep: NotificationStepEntity): Required<Parameters<ChannelStep>[2]> {
     return {
       ...this.constructCommonStepOptions(staticStep),
+      // TODO: resolve this from the Step options
       disableOutputSanitization: false,
       // TODO: add providers
       providers: {},
