@@ -45,9 +45,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     this.logger.error(
       {
         errorId: uuid,
-        name: error?.name,
-        message: error?.message,
-        stack: error?.stack,
+        err: exception,
       },
       `Unexpected exception thrown`,
       'Exception'
