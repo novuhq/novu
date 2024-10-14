@@ -14,13 +14,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { ControlVariablesLevelEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
 
-import { StoreControlVariablesCommand, StoreControlVariablesUseCase } from './usecases/store-control-variables';
+import { StoreControlValuesCommand, StoreControlValuesUseCase } from './usecases/store-control-values';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
 import { Sync } from './usecases/sync/sync.usecase';
@@ -41,7 +41,7 @@ export class BridgeController {
     private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private controlValuesRepository: ControlValuesRepository,
-    private storeControlVariablesUseCase: StoreControlVariablesUseCase,
+    private storeControlValuesUseCase: StoreControlValuesUseCase,
     private previewStep: PreviewStep,
     private analyticsService: AnalyticsService
   ) {}
@@ -174,7 +174,7 @@ export class BridgeController {
       _organizationId: user.organizationId,
       _workflowId: workflowExist._id,
       _stepId: step._id,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
     return result;
@@ -189,11 +189,11 @@ export class BridgeController {
     @UserSession() user: UserSessionData,
     @Body() body: any
   ) {
-    return this.storeControlVariablesUseCase.execute(
-      StoreControlVariablesCommand.create({
+    return this.storeControlValuesUseCase.execute(
+      StoreControlValuesCommand.create({
         stepId,
         workflowId,
-        variables: body.variables,
+        controlValues: body.variables,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

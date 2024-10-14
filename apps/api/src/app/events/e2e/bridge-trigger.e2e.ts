@@ -721,7 +721,7 @@ contexts.forEach((context: Context) => {
 
       if (context.isStateful) {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
-        await saveControlVariables(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
+        await saveControlValues(session, workflowId, stepId, { variables: { name: 'stored_control_name' } });
       }
 
       const controls = { steps: { [stepId]: { name: 'stored_control_name' } } };
@@ -1539,7 +1539,7 @@ async function discoverAndSyncBridge(
   return discoverResponse;
 }
 
-async function saveControlVariables(
+async function saveControlValues(
   session: UserSession,
   workflowIdentifier?: string,
   stepIdentifier?: string,

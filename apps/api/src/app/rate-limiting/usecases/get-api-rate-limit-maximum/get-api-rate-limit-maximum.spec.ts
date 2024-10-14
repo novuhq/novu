@@ -1,4 +1,4 @@
-import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -27,7 +27,7 @@ const mockDefaultApiRateLimits = {
 describe('GetApiRateLimitMaximum', async () => {
   let useCase: GetApiRateLimitMaximum;
   let session: UserSession;
-  let organizationRepository: OrganizationRepository;
+  let organizationRepository: CommunityOrganizationRepository;
   let environmentRepository: EnvironmentRepository;
   let getDefaultApiRateLimits: GetApiRateLimitServiceMaximumConfig;
 
@@ -48,7 +48,7 @@ describe('GetApiRateLimitMaximum', async () => {
     await session.initialize();
 
     useCase = moduleRef.get<GetApiRateLimitMaximum>(GetApiRateLimitMaximum);
-    organizationRepository = moduleRef.get<OrganizationRepository>(OrganizationRepository);
+    organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     environmentRepository = moduleRef.get<EnvironmentRepository>(EnvironmentRepository);
     getDefaultApiRateLimits = moduleRef.get<GetApiRateLimitServiceMaximumConfig>(GetApiRateLimitServiceMaximumConfig);
 

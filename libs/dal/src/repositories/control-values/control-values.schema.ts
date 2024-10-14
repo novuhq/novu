@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { ChangePropsValueType } from '../../types';
 import { schemaOptions } from '../schema-default.options';
-import { ControlValuesEntity } from './controlValuesEntity';
+import { ControlValuesEntity } from './control-values.entity';
 
 const mongooseDelete = require('mongoose-delete');
 
@@ -10,7 +10,7 @@ export type ControlValuesModel = ChangePropsValueType<
   '_environmentId' | '_organizationId' | '_workflowId'
 >;
 
-const controlVariablesSchema = new Schema<ControlValuesModel>(
+const controlValuesSchema = new Schema<ControlValuesModel>(
   {
     _environmentId: {
       type: Schema.Types.ObjectId,
@@ -37,9 +37,9 @@ const controlVariablesSchema = new Schema<ControlValuesModel>(
   schemaOptions
 );
 
-controlVariablesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+controlValuesSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-export const ControlVariables =
-  (mongoose.models.ControlVariables as mongoose.Model<ControlValuesModel>) ||
-  mongoose.model<ControlValuesModel>('controls', controlVariablesSchema) ||
-  mongoose.model<ControlValuesModel>('inputs', controlVariablesSchema);
+export const ControlValues =
+  (mongoose.models.ControlValues as mongoose.Model<ControlValuesModel>) ||
+  mongoose.model<ControlValuesModel>('controls', controlValuesSchema) ||
+  mongoose.model<ControlValuesModel>('inputs', controlValuesSchema);
