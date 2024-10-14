@@ -101,21 +101,7 @@ export class UpdateIntegration {
     command: UpdateIntegrationCommand,
     existingIntegration: IntegrationEntity
   ): Promise<boolean> {
-    const [isImprovedBillingEnabled, organization] = await Promise.all([
-      this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          userId: 'system',
-          environmentId: 'system',
-          organizationId: command.organizationId,
-          key: FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED,
-        })
-      ),
-      this.communityOrganizationRepository.findOne({ _id: command.organizationId }),
-    ]);
-
-    if (!isImprovedBillingEnabled) {
-      return false;
-    }
+    const organization = await this.communityOrganizationRepository.findOne({ _id: command.organizationId });
 
     const isRemoveNovuBrandingDefined = typeof command.removeNovuBranding !== 'undefined';
     const isRemoveNovuBrandingChanged =
