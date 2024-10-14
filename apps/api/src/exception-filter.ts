@@ -44,7 +44,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     this.logger.error(
       {
         errorId: uuid,
-        err: exception, // important to use `err` as the key, New Relic will log an empty object if the key is not `err`
+        /**
+         * It's important to use `err` as the key, pino (the logger we use) will
+         * log an empty object if the key is not `err`
+         *
+         * @see https://github.com/pinojs/pino/issues/819#issuecomment-611995074
+         */
+        err: exception,
       },
       `Unexpected exception thrown`,
       'Exception'
