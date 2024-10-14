@@ -73,7 +73,7 @@ export class ConstructFrameworkWorkflow {
               skip: () => false,
               // TODO: dynamically set this based on the persisted step settings
               disableOutputSanitization: false,
-            }
+            } as StepOptions
           );
         }
       },
