@@ -174,12 +174,17 @@ export class BridgeController {
     if (!workflowExist) {
       throw new NotFoundException('Workflow not found');
     }
+    const step = workflowExist?.steps.find((item) => item.stepId === stepId);
+
+    if (!step || !step._id) {
+      throw new NotFoundException('Step not found');
+    }
 
     const result = await this.controlValuesRepository.findOne({
       _environmentId: user.environmentId,
       _organizationId: user.organizationId,
       _workflowId: workflowExist._id,
-      stepId,
+      _stepId: step._id,
       level: ControlVariablesLevelEnum.STEP_CONTROLS,
     });
 

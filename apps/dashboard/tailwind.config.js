@@ -6,6 +6,7 @@ export default {
     boxShadow: {
       xs: '0px 1px 2px 0px rgba(10, 13, 20, 0.03)',
       sm: '0px 1px 2px 0px #1018280F,0px 1px 3px 0px #1018281A',
+      md: '0px 16px 32px -12px rgba(14, 18, 27, 0.10)',
       DEFAULT: '0px 16px 32px -12px #0E121B1A',
     },
     colors: {
@@ -102,6 +103,19 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      keyframes: {
+        'pulse-shadow': {
+          '0%': {
+            boxShadow: '0 0 0 0 hsl(var(--pulse-color))',
+          },
+          '70%': {
+            boxShadow: '0 0 0 6px rgba(255, 82, 82, 0)',
+          },
+          '100%': {
+            boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)',
+          },
+        },
       },
     },
   },
