@@ -7,6 +7,7 @@ export type EnvironmentContextValue = {
   areEnvironmentsInitialLoading: boolean;
   readOnly: boolean;
   switchEnvironment: (newEnvironment?: string) => void;
+  setBridgeUrl: (url: string) => void;
 };
 
 const [EnvironmentContext, useEnvironmentContext] =

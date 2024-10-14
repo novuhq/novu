@@ -479,9 +479,9 @@ importers:
       ioredis:
         specifier: 5.3.2
         version: 5.3.2
-      json-schema-defaults:
-        specifier: ^0.4.0
-        version: 0.4.0
+      json-schema-to-ts:
+        specifier: ^3.0.0
+        version: 3.1.0
       jsonwebtoken:
         specifier: 9.0.0
         version: 9.0.0
@@ -638,7 +638,7 @@ importers:
         specifier: ^5.2.5
         version: 5.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@hookform/resolvers':
-        specifier: ^2.9.1
+        specifier: ^2.9.11
         version: 2.9.11(react-hook-form@7.43.9(react@18.3.1))
       '@novu/react':
         specifier: ^2.3.0
@@ -718,6 +718,9 @@ importers:
       react-router-dom:
         specifier: 6.26.2
         version: 6.26.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use-intercom:
+        specifier: ^2.0.0
+        version: 2.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.4.0
@@ -24591,10 +24594,6 @@ packages:
 
   json-schema-compare@0.2.2:
     resolution: {integrity: sha512-c4WYmDKyJXhs7WWvAWm3uIYnfyWFoIp+JEoX34rctVvEkMYCPGhXtvmFFXiffBbxfZsvQ0RNnV5H7GvDF5HCqQ==}
-
-  json-schema-defaults@0.4.0:
-    resolution: {integrity: sha512-UsUrkDVNvHTneyeQOYHH9ZHb3+6OjwYfJ831SdO0yjtXtYZ7Jh8BKWsuJYUQW7qckP5JhHawsg4GI6A5fMaR/Q==}
-    hasBin: true
 
   json-schema-faker@0.5.6:
     resolution: {integrity: sha512-u/cFC26/GDxh2vPiAC8B8xVvpXAW+QYtG2mijEbKrimCk8IHtiwQBjCE8TwvowdhALWq9IcdIWZ+/8ocXvdL3Q==}
@@ -67970,10 +67969,6 @@ snapshots:
   json-schema-compare@0.2.2:
     dependencies:
       lodash: 4.17.21
-
-  json-schema-defaults@0.4.0:
-    dependencies:
-      argparse: 1.0.10
 
   json-schema-faker@0.5.6:
     dependencies:
