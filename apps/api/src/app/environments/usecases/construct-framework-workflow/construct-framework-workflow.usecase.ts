@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Step, Workflow, workflow, WorkflowChannelEnum } from '@novu/framework';
+import { Step, StepOptions, Workflow, workflow, WorkflowChannelEnum } from '@novu/framework';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
@@ -57,14 +57,26 @@ export class ConstructFrameworkWorkflow {
             throw new NotFoundException(`Step controls not found for step ${staticStep.stepId}`);
           }
 
-          await step[stepFn](staticStep.stepId, () => controlValues, {
-            controlSchema: stepControls.schema,
+          await step[stepFn](
+            // The step id is used internally by the framework to identify the step
+            staticStep.stepId,
+            // We always return the supplied control values as the step outputs
+            () => controlValues,
             /*
-             * TODO: add conditions
-             * Used to construct conditions defined with https://react-querybuilder.js.org/ or similar
+             * Step options
              */
-            skip: () => false,
-          });
+            {
+              // The control schema is used to validate the control values
+              controlSchema: stepControls.schema,
+              /*
+               * TODO: add conditions
+               * Used to construct conditions defined with https://react-querybuilder.js.org/ or similar
+               */
+              skip: () => false,
+              // TODO: dynamically set this based on the persisted step settings
+              disableOutputSanitization: false,
+            }
+          );
         }
       },
       {
