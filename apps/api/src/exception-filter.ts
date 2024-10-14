@@ -41,11 +41,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   ) {
     const uuid = this.getUuid(exception);
-    const error = exception as Error;
     this.logger.error(
       {
         errorId: uuid,
-        err: exception,
+        err: exception, // important to use `err` as the key, New Relic will log an empty object if the key is not `err`
       },
       `Unexpected exception thrown`,
       'Exception'
