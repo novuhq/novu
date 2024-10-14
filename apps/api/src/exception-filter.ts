@@ -41,7 +41,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   ) {
     const uuid = this.getUuid(exception);
-    this.logger.error({ exception, errorId: uuid }, `unexpected exception thrown`, 'Exception');
+    this.logger.error(
+      { exception, errorId: uuid, stack: (exception as Error)?.stack },
+      `Unexpected exception thrown`,
+      'Exception'
+    );
 
     return { ...responseBody, errorId: uuid };
   }
