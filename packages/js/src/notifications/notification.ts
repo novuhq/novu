@@ -146,11 +146,19 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     });
   }
 
-  on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) {
+  on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): () => void {
     const cleanup = this.#emitter.on(eventName, listener);
 
     return () => {
       cleanup();
     };
+  }
+
+  /**
+   * @deprecated
+   * Use the cleanup function returned by the "on" method instead.
+   */
+  off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
+    this.#emitter.off(eventName, listener);
   }
 }

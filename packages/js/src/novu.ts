@@ -23,6 +23,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
+  /**
+   * @deprecated
+   * Use the cleanup function returned by the "on" method instead.
+   */
+  public off: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
 
   constructor(options: NovuOptions) {
     this.#inboxService = new InboxService({
@@ -65,6 +70,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       return () => {
         cleanup();
       };
+    };
+
+    this.off = (eventName, listener) => {
+      this.#emitter.off(eventName, listener);
     };
   }
 }
