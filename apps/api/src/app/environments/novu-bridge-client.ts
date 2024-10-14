@@ -46,7 +46,6 @@ export class NovuBridgeClient {
         ConstructFrameworkWorkflowCommand.create({
           environmentId: req.params.environmentId,
           workflowId: req.query.workflowId as string,
-          controlValues: req.body.controls,
         })
       );
 
