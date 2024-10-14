@@ -1,7 +1,7 @@
 import { SoftDeleteModel } from 'mongoose-delete';
 import { ControlValuesLevelEnum } from '@novu/shared';
-import { ControlValuesModel, ControlValues } from './controlValues.schema';
-import { ControlValuesEntity } from './controlValues.entity';
+import { ControlValuesModel, ControlValues } from './control-values.schema';
+import { ControlValuesEntity } from './control-values.entity';
 import { BaseRepository } from '../base-repository';
 import { EnforceEnvOrOrgIds } from '../../types';
 
