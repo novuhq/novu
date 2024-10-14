@@ -5,7 +5,7 @@ import { Client, PostActionEnum, NovuRequestHandler, Workflow } from '@novu/fram
 // @ts-expect-error - TODO: bundle CJS with @novu/framework
 import { NovuHandler } from '@novu/framework/nest';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
-import { CreateFrameworkWorkflow } from './usecases/create-framework-workflow';
+import { CreateFrameworkWorkflow, CreateFrameworkWorkflowCommand } from './usecases/create-framework-workflow';
 
 export const frameworkName = 'novu-nest';
 
@@ -29,11 +29,13 @@ export class NovuBridgeClient {
     const workflows: Workflow[] = [];
 
     if (Object.values(PostActionEnum).includes(req.query.action as PostActionEnum)) {
-      const programmaticallyCreatedWorkflow = await this.createFrameworkWorkflow.execute({
-        environmentId: req.params.environmentId,
-        workflowId: req.query.workflowId as string,
-        controlValues: req.body.controls,
-      });
+      const programmaticallyCreatedWorkflow = await this.createFrameworkWorkflow.execute(
+        CreateFrameworkWorkflowCommand.create({
+          environmentId: req.params.environmentId,
+          workflowId: req.query.workflowId as string,
+          controlValues: req.body.controls,
+        })
+      );
 
       workflows.push(programmaticallyCreatedWorkflow);
     }
