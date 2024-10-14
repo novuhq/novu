@@ -10,7 +10,7 @@ import {
   JobEntity,
 } from '@novu/dal';
 import {
-  ControlVariablesLevelEnum,
+  ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   JobStatusEnum,
@@ -91,7 +91,7 @@ export class ExecuteBridgeJob {
     const state = await this.generateState(payload, command);
 
     const variablesStores = isStateful
-      ? await this.findControlVariables(command, workflow as NotificationTemplateEntity)
+      ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
       : command.job.step.controlVariables;
 
     const bridgeEvent: Omit<Event, 'workflowId' | 'stepId' | 'action'> = {
@@ -134,12 +134,12 @@ export class ExecuteBridgeJob {
     return bridgeResponse;
   }
 
-  private async findControlVariables(command: ExecuteBridgeJobCommand, workflow: NotificationTemplateEntity) {
+  private async findControlValues(command: ExecuteBridgeJobCommand, workflow: NotificationTemplateEntity) {
     const controls = await this.controlValuesRepository.findOne({
       _organizationId: command.organizationId,
       _workflowId: workflow._id,
       _stepId: command.job.step._id,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
     return controls?.controls || controls?.inputs;

@@ -2,16 +2,16 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
 
 import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '@novu/application-generic';
-import { StoreControlVariablesCommand } from './store-control-variables.command';
+import { StoreControlValuesCommand } from './store-control-values.command';
 
 @Injectable()
-export class StoreControlVariablesUseCase {
+export class StoreControlValuesUseCase {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase
   ) {}
 
-  async execute(command: StoreControlVariablesCommand) {
+  async execute(command: StoreControlValuesCommand) {
     const workflowExist = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.workflowId
@@ -33,7 +33,7 @@ export class StoreControlVariablesUseCase {
         environmentId: command.environmentId,
         notificationStepEntity: step,
         workflowId: workflowExist._id,
-        newControlValues: command.variables,
+        newControlValues: command.controlValues,
       })
     );
   }
