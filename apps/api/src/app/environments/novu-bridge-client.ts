@@ -7,8 +7,16 @@ import { NovuHandler } from '@novu/framework/nest';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
 import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from './usecases/construct-framework-workflow';
 
+/*
+ * A custom framework name is specified for the Novu-managed Bridge endpoint
+ * to provide a clear distinction between Novu-managed and self-managed Bridge endpoints.
+ */
 export const frameworkName = 'novu-nest';
 
+/**
+ * This class overrides the default NestJS Novu Bridge Client to allow for dynamic construction of
+ * workflows to serve on the Novu Bridge.
+ */
 @Injectable({ scope: Scope.REQUEST })
 export class NovuBridgeClient {
   public novuRequestHandler: NovuRequestHandler | null = null;
@@ -28,6 +36,11 @@ export class NovuBridgeClient {
 
     const workflows: Workflow[] = [];
 
+    /*
+     * Only construct a workflow when dealing with a POST request to the Novu-managed Bridge endpoint.
+     * Non-POST requests don't have a `workflowId` query parameter, so we can't construct a workflow.
+     * Those non-POST requests are handled for the purpose of returning a successful health-check.
+     */
     if (Object.values(PostActionEnum).includes(req.query.action as PostActionEnum)) {
       const programmaticallyConstructedWorkflow = await this.createFrameworkWorkflow.execute(
         ConstructFrameworkWorkflowCommand.create({
