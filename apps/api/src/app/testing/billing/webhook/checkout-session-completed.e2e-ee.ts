@@ -9,7 +9,7 @@ const mockCheckoutSessionCompletedEvent = {
   type: 'checkout.session.completed',
   data: {
     object: {
-      id: 'cs_test_a1zhkwJHTaI4mOomArePL4Ioxr7A8S7Z1HBjCAntee4ivijmdshWjSCr0R',
+      id: 'cs_id_1',
       object: 'checkout.session',
       amount_subtotal: 270000,
       amount_total: 270000,
