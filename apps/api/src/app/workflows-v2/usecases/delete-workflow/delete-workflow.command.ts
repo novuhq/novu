@@ -4,5 +4,5 @@ import { IsDefined, IsString } from 'class-validator';
 export class DeleteWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsString()
   @IsDefined()
-  workflowId: string;
+  workflowIdOrIdentifier: string;
 }

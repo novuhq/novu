@@ -33,9 +33,10 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
-import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
+import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
+import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
 
 function buildUpsertControlValuesCommand(
   command: UpsertWorkflowCommand,
@@ -57,17 +58,22 @@ export class UpsertWorkflowUseCase {
   constructor(
     private createWorkflowGenericUsecase: CreateWorkflowGeneric,
     private updateWorkflowUsecase: UpdateWorkflow,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     private upsertPreferencesUsecase: UpsertPreferences,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
+    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    const workflowForUpdate = await this.getWorkflowIfUpdateAndExist(command);
-    if (!workflowForUpdate && (await this.workflowExistByExternalId(command))) {
-      throw new WorkflowAlreadyExistException(command);
-    }
+    const workflowForUpdate: NotificationTemplateEntity | null = command.workflowIdOrIdentifier
+      ? await this.getWorkflowByIdsUseCase.execute(
+          GetWorkflowByIdsCommand.create({
+            ...command,
+            workflowIdOrIdentifier: command.workflowIdOrIdentifier,
+          })
+        )
+      : null;
+
     const workflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
     const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
     const preferences = await this.upsertPreference(command, workflow);
@@ -189,25 +195,6 @@ export class UpsertWorkflowUseCase {
       tags: workflowDto.tags || [],
       critical: false,
     };
-  }
-
-  private async getWorkflowIfUpdateAndExist(upsertCommand: UpsertWorkflowCommand) {
-    if (upsertCommand.workflowDatabaseIdForUpdate) {
-      return await this.notificationTemplateRepository.findByIdQuery({
-        id: upsertCommand.workflowDatabaseIdForUpdate,
-        environmentId: upsertCommand.user.environmentId,
-      });
-    }
-  }
-
-  private async workflowExistByExternalId(upsertCommand: UpsertWorkflowCommand) {
-    const { environmentId } = upsertCommand.user;
-    const workflowByDbId = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      environmentId,
-      upsertCommand.workflowDto.name
-    );
-
-    return !!workflowByDbId;
   }
 
   private convertCreateToUpdateCommand(
