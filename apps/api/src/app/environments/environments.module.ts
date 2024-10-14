@@ -11,7 +11,7 @@ import { NotificationGroupsModule } from '../notification-groups/notification-gr
 import { AuthModule } from '../auth/auth.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { NovuBridgeClient } from './novu-bridge-client';
-import { CreateFrameworkWorkflow } from './usecases/create-framework-workflow';
+import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { CreateFrameworkWorkflow } from './usecases/create-framework-workflow';
         },
         EnvironmentRepository,
         NotificationTemplateRepository,
-        CreateFrameworkWorkflow,
+        ConstructFrameworkWorkflow,
         GetDecryptedSecretKey,
       ]
     ),

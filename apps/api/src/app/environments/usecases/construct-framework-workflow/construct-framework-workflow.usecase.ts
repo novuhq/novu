@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Step, Workflow, workflow, WorkflowChannelEnum } from '@novu/framework';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { CreateFrameworkWorkflowCommand } from './create-framework-workflow.command';
+import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 // Unfortunately we need this mapper because the `in_app` step type uses `step.inApp()` in Framework.
 const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | StepTypeEnum.TRIGGER>, keyof Step> = {
@@ -16,13 +16,13 @@ const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | Ste
 };
 
 @Injectable()
-export class CreateFrameworkWorkflow {
+export class ConstructFrameworkWorkflow {
   constructor(private workflowsRepository: NotificationTemplateRepository) {}
 
-  async execute(command: CreateFrameworkWorkflowCommand): Promise<Workflow> {
+  async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
     const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
 
-    return this.createFrameworkWorkflow(dbWorkflow, command.controlValues);
+    return this.constructFrameworkWorkflow(dbWorkflow, command.controlValues);
   }
 
   private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
@@ -35,7 +35,7 @@ export class CreateFrameworkWorkflow {
     return foundWorkflow;
   }
 
-  private createFrameworkWorkflow(
+  private constructFrameworkWorkflow(
     newWorkflow: NotificationTemplateEntity,
     controlValues: Record<string, unknown>
   ): Workflow {
