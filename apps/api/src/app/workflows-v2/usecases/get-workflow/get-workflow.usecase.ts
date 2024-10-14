@@ -8,7 +8,7 @@ import {
 } from '@novu/dal';
 import { ControlValuesLevelEnum, WorkflowResponseDto } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
-
+import { Error } from 'mongoose';
 import { GetWorkflowCommand } from './get-workflow.command';
 import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
@@ -21,14 +21,12 @@ export class GetWorkflowUseCase {
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
-    const notificationTemplateEntity = await this.notificationTemplateRepository.findByIdQuery({
-      id: command._workflowId,
-      environmentId: command.user.environmentId,
-    });
+    const notificationTemplateEntity = await this.findById(command);
 
     if (!notificationTemplateEntity) {
       throw new WorkflowNotFoundException(command._workflowId);
     }
+
     const stepIdToControlValuesMap = await this.getControlsValuesMap(notificationTemplateEntity.steps, command);
     const preferences = await this.getPreferencesUseCase.safeExecute(
       GetPreferencesCommand.create({
@@ -38,6 +36,20 @@ export class GetWorkflowUseCase {
     );
 
     return toResponseWorkflowDto(notificationTemplateEntity, preferences, stepIdToControlValuesMap);
+  }
+
+  private async findById(command: GetWorkflowCommand) {
+    try {
+      return await this.notificationTemplateRepository.findByIdQuery({
+        id: command._workflowId,
+        environmentId: command.user.environmentId,
+      });
+    } catch (err) {
+      if (err instanceof Error.CastError) {
+        throw new WorkflowNotFoundException(command._workflowId);
+      }
+      throw err;
+    }
   }
 
   private async getControlsValuesMap(
