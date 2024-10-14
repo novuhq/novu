@@ -22,7 +22,7 @@ export class ConstructFrameworkWorkflow {
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
     const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
 
-    return this.constructFrameworkWorkflow(dbWorkflow, command.controlValues);
+    return this.constructFrameworkWorkflow(dbWorkflow);
   }
 
   private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
@@ -35,10 +35,7 @@ export class ConstructFrameworkWorkflow {
     return foundWorkflow;
   }
 
-  private constructFrameworkWorkflow(
-    newWorkflow: NotificationTemplateEntity,
-    controlValues: Record<string, unknown>
-  ): Workflow {
+  private constructFrameworkWorkflow(newWorkflow: NotificationTemplateEntity): Workflow {
     return workflow(
       newWorkflow.name,
       async ({ step }) => {
@@ -60,8 +57,11 @@ export class ConstructFrameworkWorkflow {
           await step[stepFn](
             // The step id is used internally by the framework to identify the step
             staticStep.stepId,
-            // We always return the supplied control values as the step outputs
-            () => controlValues,
+            // The step callback function. Takes controls and returns the step outputs
+            (controlValues) => {
+              // TODO: insert custom Maily.to hydration logic here.
+              return controlValues;
+            },
             // Step options
             {
               // The control schema is used to validate the control values
