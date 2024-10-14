@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
-import { ControlVariablesLevelEnum } from '@novu/shared';
+import { ControlValuesLevelEnum } from '@novu/shared';
 import { UpsertControlValuesCommand } from './upsert-control-values.command';
 
 @Injectable()
@@ -14,11 +14,11 @@ export class UpsertControlValuesUseCase {
       _organizationId: command.organizationId,
       _workflowId: command.workflowId,
       _stepId: command.notificationStepEntity._templateId,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
     if (existingControlValues) {
-      return await this.updateControlVariables(
+      return await this.updateControlValues(
         existingControlValues,
         command,
         command.newControlValues,
@@ -30,14 +30,14 @@ export class UpsertControlValuesUseCase {
       _environmentId: command.environmentId,
       _workflowId: command.workflowId,
       _stepId: command.notificationStepEntity._templateId,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
       priority: 0,
       inputs: command.newControlValues,
       controls: command.newControlValues,
     });
   }
 
-  private async updateControlVariables(
+  private async updateControlValues(
     found: ControlValuesEntity,
     command: UpsertControlValuesCommand,
     controlValues: Record<string, unknown>,
