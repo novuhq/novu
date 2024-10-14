@@ -1,19 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Step, StepOptions, Workflow, workflow, WorkflowChannelEnum } from '@novu/framework';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import {
+  ActionStep,
+  ChannelStep,
+  ChatOutput,
+  DelayOutput,
+  DigestOutput,
+  EmailOutput,
+  InAppOutput,
+  PushOutput,
+  SmsOutput,
+  Step,
+  StepOptions,
+  Workflow,
+  workflow,
+} from '@novu/framework';
+import { NotificationTemplateRepository, NotificationTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
-
-// Unfortunately we need this mapper because the `in_app` step type uses `step.inApp()` in Framework.
-const stepFnFromStepType: Record<Exclude<StepTypeEnum, StepTypeEnum.CUSTOM | StepTypeEnum.TRIGGER>, keyof Step> = {
-  [StepTypeEnum.IN_APP]: WorkflowChannelEnum.IN_APP,
-  [StepTypeEnum.EMAIL]: WorkflowChannelEnum.EMAIL,
-  [StepTypeEnum.SMS]: WorkflowChannelEnum.SMS,
-  [StepTypeEnum.CHAT]: WorkflowChannelEnum.CHAT,
-  [StepTypeEnum.PUSH]: WorkflowChannelEnum.PUSH,
-  [StepTypeEnum.DIGEST]: StepTypeEnum.DIGEST,
-  [StepTypeEnum.DELAY]: StepTypeEnum.DELAY,
-};
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -40,41 +43,7 @@ export class ConstructFrameworkWorkflow {
       newWorkflow.name,
       async ({ step }) => {
         for await (const staticStep of newWorkflow.steps) {
-          const stepTemplate = staticStep.template;
-
-          if (!stepTemplate) {
-            throw new NotFoundException(`Step template not found for step ${staticStep.stepId}`);
-          }
-
-          const stepType = stepTemplate.type;
-          const stepFn = stepFnFromStepType[stepType];
-          const stepControls = stepTemplate.controls;
-
-          if (!stepControls) {
-            throw new NotFoundException(`Step controls not found for step ${staticStep.stepId}`);
-          }
-
-          await step[stepFn](
-            // The step id is used internally by the framework to identify the step
-            staticStep.stepId,
-            // The step callback function. Takes controls and returns the step outputs
-            (controlValues) => {
-              // TODO: insert custom Maily.to hydration logic here.
-              return controlValues;
-            },
-            // Step options
-            {
-              // The control schema is used to validate the control values
-              controlSchema: stepControls.schema,
-              /*
-               * TODO: add conditions
-               * Used to construct conditions defined with https://react-querybuilder.js.org/ or similar
-               */
-              skip: () => false,
-              // TODO: dynamically set this based on the persisted step settings
-              disableOutputSanitization: false,
-            } as StepOptions
-          );
+          await this.constructStep(step, staticStep);
         }
       },
       {
@@ -88,5 +57,125 @@ export class ConstructFrameworkWorkflow {
          */
       }
     );
+  }
+
+  private constructStep(step: Step, staticStep: NotificationStepEntity) {
+    const stepTemplate = staticStep.template;
+
+    if (!stepTemplate) {
+      throw new NotFoundException(`Step template not found for step ${staticStep.stepId}`);
+    }
+
+    const stepType = stepTemplate.type;
+    const { stepId } = staticStep;
+
+    if (!stepId) {
+      throw new NotFoundException(`Step id not found for step ${staticStep.stepId}`);
+    }
+
+    const stepControls = stepTemplate.controls;
+
+    if (!stepControls) {
+      throw new NotFoundException(`Step controls not found for step ${staticStep.stepId}`);
+    }
+
+    switch (stepType) {
+      case StepTypeEnum.IN_APP:
+        return step.inApp(
+          // The step id is used internally by the framework to identify the step
+          stepId,
+          // The step callback function. Takes controls and returns the step outputs
+          async (controlValues) => {
+            // TODO: insert custom Maily.to hydration logic here.
+            return controlValues as InAppOutput;
+          },
+          // Step options
+          this.constructChannelStepOptions(staticStep)
+        );
+      case StepTypeEnum.EMAIL:
+        return step.email(
+          stepId,
+          async (controlValues) => {
+            // TODO: insert custom Maily.to hydration logic here.
+            return controlValues as EmailOutput;
+          },
+          this.constructChannelStepOptions(staticStep)
+        );
+      case StepTypeEnum.SMS:
+        return step.inApp(
+          stepId,
+          async (controlValues) => {
+            // TODO: insert custom Maily.to hydration logic here.
+            return controlValues as SmsOutput;
+          },
+          this.constructChannelStepOptions(staticStep)
+        );
+      case StepTypeEnum.CHAT:
+        return step.inApp(
+          stepId,
+          async (controlValues) => {
+            // TODO: insert custom Maily.to hydration logic here.
+            return controlValues as ChatOutput;
+          },
+          this.constructChannelStepOptions(staticStep)
+        );
+      case StepTypeEnum.PUSH:
+        return step.inApp(
+          stepId,
+          async (controlValues) => {
+            // TODO: insert custom Maily.to hydration logic here.
+            return controlValues as PushOutput;
+          },
+          this.constructChannelStepOptions(staticStep)
+        );
+      case StepTypeEnum.DIGEST:
+        return step.digest(
+          stepId,
+          async (controlValues) => {
+            // TODO: insert digest logic here
+            return controlValues as DigestOutput;
+          },
+          this.constructActionStepOptions(staticStep)
+        );
+      case StepTypeEnum.DELAY:
+        return step.delay(
+          stepId,
+          async (controlValues) => {
+            // TODO: insert delay logic here
+            return controlValues as DelayOutput;
+          },
+          this.constructActionStepOptions(staticStep)
+        );
+      default:
+        throw new NotFoundException(`Step type ${stepType} not found`);
+    }
+  }
+
+  private constructChannelStepOptions(staticStep: NotificationStepEntity): Required<Parameters<ChannelStep>[2]> {
+    return {
+      ...this.constructCommonStepOptions(staticStep),
+      disableOutputSanitization: false,
+      // TODO: add providers
+      providers: {},
+    };
+  }
+
+  private constructActionStepOptions(staticStep: NotificationStepEntity): Required<Parameters<ActionStep>[2]> {
+    return {
+      ...this.constructCommonStepOptions(staticStep),
+    };
+  }
+
+  private constructCommonStepOptions(staticStep: NotificationStepEntity): Required<StepOptions> {
+    return {
+      /** @deprecated */
+      inputSchema: staticStep.template!.controls!.schema,
+      controlSchema: staticStep.template!.controls!.schema,
+      /*
+       * TODO: add conditions
+       * Used to construct conditions defined with https://react-querybuilder.js.org/ or similar
+       */
+      skip: (controlValues) => false,
+    };
   }
 }
