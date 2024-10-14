@@ -137,9 +137,7 @@ export class CreateWorkflow {
        * For non-bridge workflows, we use a slugified version of the workflow name
        * as the trigger identifier to provide a better trigger DX.
        */
-      triggerIdentifier = `${slugifyIdentifier(
-        command.name,
-      )}-${shortid.generate()}`;
+      triggerIdentifier = slugifyIdentifier(command.name);
     }
 
     return triggerIdentifier;

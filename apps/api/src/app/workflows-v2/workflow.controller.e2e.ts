@@ -60,13 +60,14 @@ describe('Workflow Controller E2E API Testing', () => {
   });
 
   describe('Create Workflow Permutations', () => {
-    it('should not allow creating two workflows for the same user with the same name', async () => {
+    it('should allow creating two workflows for the same user with the same name', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       await createWorkflowAndValidate(nameSuffix);
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
       const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
-      expect(res.status).to.be.equal(400);
-      expect(res.text).to.contain('Workflow with the same name already exists');
+      expect(res.status).to.be.equal(201);
+      const workflowCreated: WorkflowResponseDto = res.body.data;
+      expect(workflowCreated.identifier).to.include(`${slugifyIdentifier(nameSuffix)}-`);
     });
   });
 
