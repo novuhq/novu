@@ -11,6 +11,7 @@ import {
   SmsOutput,
   Step,
   StepOptions,
+  StepOutput,
   Workflow,
   workflow,
 } from '@novu/framework';
@@ -59,7 +60,7 @@ export class ConstructFrameworkWorkflow {
     );
   }
 
-  private constructStep(step: Step, staticStep: NotificationStepEntity) {
+  private constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
