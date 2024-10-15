@@ -33,7 +33,6 @@ import {
   WorkflowResponseDto,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import slugify from 'slugify';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
