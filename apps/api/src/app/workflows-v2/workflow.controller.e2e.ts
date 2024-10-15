@@ -16,6 +16,7 @@ import {
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { JsonSchema } from '@novu/framework';
+import { encodeBase62 } from '../shared/helpers';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -111,6 +112,31 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(updatedWorkflow2.preferences.user).to.be.null;
       expect(updatedWorkflow2.preferences.default).to.be.ok;
     });
+
+    it('should update by slugify ids', async () => {
+      const nameSuffix = `Test Workflow${new Date().toString()}`;
+      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
+      const updateDtoWithValues = buildUpdateDtoWithValues(workflowCreated);
+
+      const internalId = workflowCreated._id;
+      await updateWorkflowAndValidate(internalId, workflowCreated.updatedAt, updateDtoWithValues);
+
+      const slugPrefixAndEncodedInternalId = `wf_${encodeBase62(internalId)}`;
+      await updateWorkflowAndValidate(slugPrefixAndEncodedInternalId, workflowCreated.updatedAt, updateDtoWithValues);
+
+      /*
+       * todo uncomment once we merge pr 6691
+       * const workflowId = workflowCreated.identifier;
+       * await updateWorkflowAndValidate(workflowId, workflowCreated.updatedAt, updateDtoWithValues);
+       */
+
+      const userDefinedNameAndEncodedInternalIdWithPrefix = `user-defined-name_${encodeBase62(`wf_${internalId}`)}`;
+      await updateWorkflowAndValidate(
+        userDefinedNameAndEncodedInternalIdWithPrefix,
+        workflowCreated.updatedAt,
+        updateDtoWithValues
+      );
+    });
   });
 
   describe('List Workflow Permutations', () => {
@@ -179,6 +205,33 @@ describe('Workflow Controller E2E API Testing', () => {
       });
       const idsDeduplicated = buildIdSet(listWorkflowResponse1, listWorkflowResponse2);
       expect(idsDeduplicated.size).to.be.equal(10);
+    });
+  });
+
+  describe('Get Workflow', () => {
+    it('should get by slugify ids', async () => {
+      const workflowCreated = await createWorkflowAndValidate('XYZ');
+
+      const internalId = workflowCreated._id;
+      const workflowRetrievedByInternalId = await getWorkflowRest(internalId);
+      expect(workflowRetrievedByInternalId._id).to.equal(internalId);
+
+      const slugPrefixAndEncodedInternalId = `wf_${encodeBase62(internalId)}`;
+      const workflowRetrievedBySlugPrefixAndEncodedInternalId = await getWorkflowRest(slugPrefixAndEncodedInternalId);
+      expect(workflowRetrievedBySlugPrefixAndEncodedInternalId._id).to.equal(internalId);
+
+      /*
+       *  todo uncomment once we merge pr 6691
+       * const workflowIdentifier = workflowCreated.identifier;
+       * const workflowRetrievedByWorkflowIdentifier = await getWorkflowRest(workflowIdentifier);
+       * expect(workflowRetrievedByWorkflowIdentifier._id).to.equal(internalId);
+       */
+
+      const userDefinedNameAndEncodedInternalIdWithPrefix = `user-defined-name_${encodeBase62(`wf_${internalId}`)}`;
+      const workflowRetrievedByUserDefinedNameAndEncodedInternalIdWithPrefix = await getWorkflowRest(
+        userDefinedNameAndEncodedInternalIdWithPrefix
+      );
+      expect(workflowRetrievedByUserDefinedNameAndEncodedInternalIdWithPrefix._id).to.equal(internalId);
     });
   });
 });
@@ -374,10 +427,8 @@ async function safeRest<T>(
   return parseAndReturnJson(res, url);
 }
 
-async function getWorkflowRest(
-  workflowCreated: WorkflowCommonsFields & { updatedAt: string }
-): Promise<WorkflowResponseDto> {
-  return await safeGet(`${v2Prefix}/workflows/${workflowCreated._id}`);
+async function getWorkflowRest(workflowId: string): Promise<WorkflowResponseDto> {
+  return await safeGet(`${v2Prefix}/workflows/${workflowId}`);
 }
 
 async function validateWorkflowDeleted(workflowId: string): Promise<void> {
@@ -385,7 +436,7 @@ async function validateWorkflowDeleted(workflowId: string): Promise<void> {
 }
 
 async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
-  const workflowRetrieved = await getWorkflowRest(workflowCreated);
+  const workflowRetrieved = await getWorkflowRest(workflowCreated._id);
   expect(workflowRetrieved).to.deep.equal(workflowCreated);
 }
 

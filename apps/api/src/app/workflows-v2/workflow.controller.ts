@@ -24,6 +24,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
+
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
@@ -35,6 +36,7 @@ import { ListWorkflowsCommand } from './usecases/list-workflows/list-workflows.c
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 import { GetListQueryParams } from './params/get-list-query-params';
+import { ParseSlugIdPipe } from './pipes/parse-slug-Id.pipe';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -67,7 +69,7 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async update(
     @UserSession() user: UserSessionData,
-    @Param('workflowId') workflowId: string,
+    @Param('workflowId', ParseSlugIdPipe) workflowId: string,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     return await this.upsertWorkflowUseCase.execute(
@@ -83,7 +85,7 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async getWorkflow(
     @UserSession() user: UserSessionData,
-    @Param('workflowId') workflowId: string
+    @Param('workflowId', ParseSlugIdPipe) workflowId: string
   ): Promise<WorkflowResponseDto> {
     return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ workflowIdOrIdentifier: workflowId, user }));
   }
@@ -91,7 +93,7 @@ export class WorkflowController {
   @Delete(':workflowId')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string) {
+  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId', ParseSlugIdPipe) workflowId: string) {
     await this.deleteWorkflowUsecase.execute(
       DeleteWorkflowCommand.create({ workflowIdOrIdentifier: workflowId, user })
     );
