@@ -15,7 +15,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
-import { JsonSchema } from '@novu/framework';
+import { channelStepSchemas, JsonSchema } from '@novu/framework';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -226,6 +226,9 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
 function buildEmailStep(): StepDto {
   return {
     controlValues: {},
+    controls: {
+      schema: channelStepSchemas.email.output,
+    },
     name: 'Email Test Step',
     type: StepTypeEnum.EMAIL,
   };
@@ -234,6 +237,9 @@ function buildEmailStep(): StepDto {
 function buildInAppStep(): StepDto {
   return {
     controlValues: {},
+    controls: {
+      schema: channelStepSchemas.in_app.output,
+    },
     name: 'In-App Test Step',
     type: StepTypeEnum.IN_APP,
   };
@@ -268,6 +274,9 @@ function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
+      controls: {
+        schema: channelStepSchemas[stepInResponse.type].output,
+      },
       name: stepInResponse.name,
       type: stepInResponse.type,
     };
