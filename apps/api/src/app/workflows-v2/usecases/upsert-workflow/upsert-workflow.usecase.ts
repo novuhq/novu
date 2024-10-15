@@ -80,13 +80,7 @@ export class UpsertWorkflowUseCase {
     for (const persistedStep of workflow.steps) {
       const controlValuesEntity = await this.upsertControlValuesForSingleStep(persistedStep, command, workflow);
       if (controlValuesEntity) {
-        const { stepId } = persistedStep;
-
-        if (!stepId) {
-          throw new NotFoundException(`Step id is not set for workflow ${workflow._id}`);
-        }
-
-        stepIdToControlValuesMap[stepId] = controlValuesEntity;
+        stepIdToControlValuesMap[persistedStep._templateId] = controlValuesEntity;
       }
     }
 
