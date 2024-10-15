@@ -29,7 +29,7 @@ describe('Create checkout session', async () => {
     throw new Error("CreateCheckoutSession doesn't exist");
   }
 
-  const CreateCheckoutSession = require('@novu/ee-billing').CreateCheckoutSession;
+  const { CreateCheckoutSession } = require('@novu/ee-billing');
 
   const getOrCreateCustomer = {
     execute: () => Promise.resolve({ id: 'customer_id' }),
