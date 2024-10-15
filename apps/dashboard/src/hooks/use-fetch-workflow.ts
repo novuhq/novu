@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { WorkflowResponseDto } from '@novu/shared';
 import { QueryKeys } from '@/utils/query-keys';
 import { fetchWorkflow } from '@/api/workflows';
+import { useEnvironment } from '@/context/environment/hooks';
 
 export const useFetchWorkflow = ({
   workflowId,
@@ -12,8 +13,9 @@ export const useFetchWorkflow = ({
   onSuccess?: (data: WorkflowResponseDto) => void;
   onError?: (error: unknown) => void;
 }) => {
+  const { currentEnvironment } = useEnvironment();
   const { data, isPending, error } = useQuery<WorkflowResponseDto>({
-    queryKey: [QueryKeys.bridgeHealthCheck, workflowId],
+    queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflowId],
     queryFn: async () => {
       try {
         const result = await fetchWorkflow({ workflowId });
@@ -24,7 +26,7 @@ export const useFetchWorkflow = ({
         throw error;
       }
     },
-    enabled: !!workflowId,
+    enabled: !!currentEnvironment?._id && !!workflowId,
   });
 
   return {
