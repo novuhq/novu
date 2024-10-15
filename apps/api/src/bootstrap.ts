@@ -98,7 +98,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  // await setupSwagger(app);
+  await setupSwagger(app);
 
   app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
