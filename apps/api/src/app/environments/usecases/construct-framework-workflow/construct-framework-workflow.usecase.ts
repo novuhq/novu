@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   ActionStep,
   ChannelStep,
@@ -64,20 +64,20 @@ export class ConstructFrameworkWorkflow {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
-      throw new NotFoundException(`Step template not found for step ${staticStep.stepId}`);
+      throw new InternalServerErrorException(`Step template not found for step ${staticStep.stepId}`);
     }
 
     const stepType = stepTemplate.type;
     const { stepId } = staticStep;
 
     if (!stepId) {
-      throw new NotFoundException(`Step id not found for step ${staticStep.stepId}`);
+      throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
     }
 
     const stepControls = stepTemplate.controls;
 
     if (!stepControls) {
-      throw new NotFoundException(`Step controls not found for step ${staticStep.stepId}`);
+      throw new InternalServerErrorException(`Step controls not found for step ${staticStep.stepId}`);
     }
 
     switch (stepType) {
@@ -146,7 +146,7 @@ export class ConstructFrameworkWorkflow {
           this.constructActionStepOptions(staticStep)
         );
       default:
-        throw new NotFoundException(`Step type ${stepType} not found`);
+        throw new InternalServerErrorException(`Step type ${stepType} is not supported`);
     }
   }
 
