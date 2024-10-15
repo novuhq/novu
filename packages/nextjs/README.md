@@ -30,27 +30,6 @@ function Novu() {
 }
 ```
 
-## Use your own backend and socket URL
-
-By default, Novu's hosted services for API and socket are used. If you want, you can override them and configure your own.
-
-```tsx
-import { Inbox } from '@novu/nextjs';
-
-function Novu() {
-  return (
-    <Inbox
-      options={{
-        backendUrl: 'YOUR_BACKEND_URL',
-        socketUrl: 'YOUR_SOCKET_URL',
-        subscriberId: 'SUBSCRIBER_ID',
-        applicationIdentifier: 'APPLICATION_IDENTIFIER',
-      }}
-    />
-  );
-}
-```
-
 ## Controlled Inbox
 
 You can use the `open` prop to manage the Inbox popover open state.
@@ -143,3 +122,24 @@ const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY).update(subscribe
 
 > Note: If HMAC encryption is active in In-App provider settings and `subscriberHash`
 > along with `subscriberId` is not provided, then Inbox will not load
+
+## Use your own backend and socket URL
+
+By default, Novu's hosted services for API and socket are used. If you want, you can override them and configure your own.
+
+```tsx
+import { Inbox } from '@novu/nextjs';
+
+function Novu() {
+  return (
+    <Inbox
+      options={{
+        backendUrl: 'YOUR_BACKEND_URL',
+        socketUrl: 'YOUR_SOCKET_URL',
+        subscriberId: 'SUBSCRIBER_ID',
+        applicationIdentifier: 'APPLICATION_IDENTIFIER',
+      }}
+    />
+  );
+}
+```
