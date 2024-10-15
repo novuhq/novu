@@ -32,6 +32,7 @@ import {
   WorkflowResponseDto,
   WorkflowTypeEnum,
 } from '@novu/shared';
+import slugify from 'slugify';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
@@ -261,7 +262,7 @@ export class UpsertWorkflowUseCase {
     return stepEntityToReturn;
   }
 
-  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })) {
+  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })): NotificationStep {
     return {
       template: {
         type: step.type,
@@ -269,6 +270,7 @@ export class UpsertWorkflowUseCase {
         controls: step.controls,
         content: '',
       },
+      stepId: slugify(step.name, { lower: true, strict: true, trim: true }),
       name: step.name,
     };
   }

@@ -44,7 +44,6 @@ export class ExecuteBridgeJob {
 
   async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
     const stepId = command.job.step.stepId || command.job.step.uuid;
-    console.log({ step: command.job.step });
 
     const isStateful = !command.job.step.bridgeUrl;
 
