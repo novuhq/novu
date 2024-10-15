@@ -39,8 +39,8 @@ export class StepDto {
   @IsDefined()
   type: StepTypeEnum;
 
-  @IsOptional()
-  controls?: ControlsSchema;
+  @IsObject()
+  controls: ControlsSchema;
 
   @IsObject()
   controlValues: Record<string, unknown>;

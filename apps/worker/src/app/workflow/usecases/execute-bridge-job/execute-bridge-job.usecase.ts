@@ -57,7 +57,7 @@ export class ExecuteBridgeJob {
             $in: [WorkflowTypeEnum.ECHO, WorkflowTypeEnum.BRIDGE],
           },
         },
-        '_id triggers type'
+        '_id triggers type origin'
       );
     }
 
@@ -81,7 +81,7 @@ export class ExecuteBridgeJob {
       throw new Error(`Environment id ${command.environmentId} is not found`);
     }
 
-    if (!environment?.echo?.url && isStateful) {
+    if (!environment?.echo?.url && isStateful && workflow?.origin === WorkflowOriginEnum.EXTERNAL) {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
@@ -110,7 +110,11 @@ export class ExecuteBridgeJob {
 
     const bridgeResponse = await this.sendBridgeRequest({
       environmentId: command.environmentId,
-      workflowOrigin: workflow?.origin ?? WorkflowOriginEnum.EXTERNAL,
+      /*
+       * TODO: We fallback to external due to lack of backfilling origin for existing Workflows.
+       * Once we backfill the origin field for existing Workflows, we should remove the fallback.
+       */
+      workflowOrigin: workflow?.origin || WorkflowOriginEnum.EXTERNAL,
       statelessBridgeUrl: command.job.step.bridgeUrl,
       event: bridgeEvent,
       job: command.job,

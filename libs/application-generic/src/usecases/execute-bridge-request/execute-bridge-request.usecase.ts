@@ -88,6 +88,11 @@ export class ExecuteBridgeRequest {
       command.statelessBridgeUrl,
     );
 
+    Logger.log(
+      `Resolved bridge URL: ${bridgeUrl} for environment ${command.environmentId} and origin ${command.workflowOrigin}`,
+      LOG_CONTEXT,
+    );
+
     const retriesLimit = command.retriesLimit || DEFAULT_RETRIES_LIMIT;
     const bridgeActionUrl = new URL(bridgeUrl);
     bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, command.action);
@@ -250,19 +255,19 @@ export class ExecuteBridgeRequest {
 
     switch (workflowOrigin) {
       case WorkflowOriginEnum.NOVU_CLOUD:
-        return `${this.getApiUrl()}/environments/${environmentId}/bridge`;
+        return `${this.getApiUrl()}/v1/environments/${environmentId}/bridge`;
       case WorkflowOriginEnum.EXTERNAL:
-      default:
-        // default is treated as an external workflow for backwards compatibility
         return environmentBridgeUrl;
+      default:
+        throw new Error(`Unsupported workflow origin: ${workflowOrigin}`);
     }
   }
 
   private getApiUrl(): string {
-    const apiUrl = process.env.API_URL;
+    const apiUrl = process.env.API_ROOT_URL;
 
     if (!apiUrl) {
-      throw new Error('API_URL is not set');
+      throw new Error('API_ROOT_URL environment variable is not set');
     }
 
     return apiUrl;
