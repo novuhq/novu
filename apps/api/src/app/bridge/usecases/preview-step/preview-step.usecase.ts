@@ -1,114 +1,53 @@
-import { createHmac } from 'crypto';
-import axios from 'axios';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { PostActionEnum, HttpQueryKeysEnum } from '@novu/framework';
-
-import { EnvironmentRepository } from '@novu/dal';
-import { decryptApiKey } from '@novu/application-generic';
+import { Injectable } from '@nestjs/common';
+import { PostActionEnum, HttpQueryKeysEnum, Event, JobStatusEnum, ExecuteOutput } from '@novu/framework';
+import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand } from '@novu/application-generic';
+import { WorkflowOriginEnum } from '@novu/shared';
 
 import { PreviewStepCommand } from './preview-step.command';
-import { BridgeErrorCodeEnum } from '../../shared';
 
 @Injectable()
 export class PreviewStep {
-  constructor(private environmentRepository: EnvironmentRepository) {}
+  constructor(private executeBridgeRequest: ExecuteBridgeRequest) {}
 
-  async execute(command: PreviewStepCommand) {
-    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
-    const bridgeUrl = command.bridgeUrl || environment?.echo.url;
-    if (!bridgeUrl) {
-      throw new BadRequestException('Bridge URL not found');
-    }
+  async execute(command: PreviewStepCommand): Promise<ExecuteOutput> {
+    const event = this.mapEvent(command);
 
-    const axiosInstance = axios.create();
-    try {
-      const payload = this.mapPayload(command);
-      const novuSignatureHeader = this.buildNovuSignature(environment, payload);
-      const bridgeActionUrl = new URL(bridgeUrl);
-      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, PostActionEnum.PREVIEW);
-      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.WORKFLOW_ID, command.workflowId);
-      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.STEP_ID, command.stepId);
-
-      const response = await axiosInstance.post(bridgeActionUrl.toString(), payload, {
-        headers: {
-          'content-type': 'application/json',
-          'x-novu-signature': novuSignatureHeader,
-          'novu-signature': novuSignatureHeader,
+    const response = (await this.executeBridgeRequest.execute(
+      ExecuteBridgeRequestCommand.create({
+        environmentId: command.environmentId,
+        action: PostActionEnum.PREVIEW,
+        event,
+        searchParams: {
+          [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
+          [HttpQueryKeysEnum.STEP_ID]: command.stepId,
         },
-      });
+        // TODO: pass the origin from the command
+        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+        retriesLimit: 1,
+      })
+    )) as ExecuteOutput;
 
-      if (!response.data?.outputs || !response.data?.metadata) {
-        throw new BadRequestException({
-          code: BridgeErrorCodeEnum.BRIDGE_UNEXPECTED_RESPONSE,
-          message: JSON.stringify(response.data),
-        });
-      }
-
-      return response.data;
-    } catch (e: any) {
-      if (e?.response?.status === 404) {
-        throw new BadRequestException({
-          code: BridgeErrorCodeEnum.BRIDGE_ENDPOINT_NOT_FOUND,
-          message: `Bridge Endpoint Was not found or not accessible. Endpoint: ${bridgeUrl}`,
-        });
-      }
-
-      if (e?.response?.status === 405) {
-        throw new BadRequestException({
-          code: BridgeErrorCodeEnum.BRIDGE_ENDPOINT_NOT_FOUND,
-          message: `Bridge Endpoint is not properly configured. : ${bridgeUrl}`,
-        });
-      }
-
-      if (e.code === BridgeErrorCodeEnum.BRIDGE_UNEXPECTED_RESPONSE) {
-        throw e;
-      }
-
-      // todo add status indication - check if e?.response?.status === 400 here
-      if (e?.response?.data) {
-        throw new BadRequestException(e.response.data);
-      }
-
-      throw new BadRequestException({
-        code: BridgeErrorCodeEnum.BRIDGE_UNEXPECTED_RESPONSE,
-        message: `Un-expected Bridge response: ${e.message}`,
-      });
-    }
+    return response;
   }
 
-  private mapPayload(command: PreviewStepCommand) {
+  private mapEvent(command: PreviewStepCommand): Omit<Event, 'workflowId' | 'stepId' | 'action' | 'source'> {
     const payload = {
-      inputs: command.controls || command.inputs || {},
-      controls: command.controls || command.inputs || {},
-      data: command.data || {},
+      /** @deprecated - use controls instead */
+      inputs: command.controls || {},
+      controls: command.controls || {},
+      /** @deprecated - use payload instead */
+      data: command.payload || {},
+      payload: command.payload || {},
       state: [
         {
           stepId: 'trigger',
-          outputs: command.data || {},
+          outputs: command.payload || {},
+          state: { status: JobStatusEnum.COMPLETED },
         },
       ],
+      subscriber: {},
     };
 
     return payload;
-  }
-
-  private buildNovuSignature(
-    environment,
-    payload: { data: any; inputs: any; controls: any; state: { outputs: any; stepId: string }[] }
-  ) {
-    const timestamp = Date.now();
-    const xNovuSignature = `t=${timestamp},v1=${this.createHmacByApiKey(
-      environment.apiKeys[0].key,
-      timestamp,
-      payload
-    )}`;
-
-    return xNovuSignature;
-  }
-
-  private createHmacByApiKey(secret: string, timestamp: number, payload) {
-    const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
-
-    return createHmac('sha256', decryptApiKey(secret)).update(publicKey).digest('hex');
   }
 }

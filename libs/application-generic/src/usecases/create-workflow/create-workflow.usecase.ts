@@ -126,7 +126,10 @@ export class CreateWorkflow {
     }
 
     let triggerIdentifier: string;
-    if (command.type === WorkflowTypeEnum.BRIDGE)
+    if (
+      command.type === WorkflowTypeEnum.BRIDGE &&
+      command.origin === WorkflowOriginEnum.EXTERNAL
+    )
       /*
        * Bridge workflows need to have the identifier preserved to ensure that
        * the Framework-defined identifier is the source of truth.

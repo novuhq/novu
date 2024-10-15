@@ -15,7 +15,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
-import { JsonSchema } from '@novu/framework';
+import { channelStepSchemas, JsonSchema } from '@novu/framework';
 import { slugifyName } from '@novu/application-generic';
 
 const v2Prefix = '/v2';
@@ -68,6 +68,16 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(res.status).to.be.equal(201);
       const workflowCreated: WorkflowResponseDto = res.body.data;
       expect(workflowCreated.workflowId).to.include(`${slugifyName(nameSuffix)}-`);
+    });
+
+    it('should throw error when creating workflow with duplicate step ids', async () => {
+      const nameSuffix = `Test Workflow${new Date().toString()}`;
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix, {
+        steps: [buildEmailStep(), buildEmailStep(), buildInAppStep(), buildInAppStep()],
+      });
+      const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
+      expect(res.status).to.be.equal(400);
+      expect(res.body.message).to.be.equal('Duplicate stepIds are not allowed: email-test-step, in-app-test-step');
     });
   });
 
@@ -228,6 +238,9 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
 function buildEmailStep(): StepDto {
   return {
     controlValues: {},
+    controls: {
+      schema: channelStepSchemas.email.output,
+    },
     name: 'Email Test Step',
     type: StepTypeEnum.EMAIL,
   };
@@ -236,12 +249,15 @@ function buildEmailStep(): StepDto {
 function buildInAppStep(): StepDto {
   return {
     controlValues: {},
+    controls: {
+      schema: channelStepSchemas.in_app.output,
+    },
     name: 'In-App Test Step',
     type: StepTypeEnum.IN_APP,
   };
 }
 
-function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
+function buildCreateWorkflowDto(nameSuffix: string, overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
@@ -250,6 +266,7 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
     active: true,
     tags: TEST_TAGS,
     steps: [buildEmailStep(), buildInAppStep()],
+    ...overrides,
   };
 }
 
@@ -271,6 +288,9 @@ function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
+      controls: {
+        schema: channelStepSchemas[stepInResponse.type].output,
+      },
       name: stepInResponse.name,
       type: stepInResponse.type,
     };

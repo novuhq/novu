@@ -8,7 +8,6 @@ import { UpdateEnvironment } from './update-environment/update-environment.useca
 import { GetMxRecord } from '../../inbound-parse/usecases/get-mx-record/get-mx-record.usecase';
 
 export const USE_CASES = [
-  //
   GetMxRecord,
   CreateEnvironment,
   UpdateEnvironment,

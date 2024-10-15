@@ -223,6 +223,21 @@ export class UpsertWorkflowUseCase {
       return this.mapSingleStep(persistedWorkflow, step);
     });
 
+    const seenStepIds = new Set();
+    const duplicateStepIds = new Set();
+
+    steps.forEach((step) => {
+      if (seenStepIds.has(step.stepId)) {
+        duplicateStepIds.add(step.stepId);
+      } else {
+        seenStepIds.add(step.stepId);
+      }
+    });
+
+    if (duplicateStepIds.size > 0) {
+      throw new BadRequestException(`Duplicate stepIds are not allowed: ${Array.from(duplicateStepIds).join(', ')}`);
+    }
+
     return steps;
   }
 
@@ -244,7 +259,7 @@ export class UpsertWorkflowUseCase {
     return stepEntityToReturn;
   }
 
-  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })) {
+  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })): NotificationStep {
     return {
       template: {
         type: step.type,
@@ -252,6 +267,7 @@ export class UpsertWorkflowUseCase {
         controls: step.controls,
         content: '',
       },
+      stepId: slugifyName(step.name),
       name: step.name,
     };
   }
