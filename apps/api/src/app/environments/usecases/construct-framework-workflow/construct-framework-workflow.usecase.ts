@@ -33,7 +33,7 @@ export class ConstructFrameworkWorkflow {
     const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
 
     if (!foundWorkflow) {
-      throw new NotFoundException(`Workflow ${workflowId} not found`);
+      throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
     }
 
     return foundWorkflow;
