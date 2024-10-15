@@ -69,6 +69,16 @@ describe('Workflow Controller E2E API Testing', () => {
       const workflowCreated: WorkflowResponseDto = res.body.data;
       expect(workflowCreated.workflowId).to.include(`${slugifyName(nameSuffix)}-`);
     });
+
+    it('should throw error when creating workflow with duplicate step ids', async () => {
+      const nameSuffix = `Test Workflow${new Date().toString()}`;
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix, {
+        steps: [buildEmailStep(), buildEmailStep(), buildInAppStep(), buildInAppStep()],
+      });
+      const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
+      expect(res.status).to.be.equal(400);
+      expect(res.body.message).to.be.equal('Duplicate stepIds are not allowed: email-test-step, in-app-test-step');
+    });
   });
 
   describe('Update Workflow Permutations', () => {
@@ -247,7 +257,7 @@ function buildInAppStep(): StepDto {
   };
 }
 
-function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
+function buildCreateWorkflowDto(nameSuffix: string, overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
@@ -256,6 +266,7 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
     active: true,
     tags: TEST_TAGS,
     steps: [buildEmailStep(), buildInAppStep()],
+    ...overrides,
   };
 }
 

@@ -223,6 +223,21 @@ export class UpsertWorkflowUseCase {
       return this.mapSingleStep(persistedWorkflow, step);
     });
 
+    const seenStepIds = new Set();
+    const duplicateStepIds = new Set();
+
+    steps.forEach((step) => {
+      if (seenStepIds.has(step.stepId)) {
+        duplicateStepIds.add(step.stepId);
+      } else {
+        seenStepIds.add(step.stepId);
+      }
+    });
+
+    if (duplicateStepIds.size > 0) {
+      throw new BadRequestException(`Duplicate stepIds are not allowed: ${Array.from(duplicateStepIds).join(', ')}`);
+    }
+
     return steps;
   }
 
