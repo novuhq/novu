@@ -81,4 +81,6 @@ export default defineConfig((config: Options) => {
     ],
     onSuccess: async () => await buildCSS(),
   };
+
+  return [cjs, esm, umd];
 });
