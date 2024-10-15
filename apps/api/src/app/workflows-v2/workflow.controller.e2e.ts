@@ -16,7 +16,7 @@ import {
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { JsonSchema } from '@novu/framework';
-import { slugifyIdentifier } from '@novu/application-generic';
+import { slugifyName } from '@novu/application-generic';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -67,7 +67,7 @@ describe('Workflow Controller E2E API Testing', () => {
       const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
       expect(res.status).to.be.equal(201);
       const workflowCreated: WorkflowResponseDto = res.body.data;
-      expect(workflowCreated.identifier).to.include(`${slugifyIdentifier(nameSuffix)}-`);
+      expect(workflowCreated.workflowId).to.include(`${slugifyName(nameSuffix)}-`);
     });
   });
 
@@ -245,7 +245,7 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
-    identifier: `${slugifyIdentifier(TEST_WORKFLOW_NAME + nameSuffix)}`,
+    workflowId: `${slugifyName(TEST_WORKFLOW_NAME + nameSuffix)}`,
     description: 'This is a test workflow',
     active: true,
     tags: TEST_TAGS,
@@ -591,7 +591,7 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
   return {
     ...updateRequest,
     name: TEST_WORKFLOW_UPDATED_NAME,
-    identifier: `${slugifyIdentifier(TEST_WORKFLOW_UPDATED_NAME)}`,
+    workflowId: `${slugifyName(TEST_WORKFLOW_UPDATED_NAME)}`,
     steps,
   };
 }
