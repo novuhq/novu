@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Post,
   Query,
   UseGuards,
@@ -12,7 +11,6 @@ import {
 } from '@nestjs/common';
 import {
   GetFeatureFlag,
-  GetFeatureFlagCommand,
   GetPreferences,
   GetPreferencesCommand,
   UpsertPreferences,
@@ -20,7 +18,7 @@ import {
   UserAuthGuard,
   UserSession,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
@@ -37,8 +35,6 @@ export class PreferencesController {
   @Get('/')
   @UseGuards(UserAuthGuard)
   async get(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
-    await this.verifyPreferencesApiAvailability(user);
-
     return this.getPreferences.execute(
       GetPreferencesCommand.create({
         templateId: workflowId,
@@ -51,8 +47,6 @@ export class PreferencesController {
   @Post('/')
   @UseGuards(UserAuthGuard)
   async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
-    await this.verifyPreferencesApiAvailability(user);
-
     return this.upsertPreferences.upsertUserWorkflowPreferences(
       UpsertUserWorkflowPreferencesCommand.create({
         environmentId: user.environmentId,
@@ -67,8 +61,6 @@ export class PreferencesController {
   @Delete('/')
   @UseGuards(UserAuthGuard)
   async delete(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
-    await this.verifyPreferencesApiAvailability(user);
-
     return this.upsertPreferences.upsertUserWorkflowPreferences(
       UpsertUserWorkflowPreferencesCommand.create({
         environmentId: user.environmentId,
@@ -78,20 +70,5 @@ export class PreferencesController {
         preferences: null,
       })
     );
-  }
-
-  private async verifyPreferencesApiAvailability(user: UserSessionData) {
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      })
-    );
-
-    if (!isEnabled) {
-      throw new NotFoundException();
-    }
   }
 }

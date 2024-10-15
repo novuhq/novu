@@ -23,8 +23,6 @@ describe('Preferences', function () {
   let session: UserSession;
 
   beforeEach(async () => {
-    // @ts-ignore
-    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
     const moduleRef = await Test.createTestingModule({
       imports: [PreferencesModule, AuthModule],
       providers: [],

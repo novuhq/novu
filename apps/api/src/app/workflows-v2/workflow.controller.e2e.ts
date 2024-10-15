@@ -38,15 +38,11 @@ const SCHEMA_WITH_TEXT: JsonSchema = {
 
 describe('Workflow Controller E2E API Testing', () => {
   beforeEach(async () => {
-    // @ts-ignore
-    process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
   });
 
   it('Smoke Testing', async () => {
-    // @ts-ignore
-    process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     const workflowCreated = await createWorkflowAndValidate();
     await getWorkflowAndValidate(workflowCreated);
     const updateRequest = buildUpdateRequest(workflowCreated);

@@ -4,3 +4,5 @@ apps/api/src/metadata.ts
 
 /.nx/cache
 /.nx/workspace-data
+
+libs/application-generic/src/usecases/get-preferences/get-preferences.usecase.ts

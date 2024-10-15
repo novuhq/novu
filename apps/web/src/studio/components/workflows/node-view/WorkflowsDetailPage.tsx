@@ -4,9 +4,7 @@ import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow, IconSettings } from '@novu/novui/icons';
 import { HStack, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { useWorkflow } from '../../../hooks/useBridgeAPI';
 import { useStudioWorkflowsNavigation } from '../../../hooks/useStudioWorkflowsNavigation';
@@ -26,7 +24,6 @@ const BaseWorkflowsDetailPage = () => {
   const track = useTelemetry();
   const { isLocalStudio } = useStudioState() || {};
 
-  const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
   const [isPanelOpen, setPanelOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -53,7 +50,7 @@ const BaseWorkflowsDetailPage = () => {
           <OutlineButton Icon={IconPlayArrow} onClick={() => goToTest(currentWorkflowId)}>
             Test workflow
           </OutlineButton>
-          {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={() => setPanelOpen(true)} />}
+          <IconButton Icon={IconSettings} onClick={() => setPanelOpen(true)} />
         </HStack>
       }
     >

@@ -4,7 +4,6 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IPreferenceChannels,
   PreferencesTypeEnum,
@@ -22,7 +21,6 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   GetFeatureFlag,
-  GetFeatureFlagCommand,
   GetPreferences,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -128,7 +126,12 @@ export class SendMessage {
           isRetry: false,
           raw: JSON.stringify({
             ...(stepCondition
-              ? { filter: { conditions: stepCondition?.conditions, passed: stepCondition?.passed } }
+              ? {
+                  filter: {
+                    conditions: stepCondition?.conditions,
+                    passed: stepCondition?.passed,
+                  },
+                }
               : {}),
             ...(channelPreference ? { preferences: { passed: channelPreference } } : {}),
             ...(isBridgeSkipped ? { skip: isBridgeSkipped } : {}),
@@ -203,9 +206,15 @@ export class SendMessage {
     bridgeSkip: boolean | undefined,
     command: SendMessageCommand,
     variables: IFilterVariables
-  ): Promise<{ stepCondition: IConditionsFilterResponse | null; channelPreference: boolean | null }> {
+  ): Promise<{
+    stepCondition: IConditionsFilterResponse | null;
+    channelPreference: boolean | null;
+  }> {
     if (bridgeSkip === true) {
-      return { stepCondition: { passed: true, conditions: [], variables: {} }, channelPreference: true };
+      return {
+        stepCondition: { passed: true, conditions: [], variables: {} },
+        channelPreference: true,
+      };
     }
 
     const [stepCondition, channelPreference] = await Promise.all([
@@ -306,15 +315,6 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException(`Subscriber not found with id ${job._subscriberId}`);
 
-    const isWorkflowPreferencesEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: 'system',
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED,
-      })
-    );
-
     /*
      * TODO: Remove this after we deprecate V1 preferences, global subscriber
      * preferences are handled in `GetPreferences` for V2 preferences.
@@ -322,35 +322,36 @@ export class SendMessage {
      * This is actually a bug because it can allow for Global Preferences to disable
      * delivery of Workflows with read-only preferences.
      */
-    if (!isWorkflowPreferencesEnabled) {
-      const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
-        GetSubscriberGlobalPreferenceCommand.create({
-          organizationId: job._organizationId,
-          environmentId: job._environmentId,
-          subscriberId: job.subscriberId,
+    const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+        subscriberId: job.subscriberId,
+      })
+    );
+
+    const globalPreferenceResult = this.stepPreferred(globalPreference, job);
+
+    if (!globalPreferenceResult) {
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(globalPreference),
         })
       );
 
-      const globalPreferenceResult = this.stepPreferred(globalPreference, job);
-
-      if (!globalPreferenceResult) {
-        await this.executionLogRoute.execute(
-          ExecutionLogRouteCommand.create({
-            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-            detail: DetailEnum.STEP_FILTERED_BY_SUBSCRIBER_GLOBAL_PREFERENCES,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.SUCCESS,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify(globalPreference),
-          })
-        );
-
-        return false;
-      }
+      return false;
     }
 
-    let subscriberPreference: { enabled: boolean; channels: IPreferenceChannels };
+    let subscriberPreference: {
+      enabled: boolean;
+      channels: IPreferenceChannels;
+    };
     let subscriberPreferenceType: PreferencesTypeEnum;
     if (command.statelessPreferences) {
       /*
