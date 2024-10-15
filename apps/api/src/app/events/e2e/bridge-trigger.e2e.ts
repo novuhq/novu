@@ -18,6 +18,7 @@ import {
   MessagesStatusEnum,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
+  WorkflowResponseDto,
 } from '@novu/shared';
 import { workflow, channelStepSchemas } from '@novu/framework';
 
@@ -1514,13 +1515,15 @@ describe('Novu-Hosted Bridge Trigger', () => {
     const response = await session.testAgent.post(`/v2/workflows`).send(createWorkflowDto);
     expect(response.status).to.be.eq(201);
 
-    await triggerEvent(session, createWorkflowDto.name, subscriber._id, {});
+    const responseData = response.body.data as WorkflowResponseDto;
+
+    await triggerEvent(session, responseData.slug, subscriber._id, {});
     await session.awaitRunningJobs();
 
     const sentMessages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: session.subscriberProfile?._id,
-      templateIdentifier: createWorkflowDto.name,
+      templateIdentifier: responseData.slug,
       channel: StepTypeEnum.IN_APP,
     });
 

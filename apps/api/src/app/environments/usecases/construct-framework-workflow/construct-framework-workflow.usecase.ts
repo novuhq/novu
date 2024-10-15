@@ -41,7 +41,7 @@ export class ConstructFrameworkWorkflow {
 
   private constructFrameworkWorkflow(newWorkflow: NotificationTemplateEntity): Workflow {
     return workflow(
-      newWorkflow.name,
+      newWorkflow.triggers[0].identifier,
       async ({ step }) => {
         for await (const staticStep of newWorkflow.steps) {
           await this.constructStep(step, staticStep);

@@ -64,13 +64,16 @@ export class CreateWorkflow {
     this.validatePayload(command);
 
     let triggerIdentifier: string;
-    if (command.type === WorkflowTypeEnum.BRIDGE)
+    if (
+      command.type === WorkflowTypeEnum.BRIDGE &&
+      command.origin === WorkflowOriginEnum.EXTERNAL
+    ) {
       /*
-       * Bridge workflows need to have the identifier preserved to ensure that
+       * External Bridge workflows need to have the identifier preserved to ensure that
        * the Framework-defined identifier is the source of truth.
        */
       triggerIdentifier = command.name;
-    else {
+    } else {
       /**
        * For non-bridge workflows, we use a slugified version of the workflow name
        * as the trigger identifier to provide a better trigger DX.

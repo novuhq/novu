@@ -26,6 +26,7 @@ export function toResponseWorkflowDto(
 
   return {
     _id: template._id,
+    slug: template.triggers[0].identifier,
     tags: template.tags,
     active: template.active,
     preferences: preferencesDto,
