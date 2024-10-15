@@ -4,7 +4,7 @@ import shortid from 'shortid';
 
 import { providers } from '@novu/shared';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { slugifyIdentifier } from '@novu/application-generic';
+import { slugifyName } from '@novu/application-generic';
 
 export const ENVIRONMENT_NAME_TO_SHORT_NAME = { ['Development']: 'dev', ['Production']: 'prod', ['undefined']: '' };
 
@@ -101,7 +101,7 @@ export function genIntegrationIdentificationDetails({
   const defaultName = providers.find((provider) => provider.id === providerId)?.displayName ?? providerIdCapitalized;
 
   const name = existingName ?? defaultName;
-  const identifier = existingIdentifier ?? `${slugifyIdentifier(name)}-${shortid.generate()}`;
+  const identifier = existingIdentifier ?? `${slugifyName(name)}-${shortid.generate()}`;
 
   return { name, identifier };
 }

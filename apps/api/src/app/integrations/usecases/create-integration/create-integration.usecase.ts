@@ -16,7 +16,7 @@ import {
   InvalidateCacheService,
   areNovuSmsCredentialsSet,
   areNovuEmailCredentialsSet,
-  slugifyIdentifier,
+  slugifyName,
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
@@ -148,7 +148,7 @@ export class CreateIntegration {
       const defaultName =
         providers.find((provider) => provider.id === command.providerId)?.displayName ?? providerIdCapitalized;
       const name = command.name ?? defaultName;
-      const identifier = command.identifier ?? `${slugifyIdentifier(name)}-${shortid.generate()}`;
+      const identifier = command.identifier ?? `${slugifyName(name)}-${shortid.generate()}`;
 
       const query: IntegrationQuery = {
         name,

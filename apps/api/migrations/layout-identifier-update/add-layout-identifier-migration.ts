@@ -3,7 +3,7 @@
 import shortid from 'shortid';
 
 import { LayoutRepository, OrganizationRepository } from '@novu/dal';
-import { slugifyIdentifier } from '@novu/application-generic';
+import { slugifyName } from '@novu/application-generic';
 
 export async function addLayoutIdentifierMigration() {
   // eslint-disable-next-line no-console
@@ -27,7 +27,7 @@ export async function addLayoutIdentifierMigration() {
     const bulkWriteOps = layouts
       .map((layout) => {
         const { _id, name } = layout;
-        const identifier = `${slugifyIdentifier(name)}-${shortid.generate()}`;
+        const identifier = `${slugifyName(name)}-${shortid.generate()}`;
 
         return [
           {

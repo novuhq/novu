@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import slugify from 'slugify';
 
 import {
   ControlValuesEntity,
@@ -22,6 +21,7 @@ import {
   UpsertControlValuesUseCase,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
+  slugifyName,
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
@@ -34,7 +34,6 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
-import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
@@ -189,10 +188,7 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description || '',
       tags: workflowDto.tags || [],
       critical: false,
-      triggerIdentifier: `${slugify(workflowDto.name, {
-        lower: true,
-        strict: true,
-      })}`,
+      triggerIdentifier: slugifyName(workflowDto.name),
     };
   }
 
@@ -215,7 +211,7 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description,
       tags: workflowDto.tags,
       active: workflowDto.active ?? true,
-      identifier: workflowDto.identifier,
+      workflowId: workflowDto.workflowId,
     };
   }
 
