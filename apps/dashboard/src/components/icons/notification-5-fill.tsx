@@ -1,4 +1,4 @@
-import { HTMLAttributes } from 'react';
+import type { HTMLAttributes } from 'react';
 
 export const Notification5Fill = (props: HTMLAttributes<HTMLOrSVGElement>) => {
   return (

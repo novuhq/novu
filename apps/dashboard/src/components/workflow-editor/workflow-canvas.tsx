@@ -8,7 +8,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react';
-import type { StepResponseDto } from '@novu/shared';
+import { StepTypeEnum, type StepResponseDto } from '@novu/shared';
 import '@xyflow/react/dist/style.css';
 import {
   AddNode,
@@ -18,6 +18,7 @@ import {
   DigestNode,
   EmailNode,
   InAppNode,
+  NodeData,
   PushNode,
   SmsNode,
   TriggerNode,
@@ -50,12 +51,19 @@ const Y_DISTANCE = NODE_HEIGHT + 50;
 const mapStepToNode = (
   step: StepResponseDto,
   previousPosition: { x: number; y: number }
-): Node<Record<string, unknown>, keyof typeof nodeTypes> => {
+): Node<NodeData, keyof typeof nodeTypes> => {
+  let content = '';
+  if (step.type === StepTypeEnum.DELAY) {
+    content = `Wait to send ~ 30 minutes`;
+  }
+
   return {
     id: step.stepUuid,
     position: { x: previousPosition.x, y: previousPosition.y + Y_DISTANCE },
-    // TODO pass the step title and content
-    data: {},
+    data: {
+      name: step.name,
+      content,
+    },
     type: step.type,
   };
 };

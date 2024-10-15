@@ -6,7 +6,12 @@ import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeHeader, NodeIcon, NodeName } from './base-node';
 
-export type NodeType = FlowNode<Record<string, unknown>>;
+export type NodeData = {
+  name: string;
+  content: string;
+};
+
+export type NodeType = FlowNode<NodeData>;
 
 const topHandleClasses = `data-[handlepos=top]:w-2 data-[handlepos=top]:h-2 data-[handlepos=top]:bg-transparent data-[handlepos=top]:rounded-none data-[handlepos=top]:before:absolute data-[handlepos=top]:before:top-0 data-[handlepos=top]:before:left-0 data-[handlepos=top]:before:w-full data-[handlepos=top]:before:h-full data-[handlepos=top]:before:bg-neutral-alpha-200 data-[handlepos=top]:before:rotate-45`;
 
@@ -24,13 +29,13 @@ export const TriggerNode = (_props: NodeProps) => {
       <NodeHeader type={StepTypeEnum.TRIGGER}>
         <NodeName>Workflow trigger</NodeName>
       </NodeHeader>
-      <NodeBody>This step triggers this workflow asdf asdf asd fasdf asdf</NodeBody>
+      <NodeBody>This step triggers this workflow</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const EmailNode = (_props: NodeProps<NodeType>) => {
+export const EmailNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.EMAIL];
 
   return (
@@ -39,16 +44,16 @@ export const EmailNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.EMAIL]}>
           <Icon />
         </NodeIcon>
-        <NodeName>Email step</NodeName>
+        <NodeName>{data.name ?? 'Email Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>Sends Email to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const SmsNode = (_props: NodeProps<NodeType>) => {
+export const SmsNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.SMS];
 
   return (
@@ -57,16 +62,16 @@ export const SmsNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.SMS]}>
           <Icon />
         </NodeIcon>
-        <NodeName>SMS step</NodeName>
+        <NodeName>{data.name ?? 'SMS Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>Sends SMS notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const InAppNode = (_props: NodeProps<NodeType>) => {
+export const InAppNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP];
 
   return (
@@ -75,16 +80,16 @@ export const InAppNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}>
           <Icon />
         </NodeIcon>
-        <NodeName>In-app step</NodeName>
+        <NodeName>{data.name ?? 'In-App Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>Sends In-app notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const PushNode = (_props: NodeProps<NodeType>) => {
+export const PushNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.PUSH];
 
   return (
@@ -93,16 +98,16 @@ export const PushNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.PUSH]}>
           <Icon />
         </NodeIcon>
-        <NodeName>Push step</NodeName>
+        <NodeName>{data.name ?? 'Push Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>Sends push notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const ChatNode = (_props: NodeProps<NodeType>) => {
+export const ChatNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.CHAT];
 
   return (
@@ -111,16 +116,16 @@ export const ChatNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CHAT]}>
           <Icon />
         </NodeIcon>
-        <NodeName>Chat step</NodeName>
+        <NodeName>{data.name ?? 'Chat Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>Sends chat notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const DelayNode = (_props: NodeProps<NodeType>) => {
+export const DelayNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.DELAY];
 
   return (
@@ -129,16 +134,16 @@ export const DelayNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DELAY]}>
           <Icon />
         </NodeIcon>
-        <NodeName>Delay step</NodeName>
+        <NodeName>{data.name ?? 'Delay Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>{data.content ?? 'You have been invited to the Novu party on "commentSnippet"'}</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const DigestNode = (_props: NodeProps<NodeType>) => {
+export const DigestNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.DIGEST];
 
   return (
@@ -147,16 +152,18 @@ export const DigestNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DIGEST]}>
           <Icon />
         </NodeIcon>
-        <NodeName>Digest step</NodeName>
+        <NodeName>{data.name ?? 'Digest Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>
+        {data.content ?? 'Batches events into one coherent message before delivery to the subscriber.'}
+      </NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
   );
 };
 
-export const CustomNode = (_props: NodeProps<NodeType>) => {
+export const CustomNode = ({ data }: NodeProps<NodeType>) => {
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.CUSTOM];
 
   return (
@@ -165,9 +172,9 @@ export const CustomNode = (_props: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM]}>
           <Icon />
         </NodeIcon>
-        <NodeName>Custom step</NodeName>
+        <NodeName>{data.name ?? 'Custom Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>You have been invited to the Novu party on "commentSnippet"</NodeBody>
+      <NodeBody>Executes the business logic in your bridge application</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
