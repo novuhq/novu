@@ -172,16 +172,25 @@ export class ExecuteBridgeRequest {
            * Tunnel was live, but the Bridge endpoint was down.
            * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
            */
+          Logger.error(
+            `Bridge endpoint unavailable for \`${url}\``,
+            LOG_CONTEXT,
+          );
           throw new BadRequestException(
             BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE,
           );
         } else if (error.response?.statusCode === 404) {
           // Bridge endpoint wasn't found.
+          Logger.error(`Bridge endpoint not found for \`${url}\``, LOG_CONTEXT);
           throw new NotFoundException(
             BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND,
           );
         } else if (error.response?.statusCode === 405) {
           // The Bridge endpoint didn't expose the required methods.
+          Logger.error(
+            `Bridge endpoint method not configured for \`${url}\``,
+            LOG_CONTEXT,
+          );
           throw new BadRequestException(
             BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED,
           );
@@ -250,6 +259,12 @@ export class ExecuteBridgeRequest {
   }
 
   private getApiUrl(): string {
-    return process.env.API_URL;
+    const apiUrl = process.env.API_URL;
+
+    if (!apiUrl) {
+      throw new Error('API_URL is not set');
+    }
+
+    return apiUrl;
   }
 }
