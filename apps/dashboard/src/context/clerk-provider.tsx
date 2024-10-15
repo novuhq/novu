@@ -38,6 +38,14 @@ export const ClerkProvider = (props: ClerkProviderProps) => {
       routerReplace={(to) => navigate(to, { replace: true })}
       publishableKey={CLERK_PUBLISHABLE_KEY}
       appearance={{
+        userButton: {
+          elements: {
+            userButtonAvatarBox: {
+              width: '24px',
+              height: '24px',
+            },
+          },
+        },
         createOrganization: {
           elements: {
             modalContent: {

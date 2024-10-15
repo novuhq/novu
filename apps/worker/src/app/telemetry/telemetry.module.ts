@@ -5,20 +5,20 @@ import {
   IntegrationRepository,
   NotificationRepository,
   NotificationTemplateRepository,
-  OrganizationRepository,
   SubscriberRepository,
   TopicRepository,
-  UserRepository,
+  CommunityUserRepository,
+  CommunityOrganizationRepository,
 } from '@novu/dal';
 import { SharedModule } from '../shared/shared.module';
 import { MachineInfoService } from './usecases/machineInfoService.usecase';
 import { UserInfoService } from './usecases/userInfoService.usecase';
 
 const REPOSITORIES = [
-  UserRepository,
+  CommunityUserRepository,
+  CommunityOrganizationRepository,
   NotificationTemplateRepository,
   NotificationRepository,
-  OrganizationRepository,
   TopicRepository,
   SubscriberRepository,
   IntegrationRepository,

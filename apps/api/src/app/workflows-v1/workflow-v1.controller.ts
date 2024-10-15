@@ -111,7 +111,7 @@ export class WorkflowControllerV1 {
         name: body.name,
         tags: body.tags,
         description: body.description,
-        identifier: body.identifier,
+        workflowId: body.identifier,
         critical: body.critical,
         preferenceSettings: body.preferenceSettings,
         steps: body.steps,

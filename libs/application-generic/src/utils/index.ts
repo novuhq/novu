@@ -11,3 +11,4 @@ export * from './bridge';
 export * from './subscriber';
 export * from './variants';
 export * from './deepmerge';
+export * from './slugify-name';

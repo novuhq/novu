@@ -71,7 +71,6 @@
     "helmet": "^6.0.1",
     "i18next": "^23.7.6",
     "ioredis": "5.3.2",
-    "json-schema-defaults": "^0.4.0",
     "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",
@@ -92,7 +91,8 @@
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "swagger-ui-express": "^4.4.0",
-    "twilio": "^4.14.1",
+    "twilio": "^4.14.1",    
+    "json-schema-to-ts": "^3.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

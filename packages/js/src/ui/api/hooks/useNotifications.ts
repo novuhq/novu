@@ -28,9 +28,9 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
       mutate({ data: data.notifications, hasMore: data.hasMore });
     };
 
-    novu.on('notifications.list.updated', listener);
+    const cleanup = novu.on('notifications.list.updated', listener);
 
-    onCleanup(() => novu.off('notifications.list.updated', listener));
+    onCleanup(() => cleanup());
   });
 
   createEffect(() => {

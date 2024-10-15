@@ -42,7 +42,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsOptional()
-  identifier?: string;
+  workflowId?: string;
 
   @IsBoolean()
   @IsOptional()
