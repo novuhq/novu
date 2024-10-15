@@ -1,26 +1,22 @@
 {
-  "name": "@novu/react",
+  "name": "@novu/nextjs",
   "version": "2.5.0",
   "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's React SDK for building custom inbox notification experiences",
+  "description": "Novu's Next.js SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/server/server.js",
+  "main": "dist/client/index.js",
   "module": "dist/client/index.mjs",
   "types": "dist/client/index.d.ts",
-  "browser": {
-    "./dist/server/server.js": "./dist/client/index.js",
-    "./dist/server/server.mjs": "./dist/client/index.mjs"
-  },
   "exports": {
     ".": {
       "import": {
         "types": "./dist/client/index.d.mts",
-        "default": "./dist/server/server.mjs"
+        "default": "./dist/client/index.mjs"
       },
       "require": {
-        "types": "./dist/server/server.d.ts",
-        "default": "./dist/server/server.js"
+        "types": "./dist/client/index.d.ts",
+        "default": "./dist/client/index.js"
       }
     },
     "./hooks": {
@@ -47,7 +43,6 @@
   "files": [
     "dist",
     "dist/client/**/*",
-    "dist/server/**/*",
     "dist/hooks/**/*",
     "dist/themes/**/*",
     "hooks/**/*",
@@ -86,7 +81,8 @@
   },
   "peerDependencies": {
     "react": ">=17",
-    "react-dom": ">=17"
+    "react-dom": ">=17",
+    "next": ">=13"
   },
   "peerDependenciesMeta": {
     "react-dom": {
@@ -94,7 +90,7 @@
     }
   },
   "dependencies": {
-    "@novu/js": "workspace:*"
+    "@novu/react": "workspace:*"
   },
   "nx": {
     "tags": ["package:public"]

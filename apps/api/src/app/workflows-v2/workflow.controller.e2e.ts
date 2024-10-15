@@ -16,6 +16,7 @@ import {
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { channelStepSchemas, JsonSchema } from '@novu/framework';
+import { slugifyName } from '@novu/application-generic';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -59,13 +60,14 @@ describe('Workflow Controller E2E API Testing', () => {
   });
 
   describe('Create Workflow Permutations', () => {
-    it('should not allow creating two workflows for the same user with the same name', async () => {
+    it('should allow creating two workflows for the same user with the same name', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       await createWorkflowAndValidate(nameSuffix);
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
       const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
-      expect(res.status).to.be.equal(400);
-      expect(res.text).to.contain('Workflow with the same name already exists');
+      expect(res.status).to.be.equal(201);
+      const workflowCreated: WorkflowResponseDto = res.body.data;
+      expect(workflowCreated.workflowId).to.include(`${slugifyName(nameSuffix)}-`);
     });
   });
 
@@ -147,7 +149,7 @@ describe('Workflow Controller E2E API Testing', () => {
       });
     });
 
-    it('should return  results without query', async () => {
+    it('should return results without query', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
       const listWorkflowResponse = await getAllAndValidate({
@@ -249,6 +251,7 @@ function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
+    workflowId: `${slugifyName(TEST_WORKFLOW_NAME + nameSuffix)}`,
     description: 'This is a test workflow',
     active: true,
     tags: TEST_TAGS,
@@ -594,5 +597,10 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
     'type'
   ) as UpdateWorkflowDto;
 
-  return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
+  return {
+    ...updateRequest,
+    name: TEST_WORKFLOW_UPDATED_NAME,
+    workflowId: `${slugifyName(TEST_WORKFLOW_UPDATED_NAME)}`,
+    steps,
+  };
 }

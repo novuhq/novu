@@ -32,6 +32,7 @@ export function toResponseWorkflowDto(
     preferences: preferencesDto,
     steps: getSteps(template, stepIdToControlValuesMap),
     name: template.name,
+    workflowId: template.triggers[0].identifier,
     description: template.description,
     origin: template.origin || WorkflowOriginEnum.EXTERNAL,
     type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
