@@ -7,10 +7,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
-import { Form } from './primitives/form';
+import { Form } from '../primitives/form';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './primitives/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { WorkflowCanvas } from './workflow-canvas';
 
 const formSchema = z.object({
   name: z.string(),
@@ -50,12 +51,14 @@ export const WorkflowEditor = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Tabs defaultValue="workflow" className="-mt-[1px]">
+      <form onSubmit={handleSubmit(onSubmit)} className="h-full">
+        <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-col">
           <TabsList>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
           </TabsList>
-          <TabsContent value="workflow">{`Workflow Editor Canvas - ${workflow?.name ?? ''}`}</TabsContent>
+          <TabsContent value="workflow" className="mt-0 h-full w-full">
+            {workflow && <WorkflowCanvas steps={workflow.steps} />}
+          </TabsContent>
         </Tabs>
       </form>
     </Form>
