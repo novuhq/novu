@@ -83,11 +83,11 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   };
 }
 
-function convertControls(step: NotificationStepEntity): ControlsSchema | undefined {
+function convertControls(step: NotificationStepEntity): ControlsSchema {
   if (step.template?.controls) {
     return { schema: step.template.controls.schema };
   } else {
-    return undefined;
+    throw new Error('Missing controls');
   }
 }
 
