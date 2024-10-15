@@ -27,9 +27,9 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
       mutate(data);
     };
 
-    novu.on('preferences.list.updated', listener);
+    const cleanup = novu.on('preferences.list.updated', listener);
 
-    onCleanup(() => novu.off('preferences.list.updated', listener));
+    onCleanup(() => cleanup());
   });
 
   createEffect(() => {
