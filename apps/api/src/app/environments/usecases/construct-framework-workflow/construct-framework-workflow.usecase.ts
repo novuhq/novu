@@ -133,7 +133,6 @@ export class ConstructFrameworkWorkflow {
         return step.digest(
           stepId,
           async (controlValues) => {
-            // TODO: insert digest logic here
             return controlValues as DigestOutput;
           },
           this.constructActionStepOptions(staticStep)
@@ -142,7 +141,6 @@ export class ConstructFrameworkWorkflow {
         return step.delay(
           stepId,
           async (controlValues) => {
-            // TODO: insert delay logic here
             return controlValues as DelayOutput;
           },
           this.constructActionStepOptions(staticStep)
