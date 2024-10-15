@@ -20,12 +20,15 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   };
 
   onMount(() => {
+    let cleanup: () => void;
     const resolveLock = requestLock(`nv.${webSocketEvent}`, () => {
-      novu.on(webSocketEvent, updateReadCount);
+      cleanup = novu.on(webSocketEvent, updateReadCount);
     });
 
     onCleanup(() => {
-      novu.off(webSocketEvent, updateReadCount);
+      if (cleanup) {
+        cleanup();
+      }
       resolveLock();
     });
   });
