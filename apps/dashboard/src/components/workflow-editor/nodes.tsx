@@ -1,4 +1,5 @@
 import { Handle, Node as FlowNode, NodeProps, Position } from '@xyflow/react';
+import { RiPlayCircleLine } from 'react-icons/ri';
 import { StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
@@ -15,7 +16,11 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 
 export const TriggerNode = (_props: NodeProps) => {
   return (
-    <Node>
+    <Node className="relative rounded-tl-none border-r">
+      <div className="border-neutral-alpha-200 text-foreground-600 absolute -left-[1px] top-0 flex -translate-y-full items-center gap-1 rounded-t-lg border bg-neutral-50 px-2 py-1 text-xs font-medium">
+        <RiPlayCircleLine className="size-3" />
+        <span>TRIGGER</span>
+      </div>
       <NodeHeader type={StepTypeEnum.TRIGGER}>
         <NodeName>Workflow trigger</NodeName>
       </NodeHeader>
