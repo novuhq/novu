@@ -6,7 +6,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { ControlVariablesLevelEnum, WorkflowResponseDto } from '@novu/shared';
+import { ControlValuesLevelEnum, WorkflowResponseDto } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
 
 import { GetWorkflowCommand } from './get-workflow.command';
@@ -64,7 +64,7 @@ export class GetWorkflowUseCase {
       _organizationId: command.user.organizationId,
       _workflowId: command._workflowId,
       _stepId: step._templateId,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
   }
 }
