@@ -259,7 +259,7 @@ export class UpsertWorkflowUseCase {
         controls: step.controls,
         content: '',
       },
-      stepId: slugify(step.name, { lower: true, strict: true, trim: true }),
+      stepId: slugifyName(step.name),
       name: step.name,
     };
   }

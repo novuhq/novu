@@ -31,8 +31,4 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   type: WorkflowTypeEnum;
-
-  @IsString()
-  @IsDefined()
-  slug: string;
 }

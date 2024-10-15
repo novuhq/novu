@@ -1488,6 +1488,7 @@ describe('Novu-Hosted Bridge Trigger', () => {
       name: 'Test Workflow',
       description: 'Test Workflow',
       __source: WorkflowCreationSourceEnum.DASHBOARD,
+      workflowId: 'test-workflow',
       steps: [
         {
           type: StepTypeEnum.IN_APP,
@@ -1517,13 +1518,13 @@ describe('Novu-Hosted Bridge Trigger', () => {
 
     const responseData = response.body.data as WorkflowResponseDto;
 
-    await triggerEvent(session, responseData.slug, subscriber._id, {});
+    await triggerEvent(session, responseData.workflowId, subscriber._id, {});
     await session.awaitRunningJobs();
 
     const sentMessages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: session.subscriberProfile?._id,
-      templateIdentifier: responseData.slug,
+      templateIdentifier: responseData.workflowId,
       channel: StepTypeEnum.IN_APP,
     });
 
