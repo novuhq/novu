@@ -65,11 +65,11 @@ export class UpsertWorkflowUseCase {
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    const workflowForUpdate: NotificationTemplateEntity | null = command.workflowIdOrIdentifier
+    const workflowForUpdate: NotificationTemplateEntity | null = command.identifierOrInternalId
       ? await this.getWorkflowByIdsUseCase.execute(
           GetWorkflowByIdsCommand.create({
             ...command,
-            workflowIdOrIdentifier: command.workflowIdOrIdentifier,
+            identifierOrInternalId: command.identifierOrInternalId,
           })
         )
       : null;
