@@ -3,9 +3,9 @@ import { css } from '@novu/novui/css';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { errorMessage, When } from '@novu/design-system';
-import { api } from '../../../../api';
-import { useSubscriptionContext } from '../SubscriptionProvider';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { api } from '../../../api';
+import { useSubscriptionContext } from './SubscriptionProvider';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 const checkoutUrl = '/v1/billing/checkout-session';
 const billingPortalUrl = '/v1/billing/portal';

@@ -2,7 +2,7 @@ import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useState } from 'react';
-import { ContactSalesModal } from '../ContactSalesModal';
+import { ContactSalesModal } from './ContactSalesModal';
 
 export const ContactUsButton = () => {
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);

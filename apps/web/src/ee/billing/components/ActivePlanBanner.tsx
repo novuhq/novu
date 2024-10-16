@@ -2,8 +2,8 @@ import { Text, Title } from '@novu/novui';
 import { MantineTheme } from '@mantine/core';
 import { css } from '@novu/novui/css';
 import { UsageProgress } from './UsageProgress';
-import { useSubscriptionContext } from '../SubscriptionProvider';
-import { capitalizeFirstLetter } from '../../../../utils/string';
+import { useSubscriptionContext } from './SubscriptionProvider';
+import { capitalizeFirstLetter } from '../../../utils/string';
 import { Badge } from './Badge';
 import { PlanActionButton } from './PlanActionButton';
 
