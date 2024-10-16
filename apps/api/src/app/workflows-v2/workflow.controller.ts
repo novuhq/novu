@@ -1,29 +1,21 @@
+import { ApiTags } from '@nestjs/swagger';
+import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
   HttpCode,
-  HttpStatus,
   Param,
   Post,
   Put,
   Query,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
-
-import { ApiTags } from '@nestjs/swagger';
-import {
-  CreateWorkflowDto,
-  DirectionEnum,
-  ListWorkflowResponse,
-  UpdateWorkflowDto,
-  UserSessionData,
-  WorkflowResponseDto,
-} from '@novu/shared';
-import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
+} from '@nestjs/common/decorators';
+import { ClassSerializerInterceptor, HttpStatus } from '@nestjs/common';
+import { DirectionEnum, UserSessionData } from '@novu/shared';
+import { CreateWorkflowDto, ListWorkflowResponse, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared-internal';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';

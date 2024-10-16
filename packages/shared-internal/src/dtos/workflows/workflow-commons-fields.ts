@@ -1,8 +1,6 @@
-import { IsArray, IsBoolean, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-
 import { JSONSchema } from 'json-schema-to-ts';
+import { StepTypeEnum, WorkflowPreferences } from '@novu/shared';
 import { WorkflowResponseDto } from './workflow-response-dto';
-import { StepTypeEnum, WorkflowPreferences } from '../../types';
 
 export class ControlsSchema {
   schema: JSONSchema;
@@ -31,45 +29,26 @@ export type WorkflowListResponseDto = Pick<
 };
 
 export class StepDto {
-  @IsString()
-  @IsDefined()
   name: string;
 
-  @IsString()
-  @IsDefined()
   type: StepTypeEnum;
 
-  @IsObject()
   controls: ControlsSchema;
 
-  @IsObject()
   controlValues: Record<string, unknown>;
 }
 
 export class WorkflowCommonsFields {
-  @IsString()
-  @IsDefined()
   _id: string;
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
   tags?: string[];
 
-  @IsOptional()
-  @IsBoolean()
   active?: boolean;
 
-  @IsString()
-  @IsDefined()
   name: string;
 
-  @IsString()
-  @IsDefined()
   workflowId: string;
 
-  @IsString()
-  @IsOptional()
   description?: string;
 }
 

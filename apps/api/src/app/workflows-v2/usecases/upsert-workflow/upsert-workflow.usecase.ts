@@ -15,24 +15,16 @@ import {
   GetPreferencesCommand,
   GetPreferencesResponseDto,
   NotificationStep,
+  slugifyName,
   UpdateWorkflow,
   UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
-  slugifyName,
 } from '@novu/application-generic';
-import {
-  CreateWorkflowDto,
-  StepCreateDto,
-  StepDto,
-  StepUpdateDto,
-  WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowResponseDto,
-  WorkflowTypeEnum,
-} from '@novu/shared';
+import { CreateWorkflowDto, StepCreateDto, StepDto, StepUpdateDto, WorkflowResponseDto } from '@novu/shared-internal';
+import { WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';

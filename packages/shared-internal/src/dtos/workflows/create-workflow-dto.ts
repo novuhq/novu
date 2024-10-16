@@ -1,4 +1,4 @@
-import { WorkflowCreationSourceEnum } from '../../types';
+import { WorkflowCreationSourceEnum } from '@novu/shared';
 import { PreferencesRequestDto, StepCreateDto, WorkflowCommonsFields } from './workflow-commons-fields';
 
 export type CreateWorkflowDto = Omit<WorkflowCommonsFields, '_id'> & {
