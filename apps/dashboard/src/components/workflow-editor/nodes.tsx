@@ -44,7 +44,7 @@ export const EmailNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.EMAIL]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'Email Step'}</NodeName>
+        <NodeName>{data.name || 'Email Step'}</NodeName>
       </NodeHeader>
       <NodeBody>Sends Email to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
@@ -62,7 +62,7 @@ export const SmsNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.SMS]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'SMS Step'}</NodeName>
+        <NodeName>{data.name || 'SMS Step'}</NodeName>
       </NodeHeader>
       <NodeBody>Sends SMS notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
@@ -80,7 +80,7 @@ export const InAppNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'In-App Step'}</NodeName>
+        <NodeName>{data.name || 'In-App Step'}</NodeName>
       </NodeHeader>
       <NodeBody>Sends In-app notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
@@ -98,7 +98,7 @@ export const PushNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.PUSH]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'Push Step'}</NodeName>
+        <NodeName>{data.name || 'Push Step'}</NodeName>
       </NodeHeader>
       <NodeBody>Sends push notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
@@ -116,7 +116,7 @@ export const ChatNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CHAT]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'Chat Step'}</NodeName>
+        <NodeName>{data.name || 'Chat Step'}</NodeName>
       </NodeHeader>
       <NodeBody>Sends chat notification to your subscribers</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
@@ -134,9 +134,9 @@ export const DelayNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DELAY]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'Delay Step'}</NodeName>
+        <NodeName>{data.name || 'Delay Step'}</NodeName>
       </NodeHeader>
-      <NodeBody>{data.content ?? 'You have been invited to the Novu party on "commentSnippet"'}</NodeBody>
+      <NodeBody>{data.content || 'You have been invited to the Novu party on "commentSnippet"'}</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
     </Node>
@@ -152,10 +152,10 @@ export const DigestNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DIGEST]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'Digest Step'}</NodeName>
+        <NodeName>{data.name || 'Digest Step'}</NodeName>
       </NodeHeader>
       <NodeBody>
-        {data.content ?? 'Batches events into one coherent message before delivery to the subscriber.'}
+        {data.content || 'Batches events into one coherent message before delivery to the subscriber.'}
       </NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
       <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
@@ -172,7 +172,7 @@ export const CustomNode = ({ data }: NodeProps<NodeType>) => {
         <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM]}>
           <Icon />
         </NodeIcon>
-        <NodeName>{data.name ?? 'Custom Step'}</NodeName>
+        <NodeName>{data.name || 'Custom Step'}</NodeName>
       </NodeHeader>
       <NodeBody>Executes the business logic in your bridge application</NodeBody>
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />

@@ -15,7 +15,7 @@ const MenuGroup = ({ children }: { children: ReactNode }) => {
 
 const MenuTitle = ({ children }: { children: ReactNode }) => {
   return (
-    <span className="bg-neutral-alpha-50 text-foreground-400 border-neutral-alpha-100 border-b p-1.5 text-sm uppercase">
+    <span className="bg-neutral-alpha-50 text-foreground-400 border-neutral-alpha-100 border-b p-1.5 text-xs uppercase">
       {children}
     </span>
   );
