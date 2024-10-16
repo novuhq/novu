@@ -1,7 +1,8 @@
 import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
 import { AddStepMenu } from './add-step-menu';
+import { useWorkflowEditorContext } from './hooks';
 
-export type AddNodeEdgeType = Edge<{ isLast: boolean }>;
+export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
 export function AddNodeEdge({
   sourceX,
@@ -11,9 +12,11 @@ export function AddNodeEdge({
   sourcePosition,
   targetPosition,
   style = {},
-  data = { isLast: false },
+  data = { isLast: false, addStepIndex: 0 },
   markerEnd,
 }: EdgeProps<AddNodeEdgeType>) {
+  const { addStep } = useWorkflowEditorContext();
+
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -39,7 +42,11 @@ export function AddNodeEdge({
             }}
             className="nodrag nopan"
           >
-            <AddStepMenu />
+            <AddStepMenu
+              onMenuItemClick={(stepType) => {
+                addStep(stepType, data.addStepIndex);
+              }}
+            />
           </div>
         </EdgeLabelRenderer>
       )}
