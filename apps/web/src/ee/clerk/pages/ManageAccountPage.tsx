@@ -91,7 +91,7 @@ export default function ManageAccountPage() {
             className={normalTabStyle}
             icon={<IconCreditCard className={tabIconStyle} />}
           >
-            Billing plans
+            Plans & Billing
           </Tabs.Tab>
         </Tabs.List>
 
@@ -125,7 +125,7 @@ export default function ManageAccountPage() {
           </Tabs.Panel>
         )}
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.BILLING}>
-          <Title className={billingTitle}>Billing plans</Title>
+          <Title className={billingTitle}>Plans & Billing</Title>
           <BillingPage />
         </Tabs.Panel>
       </Tabs>
