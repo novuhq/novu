@@ -1,5 +1,6 @@
-import { Badge, BadgeContent, badgeContentVariants, badgeVariants } from '@/components/primitives/badge';
-import { WorkflowStatusEnum } from '@novu/shared';
+import { Badge, BadgeContent } from '@/components/primitives/badge';
+import { badgeContentVariants, badgeVariants } from '@/components/primitives/variants';
+import { WorkflowStatusEnum } from '@/utils/enums';
 
 type WorkflowStatusProps = {
   status: WorkflowStatusEnum;

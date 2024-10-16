@@ -4,14 +4,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { StepTypeEnum } from '@novu/shared';
 
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
-import { Form } from '../primitives/form';
+import { Form } from '../primitives/form/form';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import { WorkflowCanvas } from './workflow-canvas';
+import { StepTypeEnum } from '@/utils/enums';
 
 const formSchema = z.object({
   name: z.string(),

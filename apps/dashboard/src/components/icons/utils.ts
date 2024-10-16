@@ -1,4 +1,3 @@
-import { StepTypeEnum } from '@novu/shared';
 import {
   RiCellphoneFill,
   RiChatThreadFill,
@@ -11,6 +10,7 @@ import { Mail3Fill } from './mail-3-fill';
 import { Notification5Fill } from './notification-5-fill';
 import { Sms } from './sms';
 import { IconType } from 'react-icons/lib';
+import { StepTypeEnum } from '@/utils/enums';
 
 export const STEP_TYPE_TO_ICON: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.CHAT]: RiChatThreadFill,

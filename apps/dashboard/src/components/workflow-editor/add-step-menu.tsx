@@ -1,13 +1,13 @@
 import { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { PopoverPortal } from '@radix-ui/react-popover';
-import { StepTypeEnum } from '@novu/shared';
 import { Node } from './base-node';
 import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { Badge, BadgeContent } from '../primitives/badge';
 import { cn } from '@/utils/ui';
+import { StepTypeEnum } from '@/utils/enums';
 
 const MenuGroup = ({ children }: { children: ReactNode }) => {
   return <div className="flex flex-col">{children}</div>;
