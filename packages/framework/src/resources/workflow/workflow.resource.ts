@@ -81,6 +81,8 @@ export function workflow<
     };
   };
 
+  console.log({ options });
+
   const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,
     options: {
@@ -115,6 +117,8 @@ export function workflow<
     },
     tags: options.tags || [],
     preferences: mapPreferences(options.preferences),
+    name: options.name,
+    description: options.description,
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 
