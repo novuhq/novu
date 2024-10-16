@@ -10,6 +10,7 @@ export class ControlsSchema {
 
 export type StepResponseDto = StepDto & {
   stepUuid: string;
+  stepId: string;
 };
 
 export type StepUpdateDto = StepDto & {
