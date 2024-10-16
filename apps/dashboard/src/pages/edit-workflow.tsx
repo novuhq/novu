@@ -1,6 +1,5 @@
 import { EditWorkflowLayout } from '@/components/edit-workflow-layout';
 import { ArrowRight, RouteFill } from '@/components/icons';
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,9 +11,10 @@ import {
 import { Button } from '@/components/primitives/button';
 import { WorkflowEditor } from '@/components/workflow-editor';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const EditWorkflowPage = () => {
   return (
@@ -26,9 +26,12 @@ export const EditWorkflowPage = () => {
 
 const StartItems = () => {
   const { currentEnvironment } = useEnvironment();
-  const { state } = useLocation();
+  const { workflowId } = useParams<{ workflowId?: string }>();
   const navigate = useNavigate();
   const workflowsRoute = buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' });
+  const { workflow } = useFetchWorkflow({
+    workflowId,
+  });
 
   const breadcrumbs = [
     { label: currentEnvironment?.name, href: '/' },
@@ -60,7 +63,7 @@ const StartItems = () => {
           <BreadcrumbItem>
             <BreadcrumbPage>
               <RouteFill />
-              {state?.workflowName}
+              {workflow?.name}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

@@ -170,10 +170,7 @@ export const WorkflowList = () => {
                               buildRoute(ROUTES.EDIT_WORKFLOW, {
                                 environmentId: currentEnvironment?._id ?? '',
                                 workflowId: workflow._id,
-                              }),
-                              {
-                                state: { workflowName: workflow.name },
-                              }
+                              })
                             );
                           }}
                         />
