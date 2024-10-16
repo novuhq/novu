@@ -1,4 +1,5 @@
-import { JSONSchemaFaker } from 'json-schema-faker';
+// @ts-expect-error TS2305: Module '"json-schema-faker"' has no exported member 'JSONSchemaFaker'. The latest @types/json-schema-faker is not compatible with the current version of json-schema-faker. Moreover, there is a typo in the package.json of json-schema-faker for require.types. The ./index.d.cts doesn't exist. So, we bypass type safety on this package for now.
+import JSONSchemaFaker from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 

@@ -1,0 +1,5 @@
+{
+  "main": "../dist/cjs/servers/lambda.js",
+  "module": "../dist/esm/servers/lambda.mjs",
+  "types": "../dist/esm/servers/lambda.d.mts"
+}

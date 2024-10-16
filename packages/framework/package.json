@@ -2,8 +2,9 @@
   "name": "@novu/framework",
   "version": "2.2.0",
   "description": "The Code-First Notifications Workflow SDK.",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "module": "./dist/esm/index.mjs",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
@@ -15,6 +16,14 @@
   },
   "files": [
     "dist",
+    "express",
+    "h3",
+    "lambda",
+    "nest",
+    "next",
+    "nuxt",
+    "remix",
+    "sveltekit",  
     "README.md"
   ],
   "scripts": {
@@ -24,8 +33,9 @@
     "lint:fix": "pnpm lint -- --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "NODE_ENV=production tsup",
+    "postbuild": "./scripts/copy-package-json.sh && pnpm run check-exports",
+    "check-exports": "attw --pack .",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
@@ -51,49 +61,94 @@
   "license": "ISC",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      },
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      }
     },
     "./express": {
-      "require": "./dist/servers/express.js",
-      "import": "./dist/servers/express.js",
-      "types": "./dist/servers/express.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/express.d.ts",
+        "default": "./dist/cjs/servers/express.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/express.d.mts",
+        "default": "./dist/esm/servers/express.mjs"
+      }
     },
     "./nest": {
-      "require": "./dist/servers/nest.js",
-      "import": "./dist/servers/nest.js",
-      "types": "./dist/servers/nest.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/nest.d.ts",
+        "default": "./dist/cjs/servers/nest.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/nest.d.mts",
+        "default": "./dist/esm/servers/nest.mjs"
+      }
     },
     "./next": {
-      "require": "./dist/servers/next.js",
-      "import": "./dist/servers/next.js",
-      "types": "./dist/servers/next.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/next.d.ts",
+        "default": "./dist/cjs/servers/next.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/next.d.mts",
+        "default": "./dist/esm/servers/next.mjs"
+      }
     },
     "./nuxt": {
-      "require": "./dist/servers/nuxt.js",
-      "import": "./dist/servers/nuxt.js",
-      "types": "./dist/servers/nuxt.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/nuxt.d.ts",
+        "default": "./dist/cjs/servers/nuxt.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/nuxt.d.mts",
+        "default": "./dist/esm/servers/nuxt.mjs"
+      }
     },
     "./h3": {
-      "require": "./dist/servers/h3.js",
-      "import": "./dist/servers/h3.js",
-      "types": "./dist/servers/h3.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/h3.d.ts",
+        "default": "./dist/cjs/servers/h3.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/h3.d.mts",
+        "default": "./dist/esm/servers/h3.mjs"
+      }
     },
-    "./lambda ": {
-      "require": "./dist/servers/lambda.js",
-      "import": "./dist/servers/lambda.js",
-      "types": "./dist/servers/lambda.d.ts"
+    "./lambda": {
+      "require": {
+        "types": "./dist/cjs/servers/lambda.d.ts",
+        "default": "./dist/cjs/servers/lambda.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/lambda.d.mts",
+        "default": "./dist/esm/servers/lambda.mjs"
+      }
     },
     "./sveltekit": {
-      "require": "./dist/servers/sveltekit.js",
-      "import": "./dist/servers/sveltekit.js",
-      "types": "./dist/servers/sveltekit.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/sveltekit.d.ts",
+        "default": "./dist/cjs/servers/sveltekit.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/sveltekit.d.mts",
+        "default": "./dist/esm/servers/sveltekit.mjs"
+      }
     },
     "./remix": {
-      "require": "./dist/servers/remix.js",
-      "import": "./dist/servers/remix.js",
-      "types": "./dist/servers/remix.d.ts"
+      "require": {
+        "types": "./dist/cjs/servers/remix.d.ts",
+        "default": "./dist/cjs/servers/remix.js"
+      },
+      "import": {
+        "types": "./dist/esm/servers/remix.d.mts",
+        "default": "./dist/esm/servers/remix.mjs"
+      }
     }
   },
   "peerDependencies": {
@@ -141,6 +196,7 @@
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
+    "@arethetypeswrong/cli": "^0.16.4",
     "@nestjs/common": "10.4.1",
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
