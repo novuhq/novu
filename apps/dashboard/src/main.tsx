@@ -6,6 +6,7 @@ import { RootRoute, AuthRoute, DashboardRoute, CatchAllRoute } from './routes';
 import { WorkflowsPage, SignInPage, SignUpPage, OrganizationListPage } from '@/pages';
 import './index.css';
 import { ROUTES } from './utils/routes';
+import { EditWorkflowPage } from './pages/edit-workflow';
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.WORKFLOWS,
                 element: <WorkflowsPage />,
+              },
+              {
+                path: ROUTES.EDIT_WORKFLOW,
+                element: <EditWorkflowPage />,
               },
               {
                 path: '*',
