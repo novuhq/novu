@@ -12,7 +12,7 @@ export const useBridgeHealthCheck = () => {
   const bridgeURL = currentEnvironment?.bridge?.url || '';
 
   const { data, isLoading, error } = useQuery<BridgeStatus>({
-    queryKey: [QueryKeys.bridgeHealthCheck, bridgeURL],
+    queryKey: [QueryKeys.bridgeHealthCheck, currentEnvironment?._id, bridgeURL],
     queryFn: getBridgeHealthCheck,
     enabled: !!bridgeURL,
     networkMode: 'always',

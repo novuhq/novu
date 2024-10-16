@@ -15,12 +15,12 @@ export const DashboardLayout = ({
 }) => {
   return (
     <IntercomProvider appId={INTERCOM_APP_ID}>
-      <div className="relative flex w-full">
+      <div className="relative flex h-full w-full">
         <SideNavigation />
         <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
           <HeaderNavigation startItems={headerStartItems} />
 
-          <div className="flex min-h-[calc(100dvh-4rem)] flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+          <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
         </div>
       </div>
     </IntercomProvider>

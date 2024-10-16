@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
-import { GetSubscriptionDto } from '@novu/shared';
+import type { GetSubscriptionDto } from '@novu/shared';
 import { useAuth } from '@/context';
 import { getBillingSubscription } from '@/api/billing';
 import { QueryKeys } from '@/utils/query-keys';

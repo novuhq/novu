@@ -1,7 +1,23 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { FaCode } from 'react-icons/fa6';
+import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  RiRouteFill,
+  RiBookMarkedLine,
+  RiMore2Fill,
+  RiPlayCircleLine,
+  RiGitPullRequestFill,
+  RiPulseFill,
+  RiPauseCircleLine,
+  RiDeleteBin2Line,
+} from 'react-icons/ri';
+import type { ListWorkflowResponse } from '@novu/shared';
+
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
-import { Badge } from '@/components/primitives/badge';
-import { Button, buttonVariants } from '@/components/primitives/button';
+import { Badge, BadgeContent } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
+import { buttonVariants } from '@/components/primitives/variants';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
@@ -19,20 +35,6 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { ListWorkflowResponse, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FaCode } from 'react-icons/fa6';
-import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
-import {
-  RiRouteFill,
-  RiBookMarkedLine,
-  RiMore2Fill,
-  RiPlayCircleLine,
-  RiGitPullRequestFill,
-  RiPulseFill,
-  RiPauseCircleLine,
-  RiDeleteBin2Line,
-} from 'react-icons/ri';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,11 +43,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const hrefFromOffset = (offset: number) => {
     return `${location.pathname}?${createSearchParams({
       ...searchParams,
@@ -154,11 +159,24 @@ export const WorkflowList = () => {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-1">
                         {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-                          <Badge className="rounded-full px-1.5" variant={'warning'}>
-                            <FaCode className="size-3" />
+                          <Badge className="rounded-full px-1.5" variant="warning-light">
+                            <BadgeContent variant="warning">
+                              <FaCode className="size-3" />
+                            </BadgeContent>
                           </Badge>
                         )}
-                        <TruncatedText text={workflow.name} />
+                        <TruncatedText
+                          className="cursor-pointer"
+                          text={workflow.name}
+                          onClick={() => {
+                            navigate(
+                              buildRoute(ROUTES.EDIT_WORKFLOW, {
+                                environmentId: currentEnvironment?._id ?? '',
+                                workflowId: workflow._id,
+                              })
+                            );
+                          }}
+                        />
                       </div>
                       <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
                     </TableCell>
