@@ -63,6 +63,8 @@ export const useWorkflowDetailPageForm = ({ templateId, workflow }: UseWorkflowD
       general: {
         workflowId: workflow.triggers?.[0]?.identifier ?? '',
         name: workflow.name,
+        description: workflow.description,
+        tags: workflow.tags || [],
       },
     });
   }, !!workflow);

@@ -11,18 +11,17 @@ import {
   IconSize,
   IconType,
 } from '@novu/novui/icons';
+import { ActionStepEnum, ChannelStepEnum, type DiscoverStepOutput } from '@novu/framework';
 import { StepNode } from './StepNode';
-import { BridgeWorkflowStepType } from '../../../types';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 
 export interface WorkflowNodesProps {
-  // TODO: add proper types
-  steps: any[] | null;
-  onStepClick: (step: any) => void;
+  steps: DiscoverStepOutput[] | null;
+  onStepClick: (step: DiscoverStepOutput) => void;
   onTriggerClick: () => void;
 }
 
-export const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<BridgeWorkflowStepType, IconType> = {
+export const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<`${ChannelStepEnum | ActionStepEnum}`, IconType> = {
   email: IconOutlineEmail,
   in_app: IconOutlineNotifications,
   sms: IconOutlineSms,
@@ -54,7 +53,7 @@ export function WorkflowNodes({ steps, onStepClick, onTriggerClick }: WorkflowNo
           return (
             <StepNode
               key={step.stepId}
-              icon={<Icon size={STEP_TYPE_ICON_SIZE} />}
+              icon={<Icon size={STEP_TYPE_ICON_SIZE} title={step.type} />}
               title={step.stepId}
               onClick={handleStepClick}
             />

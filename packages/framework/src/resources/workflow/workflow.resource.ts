@@ -81,8 +81,6 @@ export function workflow<
     };
   };
 
-  console.log({ options });
-
   const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,
     options: {

@@ -1,3 +1,3 @@
-import { type IBridgeWorkflow } from '../../../types';
+import type { DiscoverWorkflowOutput } from '@novu/framework';
 
-export type WorkflowTableRow = IBridgeWorkflow;
+export type WorkflowTableRow = DiscoverWorkflowOutput;
