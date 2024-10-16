@@ -1,5 +1,6 @@
 import { EditWorkflowLayout } from '@/components/edit-workflow-layout';
-import RouteFill from '@/components/icons/route-fill';
+import { ArrowRight, RouteFill } from '@/components/icons';
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,11 +9,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
+import { Button } from '@/components/primitives/button';
 import { WorkflowEditor } from '@/components/workflow-editor';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export const EditWorkflowPage = () => {
   return (
@@ -25,17 +27,26 @@ export const EditWorkflowPage = () => {
 const StartItems = () => {
   const { currentEnvironment } = useEnvironment();
   const { state } = useLocation();
+  const navigate = useNavigate();
+  const workflowsRoute = buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' });
 
   const breadcrumbs = [
     { label: currentEnvironment?.name, href: '/' },
     {
       label: 'Workflows',
-      href: buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' }),
+      href: workflowsRoute,
     },
   ];
 
+  const handleBackNav = () => {
+    navigate(workflowsRoute);
+  };
+
   return (
-    <>
+    <div className="flex items-center gap-2">
+      <Button variant="link" className="pl-0" onClick={handleBackNav}>
+        <ArrowRight className="text-neutral-950" />
+      </Button>
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map(({ label, href }) => (
@@ -54,6 +65,6 @@ const StartItems = () => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-    </>
+    </div>
   );
 };
