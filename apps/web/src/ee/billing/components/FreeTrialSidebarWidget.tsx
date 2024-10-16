@@ -3,15 +3,12 @@ import { colors, Button } from '@novu/design-system';
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubscription } from '../hooks/useSubscription';
-import { pluralizeDaysLeft, warningLimitDays, COLOR_WARNING } from '../utils/freeTrial.constants';
+import { pluralizeDaysLeft, COLOR_WARNING, WARNING_LIMIT_DAYS } from '../utils/freeTrial.constants';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 import { ROUTES } from '../../../constants/routes';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../../hooks';
 
 export const FreeTrialSidebarWidget = () => {
   const { trial } = useSubscription();
-  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
   const percentRemaining = useMemo(() => {
     return trial.daysTotal === 0 && trial.daysLeft === 0 ? 0 : Math.round((trial.daysLeft / trial.daysTotal) * 100);
   }, [trial.daysTotal, trial.daysLeft]);
@@ -23,10 +20,10 @@ export const FreeTrialSidebarWidget = () => {
   }
 
   const getProgressBarColor = () => {
-    if (trial.daysLeft <= warningLimitDays(isImprovedBillingEnabled)) {
+    if (trial.daysLeft <= WARNING_LIMIT_DAYS) {
       return COLOR_WARNING;
     }
-    if (trial.daysLeft > warningLimitDays(isImprovedBillingEnabled)) {
+    if (trial.daysLeft > WARNING_LIMIT_DAYS) {
       return colors.success;
     }
   };

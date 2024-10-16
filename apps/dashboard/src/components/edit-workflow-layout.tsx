@@ -14,11 +14,11 @@ export const EditWorkflowLayout = ({
 }) => {
   return (
     <IntercomProvider appId={INTERCOM_APP_ID}>
-      <div className="relative flex w-full">
+      <div className="relative flex h-full w-full">
         <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
           <HeaderNavigation startItems={headerStartItems} />
 
-          <div className="flex min-h-dvh flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+          <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
         </div>
       </div>
     </IntercomProvider>

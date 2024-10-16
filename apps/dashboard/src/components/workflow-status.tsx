@@ -1,4 +1,4 @@
-import { Badge, badgeVariants } from '@/components/primitives/badge';
+import { Badge, BadgeContent, badgeContentVariants, badgeVariants } from '@/components/primitives/badge';
 import { WorkflowStatusEnum } from '@novu/shared';
 
 type WorkflowStatusProps = {
@@ -7,15 +7,29 @@ type WorkflowStatusProps = {
 
 const statusRenderData: Record<
   WorkflowStatusEnum,
-  { variant: NonNullable<Parameters<typeof badgeVariants>[0]>['variant']; text: string }
+  {
+    badgeVariant: NonNullable<Parameters<typeof badgeVariants>[0]>['variant'];
+    badgeContentVariant: NonNullable<Parameters<typeof badgeContentVariants>[0]>['variant'];
+    text: string;
+  }
 > = {
-  [WorkflowStatusEnum.ACTIVE]: { variant: 'success', text: 'Active' },
-  [WorkflowStatusEnum.INACTIVE]: { variant: 'warning', text: 'Inactive' },
-  [WorkflowStatusEnum.ERROR]: { variant: 'destructive', text: 'Action required' },
+  [WorkflowStatusEnum.ACTIVE]: { badgeVariant: 'success-light', badgeContentVariant: 'success', text: 'Active' },
+  [WorkflowStatusEnum.INACTIVE]: { badgeVariant: 'warning-light', badgeContentVariant: 'warning', text: 'Inactive' },
+  [WorkflowStatusEnum.ERROR]: {
+    badgeVariant: 'destructive-light',
+    badgeContentVariant: 'destructive',
+    text: 'Action required',
+  },
 };
 
 export const WorkflowStatus = (props: WorkflowStatusProps) => {
   const { status } = props;
+  const badgeVariant = statusRenderData[status].badgeVariant;
+  const badgeContentVariant = statusRenderData[status].badgeContentVariant;
 
-  return <Badge variant={statusRenderData[status].variant}>{statusRenderData[status].text}</Badge>;
+  return (
+    <Badge variant={badgeVariant}>
+      <BadgeContent variant={badgeContentVariant}>{statusRenderData[status].text}</BadgeContent>
+    </Badge>
+  );
 };
