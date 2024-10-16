@@ -5,10 +5,12 @@ import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeHeader, NodeIcon, NodeName } from './base-node';
 import { StepTypeEnum } from '@/utils/enums';
+import { useWorkflowEditorContext } from './hooks';
 
 export type NodeData = {
-  name: string;
-  content: string;
+  name?: string;
+  content?: string;
+  addStepIndex?: number;
 };
 
 export type NodeType = FlowNode<NodeData>;
@@ -181,11 +183,18 @@ export const CustomNode = ({ data }: NodeProps<NodeType>) => {
   );
 };
 
-export const AddNode = (_props: NodeProps) => {
+export const AddNode = (_props: NodeProps<NodeType>) => {
+  const { addStep } = useWorkflowEditorContext();
+
   return (
     <div className="flex w-[300px] justify-center">
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
-      <AddStepMenu visible />
+      <AddStepMenu
+        visible
+        onMenuItemClick={(stepType) => {
+          addStep(stepType);
+        }}
+      />
     </div>
   );
 };

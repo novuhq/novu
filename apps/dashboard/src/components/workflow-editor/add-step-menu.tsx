@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import { Node } from './base-node';
@@ -29,16 +29,19 @@ const MenuItem = ({
   children,
   stepType,
   disabled = true,
+  onClick,
 }: {
   children: ReactNode;
   stepType: StepTypeEnum;
   disabled?: boolean;
+  onClick?: React.MouseEventHandler<HTMLSpanElement>;
 }) => {
   const Icon = STEP_TYPE_TO_ICON[stepType];
   const color = STEP_TYPE_TO_COLOR[stepType];
 
   return (
     <span
+      onClick={onClick}
       className={cn(
         'shadow-xs text-foreground-600 hover:bg-accent flex cursor-pointer items-center gap-2 rounded-lg p-1.5',
         {
@@ -57,8 +60,19 @@ const MenuItem = ({
   );
 };
 
-export const AddStepMenu = ({ visible = false }: { visible?: boolean }) => {
+export const AddStepMenu = ({
+  visible = false,
+  onMenuItemClick,
+}: {
+  visible?: boolean;
+  onMenuItemClick: (stepType: StepTypeEnum) => void;
+}) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  const handleMenuItemClick = (stepType: StepTypeEnum) => {
+    onMenuItemClick(stepType);
+    setIsPopoverOpen(false);
+  };
 
   return (
     <Popover
@@ -86,7 +100,11 @@ export const AddStepMenu = ({ visible = false }: { visible?: boolean }) => {
               <MenuTitle>Channels</MenuTitle>
               <MenuItemsGroup>
                 <MenuItem stepType={StepTypeEnum.EMAIL}>Email</MenuItem>
-                <MenuItem stepType={StepTypeEnum.IN_APP} disabled={false}>
+                <MenuItem
+                  stepType={StepTypeEnum.IN_APP}
+                  disabled={false}
+                  onClick={() => handleMenuItemClick(StepTypeEnum.IN_APP)}
+                >
                   In-App
                 </MenuItem>
                 <MenuItem stepType={StepTypeEnum.PUSH}>Push</MenuItem>

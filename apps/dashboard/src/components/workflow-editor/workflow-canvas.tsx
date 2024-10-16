@@ -9,7 +9,7 @@ import {
   useReactFlow,
   ViewportHelperFunctionOptions,
 } from '@xyflow/react';
-import type { StepResponseDto } from '@novu/shared';
+import type { StepDto } from '@novu/shared';
 import '@xyflow/react/dist/style.css';
 import {
   AddNode,
@@ -51,8 +51,9 @@ const panOnDrag = [1, 2];
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
 const mapStepToNode = (
-  step: StepResponseDto,
-  previousPosition: { x: number; y: number }
+  step: StepDto,
+  previousPosition: { x: number; y: number },
+  addStepIndex: number
 ): Node<NodeData, keyof typeof nodeTypes> => {
   let content = '';
   if (step.type === StepTypeEnum.DELAY) {
@@ -60,17 +61,18 @@ const mapStepToNode = (
   }
 
   return {
-    id: step.stepUuid,
+    id: crypto.randomUUID(),
     position: { x: previousPosition.x, y: previousPosition.y + Y_DISTANCE },
     data: {
       name: step.name,
       content,
+      addStepIndex,
     },
     type: step.type,
   };
 };
 
-const WorkflowCanvasChild = ({ steps }: { steps: StepResponseDto[] }) => {
+const WorkflowCanvasChild = ({ steps }: { steps: StepDto[] }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
 
@@ -78,13 +80,13 @@ const WorkflowCanvasChild = ({ steps }: { steps: StepResponseDto[] }) => {
     const triggerNode = { id: '0', position: { x: 0, y: 0 }, data: {}, type: 'trigger' };
     let previousPosition = triggerNode.position;
 
-    const createdNodes = steps.map((el) => {
-      const node = mapStepToNode(el, previousPosition);
+    const createdNodes = steps.map((el, index) => {
+      const node = mapStepToNode(el, previousPosition, index);
       previousPosition = node.position;
       return node;
     });
 
-    const addNode = {
+    const addNode: Node<NodeData> = {
       id: `${Number.MAX_SAFE_INTEGER}`,
       position: { ...previousPosition, y: previousPosition.y + Y_DISTANCE },
       data: {},
@@ -96,12 +98,12 @@ const WorkflowCanvasChild = ({ steps }: { steps: StepResponseDto[] }) => {
 
   const edges = useMemo(
     () =>
-      nodes.reduce<AddNodeEdgeType[]>((acc, node, idx) => {
-        if (idx === 0) {
+      nodes.reduce<AddNodeEdgeType[]>((acc, node, index) => {
+        if (index === 0) {
           return acc;
         }
 
-        const parent = nodes[idx - 1];
+        const parent = nodes[index - 1];
         acc.push({
           id: `edge-${parent.id}-${node.id}`,
           source: parent.id,
@@ -111,7 +113,8 @@ const WorkflowCanvasChild = ({ steps }: { steps: StepResponseDto[] }) => {
           type: 'addNode',
           style: { stroke: 'hsl(var(--neutral-alpha-200))', strokeWidth: 2, strokeDasharray: 5 },
           data: {
-            isLast: idx === nodes.length - 1,
+            isLast: index === nodes.length - 1,
+            addStepIndex: index - 1,
           },
         });
 
@@ -165,7 +168,7 @@ const WorkflowCanvasChild = ({ steps }: { steps: StepResponseDto[] }) => {
   );
 };
 
-export const WorkflowCanvas = ({ steps }: { steps: StepResponseDto[] }) => {
+export const WorkflowCanvas = ({ steps }: { steps: StepDto[] }) => {
   return (
     <ReactFlowProvider>
       <WorkflowCanvasChild steps={steps} />
