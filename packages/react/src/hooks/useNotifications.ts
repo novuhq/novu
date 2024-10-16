@@ -14,7 +14,7 @@ export type UseNotificationsProps = {
 export const useNotifications = (props?: UseNotificationsProps) => {
   const { tags, read, archived = false, limit, onSuccess, onError } = props || {};
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
-  const { notifications, on, off } = useNovu();
+  const { notifications, on } = useNovu();
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +32,10 @@ export const useNotifications = (props?: UseNotificationsProps) => {
   };
 
   useEffect(() => {
-    on('notifications.list.updated', sync);
+    const cleanup = on('notifications.list.updated', sync);
 
     return () => {
-      off('notifications.list.updated', sync);
+      cleanup();
     };
   }, []);
 

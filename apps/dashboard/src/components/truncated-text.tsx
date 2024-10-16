@@ -5,9 +5,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 interface TruncatedTextProps {
   text: string;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLSpanElement>;
 }
 
-export default function TruncatedText({ text, className = '' }: TruncatedTextProps) {
+export default function TruncatedText({ text, className = '', onClick }: TruncatedTextProps) {
   const [isTruncated, setIsTruncated] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +29,7 @@ export default function TruncatedText({ text, className = '' }: TruncatedTextPro
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span ref={textRef} className={cn('block truncate', className)}>
+          <span ref={textRef} className={cn('block truncate', className)} onClick={onClick}>
             {text}
           </span>
         </TooltipTrigger>

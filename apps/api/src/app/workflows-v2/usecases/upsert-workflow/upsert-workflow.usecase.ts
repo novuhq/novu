@@ -21,6 +21,7 @@ import {
   UpsertControlValuesUseCase,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
+  slugifyName,
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
@@ -33,7 +34,6 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
-import { WorkflowAlreadyExistException } from '../../exceptions/workflow-already-exist';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
@@ -64,11 +64,11 @@ export class UpsertWorkflowUseCase {
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    const workflowForUpdate = await this.getWorkflowIfUpdateAndExist(command);
-    if (!workflowForUpdate && (await this.workflowExistByExternalId(command))) {
-      throw new WorkflowAlreadyExistException(command);
-    }
-    const workflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
+    const existingWorkflow = await this.notificationTemplateRepository.findOne({
+      _id: command.workflowDatabaseIdForUpdate,
+      _environmentId: command.user.environmentId,
+    });
+    const workflow = await this.createOrUpdateWorkflow(existingWorkflow, command);
     const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
     const preferences = await this.upsertPreference(command, workflow);
 
@@ -188,26 +188,8 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description || '',
       tags: workflowDto.tags || [],
       critical: false,
+      triggerIdentifier: slugifyName(workflowDto.name),
     };
-  }
-
-  private async getWorkflowIfUpdateAndExist(upsertCommand: UpsertWorkflowCommand) {
-    if (upsertCommand.workflowDatabaseIdForUpdate) {
-      return await this.notificationTemplateRepository.findByIdQuery({
-        id: upsertCommand.workflowDatabaseIdForUpdate,
-        environmentId: upsertCommand.user.environmentId,
-      });
-    }
-  }
-
-  private async workflowExistByExternalId(upsertCommand: UpsertWorkflowCommand) {
-    const { environmentId } = upsertCommand.user;
-    const workflowByDbId = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      environmentId,
-      upsertCommand.workflowDto.name
-    );
-
-    return !!workflowByDbId;
   }
 
   private convertCreateToUpdateCommand(
@@ -229,6 +211,7 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description,
       tags: workflowDto.tags,
       active: workflowDto.active ?? true,
+      workflowId: workflowDto.workflowId,
     };
   }
 
@@ -239,6 +222,21 @@ export class UpsertWorkflowUseCase {
     const steps: NotificationStep[] = commandWorkflowSteps.map((step) => {
       return this.mapSingleStep(persistedWorkflow, step);
     });
+
+    const seenStepIds = new Set();
+    const duplicateStepIds = new Set();
+
+    steps.forEach((step) => {
+      if (seenStepIds.has(step.stepId)) {
+        duplicateStepIds.add(step.stepId);
+      } else {
+        seenStepIds.add(step.stepId);
+      }
+    });
+
+    if (duplicateStepIds.size > 0) {
+      throw new BadRequestException(`Duplicate stepIds are not allowed: ${Array.from(duplicateStepIds).join(', ')}`);
+    }
 
     return steps;
   }
@@ -261,7 +259,7 @@ export class UpsertWorkflowUseCase {
     return stepEntityToReturn;
   }
 
-  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })) {
+  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })): NotificationStep {
     return {
       template: {
         type: step.type,
@@ -269,6 +267,7 @@ export class UpsertWorkflowUseCase {
         controls: step.controls,
         content: '',
       },
+      stepId: slugifyName(step.name),
       name: step.name,
     };
   }
