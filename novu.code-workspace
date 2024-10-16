@@ -105,6 +105,10 @@
       "path": "packages/react"
     },
     {
+      "name": "📦 @novu/nextjs",
+      "path": "packages/nextjs"
+    },
+    {
       "name": "🎮 @novu/nextjs-playground",
       "path": "playground/nextjs"
     }

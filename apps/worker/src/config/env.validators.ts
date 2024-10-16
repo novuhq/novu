@@ -60,6 +60,7 @@ export const envValidators = {
   NOTIFICATION_RETENTION_DAYS: num({ default: DEFAULT_NOTIFICATION_RETENTION_DAYS }),
   MESSAGE_GENERIC_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS }),
   MESSAGE_IN_APP_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS }),
+  API_ROOT_URL: str(),
 
   // Feature Flags
   ...Object.keys(FeatureFlagsKeysEnum).reduce(

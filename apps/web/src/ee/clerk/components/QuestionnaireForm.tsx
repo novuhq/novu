@@ -29,6 +29,8 @@ function updateClerkOrgMetadata(data: UpdateExternalOrganizationDto) {
   return api.post('/v1/clerk/organization', data);
 }
 
+const companySizeOptions = ['<20', '20-50', '51-100', '101-200', '200+'];
+
 export function QuestionnaireForm() {
   const { isSupported } = useWebContainerSupported();
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
@@ -45,10 +47,6 @@ export function QuestionnaireForm() {
   const location = useLocation();
   const [_, setParams] = useSearchParams();
 
-  const { mutateAsync: updateOrganizationMutation } = useMutation<{ _id: string }, IResponseError, any>(
-    (data: UpdateExternalOrganizationDto) => updateClerkOrgMetadata(data)
-  );
-
   async function updateOrganization(data: UpdateExternalOrganizationDto) {
     const selectedLanguages = Object.keys(data.language || {}).filter((key) => data.language && data.language[key]);
 
@@ -56,8 +54,9 @@ export function QuestionnaireForm() {
       jobTitle: data.jobTitle,
       domain: data.domain,
       language: selectedLanguages,
+      companySize: data.companySize,
     };
-    await updateOrganizationMutation(updateClerkOrgDto);
+    await updateClerkOrgMetadata(updateClerkOrgDto);
 
     const hubspotContext = hubspotCookie.get();
 
@@ -68,12 +67,14 @@ export function QuestionnaireForm() {
       pageUri: window.location.href,
       pageName: 'Create Organization Form',
       hubspotContext: hubspotContext || '',
+      companySize: data.companySize,
     });
 
     segment.track('Create Organization Form Submitted', {
       location: (location.state as any)?.origin || 'web',
       language: selectedLanguages,
       jobTitle: data.jobTitle,
+      companySize: data.companySize,
     });
 
     // get updated organization data in session
@@ -144,16 +145,34 @@ export function QuestionnaireForm() {
     }
   `;
 
-  const trackRedirectionToOnboarding = () => {
-    if (isPlaygroundOnboardingEnabled && !isSupported) {
-      segment.track(
-        'Redirected to onboarding page because the playground was not supported on the browser - [Sign-Up]'
-      );
-    }
-  };
-
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onUpdateOrganization)}>
+      <Controller
+        name="companySize"
+        control={control}
+        rules={{
+          required: 'Please specify your company size',
+        }}
+        render={({ field }) => {
+          return (
+            <StyledSelect
+              label="Company size"
+              data-test-id="questionnaire-company-size"
+              error={errors.companySize?.message}
+              {...field}
+              allowDeselect={false}
+              placeholder="Select an option"
+              data={companySizeOptions.map((item) => ({
+                label: item,
+                value: item,
+              }))}
+              required
+              mt={32}
+            />
+          );
+        }}
+      />
+
       <Controller
         name="jobTitle"
         control={control}
@@ -174,6 +193,7 @@ export function QuestionnaireForm() {
                 value: item,
               }))}
               required
+              mt={16}
             />
           );
         }}
@@ -200,7 +220,7 @@ export function QuestionnaireForm() {
               label="Choose your back-end stack"
               styles={inputStyles}
               error={fieldState.error?.message}
-              mt={32}
+              mt={16}
               required
             >
               <Group
@@ -240,10 +260,11 @@ const backendLanguages = [
 ];
 
 interface OrganizationUpdateForm {
-  jobTitle: JobTitleEnum;
+  companySize?: string;
   domain?: string;
-  language?: string[];
   frontendStack?: string[];
+  jobTitle: JobTitleEnum;
+  language?: string[];
 }
 
 function isJobTitleIsTech(jobTitle: JobTitleEnum) {

@@ -17,6 +17,7 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "allowUnusedLabels": true,
     "jsx": "react-jsx",
 
     /* Linting */

@@ -94,6 +94,16 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   type: WorkflowTypeEnum;
 
   origin: WorkflowOriginEnum;
+
+  /**
+   * Optional identifier for the workflow trigger.
+   * This allows overriding the default trigger identifier generation strategy in the use case.
+   * If provided, the use case will use this value instead of generating one.
+   * If not provided, the use case will generate a trigger identifier based on its internal logic.
+   */
+  @IsOptional()
+  @IsString()
+  triggerIdentifier?: string;
 }
 
 export class ChannelCTACommand {

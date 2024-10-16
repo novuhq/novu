@@ -14,7 +14,7 @@ const version = PACKAGE_VERSION;
 const name = PACKAGE_NAME;
 const userAgent = `${name}@${version}`;
 
-export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
+export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #socket: Socket;
@@ -22,7 +22,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
-  public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
+  public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
+  /**
+   * @deprecated
+   * Use the cleanup function returned by the "on" method instead.
+   */
   public off: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void;
 
   constructor(options: NovuOptions) {
@@ -61,7 +65,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
       if (this.#socket.isSocketEvent(eventName)) {
         this.#socket.initialize();
       }
-      this.#emitter.on(eventName, listener);
+      const cleanup = this.#emitter.on(eventName, listener);
+
+      return () => {
+        cleanup();
+      };
     };
 
     this.off = (eventName, listener) => {
