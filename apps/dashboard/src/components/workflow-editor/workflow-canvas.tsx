@@ -7,6 +7,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  ViewportHelperFunctionOptions,
 } from '@xyflow/react';
 import { StepTypeEnum, type StepResponseDto } from '@novu/shared';
 import '@xyflow/react/dist/style.css';
@@ -118,18 +119,23 @@ const WorkflowCanvasChild = ({ steps }: { steps: StepResponseDto[] }) => {
     [nodes]
   );
 
-  const positionCanvas = useCallback(() => {
-    const clientWidth = reactFlowWrapper.current?.clientWidth;
-    const middle = clientWidth ? clientWidth / 2 - NODE_WIDTH / 2 : 0;
+  const positionCanvas = useCallback(
+    (options?: ViewportHelperFunctionOptions) => {
+      const clientWidth = reactFlowWrapper.current?.clientWidth;
+      const middle = clientWidth ? clientWidth / 2 - NODE_WIDTH / 2 : 0;
 
-    reactFlowInstance.setViewport({ x: middle, y: 50, zoom: 1 });
-  }, [reactFlowInstance]);
+      reactFlowInstance.setViewport({ x: middle, y: 50, zoom: 1 }, options);
+    },
+    [reactFlowInstance]
+  );
 
   useEffect(() => {
-    window.addEventListener('resize', positionCanvas);
+    const listener = () => positionCanvas({ duration: 300 });
+
+    window.addEventListener('resize', listener);
 
     return () => {
-      window.removeEventListener('resize', positionCanvas);
+      window.removeEventListener('resize', listener);
     };
   }, [positionCanvas]);
 
