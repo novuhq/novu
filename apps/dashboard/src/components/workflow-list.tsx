@@ -1,6 +1,6 @@
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
-import { Badge } from '@/components/primitives/badge';
+import { Badge, BadgeContent } from '@/components/primitives/badge';
 import { Button, buttonVariants } from '@/components/primitives/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -156,8 +156,10 @@ export const WorkflowList = () => {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-1">
                         {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-                          <Badge className="rounded-full px-1.5" variant={'warning'}>
-                            <FaCode className="size-3" />
+                          <Badge className="rounded-full px-1.5" variant="warning-light">
+                            <BadgeContent variant="warning">
+                              <FaCode className="size-3" />
+                            </BadgeContent>
                           </Badge>
                         )}
                         <TruncatedText

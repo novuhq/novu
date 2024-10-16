@@ -89,6 +89,9 @@ export default {
       verified: {
         DEFAULT: 'hsl(var(--verified))',
       },
+      alert: {
+        DEFAULT: 'hsl(var(--alert))',
+      },
       input: 'hsl(var(--input))',
       ring: 'hsl(var(--ring))',
     },
