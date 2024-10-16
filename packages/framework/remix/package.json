@@ -1,0 +1,5 @@
+{
+  "main": "../dist/cjs/servers/remix.js",
+  "module": "../dist/esm/servers/remix.mjs",
+  "types": "../dist/esm/servers/remix.d.mts"
+}

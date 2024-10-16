@@ -1,0 +1,5 @@
+{
+  "main": "../dist/cjs/servers/sveltekit.js",
+  "module": "../dist/esm/servers/sveltekit.mjs",
+  "types": "../dist/esm/servers/sveltekit.d.mts"
+}
