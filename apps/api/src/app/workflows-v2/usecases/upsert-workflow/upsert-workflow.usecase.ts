@@ -41,7 +41,7 @@ import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/st
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 
 const workflowResponseDto: WorkflowResponseDto = {
-  id: 'my-workflow-{base62(6661fe983370d0542e4a096c)}', // `slug` + `-{base62(ObjectId)}`
+  id: 'my-workflow-FtfjFHJ9j11gGfds', // `slug` + `-{base62(ObjectId)}`
   slug: 'my-workflow', // previously, this was `workflow.triggers[0].identifier`
   name: 'My Workflow',
   description: 'My Workflow Description',
@@ -50,7 +50,7 @@ const workflowResponseDto: WorkflowResponseDto = {
   origin: WorkflowOriginEnum.NOVU_CLOUD,
   steps: [
     {
-      id: 'my-step-{base62(6661fe983370d0542e4a096c)}', // `slug` + `-{base62(ObjectId)}`
+      id: 'my-step-FtfjFHJ9j11gGfds', // `slug` + `-{base62(ObjectId)}`
       slug: 'my-step', // previously, this was `step.stepId`
       name: 'My Step',
       type: StepTypeEnum.IN_APP,
