@@ -971,8 +971,6 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       _environmentId: session.environment._id,
     });
 
-    process.env.IS_IMPROVED_BILLING_ENABLED = 'true';
-
     await communityOrganizationRepository.update(
       { _id: session.organization._id },
       { $set: { apiServiceLevel: ApiServiceLevelEnum.BUSINESS } }
@@ -1012,8 +1010,6 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
     });
-
-    process.env.IS_IMPROVED_BILLING_ENABLED = 'true';
 
     await communityOrganizationRepository.update(
       { _id: session.organization._id },

@@ -1,10 +1,10 @@
 import { Handle, Node as FlowNode, NodeProps, Position } from '@xyflow/react';
 import { RiPlayCircleLine } from 'react-icons/ri';
-import { StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { StepTypeEnum } from '@/utils/enums';
 
 export type NodeData = {
   name: string;

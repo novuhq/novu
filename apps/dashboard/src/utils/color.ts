@@ -1,4 +1,4 @@
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from './enums';
 
 export enum StepColorEnum {
   NEUTRAL = 'neutral',

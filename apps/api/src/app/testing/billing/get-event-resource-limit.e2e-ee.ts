@@ -12,7 +12,6 @@ describe('GetEventResourceUsage', async () => {
   let useCase: GetEventResourceUsage;
   let session: UserSession;
   let getSubscription: GetSubscription;
-  let getPlatformNotificationUsage: GetPlatformNotificationUsage;
 
   let getSubscriptionStub: sinon.SinonStub;
 
@@ -49,7 +48,6 @@ describe('GetEventResourceUsage', async () => {
 
     useCase = moduleRef.get(GetEventResourceUsage);
     getSubscription = moduleRef.get<GetSubscription>(GetSubscription);
-    getPlatformNotificationUsage = moduleRef.get(GetPlatformNotificationUsage);
     getSubscriptionStub = sinon.stub(getSubscription, 'execute').resolves(getSubscriptionResponse);
   });
 

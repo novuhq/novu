@@ -1,4 +1,4 @@
-import type { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import type { IOrganizationEntity, IServicesHashes, IUserEntity, JobTitleEnum, ProductUseCases } from '@novu/shared';
 import { OrganizationResource, UserResource } from '@clerk/types';
 
 export const toUserEntity = (clerkUser: UserResource): IUserEntity => {
@@ -23,9 +23,9 @@ export const toUserEntity = (clerkUser: UserResource): IUserEntity => {
     profilePicture: clerkUser.imageUrl,
     createdAt: clerkUser.createdAt?.toISOString() ?? '',
     showOnBoarding: !!clerkUser.publicMetadata.showOnBoarding,
-    showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour as any,
-    servicesHashes: clerkUser.publicMetadata.servicesHashes as any,
-    jobTitle: clerkUser.publicMetadata.jobTitle as any,
+    showOnBoardingTour: clerkUser.publicMetadata.showOnBoardingTour as number,
+    servicesHashes: clerkUser.publicMetadata.servicesHashes as IServicesHashes,
+    jobTitle: clerkUser.publicMetadata.jobTitle as JobTitleEnum,
     hasPassword: clerkUser.passwordEnabled,
   };
 };
@@ -46,12 +46,12 @@ export const toOrganizationEntity = (clerkOrganization: OrganizationResource): I
    */
 
   return {
-    _id: (clerkOrganization.publicMetadata.externalOrgId as any) ?? clerkOrganization.id,
+    _id: (clerkOrganization.publicMetadata.externalOrgId as string) ?? clerkOrganization.id,
     name: clerkOrganization.name,
     createdAt: clerkOrganization.createdAt.toISOString(),
     updatedAt: clerkOrganization.updatedAt.toISOString(),
-    domain: clerkOrganization.publicMetadata.domain as any,
-    productUseCases: clerkOrganization.publicMetadata.productUseCases as any,
-    language: clerkOrganization.publicMetadata.language as any,
+    domain: clerkOrganization.publicMetadata.domain as string,
+    productUseCases: clerkOrganization.publicMetadata.productUseCases as ProductUseCases,
+    language: clerkOrganization.publicMetadata.language as string[],
   };
 };
