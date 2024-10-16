@@ -36,6 +36,8 @@ import {
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
 import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/step-upsert-mechanism-failed-missing-id.exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
+import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
+import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
 
 function buildUpsertControlValuesCommand(
   command: UpsertWorkflowCommand,
@@ -57,18 +59,22 @@ export class UpsertWorkflowUseCase {
   constructor(
     private createWorkflowGenericUsecase: CreateWorkflowGeneric,
     private updateWorkflowUsecase: UpdateWorkflow,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     private upsertPreferencesUsecase: UpsertPreferences,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
+    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    const existingWorkflow = await this.notificationTemplateRepository.findOne({
-      _id: command.workflowDatabaseIdForUpdate,
-      _environmentId: command.user.environmentId,
-    });
-    const workflow = await this.createOrUpdateWorkflow(existingWorkflow, command);
+    const workflowForUpdate: NotificationTemplateEntity | null = command.identifierOrInternalId
+      ? await this.getWorkflowByIdsUseCase.execute(
+          GetWorkflowByIdsCommand.create({
+            ...command,
+            identifierOrInternalId: command.identifierOrInternalId,
+          })
+        )
+      : null;
+    const workflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
     const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
     const preferences = await this.upsertPreference(command, workflow);
 
