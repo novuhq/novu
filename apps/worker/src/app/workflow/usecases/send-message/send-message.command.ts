@@ -1,7 +1,7 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { NotificationStepEntity, JobEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { ExecuteOutput } from '@novu/framework';
+import { ExecuteOutput } from '@novu/framework/internal';
 import { WorkflowPreferences } from '@novu/shared';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {

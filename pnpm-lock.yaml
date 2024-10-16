@@ -3402,6 +3402,9 @@ importers:
       '@apidevtools/json-schema-ref-parser':
         specifier: 11.6.4
         version: 11.6.4
+      '@arethetypeswrong/cli':
+        specifier: ^0.16.4
+        version: 0.16.4
       '@nestjs/common':
         specifier: 10.4.1
         version: 10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import type { DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverWorkflowOutput } from '@novu/framework/internal';
 
 export type StepPreviewParams = {
   workflowId: string;

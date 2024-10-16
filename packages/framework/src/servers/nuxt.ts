@@ -3,6 +3,20 @@ import { getHeader, getQuery, H3Event, readBody, send, setHeaders } from 'h3';
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type SupportedFrameworkName } from '../types';
 
+/*
+ * Re-export all top level exports from the main package.
+ * This results in better DX reduces the chances of the dual package hazard for ESM + CJS packages.
+ *
+ * Example:
+ *
+ * import { serve, Client, type Workflow } from '@novu/framework/express';
+ *
+ * instead of
+ *
+ * import { serve } from '@novu/framework/express';
+ * import { Client, type Workflow } from '@novu/framework';
+ */
+export * from '../index';
 export const frameworkName: SupportedFrameworkName = 'nuxt';
 
 export const serve = (options: ServeHandlerOptions) => {

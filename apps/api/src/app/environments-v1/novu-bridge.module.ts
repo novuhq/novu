@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-// @ts-expect-error - TODO: bundle CJS with @novu/framework
 import { NovuClient, NovuHandler } from '@novu/framework/nest';
 
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';

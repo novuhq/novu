@@ -13,7 +13,7 @@ import {
   StepTypeEnum,
   TipTapNode,
 } from '@novu/shared';
-import { InAppOutput } from '@novu/framework';
+import { InAppOutput } from '@novu/framework/internal';
 import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
 
