@@ -1,10 +1,10 @@
 // June 27th, 2023
 
 import shortid from 'shortid';
-import slugify from 'slugify';
 
 import { providers } from '@novu/shared';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { slugifyName } from '@novu/application-generic';
 
 export const ENVIRONMENT_NAME_TO_SHORT_NAME = { ['Development']: 'dev', ['Production']: 'prod', ['undefined']: '' };
 
@@ -101,7 +101,7 @@ export function genIntegrationIdentificationDetails({
   const defaultName = providers.find((provider) => provider.id === providerId)?.displayName ?? providerIdCapitalized;
 
   const name = existingName ?? defaultName;
-  const identifier = existingIdentifier ?? `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`;
+  const identifier = existingIdentifier ?? `${slugifyName(name)}-${shortid.generate()}`;
 
   return { name, identifier };
 }

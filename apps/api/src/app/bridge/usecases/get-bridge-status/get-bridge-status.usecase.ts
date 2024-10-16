@@ -1,34 +1,35 @@
-import { BadRequestException, Logger, Injectable } from '@nestjs/common';
-import axios from 'axios';
-import { HealthCheck, GetActionEnum, HttpQueryKeysEnum } from '@novu/framework';
+import { Logger, Injectable } from '@nestjs/common';
+import { HealthCheck, GetActionEnum } from '@novu/framework';
+import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from '@novu/application-generic';
+import { WorkflowOriginEnum } from '@novu/shared';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';
-
-const axiosInstance = axios.create();
 
 export const LOG_CONTEXT = 'GetBridgeStatusUsecase';
 
 @Injectable()
 export class GetBridgeStatus {
+  constructor(private executeBridgeRequest: ExecuteBridgeRequest) {}
+
   async execute(command: GetBridgeStatusCommand): Promise<HealthCheck> {
     try {
-      const bridgeActionUrl = new URL(command.bridgeUrl);
-      bridgeActionUrl.searchParams.set(HttpQueryKeysEnum.ACTION, GetActionEnum.HEALTH_CHECK);
+      const response = (await this.executeBridgeRequest.execute(
+        ExecuteBridgeRequestCommand.create({
+          environmentId: command.environmentId,
+          action: GetActionEnum.HEALTH_CHECK,
+          workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+          statelessBridgeUrl: command.statelessBridgeUrl,
+          retriesLimit: 1,
+        })
+      )) as ExecuteBridgeRequestDto<GetActionEnum.HEALTH_CHECK>;
 
-      const response = await axiosInstance.get<HealthCheck>(bridgeActionUrl.toString(), {
-        headers: {
-          'Bypass-Tunnel-Reminder': 'true',
-          'content-type': 'application/json',
-        },
-      });
-
-      return response.data;
+      return response;
     } catch (err: any) {
       Logger.error(
-        `Failed to verify Bridge endpoint ${command.bridgeUrl} with error: ${(err as Error).message || err}`,
+        `Failed to verify Bridge endpoint for environment ${command.environmentId} with error: ${(err as Error).message || err}`,
         (err as Error).stack,
         LOG_CONTEXT
       );
-      throw new BadRequestException(`Bridge is not accessible. ${err.message}`);
+      throw err;
     }
   }
 }

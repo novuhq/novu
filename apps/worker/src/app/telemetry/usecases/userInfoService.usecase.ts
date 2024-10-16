@@ -2,13 +2,13 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
+  CommunityUserRepository,
+  CommunityOrganizationRepository,
   IntegrationRepository,
   NotificationRepository,
   NotificationTemplateRepository,
-  OrganizationRepository,
   SubscriberRepository,
   TopicRepository,
-  UserRepository,
 } from '@novu/dal';
 import { loadOrCreateMachineId } from '../utils/machine.utils';
 import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
@@ -16,8 +16,8 @@ import { sendDataToNovuTrace } from '../utils/sendDataToNovuTrace.utils';
 @Injectable()
 export class UserInfoService {
   constructor(
-    private readonly userRepository: UserRepository,
-    private readonly organizationRepository: OrganizationRepository,
+    private readonly userRepository: CommunityUserRepository,
+    private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly notificationTemplateRepository: NotificationTemplateRepository,
     private readonly notificationRepository: NotificationRepository,
     private readonly topicRepository: TopicRepository,

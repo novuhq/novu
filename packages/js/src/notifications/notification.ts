@@ -3,7 +3,7 @@ import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emi
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
 import { archive, completeAction, read, revertAction, unarchive, unread } from './helpers';
 
-export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, InboxNotification {
+export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
 
@@ -146,10 +146,18 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'>, Inbox
     });
   }
 
-  on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
-    this.#emitter.on(eventName, listener);
+  on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): () => void {
+    const cleanup = this.#emitter.on(eventName, listener);
+
+    return () => {
+      cleanup();
+    };
   }
 
+  /**
+   * @deprecated
+   * Use the cleanup function returned by the "on" method instead.
+   */
   off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
     this.#emitter.off(eventName, listener);
   }
