@@ -42,7 +42,7 @@ import { toResponseWorkflowDto } from '../../mappers/notification-template-mappe
 
 const workflowResponseDto: WorkflowResponseDto = {
   id: 'my-workflow-{base62(6661fe983370d0542e4a096c)}', // `slug` + `-{base62(ObjectId)}`
-  slug: 'my-workflow',
+  slug: 'my-workflow', // previously, this was `workflow.triggers[0].identifier`
   name: 'My Workflow',
   description: 'My Workflow Description',
   active: true,
@@ -51,10 +51,11 @@ const workflowResponseDto: WorkflowResponseDto = {
   steps: [
     {
       id: 'my-step-{base62(6661fe983370d0542e4a096c)}', // `slug` + `-{base62(ObjectId)}`
-      slug: 'my-step',
+      slug: 'my-step', // previously, this was `step.stepId`
       name: 'My Step',
       type: StepTypeEnum.IN_APP,
       controlSchema: {
+        // previously, this was `step.template.controls.schema`
         type: 'object',
         properties: {
           body: {
