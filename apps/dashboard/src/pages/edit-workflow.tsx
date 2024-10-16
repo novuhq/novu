@@ -44,7 +44,7 @@ const StartItems = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="link" className="pl-0" onClick={handleBackNav}>
+      <Button variant="link" onClick={handleBackNav}>
         <ArrowRight className="text-neutral-950" />
       </Button>
       <Breadcrumb>
