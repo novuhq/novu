@@ -2,7 +2,6 @@ import { UserSession } from '@novu/testing';
 import {
   createStepSchemaClient,
   createWorkflowClient,
-  EmailRenderResult,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   HttpError,
@@ -27,6 +26,15 @@ async function assertHttpError(
   }
 
   return new Error(`${description}: Failed to generate preview, bug in response error mapping `);
+}
+
+function assertEmail(dto: GeneratePreviewResponseDto, dto1: Record<string, unknown>) {
+  if (dto.result!.type === ChannelTypeEnum.EMAIL) {
+    const preview = JSON.parse(dto.result!.preview.body);
+    const expected = JSON.parse(dto1.body as string);
+    expect(preview).to.exist;
+    expect(preview).to.deep.equal(expected);
+  }
 }
 
 describe('Control Schema', () => {
@@ -66,7 +74,10 @@ describe('Control Schema', () => {
     describe('Happy Path', () => {
       const channelTypes = [
         // { type: ChannelTypeEnum.SMS, description: 'SMS' },
-        { type: ChannelTypeEnum.EMAIL, description: 'Email' },
+        {
+          type: ChannelTypeEnum.EMAIL,
+          description: 'Email',
+        },
         /*
          * { type: ChannelTypeEnum.PUSH, description: 'Push' },
          * { type: ChannelTypeEnum.CHAT, description: 'Chat' },
@@ -79,9 +90,12 @@ describe('Control Schema', () => {
           const workflowId = await createWorkflowAndReturnId(type);
           const requestDto = buildHappyDto(type, workflowId);
           const previewResponseDto = await generatePreview(type, requestDto, description);
-
           expect(previewResponseDto.result!.preview).to.exist;
-          expect(previewResponseDto.result!.preview).to.deep.equal(dtos[type]);
+          if (type !== ChannelTypeEnum.EMAIL) {
+            expect(previewResponseDto.result!.preview).to.deep.equal(dtos[type]);
+          } else {
+            assertEmail(previewResponseDto, dtos[type]);
+          }
         });
       });
     });
@@ -216,10 +230,10 @@ function mailyJsonExample(): TiptapNodeDto {
   };
 }
 
-function buildEmailControls(): EmailRenderResult {
+function buildEmailControls(): Record<string, unknown> {
   return {
     subject: 'Hello, World!',
-    body: mailyJsonExample(),
+    body: JSON.stringify(mailyJsonExample()),
   };
 }
 

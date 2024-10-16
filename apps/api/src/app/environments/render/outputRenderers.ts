@@ -19,7 +19,7 @@ export interface Renderer<T extends BaseRenderResult> {
 export class EmailOutputRenderer implements Renderer<EmailRenderResult> {
   render(controlValues: Record<string, unknown>): EmailRenderResult {
     const parse = EmailRenderResultSchema.parse(controlValues);
-    const body = expendSchema(parse.body as TiptapNode);
+    const body = expendSchema(JSON.parse(parse.body) as TiptapNode);
 
     return { subject: parse.subject, body: JSON.stringify(body) };
   }

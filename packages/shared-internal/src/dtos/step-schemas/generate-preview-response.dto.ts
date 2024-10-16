@@ -34,7 +34,7 @@ export const TiptapNodeSchema = z.object({
 
 export const EmailRenderResultSchema = PreviewResultSchema.extend({
   subject: z.string(),
-  body: TiptapNodeSchema,
+  body: z.string(),
 });
 
 export const InAppPreviewResultSchema = PreviewResultSchema.extend({
