@@ -57,6 +57,8 @@
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.14.0",
     "@upstash/ratelimit": "^0.4.4",
+    "zod-to-json-schema": "^3.23.3",
+    "@maily-to/render": "^0.0.12",
     "axios": "^1.6.8",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.20.0",

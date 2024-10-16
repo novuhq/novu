@@ -1,32 +1,29 @@
 // Base interface for all renderers
+import { render } from '@maily-to/render';
 import {
-  BaseRenderResult,
   ChatRenderResult,
   EmailRenderResult,
-  EmailRenderResultSchema,
+  EmailStepControlSchema,
   InAppPreviewResultSchema,
   InAppRenderResult,
   PushRenderResult,
   RedirectTargetEnum,
   SmsRenderResult,
 } from '@novu/shared-internal';
-import { expendSchema, TiptapNode } from './email-schema-extender';
+import { expendSchema } from './email-schema-extender';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface Renderer<T extends BaseRenderResult> {
-  render(controlValues: Record<string, unknown>): T;
-}
-export class EmailOutputRenderer implements Renderer<EmailRenderResult> {
-  render(controlValues: Record<string, unknown>): EmailRenderResult {
-    const parse = EmailRenderResultSchema.parse(controlValues);
-    const body = expendSchema(JSON.parse(parse.body) as TiptapNode);
+export class EmailOutputRenderer {
+  async render(controlValues: Record<string, unknown>): Promise<EmailRenderResult> {
+    const parse = EmailStepControlSchema.parse(controlValues);
+    const expandedSchema = expendSchema(parse.emailEditor);
+    const html = await render(expandedSchema);
 
-    return { subject: parse.subject, body: JSON.stringify(body) };
+    return { subject: parse.subject, body: html };
   }
 }
 
 // Concrete Renderer for Chat Preview
-export class ChatOutputRenderer implements Renderer<ChatRenderResult> {
+export class ChatOutputRenderer {
   render(controlValues: Record<string, unknown>): ChatRenderResult {
     const body = (controlValues.body as string) || 'Default chat message';
 
@@ -35,7 +32,7 @@ export class ChatOutputRenderer implements Renderer<ChatRenderResult> {
 }
 
 // Concrete Renderer for SMS Preview
-export class SmsOutputRenderer implements Renderer<SmsRenderResult> {
+export class SmsOutputRenderer {
   render(controlValues: Record<string, unknown>): SmsRenderResult {
     const body = (controlValues.body as string) || 'Default SMS message';
 
@@ -44,7 +41,7 @@ export class SmsOutputRenderer implements Renderer<SmsRenderResult> {
 }
 
 // Concrete Renderer for Push Notification Preview
-export class PushOutputRenderer implements Renderer<PushRenderResult> {
+export class PushOutputRenderer {
   render(controlValues: Record<string, unknown>): PushRenderResult {
     const subject = (controlValues.subject as string) || 'Default Push Notification Subject';
     const body = (controlValues.body as string) || 'Default Push Notification Body';
@@ -54,7 +51,7 @@ export class PushOutputRenderer implements Renderer<PushRenderResult> {
 }
 
 // Concrete Renderer for In-App Message Preview
-export class InAppOutputRenderer implements Renderer<InAppRenderResult> {
+export class InAppOutputRenderer {
   render(controlValues: Record<string, unknown>): InAppRenderResult {
     const inApp = InAppPreviewResultSchema.parse(controlValues);
 

@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.3",
     "@novu/shared": "workspace:*"
 
   },

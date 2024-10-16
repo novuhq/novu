@@ -62,7 +62,7 @@ export class ConstructFrameworkWorkflow {
     );
   }
 
-  private constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
+  private async constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
@@ -98,7 +98,7 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return new EmailOutputRenderer().render(controlValues) as EmailOutput;
+            return (await new EmailOutputRenderer().render(controlValues)) as EmailOutput;
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -106,8 +106,6 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            console.log('controlValues:', controlValues);
-
             return new SmsOutputRenderer().render(controlValues);
           },
           this.constructChannelStepOptions(staticStep)

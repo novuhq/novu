@@ -2,13 +2,14 @@ import { UserSession } from '@novu/testing';
 import {
   createStepSchemaClient,
   createWorkflowClient,
+  EmailStepControlSchemaDto,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   HttpError,
   InAppRenderResult,
   NovuRestResult,
   RedirectTargetEnum,
-  TiptapNodeDto,
+  TipTapNodeSchemaDto,
 } from '@novu/shared-internal';
 import { expect } from 'chai';
 import { randomUUID } from 'node:crypto';
@@ -179,7 +180,7 @@ function buildInAppControlValues(): InAppRenderResult {
   };
 }
 
-function mailyJsonExample(): TiptapNodeDto {
+function mailyJsonExample(): TipTapNodeSchemaDto {
   return {
     type: 'doc',
     content: [
@@ -230,10 +231,10 @@ function mailyJsonExample(): TiptapNodeDto {
   };
 }
 
-function buildEmailControls(): Record<string, unknown> {
+function buildEmailControls(): EmailStepControlSchemaDto {
   return {
     subject: 'Hello, World!',
-    body: JSON.stringify(mailyJsonExample()),
+    emailEditor: mailyJsonExample(),
   };
 }
 

@@ -25,12 +25,6 @@ export const PushPreviewResultSchema = PreviewResultSchema.extend({
   subject: z.string(),
   body: z.string(),
 });
-export const TiptapNodeSchema = z.object({
-  type: z.string(), // The type of the node must be a string
-  content: z.array(z.lazy(() => TiptapNodeSchema)).optional(), // Optional array of nested TiptapNodes
-  text: z.string().optional(), // Optional text property
-  attr: z.record(z.any()).optional(), // Optional attributes as a record of key-value pairs
-});
 
 export const EmailRenderResultSchema = PreviewResultSchema.extend({
   subject: z.string(),
@@ -107,4 +101,3 @@ export type PushRenderResult = z.infer<typeof PushPreviewResultSchema>;
 export type EmailRenderResult = z.infer<typeof EmailRenderResultSchema>;
 export type InAppRenderResult = z.infer<typeof InAppPreviewResultSchema>;
 export type BaseRenderResult = z.infer<typeof PreviewResultSchema>;
-export type TiptapNodeDto = z.infer<typeof TiptapNodeSchema>;
