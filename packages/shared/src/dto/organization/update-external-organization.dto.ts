@@ -15,4 +15,7 @@ export class UpdateExternalOrganizationDto {
 
   @IsOptional()
   frontendStack?: string[];
+
+  @IsOptional()
+  companySize?: string;
 }

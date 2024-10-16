@@ -7,7 +7,7 @@ export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   contentType: 'customHtml' | 'editor';
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: Record<string, unknown>;
 
   @IsDefined()
   @IsString()
@@ -40,9 +40,7 @@ export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   stepId?: string | null;
 
   @IsOptional()
-  inputs: any;
-  @IsOptional()
-  controls: any;
+  controls: Record<string, unknown>;
 
   @IsOptional()
   @IsString()

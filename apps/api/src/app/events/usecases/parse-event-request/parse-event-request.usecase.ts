@@ -28,6 +28,7 @@ import {
   ReservedVariablesMap,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
+  WorkflowOriginEnum,
 } from '@novu/shared';
 import {
   WorkflowOverrideRepository,
@@ -79,10 +80,13 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const { environment } = await this.isStatelessWorkflowAllowed(command.environmentId, command.bridgeUrl);
+    const { environment, statelessWorkflowAllowed } = await this.isStatelessWorkflowAllowed(
+      command.environmentId,
+      command.bridgeUrl
+    );
 
-    if (environment) {
-      const discoveredWorkflow = await this.queryDiscoverWorkflow(command, environment);
+    if (environment && statelessWorkflowAllowed) {
+      const discoveredWorkflow = await this.queryDiscoverWorkflow(command);
 
       if (!discoveredWorkflow) {
         throw new UnprocessableEntityException('workflow_not_found');
@@ -184,19 +188,17 @@ export class ParseEventRequest {
     return await this.dispatchEvent(command, transactionId);
   }
 
-  private async queryDiscoverWorkflow(
-    command: ParseEventRequestCommand,
-    environment: EnvironmentEntity
-  ): Promise<DiscoverWorkflowOutput | null> {
+  private async queryDiscoverWorkflow(command: ParseEventRequestCommand): Promise<DiscoverWorkflowOutput | null> {
     if (!command.bridgeUrl) {
       return null;
     }
 
     const discover = (await this.executeBridgeRequest.execute(
       ExecuteBridgeRequestCommand.create({
-        bridgeUrl: command.bridgeUrl,
-        apiKey: environment.apiKeys[0].key,
+        statelessBridgeUrl: command.bridgeUrl,
+        environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
+        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
@@ -238,9 +240,7 @@ export class ParseEventRequest {
       throw new UnprocessableEntityException('Environment not found');
     }
 
-    const statelessWorkflowAllowed = environment.name !== 'Production';
-
-    return { environment, statelessWorkflowAllowed };
+    return { environment, statelessWorkflowAllowed: true };
   }
 
   @Instrument()

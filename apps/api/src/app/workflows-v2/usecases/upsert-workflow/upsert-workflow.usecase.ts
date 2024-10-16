@@ -21,6 +21,7 @@ import {
   UpsertControlValuesUseCase,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
+  slugifyName,
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
@@ -73,7 +74,6 @@ export class UpsertWorkflowUseCase {
           })
         )
       : null;
-
     const workflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
     const stepIdToControlValuesMap = await this.upsertControlValues(workflow, command);
     const preferences = await this.upsertPreference(command, workflow);
@@ -194,6 +194,7 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description || '',
       tags: workflowDto.tags || [],
       critical: false,
+      triggerIdentifier: slugifyName(workflowDto.name),
     };
   }
 
@@ -216,6 +217,7 @@ export class UpsertWorkflowUseCase {
       description: workflowDto.description,
       tags: workflowDto.tags,
       active: workflowDto.active ?? true,
+      workflowId: workflowDto.workflowId,
     };
   }
 
@@ -226,6 +228,21 @@ export class UpsertWorkflowUseCase {
     const steps: NotificationStep[] = commandWorkflowSteps.map((step) => {
       return this.mapSingleStep(persistedWorkflow, step);
     });
+
+    const seenStepIds = new Set();
+    const duplicateStepIds = new Set();
+
+    steps.forEach((step) => {
+      if (seenStepIds.has(step.stepId)) {
+        duplicateStepIds.add(step.stepId);
+      } else {
+        seenStepIds.add(step.stepId);
+      }
+    });
+
+    if (duplicateStepIds.size > 0) {
+      throw new BadRequestException(`Duplicate stepIds are not allowed: ${Array.from(duplicateStepIds).join(', ')}`);
+    }
 
     return steps;
   }
@@ -248,7 +265,7 @@ export class UpsertWorkflowUseCase {
     return stepEntityToReturn;
   }
 
-  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })) {
+  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })): NotificationStep {
     return {
       template: {
         type: step.type,
@@ -256,6 +273,7 @@ export class UpsertWorkflowUseCase {
         controls: step.controls,
         content: '',
       },
+      stepId: slugifyName(step.name),
       name: step.name,
     };
   }
