@@ -49,7 +49,7 @@ export class AnalyticsService {
       _organization: organizationId,
       id: organizationId,
       name: organization.name,
-      createdAt: organization.createdAt,
+      createdAt: this.convertToIsoDate(organization.createdAt),
       domain: organization.domain || user.email?.split('@')[1],
     };
 
@@ -99,9 +99,9 @@ export class AnalyticsService {
         name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         email: user.email,
         avatar: user.profilePicture,
-        createdAt: user.createdAt,
+        createdAt: this.convertToIsoDate(user.createdAt),
         // For segment auto mapping
-        created: user.createdAt,
+        created: this.convertToIsoDate(user.createdAt),
         githubProfile: githubToken?.username,
       },
     });
@@ -178,5 +178,16 @@ export class AnalyticsService {
 
   private get mixpanelEnabled() {
     return process.env.NODE_ENV !== 'test' && this.mixpanel;
+  }
+
+  private convertToIsoDate(createdAt: string | number | null): string {
+    const createdAtNumber = Number(createdAt);
+    const isEpochValidNumber = !Number.isNaN(createdAtNumber);
+
+    if (isEpochValidNumber) {
+      return new Date(createdAtNumber).toISOString();
+    }
+
+    return String(createdAt);
   }
 }

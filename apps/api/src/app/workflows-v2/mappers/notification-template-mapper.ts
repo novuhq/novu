@@ -31,6 +31,7 @@ export function toResponseWorkflowDto(
     preferences: preferencesDto,
     steps: getSteps(template, stepIdToControlValuesMap),
     name: template.name,
+    workflowId: template.triggers[0].identifier,
     description: template.description,
     origin: template.origin || WorkflowOriginEnum.EXTERNAL,
     type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
@@ -82,11 +83,11 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   };
 }
 
-function convertControls(step: NotificationStepEntity): ControlsSchema | undefined {
+function convertControls(step: NotificationStepEntity): ControlsSchema {
   if (step.template?.controls) {
     return { schema: step.template.controls.schema };
   } else {
-    return undefined;
+    throw new Error('Missing controls');
   }
 }
 

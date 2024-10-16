@@ -12,10 +12,10 @@ export const useNovuEvent = <E extends EventNames>({
   const novu = useNovu();
 
   onMount(() => {
-    novu.on(event, eventHandler);
+    const cleanup = novu.on(event, eventHandler);
 
     onCleanup(() => {
-      novu.off(event, eventHandler);
+      cleanup();
     });
   });
 };

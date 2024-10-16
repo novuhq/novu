@@ -50,10 +50,11 @@ export class Sync {
     let discover: DiscoverOutput | undefined;
     try {
       discover = (await this.executeBridgeRequest.execute({
-        bridgeUrl: command.bridgeUrl,
-        apiKey: environment.apiKeys[0].key,
+        statelessBridgeUrl: command.bridgeUrl,
+        environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
         retriesLimit: 1,
+        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
       })) as DiscoverOutput;
     } catch (error: any) {
       throw new BadRequestException(`Bridge URL is not valid. ${error.message}`);

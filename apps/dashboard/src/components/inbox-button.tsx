@@ -1,8 +1,7 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from '@/components/primitives/popover';
 import { APP_ID } from '@/config';
 import { useUser } from '@clerk/clerk-react';
 import { Bell, Inbox, InboxContent } from '@novu/react';
-import { PopoverPortal } from '@radix-ui/react-popover';
 
 export const InboxButton = () => {
   const { user } = useUser();
