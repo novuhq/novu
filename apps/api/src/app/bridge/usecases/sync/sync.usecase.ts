@@ -224,9 +224,9 @@ export class Sync {
           /** @deprecated */
           (workflow.options?.payloadSchema as Record<string, unknown>),
         active: isWorkflowActive,
-        description: workflow.description,
+        description: this.getWorkflowDescription(workflow),
         data: this.castToAnyNotSupportedParam(workflow).options?.data,
-        tags: workflow.tags || [],
+        tags: this.getWorkflowTags(workflow),
         critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
         preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
       })
@@ -258,9 +258,9 @@ export class Sync {
           (workflow.payload?.schema as Record<string, unknown>) ||
           (workflow.options?.payloadSchema as Record<string, unknown>),
         type: WorkflowTypeEnum.BRIDGE,
-        description: workflow.description,
+        description: this.getWorkflowDescription(workflow),
         data: this.castToAnyNotSupportedParam(workflow.options)?.data,
-        tags: workflow.tags || [],
+        tags: this.getWorkflowTags(workflow),
         active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
         critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
         preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
@@ -321,6 +321,14 @@ export class Sync {
 
   private getWorkflowName(workflow: DiscoverWorkflowOutput): string {
     return workflow.name || workflow.workflowId;
+  }
+
+  private getWorkflowDescription(workflow: DiscoverWorkflowOutput): string {
+    return workflow.description || '';
+  }
+
+  private getWorkflowTags(workflow: DiscoverWorkflowOutput): string[] {
+    return workflow.tags || [];
   }
 
   private castToAnyNotSupportedParam(param: any): any {

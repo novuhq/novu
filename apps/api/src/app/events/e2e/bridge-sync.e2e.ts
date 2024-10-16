@@ -503,4 +503,58 @@ describe('Bridge Sync - /bridge/sync (POST)', async () => {
     const workflowData = workflows[0];
     expect(workflowData.description).to.equal('This is a description');
   });
+
+  it('should unset the workflow description after the description is removed', async () => {
+    const workflowId = 'hello-world-description';
+    const newWorkflow = workflow(
+      workflowId,
+      async ({ step }) => {
+        await step.email('send-email', () => ({
+          subject: 'Welcome!',
+          body: 'Hello there',
+        }));
+      },
+      {
+        description: 'This is a description',
+      }
+    );
+    await bridgeServer.start({ workflows: [newWorkflow] });
+
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+    const workflowDbId = result.body.data[0]._id;
+    const workflows = await workflowsRepository.find({
+      _environmentId: session.environment._id,
+      _id: workflowDbId,
+    });
+    expect(workflows.length).to.equal(1);
+
+    const workflowData = workflows[0];
+    expect(workflowData.description).to.equal('This is a description');
+
+    await bridgeServer.stop();
+
+    bridgeServer = new BridgeServer();
+    const newWorkflowWithName = workflow(workflowId, async ({ step }) => {
+      await step.email('send-email', () => ({
+        subject: 'Welcome!',
+        body: 'Hello there',
+      }));
+    });
+    await bridgeServer.start({ workflows: [newWorkflowWithName] });
+
+    await session.testAgent.post(`/v1/bridge/sync`).send({
+      bridgeUrl: bridgeServer.serverPath,
+    });
+
+    const workflowsWithDescription = await workflowsRepository.find({
+      _environmentId: session.environment._id,
+      _id: workflowDbId,
+    });
+    expect(workflowsWithDescription.length).to.equal(1);
+
+    const workflowDataWithName = workflowsWithDescription[0];
+    expect(workflowDataWithName.description).to.equal('');
+  });
 });
