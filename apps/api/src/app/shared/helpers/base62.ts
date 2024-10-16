@@ -3,14 +3,16 @@ import basex from 'base-x';
 const BASE62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const { encode, decode } = basex(BASE62);
 
-export function encodeBase62(input: string): string {
-  return encode(Buffer.from(input));
+export function encodeBase62(value: string): string {
+  const buffer = Buffer.from(value, 'hex');
+
+  return encode(buffer);
 }
 
 export function decodeBase62(encoded: string): string {
-  const decoded = decode(encoded);
+  const uint8Array = decode(encoded);
 
-  return Buffer.from(decoded).toString();
+  return Buffer.from(uint8Array).toString('hex');
 }
 
 export function isBase62(input: string): boolean {
