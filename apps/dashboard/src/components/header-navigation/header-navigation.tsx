@@ -12,7 +12,7 @@ export const HeaderNavigation = ({
   hideBridgeUrl?: boolean;
 }) => {
   return (
-    <div className="bg-background flex w-full items-center justify-between border-b px-6 py-3">
+    <div className="bg-background flex w-full items-center justify-between border-b px-2.5 py-1.5">
       {startItems}
       <div className="text-foreground-600 ml-auto flex items-center gap-3">
         {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
