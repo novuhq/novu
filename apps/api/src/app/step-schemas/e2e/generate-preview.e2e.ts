@@ -19,7 +19,7 @@ import { ChannelTypeEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/share
 import { x } from 'tar';
 import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e2e';
 
-const FOR_ITEM_VALUE_PLACEHOLDER = '{{item.body}}';
+const FOR_ITEM_VALUE_PLACEHOLDER = '{{{item.body}}}';
 const TEST_SHOW_VALUE = 'TEST_SHOW_VALUE';
 
 async function assertHttpError(

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common/decorators';
 import {
   ControlPreviewIssue,
-  EMAIL_EDITOR_JSON_KEY,
   GeneratePreviewResponseDto,
   GeneratePreviewResponseDtoSchema,
   TRANSIENT_PREVIEW_PREFIX,
@@ -36,8 +35,6 @@ export class GeneratePreviewUseCase {
   private async executePreviewUsecase(hydratedPayload: Record<string, unknown>, command: GeneratePreviewCommand) {
     const dto = command.generatePreviewRequestDto;
     const workflowId = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
-    console.log('hydratedPayload', JSON.stringify(hydratedPayload!, null, 2));
-    console.log('dto.controlValues![EMAIL_EDITOR_JSON_KEY]', dto.controlValues![EMAIL_EDITOR_JSON_KEY]);
 
     return await this.legacyPreviewStepUseCase.execute(
       PreviewStepCommand.create({
