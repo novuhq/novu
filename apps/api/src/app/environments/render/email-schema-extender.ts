@@ -1,10 +1,5 @@
 /* eslint-disable */
-export type TiptapNode = {
-  type: string;
-  content?: TiptapNode[];
-  text?: string;
-  attr?: Record<string, any>;
-};
+e2e;
 
 export function expendSchema(schema: TiptapNode): TiptapNode {
   const content = schema.content!.map(processNodeRecursive).filter((x) => Boolean(x)) as TiptapNode[];
@@ -38,7 +33,7 @@ const processNodeRecursive = (node: TiptapNode): TiptapNode | null => {
   }
 
   if (hasEachAttr(node)) {
-    return handleFor(node);
+    return { type: 'section', content: handleFor(node) };
   }
 
   return processNodeContent(node);
@@ -55,21 +50,25 @@ function hasEachAttr(node: TiptapNode): node is TiptapNode & { attr: { each: any
   return node.attr !== undefined && node.attr.each !== undefined;
 }
 
-function handleFor(node: TiptapNode & { attr: { each: any } }) {
+function handleFor(node: TiptapNode & { attr: { each: any } }): TiptapNode[] {
   const items = node.attr.each;
   const newContent: TiptapNode[] = [];
 
   for (const item of items) {
     const newNode = { ...node };
+
+    // Process inner nodes with the current item
     newNode.content =
       newNode.content?.map((innerNode) => {
         return processItemNode(innerNode, item);
       }) || [];
 
+    // Add the processed content to the newContent array
     if (newNode.content) {
       newContent.push(...newNode.content);
     }
   }
 
-  return { type: 'container', content: newContent };
+  // Return the new content directly, replacing the original "for" node
+  return newContent;
 }

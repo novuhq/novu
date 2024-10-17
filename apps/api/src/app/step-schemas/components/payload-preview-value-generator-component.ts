@@ -1,45 +1,28 @@
 import { GeneratePreviewRequestDto, HydrationStrategyEnum, JsonSchemaDto } from '@novu/shared-internal';
 import { faker } from '@faker-js/faker';
+import { collectPlaceholderMappings } from './email-editor-hydration-component';
+import { TiptapNode } from '../../environments/render/email-schema-extender';
 
-function resolvePayload(
-  aggregatedPayload: Record<string, unknown>,
-  textWitPlaceholders: string,
-  dto: GeneratePreviewRequestDto
-) {
-  return resolveAndAddToPayload(
-    aggregatedPayload,
-    textWitPlaceholders,
-    (key, payload) => handleRegularPayload(key, payload, dto.hydrationStrategies),
-    ['payload']
-  );
-}
-
-function resolveSystem(
-  aggregatedPayload: Record<string, unknown>,
-  textWitPlaceholders: string,
-  dto: GeneratePreviewRequestDto
-) {
-  const schemaDefaults = getAllDefaultValuesForSchema(dto.variablesSchema);
-
-  return resolveAndAddToPayload(
-    aggregatedPayload,
-    textWitPlaceholders,
-    (key, payload) => getDefaultFromSchema(key, payload, schemaDefaults),
-    ['subscriber', 'actor', 'steps']
-  );
-}
 /**
  * Resolves the payload based on the hydration strategy.
- * @param aggregatedPayload - The existing payload to which values will be added.
- * @param textWitPlaceholders - The text containing placeholders to resolve.
  * @param dto - The request DTO containing hydration strategies.
+ * @param controlValueKey
  * @returns The updated payload.
  */
 export function addKeysToPayloadBasedOnHydrationStrategy(
   dto: GeneratePreviewRequestDto,
   controlValueKey: string
 ): Record<string, unknown> {
-  const textWitPlaceholders = getValueAsString(controlValueKey, dto.controlValues);
+  if (!dto.controlValues) {
+    return {};
+  }
+
+  const controlValue = dto.controlValues[controlValueKey];
+  if (typeof controlValue === 'object') {
+    return buildPayloadForEmailEditor(controlValue, dto);
+  }
+
+  const textWitPlaceholders = String(controlValue);
   if (!textWitPlaceholders) {
     return {};
   }
@@ -51,6 +34,24 @@ export function addKeysToPayloadBasedOnHydrationStrategy(
   }
 
   return aggregatedPayload;
+}
+/**
+ * Builds a payload for the email editor.
+ * @param controlValue - The control value.
+ * @param dto - The request DTO.
+ * @returns The payload.
+ */
+
+function buildPayloadForEmailEditor(controlValue: unknown, dto: GeneratePreviewRequestDto): Record<string, unknown> {
+  console.log('buildPayloadForEmailEditor.controlValue', JSON.stringify(controlValue, null, 2));
+
+  const collectPlaceholderMappings1 = collectPlaceholderMappings(controlValue as TiptapNode, dto.payloadValues || {});
+  console.log(
+    'buildPayloadForEmailEditor.collectPlaceholderMappings1.output',
+    JSON.stringify(collectPlaceholderMappings1, null, 2)
+  );
+
+  return collectPlaceholderMappings1 as unknown as Record<string, unknown>;
 }
 
 function handleRegularPayload(
@@ -66,7 +67,7 @@ function handleRegularPayload(
     hydrationStrategies.includes(HydrationStrategyEnum.HYDRATE_PAYLOAD_VARIABLES_WITH_RANDOM_VALUES_IF_MISSING)
   ) {
     // eslint-disable-next-line no-param-reassign
-    payload[key] = randomWithFaker(key);
+    payload[key] = randomWithFaker();
   }
 }
 
@@ -95,7 +96,7 @@ function getValueFromPayload(key: string, payload: Record<string, unknown>): unk
   return keys.reduce((acc, key2) => (acc && acc[key2] !== undefined ? acc[key2] : undefined), payload);
 }
 
-function randomWithFaker(key: string): string {
+function randomWithFaker(): string {
   return faker.lorem.word();
 }
 
@@ -148,10 +149,30 @@ function getDefaultFromSchema(
   }
 }
 
-function getValueAsString(key: string, controlValues?: Record<string, unknown>) {
-  if (!controlValues) {
-    return undefined;
-  }
+function resolvePayload(
+  aggregatedPayload: Record<string, unknown>,
+  textWitPlaceholders: string,
+  dto: GeneratePreviewRequestDto
+) {
+  return resolveAndAddToPayload(
+    aggregatedPayload,
+    textWitPlaceholders,
+    (key, payload) => handleRegularPayload(key, payload, dto.hydrationStrategies),
+    ['payload']
+  );
+}
 
-  return typeof controlValues[key] === 'object' ? JSON.stringify(controlValues[key]) : String(controlValues[key]);
+function resolveSystem(
+  aggregatedPayload: Record<string, unknown>,
+  textWitPlaceholders: string,
+  dto: GeneratePreviewRequestDto
+) {
+  const schemaDefaults = getAllDefaultValuesForSchema(dto.variablesSchema);
+
+  return resolveAndAddToPayload(
+    aggregatedPayload,
+    textWitPlaceholders,
+    (key, payload) => getDefaultFromSchema(key, payload, schemaDefaults),
+    ['subscriber', 'actor', 'steps']
+  );
 }

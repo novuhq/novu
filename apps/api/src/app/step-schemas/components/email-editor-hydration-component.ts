@@ -65,3 +65,56 @@ type PlaceholderMap = {
     [key: string]: any[];
   };
 };
+
+const exampleNode: TipTapNodeSchemaDto = {
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: [
+        {
+          type: 'text',
+          text: '{{novu.payload.intro}} Wow, this editor instance exports its content as JSON.',
+        },
+      ],
+    },
+    {
+      type: 'for',
+      attr: {
+        each: '{{novu.payload.comment}}',
+      },
+      content: [
+        {
+          type: 'h1',
+          content: [
+            {
+              type: 'text',
+              text: '{{novu.item.body}}',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'show',
+      attr: {
+        when: '{{novu.payload.isPremiumPlan}}',
+      },
+      content: [
+        {
+          type: 'h1',
+          content: [
+            {
+              type: 'text',
+              text: 'Hi customer',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+// Uncomment the following line to see the collected placeholders in action
+// const collectedPlaceholders = collectPlaceholders(exampleNode);
+// console.log(collectedPlaceholders);
