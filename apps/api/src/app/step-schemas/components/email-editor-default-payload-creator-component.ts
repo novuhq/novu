@@ -106,12 +106,17 @@ function handleShowTraversal(node: TipTapNodeSchemaDto, placeholders: Placeholde
 }
 
 function extractPlaceholders(text: string): string[] {
-  const regex = /\{\{(.*?)}}/g;
+  // Updated regex to match {{{placeholder}}}, {{placeholder}}, and {#placeholder#}
+  const regex = /\{\{\{(.*?)\}\}\}|\{\{(.*?)\}\}|\{#(.*?)#\}/g;
   const matches: string[] = [];
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
-    matches.push(match[1].trim());
+    // Check for the first, second, or third capturing group
+    const placeholder = match[1] || match[2] || match[3];
+    if (placeholder) {
+      matches.push(placeholder.trim());
+    }
   }
   return matches;
 }
@@ -127,7 +132,7 @@ function processFor(
     setNestedValue(defaultPayload, key, finalValue);
     items.forEach((item) => {
       const extractedKey = item.replace('item.', '');
-      const valueFunc = (suffix) => `{{${item}}}-${suffix}`;
+      const valueFunc = (suffix) => `{#${item}#}-${suffix}`;
       setNestedValue(finalValue[0], extractedKey, valueFunc('1'));
       setNestedValue(finalValue[1], extractedKey, valueFunc('2'));
     });

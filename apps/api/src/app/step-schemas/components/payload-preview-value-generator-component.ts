@@ -49,7 +49,9 @@ export function addKeysToPayloadBasedOnHydrationStrategy(
 
 function buildPayloadForEmailEditor(controlValue: unknown, dto: GeneratePreviewRequestDto): Record<string, unknown> {
   const collectPlaceholderMappings1 = collectPlaceholders(controlValue as TipTapNodeSchemaDto);
+  console.log('collectPlaceholderMappings1', JSON.stringify(collectPlaceholderMappings1, null, 2));
   const transformPlaceholderMap1 = transformPlaceholderMap(collectPlaceholderMappings1);
+  console.log('transformPlaceholderMap1', JSON.stringify(transformPlaceholderMap1, null, 2));
 
   return transformPlaceholderMap1.payload;
 }

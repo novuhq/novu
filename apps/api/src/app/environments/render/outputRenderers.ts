@@ -15,6 +15,7 @@ import { expendSchema } from './email-schema-extender';
 export class EmailOutputRenderer {
   async render(controlValues: Record<string, unknown>): Promise<EmailRenderResult> {
     const parse = EmailStepControlSchema.parse(controlValues);
+    console.log('compactSchema', JSON.stringify(parse, null, 2));
     const expandedSchema = expendSchema(parse.emailEditor);
     console.log('expandedSchema', JSON.stringify(expandedSchema, null, 2));
     const html = await render(expandedSchema);
