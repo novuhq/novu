@@ -1,7 +1,12 @@
-import { GeneratePreviewRequestDto, HydrationStrategyEnum, JsonSchemaDto } from '@novu/shared-internal';
+import {
+  GeneratePreviewRequestDto,
+  HydrationStrategyEnum,
+  JsonSchemaDto,
+  TipTapNodeSchemaDto,
+} from '@novu/shared-internal';
 import { faker } from '@faker-js/faker';
-import { collectPlaceholderMappings } from './email-editor-hydration-component';
-import { TiptapNode } from '../../environments/render/email-schema-extender';
+import { RecordType } from 'zod';
+import { collectPlaceholders, PlaceholderMap } from './email-editor-hydration-component';
 
 /**
  * Resolves the payload based on the hydration strategy.
@@ -35,6 +40,14 @@ export function addKeysToPayloadBasedOnHydrationStrategy(
 
   return aggregatedPayload;
 }
+
+function buildPayload(
+  collectPlaceholderMappings1: PlaceholderMap,
+  payloadValues?: RecordType<string, unknown>
+): Record<string, unknown> {
+  return {};
+}
+
 /**
  * Builds a payload for the email editor.
  * @param controlValue - The control value.
@@ -45,13 +58,13 @@ export function addKeysToPayloadBasedOnHydrationStrategy(
 function buildPayloadForEmailEditor(controlValue: unknown, dto: GeneratePreviewRequestDto): Record<string, unknown> {
   console.log('buildPayloadForEmailEditor.controlValue', JSON.stringify(controlValue, null, 2));
 
-  const collectPlaceholderMappings1 = collectPlaceholderMappings(controlValue as TiptapNode, dto.payloadValues || {});
+  const collectPlaceholderMappings1 = collectPlaceholders(controlValue as TipTapNodeSchemaDto);
   console.log(
     'buildPayloadForEmailEditor.collectPlaceholderMappings1.output',
     JSON.stringify(collectPlaceholderMappings1, null, 2)
   );
 
-  return collectPlaceholderMappings1 as unknown as Record<string, unknown>;
+  return buildPayload(collectPlaceholderMappings1, dto.payloadValues);
 }
 
 function handleRegularPayload(

@@ -1,6 +1,38 @@
 /* eslint-disable */
 import { TipTapNodeSchemaDto } from '@novu/shared-internal';
 
+function handleForTraversal(node: TipTapNodeSchemaDto, placeholders: PlaceholderMap) {
+  const mainPlaceholder = node.attr.each;
+  if (mainPlaceholder) {
+    if (!placeholders.for[mainPlaceholder]) {
+      placeholders.for[mainPlaceholder] = [];
+    }
+
+    if (node.content) {
+      node.content.forEach((nestedNode) => {
+        if (nestedNode.content) {
+          nestedNode.content.forEach((childNode) => {
+            if (childNode.type === 'text' && childNode.text) {
+              // Collect the nested placeholder directly without additional formatting
+              const nestedPlaceholders = extractPlaceholders(childNode.text); // Use text directly
+              for (let nestedPlaceholder of nestedPlaceholders) {
+                placeholders.for[mainPlaceholder].push(nestedPlaceholder);
+              }
+            }
+          });
+        }
+      });
+    }
+  }
+}
+
+function handleShowTraversal(node: TipTapNodeSchemaDto, placeholders: PlaceholderMap) {
+  const showPlaceholder = node.attr.when;
+  if (showPlaceholder) {
+    placeholders.show[showPlaceholder] = [];
+  }
+}
+
 /**
  * Collects placeholders from a TipTapNode structure.
  *
@@ -16,33 +48,16 @@ export function collectPlaceholders(node: TipTapNodeSchemaDto): PlaceholderMap {
 
   function traverse(node: TipTapNodeSchemaDto) {
     if (node.type === 'for' && node.attr) {
-      const mainPlaceholder = node.attr.each;
-      if (mainPlaceholder) {
-        if (!placeholders.for[mainPlaceholder]) {
-          placeholders.for[mainPlaceholder] = [];
-        }
-
-        if (node.content) {
-          node.content.forEach((nestedNode) => {
-            if (nestedNode.content) {
-              nestedNode.content.forEach((childNode) => {
-                if (childNode.type === 'text' && childNode.text) {
-                  const nestedPlaceholder = `{{novu.item.${childNode.text}}}`;
-                  placeholders.for[mainPlaceholder].push(nestedPlaceholder);
-                }
-              });
-            }
-          });
-        }
-      }
+      handleForTraversal(node, placeholders);
     } else if (node.type === 'show' && node.attr) {
-      const showPlaceholder = node.attr.when;
-      if (showPlaceholder) {
-        placeholders.show[showPlaceholder] = [];
-      }
+      handleShowTraversal(node, placeholders);
     } else if (node.type === 'text' && node.text) {
-      const regularPlaceholder = `{{novu.payload.${node.text}}}`;
-      placeholders.regular[regularPlaceholder] = [];
+      // Regular placeholders should not be prefixed
+      const regularPlaceholders = extractPlaceholders(node.text).filter((x) => !x.startsWith('novu.item')); // Use text directly for regular placeholders
+      console.log(JSON.stringify(regularPlaceholders));
+      for (let regularPlaceholder of regularPlaceholders) {
+        placeholders.regular[regularPlaceholder] = [];
+      }
     }
 
     if (node.content) {
@@ -53,8 +68,21 @@ export function collectPlaceholders(node: TipTapNodeSchemaDto): PlaceholderMap {
   traverse(node);
   return placeholders;
 }
+function extractPlaceholders(text: string): string[] {
+  // Use regex to find all occurrences of {{...}}
+  const regex = /\{\{(.*?)}}/g;
+  const matches: string[] = [];
+  let match: RegExpExecArray | null;
 
-type PlaceholderMap = {
+  while ((match = regex.exec(text)) !== null) {
+    matches.push(match[1].trim());
+  }
+  console.log('matches' + JSON.stringify(matches));
+  return matches;
+}
+
+// Export PlaceholderMap type
+export type PlaceholderMap = {
   for: {
     [key: string]: string[];
   };
@@ -65,56 +93,3 @@ type PlaceholderMap = {
     [key: string]: any[];
   };
 };
-
-const exampleNode: TipTapNodeSchemaDto = {
-  type: 'doc',
-  content: [
-    {
-      type: 'paragraph',
-      content: [
-        {
-          type: 'text',
-          text: '{{novu.payload.intro}} Wow, this editor instance exports its content as JSON.',
-        },
-      ],
-    },
-    {
-      type: 'for',
-      attr: {
-        each: '{{novu.payload.comment}}',
-      },
-      content: [
-        {
-          type: 'h1',
-          content: [
-            {
-              type: 'text',
-              text: '{{novu.item.body}}',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      type: 'show',
-      attr: {
-        when: '{{novu.payload.isPremiumPlan}}',
-      },
-      content: [
-        {
-          type: 'h1',
-          content: [
-            {
-              type: 'text',
-              text: 'Hi customer',
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
-
-// Uncomment the following line to see the collected placeholders in action
-// const collectedPlaceholders = collectPlaceholders(exampleNode);
-// console.log(collectedPlaceholders);

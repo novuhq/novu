@@ -1,13 +1,13 @@
 /* eslint-disable */
-e2e;
+import { TipTapNodeSchemaDto } from '@novu/shared-internal';
 
-export function expendSchema(schema: TiptapNode): TiptapNode {
-  const content = schema.content!.map(processNodeRecursive).filter((x) => Boolean(x)) as TiptapNode[];
+export function expendSchema(schema: TipTapNodeSchemaDto): TipTapNodeSchemaDto {
+  const content = schema.content!.map(processNodeRecursive).filter((x) => Boolean(x)) as TipTapNodeSchemaDto[];
 
   return { ...schema, content };
 }
 
-function processItemNode(node: TiptapNode, item: any): TiptapNode {
+function processItemNode(node: TipTapNodeSchemaDto, item: any): TipTapNodeSchemaDto {
   if (node.type === 'text' && typeof node.text === 'string') {
     const regex = /{{(novu\.item\.(\w+))}}/g;
     node.text = node.text.replace(regex, (_, key: string) => {
@@ -24,7 +24,7 @@ function processItemNode(node: TiptapNode, item: any): TiptapNode {
   return node;
 }
 
-const processNodeRecursive = (node: TiptapNode): TiptapNode | null => {
+const processNodeRecursive = (node: TipTapNodeSchemaDto): TipTapNodeSchemaDto | null => {
   if (node.type === 'show') {
     const whenValue = node.attr?.when;
     if (whenValue !== 'true') {
@@ -39,20 +39,20 @@ const processNodeRecursive = (node: TiptapNode): TiptapNode | null => {
   return processNodeContent(node);
 };
 
-const processNodeContent = (node: TiptapNode): TiptapNode | null => {
+const processNodeContent = (node: TipTapNodeSchemaDto): TipTapNodeSchemaDto | null => {
   if (node.content) {
-    node.content = node.content.map(processNodeRecursive).filter(Boolean) as TiptapNode[];
+    node.content = node.content.map(processNodeRecursive).filter(Boolean) as TipTapNodeSchemaDto[];
   }
   return node;
 };
 
-function hasEachAttr(node: TiptapNode): node is TiptapNode & { attr: { each: any } } {
+function hasEachAttr(node: TipTapNodeSchemaDto): node is TipTapNodeSchemaDto & { attr: { each: any } } {
   return node.attr !== undefined && node.attr.each !== undefined;
 }
 
-function handleFor(node: TiptapNode & { attr: { each: any } }): TiptapNode[] {
+function handleFor(node: TipTapNodeSchemaDto & { attr: { each: any } }): TipTapNodeSchemaDto[] {
   const items = node.attr.each;
-  const newContent: TiptapNode[] = [];
+  const newContent: TipTapNodeSchemaDto[] = [];
 
   for (const item of items) {
     const newNode = { ...node };
