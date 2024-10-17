@@ -16,8 +16,8 @@ import { StepNode } from './StepNode';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 
 export interface WorkflowNodesProps {
-  steps: DiscoverStepOutput[] | null;
-  onStepClick: (step: DiscoverStepOutput) => void;
+  steps: Pick<DiscoverStepOutput, 'stepId' | 'type'>[] | null;
+  onStepClick: (step: Pick<DiscoverStepOutput, 'stepId' | 'type'>) => void;
   onTriggerClick: () => void;
 }
 

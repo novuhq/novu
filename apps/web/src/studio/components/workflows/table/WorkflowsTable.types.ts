@@ -1,3 +1,3 @@
 import type { DiscoverWorkflowOutput } from '@novu/framework';
 
-export type WorkflowTableRow = DiscoverWorkflowOutput;
+export type WorkflowTableRow = Omit<DiscoverWorkflowOutput, 'controls' | 'inputs'>;
