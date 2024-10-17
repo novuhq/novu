@@ -4,8 +4,19 @@ import {
   NotFoundException,
   BadRequestException,
   HttpException,
+  GatewayTimeoutException,
 } from '@nestjs/common';
-import got, { OptionsOfTextResponseBody, RequestError } from 'got';
+import got, {
+  CacheError,
+  HTTPError,
+  MaxRedirectsError,
+  OptionsOfTextResponseBody,
+  ReadError,
+  RequestError,
+  TimeoutError,
+  UnsupportedProtocolError,
+  UploadError,
+} from 'got';
 import { createHmac } from 'node:crypto';
 
 import {
@@ -76,11 +87,6 @@ export class ExecuteBridgeRequest {
       );
     }
 
-    const secretKey = await this.getDecryptedSecretKey.execute(
-      GetDecryptedSecretKeyCommand.create({
-        environmentId: command.environmentId,
-      }),
-    );
     const bridgeUrl = this.getBridgeUrl(
       environment.bridge?.url || environment.echo?.url,
       command.environmentId,
@@ -125,25 +131,13 @@ export class ExecuteBridgeRequest {
       },
     };
 
-    const timestamp = Date.now();
-    const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacBySecretKey(
-      secretKey,
-      timestamp,
-      command.event || {},
-    )}`;
-
     const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(
       command.action as PostActionEnum,
     )
       ? got.post
       : got.get;
 
-    const headers = {
-      [HttpRequestHeaderKeysEnum.BYPASS_TUNNEL_REMINDER]: 'true',
-      [HttpRequestHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
-      [HttpHeaderKeysEnum.NOVU_SIGNATURE_DEPRECATED]: novuSignatureHeader,
-      [HttpHeaderKeysEnum.NOVU_SIGNATURE]: novuSignatureHeader,
-    };
+    const headers = await this.buildRequestHeaders(command);
 
     Logger.log(`Making bridge request to \`${url}\``, LOG_CONTEXT);
     try {
@@ -152,73 +146,36 @@ export class ExecuteBridgeRequest {
         headers,
       }).json();
     } catch (error) {
-      if (error instanceof RequestError) {
-        let body: Record<string, unknown>;
-        try {
-          body = JSON.parse(error.response.body as string);
-        } catch (e) {
-          // If the body is not valid JSON, we'll just use an empty object.
-          body = {};
-        }
-
-        if (Object.values(ErrorCodeEnum).includes(body.code as ErrorCodeEnum)) {
-          // Handle known Bridge errors. Propagate the error code and message.
-          throw new HttpException(body, error.response.statusCode);
-        } else if (body.code === TUNNEL_ERROR_CODE) {
-          // Handle known tunnel errors
-          const tunnelBody = body as TunnelResponseError;
-          Logger.error(
-            `Could not establish tunnel connection for \`${url}\`. Error: \`${tunnelBody.message}\``,
-            LOG_CONTEXT,
-          );
-          throw new NotFoundException(BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND);
-        } else if (error.response?.statusCode === 502) {
-          /*
-           * Tunnel was live, but the Bridge endpoint was down.
-           * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
-           */
-          Logger.error(
-            `Bridge endpoint unavailable for \`${url}\``,
-            LOG_CONTEXT,
-          );
-          throw new BadRequestException(
-            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE,
-          );
-        } else if (error.response?.statusCode === 404) {
-          // Bridge endpoint wasn't found.
-          Logger.error(`Bridge endpoint not found for \`${url}\``, LOG_CONTEXT);
-          throw new NotFoundException(
-            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND,
-          );
-        } else if (error.response?.statusCode === 405) {
-          // The Bridge endpoint didn't expose the required methods.
-          Logger.error(
-            `Bridge endpoint method not configured for \`${url}\``,
-            LOG_CONTEXT,
-          );
-          throw new BadRequestException(
-            BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED,
-          );
-        } else {
-          // Unknown errors when calling the Bridge endpoint.
-          Logger.error(
-            `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
-              body,
-            )}\``,
-            LOG_CONTEXT,
-          );
-          throw error;
-        }
-      } else {
-        // Handle unknown, non-request errors.
-        Logger.error(
-          `Unknown bridge error calling \`${url}\``,
-          error,
-          LOG_CONTEXT,
-        );
-        throw error;
-      }
+      this.handleResponseError(error, url);
     }
+  }
+
+  private async buildRequestHeaders(command: ExecuteBridgeRequestCommand) {
+    const novuSignatureHeader = await this.buildRequestSignature(command);
+
+    return {
+      [HttpRequestHeaderKeysEnum.BYPASS_TUNNEL_REMINDER]: 'true',
+      [HttpRequestHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
+      [HttpHeaderKeysEnum.NOVU_SIGNATURE_DEPRECATED]: novuSignatureHeader,
+      [HttpHeaderKeysEnum.NOVU_SIGNATURE]: novuSignatureHeader,
+    };
+  }
+
+  private async buildRequestSignature(command: ExecuteBridgeRequestCommand) {
+    const secretKey = await this.getDecryptedSecretKey.execute(
+      GetDecryptedSecretKeyCommand.create({
+        environmentId: command.environmentId,
+      }),
+    );
+
+    const timestamp = Date.now();
+    const novuSignatureHeader = `t=${timestamp},v1=${this.createHmacBySecretKey(
+      secretKey,
+      timestamp,
+      command.event || {},
+    )}`;
+
+    return novuSignatureHeader;
   }
 
   private createHmacBySecretKey(
@@ -256,8 +213,19 @@ export class ExecuteBridgeRequest {
     switch (workflowOrigin) {
       case WorkflowOriginEnum.NOVU_CLOUD:
         return `${this.getApiUrl()}/v1/environments/${environmentId}/bridge`;
-      case WorkflowOriginEnum.EXTERNAL:
+      case WorkflowOriginEnum.EXTERNAL: {
+        if (!environmentBridgeUrl) {
+          throw new BadRequestException({
+            code: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.code,
+            message:
+              BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.message(
+                environmentBridgeUrl,
+              ),
+          });
+        }
+
         return environmentBridgeUrl;
+      }
       default:
         throw new Error(`Unsupported workflow origin: ${workflowOrigin}`);
     }
@@ -271,5 +239,126 @@ export class ExecuteBridgeRequest {
     }
 
     return apiUrl;
+  }
+
+  private handleResponseError(error: unknown, url: string) {
+    if (error instanceof RequestError) {
+      let body: Record<string, unknown>;
+      try {
+        body = JSON.parse(error.response.body as string);
+      } catch (e) {
+        // If the body is not valid JSON, we'll just use an empty object.
+        body = {};
+      }
+
+      if (
+        error instanceof HTTPError &&
+        Object.values(ErrorCodeEnum).includes(body.code as ErrorCodeEnum)
+      ) {
+        // Handle known Bridge errors. Propagate the error code and message.
+        throw new HttpException(body, error.response.statusCode);
+      } else if (body.code === TUNNEL_ERROR_CODE) {
+        // Handle known tunnel errors
+        const tunnelBody = body as TunnelResponseError;
+        Logger.error(
+          `Could not establish tunnel connection for \`${url}\`. Error: \`${tunnelBody.message}\``,
+          LOG_CONTEXT,
+        );
+        throw new NotFoundException({
+          message: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.message(url),
+          code: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.code,
+        });
+      } else if (error instanceof TimeoutError) {
+        Logger.error(`Bridge request timeout for \`${url}\``, LOG_CONTEXT);
+        throw new GatewayTimeoutException({
+          message: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.message(url),
+          code: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.code,
+        });
+      } else if (error instanceof UnsupportedProtocolError) {
+        Logger.error(`Unsupported protocol for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.UNSUPPORTED_PROTOCOL.message(url),
+          code: BRIDGE_EXECUTION_ERROR.UNSUPPORTED_PROTOCOL.code,
+        });
+      } else if (error instanceof ReadError) {
+        Logger.error(
+          `Response body could not be read for \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.message(url),
+          code: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.code,
+        });
+      } else if (error instanceof UploadError) {
+        Logger.error(
+          `Error uploading request body for \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.message(url),
+          code: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.code,
+        });
+      } else if (error instanceof CacheError) {
+        Logger.error(`Error caching request for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.REQUEST_CACHE_ERROR.message(url),
+          code: BRIDGE_EXECUTION_ERROR.REQUEST_CACHE_ERROR.code,
+        });
+      } else if (error instanceof MaxRedirectsError) {
+        Logger.error(`Maximum redirects exceeded for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message:
+            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
+          code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
+        });
+      } else if (error.response?.statusCode === 502) {
+        /*
+         * Tunnel was live, but the Bridge endpoint was down.
+         * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
+         */
+        Logger.error(`Bridge endpoint unavailable for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message:
+            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
+          code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.code,
+        });
+      } else if (
+        error.response?.statusCode === 404 ||
+        error.code === 'ENOTFOUND'
+      ) {
+        Logger.error(`Bridge endpoint not found for \`${url}\``, LOG_CONTEXT);
+        throw new NotFoundException({
+          message:
+            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.message(url),
+          code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.code,
+        });
+      } else if (error.response?.statusCode === 405) {
+        Logger.error(
+          `Bridge endpoint method not configured for \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message:
+            BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.message(url),
+          code: BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.code,
+        });
+      } else {
+        Logger.error(
+          `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
+            body,
+          )}\``,
+          error,
+          LOG_CONTEXT,
+        );
+        throw error;
+      }
+    } else {
+      Logger.error(
+        `Unknown bridge non-request error calling \`${url}\``,
+        error,
+        LOG_CONTEXT,
+      );
+      throw error;
+    }
   }
 }
