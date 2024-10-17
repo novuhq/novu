@@ -115,6 +115,8 @@ export function workflow<
     },
     tags: options.tags || [],
     preferences: mapPreferences(options.preferences),
+    name: options.name,
+    description: options.description,
     execute: execute as Execute<Record<string, unknown>, Record<string, unknown>>,
   };
 
