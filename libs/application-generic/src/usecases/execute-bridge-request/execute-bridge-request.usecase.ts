@@ -258,7 +258,64 @@ export class ExecuteBridgeRequest {
       ) {
         // Handle known Bridge errors. Propagate the error code and message.
         throw new HttpException(body, error.response.statusCode);
-      } else if (body.code === TUNNEL_ERROR_CODE) {
+      }
+
+      if (error instanceof TimeoutError) {
+        Logger.error(`Bridge request timeout for \`${url}\``, LOG_CONTEXT);
+        throw new GatewayTimeoutException({
+          message: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.message(url),
+          code: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.code,
+        });
+      }
+
+      if (error instanceof UnsupportedProtocolError) {
+        Logger.error(`Unsupported protocol for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.UNSUPPORTED_PROTOCOL.message(url),
+          code: BRIDGE_EXECUTION_ERROR.UNSUPPORTED_PROTOCOL.code,
+        });
+      }
+
+      if (error instanceof ReadError) {
+        Logger.error(
+          `Response body could not be read for \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.message(url),
+          code: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.code,
+        });
+      }
+
+      if (error instanceof UploadError) {
+        Logger.error(
+          `Error uploading request body for \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.message(url),
+          code: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.code,
+        });
+      }
+
+      if (error instanceof CacheError) {
+        Logger.error(`Error caching request for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.REQUEST_CACHE_ERROR.message(url),
+          code: BRIDGE_EXECUTION_ERROR.REQUEST_CACHE_ERROR.code,
+        });
+      }
+
+      if (error instanceof MaxRedirectsError) {
+        Logger.error(`Maximum redirects exceeded for \`${url}\``, LOG_CONTEXT);
+        throw new BadRequestException({
+          message:
+            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
+          code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
+        });
+      }
+
+      if (body.code === TUNNEL_ERROR_CODE) {
         // Handle known tunnel errors
         const tunnelBody = body as TunnelResponseError;
         Logger.error(
@@ -269,50 +326,9 @@ export class ExecuteBridgeRequest {
           message: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.message(url),
           code: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.code,
         });
-      } else if (error instanceof TimeoutError) {
-        Logger.error(`Bridge request timeout for \`${url}\``, LOG_CONTEXT);
-        throw new GatewayTimeoutException({
-          message: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.message(url),
-          code: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.code,
-        });
-      } else if (error instanceof UnsupportedProtocolError) {
-        Logger.error(`Unsupported protocol for \`${url}\``, LOG_CONTEXT);
-        throw new BadRequestException({
-          message: BRIDGE_EXECUTION_ERROR.UNSUPPORTED_PROTOCOL.message(url),
-          code: BRIDGE_EXECUTION_ERROR.UNSUPPORTED_PROTOCOL.code,
-        });
-      } else if (error instanceof ReadError) {
-        Logger.error(
-          `Response body could not be read for \`${url}\``,
-          LOG_CONTEXT,
-        );
-        throw new BadRequestException({
-          message: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.message(url),
-          code: BRIDGE_EXECUTION_ERROR.RESPONSE_READ_ERROR.code,
-        });
-      } else if (error instanceof UploadError) {
-        Logger.error(
-          `Error uploading request body for \`${url}\``,
-          LOG_CONTEXT,
-        );
-        throw new BadRequestException({
-          message: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.message(url),
-          code: BRIDGE_EXECUTION_ERROR.REQUEST_UPLOAD_ERROR.code,
-        });
-      } else if (error instanceof CacheError) {
-        Logger.error(`Error caching request for \`${url}\``, LOG_CONTEXT);
-        throw new BadRequestException({
-          message: BRIDGE_EXECUTION_ERROR.REQUEST_CACHE_ERROR.message(url),
-          code: BRIDGE_EXECUTION_ERROR.REQUEST_CACHE_ERROR.code,
-        });
-      } else if (error instanceof MaxRedirectsError) {
-        Logger.error(`Maximum redirects exceeded for \`${url}\``, LOG_CONTEXT);
-        throw new BadRequestException({
-          message:
-            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
-          code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
-        });
-      } else if (error.response?.statusCode === 502) {
+      }
+
+      if (error.response?.statusCode === 502) {
         /*
          * Tunnel was live, but the Bridge endpoint was down.
          * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
@@ -326,7 +342,9 @@ export class ExecuteBridgeRequest {
             BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.code,
         });
-      } else if (
+      }
+
+      if (
         error.response?.statusCode === 404 ||
         RETRYABLE_ERROR_CODES.includes(error.code)
       ) {
@@ -343,7 +361,9 @@ export class ExecuteBridgeRequest {
             BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
           code: codeToThrow,
         });
-      } else if (error.response?.statusCode === 405) {
+      }
+
+      if (error.response?.statusCode === 405) {
         Logger.error(
           `Bridge endpoint method not configured for \`${url}\``,
           LOG_CONTEXT,
@@ -353,16 +373,16 @@ export class ExecuteBridgeRequest {
             BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_METHOD_NOT_CONFIGURED.code,
         });
-      } else {
-        Logger.error(
-          `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
-            body,
-          )}\``,
-          error,
-          LOG_CONTEXT,
-        );
-        throw error;
       }
+
+      Logger.error(
+        `Unknown bridge request error calling \`${url}\`: \`${JSON.stringify(
+          body,
+        )}\``,
+        error,
+        LOG_CONTEXT,
+      );
+      throw error;
     } else {
       Logger.error(
         `Unknown bridge non-request error calling \`${url}\``,
