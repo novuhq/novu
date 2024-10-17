@@ -10,7 +10,7 @@ import {
   RedirectTargetEnum,
   SmsRenderResult,
 } from '@novu/shared-internal';
-import { expendSchema } from './email-schema-extender';
+import { expendSchema } from '../render/email-schema-extender';
 
 class RenderCommand {
   controlValues: Record<string, unknown>;
