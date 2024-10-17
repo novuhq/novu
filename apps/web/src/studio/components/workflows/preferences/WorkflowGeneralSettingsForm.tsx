@@ -108,7 +108,7 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({
                 {...field}
                 label="Description"
                 description="A brief description of the workflow's purpose for team members"
-                placeholder="Describe the workflow"
+                placeholder="Add a description..."
                 value={field.value || ''}
                 disabled={checkShouldDisableField?.(field.name)}
                 error={errors?.general?.description?.message}
@@ -134,8 +134,8 @@ export const WorkflowGeneralSettingsForm: FC<WorkflowGeneralSettingsProps> = ({
                 }
                 searchable={checkShouldDisableField?.(field.name)}
                 type={'multiselect'}
-                placeholder="Attach a tag to identify the workflow"
-                data={field.value?.map((item) => ({ label: item, value: item }))}
+                placeholder="Add tags to categorize the workflow..."
+                data={(field.value || [])?.map((item) => ({ label: item, value: item }))}
               />
             );
           }}
