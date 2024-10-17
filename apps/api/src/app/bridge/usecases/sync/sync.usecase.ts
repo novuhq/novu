@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 
 import {
   EnvironmentRepository,
@@ -56,8 +56,12 @@ export class Sync {
         retriesLimit: 1,
         workflowOrigin: WorkflowOriginEnum.EXTERNAL,
       })) as DiscoverOutput;
-    } catch (error: any) {
-      throw new BadRequestException(`Bridge URL is not valid. ${error.message}`);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw new BadRequestException(error.message);
+      }
+
+      throw error;
     }
 
     if (!discover) {

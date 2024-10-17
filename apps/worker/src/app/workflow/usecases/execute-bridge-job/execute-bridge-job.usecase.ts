@@ -249,12 +249,23 @@ export class ExecuteBridgeJob {
       let raw: { retryCount?: number; statusCode?: number; message: string; url?: string };
 
       if (error.response) {
+        let rawMessage: Record<string, unknown>;
+        const errorResponseBody = error?.response?.body;
+        try {
+          rawMessage = JSON.parse(errorResponseBody);
+        } catch {
+          Logger.error(`Unexpected body received from Bridge: ${errorResponseBody}`, LOG_CONTEXT);
+          rawMessage = {
+            error: `Unexpected body received from Bridge: ${errorResponseBody}`,
+          };
+        }
+
         raw = {
           url: statelessBridgeUrl,
           statusCode: error.response?.statusCode,
           message: error.response?.statusMessage,
           ...(error.response?.retryCount ? { retryCount: error.response?.retryCount } : {}),
-          ...(error?.response?.body?.length > 0 ? { raw: JSON.parse(error?.response?.body) } : {}),
+          ...(error?.response?.body?.length > 0 ? { raw: rawMessage } : {}),
         };
       } else if (error.message) {
         raw = {
