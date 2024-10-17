@@ -44,14 +44,15 @@ export const RETRYABLE_HTTP_CODES: number[] = [
   408, 413, 429, 500, 502, 503, 504, 521, 522, 524,
 ];
 const RETRYABLE_ERROR_CODES: string[] = [
-  'ETIMEDOUT',
-  'ECONNRESET',
-  'EADDRINUSE',
-  'ECONNREFUSED',
-  'EPIPE',
-  'ENOTFOUND',
-  'ENETUNREACH',
-  'EAI_AGAIN',
+  'EAI_AGAIN', //    DNS resolution failed, retry
+  'ECONNREFUSED', // Connection refused by the server
+  'ECONNRESET', //   Connection was forcibly closed by a peer
+  'EADDRINUSE', //   Address already in use
+  'EPIPE', //        Broken pipe
+  'ETIMEDOUT', //    Operation timed out
+  'ENOTFOUND', //    DNS lookup failed
+  'EHOSTUNREACH', // No route to host
+  'ENETUNREACH', //  Network is unreachable
 ];
 
 const LOG_CONTEXT = 'ExecuteBridgeRequest';
@@ -316,21 +317,24 @@ export class ExecuteBridgeRequest {
          * Tunnel was live, but the Bridge endpoint was down.
          * 502 is thrown by the tunnel service when the Bridge endpoint is not reachable.
          */
-        Logger.error(`Bridge endpoint unavailable for \`${url}\``, LOG_CONTEXT);
+        Logger.error(
+          `Local Bridge endpoint not found for \`${url}\``,
+          LOG_CONTEXT,
+        );
         throw new BadRequestException({
-          message:
-            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
-          code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.code,
-        });
-      } else if (
-        error.response?.statusCode === 404 ||
-        error.code === 'ENOTFOUND'
-      ) {
-        Logger.error(`Bridge endpoint not found for \`${url}\``, LOG_CONTEXT);
-        throw new NotFoundException({
           message:
             BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_NOT_FOUND.code,
+        });
+      } else if (
+        error.response?.statusCode === 404 ||
+        RETRYABLE_ERROR_CODES.includes(error.code)
+      ) {
+        Logger.error(`Bridge endpoint unavailable for \`${url}\``, LOG_CONTEXT);
+        throw new NotFoundException({
+          message:
+            BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
+          code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.code,
         });
       } else if (error.response?.statusCode === 405) {
         Logger.error(
