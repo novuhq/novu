@@ -48,17 +48,10 @@ export function addKeysToPayloadBasedOnHydrationStrategy(
  */
 
 function buildPayloadForEmailEditor(controlValue: unknown, dto: GeneratePreviewRequestDto): Record<string, unknown> {
-  console.log('buildPayloadForEmailEditor.controlValue', JSON.stringify(controlValue, null, 2));
-
   const collectPlaceholderMappings1 = collectPlaceholders(controlValue as TipTapNodeSchemaDto);
   const transformPlaceholderMap1 = transformPlaceholderMap(collectPlaceholderMappings1);
-  const finalPayload = mergeJsonObjects(dto.payloadValues || {}, transformPlaceholderMap1);
-  console.log(
-    'buildPayloadForEmailEditor.collectPlaceholderMappings1.output',
-    JSON.stringify(collectPlaceholderMappings1, null, 2)
-  );
 
-  return finalPayload;
+  return transformPlaceholderMap1.payload;
 }
 
 function handleRegularPayload(
@@ -183,7 +176,7 @@ function resolveSystem(
     ['subscriber', 'actor', 'steps']
   );
 }
-function mergeJsonObjects(
+export function mergeJsonObjects(
   primary: Record<string, unknown>,
   secondary: Record<string, unknown>
 ): Record<string, unknown> {

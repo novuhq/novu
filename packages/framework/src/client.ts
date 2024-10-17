@@ -4,7 +4,6 @@ import ora from 'ora';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
-  StepControlCompilationFailedError,
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
   ExecutionProviderOutputInvalidError,
@@ -14,6 +13,7 @@ import {
   ExecutionStateResultInvalidError,
   ProviderExecutionFailedError,
   ProviderNotFoundError,
+  StepControlCompilationFailedError,
   StepNotFoundError,
   WorkflowAlreadyExistsError,
   WorkflowNotFoundError,
@@ -57,7 +57,15 @@ function isRuntimeInDevelopment() {
 export class Client {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
-  private templateEngine = new Liquid();
+  private templateEngine = new Liquid({
+    outputEscape: (output) => {
+      if (Array.isArray(output) || (typeof output === 'object' && output !== null)) {
+        return JSON.stringify(output).replace(/"/g, "'");
+      }
+
+      return output;
+    },
+  });
 
   public secretKey?: string;
 

@@ -54,9 +54,9 @@ function handleFor(node: TipTapNodeSchemaDto & { attr: { each: any } }): TipTapN
   const items = node.attr.each;
   const newContent: TipTapNodeSchemaDto[] = [];
 
-  for (const item of items) {
+  for (const item of JSON.parse(items)) {
     const newNode = { ...node };
-
+    console.log('item2', item);
     // Process inner nodes with the current item
     newNode.content =
       newNode.content?.map((innerNode) => {

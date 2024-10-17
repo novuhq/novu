@@ -16,7 +16,11 @@ import { randomUUID } from 'node:crypto';
 import { after, beforeEach } from 'mocha';
 import { sleep } from '@nestjs/terminus/dist/utils';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
+import { x } from 'tar';
 import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e2e';
+
+const FOR_ITEM_VALUE_PLACEHOLDER = '{{item.body}}';
+const TEST_SHOW_VALUE = 'TEST_SHOW_VALUE';
 
 async function assertHttpError(
   description: string,
@@ -29,11 +33,13 @@ async function assertHttpError(
   return new Error(`${description}: Failed to generate preview, bug in response error mapping `);
 }
 
-function assertEmail(dto: GeneratePreviewResponseDto, dto1: Record<string, unknown>) {
+function assertEmail(dto: GeneratePreviewResponseDto) {
   if (dto.result!.type === ChannelTypeEnum.EMAIL) {
     const preview = dto.result!.preview.body;
     expect(preview).to.exist;
-    expect(preview).to.not.contain('for');
+    expect(preview).to.not.contain('{{payload.comment}}');
+    expect(preview).to.contain(FOR_ITEM_VALUE_PLACEHOLDER);
+    expect(preview).to.contain(TEST_SHOW_VALUE);
   }
 }
 
@@ -94,7 +100,8 @@ describe('Control Schema', () => {
           if (type !== ChannelTypeEnum.EMAIL) {
             expect(previewResponseDto.result!.preview).to.deep.equal(dtos[type]);
           } else {
-            assertEmail(previewResponseDto, dtos[type]);
+            x;
+            assertEmail(previewResponseDto);
           }
         });
       });
@@ -152,7 +159,7 @@ function buildHappyDto(stepTypeEnum: ChannelTypeEnum, workflowId: string): Gener
 
 function buildInAppControlValues(): InAppRenderResult {
   return {
-    subject: 'Hello, World!',
+    subject: 'Hello, World! {{payload.blabla}}',
     body: 'Hello, World!',
     avatar: 'https://www.example.com/avatar.png',
     primaryAction: {
@@ -188,14 +195,14 @@ function mailyJsonExample(): TipTapNodeSchemaDto {
         content: [
           {
             type: 'text',
-            text: '{{novu.payload.intro}} Wow, this editor instance exports its content as JSON.',
+            text: '{{payload.intro}} Wow, this editor instance exports its content as JSON.',
           },
         ],
       },
       {
         type: 'for',
         attr: {
-          each: '{{novu.payload.comment}}',
+          each: '{{payload.comment}}',
         },
         content: [
           {
@@ -203,7 +210,7 @@ function mailyJsonExample(): TipTapNodeSchemaDto {
             content: [
               {
                 type: 'text',
-                text: '{{novu.item.body}}',
+                text: FOR_ITEM_VALUE_PLACEHOLDER,
               },
             ],
           },
@@ -212,7 +219,7 @@ function mailyJsonExample(): TipTapNodeSchemaDto {
       {
         type: 'show',
         attr: {
-          when: '{{novu.payload.isPremiumPlan}}',
+          when: '{{payload.isPremiumPlan}}',
         },
         content: [
           {
@@ -220,7 +227,7 @@ function mailyJsonExample(): TipTapNodeSchemaDto {
             content: [
               {
                 type: 'text',
-                text: 'Hi customer',
+                text: TEST_SHOW_VALUE,
               },
             ],
           },
@@ -230,9 +237,11 @@ function mailyJsonExample(): TipTapNodeSchemaDto {
   };
 }
 
+const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
+
 function buildEmailControls(): EmailStepControlSchemaDto {
   return {
-    subject: 'Hello, World!',
+    subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
     emailEditor: mailyJsonExample(),
   };
 }

@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { createNovuBaseClient, HttpError, NovuRestResult } from './novu-base-client';
 import { GeneratePreviewRequestDto, GeneratePreviewResponseDto } from '../dtos';
 
-export const EMAIL_EDITOR_JSON_KEY = 'EMAIL_EDITOR_JSON_KEY';
+export const EMAIL_EDITOR_JSON_KEY = 'emailEditor';
 
 // Define the StepSchemaClient as a function that utilizes the base client
 export const createStepSchemaClient = (baseUrl: string, headers: HeadersInit = {}) => {

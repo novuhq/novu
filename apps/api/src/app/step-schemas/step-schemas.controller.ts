@@ -50,8 +50,6 @@ export class StepSchemasController {
     @Param('stepType') stepType: ChannelTypeEnum,
     @Body() generatePreviewRequestDto: GeneratePreviewRequestDto
   ): Promise<GeneratePreviewResponseDto> {
-    console.log('generatePreviewRequestDto', generatePreviewRequestDto);
-
     return await this.generatePreviewUseCase.execute(
       GeneratePreviewCommand.create({ user, stepType, generatePreviewRequestDto })
     );

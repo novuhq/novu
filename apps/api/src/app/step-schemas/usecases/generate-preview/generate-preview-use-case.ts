@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common/decorators';
 import {
   ControlPreviewIssue,
+  EMAIL_EDITOR_JSON_KEY,
   GeneratePreviewResponseDto,
   GeneratePreviewResponseDtoSchema,
   TRANSIENT_PREVIEW_PREFIX,
@@ -9,7 +10,10 @@ import { ExecuteOutput } from '@novu/framework';
 import { VariableValidatorComponent } from '../../components/variable-validator-component';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { addKeysToPayloadBasedOnHydrationStrategy } from '../../components/payload-preview-value-generator-component';
+import {
+  addKeysToPayloadBasedOnHydrationStrategy,
+  mergeJsonObjects,
+} from '../../components/payload-preview-value-generator-component';
 import { GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow/get-workflow.usecase';
 
 @Injectable()
@@ -22,6 +26,7 @@ export class GeneratePreviewUseCase {
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
     const issues: Record<string, ControlPreviewIssue[]> = this.validateControlValues(command);
+    console.log('command-payloadValues', JSON.stringify(command.generatePreviewRequestDto.payloadValues, null, 2));
     const hydratedPayload = addHydrationValuesToPayload(command);
     const executeOutput = await this.executePreviewUsecase(hydratedPayload, command);
 
@@ -31,6 +36,8 @@ export class GeneratePreviewUseCase {
   private async executePreviewUsecase(hydratedPayload: Record<string, unknown>, command: GeneratePreviewCommand) {
     const dto = command.generatePreviewRequestDto;
     const workflowId = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
+    console.log('hydratedPayload', JSON.stringify(hydratedPayload!, null, 2));
+    console.log('dto.controlValues![EMAIL_EDITOR_JSON_KEY]', dto.controlValues![EMAIL_EDITOR_JSON_KEY]);
 
     return await this.legacyPreviewStepUseCase.execute(
       PreviewStepCommand.create({
@@ -68,15 +75,15 @@ export class GeneratePreviewUseCase {
 
 function addHydrationValuesToPayload(command: GeneratePreviewCommand): Record<string, unknown> {
   const dto = command.generatePreviewRequestDto;
-  const payloadFromDto = dto.payloadValues || {};
+  let payloadFromDto = dto.payloadValues || {};
   for (const key in dto.controlValues) {
     if (dto.controlValues.hasOwnProperty(key)) {
       const hydratedValue = addKeysToPayloadBasedOnHydrationStrategy(dto, key);
-      if (hydratedValue) {
-        payloadFromDto[key] = hydratedValue;
-      }
+      payloadFromDto = mergeJsonObjects(payloadFromDto, hydratedValue);
     }
   }
+
+  console.log('hydratedValue', JSON.stringify(payloadFromDto, null, 2));
 
   return payloadFromDto;
 }

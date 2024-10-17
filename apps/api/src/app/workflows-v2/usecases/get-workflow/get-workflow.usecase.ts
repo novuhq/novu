@@ -24,7 +24,6 @@ export class GetWorkflowUseCase {
   ) {}
   async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
     const notificationTemplateEntity = await this.findById(command);
-    console.log('notificationTemplateEntity:', notificationTemplateEntity);
     if (!notificationTemplateEntity) {
       throw new WorkflowNotFoundException(command._workflowId);
     }

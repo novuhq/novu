@@ -26,6 +26,13 @@ import {
 
 const MOCK_CONTENT = 'MOCK_CONTENT';
 
+const PERMISSIVE_EMPTY_SCHEMA = {
+  type: 'object',
+  properties: {},
+  required: [],
+  additionalProperties: true,
+} as const;
+
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(private workflowsRepository: NotificationTemplateRepository) {}
@@ -45,11 +52,12 @@ export class ConstructFrameworkWorkflow {
       newWorkflow.triggers[0].identifier,
       async ({ step }) => {
         for await (const staticStep of newWorkflow.steps) {
-          console.log('staticStep:', staticStep);
           await this.constructStep(step, staticStep);
         }
       },
       {
+        payloadSchema: PERMISSIVE_EMPTY_SCHEMA,
+
         /*
          * TODO: Workflow options are not needed currently, given that this endpoint
          * focuses on execution only. However we should reconsider if we decide to

@@ -43,7 +43,7 @@ export class PreviewStep {
       state: [
         {
           stepId: 'trigger',
-          outputs: command.payload || {},
+          outputs: {},
           state: { status: JobStatusEnum.COMPLETED },
         },
       ],
