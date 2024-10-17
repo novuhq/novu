@@ -331,10 +331,17 @@ export class ExecuteBridgeRequest {
         RETRYABLE_ERROR_CODES.includes(error.code)
       ) {
         Logger.error(`Bridge endpoint unavailable for \`${url}\``, LOG_CONTEXT);
+
+        let codeToThrow: string;
+        if (RETRYABLE_ERROR_CODES.includes(error.code)) {
+          codeToThrow = error.code;
+        } else {
+          codeToThrow = BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.code;
+        }
         throw new NotFoundException({
           message:
             BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.message(url),
-          code: BRIDGE_EXECUTION_ERROR.BRIDGE_ENDPOINT_UNAVAILABLE.code,
+          code: codeToThrow,
         });
       } else if (error.response?.statusCode === 405) {
         Logger.error(
