@@ -78,6 +78,7 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   return {
     name: step.name || 'Missing Name',
     stepUuid: step._templateId,
+    stepId: step.stepId || 'Missing Step Id',
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),
     controlValues: step.controlVariables || {},

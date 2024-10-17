@@ -243,6 +243,7 @@ function buildEmailStep(): StepDto {
       schema: channelStepSchemas.email.output,
     },
     name: 'Email Test Step',
+    stepId: 'email-test-step',
     type: StepTypeEnum.EMAIL,
   };
 }
@@ -254,6 +255,7 @@ function buildInAppStep(): StepDto {
       schema: channelStepSchemas.in_app.output,
     },
     name: 'In-App Test Step',
+    stepId: 'in-app-test-step',
     type: StepTypeEnum.IN_APP,
   };
 }
