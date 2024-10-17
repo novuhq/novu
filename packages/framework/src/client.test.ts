@@ -859,7 +859,7 @@ describe('Novu Client', () => {
       });
     });
 
-    it.only('should respect the spaces option when using json filter', async () => {
+    it('should respect the spaces option when using json filter', async () => {
       const newWorkflow = workflow(
         'test-workflow',
         async ({ step }) => {

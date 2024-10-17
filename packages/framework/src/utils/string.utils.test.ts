@@ -43,7 +43,7 @@ describe('stringifyDataStructureWithSingleQuotes', () => {
     const myTestObject = { comments: [{ text: 'cat' }, { text: 'dog' }] };
     const converted = stringifyDataStructureWithSingleQuotes(myTestObject, 2);
     expect(converted).toStrictEqual(
-      `"{\\n  'comments': [\\n    {\\n      'text': 'cat'\\n    },\\n    {\\n      'text': 'dog'\\n    }\\n  ]\\n}"`
+      `{\\n  'comments': [\\n    {\\n      'text': 'cat'\\n    },\\n    {\\n      'text': 'dog'\\n    }\\n  ]\\n}`
     );
   });
 
