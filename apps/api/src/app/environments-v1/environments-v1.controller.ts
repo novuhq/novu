@@ -32,12 +32,15 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
 
+/**
+ * @deprecated use EnvironmentsControllerV2
+ */
 @ApiCommonResponses()
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
 @UserAuthentication()
 @ApiTags('Environments')
-export class EnvironmentsController {
+export class EnvironmentsControllerV1 {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
     private updateEnvironmentUsecase: UpdateEnvironment,
