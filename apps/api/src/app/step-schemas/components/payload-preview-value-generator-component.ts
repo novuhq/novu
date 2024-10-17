@@ -5,8 +5,7 @@ import {
   TipTapNodeSchemaDto,
 } from '@novu/shared-internal';
 import { faker } from '@faker-js/faker';
-import { RecordType } from 'zod';
-import { collectPlaceholders, PlaceholderMap } from './email-editor-hydration-component';
+import { collectPlaceholders, transformPlaceholderMap } from './email-editor-default-payload-creator-component';
 
 /**
  * Resolves the payload based on the hydration strategy.
@@ -41,13 +40,6 @@ export function addKeysToPayloadBasedOnHydrationStrategy(
   return aggregatedPayload;
 }
 
-function buildPayload(
-  collectPlaceholderMappings1: PlaceholderMap,
-  payloadValues?: RecordType<string, unknown>
-): Record<string, unknown> {
-  return {};
-}
-
 /**
  * Builds a payload for the email editor.
  * @param controlValue - The control value.
@@ -59,12 +51,14 @@ function buildPayloadForEmailEditor(controlValue: unknown, dto: GeneratePreviewR
   console.log('buildPayloadForEmailEditor.controlValue', JSON.stringify(controlValue, null, 2));
 
   const collectPlaceholderMappings1 = collectPlaceholders(controlValue as TipTapNodeSchemaDto);
+  const transformPlaceholderMap1 = transformPlaceholderMap(collectPlaceholderMappings1);
+  const finalPayload = mergeJsonObjects(dto.payloadValues || {}, transformPlaceholderMap1);
   console.log(
     'buildPayloadForEmailEditor.collectPlaceholderMappings1.output',
     JSON.stringify(collectPlaceholderMappings1, null, 2)
   );
 
-  return buildPayload(collectPlaceholderMappings1, dto.payloadValues);
+  return finalPayload;
 }
 
 function handleRegularPayload(
@@ -188,4 +182,35 @@ function resolveSystem(
     (key, payload) => getDefaultFromSchema(key, payload, schemaDefaults),
     ['subscriber', 'actor', 'steps']
   );
+}
+function mergeJsonObjects(
+  primary: Record<string, unknown>,
+  secondary: Record<string, unknown>
+): Record<string, unknown> {
+  // Create a new object to hold the merged result
+  const merged: Record<string, unknown> = { ...primary };
+
+  // Iterate over the keys of the secondary object
+  for (const key in secondary) {
+    // If the key is not present in the primary object, add it
+    if (!(key in merged)) {
+      merged[key] = secondary[key];
+    } else {
+      // If both values are objects, merge them recursively
+      if (
+        typeof merged[key] === 'object' &&
+        merged[key] !== null &&
+        typeof secondary[key] === 'object' &&
+        secondary[key] !== null
+      ) {
+        merged[key] = mergeJsonObjects(
+          merged[key] as Record<string, unknown>,
+          secondary[key] as Record<string, unknown>
+        );
+      }
+      // If the key exists but the value is not an object, we do nothing (keep the primary value)
+    }
+  }
+
+  return merged;
 }
