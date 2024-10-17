@@ -1,36 +1,25 @@
-import { OrganizationProfile } from '@clerk/clerk-react';
-import { FC } from 'react';
-
-// Hides OrganizationProfile sidebar + makes it fit the parent container
-const OrganizationProfileAppearance = {
-  elements: {
-    pageScrollBox: {
-      padding: 0,
-    },
-    cardBox: {
-      display: 'block',
-      width: '100%',
-      height: '100%',
-      boxShadow: 'none',
-    },
-    navbar: {
-      display: 'none',
-    },
-    rootBox: {
-      width: '100%',
-    },
-  },
-};
-
-interface CustomOrganizationProfileProps {
-  firstItem: 'general' | 'members';
-}
+import { OrganizationProfile, useOrganization } from '@clerk/clerk-react';
+import { OrganizationProfileTheme } from '@clerk/types';
+import { ROUTES } from '../../../constants/routes';
 
 // Hacky workaround to embed organization profile in user profile page
-export const CustomOrganizationProfile: FC<CustomOrganizationProfileProps> = ({ firstItem }) => {
+export const CustomOrganizationProfile = ({
+  appearance,
+  firstItem,
+}: {
+  appearance: OrganizationProfileTheme;
+  firstItem: 'general' | 'members';
+}) => {
+  const { organization } = useOrganization();
+
   if (firstItem === 'general') {
     return (
-      <OrganizationProfile appearance={OrganizationProfileAppearance}>
+      <OrganizationProfile
+        appearance={appearance}
+        // @ts-ignore
+        __unstable_manageBillingUrl={ROUTES.MANAGE_ACCOUNT_BILLING}
+        __unstable_manageBillingMembersLimit={organization?.maxAllowedMemberships}
+      >
         <OrganizationProfile.Page label="general" />
         <OrganizationProfile.Page label="members" />
       </OrganizationProfile>
@@ -38,7 +27,12 @@ export const CustomOrganizationProfile: FC<CustomOrganizationProfileProps> = ({ 
   }
 
   return (
-    <OrganizationProfile appearance={OrganizationProfileAppearance}>
+    <OrganizationProfile
+      appearance={appearance}
+      // @ts-ignore
+      __unstable_manageBillingUrl={ROUTES.MANAGE_ACCOUNT_BILLING}
+      __unstable_manageBillingMembersLimit={organization?.maxAllowedMemberships}
+    >
       <OrganizationProfile.Page label="members" />
       <OrganizationProfile.Page label="general" />
     </OrganizationProfile>

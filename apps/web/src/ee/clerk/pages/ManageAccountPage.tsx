@@ -10,11 +10,11 @@ import {
 } from '@novu/novui/icons';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Title } from '@novu/novui';
 import { MANAGE_ACCOUNT_ROUTE_SEGMENTS, ROUTES } from '../../../constants/routes';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import { BrandingPage } from '../../../pages/brand/BrandingPage';
 import { BillingPage } from '../../billing/pages/BillingPage';
-import { Title } from '@novu/novui';
 import {
   billingTitle,
   clerkComponentAppearance,
@@ -24,6 +24,7 @@ import {
   tabsStyles,
   titleTab,
 } from './ManageAccountPage.styles';
+import { CustomOrganizationProfile } from '../components/CustomOrganizationProfile';
 
 export default function ManageAccountPage() {
   const navigate = useNavigate();
@@ -108,16 +109,10 @@ export default function ManageAccountPage() {
           </UserProfile>
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.ORGANIZATION}>
-          <OrganizationProfile appearance={clerkComponentAppearance}>
-            <OrganizationProfile.Page label="general" />
-            <OrganizationProfile.Page label="members" />
-          </OrganizationProfile>
+          <CustomOrganizationProfile appearance={clerkComponentAppearance} firstItem="general" />
         </Tabs.Panel>
         <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.TEAM_MEMBERS}>
-          <OrganizationProfile appearance={clerkComponentAppearance}>
-            <OrganizationProfile.Page label="members" />
-            <OrganizationProfile.Page label="general" />
-          </OrganizationProfile>
+          <CustomOrganizationProfile appearance={clerkComponentAppearance} firstItem="members" />
         </Tabs.Panel>
         {!isV2Enabled && (
           <Tabs.Panel value={MANAGE_ACCOUNT_ROUTE_SEGMENTS.BRANDING}>
