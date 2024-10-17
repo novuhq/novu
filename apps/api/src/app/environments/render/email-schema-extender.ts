@@ -13,11 +13,11 @@ function processItemNode(node: TipTapNodeSchemaDto, item: any): TipTapNodeSchema
   console.log('Current item:', JSON.stringify(item, null, 2)); // Log the current item
 
   if (node.type === 'text' && typeof node.text === 'string') {
-    const regex = /{{(novu\.item\.(\w+))}}/g;
+    const regex = /{#item\.(\w+)#}/g; // Updated regex to match {#item.X#}
     node.text = node.text.replace(regex, (_, key: string) => {
-      const propertyName = key.split('.')[2];
-      const replacement = item[propertyName] !== undefined ? item[propertyName] : _;
-      console.log(`Replacing {{${key}}} with ${replacement}`); // Log the replacement
+      const propertyName = key; // Directly use the captured group as the property name
+      const replacement = item[propertyName] !== undefined ? item[propertyName] : _; // Check if the property exists
+      console.log(`Replacing {#item.${key}#} with ${replacement}`); // Log the replacement
       return replacement;
     });
   }
@@ -74,7 +74,8 @@ function handleFor(node: TipTapNodeSchemaDto & { attr: { each: any } }): TipTapN
   console.log('Items for handling "for":', items, typeof items); // Log the items for handling "for"
   const newContent: TipTapNodeSchemaDto[] = [];
 
-  for (const item of JSON.parse(items.replace(/'/g, '"'))) {
+  const itemsParsed = JSON.parse(items.replace(/'/g, '"'));
+  for (const item of itemsParsed) {
     console.log('Current item in loop:', JSON.stringify(item, null, 2)); // Log current item in the loop
     const newNode = { ...node };
 

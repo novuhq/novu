@@ -16,7 +16,6 @@ import { randomUUID } from 'node:crypto';
 import { after, beforeEach } from 'mocha';
 import { sleep } from '@nestjs/terminus/dist/utils';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
-import { x } from 'tar';
 import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e2e';
 
 const FOR_ITEM_VALUE_PLACEHOLDER = '{#item.body#}';
@@ -100,7 +99,6 @@ describe('Control Schema', () => {
           if (type !== ChannelTypeEnum.EMAIL) {
             expect(previewResponseDto.result!.preview).to.deep.equal(dtos[type]);
           } else {
-            x;
             assertEmail(previewResponseDto);
           }
         });
