@@ -76,7 +76,7 @@ export class WorkflowController {
       UpsertWorkflowCommand.create({
         workflowDto: updateWorkflowDto,
         user,
-        workflowIdOrIdentifier: workflowId,
+        identifierOrInternalId: workflowId,
       })
     );
   }
@@ -87,15 +87,15 @@ export class WorkflowController {
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowId: string
   ): Promise<WorkflowResponseDto> {
-    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ workflowIdOrIdentifier: workflowId, user }));
+    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ identifierOrInternalId: workflowId, user }));
   }
 
   @Delete(':workflowId')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId', ParseSlugIdPipe) workflowId: string) {
+  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string) {
     await this.deleteWorkflowUsecase.execute(
-      DeleteWorkflowCommand.create({ workflowIdOrIdentifier: workflowId, user })
+      DeleteWorkflowCommand.create({ identifierOrInternalId: workflowId, user })
     );
   }
 

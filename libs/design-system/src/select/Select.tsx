@@ -133,10 +133,12 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
   }
 );
 
-function Value({ label, onRemove }: MultiSelectValueProps) {
+function Value({ label, onRemove, disabled }: MultiSelectValueProps) {
   const theme = useMantineTheme();
   const dark = theme.colorScheme === 'dark';
-  const backgroundColor = dark ? theme.colors.dark[4] : theme.colors.gray[0];
+  const enabledBackgroundColor = dark ? theme.colors.dark[4] : theme.colors.gray[0];
+  const disabledBackgroundColor = dark ? theme.colors.dark[5] : theme.colors.gray[3];
+  const backgroundColor = disabled ? disabledBackgroundColor : enabledBackgroundColor;
   const color = dark ? theme.colors.dark[3] : theme.colors.gray[5];
 
   return (
@@ -151,7 +153,7 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
     >
       <div
         style={{
-          margin: '6.5px 0px 6.5px 10px',
+          margin: `6.5px ${disabled ? '10px' : '0px'} 6.5px 10px`,
           lineHeight: '20px',
           maxWidth: '80px',
           fontSize: 14,
@@ -160,7 +162,9 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
       >
         <Text rows={1}>{label}</Text>
       </div>
-      <CloseButton style={{ color }} onMouseDown={onRemove} variant="transparent" size={30} iconSize={15} />
+      {!disabled && (
+        <CloseButton style={{ color }} onMouseDown={onRemove} variant="transparent" size={30} iconSize={15} />
+      )}
     </Box>
   );
 }

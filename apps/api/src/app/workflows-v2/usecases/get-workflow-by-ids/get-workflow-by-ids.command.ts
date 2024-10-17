@@ -4,5 +4,5 @@ import { IsDefined, IsString } from 'class-validator';
 export class GetWorkflowByIdsCommand extends EnvironmentWithUserObjectCommand {
   @IsString()
   @IsDefined()
-  workflowIdOrIdentifier: string;
+  identifierOrInternalId: string;
 }

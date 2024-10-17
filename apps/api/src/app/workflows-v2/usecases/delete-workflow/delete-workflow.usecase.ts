@@ -24,7 +24,7 @@ export class DeleteWorkflowUseCase {
     const workflowEntity: NotificationTemplateEntity | null = await this.getWorkflowByIdsUseCase.execute(
       GetWorkflowByIdsCommand.create({
         ...command,
-        workflowIdOrIdentifier: command.workflowIdOrIdentifier,
+        identifierOrInternalId: command.identifierOrInternalId,
       })
     );
 

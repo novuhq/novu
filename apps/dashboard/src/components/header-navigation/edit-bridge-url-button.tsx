@@ -1,6 +1,5 @@
 import { useLayoutEffect, useState } from 'react';
 import { RiLinkM, RiPencilFill } from 'react-icons/ri';
-import { PopoverPortal } from '@radix-ui/react-popover';
 import { useForm } from 'react-hook-form';
 // eslint-disable-next-line
 // @ts-ignore
@@ -8,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { cn } from '@/utils/ui';
-import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover';
+import { Popover, PopoverContent, PopoverTrigger, PopoverPortal } from '../primitives/popover';
 import { Button } from '../primitives/button';
 import { Input, InputField } from '../primitives/input';
 import { useBridgeHealthCheck, useUpdateBridgeUrl, useValidateBridgeUrl } from '@/hooks';
@@ -65,7 +64,7 @@ export const EditBridgeUrlButton = () => {
                 'relative size-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
                 status === ConnectionStatus.DISCONNECTED || status === ConnectionStatus.LOADING
                   ? 'bg-destructive [--pulse-color:var(--destructive)]'
-                  : 'bg-success [--pulse-color:var(--destructive)]'
+                  : 'bg-success [--pulse-color:var(--success)]'
               )}
             />
             <span>Local Studio</span>
@@ -92,7 +91,7 @@ export const EditBridgeUrlButton = () => {
                           <Input id="bridgeUrl" {...field} />
                         </InputField>
                       </FormControl>
-                      <FormMessage>Full path URL (e.g., https://your.api.com/api/novu)</FormMessage>
+                      <FormMessage>URL (e.g., https://your.api.com/api/novu)</FormMessage>
                     </FormItem>
                   )}
                 />
@@ -104,7 +103,7 @@ export const EditBridgeUrlButton = () => {
                   rel="noopener noreferrer"
                   className="text-xs"
                 >
-                  How it works?
+                  Learn more
                 </a>
                 <Button
                   type="submit"

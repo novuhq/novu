@@ -1,5 +1,5 @@
+import React from 'react';
 import type { IEnvironment } from '@novu/shared';
-import { createContextAndHook } from '@/utils/context';
 
 export type EnvironmentContextValue = {
   currentEnvironment?: IEnvironment;
@@ -10,7 +10,5 @@ export type EnvironmentContextValue = {
   setBridgeUrl: (url: string) => void;
 };
 
-const [EnvironmentContext, useEnvironmentContext] =
-  createContextAndHook<EnvironmentContextValue>('Environment Context');
-
-export { EnvironmentContext, useEnvironmentContext };
+export const EnvironmentContext = React.createContext<EnvironmentContextValue>({} as EnvironmentContextValue);
+EnvironmentContext.displayName = 'EnvironmentContext';

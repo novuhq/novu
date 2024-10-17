@@ -15,7 +15,8 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
-import { JsonSchema } from '@novu/framework';
+import { channelStepSchemas, JsonSchema } from '@novu/framework';
+import { slugifyName } from '@novu/application-generic';
 import { encodeBase62 } from '../shared/helpers';
 
 const v2Prefix = '/v2';
@@ -61,13 +62,24 @@ describe('Workflow Controller E2E API Testing', () => {
 
   describe('Create Workflow Permutations', () => {
     // todo: remove skip and fix if needed once pr 6657 is merged
-    it.skip('should not allow creating two workflows for the same user with the same name', async () => {
+    it.skip('should allow creating two workflows for the same user with the same name', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       await createWorkflowAndValidate(nameSuffix);
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
       const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
+      expect(res.status).to.be.equal(201);
+      const workflowCreated: WorkflowResponseDto = res.body.data;
+      expect(workflowCreated.workflowId).to.include(`${slugifyName(nameSuffix)}-`);
+    });
+
+    it('should throw error when creating workflow with duplicate step ids', async () => {
+      const nameSuffix = `Test Workflow${new Date().toString()}`;
+      const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix, {
+        steps: [buildEmailStep(), buildEmailStep(), buildInAppStep(), buildInAppStep()],
+      });
+      const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
       expect(res.status).to.be.equal(400);
-      expect(res.text).to.contain('Workflow with the same name already exists');
+      expect(res.body.message).to.be.equal('Duplicate stepIds are not allowed: email-test-step, in-app-test-step');
     });
   });
 
@@ -174,7 +186,7 @@ describe('Workflow Controller E2E API Testing', () => {
       });
     });
 
-    it('should return  results without query', async () => {
+    it('should return results without query', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
       const listWorkflowResponse = await getAllAndValidate({
@@ -280,6 +292,9 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
 function buildEmailStep(): StepDto {
   return {
     controlValues: {},
+    controls: {
+      schema: channelStepSchemas.email.output,
+    },
     name: 'Email Test Step',
     type: StepTypeEnum.EMAIL,
   };
@@ -288,19 +303,24 @@ function buildEmailStep(): StepDto {
 function buildInAppStep(): StepDto {
   return {
     controlValues: {},
+    controls: {
+      schema: channelStepSchemas.in_app.output,
+    },
     name: 'In-App Test Step',
     type: StepTypeEnum.IN_APP,
   };
 }
 
-function buildCreateWorkflowDto(nameSuffix: string): CreateWorkflowDto {
+function buildCreateWorkflowDto(nameSuffix: string, overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
+    workflowId: `${slugifyName(TEST_WORKFLOW_NAME + nameSuffix)}`,
     description: 'This is a test workflow',
     active: true,
     tags: TEST_TAGS,
     steps: [buildEmailStep(), buildInAppStep()],
+    ...overrides,
   };
 }
 
@@ -322,6 +342,9 @@ function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
+      controls: {
+        schema: channelStepSchemas[stepInResponse.type].output,
+      },
       name: stepInResponse.name,
       type: stepInResponse.type,
     };
@@ -637,5 +660,10 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflo
     'type'
   ) as UpdateWorkflowDto;
 
-  return { ...updateRequest, name: TEST_WORKFLOW_UPDATED_NAME, steps };
+  return {
+    ...updateRequest,
+    name: TEST_WORKFLOW_UPDATED_NAME,
+    workflowId: `${slugifyName(TEST_WORKFLOW_UPDATED_NAME)}`,
+    steps,
+  };
 }

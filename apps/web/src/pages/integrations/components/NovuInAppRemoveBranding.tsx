@@ -1,11 +1,10 @@
 import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
 import { Popover, Switch, Text, Button, useColorScheme } from '@novu/design-system';
-import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '../../../hooks';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { Group } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 import { ROUTES } from '../../../constants/routes';
 import { IS_EE_AUTH_ENABLED } from '../../../config/index';
 
@@ -44,9 +43,8 @@ const PopoverContent = () => {
 export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
   const { apiServiceLevel } = useSubscription();
   const { colorScheme } = useColorScheme();
-  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (!isImprovedBillingEnabled || !IS_EE_AUTH_ENABLED) {
+  if (!IS_EE_AUTH_ENABLED) {
     return null;
   }
 
@@ -54,6 +52,7 @@ export const NovuInAppRemoveBranding = ({ control }: { control: any }) => {
     if (apiServiceLevel === ApiServiceLevelEnum.FREE) {
       // If it's a free tier, don't change the value, just show the popover
       e.preventDefault();
+
       return;
     }
 

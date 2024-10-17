@@ -1,6 +1,6 @@
 import { Step } from '@/components/primitives/step';
 import { WorkflowStep } from '@/components/workflow-step';
-import { StepTypeEnum } from '@novu/shared';
+import type { StepTypeEnum } from '@/utils/enums';
 
 type WorkflowStepsProps = {
   steps: StepTypeEnum[];

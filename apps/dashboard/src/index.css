@@ -66,6 +66,8 @@
 
     --stable: 172 72% 48%;
 
+    --alert: 42, 92%, 54%, 1;
+
     --verified: 200 100% 64%;
 
     --input: 220 18% 90%;
@@ -84,4 +86,9 @@
   body {
     @apply bg-background text-foreground-950;
   }
+
+  body, html{
+    height: 100%;
+    scroll-behavior: smooth;
+}
 }
