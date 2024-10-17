@@ -19,11 +19,13 @@ export const badgeVariants = cva(
         'warning-light': 'border-transparent bg-warning/10',
         alert: 'border-alert bg-alert',
         soft: 'border-neutral-alpha-200 bg-neutral-alpha-200',
+        outline: 'border-neutral-alpha-200 bg-transparent font-normal text-foreground-600 text-sm shadow-sm',
       },
       kind: {
         default: 'rounded-md',
         pill: 'rounded-full',
         'pill-stroke': 'rounded-full bg-transparent',
+        tag: 'rounded-md px-2 py-3',
       },
     },
     defaultVariants: {

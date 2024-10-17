@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.2.5",
-    "@hookform/resolvers": "^2.9.11",
+    "@hookform/resolvers": "^3.9.0",
     "@novu/react": "^2.3.0",
     "@novu/shared": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.2",
@@ -32,6 +32,7 @@
     "@radix-ui/react-progress": "^1.1.0",
     "@radix-ui/react-scroll-area": "^1.2.0",
     "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.3",
