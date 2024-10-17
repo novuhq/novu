@@ -1,12 +1,34 @@
-name: Deploy PROD Widget
+name: Deploy Widget
 
 on:
   workflow_call:
+    inputs:
+      env:
+        description: 'Deployment environment - choose between dev and prod'
+        required: true
+        type: string
 
 jobs:
 
+  deploy_widget:
+    uses: ./.github/workflows/reusable-widget-deploy.yml
+    if: ${{ contains(inputs.env, 'dev') }}
+    with:
+      environment: Development
+      react_app_api_url: https://dev.api.novu.co
+      react_app_ws_url: https://dev.ws.novu.co
+      react_app_webhook_url: https://dev.webhook.novu.co
+      react_app_sentry_dsn: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
+      react_app_environment: dev
+      netlify_deploy_message: Dev deployment
+      netlify_alias: dev
+      netlify_gh_env: development
+      netlify_site_id: b9147448-b835-4eb1-a2f0-11102f611f5f
+    secrets: inherit
+
   deploy_widget_eu:
     uses: ./.github/workflows/reusable-widget-deploy.yml
+    if: ${{ !contains(inputs.env, 'dev') }}
     with:
       environment: Production
       react_app_api_url: https://eu.api.novu.co
@@ -21,9 +43,8 @@ jobs:
     secrets: inherit
 
   deploy_widget_us:
-    needs:
-      - test_widget
     uses: ./.github/workflows/reusable-widget-deploy.yml
+    if: ${{ !contains(inputs.env, 'dev') }}
     with:
       environment: Production
       react_app_api_url: https://api.novu.co
