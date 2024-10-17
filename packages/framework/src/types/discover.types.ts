@@ -76,6 +76,8 @@ export type DiscoverWorkflowOutput = {
   };
   preferences: WorkflowPreferencesPartial;
   tags: string[];
+  name?: string;
+  description?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

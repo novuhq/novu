@@ -84,7 +84,7 @@ export class Sync {
     return persistedWorkflowsInBridge;
   }
 
-  private async updateBridgeUrl(command: SyncCommand) {
+  private async updateBridgeUrl(command: SyncCommand): Promise<void> {
     await this.environmentRepository.update(
       { _id: command.environmentId },
       {
@@ -100,7 +100,10 @@ export class Sync {
     );
   }
 
-  private async disposeOldWorkflows(command: SyncCommand, createdWorkflows: NotificationTemplateEntity[]) {
+  private async disposeOldWorkflows(
+    command: SyncCommand,
+    createdWorkflows: NotificationTemplateEntity[]
+  ): Promise<void> {
     const persistedWorkflowIdsInBridge = createdWorkflows.map((i) => i._id);
 
     const workflowsToDelete = await this.findAllWorkflowsWithOtherIds(command, persistedWorkflowIdsInBridge);
@@ -119,7 +122,10 @@ export class Sync {
     );
   }
 
-  private async findAllWorkflowsWithOtherIds(command: SyncCommand, persistedWorkflowIdsInBridge: string[]) {
+  private async findAllWorkflowsWithOtherIds(
+    command: SyncCommand,
+    persistedWorkflowIdsInBridge: string[]
+  ): Promise<NotificationTemplateEntity[]> {
     return await this.notificationTemplateRepository.find({
       _environmentId: command.environmentId,
       type: {
@@ -132,7 +138,10 @@ export class Sync {
     });
   }
 
-  private async createWorkflows(command: SyncCommand, workflowsFromBridge: DiscoverWorkflowOutput[]) {
+  private async createWorkflows(
+    command: SyncCommand,
+    workflowsFromBridge: DiscoverWorkflowOutput[]
+  ): Promise<NotificationTemplateEntity[]> {
     return Promise.all(
       workflowsFromBridge.map(async (workflow) => {
         const workflowExist = await this.notificationTemplateRepository.findByTriggerIdentifier(
@@ -183,7 +192,12 @@ export class Sync {
     );
   }
 
-  private async createWorkflow(notificationGroupId: string, isWorkflowActive, command: SyncCommand, workflow) {
+  private async createWorkflow(
+    notificationGroupId: string,
+    isWorkflowActive: boolean,
+    command: SyncCommand,
+    workflow: DiscoverWorkflowOutput
+  ): Promise<NotificationTemplateEntity> {
     return await this.createWorkflowUsecase.execute(
       CreateWorkflowCommand.create({
         origin: WorkflowOriginEnum.EXTERNAL,
@@ -193,7 +207,8 @@ export class Sync {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-        name: workflow.workflowId,
+        name: this.getWorkflowName(workflow),
+        triggerIdentifier: workflow.workflowId,
         __source: WorkflowCreationSourceEnum.BRIDGE,
         steps: this.mapSteps(workflow.steps),
         /** @deprecated */
@@ -209,23 +224,28 @@ export class Sync {
           /** @deprecated */
           (workflow.options?.payloadSchema as Record<string, unknown>),
         active: isWorkflowActive,
-        description: this.castToAnyNotSupportedParam(workflow.options).description,
+        description: this.getWorkflowDescription(workflow),
         data: this.castToAnyNotSupportedParam(workflow).options?.data,
-        tags: workflow.tags || [],
+        tags: this.getWorkflowTags(workflow),
         critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
         preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
       })
     );
   }
 
-  private async updateWorkflow(workflowExist, command: SyncCommand, workflow) {
+  private async updateWorkflow(
+    workflowExist: NotificationTemplateEntity,
+    command: SyncCommand,
+    workflow: DiscoverWorkflowOutput
+  ): Promise<NotificationTemplateEntity> {
     return await this.updateWorkflowUsecase.execute(
       UpdateWorkflowCommand.create({
         id: workflowExist._id,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-        name: workflow.workflowId,
+        name: this.getWorkflowName(workflow),
+        workflowId: workflow.workflowId,
         steps: this.mapSteps(workflow.steps, workflowExist),
         inputs: {
           schema: workflow.controls?.schema || workflow.inputs.schema,
@@ -238,9 +258,9 @@ export class Sync {
           (workflow.payload?.schema as Record<string, unknown>) ||
           (workflow.options?.payloadSchema as Record<string, unknown>),
         type: WorkflowTypeEnum.BRIDGE,
-        description: this.castToAnyNotSupportedParam(workflow.options).description,
+        description: this.getWorkflowDescription(workflow),
         data: this.castToAnyNotSupportedParam(workflow.options)?.data,
-        tags: workflow.tags,
+        tags: this.getWorkflowTags(workflow),
         active: this.castToAnyNotSupportedParam(workflow.options)?.active ?? true,
         critical: this.castToAnyNotSupportedParam(workflow.options)?.critical ?? false,
         preferenceSettings: this.castToAnyNotSupportedParam(workflow.options)?.preferenceSettings,
@@ -248,7 +268,10 @@ export class Sync {
     );
   }
 
-  private mapSteps(commandWorkflowSteps: DiscoverStepOutput[], workflow?: NotificationTemplateEntity | undefined) {
+  private mapSteps(
+    commandWorkflowSteps: DiscoverStepOutput[],
+    workflow?: NotificationTemplateEntity | undefined
+  ): NotificationStep[] {
     const steps: NotificationStep[] = commandWorkflowSteps.map((step) => {
       const foundStep = workflow?.steps?.find((workflowStep) => workflowStep.stepId === step.stepId);
 
@@ -275,7 +298,10 @@ export class Sync {
     return steps;
   }
 
-  private async getNotificationGroup(notificationGroupIdCommand: string | undefined, environmentId: string) {
+  private async getNotificationGroup(
+    notificationGroupIdCommand: string | undefined,
+    environmentId: string
+  ): Promise<string | undefined> {
     let notificationGroupId = notificationGroupIdCommand;
 
     if (!notificationGroupId) {
@@ -291,6 +317,18 @@ export class Sync {
     }
 
     return notificationGroupId;
+  }
+
+  private getWorkflowName(workflow: DiscoverWorkflowOutput): string {
+    return workflow.name || workflow.workflowId;
+  }
+
+  private getWorkflowDescription(workflow: DiscoverWorkflowOutput): string {
+    return workflow.description || '';
+  }
+
+  private getWorkflowTags(workflow: DiscoverWorkflowOutput): string[] {
+    return workflow.tags || [];
   }
 
   private castToAnyNotSupportedParam(param: any): any {

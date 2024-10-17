@@ -27,6 +27,9 @@ export const StudioWorkflowSettingsSidePanel: FC<StudioWorkflowSettingsSidePanel
   useEffect(() => {
     if (workflow) {
       setValue('general.workflowId', workflow.workflowId);
+      setValue('general.name', workflow.name || workflow.workflowId);
+      setValue('general.description', workflow.description || '');
+      setValue('general.tags', workflow.tags || []);
       setValue('preferences', buildWorkflowPreferences(workflow.preferences));
     }
   }, [setValue, workflow]);
