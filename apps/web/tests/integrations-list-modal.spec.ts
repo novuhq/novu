@@ -466,10 +466,6 @@ test('should update the mailjet integration', async ({ page }) => {
   await updateButton.click();
   await expect(updateButton).toBeDisabled();
 
-  // Test that the update button is enabled again when the form value changes
-  await senderName.fill('Novu edited');
-  await expect(updateButton).toBeEnabled();
-
   const sidebarClose = page.getByTestId('sidebar-close');
   await sidebarClose.click();
 

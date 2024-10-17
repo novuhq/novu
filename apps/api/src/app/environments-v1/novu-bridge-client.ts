@@ -2,7 +2,6 @@ import { Injectable, Inject, Scope } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
 import { Client, PostActionEnum, NovuRequestHandler, Workflow } from '@novu/framework';
-// @ts-expect-error - TODO: bundle CJS with @novu/framework
 import { NovuHandler } from '@novu/framework/nest';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '@novu/application-generic';
 import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from './usecases/construct-framework-workflow';
