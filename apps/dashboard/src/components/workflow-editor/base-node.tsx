@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 import { cva, VariantProps } from 'class-variance-authority';
-import { StepTypeEnum } from '@novu/shared';
 import { Badge, BadgeContent, BadgeContentProps, BadgeProps } from '../primitives/badge';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
+import { StepTypeEnum } from '@/utils/enums';
 
 const nodeIconVariants = cva('w-5 h-5 border rounded-full opacity-40 flex items-center justify-center p-1', {
   variants: {
@@ -66,7 +66,7 @@ export const NodeBody = ({ children }: { children: ReactNode }) => {
 export const NODE_WIDTH = 300;
 export const NODE_HEIGHT = 86;
 
-export const nodeVariants = cva(
+const nodeVariants = cva(
   `border-neutral-alpha-200 bg-foreground-0 flex w-[300px] flex-col gap-1 border p-1 shadow-xs`,
   {
     variants: {

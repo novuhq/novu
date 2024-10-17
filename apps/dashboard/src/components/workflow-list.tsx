@@ -1,7 +1,23 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { FaCode } from 'react-icons/fa6';
+import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  RiRouteFill,
+  RiBookMarkedLine,
+  RiMore2Fill,
+  RiPlayCircleLine,
+  RiGitPullRequestFill,
+  RiPulseFill,
+  RiPauseCircleLine,
+  RiDeleteBin2Line,
+} from 'react-icons/ri';
+import type { ListWorkflowResponse } from '@novu/shared';
+
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
 import { Badge, BadgeContent } from '@/components/primitives/badge';
-import { Button, buttonVariants } from '@/components/primitives/button';
+import { Button } from '@/components/primitives/button';
+import { buttonVariants } from '@/components/primitives/variants';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
@@ -19,20 +35,6 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { ListWorkflowResponse, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FaCode } from 'react-icons/fa6';
-import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  RiRouteFill,
-  RiBookMarkedLine,
-  RiMore2Fill,
-  RiPlayCircleLine,
-  RiGitPullRequestFill,
-  RiPulseFill,
-  RiPauseCircleLine,
-  RiDeleteBin2Line,
-} from 'react-icons/ri';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();

@@ -63,7 +63,8 @@ export class Notifications extends BaseModule {
     return this.callWithSession(async () => {
       const args = { limit, ...restOptions };
       try {
-        let data: ListNotificationsResponse | undefined = this.#useCache ? this.cache.getAll(args) : undefined;
+        const shouldUseCache = 'useCache' in args ? args.useCache : this.#useCache;
+        let data: ListNotificationsResponse | undefined = shouldUseCache ? this.cache.getAll(args) : undefined;
         this._emitter.emit('notifications.list.pending', { args, data });
 
         if (!data) {
@@ -78,7 +79,7 @@ export class Notifications extends BaseModule {
             notifications: response.data.map((el) => new Notification(el, this._emitter, this._inboxService)),
           };
 
-          if (this.#useCache) {
+          if (shouldUseCache) {
             this.cache.set(args, data);
             data = this.cache.getAll(args);
           }

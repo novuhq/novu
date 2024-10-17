@@ -60,7 +60,6 @@ type Feature = {
 const features: Feature[] = [
   {
     label: 'Platform',
-    isContrast: false,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -70,7 +69,6 @@ const features: Feature[] = [
   },
   {
     label: 'Monthly events',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Up to 30,000' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Up to 250,000' },
@@ -79,7 +77,6 @@ const features: Feature[] = [
   },
   {
     label: 'Additional Events',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: '$0.0012 per event' },
@@ -88,7 +85,6 @@ const features: Feature[] = [
   },
   {
     label: 'Email, InApp, SMS, Chat, Push Channels',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -97,7 +93,6 @@ const features: Feature[] = [
   },
   {
     label: 'Notification subscribers',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
@@ -106,7 +101,6 @@ const features: Feature[] = [
   },
   {
     label: 'Framework',
-    isContrast: false,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -116,7 +110,6 @@ const features: Feature[] = [
   },
   {
     label: 'Total workflows',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
@@ -125,7 +118,6 @@ const features: Feature[] = [
   },
   {
     label: 'Provider integrations',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Unlimited' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Unlimited' },
@@ -133,8 +125,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Activity retention',
-    isContrast: false,
+    label: 'Activity Feed retention',
     values: {
       [SupportedPlansEnum.FREE]: { value: '30 days' },
       [SupportedPlansEnum.BUSINESS]: { value: '90 days' },
@@ -143,7 +134,6 @@ const features: Feature[] = [
   },
   {
     label: 'Digests',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -152,7 +142,6 @@ const features: Feature[] = [
   },
   {
     label: 'Step controls',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -161,7 +150,6 @@ const features: Feature[] = [
   },
   {
     label: 'Inbox',
-    isContrast: true,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -171,7 +159,6 @@ const features: Feature[] = [
   },
   {
     label: 'Inbox component',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -180,7 +167,6 @@ const features: Feature[] = [
   },
   {
     label: 'User preferences component',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -189,7 +175,6 @@ const features: Feature[] = [
   },
   {
     label: 'Remove Novu branding',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -197,17 +182,7 @@ const features: Feature[] = [
     },
   },
   {
-    label: 'Notifications retention',
-    isContrast: true,
-    values: {
-      [SupportedPlansEnum.FREE]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.BUSINESS]: { value: <Badge label="Coming soon" /> },
-      [SupportedPlansEnum.ENTERPRISE]: { value: <Badge label="Coming soon" /> },
-    },
-  },
-  {
     label: 'Account administration and security',
-    isContrast: false,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -217,25 +192,22 @@ const features: Feature[] = [
   },
   {
     label: 'Team members',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '3' },
-      [SupportedPlansEnum.BUSINESS]: { value: '50' },
+      [SupportedPlansEnum.BUSINESS]: { value: '10' },
       [SupportedPlansEnum.ENTERPRISE]: { value: 'Unlimited' },
     },
   },
   {
     label: 'RBAC',
-    isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
+      [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
       [SupportedPlansEnum.ENTERPRISE]: { value: <IconCheck /> },
     },
   },
   {
     label: 'GDPR compliance',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: <IconCheck /> },
       [SupportedPlansEnum.BUSINESS]: { value: <IconCheck /> },
@@ -244,7 +216,6 @@ const features: Feature[] = [
   },
   {
     label: 'SAML SSO and Enterprise SSO providers',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: '-' },
@@ -253,7 +224,6 @@ const features: Feature[] = [
   },
   {
     label: 'Support and account management',
-    isContrast: true,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -263,25 +233,22 @@ const features: Feature[] = [
   },
   {
     label: 'Support SLA',
-    isContrast: false,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Community & Intercom' },
+      [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: '48 hours' },
       [SupportedPlansEnum.ENTERPRISE]: { value: '24 hours' },
     },
   },
   {
     label: 'Support channels',
-    isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'Community & Intercom' },
-      [SupportedPlansEnum.BUSINESS]: { value: 'Chat and Email' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated support' },
+      [SupportedPlansEnum.FREE]: { value: 'Community & Discord' },
+      [SupportedPlansEnum.BUSINESS]: { value: 'Slack & Email' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Dedicated' },
     },
   },
   {
     label: 'Legal & Vendor management',
-    isContrast: false,
     isTitle: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: '' },
@@ -291,16 +258,14 @@ const features: Feature[] = [
   },
   {
     label: 'Payment method',
-    isContrast: true,
     values: {
-      [SupportedPlansEnum.FREE]: { value: 'N/A' },
+      [SupportedPlansEnum.FREE]: { value: '-' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Credit card only' },
-      [SupportedPlansEnum.ENTERPRISE]: { value: 'PO and Invoicing' },
+      [SupportedPlansEnum.ENTERPRISE]: { value: 'Credit card & PO and Invoicing' },
     },
   },
   {
     label: 'Terms of service',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Standard' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
@@ -309,7 +274,6 @@ const features: Feature[] = [
   },
   {
     label: 'DPA',
-    isContrast: true,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'Standard' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Standard' },
@@ -318,7 +282,6 @@ const features: Feature[] = [
   },
   {
     label: 'Security review',
-    isContrast: false,
     values: {
       [SupportedPlansEnum.FREE]: { value: 'SOC 2 and ISO 27001 upon request' },
       [SupportedPlansEnum.BUSINESS]: { value: 'Custom' },
@@ -331,14 +294,14 @@ export const Features = () => {
   return (
     <div className={styles.featureList}>
       {features.map((feature, index) => (
-        <FeatureRow key={index} feature={feature} />
+        <FeatureRow key={index} feature={feature} index={index} />
       ))}
     </div>
   );
 };
 
-const FeatureRow = ({ feature }: { feature: Feature }) => (
-  <div className={styles.rowContainer(feature.isContrast, feature.isTitle)}>
+const FeatureRow = ({ feature, index }: { feature: Feature; index: number }) => (
+  <div className={styles.rowContainer(index % 2 === 1, feature.isTitle)}>
     <TitleCell>
       <Text
         variant={feature.isTitle ? 'strong' : undefined}

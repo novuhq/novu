@@ -8,35 +8,37 @@ import {
 } from '@novu/dal';
 
 import { DeleteWorkflowCommand } from './delete-workflow.command';
-import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
+import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
+import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
 
 @Injectable()
 export class DeleteWorkflowUseCase {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
+    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository
   ) {}
 
   async execute(command: DeleteWorkflowCommand): Promise<void> {
-    const workflow = await this.notificationTemplateRepository.findByIdQuery({
-      id: command.workflowId,
-      environmentId: command.user.environmentId,
-    });
-    if (!workflow) {
-      throw new WorkflowNotFoundException(command.workflowId);
-    }
-    await this.deleteRelatedEntities(command, workflow);
+    const workflowEntity: NotificationTemplateEntity | null = await this.getWorkflowByIdsUseCase.execute(
+      GetWorkflowByIdsCommand.create({
+        ...command,
+        identifierOrInternalId: command.identifierOrInternalId,
+      })
+    );
+
+    await this.deleteRelatedEntities(command, workflowEntity);
   }
 
-  private async deleteRelatedEntities(command: DeleteWorkflowCommand, workflow) {
+  private async deleteRelatedEntities(command: DeleteWorkflowCommand, workflow: NotificationTemplateEntity) {
     await this.controlValuesRepository.deleteMany({
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,
-      _workflowId: command.workflowId,
+      _workflowId: workflow._id,
     });
     await this.removeMessageTemplatesIfNeeded(workflow, command);
-    await this.notificationTemplateRepository.delete(buildDeleteQuery(command));
+    await this.notificationTemplateRepository.delete(buildDeleteQuery(command, workflow._id));
   }
 
   private async removeMessageTemplatesIfNeeded(workflow: NotificationTemplateEntity, command: DeleteWorkflowCommand) {
@@ -50,9 +52,9 @@ export class DeleteWorkflowUseCase {
     }
   }
 }
-function buildDeleteQuery(command: DeleteWorkflowCommand) {
+function buildDeleteQuery(command: DeleteWorkflowCommand, _workflowId: string) {
   return {
-    _id: command.workflowId,
+    _id: _workflowId,
     _organizationId: command.user.organizationId,
     _environmentId: command.user.environmentId,
   };
