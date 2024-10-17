@@ -12,12 +12,14 @@ import {
 } from '@novu/shared-internal';
 import { expendSchema } from './email-schema-extender';
 
-export class EmailOutputRenderer {
-  async render(controlValues: Record<string, unknown>): Promise<EmailRenderResult> {
-    const parse = EmailStepControlSchema.parse(controlValues);
-    console.log('compactSchema', JSON.stringify(parse, null, 2));
+class RenderCommand {
+  controlValues: Record<string, unknown>;
+}
+
+export class EmailOutputRendererUseCase {
+  async execute(renderCommand: RenderCommand): Promise<EmailRenderResult> {
+    const parse = EmailStepControlSchema.parse(renderCommand.controlValues);
     const expandedSchema = expendSchema(parse.emailEditor);
-    console.log('expandedSchema', JSON.stringify(expandedSchema, null, 2));
     const html = await render(expandedSchema);
 
     return { subject: parse.subject, body: html };
@@ -25,37 +27,37 @@ export class EmailOutputRenderer {
 }
 
 // Concrete Renderer for Chat Preview
-export class ChatOutputRenderer {
-  render(controlValues: Record<string, unknown>): ChatRenderResult {
-    const body = (controlValues.body as string) || 'Default chat message';
+export class ChatOutputRendererUseCase {
+  execute(renderCommand: RenderCommand): ChatRenderResult {
+    const body = (renderCommand.controlValues.body as string) || 'Default chat message';
 
     return { body };
   }
 }
 
 // Concrete Renderer for SMS Preview
-export class SmsOutputRenderer {
-  render(controlValues: Record<string, unknown>): SmsRenderResult {
-    const body = (controlValues.body as string) || 'Default SMS message';
+export class SmsOutputRendererUseCase {
+  execute(renderCommand: RenderCommand): SmsRenderResult {
+    const body = (renderCommand.controlValues.body as string) || 'Default SMS message';
 
     return { body };
   }
 }
 
 // Concrete Renderer for Push Notification Preview
-export class PushOutputRenderer {
-  render(controlValues: Record<string, unknown>): PushRenderResult {
-    const subject = (controlValues.subject as string) || 'Default Push Notification Subject';
-    const body = (controlValues.body as string) || 'Default Push Notification Body';
+export class PushOutputRendererUseCase {
+  execute(renderCommand: RenderCommand): PushRenderResult {
+    const subject = (renderCommand.controlValues.subject as string) || 'Default Push Notification Subject';
+    const body = (renderCommand.controlValues.body as string) || 'Default Push Notification Body';
 
     return { subject, body };
   }
 }
 
 // Concrete Renderer for In-App Message Preview
-export class InAppOutputRenderer {
-  render(controlValues: Record<string, unknown>): InAppRenderResult {
-    const inApp = InAppPreviewResultSchema.parse(controlValues);
+export class InAppOutputRendererUseCase {
+  execute(renderCommand: RenderCommand): InAppRenderResult {
+    const inApp = InAppPreviewResultSchema.parse(renderCommand.controlValues);
 
     return {
       subject: inApp.subject as string,

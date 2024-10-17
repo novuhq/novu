@@ -1,5 +1,3 @@
-// @ts-ignore
-
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { Client, NovuRequestHandler, PostActionEnum, Workflow } from '@novu/framework';
@@ -52,8 +50,6 @@ export class NovuBridgeClient {
           stepId: req.body.stepId,
         })
       );
-
-      console.log('workflow Log', JSON.stringify(programmaticallyConstructedWorkflow.definition.steps, null, 2));
 
       workflows.push(programmaticallyConstructedWorkflow);
     }

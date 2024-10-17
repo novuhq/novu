@@ -17,7 +17,7 @@ import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
 import { GeneratePreviewRequestDto, GeneratePreviewResponseDto } from '@novu/shared-internal';
 import { createGetStepSchemaCommand } from './usecases/get-step-schema/get-step-schema.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { GetStepSchema } from './usecases/get-step-schema/get-step-schema.usecase';
+import { GetStepSchemaUseCase } from './usecases/get-step-schema/get-step-schema.usecase';
 import { StepSchemaDto } from './dtos/step-schema.dto';
 import { GeneratePreviewUseCase } from './usecases/generate-preview/generate-preview-use-case';
 import { GeneratePreviewCommand } from './usecases/generate-preview/generate-preview-command';
@@ -27,7 +27,7 @@ import { GeneratePreviewCommand } from './usecases/generate-preview/generate-pre
 @UseInterceptors(ClassSerializerInterceptor)
 export class StepSchemasController {
   constructor(
-    private getStepDefaultSchemaUsecase: GetStepSchema,
+    private getStepDefaultSchemaUsecase: GetStepSchemaUseCase,
     private generatePreviewUseCase: GeneratePreviewUseCase
   ) {}
 

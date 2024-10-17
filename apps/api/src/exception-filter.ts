@@ -136,5 +136,5 @@ function handleCommandValidation(exception: CommandValidationException) {
   const { mappedErrors } = exception;
   const { message } = exception;
 
-  return { message: { message, cause: mappedErrors }, status: 0 };
+  return { message: { message, cause: mappedErrors }, status: 400 };
 }

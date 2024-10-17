@@ -17,11 +17,11 @@ import { TRANSIENT_PREVIEW_PREFIX } from '@novu/shared-internal';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 import { mapStepTypeToOutput } from '../../../step-schemas/shared';
 import {
-  ChatOutputRenderer,
-  EmailOutputRenderer,
-  InAppOutputRenderer,
-  PushOutputRenderer,
-  SmsOutputRenderer,
+  ChatOutputRendererUseCase,
+  EmailOutputRendererUseCase,
+  InAppOutputRendererUseCase,
+  PushOutputRendererUseCase,
+  SmsOutputRendererUseCase,
 } from '../../render/outputRenderers';
 
 const MOCK_CONTENT = 'MOCK_CONTENT';
@@ -38,7 +38,6 @@ export class ConstructFrameworkWorkflow {
   constructor(private workflowsRepository: NotificationTemplateRepository) {}
 
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    console.log('command:', command);
     const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
     if (shouldMockStepsForPreview(command)) {
       dbWorkflow.steps = [this.buildPreviewStep(command)];
@@ -97,7 +96,7 @@ export class ConstructFrameworkWorkflow {
           stepId,
           // The step callback function. Takes controls and returns the step outputs
           async (controlValues) => {
-            return new InAppOutputRenderer().render(controlValues);
+            return new InAppOutputRendererUseCase().execute({ controlValues });
           },
           // Step options
           this.constructChannelStepOptions(staticStep)
@@ -106,7 +105,7 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return (await new EmailOutputRenderer().render(controlValues)) as EmailOutput;
+            return (await new EmailOutputRendererUseCase().execute({ controlValues })) as EmailOutput;
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -114,7 +113,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            return new SmsOutputRenderer().render(controlValues);
+            return new SmsOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -122,7 +121,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            return new ChatOutputRenderer().render(controlValues);
+            return new ChatOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -130,7 +129,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            return new PushOutputRenderer().render(controlValues);
+            return new PushOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );
