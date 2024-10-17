@@ -34,7 +34,7 @@ const StartItems = () => {
   });
 
   const breadcrumbs = [
-    { label: currentEnvironment?.name, href: '/' },
+    { label: currentEnvironment?.name, href: workflowsRoute },
     {
       label: 'Workflows',
       href: workflowsRoute,
