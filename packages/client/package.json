@@ -47,7 +47,7 @@
     "@novu/shared": "workspace:*"
   },
   "devDependencies": {
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.13",
     "@types/node": "^20.15.0",
     "codecov": "^3.5.0",
     "jest": "^27.0.6",
