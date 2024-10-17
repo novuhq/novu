@@ -50,7 +50,7 @@ export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-
+  const navigate = useNavigate();
   const hrefFromOffset = (offset: number) => {
     return `${location.pathname}?${createSearchParams({
       ...searchParams,
