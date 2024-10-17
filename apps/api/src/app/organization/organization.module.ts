@@ -12,7 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { isClerkEnabled } from '@novu/shared';
-import { EnvironmentsModule } from '../environments/environments.module';
+import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
 import { UserModule } from '../user/user.module';
@@ -48,7 +48,7 @@ function getControllers() {
   imports: [
     SharedModule,
     UserModule,
-    EnvironmentsModule,
+    EnvironmentsModuleV1,
     IntegrationModule,
     forwardRef(() => AuthModule),
     ...enterpriseImports(),

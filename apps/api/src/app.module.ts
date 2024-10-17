@@ -12,7 +12,6 @@ import { AuthModule } from './app/auth/auth.module';
 import { TestingModule } from './app/testing/testing.module';
 import { HealthModule } from './app/health/health.module';
 import { OrganizationModule } from './app/organization/organization.module';
-import { EnvironmentsModule } from './app/environments/environments.module';
 import { ExecutionDetailsModule } from './app/execution-details/execution-details.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
@@ -44,6 +43,8 @@ import { PreferencesModule } from './app/preferences';
 import { StepSchemasModule } from './app/step-schemas/step-schemas.module';
 import { WorkflowModule } from './app/workflows-v2/workflow.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
+import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
+import { EnvironmentsModule } from './app/environments-v2/environments.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -76,7 +77,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   InboundParseModule,
   SharedModule,
   HealthModule,
-  EnvironmentsModule,
+  EnvironmentsModuleV1,
   ExecutionDetailsModule,
   WorkflowModuleV1,
   EventsModule,
@@ -106,6 +107,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   BridgeModule,
   PreferencesModule,
   WorkflowModule,
+  EnvironmentsModule,
 ];
 
 const enterpriseModules = enterpriseImports();

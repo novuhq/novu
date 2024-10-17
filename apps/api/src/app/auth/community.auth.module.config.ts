@@ -13,7 +13,7 @@ import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
 import { GitHubStrategy } from './services/passport/github.strategy';
 import { OrganizationModule } from '../organization/organization.module';
-import { EnvironmentsModule } from '../environments/environments.module';
+import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
@@ -39,7 +39,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
           expiresIn: 360000,
         },
       }),
-      EnvironmentsModule,
+      EnvironmentsModuleV1,
     ],
     controllers: [AuthController],
     providers: [
