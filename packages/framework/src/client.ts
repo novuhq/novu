@@ -35,7 +35,7 @@ import type {
   Workflow,
 } from './types';
 import { WithPassthrough } from './types/provider.types';
-import { EMOJI, log, sanitizeHtmlInObject } from './utils';
+import { EMOJI, log, sanitizeHtmlInObject, stringifyDataStructureWithSingleQuotes } from './utils';
 import { transformSchema, validateData } from './validators';
 
 /**
@@ -57,7 +57,11 @@ function isRuntimeInDevelopment() {
 export class Client {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
-  private templateEngine = new Liquid();
+  private templateEngine = new Liquid({
+    outputEscape: (output) => {
+      return stringifyDataStructureWithSingleQuotes(output);
+    },
+  });
 
   public secretKey?: string;
 
@@ -69,6 +73,9 @@ export class Client {
     const builtOpts = this.buildOptions(options);
     this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
+    this.templateEngine.registerFilter('json', (value, spaces) =>
+      stringifyDataStructureWithSingleQuotes(value, spaces)
+    );
   }
 
   private buildOptions(providedOptions?: ClientOptions) {

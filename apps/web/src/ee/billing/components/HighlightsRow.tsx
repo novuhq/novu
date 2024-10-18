@@ -28,19 +28,17 @@ const highlights: PlanHighlights = {
   [ApiServiceLevelEnum.FREE]: [
     { text: 'Up to 30,000 events per month' },
     { text: '3 teammates' },
-    { text: '7 days activity feed' },
+    { text: '30 days Activity Feed retention' },
   ],
   [ApiServiceLevelEnum.BUSINESS]: [
     { text: 'Up to 250,000 events per month' },
     { text: '50 teammates' },
-    { text: '90 days activity feed' },
-    { text: 'RBAC', badgeLabel: 'Coming soon' },
+    { text: '90 days Activity Feed retention' },
   ],
   [ApiServiceLevelEnum.ENTERPRISE]: [
     { text: 'Up to 5,000,000 events per month' },
     { text: 'Unlimited teammates' },
     { text: 'SAML SSO' },
-    { text: 'RBAC', badgeLabel: 'Coming soon' },
   ],
 };
 

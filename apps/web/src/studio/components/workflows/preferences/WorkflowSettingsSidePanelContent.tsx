@@ -39,8 +39,9 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
   const checkShouldHideField = (fieldName: WorkflowGeneralSettingsFieldName) => {
     switch (fieldName) {
       case 'general.name':
-        return isLocalStudio;
       case 'general.workflowId':
+      case 'general.description':
+      case 'general.tags':
         return false;
       default:
         return false;
@@ -51,6 +52,8 @@ export const WorkflowSettingsSidePanelContent: FC<WorkflowSettingsSidePanelConte
     switch (fieldName) {
       case 'general.name':
       case 'general.workflowId':
+      case 'general.description':
+      case 'general.tags':
         return isLocalStudio || isBridgeWorkflow(workflowType);
       default:
         return false;

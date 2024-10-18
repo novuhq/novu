@@ -10,6 +10,7 @@ export default {
       DEFAULT: '0px 16px 32px -12px #0E121B1A',
     },
     colors: {
+      black: 'black',
       transparent: 'transparent',
       background: 'hsl(var(--background))',
       foreground: {
