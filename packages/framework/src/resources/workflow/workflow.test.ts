@@ -1,6 +1,6 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
 import { MissingSecretKeyError } from '../../errors';
-import { workflow } from '.';
+import { workflow } from './workflow.resource';
 
 describe('workflow function', () => {
   describe('Type tests', () => {
@@ -121,6 +121,40 @@ describe('workflow function', () => {
         email: { enabled: true },
       },
     });
+  });
+
+  it('should include the defined name', async () => {
+    const { definition } = workflow(
+      'workflow-with-name',
+      async ({ step }) => {
+        await step.email('send-email', async () => ({
+          subject: 'Test Subject',
+          body: 'Test Body',
+        }));
+      },
+      {
+        name: 'My Workflow',
+      }
+    );
+
+    expect(definition.name).to.equal('My Workflow');
+  });
+
+  it('should include the defined description', async () => {
+    const { definition } = workflow(
+      'workflow-with-description',
+      async ({ step }) => {
+        await step.email('send-email', async () => ({
+          subject: 'Test Subject',
+          body: 'Test Body',
+        }));
+      },
+      {
+        description: 'My Workflow Description',
+      }
+    );
+
+    expect(definition.description).to.equal('My Workflow Description');
   });
 
   describe('trigger', () => {

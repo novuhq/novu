@@ -16,6 +16,7 @@ import { UpsertWorkflowUseCase } from './usecases/upsert-workflow/upsert-workflo
 import { GetWorkflowUseCase } from './usecases/get-workflow/get-workflow.usecase';
 import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.usecase';
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
+import { GetWorkflowByIdsUseCase } from './usecases/get-workflow-by-ids/get-workflow-by-ids.usecase';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
@@ -30,6 +31,7 @@ import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflo
     UpsertPreferences,
     UpsertControlValuesUseCase,
     GetPreferences,
+    GetWorkflowByIdsUseCase,
   ],
 })
 export class WorkflowModule implements NestModule {

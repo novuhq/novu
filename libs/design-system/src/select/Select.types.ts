@@ -12,7 +12,7 @@ export interface ISelectProps extends SpacingProps {
   itemComponent?: FC<any>;
   valueComponent?: FC<any>;
   placeholder?: string;
-  description?: string;
+  description?: React.ReactNode;
   getCreateLabel?: (query: string) => React.ReactNode;
   onDropdownOpen?: () => void;
   onDropdownClose?: () => void;

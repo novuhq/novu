@@ -7,6 +7,7 @@ export type DevCommandOptions = {
   studioPort: string;
   dashboardUrl: string;
   route: string;
+  tunnel: string;
 };
 
 export type LocalTunnelResponse = {
