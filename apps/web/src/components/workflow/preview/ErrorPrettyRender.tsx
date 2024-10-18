@@ -4,10 +4,11 @@ import { Text } from '@novu/novui';
 import { hstack } from '@novu/novui/patterns';
 import { Center, Stack } from '@novu/novui/jsx';
 import { IconErrorOutline, IconExpandLess, IconExpandMore } from '@novu/novui/icons';
+import { getSimplifiedErrorObject } from '../../../studio/utils';
 
 export function ErrorPrettyRender({ error: unparsedError }) {
   const [isExpanded, { toggle }] = useDisclosure();
-  const error = 'response' in unparsedError ? unparsedError?.response?.data : unparsedError;
+  const error = getSimplifiedErrorObject(unparsedError);
   /*
    * TODO: find a way to import ErrorCodeEnum from @novu/framework without transiently importing
    * types that are not available in the browser, like `crypto`

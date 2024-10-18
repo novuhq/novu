@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ZodSchema, z } from 'zod';
 import { validateData, transformSchema } from './base.validator';
-import { JsonSchema, Schema } from '../types/schema.types';
+import { JsonSchema, Schema } from '../types';
 
 const schemas = ['zod', 'json'] as const;
 
@@ -104,6 +104,45 @@ describe('validators', () => {
         },
       },
       {
+        title: 'should validate array properties successfully',
+        schemas: {
+          zod: z.object({ array: z.array(z.string()) }),
+          json: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              array: { type: 'array', items: { type: 'string' } },
+            },
+          } as const,
+        },
+        payload: { array: ['apples'] },
+        result: {
+          success: true,
+          data: { array: ['apples'] },
+        },
+      },
+      {
+        title: 'should return errors for invalid array properties',
+        schemas: {
+          zod: z.object({ array: z.array(z.string()) }),
+          json: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              array: { type: 'array', items: { type: 'string' } },
+            },
+          } as const,
+        },
+        payload: { array: [5] },
+        result: {
+          success: false,
+          errors: {
+            zod: [{ message: 'Expected string, received number', path: '/array/0' }],
+            json: [{ message: 'must be string', path: '/array/0' }],
+          },
+        },
+      },
+      {
         title: 'should successfully validate a polymorphic oneOf schema',
         schemas: {
           zod: null, // Zod has no support for `oneOf`
@@ -193,7 +232,7 @@ describe('validators', () => {
         result: {
           success: false,
           errors: {
-            json: [{ message: "must have required property 'numberType'", path: '' }],
+            json: [{ message: "must have required property 'numberType'", path: '/numberType' }],
             zod: null, // Zod has no support for `allOf`
           },
         },
@@ -288,7 +327,7 @@ describe('validators', () => {
             json: [
               {
                 message: "must have required property 'stringVal'",
-                path: '',
+                path: '/stringVal',
               },
               {
                 message: 'must be number',
@@ -296,7 +335,7 @@ describe('validators', () => {
               },
               {
                 message: "must have required property 'boolVal'",
-                path: '',
+                path: '/boolVal',
               },
               {
                 message: 'must match a schema in anyOf',
