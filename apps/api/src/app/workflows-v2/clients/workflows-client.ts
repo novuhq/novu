@@ -1,5 +1,12 @@
 import { GetListQueryParams } from '@novu/shared/src/dto/workflows/get-list-query-params';
-import { CreateWorkflowDto, ListWorkflowResponse, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  GeneratePreviewRequestDto,
+  GeneratePreviewResponseDto,
+  ListWorkflowResponse,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { createNovuBaseClient, HttpError, NovuRestResult } from './novu-base-client';
 
 // Define the WorkflowClient as a function that utilizes the base client
@@ -45,9 +52,20 @@ export const createWorkflowClient = (baseUrl: string, headers: HeadersInit = {})
 
     return await baseClient.safeGet<ListWorkflowResponse>(`/v2/workflows?${query.toString()}`);
   };
+  const generatePreview = async (
+    workflowId: string,
+    stepUuid: string,
+    generatePreviewDto: GeneratePreviewRequestDto
+  ): Promise<NovuRestResult<GeneratePreviewResponseDto, HttpError>> => {
+    return await baseClient.safePost<GeneratePreviewResponseDto>(
+      `/v2/workflows/${workflowId}/step/${stepUuid}/preview`,
+      generatePreviewDto
+    );
+  };
 
   // Return the methods as an object
   return {
+    generatePreview,
     createWorkflow,
     updateWorkflow,
     getWorkflow,

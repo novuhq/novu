@@ -15,7 +15,7 @@ import {
 } from '@novu/shared';
 import { InAppOutput } from '@novu/framework';
 import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e2e';
-import { createStepSchemaClient, createWorkflowClient, HttpError, NovuRestResult } from '../../workflows-v2/clients';
+import { createWorkflowClient, HttpError, NovuRestResult } from '../../workflows-v2/clients';
 
 const FOR_ITEM_VALUE_PLACEHOLDER = '{#item.body#}';
 const TEST_SHOW_VALUE = 'TEST_SHOW_VALUE';
@@ -43,13 +43,11 @@ function assertEmail(dto: GeneratePreviewResponseDto) {
 
 describe('Control Schema', () => {
   let session: UserSession;
-  let stepSchemaClient: ReturnType<typeof createStepSchemaClient>;
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    stepSchemaClient = createStepSchemaClient(session.serverUrl, getHeaders());
     workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
     // @ts-ignore
     process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
@@ -77,20 +75,20 @@ describe('Control Schema', () => {
 
     describe('Happy Path', () => {
       const channelTypes = [
-        { type: ChannelTypeEnum.IN_APP, description: 'InApp' },
-        { type: ChannelTypeEnum.SMS, description: 'SMS' },
-        { type: ChannelTypeEnum.PUSH, description: 'Push' },
-        { type: ChannelTypeEnum.CHAT, description: 'Chat' },
+        { type: StepTypeEnum.IN_APP, description: 'InApp' },
+        { type: StepTypeEnum.SMS, description: 'SMS' },
+        { type: StepTypeEnum.PUSH, description: 'Push' },
+        { type: StepTypeEnum.CHAT, description: 'Chat' },
       ];
 
       channelTypes.forEach(({ type, description }) => {
         it(`${type}:should match the body in the preview response`, async () => {
-          const res = await createWorkflowAndReturnId(type);
-          const requestDto = buildHappyDto(type, res.workflowId, res.stepUuid);
-          const previewResponseDto = await generatePreview(type, requestDto, description);
+          const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
+          const requestDto = buildHappyDto(type, workflowId, stepUuid);
+          const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
           console.log('previewResponseDto', JSON.stringify(previewResponseDto));
           expect(previewResponseDto.result!.preview).to.exist;
-          if (type !== ChannelTypeEnum.EMAIL) {
+          if (type !== StepTypeEnum.EMAIL) {
             expect(previewResponseDto.result!.preview).to.deep.equal(dtos[type]);
           } else {
             assertEmail(previewResponseDto);
@@ -108,19 +106,21 @@ describe('Control Schema', () => {
   }
 
   async function generatePreview(
-    stepType: ChannelTypeEnum,
+    workflowId: string,
+    stepUuid: string,
     dto: GeneratePreviewRequestDto,
     description: string
   ): Promise<GeneratePreviewResponseDto> {
-    const novuRestResult = await stepSchemaClient.generatePreview(stepType, dto);
+    const novuRestResult = await workflowsClient.generatePreview(workflowId, stepUuid, dto);
     if (novuRestResult.isSuccessResult()) {
       return novuRestResult.value;
     }
     throw await assertHttpError(description, novuRestResult);
   }
 
-  async function createWorkflowAndReturnId(type: ChannelTypeEnum) {
-    const createWorkflowDto = buildCreateWorkflowDto(type + randomUUID());
+  async function createWorkflowAndReturnId(type: StepTypeEnum) {
+    const createWorkflowDto = buildCreateWorkflowDto(`${type}:${randomUUID()}`);
+    createWorkflowDto.steps[0].type = type;
     const workflowResult = await workflowsClient.createWorkflow(createWorkflowDto);
     if (!workflowResult.isSuccessResult()) {
       throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);
@@ -130,12 +130,9 @@ describe('Control Schema', () => {
   }
 });
 
-function buildHappyDto(stepTypeEnum: ChannelTypeEnum, workflowId: string, stepUuid: string): GeneratePreviewRequestDto {
+function buildHappyDto(stepTypeEnum: StepTypeEnum, workflowId: string, stepUuid: string): GeneratePreviewRequestDto {
   return {
-    workflowId,
-    stepId: stepUuid,
     validationStrategies: [],
-    hydrationStrategies: [],
     controlValues: dtos[stepTypeEnum],
     controlSchema: {
       type: 'object',
@@ -239,7 +236,13 @@ function buildEmailControls(): EmailStepControlSchemaDto {
   };
 }
 
-const dtos: Record<ChannelTypeEnum, Record<string, unknown>> = {
+const dtos: {
+  [StepTypeEnum.IN_APP];
+  [StepTypeEnum.CHAT]: { body: string };
+  [StepTypeEnum.SMS]: { body: string };
+  [StepTypeEnum.EMAIL]: Record<string, unknown>;
+  [StepTypeEnum.PUSH]: { subject: string; body: string };
+} = {
   [StepTypeEnum.SMS]: {
     body: 'Hello, World!',
   },

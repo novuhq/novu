@@ -45,13 +45,13 @@ export class GeneratePreviewUseCase {
 
   private async getWorkflowUserIdentifierFromWorkflowObject(command: GeneratePreviewCommand) {
     const workflowResponseDto = await this.getWorkflowUseCase.execute({
-      identifierOrInternalId: command.generatePreviewRequestDto.workflowId,
+      identifierOrInternalId: command.workflowId,
       user: command.user,
     });
     const { workflowId, steps } = workflowResponseDto;
-    const step = steps.find((stepDto) => stepDto.stepUuid === command.generatePreviewRequestDto.stepId);
+    const step = steps.find((stepDto) => stepDto.stepUuid === command.stepUuid);
     if (!step) {
-      throw new BadRequestException(`Step id found for ${command.generatePreviewRequestDto.stepId}`);
+      throw new BadRequestException(`Step id found for ${command.stepUuid}`);
     }
 
     return { workflowId, stepId: step.slug };

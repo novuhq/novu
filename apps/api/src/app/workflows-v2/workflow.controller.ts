@@ -123,7 +123,7 @@ export class WorkflowController {
   async generatePreview(
     @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
-    @Param('workflowId') stepUuid: string,
+    @Param('stepUuid') stepUuid: string,
     @Body() generatePreviewRequestDto: GeneratePreviewRequestDto
   ): Promise<GeneratePreviewResponseDto> {
     return await this.generatePreviewUseCase.execute(
