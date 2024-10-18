@@ -2,22 +2,32 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   ActionStep,
   ChannelStep,
-  ChatOutput,
   DelayOutput,
   DigestOutput,
   EmailOutput,
-  InAppOutput,
-  PushOutput,
-  SmsOutput,
   Step,
   StepOptions,
   StepOutput,
   Workflow,
   workflow,
 } from '@novu/framework';
-import { NotificationTemplateRepository, NotificationTemplateEntity, NotificationStepEntity } from '@novu/dal';
+import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
+import {
+  ChatOutputRendererUseCase,
+  EmailOutputRendererUseCase,
+  InAppOutputRendererUseCase,
+  PushOutputRendererUseCase,
+  SmsOutputRendererUseCase,
+} from '../outputRendererUseCases';
+
+const PERMISSIVE_EMPTY_SCHEMA = {
+  type: 'object',
+  properties: {},
+  required: [],
+  additionalProperties: true,
+} as const;
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -29,16 +39,6 @@ export class ConstructFrameworkWorkflow {
     return this.constructFrameworkWorkflow(dbWorkflow);
   }
 
-  private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
-    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
-
-    if (!foundWorkflow) {
-      throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
-    }
-
-    return foundWorkflow;
-  }
-
   private constructFrameworkWorkflow(newWorkflow: NotificationTemplateEntity): Workflow {
     return workflow(
       newWorkflow.triggers[0].identifier,
@@ -48,6 +48,8 @@ export class ConstructFrameworkWorkflow {
         }
       },
       {
+        payloadSchema: PERMISSIVE_EMPTY_SCHEMA,
+
         /*
          * TODO: Workflow options are not needed currently, given that this endpoint
          * focuses on execution only. However we should reconsider if we decide to
@@ -60,7 +62,7 @@ export class ConstructFrameworkWorkflow {
     );
   }
 
-  private constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
+  private async constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
@@ -69,7 +71,7 @@ export class ConstructFrameworkWorkflow {
 
     const stepType = stepTemplate.type;
     const { stepId } = staticStep;
-
+    console.log(`construct stepId:${stepId}`);
     if (!stepId) {
       throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
     }
@@ -87,8 +89,7 @@ export class ConstructFrameworkWorkflow {
           stepId,
           // The step callback function. Takes controls and returns the step outputs
           async (controlValues) => {
-            // TODO: insert custom in-app hydration logic here.
-            return controlValues as InAppOutput;
+            return new InAppOutputRendererUseCase().execute({ controlValues });
           },
           // Step options
           this.constructChannelStepOptions(staticStep)
@@ -97,8 +98,7 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom Maily.to hydration logic here.
-            return controlValues as EmailOutput;
+            return (await new EmailOutputRendererUseCase().execute({ controlValues })) as EmailOutput;
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -106,8 +106,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom SMS hydration logic here.
-            return controlValues as SmsOutput;
+            return new SmsOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -115,8 +114,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom chat hydration logic here.
-            return controlValues as ChatOutput;
+            return new ChatOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -124,8 +122,7 @@ export class ConstructFrameworkWorkflow {
         return step.inApp(
           stepId,
           async (controlValues) => {
-            // TODO: insert custom push hydration logic here.
-            return controlValues as PushOutput;
+            return new PushOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );
@@ -177,5 +174,14 @@ export class ConstructFrameworkWorkflow {
        */
       skip: (controlValues) => false,
     };
+  }
+  private async getDbWorkflow(environmentId: string, workflowId: string): Promise<NotificationTemplateEntity> {
+    const foundWorkflow = await this.workflowsRepository.findByTriggerIdentifier(environmentId, workflowId);
+
+    if (!foundWorkflow) {
+      throw new InternalServerErrorException(`Workflow ${workflowId} not found`);
+    }
+
+    return foundWorkflow;
   }
 }

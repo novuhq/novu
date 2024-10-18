@@ -39,6 +39,7 @@
     "@tanstack/react-query": "^5.59.6",
     "@xyflow/react": "^12.3.2",
     "class-variance-authority": "^0.7.0",
+    "faker": "^6.6.6",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.439.0",

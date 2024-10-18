@@ -1,5 +1,8 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { randomBytes } from 'crypto';
+import { channelStepSchemas, JsonSchema } from '@novu/framework';
+import { slugifyName } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -14,9 +17,7 @@ import {
   WorkflowListResponseDto,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { randomBytes } from 'crypto';
-import { channelStepSchemas, JsonSchema } from '@novu/framework';
-import { slugifyName } from '@novu/application-generic';
+import { createNovuClient, createWorkflowClient } from './clients';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -37,12 +38,21 @@ const SCHEMA_WITH_TEXT: JsonSchema = {
 };
 
 describe('Workflow Controller E2E API Testing', () => {
+  let workflowsClient: ReturnType<typeof createWorkflowClient>;
+
   beforeEach(async () => {
     // @ts-ignore
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
+    workflowsClient = createNovuClient(session.serverUrl, getHeaders()).workflow;
   });
+  function getHeaders(): HeadersInit {
+    return {
+      Authorization: session.token, // Fixed space
+      'Novu-Environment-Id': session.environment._id,
+    };
+  }
 
   it('Smoke Testing', async () => {
     // @ts-ignore
@@ -193,6 +203,17 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(idsDeduplicated.size).to.be.equal(10);
     });
   });
+  describe('Get Workflow Permutations', () => {
+    it('should return 404 if workflow does not exist', async () => {
+      const notExistingId = '123';
+      const novuRestResult = await workflowsClient.getWorkflow(notExistingId);
+      expect(novuRestResult.isSuccess).to.be.false;
+      expect(novuRestResult.error).to.be.ok;
+      expect(novuRestResult.error!.status).to.equal(404);
+      expect(novuRestResult.error!.responseText).to.contain('Workflow');
+      expect(JSON.parse(novuRestResult.error!.responseText).workflowId).to.contain(notExistingId);
+    });
+  });
 });
 
 function buildErrorMsg(createWorkflowDto: Omit<WorkflowCommonsFields, '_id'>, createdWorkflowWithoutUpdateDate) {
@@ -258,7 +279,10 @@ function buildInAppStep(): StepDto {
   };
 }
 
-function buildCreateWorkflowDto(nameSuffix: string, overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
+export function buildCreateWorkflowDto(
+  nameSuffix: string,
+  overrides: Partial<CreateWorkflowDto> = {}
+): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,

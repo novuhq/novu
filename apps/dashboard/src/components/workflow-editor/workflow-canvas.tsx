@@ -9,7 +9,6 @@ import {
   useReactFlow,
   ViewportHelperFunctionOptions,
 } from '@xyflow/react';
-import type { StepResponseDto } from '@novu/shared';
 import '@xyflow/react/dist/style.css';
 import {
   AddNode,
@@ -24,9 +23,10 @@ import {
   SmsNode,
   TriggerNode,
 } from './nodes';
-import { AddNodeEdgeType, AddNodeEdge } from './edges';
+import { AddNodeEdge, AddNodeEdgeType } from './edges';
 import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { StepTypeEnum } from '@/utils/enums';
+import { StepResponseDto } from '@novu/shared';
 
 const nodeTypes = {
   trigger: TriggerNode,

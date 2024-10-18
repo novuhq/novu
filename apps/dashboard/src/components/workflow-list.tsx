@@ -2,16 +2,15 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FaCode } from 'react-icons/fa6';
 import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  RiRouteFill,
   RiBookMarkedLine,
-  RiMore2Fill,
-  RiPlayCircleLine,
-  RiGitPullRequestFill,
-  RiPulseFill,
-  RiPauseCircleLine,
   RiDeleteBin2Line,
+  RiGitPullRequestFill,
+  RiMore2Fill,
+  RiPauseCircleLine,
+  RiPlayCircleLine,
+  RiPulseFill,
+  RiRouteFill,
 } from 'react-icons/ri';
-import type { ListWorkflowResponse } from '@novu/shared';
 
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
@@ -45,6 +44,7 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
+import { ListWorkflowResponse } from '@novu/shared';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();

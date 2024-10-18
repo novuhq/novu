@@ -15,13 +15,13 @@ import {
   GetPreferencesCommand,
   GetPreferencesResponseDto,
   NotificationStep,
+  slugifyName,
   UpdateWorkflow,
   UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
-  slugifyName,
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,

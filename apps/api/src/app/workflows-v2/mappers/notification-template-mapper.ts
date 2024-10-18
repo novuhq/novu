@@ -11,9 +11,9 @@ import {
   WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
+import { BadRequestException } from '@nestjs/common';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
-import { BadRequestException } from '@nestjs/common';
 
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
@@ -77,6 +77,7 @@ export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[])
 function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   return {
     name: step.name || 'Missing Name',
+    slug: step.stepId || 'Missing Name',
     stepUuid: step._templateId,
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),
