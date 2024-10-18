@@ -4,11 +4,11 @@ import { CommunityUserRepository, CommunityOrganizationRepository } from '@novu/
 import { USE_CASES } from './usecases';
 import { PartnerIntegrationsController } from './partner-integrations.controller';
 import { SharedModule } from '../shared/shared.module';
-import { EnvironmentsModule } from '../environments/environments.module';
+import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { BridgeModule } from '../bridge';
 
 @Module({
-  imports: [SharedModule, HttpModule, EnvironmentsModule, BridgeModule],
+  imports: [SharedModule, HttpModule, EnvironmentsModuleV1, BridgeModule],
   providers: [...USE_CASES, CommunityUserRepository, CommunityOrganizationRepository],
   controllers: [PartnerIntegrationsController],
 })

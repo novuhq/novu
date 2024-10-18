@@ -5,8 +5,8 @@ import { ApiServiceLevelEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared'
 import { AnalyticsService } from '@novu/application-generic';
 
 import { ModuleRef } from '@nestjs/core';
-import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
-import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
+import { CreateEnvironmentCommand } from '../../../environments-v1/usecases/create-environment/create-environment.command';
+import { CreateEnvironment } from '../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
 import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';

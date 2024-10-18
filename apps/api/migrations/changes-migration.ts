@@ -12,8 +12,8 @@ import {
   OrganizationRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum, MemberRoleEnum } from '@novu/shared';
-import { CreateEnvironment } from '../src/app/environments/usecases/create-environment/create-environment.usecase';
-import { CreateEnvironmentCommand } from '../src/app/environments/usecases/create-environment/create-environment.command';
+import { CreateEnvironment } from '../src/app/environments-v1/usecases/create-environment/create-environment.usecase';
+import { CreateEnvironmentCommand } from '../src/app/environments-v1/usecases/create-environment/create-environment.command';
 import { ApplyChange } from '../src/app/change/usecases/apply-change/apply-change.usecase';
 import { ApplyChangeCommand } from '../src/app/change/usecases/apply-change/apply-change.command';
 import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
