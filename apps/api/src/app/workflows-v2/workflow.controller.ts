@@ -17,6 +17,8 @@ import { ClassSerializerInterceptor, HttpStatus } from '@nestjs/common';
 import {
   CreateWorkflowDto,
   DirectionEnum,
+  GeneratePreviewRequestDto,
+  GeneratePreviewResponseDto,
   ListWorkflowResponse,
   UpdateWorkflowDto,
   UserSessionData,
@@ -33,6 +35,8 @@ import { ListWorkflowsCommand } from './usecases/list-workflows/list-workflows.c
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 import { GetListQueryParams } from './params/get-list-query-params';
+import { GeneratePreviewCommand } from '../step-schemas/usecases/generate-preview/generate-preview-command';
+import { GeneratePreviewUseCase } from '../step-schemas/usecases/generate-preview/generate-preview-use-case';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -44,7 +48,8 @@ export class WorkflowController {
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private getWorkflowUseCase: GetWorkflowUseCase,
     private listWorkflowsUseCase: ListWorkflowsUseCase,
-    private deleteWorkflowUsecase: DeleteWorkflowUseCase
+    private deleteWorkflowUsecase: DeleteWorkflowUseCase,
+    private generatePreviewUseCase: GeneratePreviewUseCase
   ) {}
 
   @Post('')
@@ -110,6 +115,19 @@ export class WorkflowController {
         searchQuery: query.query,
         user,
       })
+    );
+  }
+
+  @Post('/:workflowId/step/:stepUuid/preview')
+  @UseGuards(UserAuthGuard)
+  async generatePreview(
+    @UserSession() user: UserSessionData,
+    @Param('workflowId') workflowId: string,
+    @Param('workflowId') stepUuid: string,
+    @Body() generatePreviewRequestDto: GeneratePreviewRequestDto
+  ): Promise<GeneratePreviewResponseDto> {
+    return await this.generatePreviewUseCase.execute(
+      GeneratePreviewCommand.create({ user, workflowId, stepUuid, generatePreviewRequestDto })
     );
   }
 }

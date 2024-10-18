@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import { PlaceholderMap } from './collect-placeholders-usecase';
+import { PlaceholderMap } from './collect-placeholders-from-tip-tap-schema-use-case';
 
 export interface TransformPlaceholderMapCommand {
   input: PlaceholderMap;

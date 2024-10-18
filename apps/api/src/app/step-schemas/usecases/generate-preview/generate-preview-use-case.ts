@@ -5,11 +5,8 @@ import { BadRequestException } from '@nestjs/common';
 import { VariableValidatorComponent } from '../../components/variable-validator-component';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import {
-  addKeysToPayloadBasedOnHydrationStrategy,
-  mergeJsonObjects,
-} from '../../components/payload-preview-value-generator-component';
 import { GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow/get-workflow.usecase';
+import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator-use-case';
 
 @Injectable()
 export class GeneratePreviewUseCase {
@@ -73,9 +70,10 @@ export class GeneratePreviewUseCase {
 function addHydrationValuesToPayload(command: GeneratePreviewCommand): Record<string, unknown> {
   const dto = command.generatePreviewRequestDto;
   let payloadFromDto = dto.payloadValues || {};
-  for (const key in dto.controlValues) {
-    if (dto.controlValues.hasOwnProperty(key)) {
-      const hydratedValue = addKeysToPayloadBasedOnHydrationStrategy(dto, key);
+  for (const controlValueKey in dto.controlValues) {
+    if (dto.controlValues.hasOwnProperty(controlValueKey)) {
+      const hydratedValue = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
+      console.log('hydratedValue', hydratedValue);
       payloadFromDto = mergeJsonObjects(payloadFromDto, hydratedValue);
     }
   }
@@ -95,4 +93,25 @@ function buildResponse(
       type: command.stepType,
     },
   };
+}
+function mergeJsonObjects(
+  primary: Record<string, unknown>,
+  secondary: Record<string, unknown>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...primary };
+
+  for (const key in secondary) {
+    if (!(key in merged)) {
+      merged[key] = secondary[key];
+    } else if (
+      typeof merged[key] === 'object' &&
+      merged[key] !== null &&
+      typeof secondary[key] === 'object' &&
+      secondary[key] !== null
+    ) {
+      merged[key] = mergeJsonObjects(merged[key] as Record<string, unknown>, secondary[key] as Record<string, unknown>);
+    }
+  }
+
+  return merged;
 }

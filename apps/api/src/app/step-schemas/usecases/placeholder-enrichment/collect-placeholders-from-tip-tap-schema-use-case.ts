@@ -5,13 +5,13 @@ import { TipTapNode } from '@novu/shared';
 
 // Define the PlaceholderMap type
 export type PlaceholderMap = {
-  for: {
+  for?: {
     [key: string]: string[];
   };
-  show: {
+  show?: {
     [key: string]: any[];
   };
-  regular: {
+  regular?: {
     [key: string]: any[];
   };
 };
@@ -22,7 +22,7 @@ export interface CollectPlaceholdersCommand {
 }
 
 // Create the main class with a UseCase suffix
-export class CollectPlaceholdersUseCase {
+export class CollectPlaceholdersFromTipTapSchemaUseCase {
   /**
    * The main entry point for executing the use case.
    *
@@ -30,7 +30,7 @@ export class CollectPlaceholdersUseCase {
    * @returns {PlaceholderMap} An object mapping main placeholders to their nested placeholders.
    */
   public execute(command: CollectPlaceholdersCommand): PlaceholderMap {
-    const placeholders: PlaceholderMap = {
+    const placeholders: Required<PlaceholderMap> = {
       for: {},
       show: {},
       regular: {},
@@ -40,13 +40,13 @@ export class CollectPlaceholdersUseCase {
     return placeholders;
   }
 
-  private traverse(node: TipTapNode, placeholders: PlaceholderMap) {
+  private traverse(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
     if (node.type === 'for' && node.attr) {
       this.handleForTraversal(node, placeholders);
     } else if (node.type === 'show' && node.attr && node.attr.when) {
       this.handleShowTraversal(node, placeholders);
     } else if (node.type === 'text' && node.text) {
-      const regularPlaceholders = this.extractPlaceholders(node.text).filter((x) => !x.startsWith('item'));
+      const regularPlaceholders = extractPlaceholders(node.text).filter((x) => !x.startsWith('item'));
       for (let regularPlaceholder of regularPlaceholders) {
         placeholders.regular[regularPlaceholder] = [];
       }
@@ -57,9 +57,9 @@ export class CollectPlaceholdersUseCase {
     }
   }
 
-  private handleForTraversal(node: TipTapNode, placeholders: PlaceholderMap) {
+  private handleForTraversal(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
     if (node.type === 'show' && node.attr && typeof node.attr.each === 'string') {
-      const mainPlaceholder = this.extractPlaceholders(node.attr.each);
+      const mainPlaceholder = extractPlaceholders(node.attr.each);
       if (mainPlaceholder && mainPlaceholder.length === 1) {
         if (!placeholders.for[mainPlaceholder[0]]) {
           placeholders.for[mainPlaceholder[0]] = [];
@@ -70,7 +70,7 @@ export class CollectPlaceholdersUseCase {
             if (nestedNode.content) {
               nestedNode.content.forEach((childNode) => {
                 if (childNode.type === 'text' && childNode.text) {
-                  const nestedPlaceholders = this.extractPlaceholders(childNode.text);
+                  const nestedPlaceholders = extractPlaceholders(childNode.text);
                   for (let nestedPlaceholder of nestedPlaceholders) {
                     placeholders.for[mainPlaceholder[0]].push(nestedPlaceholder);
                   }
@@ -83,24 +83,23 @@ export class CollectPlaceholdersUseCase {
     }
   }
 
-  private handleShowTraversal(node: TipTapNode, placeholders: PlaceholderMap) {
+  private handleShowTraversal(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
     if (node.type === 'show' && node.attr && typeof node.attr.when === 'string') {
-      const nestedPlaceholders = this.extractPlaceholders(node.attr.when);
+      const nestedPlaceholders = extractPlaceholders(node.attr.when);
       placeholders.show[nestedPlaceholders[0]] = [];
     }
   }
+}
+export function extractPlaceholders(text: string): string[] {
+  const regex = /\{\{\{(.*?)\}\}\}|\{\{(.*?)\}\}|\{#(.*?)#\}/g;
+  const matches: string[] = [];
+  let match: RegExpExecArray | null;
 
-  private extractPlaceholders(text: string): string[] {
-    const regex = /\{\{\{(.*?)\}\}\}|\{\{(.*?)\}\}|\{#(.*?)#\}/g;
-    const matches: string[] = [];
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(text)) !== null) {
-      const placeholder = match[1] || match[2] || match[3];
-      if (placeholder) {
-        matches.push(placeholder.trim());
-      }
+  while ((match = regex.exec(text)) !== null) {
+    const placeholder = match[1] || match[2] || match[3];
+    if (placeholder) {
+      matches.push(placeholder.trim());
     }
-    return matches;
   }
+  return matches;
 }

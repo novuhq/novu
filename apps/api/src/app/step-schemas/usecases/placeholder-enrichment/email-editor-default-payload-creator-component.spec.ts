@@ -1,6 +1,9 @@
 import { expect } from 'chai';
 import { TipTapNode } from '@novu/shared';
-import { CollectPlaceholdersUseCase, PlaceholderMap } from './collect-placeholders-usecase';
+import {
+  CollectPlaceholdersFromTipTapSchemaUseCase,
+  PlaceholderMap,
+} from './collect-placeholders-from-tip-tap-schema-use-case';
 import { TransformPlaceholderMapUseCase } from './transform-placeholder-usecase-command';
 
 describe('default paylaod creator for email editor', () => {
@@ -86,7 +89,7 @@ describe('default paylaod creator for email editor', () => {
       ],
     };
 
-    const result = new CollectPlaceholdersUseCase().execute({ node });
+    const result = new CollectPlaceholdersFromTipTapSchemaUseCase().execute({ node });
 
     expect(result).to.deep.equal({
       for: {

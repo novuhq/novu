@@ -88,6 +88,7 @@ describe('Control Schema', () => {
           const res = await createWorkflowAndReturnId(type);
           const requestDto = buildHappyDto(type, res.workflowId, res.stepUuid);
           const previewResponseDto = await generatePreview(type, requestDto, description);
+          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
           expect(previewResponseDto.result!.preview).to.exist;
           if (type !== ChannelTypeEnum.EMAIL) {
             expect(previewResponseDto.result!.preview).to.deep.equal(dtos[type]);
