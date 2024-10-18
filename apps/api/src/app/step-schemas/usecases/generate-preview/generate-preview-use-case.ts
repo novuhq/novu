@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common/decorators';
-import { ExecuteOutput } from '@novu/framework';
-import { ControlPreviewIssue, GeneratePreviewResponseDto } from '@novu/shared';
+import { ChannelTypeEnum, ControlPreviewIssue, GeneratePreviewResponseDto, StepTypeEnum } from '@novu/shared';
 import { BadRequestException } from '@nestjs/common';
+import { ExecuteOutput } from '@novu/framework/src/src';
 import { VariableValidatorComponent } from '../../components/variable-validator-component';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
@@ -17,17 +17,21 @@ export class GeneratePreviewUseCase {
   ) {}
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
-    console.log('GeneratePreviewUseCase.execute', JSON.stringify(command, null, 2));
     const issues: Record<string, ControlPreviewIssue[]> = this.validateControlValues(command);
     const hydratedPayload = addHydrationValuesToPayload(command);
-    const executeOutput = await this.executePreviewUsecase(hydratedPayload, command);
+    const { workflowId, stepId, stepType } = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
+    const executeOutput = await this.executePreviewUsecase(hydratedPayload, command, workflowId, stepId);
 
-    return buildResponse(issues, executeOutput, command);
+    return buildResponse(issues, executeOutput, stepType);
   }
 
-  private async executePreviewUsecase(hydratedPayload: Record<string, unknown>, command: GeneratePreviewCommand) {
+  private async executePreviewUsecase(
+    hydratedPayload: Record<string, unknown>,
+    command: GeneratePreviewCommand,
+    workflowId: string,
+    stepId: string
+  ) {
     const dto = command.generatePreviewRequestDto;
-    const { workflowId, stepId } = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
     console.log(`xx:${workflowId}:${stepId}`);
 
     return await this.legacyPreviewStepUseCase.execute(
@@ -54,7 +58,7 @@ export class GeneratePreviewUseCase {
       throw new BadRequestException(`Step id found for ${command.stepUuid}`);
     }
 
-    return { workflowId, stepId: step.slug };
+    return { workflowId, stepId: step.slug, stepType: step.type };
   }
 
   private validateControlValues(command: GeneratePreviewCommand) {
@@ -83,14 +87,14 @@ function addHydrationValuesToPayload(command: GeneratePreviewCommand): Record<st
 function buildResponse(
   issues: Record<string, ControlPreviewIssue[]>,
   executionOutput: ExecuteOutput,
-  command: GeneratePreviewCommand
+  stepType: StepTypeEnum
 ): GeneratePreviewResponseDto {
   return {
     issues,
     result: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       preview: executionOutput.outputs as any,
-      type: command.stepType,
+      type: stepType as unknown as ChannelTypeEnum,
     },
   };
 }

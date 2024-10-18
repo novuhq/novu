@@ -20,9 +20,10 @@ import { GetWorkflowByIdsUseCase } from './usecases/get-workflow-by-ids/get-work
 import { GetStepSchemaUseCase } from '../step-schemas/usecases/get-step-schema/get-step-schema.usecase';
 import { GeneratePreviewUseCase } from '../step-schemas/usecases/generate-preview/generate-preview-use-case';
 import { VariableValidatorComponent } from '../step-schemas/components/variable-validator-component';
+import { BridgeModule } from '../bridge';
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
+  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
   controllers: [WorkflowController],
   providers: [
     CreateWorkflow,
