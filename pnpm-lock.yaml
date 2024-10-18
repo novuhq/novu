@@ -3484,6 +3484,9 @@ importers:
       '@apidevtools/json-schema-ref-parser':
         specifier: 11.6.4
         version: 11.6.4
+      '@arethetypeswrong/cli':
+        specifier: ^0.16.4
+        version: 0.16.4
       '@nestjs/common':
         specifier: 10.4.1
         version: 10.4.1(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -3619,8 +3622,8 @@ importers:
         version: 2.4.0
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.15.4
-        version: 0.15.4
+        specifier: ^0.16.4
+        version: 0.16.4
       '@types/jest':
         specifier: ^29.2.3
         version: 29.5.12
@@ -3786,8 +3789,8 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.15.4
-        version: 0.15.4
+        specifier: ^0.16.4
+        version: 0.16.4
       '@types/node':
         specifier: ^20.14.12
         version: 20.16.5
@@ -4240,8 +4243,8 @@ importers:
         version: 18.3.1(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.15.4
-        version: 0.15.4
+        specifier: ^0.16.4
+        version: 0.16.4
       '@types/node':
         specifier: ^20.14.12
         version: 20.14.12
@@ -4268,8 +4271,8 @@ importers:
         version: 18.3.1
     devDependencies:
       '@arethetypeswrong/cli':
-        specifier: ^0.15.4
-        version: 0.15.4
+        specifier: ^0.16.4
+        version: 0.16.4
       '@types/node':
         specifier: ^20.14.12
         version: 20.16.5
@@ -4588,13 +4591,13 @@ packages:
     resolution: {integrity: sha512-JgG32LQRLphHRWsn64vIt7wD2m+JH46swM6ZrY7g1rdiGiKV5m+A+TBrJKoUUQRmS14azMgePNZY30NauWqzLg==}
     engines: {node: '>=10.4.0'}
 
-  '@arethetypeswrong/cli@0.15.4':
-    resolution: {integrity: sha512-YDbImAi1MGkouT7f2yAECpUMFhhA1J0EaXzIqoC5GGtK0xDgauLtcsZezm8tNq7d3wOFXH7OnY+IORYcG212rw==}
+  '@arethetypeswrong/cli@0.16.4':
+    resolution: {integrity: sha512-qMmdVlJon5FtA+ahn0c1oAVNxiq4xW5lqFiTZ21XHIeVwAVIQ+uRz4UEivqRMsjVV1grzRgJSKqaOrq1MvlVyQ==}
     engines: {node: '>=18'}
     hasBin: true
 
-  '@arethetypeswrong/core@0.15.1':
-    resolution: {integrity: sha512-FYp6GBAgsNz81BkfItRz8RLZO03w5+BaeiPma1uCfmxTnxbtuMrI/dbzGiOk8VghO108uFI0oJo0OkewdSHw7g==}
+  '@arethetypeswrong/core@0.16.4':
+    resolution: {integrity: sha512-RI3HXgSuKTfcBf1hSEg1P9/cOvmI0flsMm6/QL3L3wju4AlHDqd55JFPfXs4pzgEAgy5L9pul4/HPPz99x2GvA==}
     engines: {node: '>=18'}
 
   '@astrojs/compiler@2.9.1':
@@ -19217,6 +19220,9 @@ packages:
   cjs-module-lexer@1.2.2:
     resolution: {integrity: sha512-cOU9usZw8/dXIXKtwa8pM0OTJQuJkxMN6w30csNRUerHfeQ5R6U3kkU/FtJeIf3M202OHfY2U8ccInBG7/xogA==}
 
+  cjs-module-lexer@1.4.1:
+    resolution: {integrity: sha512-cuSVIHi9/9E/+821Qjdvngor+xpnlwnuwIyZOaLmHBVdXL+gP+I6QQB9VkO7RI77YIcTV+S1W9AreJ5eN63JBA==}
+
   class-transformer@0.5.1:
     resolution: {integrity: sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==}
 
@@ -32153,9 +32159,6 @@ packages:
       jsdom:
         optional: true
 
-  ts-expose-internals-conditionally@1.0.0-empty.0:
-    resolution: {integrity: sha512-F8m9NOF6ZhdOClDVdlM8gj3fDCav4ZIFSs/EI3ksQbAAXVSCN/Jh5OCJDDZWBuBy9psFc6jULGDlPwjMYMhJDw==}
-
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
@@ -32603,6 +32606,11 @@ packages:
 
   typescript@5.4.3:
     resolution: {integrity: sha512-KrPd3PKaCLr78MalgiwJnA25Nm8HAmdwN3mYUYZgG/wizIo9EainNVQI9/yDavtVFRN2h3k8uf3GLHuhDMgEHg==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@5.6.1-rc:
+    resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -34287,9 +34295,9 @@ snapshots:
     dependencies:
       tslib: 2.7.0
 
-  '@arethetypeswrong/cli@0.15.4':
+  '@arethetypeswrong/cli@0.16.4':
     dependencies:
-      '@arethetypeswrong/core': 0.15.1
+      '@arethetypeswrong/core': 0.16.4
       chalk: 4.1.2
       cli-table3: 0.6.5
       commander: 10.0.1
@@ -34297,13 +34305,14 @@ snapshots:
       marked-terminal: 7.1.0(marked@9.1.6)
       semver: 7.6.3
 
-  '@arethetypeswrong/core@0.15.1':
+  '@arethetypeswrong/core@0.16.4':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
+      cjs-module-lexer: 1.4.1
       fflate: 0.8.2
+      lru-cache: 10.4.3
       semver: 7.6.3
-      ts-expose-internals-conditionally: 1.0.0-empty.0
-      typescript: 5.3.3
+      typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
   '@astrojs/compiler@2.9.1': {}
@@ -60088,6 +60097,8 @@ snapshots:
 
   cjs-module-lexer@1.2.2: {}
 
+  cjs-module-lexer@1.4.1: {}
+
   class-transformer@0.5.1: {}
 
   class-utils@0.3.6:
@@ -78182,8 +78193,6 @@ snapshots:
     optionalDependencies:
       jsdom: 25.0.0
 
-  ts-expose-internals-conditionally@1.0.0-empty.0: {}
-
   ts-interface-checker@0.1.13: {}
 
   ts-invariant@0.4.4:
@@ -79042,6 +79051,8 @@ snapshots:
     optional: true
 
   typescript@5.4.3: {}
+
+  typescript@5.6.1-rc: {}
 
   typescript@5.6.2: {}
 
