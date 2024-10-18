@@ -182,7 +182,7 @@
     "sinon": "9.2.4",
     "storybook": "^7.4.2",
     "typescript": "5.6.2",
-    "webpack": "5.78.0",
+    "webpack": "5.94.0",
     "webpack-bundle-analyzer": "^4.9.0",
     "webpack-dev-server": "4.11.1"
   },
