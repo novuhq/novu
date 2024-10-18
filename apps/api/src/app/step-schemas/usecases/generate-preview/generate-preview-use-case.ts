@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common/decorators';
 import { ChannelTypeEnum, ControlPreviewIssue, GeneratePreviewResponseDto, StepTypeEnum } from '@novu/shared';
 import { BadRequestException } from '@nestjs/common';
-import { ExecuteOutput } from '@novu/framework/src/src';
+import { ExecuteOutput } from '@novu/framework';
 import { VariableValidatorComponent } from '../../components/variable-validator-component';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
