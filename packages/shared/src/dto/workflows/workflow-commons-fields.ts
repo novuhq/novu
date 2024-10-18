@@ -8,6 +8,7 @@ export class ControlsSchema {
 
 export type StepResponseDto = StepDto & {
   stepUuid: string;
+  slug: string;
 };
 
 export type StepUpdateDto = StepDto & {

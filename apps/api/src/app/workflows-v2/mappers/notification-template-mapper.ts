@@ -77,6 +77,7 @@ export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[])
 function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   return {
     name: step.name || 'Missing Name',
+    slug: step.stepId || 'Missing Name',
     stepUuid: step._templateId,
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),

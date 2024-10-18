@@ -71,7 +71,7 @@ export class ConstructFrameworkWorkflow {
 
     const stepType = stepTemplate.type;
     const { stepId } = staticStep;
-
+    console.log(`construct stepId:${stepId}`);
     if (!stepId) {
       throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
     }

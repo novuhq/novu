@@ -58,6 +58,7 @@ export class PushOutputRendererUseCase {
 // Concrete Renderer for In-App Message Preview
 export class InAppOutputRendererUseCase {
   execute(renderCommand: RenderCommand): InAppRenderOutput {
+    console.log('InAppOutputRendererUseCase.execute', JSON.stringify(renderCommand, null, 2));
     const inApp = InAppRenderOutputSchema.parse(renderCommand.controlValues);
 
     return {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common/decorators';
 import { ExecuteOutput } from '@novu/framework';
 import { ControlPreviewIssue, GeneratePreviewResponseDto } from '@novu/shared';
+import { BadRequestException } from '@nestjs/common';
 import { VariableValidatorComponent } from '../../components/variable-validator-component';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
@@ -19,6 +20,7 @@ export class GeneratePreviewUseCase {
   ) {}
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
+    console.log('GeneratePreviewUseCase.execute', JSON.stringify(command, null, 2));
     const issues: Record<string, ControlPreviewIssue[]> = this.validateControlValues(command);
     const hydratedPayload = addHydrationValuesToPayload(command);
     const executeOutput = await this.executePreviewUsecase(hydratedPayload, command);
@@ -28,7 +30,8 @@ export class GeneratePreviewUseCase {
 
   private async executePreviewUsecase(hydratedPayload: Record<string, unknown>, command: GeneratePreviewCommand) {
     const dto = command.generatePreviewRequestDto;
-    const workflowId = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
+    const { workflowId, stepId } = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
+    console.log(`xx:${workflowId}:${stepId}`);
 
     return await this.legacyPreviewStepUseCase.execute(
       PreviewStepCommand.create({
@@ -36,7 +39,7 @@ export class GeneratePreviewUseCase {
         controls: dto.controlValues || {},
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        stepId: dto.stepId,
+        stepId,
         userId: command.user._id,
         workflowId,
       })
@@ -48,9 +51,13 @@ export class GeneratePreviewUseCase {
       identifierOrInternalId: command.generatePreviewRequestDto.workflowId,
       user: command.user,
     });
-    const { workflowId } = workflowResponseDto;
+    const { workflowId, steps } = workflowResponseDto;
+    const step = steps.find((stepDto) => stepDto.stepUuid === command.generatePreviewRequestDto.stepId);
+    if (!step) {
+      throw new BadRequestException(`Step id found for ${command.generatePreviewRequestDto.stepId}`);
+    }
 
-    return workflowId;
+    return { workflowId, stepId: step.slug };
   }
 
   private validateControlValues(command: GeneratePreviewCommand) {
