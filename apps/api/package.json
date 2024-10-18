@@ -57,6 +57,7 @@
     "@types/newrelic": "^9.14.0",
     "@upstash/ratelimit": "^0.4.4",
     "axios": "^1.6.8",
+    "base-x": "^5.0.0",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.20.0",
     "bull": "^4.2.1",
@@ -91,7 +92,7 @@
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "swagger-ui-express": "^4.4.0",
-    "twilio": "^4.14.1",    
+    "twilio": "^4.14.1",
     "json-schema-to-ts": "^3.0.0",
     "uuid": "^8.3.2"
   },
