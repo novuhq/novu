@@ -18,7 +18,7 @@ interface GeneratePreviewRequestDto {
   controlSchema: JSONSchemaDto; // Assuming this matches the structure of jsonschemaZodValidator
   variablesSchema?: JSONSchemaDto; // Optional variables schema
   workflowId: string; // Required workflow ID
-  stepId?: string; // Optional step ID
+  stepId: string; // Optional step ID
   hydrationStrategies: HydrationStrategyEnum[]; // Array of hydration strategies
   validationStrategies: ValidationStrategyEnum[]; // Array of validation strategies
 }

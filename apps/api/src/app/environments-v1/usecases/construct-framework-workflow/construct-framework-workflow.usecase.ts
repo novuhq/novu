@@ -14,8 +14,6 @@ import {
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
-import { mapStepTypeToOutput } from '../../../step-schemas/shared';
-import { TRANSIENT_PREVIEW_PREFIX } from '../../../step-schemas/usecases/generate-preview/generate-preview-use-case';
 import {
   ChatOutputRendererUseCase,
   EmailOutputRendererUseCase,
@@ -23,8 +21,6 @@ import {
   PushOutputRendererUseCase,
   SmsOutputRendererUseCase,
 } from '../outputRendererUseCases';
-
-const MOCK_CONTENT = 'MOCK_CONTENT';
 
 const PERMISSIVE_EMPTY_SCHEMA = {
   type: 'object',
@@ -39,9 +35,6 @@ export class ConstructFrameworkWorkflow {
 
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
     const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
-    if (shouldMockStepsForPreview(command)) {
-      dbWorkflow.steps = [this.buildPreviewStep(command)];
-    }
 
     return this.constructFrameworkWorkflow(dbWorkflow);
   }
@@ -191,25 +184,4 @@ export class ConstructFrameworkWorkflow {
 
     return foundWorkflow;
   }
-
-  private buildPreviewStep(command: Required<ConstructFrameworkWorkflowCommand>): NotificationStepEntity {
-    const idWithoutPrefix = command.stepId.replace(TRANSIENT_PREVIEW_PREFIX, '');
-
-    return {
-      _templateId: command.stepId,
-      stepId: command.stepId,
-      template: {
-        controls: {
-          schema: mapStepTypeToOutput[idWithoutPrefix as StepTypeEnum],
-        },
-        type: idWithoutPrefix as unknown as StepTypeEnum,
-        content: MOCK_CONTENT,
-      },
-    } as NotificationStepEntity;
-  }
-}
-function shouldMockStepsForPreview(
-  command: ConstructFrameworkWorkflowCommand
-): command is Required<ConstructFrameworkWorkflowCommand> {
-  return command.stepId ? command.stepId.startsWith(TRANSIENT_PREVIEW_PREFIX) : false;
 }

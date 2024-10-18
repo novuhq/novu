@@ -3,7 +3,21 @@ import { UserSession } from '@novu/testing';
 import { randomBytes } from 'crypto';
 import { channelStepSchemas, JsonSchema } from '@novu/framework';
 import { slugifyName } from '@novu/application-generic';
-import { DEFAULT_WORKFLOW_PREFERENCES, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  DEFAULT_WORKFLOW_PREFERENCES,
+  ListWorkflowResponse,
+  StepCreateDto,
+  StepDto,
+  StepTypeEnum,
+  StepUpdateDto,
+  UpdateWorkflowDto,
+  WorkflowCommonsFields,
+  WorkflowCreationSourceEnum,
+  WorkflowListResponseDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { createNovuClient, createWorkflowClient } from './clients';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';

@@ -8,7 +8,7 @@ export interface TipTapNode {
   attr?: Record<string, unknown>;
 }
 
-interface EmailStepControlSchemaDto {
+export interface EmailStepControlSchemaDto {
   emailEditor: TipTapNode;
   subject: string;
 }
@@ -17,7 +17,7 @@ export enum CustomComponentsEnum {
   EMAIL_EDITOR = 'EMAIL_EDITOR',
   TEXT_AREA = 'TEXT_FIELD',
 }
-export const emailStepControlSchema: JSONSchema = {
+export const EmailStepControlSchema: JSONSchema = {
   type: 'object',
   properties: {
     emailEditor: {

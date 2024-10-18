@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common/decorators';
 import { ExecuteOutput } from '@novu/framework';
-import {
-  ChannelTypeEnum,
-  ControlPreviewIssue,
-  ControlPreviewIssueType,
-  GeneratePreviewResponseDto,
-} from '@novu/shared';
-import { z } from 'zod';
+import { ControlPreviewIssue, GeneratePreviewResponseDto } from '@novu/shared';
 import { VariableValidatorComponent } from '../../components/variable-validator-component';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
@@ -15,8 +9,6 @@ import {
   mergeJsonObjects,
 } from '../../components/payload-preview-value-generator-component';
 import { GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow/get-workflow.usecase';
-
-export const TRANSIENT_PREVIEW_PREFIX = 'TRANSIENT_PREVIEW_PREFIX-';
 
 @Injectable()
 export class GeneratePreviewUseCase {
@@ -44,7 +36,7 @@ export class GeneratePreviewUseCase {
         controls: dto.controlValues || {},
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        stepId: dto.stepId || TRANSIENT_PREVIEW_PREFIX + command.stepType,
+        stepId: dto.stepId,
         userId: command.user._id,
         workflowId,
       })
@@ -87,100 +79,13 @@ function buildResponse(
   issues: Record<string, ControlPreviewIssue[]>,
   executionOutput: ExecuteOutput,
   command: GeneratePreviewCommand
-) {
-  return GeneratePreviewResponseDtoSchema.parse({
+): GeneratePreviewResponseDto {
+  return {
     issues,
     result: {
-      preview: executionOutput.outputs,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      preview: executionOutput.outputs as any,
       type: command.stepType,
     },
-  });
+  };
 }
-export enum RedirectTargetEnum {
-  SELF = '_self',
-  BLANK = '_blank',
-  PARENT = '_parent',
-  TOP = '_top',
-  UNFENCED_TOP = '_unfencedTop',
-}
-
-// Define the Zod schemas for each preview result class
-export const PreviewResultSchema = z.object({});
-
-export const ChatPreviewResultSchema = PreviewResultSchema.extend({
-  body: z.string(),
-});
-
-export const SmsPreviewResultSchema = PreviewResultSchema.extend({
-  body: z.string(),
-});
-
-export const PushPreviewResultSchema = PreviewResultSchema.extend({
-  subject: z.string(),
-  body: z.string(),
-});
-
-export const EmailRenderResultSchema = PreviewResultSchema.extend({
-  subject: z.string(),
-  body: z.string(),
-});
-
-export const InAppPreviewResultSchema = PreviewResultSchema.extend({
-  subject: z.string(),
-  body: z.string(),
-  avatar: z.string().optional(),
-  primaryAction: z.object({
-    label: z.string(),
-    redirect: z.object({
-      url: z.string(),
-      target: z.nativeEnum(RedirectTargetEnum).optional(),
-    }),
-  }),
-  secondaryAction: z
-    .object({
-      label: z.string(),
-      redirect: z.object({
-        url: z.string(),
-        target: z.nativeEnum(RedirectTargetEnum).optional(),
-      }),
-    })
-    .optional(),
-  data: z.record(z.unknown()).optional(),
-  redirect: z.object({
-    url: z.string(),
-    target: z.nativeEnum(RedirectTargetEnum).optional(),
-  }),
-});
-export const ControlPreviewIssueSchema = z.object({
-  issueType: z.nativeEnum(ControlPreviewIssueType), // Assuming ControlPreviewIssueType is an enum
-  variableName: z.string().optional(), // Optional field
-  message: z.string(), // Required field
-});
-// Define the GeneratePreviewResponseDto schema
-export const GeneratePreviewResponseDtoSchema = z.object({
-  issues: z.record(z.array(ControlPreviewIssueSchema)),
-  result: z
-    .union([
-      z.object({
-        type: z.literal(ChannelTypeEnum.EMAIL),
-        preview: EmailRenderResultSchema,
-      }),
-      z.object({
-        type: z.literal(ChannelTypeEnum.IN_APP),
-        preview: InAppPreviewResultSchema,
-      }),
-      z.object({
-        type: z.literal(ChannelTypeEnum.SMS),
-        preview: SmsPreviewResultSchema,
-      }),
-      z.object({
-        type: z.literal(ChannelTypeEnum.PUSH),
-        preview: PushPreviewResultSchema,
-      }),
-      z.object({
-        type: z.literal(ChannelTypeEnum.CHAT),
-        preview: ChatPreviewResultSchema,
-      }),
-    ])
-    .optional(),
-});

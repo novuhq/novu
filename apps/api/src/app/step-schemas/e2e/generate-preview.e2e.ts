@@ -5,13 +5,17 @@ import { after, beforeEach } from 'mocha';
 import { sleep } from '@nestjs/terminus/dist/utils';
 import {
   ChannelTypeEnum,
+  EmailStepControlSchemaDto,
   FeatureFlagsKeysEnum,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
+  RedirectTargetEnum,
   StepTypeEnum,
+  TipTapNode,
 } from '@novu/shared';
+import { InAppOutput } from '@novu/framework';
 import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e2e';
-import { createStepSchemaClient, createWorkflowClient, NovuRestResult } from '../../workflows-v2/clients';
+import { createStepSchemaClient, createWorkflowClient, HttpError, NovuRestResult } from '../../workflows-v2/clients';
 
 const FOR_ITEM_VALUE_PLACEHOLDER = '{#item.body#}';
 const TEST_SHOW_VALUE = 'TEST_SHOW_VALUE';
@@ -73,16 +77,16 @@ describe('Control Schema', () => {
 
     describe('Happy Path', () => {
       const channelTypes = [
+        { type: ChannelTypeEnum.IN_APP, description: 'InApp' },
         { type: ChannelTypeEnum.SMS, description: 'SMS' },
         { type: ChannelTypeEnum.PUSH, description: 'Push' },
         { type: ChannelTypeEnum.CHAT, description: 'Chat' },
-        { type: ChannelTypeEnum.IN_APP, description: 'InApp' },
       ];
 
       channelTypes.forEach(({ type, description }) => {
         it(`${type}:should match the body in the preview response`, async () => {
-          const workflowId = await createWorkflowAndReturnId(type);
-          const requestDto = buildHappyDto(type, workflowId);
+          const res = await createWorkflowAndReturnId(type);
+          const requestDto = buildHappyDto(type, res.workflowId, res.stepUuid);
           const previewResponseDto = await generatePreview(type, requestDto, description);
           expect(previewResponseDto.result!.preview).to.exist;
           if (type !== ChannelTypeEnum.EMAIL) {
@@ -121,13 +125,14 @@ describe('Control Schema', () => {
       throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);
     }
 
-    return workflowResult.value._id;
+    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[1].stepUuid };
   }
 });
 
-function buildHappyDto(stepTypeEnum: ChannelTypeEnum, workflowId: string): GeneratePreviewRequestDto {
+function buildHappyDto(stepTypeEnum: ChannelTypeEnum, workflowId: string, stepUuid: string): GeneratePreviewRequestDto {
   return {
     workflowId,
+    stepId: stepUuid,
     validationStrategies: [],
     hydrationStrategies: [],
     controlValues: dtos[stepTypeEnum],
@@ -144,7 +149,7 @@ function buildHappyDto(stepTypeEnum: ChannelTypeEnum, workflowId: string): Gener
   };
 }
 
-function buildInAppControlValues(): InAppRenderResult {
+function buildInAppControlValues(): InAppOutput {
   return {
     subject: 'Hello, World! {{payload.blabla}}',
     body: 'Hello, World!',
@@ -173,7 +178,7 @@ function buildInAppControlValues(): InAppRenderResult {
   };
 }
 
-function mailyJsonExample(): TipTapNodeSchemaDto {
+function mailyJsonExample(): TipTapNode {
   return {
     type: 'doc',
     content: [
@@ -237,7 +242,7 @@ const dtos: Record<ChannelTypeEnum, Record<string, unknown>> = {
   [StepTypeEnum.SMS]: {
     body: 'Hello, World!',
   },
-  [StepTypeEnum.EMAIL]: buildEmailControls(),
+  [StepTypeEnum.EMAIL]: buildEmailControls() as unknown as Record<string, unknown>,
   [StepTypeEnum.PUSH]: {
     subject: 'Hello, World!',
     body: 'Hello, World!',

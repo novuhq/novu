@@ -7,6 +7,7 @@ import {
   PushRenderOutput,
   RedirectTargetEnum,
   SmsRenderOutput,
+  TipTapNode,
 } from '@novu/shared';
 import { z } from 'zod';
 import { ExpendEmailEditorSchemaUseCase } from '../../environments/render/email-schema-extender';
@@ -18,7 +19,8 @@ class RenderCommand {
 export class EmailOutputRendererUseCase {
   async execute(renderCommand: RenderCommand): Promise<EmailRenderOutput> {
     const parse = EmailStepControlSchema.parse(renderCommand.controlValues);
-    const expandedSchema = new ExpendEmailEditorSchemaUseCase().execute({ schema: parse.emailEditor });
+    const schema = parse.emailEditor as TipTapNode;
+    const expandedSchema = new ExpendEmailEditorSchemaUseCase().execute({ schema });
     const html = await render(expandedSchema);
 
     return { subject: parse.subject, body: html };
