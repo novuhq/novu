@@ -53,7 +53,7 @@ export class GeneratePreviewUseCase {
 
   private async getWorkflowUserIdentifierFromWorkflowObject(command: GeneratePreviewCommand) {
     const workflowResponseDto = await this.getWorkflowUseCase.execute({
-      _workflowId: command.generatePreviewRequestDto.workflowId,
+      identifierOrInternalId: command.generatePreviewRequestDto.workflowId,
       user: command.user,
     });
     const { workflowId } = workflowResponseDto;

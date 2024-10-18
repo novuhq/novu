@@ -26,6 +26,7 @@ import {
 import { AddNodeEdge, AddNodeEdgeType } from './edges';
 import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { StepTypeEnum } from '@/utils/enums';
+import { StepResponseDto } from '@novu/shared';
 
 const nodeTypes = {
   trigger: TriggerNode,

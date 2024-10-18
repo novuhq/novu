@@ -9,7 +9,7 @@ import {
   SmsRenderOutput,
 } from '@novu/shared';
 import { z } from 'zod';
-import { ExpendEmailEditorSchemaUseCase } from '../render/email-schema-extender';
+import { ExpendEmailEditorSchemaUseCase } from '../../environments/render/email-schema-extender';
 
 class RenderCommand {
   controlValues: Record<string, unknown>;

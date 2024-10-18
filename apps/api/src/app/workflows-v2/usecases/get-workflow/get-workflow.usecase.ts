@@ -8,8 +8,6 @@ import {
 } from '@novu/dal';
 import { ControlValuesLevelEnum, WorkflowResponseDto } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
-
-import { Error } from 'mongoose';
 import { GetWorkflowCommand } from './get-workflow.command';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
@@ -39,20 +37,6 @@ export class GetWorkflowUseCase {
     );
 
     return toResponseWorkflowDto(workflowEntity, preferences, stepIdToControlValuesMap);
-  }
-
-  private async findById(command: GetWorkflowCommand) {
-    try {
-      return await this.notificationTemplateRepository.findByIdQuery({
-        id: command._workflowId,
-        environmentId: command.user.environmentId,
-      });
-    } catch (err) {
-      if (err instanceof Error.CastError) {
-        throw new WorkflowNotFoundException(command._workflowId);
-      }
-      throw err;
-    }
   }
 
   private async getControlsValuesMap(
