@@ -1,5 +1,3 @@
-import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { GetPreferencesResponseDto } from '@novu/application-generic';
 import {
   ControlsSchema,
   DEFAULT_WORKFLOW_PREFERENCES,
