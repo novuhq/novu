@@ -6,8 +6,9 @@ import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider } fro
 import { cn } from '@/utils/ui';
 import { Label } from '@/components/primitives/label';
 import { cva } from 'class-variance-authority';
-import { RiInformationFill } from 'react-icons/ri';
 import { FormFieldContext, FormItemContext, useFormField } from './form-context';
+import { RiErrorWarningFill, RiInformationFill } from 'react-icons/ri';
+import { BsFillInfoCircleFill } from 'react-icons/bs';
 
 const Form = FormProvider;
 
@@ -39,11 +40,27 @@ FormItem.displayName = 'FormItem';
 
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & { optional?: boolean; hint?: string }
+>(({ className, optional, hint, children, ...props }, ref) => {
   const { formItemId } = useFormField();
 
-  return <Label ref={ref} className={className} htmlFor={formItemId} {...props} />;
+  return (
+    <Label ref={ref} className={cn('text-foreground-950', className)} htmlFor={formItemId} {...props}>
+      {children}
+      {hint && (
+        <span className="text-foreground-400 ml-0.5 inline-flex items-center gap-1">
+          {hint}
+          <BsFillInfoCircleFill className="text-foreground-300 inline size-3" />
+        </span>
+      )}
+
+      {optional && (
+        <span className="text-foreground-400 ml-0.5 inline-flex items-center gap-1">
+          (optional) <BsFillInfoCircleFill className="text-foreground-300 inline size-3" />
+        </span>
+      )}
+    </Label>
+  );
 });
 FormLabel.displayName = 'FormLabel';
 
@@ -78,7 +95,7 @@ FormDescription.displayName = 'FormDescription';
 const formMessageVariants = cva('flex items-center gap-1', {
   variants: {
     variant: {
-      default: '[&>svg]:text-neutral-400 [&>span]:text-foreground-600',
+      default: '[&>svg]:text-foreground-300 text-foreground-400',
       error: '[&>svg]:text-destructive [&>span]:text-destructive',
     },
   },
@@ -100,7 +117,7 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
         className={formMessageVariants({ variant: error ? 'error' : 'default', className })}
         {...props}
       >
-        <RiInformationFill className="size-4" />
+        {error ? <RiErrorWarningFill className="size-4" /> : <RiInformationFill className="size-4" />}
         <span className="mt-[1px] text-xs leading-3">{body}</span>
       </p>
     );

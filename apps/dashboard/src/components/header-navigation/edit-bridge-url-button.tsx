@@ -1,8 +1,6 @@
 import { useLayoutEffect, useState } from 'react';
 import { RiLinkM, RiPencilFill } from 'react-icons/ri';
 import { useForm } from 'react-hook-form';
-// eslint-disable-next-line
-// @ts-ignore
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -86,7 +84,7 @@ export const EditBridgeUrlButton = () => {
                     <FormItem>
                       <FormLabel>Bridge Endpoint URL</FormLabel>
                       <FormControl>
-                        <InputField variant="xs" state={errors.bridgeUrl?.message ? 'error' : 'default'}>
+                        <InputField state={errors.bridgeUrl?.message ? 'error' : 'default'}>
                           <RiLinkM className="size-5 min-w-5" />
                           <Input id="bridgeUrl" {...field} />
                         </InputField>
