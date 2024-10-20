@@ -97,7 +97,9 @@ describe('Workflow Controller E2E API Testing', () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updateDtoWithValues = buildUpdateDtoWithValues(workflowCreated);
-      await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateDtoWithValues);
+      const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(workflowCreated._id, updateDtoWithValues);
+      expect(updatedWorkflow.steps[0].controlValues.test).to.be.equal(updateDtoWithValues.steps[0].controlValues.test);
+      expect(updatedWorkflow.steps[1].controlValues.test).to.be.equal(updateDtoWithValues.steps[1].controlValues.test);
     });
 
     it('should keep the step id on updated ', async () => {
@@ -247,7 +249,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'stepUuid')
+    removeFields(step, 'stepUuid', 'slug')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
     removeFields(createWorkflowDto, '__source'),
@@ -428,7 +430,7 @@ async function getWorkflowRest(
 }
 
 async function validateWorkflowDeleted(workflowId: string): Promise<void> {
-  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(400);
+  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(404);
 }
 
 async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
@@ -595,7 +597,17 @@ function buildInAppStepWithValues() {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type', 'status') as UpdateWorkflowDto;
+  const steps = workflowCreated.steps.map((step) => removeFields(step, 'slug')) as StepUpdateDto[];
+  const workflowResponseDto = removeFields(
+    workflowCreated,
+    'updatedAt',
+    '_id',
+    'origin',
+    'type',
+    'status'
+  ) as UpdateWorkflowDto;
+
+  return { ...workflowResponseDto, steps };
 }
 
 function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
