@@ -39,6 +39,8 @@ export class GeneratePreviewUsecase {
     workflowId: string,
     stepId: string
   ) {
+    console.log('hydratedPayload', hydratedPayload);
+
     return await this.legacyPreviewStepUseCase.execute(
       PreviewStepCommand.create({
         payload: hydratedPayload,
@@ -79,10 +81,13 @@ export class GeneratePreviewUsecase {
 function addMissingValuesToPayload(command: GeneratePreviewCommand): Record<string, unknown> {
   const dto = command.generatePreviewRequestDto;
   let payloadFromDto = dto.payloadValues || {};
+  console.log('initalPAyload', payloadFromDto);
   for (const controlValueKey in dto.controlValues) {
     if (dto.controlValues.hasOwnProperty(controlValueKey)) {
-      const hydratedValue = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
-      payloadFromDto = merge(payloadFromDto, hydratedValue);
+      const defaultValues = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
+      console.log('defaultValues', defaultValues);
+      payloadFromDto = merge(defaultValues, payloadFromDto);
+      console.log('mergedPayload', payloadFromDto);
     }
   }
 

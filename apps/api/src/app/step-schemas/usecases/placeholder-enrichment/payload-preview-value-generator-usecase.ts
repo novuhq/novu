@@ -45,7 +45,7 @@ export class CreateMockPayloadUseCase {
 
     return new TransformPlaceholderMapUseCase().execute({
       input: { regular: convertToRecord(strings) },
-    });
+    }).payload;
   }
 }
 function convertToRecord(keys: string[]): Record<string, any> {
