@@ -13,7 +13,7 @@ export const WorkflowEditor = () => {
   });
 
   return (
-    <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-col">
+    <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-1 flex-col">
       <TabsList>
         <TabsTrigger value="workflow">Workflow</TabsTrigger>
       </TabsList>
