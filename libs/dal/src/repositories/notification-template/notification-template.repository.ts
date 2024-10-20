@@ -42,6 +42,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   async findById(id: string, environmentId: string) {
     return this.findByIdQuery({ id, environmentId });
   }
+
   async findByIdQuery(query: FindByIdQuery) {
     const item = await this.MongooseModel.findOne({
       _id: query.id,

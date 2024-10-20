@@ -160,4 +160,22 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
   preferences?: WorkflowPreferences;
   /** The tags for the workflow. */
   tags?: string[];
+  /**
+   * The name of the workflow.
+   *
+   * This is used to display a human-friendly name for the workflow in the Dashboard and `<Inbox />` component.
+   *
+   * If no value is specified, the `workflowId` will be used as the name.
+   *
+   * @example `Weekly Comment Digest`
+   */
+  name?: string;
+  /**
+   * The description of the workflow.
+   *
+   * This is used to provide a brief overview of the workflow in the Dashboard.
+   *
+   * @example `This workflow sends a weekly digest of comments to users.`
+   */
+  description?: string;
 };

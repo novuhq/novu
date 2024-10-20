@@ -1,6 +1,5 @@
-import { createContextAndHook } from '@/utils/context';
+import React from 'react';
 import { AuthContextValue } from './types';
 
-const [AuthContext, useAuth] = createContextAndHook<AuthContextValue>('AuthContext');
-
-export { AuthContext, useAuth };
+export const AuthContext = React.createContext<AuthContextValue>({} as AuthContextValue);
+AuthContext.displayName = 'AuthContext';

@@ -8,6 +8,7 @@ export type ListNotificationsArgs = {
   limit?: number;
   after?: string;
   offset?: number;
+  useCache?: boolean;
 };
 
 export type ListNotificationsResponse = { notifications: Notification[]; hasMore: boolean; filter: NotificationFilter };

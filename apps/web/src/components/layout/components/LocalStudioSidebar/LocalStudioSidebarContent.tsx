@@ -5,7 +5,7 @@ import { FC } from 'react';
 import { token } from '@novu/novui/tokens';
 import { css, cx } from '@novu/novui/css';
 import { WithLoadingSkeleton } from '@novu/novui';
-import { IBridgeWorkflow } from '../../../../studio/types';
+import type { DiscoverWorkflowOutput } from '@novu/framework';
 import { NavMenu } from '../../../nav/NavMenu';
 import { NavMenuSection } from '../../../nav/NavMenuSection';
 import { LocalStudioSidebarOrganizationDisplay } from './LocalStudioSidebarOrganizationDisplay';
@@ -14,10 +14,9 @@ import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 import { useDocsModal } from '../../../docs/useDocsModal';
 import { PATHS } from '../../../docs/docs.const';
-import { ROUTES } from '../../../../constants/routes';
 
 type LocalStudioSidebarContentProps = {
-  workflows: IBridgeWorkflow[];
+  workflows: DiscoverWorkflowOutput[];
   isLoading?: boolean;
 };
 

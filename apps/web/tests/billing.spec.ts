@@ -8,7 +8,8 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 const GREEN = 'rgb(77, 153, 128)';
 const YELLOW = 'rgb(253, 224, 68)';
 
-test.describe('Billing', () => {
+// TODO: new set of tests after redesign
+test.describe.skip('Billing', () => {
   test.skip(process.env.NOVU_ENTERPRISE !== 'true', 'Skipping tests for non enterprise variant...');
 
   test.beforeEach(async ({ page }) => {

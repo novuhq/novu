@@ -60,7 +60,10 @@ program
   (e.g., npx novu@latest dev -p 4000)
 
   Running the Bridge application on a different route: 
-  (e.g., npx novu@latest dev -r /v1/api/novu)`
+  (e.g., npx novu@latest dev -r /v1/api/novu)
+  
+  Running with a custom tunnel:
+  (e.g., npx novu@latest dev --tunnel https://my-tunnel.ngrok.app)`
   )
   .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>]')
   .option('-p, --port <port>', 'The local Bridge endpoint port', '4000')
@@ -68,6 +71,7 @@ program
   .option('-o, --origin <origin>', 'The Bridge endpoint origin')
   .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
+  .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
       identity: {

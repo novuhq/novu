@@ -22,14 +22,6 @@ const buildCSS = async () => {
   fs.writeFileSync(destinationCssFilePath, processedCss);
 };
 
-const runAfterLast =
-  (commands: Array<string | false>) =>
-  (...configs: Options[]) => {
-    const [last, ...rest] = configs.reverse();
-
-    return [...rest.reverse(), { ...last, onSuccess: [last.onSuccess, ...commands].filter(Boolean).join(' && ') }];
-  };
-
 const isProd = process.env?.NODE_ENV === 'production';
 
 const baseConfig: Options = {
@@ -53,8 +45,6 @@ const baseModuleConfig: Options = {
 };
 
 export default defineConfig((config: Options) => {
-  const copyPackageJson = (format: 'esm' | 'cjs') => `cp ./package.${format}.json ./dist/${format}/package.json`;
-
   const cjs: Options = {
     ...baseModuleConfig,
     format: 'cjs',
@@ -92,5 +82,5 @@ export default defineConfig((config: Options) => {
     onSuccess: async () => await buildCSS(),
   };
 
-  return runAfterLast([copyPackageJson('esm'), copyPackageJson('cjs')])(umd, esm, cjs);
+  return [cjs, esm, umd];
 });

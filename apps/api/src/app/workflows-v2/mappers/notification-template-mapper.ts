@@ -13,6 +13,7 @@ import {
 } from '@novu/shared';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
+import { BadRequestException } from '@nestjs/common';
 
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
@@ -83,11 +84,11 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   };
 }
 
-function convertControls(step: NotificationStepEntity): ControlsSchema | undefined {
+function convertControls(step: NotificationStepEntity): ControlsSchema {
   if (step.template?.controls) {
     return { schema: step.template.controls.schema };
   } else {
-    return undefined;
+    throw new BadRequestException('Step controls must be defined.');
   }
 }
 
