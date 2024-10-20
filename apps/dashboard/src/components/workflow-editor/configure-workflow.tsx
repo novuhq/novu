@@ -15,8 +15,8 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../pri
 export function ConfigureWorkflow() {
   const { control } = useFormContext<z.infer<typeof formSchema>>();
   return (
-    <aside className="text-foreground-950 flex h-full w-[300px] max-w-[350px] flex-col border-l pb-5 pt-3.5 [&_label]:text-xs [&_label]:font-medium">
-      <div className="flex items-center gap-2.5 px-3 pb-2.5 text-sm">
+    <aside className="text-foreground-950 flex h-full w-[300px] max-w-[350px] flex-col border-l pb-5 pt-3.5 [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-neutral-600">
+      <div className="flex items-center gap-2.5 px-3 pb-3.5 text-sm font-medium">
         <RouteFill />
         <span>Configure workflow</span>
       </div>
@@ -92,7 +92,7 @@ export function ConfigureWorkflow() {
               <div className="flex items-center gap-1">
                 <FormLabel>Add tags</FormLabel>
               </div>
-              <FormControl>
+              <FormControl className="text-xs text-neutral-600">
                 <TagInput {...field} value={field.value ?? []} />
               </FormControl>
             </FormItem>
