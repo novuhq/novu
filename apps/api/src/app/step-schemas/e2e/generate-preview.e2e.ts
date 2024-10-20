@@ -177,7 +177,7 @@ describe('Control Schema', () => {
       channelTypes.forEach(({ type, description }) => {
         it(`${type}:should match the body in the preview response`, async () => {
           const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
-          const requestDto = buildHappyDto(type, workflowId, stepUuid);
+          const requestDto = buildHappyDto(type);
           const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
           console.log('previewResponseDto', JSON.stringify(previewResponseDto));
           expect(previewResponseDto.result!.preview).to.exist;
@@ -202,7 +202,7 @@ describe('Control Schema', () => {
       channelTypes.forEach(({ type, description }) => {
         it(`${type}:should match the body in the preview response`, async () => {
           const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
-          const requestDto = buildHappyDto(type, workflowId, stepUuid);
+          const requestDto = buildHappyDto(type);
           const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
           console.log('previewResponseDto', JSON.stringify(previewResponseDto));
           expect(previewResponseDto.result!.preview).to.exist;
@@ -250,20 +250,10 @@ describe('Control Schema', () => {
   }
 });
 
-function buildHappyDto(stepTypeEnum: StepTypeEnum, workflowId: string, stepUuid: string): GeneratePreviewRequestDto {
+function buildHappyDto(stepTypeEnum: StepTypeEnum): GeneratePreviewRequestDto {
   return {
     validationStrategies: [],
     controlValues: stepTypeTo[stepTypeEnum],
     payloadValues: { subject: { placeholder: PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE } },
-    controlSchema: {
-      type: 'object',
-      properties: {
-        body: {
-          type: 'string',
-        },
-      },
-      required: ['body'],
-      additionalProperties: false,
-    },
   };
 }
