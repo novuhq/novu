@@ -72,6 +72,19 @@ export default {
       success: {
         DEFAULT: 'hsl(var(--success))',
       },
+      'success-alpha': {
+        50: 'hsl(var(--success-alpha-50))',
+        100: 'hsl(var(--success-alpha-100))',
+        200: 'hsl(var(--success-alpha-200))',
+        300: 'hsl(var(--success-alpha-300))',
+        400: 'hsl(var(--success-alpha-400))',
+        500: 'hsl(var(--success-alpha-500))',
+        600: 'hsl(var(--success-alpha-600))',
+        700: 'hsl(var(--success-alpha-700))',
+        800: 'hsl(var(--success-alpha-800))',
+        900: 'hsl(var(--success-alpha-900))',
+        950: 'hsl(var(--success-alpha-950))',
+      },
       warning: {
         DEFAULT: 'hsl(var(--warning))',
       },

@@ -55,6 +55,17 @@
     --destructive-foreground: 0 0% 100%;
 
     --success: 148 72% 44%;
+    --success-alpha-50: 148 72% 44% / 0.05;
+    --success-alpha-100: 148 72% 44% / 0.1;
+    --success-alpha-200: 148 72% 44% / 0.2;
+    --success-alpha-300: 148 72% 44% / 0.3;
+    --success-alpha-400: 148 72% 44% / 0.4;
+    --success-alpha-500: 148 72% 44% / 0.5;
+    --success-alpha-600: 148 72% 44% / 0.6;
+    --success-alpha-700: 148 72% 44% / 0.7;
+    --success-alpha-800: 148 72% 44% / 0.8;
+    --success-alpha-900: 148 72% 44% / 0.9;
+    --success-alpha-950: 148 72% 44% / 0.95;
 
     --warning: 20 100% 64%;
 
