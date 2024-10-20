@@ -1,7 +1,7 @@
-import basex from 'base-x';
+import baseX from 'base-x';
 
 const BASE62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const { encode, decode } = basex(BASE62);
+const { encode, decode } = baseX(BASE62);
 
 export function encodeBase62(value: string): string {
   const buffer = Buffer.from(value, 'hex');
