@@ -18,6 +18,145 @@ import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e
 import { createWorkflowClient, HttpError, NovuRestResult } from '../../workflows-v2/clients';
 import { mapStepTypeToOutput } from '../shared';
 
+describe('Control Schema', () => {
+  let session: UserSession;
+  let workflowsClient: ReturnType<typeof createWorkflowClient>;
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+    workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
+    // @ts-ignore
+    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
+  });
+  after(async () => {
+    await sleep(1000);
+  });
+  describe('Generate Preview', () => {
+    describe('Hydration testing', () => {
+      const channelTypes = [{ type: StepTypeEnum.IN_APP, description: 'InApp' }];
+
+      channelTypes.forEach(({ type, description }) => {
+        it(`${type}:should match the body in the preview response`, async () => {
+          const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
+          const requestDto = buildDtoWithPayload(type);
+          const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
+          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
+          expect(previewResponseDto.result!.preview).to.exist;
+          const expectedRenderedResult = buildInAppControlValues();
+          expectedRenderedResult.subject = buildInAppControlValues().subject!.replace(
+            PLACEHOLDER_SUBJECT_INAPP,
+            PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE
+          );
+          expect(previewResponseDto.result!.preview).to.deep.equal(expectedRenderedResult);
+        });
+      });
+    });
+    describe('Happy Path, no payload, expected same response as requested', () => {
+      const channelTypes = [
+        { type: StepTypeEnum.IN_APP, description: 'InApp' },
+        { type: StepTypeEnum.SMS, description: 'SMS' },
+        { type: StepTypeEnum.PUSH, description: 'Push' },
+        { type: StepTypeEnum.CHAT, description: 'Chat' },
+      ];
+
+      channelTypes.forEach(({ type, description }) => {
+        it(`${type}:should match the body in the preview response`, async () => {
+          const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
+          const requestDto = buildDtoNoPayload(type);
+          const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
+          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
+          expect(previewResponseDto.result!.preview).to.exist;
+          if (type !== StepTypeEnum.EMAIL) {
+            expect(previewResponseDto.result!.preview).to.deep.equal(stepTypeTo[type]);
+          } else {
+            assertEmail(previewResponseDto);
+          }
+        });
+      });
+    });
+    describe('Missing Required ControlValues', () => {
+      const channelTypes = [{ type: StepTypeEnum.IN_APP, description: 'InApp' }];
+
+      channelTypes.forEach(({ type, description }) => {
+        it(`${type}: should assign default values to missing elements`, async () => {
+          const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
+          const requestDto = buildDtoWithMissingControlValues(type);
+          const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
+          expect(previewResponseDto.result!.preview.body).to.exist;
+          expect(previewResponseDto.result!.preview.body).to.equal('PREVIEW_ISSUE:REQUIRED_CONTROL_VALUE_IS_MISSING');
+          console.log('previewResponseDto', JSON.stringify(previewResponseDto, null, 2));
+          const { issues } = previewResponseDto;
+          expect(issues).to.exist;
+          expect(issues.body).to.exist;
+        });
+      });
+    });
+  });
+
+  function getHeaders(): HeadersInit {
+    return {
+      Authorization: session.token, // Fixed space
+      'Novu-Environment-Id': session.environment._id,
+    };
+  }
+
+  async function generatePreview(
+    workflowId: string,
+    stepUuid: string,
+    dto: GeneratePreviewRequestDto,
+    description: string
+  ): Promise<GeneratePreviewResponseDto> {
+    const novuRestResult = await workflowsClient.generatePreview(workflowId, stepUuid, dto);
+    if (novuRestResult.isSuccessResult()) {
+      return novuRestResult.value;
+    }
+    throw await assertHttpError(description, novuRestResult);
+  }
+
+  async function createWorkflowAndReturnId(type: StepTypeEnum) {
+    const createWorkflowDto = buildCreateWorkflowDto(`${type}:${randomUUID()}`);
+    createWorkflowDto.steps[0].type = type;
+    createWorkflowDto.steps[0].controls = { schema: mapStepTypeToOutput[type] };
+
+    const workflowResult = await workflowsClient.createWorkflow(createWorkflowDto);
+    if (!workflowResult.isSuccessResult()) {
+      throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);
+    }
+
+    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[0].stepUuid };
+  }
+});
+
+function buildDtoNoPayload(stepTypeEnum: StepTypeEnum): GeneratePreviewRequestDto {
+  return {
+    validationStrategies: [],
+    controlValues: stepTypeTo[stepTypeEnum],
+  };
+}
+function buildDtoWithPayload(stepTypeEnum: StepTypeEnum): GeneratePreviewRequestDto {
+  return {
+    validationStrategies: [],
+    controlValues: stepTypeTo[stepTypeEnum],
+    payloadValues: { subject: PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE },
+  };
+}
+
+function buildDtoWithMissingControlValues(stepTypeEnum: StepTypeEnum): GeneratePreviewRequestDto {
+  const stepTypeToElement = stepTypeTo[stepTypeEnum];
+  if (stepTypeEnum === StepTypeEnum.EMAIL) {
+    delete stepTypeToElement.subject;
+  } else {
+    delete stepTypeToElement.body;
+  }
+
+  return {
+    validationStrategies: [],
+    controlValues: stepTypeToElement,
+    payloadValues: { subject: PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE },
+  };
+}
+
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
@@ -154,106 +293,4 @@ function assertEmail(dto: GeneratePreviewResponseDto) {
     expect(preview).to.contain(FOR_ITEM_VALUE_PLACEHOLDER);
     expect(preview).to.contain(TEST_SHOW_VALUE);
   }
-}
-
-describe('Control Schema', () => {
-  let session: UserSession;
-  let workflowsClient: ReturnType<typeof createWorkflowClient>;
-
-  beforeEach(async () => {
-    session = new UserSession();
-    await session.initialize();
-    workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
-    // @ts-ignore
-    process.env[FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED] = 'true';
-  });
-  after(async () => {
-    await sleep(1000);
-  });
-  describe('Generate Preview', () => {
-    describe('Hydration testing', () => {
-      const channelTypes = [{ type: StepTypeEnum.IN_APP, description: 'InApp' }];
-
-      channelTypes.forEach(({ type, description }) => {
-        it(`${type}:should match the body in the preview response`, async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
-          const requestDto = buildHappyDto(type);
-          const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
-          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
-          expect(previewResponseDto.result!.preview).to.exist;
-          const expectedRenderedResult = buildInAppControlValues();
-          expectedRenderedResult.subject = buildInAppControlValues().subject!.replace(
-            PLACEHOLDER_SUBJECT_INAPP,
-            PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE
-          );
-          expect(previewResponseDto.result!.preview).to.deep.equal(expectedRenderedResult);
-        });
-      });
-    });
-
-    describe('Happy Path, no payload, expected same response as requested', () => {
-      const channelTypes = [
-        { type: StepTypeEnum.IN_APP, description: 'InApp' },
-        { type: StepTypeEnum.SMS, description: 'SMS' },
-        { type: StepTypeEnum.PUSH, description: 'Push' },
-        { type: StepTypeEnum.CHAT, description: 'Chat' },
-      ];
-
-      channelTypes.forEach(({ type, description }) => {
-        it(`${type}:should match the body in the preview response`, async () => {
-          const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
-          const requestDto = buildHappyDto(type);
-          const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
-          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
-          expect(previewResponseDto.result!.preview).to.exist;
-          if (type !== StepTypeEnum.EMAIL) {
-            expect(previewResponseDto.result!.preview).to.deep.equal(stepTypeTo[type]);
-          } else {
-            assertEmail(previewResponseDto);
-          }
-        });
-      });
-    });
-  });
-
-  function getHeaders(): HeadersInit {
-    return {
-      Authorization: session.token, // Fixed space
-      'Novu-Environment-Id': session.environment._id,
-    };
-  }
-
-  async function generatePreview(
-    workflowId: string,
-    stepUuid: string,
-    dto: GeneratePreviewRequestDto,
-    description: string
-  ): Promise<GeneratePreviewResponseDto> {
-    const novuRestResult = await workflowsClient.generatePreview(workflowId, stepUuid, dto);
-    if (novuRestResult.isSuccessResult()) {
-      return novuRestResult.value;
-    }
-    throw await assertHttpError(description, novuRestResult);
-  }
-
-  async function createWorkflowAndReturnId(type: StepTypeEnum) {
-    const createWorkflowDto = buildCreateWorkflowDto(`${type}:${randomUUID()}`);
-    createWorkflowDto.steps[0].type = type;
-    createWorkflowDto.steps[0].controls = { schema: mapStepTypeToOutput[type] };
-
-    const workflowResult = await workflowsClient.createWorkflow(createWorkflowDto);
-    if (!workflowResult.isSuccessResult()) {
-      throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);
-    }
-
-    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[0].stepUuid };
-  }
-});
-
-function buildHappyDto(stepTypeEnum: StepTypeEnum): GeneratePreviewRequestDto {
-  return {
-    validationStrategies: [],
-    controlValues: stepTypeTo[stepTypeEnum],
-    payloadValues: { subject: PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE },
-  };
 }
