@@ -15,7 +15,7 @@ import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } f
 
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
-import { Badge } from '@/components/primitives/badge';
+import { Badge, BadgeContent } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
