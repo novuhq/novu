@@ -58,7 +58,7 @@ const StartItems = () => {
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map(({ label, href }) => (
-            <React.Fragment key={href}>
+            <React.Fragment key={`${href}_${label}`}>
               <BreadcrumbItem>
                 <BreadcrumbLink to={href}>{label}</BreadcrumbLink>
               </BreadcrumbItem>
