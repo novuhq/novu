@@ -179,6 +179,10 @@ export function SelectProviderSidebar({
           type={'search'}
           onChange={(e) => {
             debouncedSearchChange(e.target.value);
+            if (e.target.value === '') {
+              // added timeout of 1000ms so that scroll happens after provider list is rendered
+              setTimeout(() => scrollToElement(selectedTab), 1000);
+            }
           }}
           mb={20}
           placeholder={'Search a provider...'}
