@@ -89,23 +89,23 @@ export class UpdateWorkflow {
       updatePayload.active = command.active;
     }
 
-    if (command.description) {
+    if (command.description !== undefined) {
       updatePayload.description = command.description;
     }
 
-    if (command.identifier) {
+    if (command.workflowId) {
       const isExistingIdentifier =
         await this.notificationTemplateRepository.findByTriggerIdentifier(
           command.environmentId,
-          command.identifier,
+          command.workflowId,
         );
 
       if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
         throw new BadRequestException(
-          `Workflow with identifier ${command.identifier} already exists`,
+          `Workflow with identifier ${command.workflowId} already exists`,
         );
       } else {
-        updatePayload['triggers.0.identifier'] = command.identifier;
+        updatePayload['triggers.0.identifier'] = command.workflowId;
       }
     }
 

@@ -13,6 +13,7 @@ import {
 } from '@novu/shared';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
+import { BadRequestException } from '@nestjs/common';
 
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
@@ -31,6 +32,7 @@ export function toResponseWorkflowDto(
     preferences: preferencesDto,
     steps: getSteps(template, stepIdToControlValuesMap),
     name: template.name,
+    workflowId: template.triggers[0].identifier,
     description: template.description,
     origin: template.origin || WorkflowOriginEnum.EXTERNAL,
     type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
@@ -82,11 +84,11 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   };
 }
 
-function convertControls(step: NotificationStepEntity): ControlsSchema | undefined {
+function convertControls(step: NotificationStepEntity): ControlsSchema {
   if (step.template?.controls) {
     return { schema: step.template.controls.schema };
   } else {
-    return undefined;
+    throw new BadRequestException('Step controls must be defined.');
   }
 }
 

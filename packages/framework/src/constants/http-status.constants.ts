@@ -48,5 +48,3 @@ export enum HttpStatusEnum {
   GATEWAY_TIMEOUT = 504,
   HTTP_VERSION_NOT_SUPPORTED = 505,
 }
-
-export const RETRYABLE_ERROR_STATUS_CODES = [HttpStatusEnum.INTERNAL_SERVER_ERROR];

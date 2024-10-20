@@ -9,6 +9,7 @@ export type OrganizationPublicMetadata = {
   productUseCases?: ProductUseCases;
   language?: string[];
   defaultLocale?: string;
+  companySize?: string;
 };
 
 export type UserPublicMetadata = {

@@ -37,7 +37,7 @@ import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
 export class BridgeController {
   constructor(
     private syncUsecase: Sync,
-    private validateBridgeUrlUsecase: GetBridgeStatus,
+    private getBridgeStatus: GetBridgeStatus,
     private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private controlValuesRepository: ControlValuesRepository,
@@ -49,20 +49,11 @@ export class BridgeController {
   @Get('/status')
   @UseGuards(UserAuthGuard)
   async health(@UserSession() user: UserSessionData) {
-    const environment = await this.environmentRepository.findOne({ _id: user.environmentId });
-    if (!environment?.echo?.url) {
-      throw new BadRequestException('Bridge URL not found');
-    }
-
-    const result = await this.validateBridgeUrlUsecase.execute(
+    const result = await this.getBridgeStatus.execute(
       GetBridgeStatusCommand.create({
-        bridgeUrl: environment.echo.url,
+        environmentId: user.environmentId,
       })
     );
-
-    if (result.status !== 'ok') {
-      throw new Error('Bridge URL is not accessible');
-    }
 
     return result;
   }
@@ -79,10 +70,8 @@ export class BridgeController {
       PreviewStepCommand.create({
         workflowId,
         stepId,
-        inputs: data.controls || data.inputs,
         controls: data.controls || data.inputs,
-        data: data.payload,
-        bridgeUrl: data.bridgeUrl,
+        payload: data.payload,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -214,17 +203,22 @@ export class BridgeController {
 
   @Post('/validate')
   @ExternalApiAccessible()
-  async validateBridgeUrl(@Body() body: ValidateBridgeUrlRequestDto): Promise<ValidateBridgeUrlResponseDto> {
+  @UseGuards(UserAuthGuard)
+  async validateBridgeUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: ValidateBridgeUrlRequestDto
+  ): Promise<ValidateBridgeUrlResponseDto> {
     try {
-      const result = await this.validateBridgeUrlUsecase.execute(
+      const result = await this.getBridgeStatus.execute(
         GetBridgeStatusCommand.create({
-          bridgeUrl: body.bridgeUrl,
+          environmentId: user.environmentId,
+          statelessBridgeUrl: body.bridgeUrl,
         })
       );
 
       return { isValid: result.status === 'ok' };
     } catch (err: any) {
-      return { isValid: false };
+      return { isValid: false, error: err.message };
     }
   }
 }

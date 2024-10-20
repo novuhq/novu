@@ -1,6 +1,6 @@
 import { Step } from '@/components/primitives/step';
 import { WorkflowStep } from '@/components/workflow-step';
-import { StepTypeEnum } from '@novu/shared';
+import type { StepTypeEnum } from '@/utils/enums';
 
 type WorkflowStepsProps = {
   steps: StepTypeEnum[];
@@ -23,9 +23,7 @@ export const WorkflowSteps = (props: WorkflowStepsProps) => {
     <div className="flex items-center">
       <>
         {firstSteps.map((step) => (
-          <>
-            <WorkflowStep key={step} step={step} className="-ml-2 first-of-type:ml-0" />
-          </>
+          <WorkflowStep key={step} step={step} className="-ml-2 first-of-type:ml-0" />
         ))}
         {restSteps.length > 1 && <Step className="-ml-2">+{restSteps.length}</Step>}
       </>

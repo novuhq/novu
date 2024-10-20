@@ -71,7 +71,7 @@ export const SettingsNavMenu: React.FC = () => {
           ></NavMenuLinkButton>
         </When>
         <NavMenuLinkButton
-          label="Billing"
+          label="Plans & Billing"
           isVisible
           icon={<IconCreditCard />}
           link={ROUTES.BILLING}

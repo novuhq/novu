@@ -39,8 +39,9 @@ import {
   ExecuteBridgeRequest,
   ExecutionLogRoute,
   featureFlagsService,
-  injectCommunityAuthProviders,
+  GetDecryptedSecretKey,
   getFeatureFlag,
+  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -114,6 +115,7 @@ const PROVIDERS = [
   CreateExecutionDetails,
   ExecuteBridgeRequest,
   getFeatureFlag,
+  GetDecryptedSecretKey,
 ];
 
 const IMPORTS = [

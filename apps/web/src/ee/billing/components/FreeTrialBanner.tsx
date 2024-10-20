@@ -4,18 +4,17 @@ import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useMemo } from 'react';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { useSubscription } from '../hooks/useSubscription';
-import { warningLimitDays, COLOR_WARNING, pluralizeDaysLeft } from '../utils/freeTrial.constants';
+import { COLOR_WARNING, WARNING_LIMIT_DAYS, pluralizeDaysLeft } from '../utils/freeTrial.constants';
 import { ContactSalesModal } from './ContactSalesModal';
 import { capitalize } from '../utils/capitalize';
-import { useFeatureFlag } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 
 export function FreeTrialBanner() {
   const { colorScheme } = useMantineTheme();
   const isDark = colorScheme === 'dark';
-  const { trial, apiServiceLevel, hasPaymentMethod } = useSubscription();
+  const { trial, apiServiceLevel } = useSubscription();
   const [freeTrialDismissed, setFreeTrialDismissed] = useLocalStorage({
     key: 'freeTrialDismissed',
     defaultValue: 'false',
@@ -23,14 +22,8 @@ export function FreeTrialBanner() {
   const navigate = useNavigate();
   const plan = useMemo(() => capitalize(apiServiceLevel), [apiServiceLevel]);
   const [isContactSalesModalOpen, setIsContactSalesModalOpen] = useState(false);
-  const isImprovedBillingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_BILLING_ENABLED);
 
-  if (
-    freeTrialDismissed === 'true' ||
-    !trial.isActive ||
-    trial.daysLeft > warningLimitDays(isImprovedBillingEnabled) ||
-    hasPaymentMethod
-  ) {
+  if (freeTrialDismissed === 'true' || !trial.isActive || trial.daysLeft > WARNING_LIMIT_DAYS) {
     return null;
   }
 

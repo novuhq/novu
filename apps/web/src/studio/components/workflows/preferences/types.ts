@@ -10,4 +10,6 @@ export type SubscriptionPreferenceRow = {
 export type WorkflowGeneralSettings = {
   workflowId: string;
   name: string;
+  description: string;
+  tags: string[];
 };

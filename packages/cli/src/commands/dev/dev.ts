@@ -24,10 +24,16 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
   await showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
-  const devSpinner = ora('Creating a development local tunnel').start();
   const NOVU_ENDPOINT_PATH = options.route;
-  const tunnelOrigin = await createTunnel(parsedOptions.origin, NOVU_ENDPOINT_PATH);
+  let tunnelOrigin: string;
 
+  const devSpinner = ora('Creating a development local tunnel').start();
+
+  if (parsedOptions.tunnel) {
+    tunnelOrigin = parsedOptions.tunnel;
+  } else {
+    tunnelOrigin = await createTunnel(parsedOptions.origin, NOVU_ENDPOINT_PATH);
+  }
   devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}${NOVU_ENDPOINT_PATH}`);
 
   const opts = {

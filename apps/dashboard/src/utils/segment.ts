@@ -96,7 +96,6 @@ export class SegmentService {
         //@ts-expect-error missing from types
         mixpanel.get_session_recording_properties();
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       data = {
         ...(data || {}),
         ...sessionReplayProperties,
