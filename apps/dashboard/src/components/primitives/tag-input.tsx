@@ -66,7 +66,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         />
       </InputField>
       <div className="flex flex-wrap gap-2">
-        {tags.map((tag, index) => (
+        {tags?.map((tag, index) => (
           <Badge key={index} variant="outline" kind="tag">
             {tag}
             <button
