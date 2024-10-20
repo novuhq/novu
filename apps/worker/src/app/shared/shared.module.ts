@@ -15,8 +15,8 @@ import {
   EventsDistributedLockService,
   ExecuteBridgeRequest,
   featureFlagsService,
+  GetDecryptedSecretKey,
   GetTenant,
-  injectCommunityAuthProviders,
   InvalidateCacheService,
   LoggerModule,
   MetricsModule,
@@ -43,35 +43,21 @@ import {
   NotificationGroupRepository,
   NotificationRepository,
   NotificationTemplateRepository,
-  OrganizationRepository,
   SubscriberPreferenceRepository,
   SubscriberRepository,
   TenantRepository,
   TopicRepository,
   TopicSubscribersRepository,
-  UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 
-import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
+import { JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
 import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 import { ActiveJobsMetricService } from '../workflow/services';
 import { CreateLog } from './logs';
 
-function getDynamicAuthProviders() {
-  if (isClerkEnabled()) {
-    // eslint-disable-next-line global-require
-    const eeAuthPackage = require('@novu/ee-auth');
-
-    return eeAuthPackage.injectEEAuthProviders();
-  } else {
-    return injectCommunityAuthProviders();
-  }
-}
-
 const DAL_MODELS = [
-  OrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
   NotificationTemplateRepository,
@@ -90,8 +76,6 @@ const DAL_MODELS = [
   TenantRepository,
   WorkflowOverrideRepository,
   ControlValuesRepository,
-  UserRepository,
-  ...getDynamicAuthProviders(),
 ];
 
 const dalService = {
@@ -133,6 +117,7 @@ const PROVIDERS = [
   ...DAL_MODELS,
   ActiveJobsMetricService,
   ExecuteBridgeRequest,
+  GetDecryptedSecretKey,
 ];
 
 @Module({

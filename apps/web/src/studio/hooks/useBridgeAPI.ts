@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
+import type { DiscoverWorkflowOutput } from '@novu/framework';
 import {
   buildBridgeHTTPClient,
   type StepPreviewParams,
@@ -70,7 +71,7 @@ export const useHealthCheck = (options?: any) => {
   };
 };
 
-export const useWorkflow = (templateId: string, options?: any) => {
+export const useWorkflow = (templateId: string, options?: any): UseQueryResult<DiscoverWorkflowOutput, unknown> => {
   const api = useBridgeAPI();
 
   return useQuery(

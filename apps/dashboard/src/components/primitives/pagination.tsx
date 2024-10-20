@@ -8,7 +8,8 @@ import {
 } from '@radix-ui/react-icons';
 
 import { cn } from '@/utils/ui';
-import { ButtonProps, buttonVariants } from '@/components/primitives/button';
+import { ButtonProps } from '@/components/primitives/button';
+import { buttonVariants } from '@/components/primitives/variants';
 import { Link, LinkProps } from 'react-router-dom';
 
 const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (

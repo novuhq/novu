@@ -5,8 +5,9 @@ const OrganizationSwitcherAppearance: OrganizationSwitcherTheme = {
   elements: {
     rootBox: 'w-full',
     organizationSwitcherTrigger:
-      'w-full py-0 [&>.cl-organizationPreview]:px-0 px-1.5 justify-start hover:bg-background before:border-neutral-alpha-100 focus-visible:ring-ring group relative flex cursor-pointer items-center gap-2 rounded-lg transition duration-300 ease-out before:absolute before:bottom-[1px] before:left-0 before:h-0 before:w-full before:border-b before:border-solid before:transition-all before:duration-300 before:ease-out before:content-[""] hover:shadow-sm hover:before:border-transparent focus-visible:outline-none focus-visible:ring-1 focus:bg-transparent focus:shadow-sm focus:bg-background focus:before:border-transparent',
-    organizationSwitcherTriggerIcon: 'ml-auto',
+      'group w-full py-0 [&>.cl-organizationPreview]:px-0 px-1.5 justify-start hover:bg-background before:border-neutral-alpha-100 focus-visible:ring-ring group relative flex cursor-pointer items-center gap-2 rounded-lg transition duration-300 ease-out before:absolute before:bottom-[1px] before:left-0 before:h-0 before:w-full before:border-b before:border-solid before:transition-all before:duration-300 before:ease-out before:content-[""] hover:shadow-sm hover:before:border-transparent focus-visible:outline-none focus-visible:ring-1 focus:bg-transparent focus:shadow-sm focus:bg-background focus:before:border-transparent',
+    organizationSwitcherTriggerIcon:
+      'opacity-0 ml-auto transition duration-300 ease-out group-hover:opacity-100 group-focus:opacity-100',
     organizationSwitcherPopoverActionButton__manageOrganization: {
       display: 'none',
     },

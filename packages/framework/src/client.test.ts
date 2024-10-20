@@ -593,6 +593,386 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
+    it('should compile array control variables to a string with single quotes', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              comments: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { text: { type: 'string' } },
+                  required: ['text'],
+                },
+              },
+              subject: { type: 'string' },
+            },
+            required: ['comments', 'subject'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: { comments: [{ text: 'cat' }, { text: 'dog' }], subject: 'Hello' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: '{{payload.comments}}',
+          subject: '{{payload.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: "[{'text':'cat'},{'text':'dog'}]",
+        subject: 'Hello',
+      });
+    });
+
+    it('should compile array control variables to a string with single quotes when using json filter', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              comments: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { text: { type: 'string' } },
+                  required: ['text'],
+                },
+              },
+              subject: { type: 'string' },
+            },
+            required: ['comments', 'subject'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: { comments: [{ text: 'cat' }, { text: 'dog' }], subject: 'Hello' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: '{{payload.comments | json}}',
+          subject: '{{payload.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: "[{'text':'cat'},{'text':'dog'}]",
+        subject: 'Hello',
+      });
+    });
+
+    it('should compile object control variables to a string with single quotes', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              comment: {
+                type: 'object',
+                properties: { text: { type: 'string' } },
+                required: ['text'],
+              },
+              subject: { type: 'string' },
+            },
+            required: ['comment', 'subject'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: { comment: { text: 'cat' }, subject: 'Hello' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: '{{payload.comment}}',
+          subject: '{{payload.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: "{'text':'cat'}",
+        subject: 'Hello',
+      });
+    });
+
+    it('should compile object control variables to a string with single quotes when using json filter', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              comment: {
+                type: 'object',
+                properties: { text: { type: 'string' } },
+                required: ['text'],
+              },
+              subject: { type: 'string' },
+            },
+            required: ['comment', 'subject'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: { comment: { text: 'cat' }, subject: 'Hello' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: '{{payload.comment | json}}',
+          subject: '{{payload.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: "{'text':'cat'}",
+        subject: 'Hello',
+      });
+    });
+
+    it('should respect the spaces option when using json filter', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              comment: {
+                type: 'object',
+                properties: { text: { type: 'string' } },
+                required: ['text'],
+              },
+              subject: { type: 'string' },
+            },
+            required: ['comment', 'subject'],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: { comment: { text: 'cat' }, subject: 'Hello' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: '{{payload.comment | json: 2}}',
+          subject: '{{payload.subject}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: `{
+  'text': 'cat'
+}`,
+        subject: 'Hello',
+      });
+    });
+
+    it('should gracefully compile control variables that are not present', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email(
+          'send-email',
+          async (controls) => ({
+            body: controls.body,
+            subject: controls.subject,
+          }),
+          {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                body: { type: 'string' },
+                subject: { type: 'string' },
+              },
+              required: ['body', 'subject'],
+              additionalProperties: false,
+            } as const,
+          }
+        );
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        data: {},
+        payload: {},
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        inputs: {},
+        controls: {
+          body: 'Hi {{payload.does_not_exist}}',
+          subject: 'Test subject',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'Hi undefined',
+        subject: 'Test subject',
+      });
+    });
+
     // skipped until we implement support for control variables https://linear.app/novu/issue/NV-4248/support-for-controls-in-autocomplete
     it.skip('should compile control variables used in other control variables', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {

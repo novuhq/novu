@@ -4,32 +4,32 @@ import {
   ControlValuesEntity,
   ControlValuesRepository,
   NotificationStepEntity,
-  NotificationTemplateRepository,
+  NotificationTemplateEntity,
 } from '@novu/dal';
-import { ControlVariablesLevelEnum, WorkflowResponseDto } from '@novu/shared';
+import { ControlValuesLevelEnum, WorkflowResponseDto } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '@novu/application-generic';
 
 import { GetWorkflowCommand } from './get-workflow.command';
-import { WorkflowNotFoundException } from '../../exceptions/workflow-not-found-exception';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
+import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
+import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
 
 @Injectable()
 export class GetWorkflowUseCase {
   constructor(
-    private notificationTemplateRepository: NotificationTemplateRepository,
+    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private getPreferencesUseCase: GetPreferences
   ) {}
   async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
-    const notificationTemplateEntity = await this.notificationTemplateRepository.findByIdQuery({
-      id: command._workflowId,
-      environmentId: command.user.environmentId,
-    });
+    const workflowEntity: NotificationTemplateEntity | null = await this.getWorkflowByIdsUseCase.execute(
+      GetWorkflowByIdsCommand.create({
+        ...command,
+        identifierOrInternalId: command.identifierOrInternalId,
+      })
+    );
 
-    if (!notificationTemplateEntity) {
-      throw new WorkflowNotFoundException(command._workflowId);
-    }
-    const stepIdToControlValuesMap = await this.getControlsValuesMap(notificationTemplateEntity.steps, command);
+    const stepIdToControlValuesMap = await this.getControlsValuesMap(workflowEntity.steps, command, workflowEntity._id);
     const preferences = await this.getPreferencesUseCase.safeExecute(
       GetPreferencesCommand.create({
         environmentId: command.user.environmentId,
@@ -37,17 +37,18 @@ export class GetWorkflowUseCase {
       })
     );
 
-    return toResponseWorkflowDto(notificationTemplateEntity, preferences, stepIdToControlValuesMap);
+    return toResponseWorkflowDto(workflowEntity, preferences, stepIdToControlValuesMap);
   }
 
   private async getControlsValuesMap(
     steps: NotificationStepEntity[],
-    command: GetWorkflowCommand
+    command: GetWorkflowCommand,
+    _workflowId: string
   ): Promise<{ [key: string]: ControlValuesEntity }> {
     const acc: { [key: string]: ControlValuesEntity } = {};
 
     for (const step of steps) {
-      const controlValuesEntity = await this.buildControlValuesForStep(step, command);
+      const controlValuesEntity = await this.buildControlValuesForStep(step, command, _workflowId);
       if (controlValuesEntity) {
         acc[step._templateId] = controlValuesEntity;
       }
@@ -57,14 +58,15 @@ export class GetWorkflowUseCase {
   }
   private async buildControlValuesForStep(
     step: NotificationStepEntity,
-    command: GetWorkflowCommand
+    command: GetWorkflowCommand,
+    _workflowId: string
   ): Promise<ControlValuesEntity | null> {
     return await this.controlValuesRepository.findFirst({
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,
-      _workflowId: command._workflowId,
+      _workflowId,
       _stepId: step._templateId,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
   }
 }

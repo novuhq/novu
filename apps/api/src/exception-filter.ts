@@ -41,7 +41,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
   ) {
     const uuid = this.getUuid(exception);
-    this.logger.error({ exception, errorId: uuid }, `unexpected exception thrown`, 'Exception');
+    this.logger.error(
+      {
+        errorId: uuid,
+        /**
+         * It's important to use `err` as the key, pino (the logger we use) will
+         * log an empty object if the key is not `err`
+         *
+         * @see https://github.com/pinojs/pino/issues/819#issuecomment-611995074
+         */
+        err: exception,
+      },
+      `Unexpected exception thrown`,
+      'Exception'
+    );
 
     return { ...responseBody, errorId: uuid };
   }

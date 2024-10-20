@@ -37,7 +37,11 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
             tooltipLabel="View the Delay step documentation"
             onClick={handleClick('delay')}
           />
-          <WorkflowFloatingMenuButton Icon={IconOutlineBolt} onClick={handleClick('custom')} />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineBolt}
+            tooltipLabel="View the Custom step documentation"
+            onClick={handleClick('custom')}
+          />
         </WorkflowFloatingMenuSection>
         <WorkflowFloatingMenuSection title="Channels">
           <WorkflowFloatingMenuButton
