@@ -37,10 +37,6 @@ export class StepDto {
   name: string;
 
   @IsString()
-  @IsOptional()
-  stepId?: string;
-
-  @IsString()
   @IsDefined()
   type: StepTypeEnum;
 

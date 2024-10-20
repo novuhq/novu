@@ -5,7 +5,6 @@ import {
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
-  NotificationTemplateRepository,
   PreferencesEntity,
 } from '@novu/dal';
 import {
@@ -273,7 +272,7 @@ export class UpsertWorkflowUseCase {
         controls: step.controls,
         content: '',
       },
-      stepId: step.stepId || slugifyName(step.name),
+      stepId: slugifyName(step.name),
       name: step.name,
     };
   }

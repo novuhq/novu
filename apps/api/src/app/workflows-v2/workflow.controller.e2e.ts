@@ -6,6 +6,7 @@ import {
   ListWorkflowResponse,
   StepCreateDto,
   StepDto,
+  StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
   UpdateWorkflowDto,
@@ -226,7 +227,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'stepUuid')
+    removeFields(step, 'stepUuid', 'stepId')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
     removeFields(createWorkflowDto, '__source'),
@@ -243,7 +244,6 @@ function buildEmailStep(): StepDto {
       schema: channelStepSchemas.email.output,
     },
     name: 'Email Test Step',
-    stepId: 'email-test-step',
     type: StepTypeEnum.EMAIL,
   };
 }
@@ -255,7 +255,6 @@ function buildInAppStep(): StepDto {
       schema: channelStepSchemas.in_app.output,
     },
     name: 'In-App Test Step',
-    stepId: 'in-app-test-step',
     type: StepTypeEnum.IN_APP,
   };
 }
@@ -317,6 +316,18 @@ function findStepOnRequestBasedOnId(workflowUpdateRequest: UpdateWorkflowDto, st
   return undefined;
 }
 
+/*
+ * There's a side effect on the backend where the stepId gets updated based on the step name.
+ * We need to make a design decision on the client side, should we allow users to update the stepId separately.
+ */
+function updateStepId(step: StepResponseDto): StepResponseDto {
+  if (step.stepId) {
+    return { ...step, stepId: slugifyName(step.name) };
+  }
+
+  return step;
+}
+
 function validateUpdatedWorkflowAndRemoveResponseFields(
   workflowResponse: WorkflowResponseDto,
   workflowUpdateRequest: UpdateWorkflowDto
@@ -355,8 +366,12 @@ async function updateWorkflowAndValidate(
     updatedWorkflow,
     updateRequest
   );
+  const expectedUpdateRequest = {
+    ...updateRequest,
+    steps: updateRequest.steps.map(updateStepId),
+  };
   expect(updatedWorkflowWithResponseFieldsRemoved, 'workflow after update does not match as expected').to.deep.equal(
-    updateRequest
+    expectedUpdateRequest
   );
   expect(convertToDate(updatedWorkflow.updatedAt)).to.be.greaterThan(convertToDate(updatedAt));
 }
@@ -587,6 +602,7 @@ function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateW
     steps: [updatedStep, newStep],
   };
 }
+
 function createStep(): StepCreateDto {
   return {
     name: 'someStep',
