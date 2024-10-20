@@ -36,7 +36,7 @@ import {
   GetFeatureFlag,
   GetFeatureFlagCommand,
 } from '@novu/application-generic';
-import { EmailOutput } from '@novu/framework';
+import { EmailOutput } from '@novu/framework/internal';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';

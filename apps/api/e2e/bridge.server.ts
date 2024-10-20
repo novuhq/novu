@@ -1,6 +1,7 @@
 import http from 'http';
 import express from 'express';
-import { serve, Client, type Workflow } from '@novu/framework/express';
+import { serve, Client } from '@novu/framework/express';
+import { type Workflow } from '@novu/framework/internal';
 
 export type ServerStartOptions = {
   workflows: Array<Workflow>;

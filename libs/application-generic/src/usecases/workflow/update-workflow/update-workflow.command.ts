@@ -15,7 +15,7 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 
-import { JsonSchema } from '@novu/framework';
+import { JsonSchema } from '@novu/framework/internal';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { NotificationStep } from '../..';
 

@@ -1,7 +1,7 @@
 import { css } from '@novu/novui/css';
 import { IconBolt } from '@novu/novui/icons';
 import { FC } from 'react';
-import type { DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../../studio/components/workflows/node-view/WorkflowNodes';
 import {
   getStudioWorkflowLink,

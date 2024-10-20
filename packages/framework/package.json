@@ -2,9 +2,10 @@
   "name": "@novu/framework",
   "version": "2.3.0",
   "description": "The Code-First Notifications Workflow SDK.",
-  "main": "./dist/cjs/index.js",
-  "types": "./dist/cjs/index.d.ts",
-  "module": "./dist/esm/index.mjs",
+  "main": "./dist/cjs/index.cjs",
+  "types": "./dist/cjs/index.d.cts",
+  "module": "./dist/esm/index.js",
+  "type": "module",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
@@ -18,6 +19,7 @@
     "dist",
     "express",
     "h3",
+    "internal",
     "lambda",
     "nest",
     "next",
@@ -64,92 +66,102 @@
   "exports": {
     ".": {
       "require": {
-        "types": "./dist/cjs/index.d.ts",
-        "default": "./dist/cjs/index.js"
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
       },
       "import": {
-        "types": "./dist/esm/index.d.mts",
-        "default": "./dist/esm/index.mjs"
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
       }
     },
     "./express": {
       "require": {
-        "types": "./dist/cjs/servers/express.d.ts",
-        "default": "./dist/cjs/servers/express.js"
+        "types": "./dist/cjs/servers/express.d.cts",
+        "default": "./dist/cjs/servers/express.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/express.d.mts",
-        "default": "./dist/esm/servers/express.mjs"
+        "types": "./dist/esm/servers/express.d.ts",
+        "default": "./dist/esm/servers/express.js"
       }
     },
     "./nest": {
       "require": {
-        "types": "./dist/cjs/servers/nest.d.ts",
-        "default": "./dist/cjs/servers/nest.js"
+        "types": "./dist/cjs/servers/nest.d.cts",
+        "default": "./dist/cjs/servers/nest.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/nest.d.mts",
-        "default": "./dist/esm/servers/nest.mjs"
+        "types": "./dist/esm/servers/nest.d.ts",
+        "default": "./dist/esm/servers/nest.js"
       }
     },
     "./next": {
       "require": {
-        "types": "./dist/cjs/servers/next.d.ts",
-        "default": "./dist/cjs/servers/next.js"
+        "types": "./dist/cjs/servers/next.d.cts",
+        "default": "./dist/cjs/servers/next.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/next.d.mts",
-        "default": "./dist/esm/servers/next.mjs"
+        "types": "./dist/esm/servers/next.d.ts",
+        "default": "./dist/esm/servers/next.js"
       }
     },
     "./nuxt": {
       "require": {
-        "types": "./dist/cjs/servers/nuxt.d.ts",
-        "default": "./dist/cjs/servers/nuxt.js"
+        "types": "./dist/cjs/servers/nuxt.d.cts",
+        "default": "./dist/cjs/servers/nuxt.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/nuxt.d.mts",
-        "default": "./dist/esm/servers/nuxt.mjs"
+        "types": "./dist/esm/servers/nuxt.d.ts",
+        "default": "./dist/esm/servers/nuxt.js"
       }
     },
     "./h3": {
       "require": {
-        "types": "./dist/cjs/servers/h3.d.ts",
-        "default": "./dist/cjs/servers/h3.js"
+        "types": "./dist/cjs/servers/h3.d.cts",
+        "default": "./dist/cjs/servers/h3.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/h3.d.mts",
-        "default": "./dist/esm/servers/h3.mjs"
+        "types": "./dist/esm/servers/h3.d.ts",
+        "default": "./dist/esm/servers/h3.js"
       }
     },
     "./lambda": {
       "require": {
-        "types": "./dist/cjs/servers/lambda.d.ts",
-        "default": "./dist/cjs/servers/lambda.js"
+        "types": "./dist/cjs/servers/lambda.d.cts",
+        "default": "./dist/cjs/servers/lambda.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/lambda.d.mts",
-        "default": "./dist/esm/servers/lambda.mjs"
+        "types": "./dist/esm/servers/lambda.d.ts",
+        "default": "./dist/esm/servers/lambda.js"
       }
     },
     "./sveltekit": {
       "require": {
-        "types": "./dist/cjs/servers/sveltekit.d.ts",
-        "default": "./dist/cjs/servers/sveltekit.js"
+        "types": "./dist/cjs/servers/sveltekit.d.cts",
+        "default": "./dist/cjs/servers/sveltekit.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/sveltekit.d.mts",
-        "default": "./dist/esm/servers/sveltekit.mjs"
+        "types": "./dist/esm/servers/sveltekit.d.ts",
+        "default": "./dist/esm/servers/sveltekit.js"
       }
     },
     "./remix": {
       "require": {
-        "types": "./dist/cjs/servers/remix.d.ts",
-        "default": "./dist/cjs/servers/remix.js"
+        "types": "./dist/cjs/servers/remix.d.cts",
+        "default": "./dist/cjs/servers/remix.cjs"
       },
       "import": {
-        "types": "./dist/esm/servers/remix.d.mts",
-        "default": "./dist/esm/servers/remix.mjs"
+        "types": "./dist/esm/servers/remix.d.ts",
+        "default": "./dist/esm/servers/remix.js"
+      }
+    },
+    "./internal": {
+      "require": {
+        "types": "./dist/cjs/internal/index.d.cts",
+        "default": "./dist/cjs/internal/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/internal/index.d.ts",
+        "default": "./dist/esm/internal/index.js"
       }
     }
   },

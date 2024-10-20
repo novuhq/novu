@@ -16,7 +16,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
-import { channelStepSchemas, JsonSchema } from '@novu/framework';
+import { channelStepSchemas, JsonSchema } from '@novu/framework/internal';
 import { slugifyName } from '@novu/application-generic';
 
 const v2Prefix = '/v2';

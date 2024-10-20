@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PostActionEnum, HttpQueryKeysEnum, Event, JobStatusEnum, ExecuteOutput } from '@novu/framework';
+import { PostActionEnum, HttpQueryKeysEnum, Event, JobStatusEnum, ExecuteOutput } from '@novu/framework/internal';
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand } from '@novu/application-generic';
 import { WorkflowOriginEnum } from '@novu/shared';
 

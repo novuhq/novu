@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework/internal';
 import { css, cx } from '@novu/novui/css';
 
 import { HStack, VStack } from '@novu/novui/jsx';

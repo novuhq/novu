@@ -9,7 +9,7 @@ import {
   GetActionEnum,
   PostActionEnum,
   HttpQueryKeysEnum,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 import { WorkflowOriginEnum } from '@novu/shared';
 import { EnvironmentLevelCommand } from '../../commands';
 

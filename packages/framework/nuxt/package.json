@@ -1,5 +1,5 @@
 {
-  "main": "../dist/cjs/servers/nuxt.js",
-  "module": "../dist/esm/servers/nuxt.mjs",
-  "types": "../dist/esm/servers/nuxt.d.mts"
+  "main": "../dist/cjs/servers/nuxt.cjs",
+  "module": "../dist/esm/servers/nuxt.js",
+  "types": "../dist/esm/servers/nuxt.d.ts"
 }

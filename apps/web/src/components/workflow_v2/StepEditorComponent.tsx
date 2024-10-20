@@ -1,5 +1,5 @@
 import { css } from '@novu/novui/css';
-import { DiscoverStepOutput } from '@novu/framework';
+import { DiscoverStepOutput } from '@novu/framework/internal';
 import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout/WorkflowsPanelLayout';
 import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
