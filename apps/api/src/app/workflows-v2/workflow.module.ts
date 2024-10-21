@@ -18,8 +18,8 @@ import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.us
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { GetWorkflowByIdsUseCase } from './usecases/get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetStepSchemaUseCase } from '../step-schemas/usecases/get-step-schema/get-step-schema.usecase';
-import { GeneratePreviewUsecase } from '../step-schemas/usecases/generate-preview/generate-preview-usecase';
 import { BridgeModule } from '../bridge';
+import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview-usecase';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],

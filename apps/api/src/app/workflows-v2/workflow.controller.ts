@@ -35,8 +35,8 @@ import { ListWorkflowsCommand } from './usecases/list-workflows/list-workflows.c
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 import { GetListQueryParams } from './params/get-list-query-params';
-import { GeneratePreviewCommand } from '../step-schemas/usecases/generate-preview/generate-preview-command';
-import { GeneratePreviewUsecase } from '../step-schemas/usecases/generate-preview/generate-preview-usecase';
+import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview-usecase';
+import { GeneratePreviewCommand } from './usecases/generate-preview/generate-preview-command';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
