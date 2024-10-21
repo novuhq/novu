@@ -1,8 +1,8 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { CreateWorkflowDto, UpdateWorkflowDto } from '@novu/shared';
+import { CreateWorkflowDto, IdentifierOrInternalId, UpsertWorkflowDto } from '@novu/shared';
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
-  identifierOrInternalId?: string;
+  identifierOrInternalId?: IdentifierOrInternalId;
 
-  workflowDto: CreateWorkflowDto | UpdateWorkflowDto;
+  workflowDto: CreateWorkflowDto | UpsertWorkflowDto;
 }

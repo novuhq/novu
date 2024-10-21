@@ -14,6 +14,7 @@ import {
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
 import { BadRequestException } from '@nestjs/common';
+import { encodeBase62 } from '../../shared/helpers';
 
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
@@ -26,7 +27,7 @@ export function toResponseWorkflowDto(
   };
 
   return {
-    _id: template._id,
+    id: encodeBase62(template._id),
     tags: template.tags,
     active: template.active,
     preferences: preferencesDto,
@@ -60,7 +61,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
   return {
     origin: template.origin || WorkflowOriginEnum.EXTERNAL,
     type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
-    _id: template._id,
+    id: encodeBase62(template._id),
     name: template.name,
     tags: template.tags,
     updatedAt: template.updatedAt || 'Missing Updated At',
@@ -76,12 +77,14 @@ export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[])
 
 function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   return {
+    id: encodeBase62(step._templateId),
+    // todo - tmp solution uncomment once pr 6689 is merged, remove any cast
+    // stepId: step.stepId || 'Missing Step Id',
     name: step.name || 'Missing Name',
-    stepUuid: step._templateId,
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),
     controlValues: step.controlVariables || {},
-  };
+  } as any;
 }
 
 function convertControls(step: NotificationStepEntity): ControlsSchema {

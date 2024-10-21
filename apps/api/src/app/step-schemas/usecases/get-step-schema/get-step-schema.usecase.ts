@@ -11,6 +11,7 @@ import {
 } from './get-step-schema.command';
 import { StepSchemaDto } from '../../dtos/step-schema.dto';
 import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
+import { encodeBase62 } from '../../../shared/helpers';
 
 @Injectable()
 export class GetStepSchema {
@@ -42,7 +43,7 @@ export class GetStepSchema {
     if (!workflow) {
       throw new BadRequestException({
         message: 'No workflow found',
-        workflowId: command.workflowId,
+        workflowId: encodeBase62(command.workflowId),
       });
     }
 
@@ -51,8 +52,8 @@ export class GetStepSchema {
     if (!currentStep) {
       throw new BadRequestException({
         message: 'No step found',
-        stepId: command.stepId,
-        workflowId: command.workflowId,
+        stepId: encodeBase62(command.stepId),
+        workflowId: encodeBase62(command.workflowId),
       });
     }
 

@@ -155,7 +155,7 @@ export const WorkflowList = () => {
           ) : (
             <>
               {workflowsQuery.data.workflows.map((workflow) => (
-                <TableRow key={workflow._id} className="relative">
+                <TableRow key={workflow.id} className="relative">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-1">
                       {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
@@ -172,13 +172,13 @@ export const WorkflowList = () => {
                           navigate(
                             buildRoute(ROUTES.EDIT_WORKFLOW, {
                               environmentId: currentEnvironment?._id ?? '',
-                              workflowId: workflow._id,
+                              workflowId: workflow.id,
                             })
                           );
                         }}
                       />
                     </div>
-                    <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
+                    <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow.id} />
                   </TableCell>
                   <TableCell>
                     <WorkflowStatus status={workflow.status} />

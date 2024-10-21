@@ -3,12 +3,17 @@ import { UserSession } from '@novu/testing';
 import {
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
+  isStepUpdateBody,
   ListWorkflowResponse,
   StepCreateDto,
   StepDto,
+  StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
-  UpdateWorkflowDto,
+  UpdateStepBody,
+  UpsertStepBody,
+  UpsertWorkflowBody,
+  UpsertWorkflowDto,
   WorkflowCommonsFields,
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
@@ -17,7 +22,8 @@ import {
 import { randomBytes } from 'crypto';
 import { channelStepSchemas, JsonSchema } from '@novu/framework';
 import { slugifyName } from '@novu/application-generic';
-import { encodeBase62 } from '../shared/helpers';
+
+import { decodeBase62 } from '../shared/helpers';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -51,18 +57,18 @@ describe('Workflow Controller E2E API Testing', () => {
     const workflowCreated = await createWorkflowAndValidate();
     await getWorkflowAndValidate(workflowCreated);
     const updateRequest = buildUpdateRequest(workflowCreated);
-    await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateRequest);
-    await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, {
+    await updateWorkflowAndValidate(workflowCreated.id, workflowCreated.updatedAt, updateRequest);
+    await updateWorkflowAndValidate(workflowCreated.id, workflowCreated.updatedAt, {
       ...updateRequest,
       description: 'Updated Description',
     });
     await getAllAndValidate({ searchQuery: PARTIAL_UPDATED_NAME, expectedTotalResults: 1, expectedArraySize: 1 });
-    await deleteWorkflowAndValidateDeletion(workflowCreated._id);
+    await deleteWorkflowAndValidateDeletion(workflowCreated.id);
   });
 
   describe('Create Workflow Permutations', () => {
     // todo: remove skip and fix if needed once pr 6657 is merged
-    it.skip('should allow creating two workflows for the same user with the same name', async () => {
+    it('should allow creating two workflows for the same user with the same name', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       await createWorkflowAndValidate(nameSuffix);
       const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
@@ -88,25 +94,25 @@ describe('Workflow Controller E2E API Testing', () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updateDtoWithValues = buildUpdateDtoWithValues(workflowCreated);
-      await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateDtoWithValues);
+      await updateWorkflowAndValidate(workflowCreated.id, workflowCreated.updatedAt, updateDtoWithValues);
     });
 
     it('should keep the step id on updated ', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updateDto = convertResponseToUpdateDto(workflowCreated);
-      const updatedWorkflow = await updateWorkflowRest(workflowCreated._id, updateDto);
+      const updatedWorkflow = await updateWorkflowRest(workflowCreated.id, updateDto);
       const updatedStep = updatedWorkflow.steps[0];
       const originalStep = workflowCreated.steps[0];
-      expect(updatedStep.stepUuid).to.be.ok;
-      expect(updatedStep.stepUuid).to.be.equal(originalStep.stepUuid);
+      expect(updatedStep.id).to.be.ok;
+      expect(updatedStep.id).to.be.equal(originalStep.id);
     });
 
     it('adding user preferences', async () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updateDto = convertResponseToUpdateDto(workflowCreated);
-      const updatedWorkflow = await updateWorkflowRest(workflowCreated._id, {
+      const updatedWorkflow = await updateWorkflowRest(workflowCreated.id, {
         ...updateDto,
         preferences: {
           user: { ...DEFAULT_WORKFLOW_PREFERENCES, all: { ...DEFAULT_WORKFLOW_PREFERENCES.all, enabled: false } },
@@ -115,7 +121,7 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(updatedWorkflow.preferences.user, JSON.stringify(updatedWorkflow, null, 2)).to.be.ok;
       expect(updatedWorkflow.preferences?.user?.all.enabled, JSON.stringify(updatedWorkflow, null, 2)).to.be.false;
 
-      const updatedWorkflow2 = await updateWorkflowRest(workflowCreated._id, {
+      const updatedWorkflow2 = await updateWorkflowRest(workflowCreated.id, {
         ...updateDto,
         preferences: {
           user: null,
@@ -130,24 +136,15 @@ describe('Workflow Controller E2E API Testing', () => {
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updateDtoWithValues = buildUpdateDtoWithValues(workflowCreated);
 
-      const internalId = workflowCreated._id;
+      const base62InternalId = workflowCreated.id;
+      const internalId = decodeBase62(base62InternalId);
       await updateWorkflowAndValidate(internalId, workflowCreated.updatedAt, updateDtoWithValues);
 
-      const slugPrefixAndEncodedInternalId = `wf_${encodeBase62(internalId)}`;
+      const slugPrefixAndEncodedInternalId = `workflow-name-wf_${base62InternalId}`;
       await updateWorkflowAndValidate(slugPrefixAndEncodedInternalId, workflowCreated.updatedAt, updateDtoWithValues);
 
-      /*
-       * todo uncomment once we merge pr 6691
-       * const workflowId = workflowCreated.identifier;
-       * await updateWorkflowAndValidate(workflowId, workflowCreated.updatedAt, updateDtoWithValues);
-       */
-
-      const userDefinedNameAndEncodedInternalIdWithPrefix = `user-defined-name_${encodeBase62(`wf_${internalId}`)}`;
-      await updateWorkflowAndValidate(
-        userDefinedNameAndEncodedInternalIdWithPrefix,
-        workflowCreated.updatedAt,
-        updateDtoWithValues
-      );
+      const { workflowId } = workflowCreated;
+      await updateWorkflowAndValidate(workflowId, workflowCreated.updatedAt, updateDtoWithValues);
     });
   });
 
@@ -224,31 +221,23 @@ describe('Workflow Controller E2E API Testing', () => {
     it('should get by slugify ids', async () => {
       const workflowCreated = await createWorkflowAndValidate('XYZ');
 
-      const internalId = workflowCreated._id;
+      const base62InternalId = workflowCreated.id;
+      const internalId = decodeBase62(base62InternalId);
       const workflowRetrievedByInternalId = await getWorkflowRest(internalId);
-      expect(workflowRetrievedByInternalId._id).to.equal(internalId);
+      expect(workflowRetrievedByInternalId.id).to.equal(base62InternalId);
 
-      const slugPrefixAndEncodedInternalId = `wf_${encodeBase62(internalId)}`;
+      const slugPrefixAndEncodedInternalId = `my-workflow-wf_${base62InternalId}`;
       const workflowRetrievedBySlugPrefixAndEncodedInternalId = await getWorkflowRest(slugPrefixAndEncodedInternalId);
-      expect(workflowRetrievedBySlugPrefixAndEncodedInternalId._id).to.equal(internalId);
+      expect(workflowRetrievedBySlugPrefixAndEncodedInternalId.id).to.equal(base62InternalId);
 
-      /*
-       *  todo uncomment once we merge pr 6691
-       * const workflowIdentifier = workflowCreated.identifier;
-       * const workflowRetrievedByWorkflowIdentifier = await getWorkflowRest(workflowIdentifier);
-       * expect(workflowRetrievedByWorkflowIdentifier._id).to.equal(internalId);
-       */
-
-      const userDefinedNameAndEncodedInternalIdWithPrefix = `user-defined-name_${encodeBase62(`wf_${internalId}`)}`;
-      const workflowRetrievedByUserDefinedNameAndEncodedInternalIdWithPrefix = await getWorkflowRest(
-        userDefinedNameAndEncodedInternalIdWithPrefix
-      );
-      expect(workflowRetrievedByUserDefinedNameAndEncodedInternalIdWithPrefix._id).to.equal(internalId);
+      const workflowIdentifier = workflowCreated.workflowId;
+      const workflowRetrievedByWorkflowIdentifier = await getWorkflowRest(workflowIdentifier);
+      expect(workflowRetrievedByWorkflowIdentifier.id).to.equal(base62InternalId);
     });
   });
 });
 
-function buildErrorMsg(createWorkflowDto: Omit<WorkflowCommonsFields, '_id'>, createdWorkflowWithoutUpdateDate) {
+function buildErrorMsg(createWorkflowDto: WorkflowCommonsFields, createdWorkflowWithoutUpdateDate) {
   return `created workflow does not match as expected 
     Original:
      ${JSON.stringify(createWorkflowDto, null, 2)}
@@ -263,14 +252,14 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
   const workflowResponseDto: WorkflowResponseDto = res.body.data;
   expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto._id, JSON.stringify(res, null, 2)).to.be.ok;
+  expect(workflowResponseDto.id, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
-    '_id',
+    'id',
     'origin',
     'preferences',
     'updatedAt',
@@ -279,11 +268,11 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'stepUuid')
+    removeFields(step, 'id')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
-    removeFields(createWorkflowDto, '__source'),
-    buildErrorMsg(createWorkflowDto, createdWorkflowWithoutUpdateDate)
+    removeFields(createWorkflowDto, '__source')
+    // buildErrorMsg(createWorkflowDto, createdWorkflowWithoutUpdateDate)
   );
 
   return workflowResponseDto;
@@ -324,7 +313,7 @@ function buildCreateWorkflowDto(nameSuffix: string, overrides: Partial<CreateWor
   };
 }
 
-async function updateWorkflowRest(id: string, workflow: UpdateWorkflowDto): Promise<WorkflowResponseDto> {
+async function updateWorkflowRest(id: string, workflow: UpsertWorkflowBody): Promise<WorkflowResponseDto> {
   return await safePut(`${v2Prefix}/workflows/${id}`, workflow);
 }
 
@@ -334,11 +323,11 @@ function convertToDate(dateString: string) {
   return new Date(timestamp);
 }
 
-function isStepUpdateDto(obj: StepDto): obj is StepUpdateDto {
-  return typeof obj === 'object' && obj !== null && 'stepUuid' in obj;
+function isStepUpdateDto(obj: StepCreateDto | StepUpdateDto): obj is StepUpdateDto {
+  return typeof obj === 'object' && obj !== null && !!(obj as StepUpdateDto)._id;
 }
 
-function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
+function buildStepWithoutUUid(stepInResponse: StepResponseDto) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
@@ -358,9 +347,11 @@ function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
   };
 }
 
-function findStepOnRequestBasedOnId(workflowUpdateRequest: UpdateWorkflowDto, stepUuid: string) {
+function findStepOnRequestBasedOnId(workflowUpdateRequest: UpsertWorkflowBody, stepUuid: string) {
   for (const stepInRequest of workflowUpdateRequest.steps) {
-    if (isStepUpdateDto(stepInRequest) && stepInRequest.stepUuid === stepUuid) {
+    const test1 = isStepUpdateBody(stepInRequest);
+    const test2 = (stepInRequest as UpdateStepBody).id === stepUuid;
+    if (test1 && test2) {
       return stepInRequest;
     }
   }
@@ -370,21 +361,21 @@ function findStepOnRequestBasedOnId(workflowUpdateRequest: UpdateWorkflowDto, st
 
 function validateUpdatedWorkflowAndRemoveResponseFields(
   workflowResponse: WorkflowResponseDto,
-  workflowUpdateRequest: UpdateWorkflowDto
-): UpdateWorkflowDto {
-  const updatedWorkflowWoUpdated: UpdateWorkflowDto = removeFields(
+  workflowUpdateRequest: UpsertWorkflowBody
+): UpsertWorkflowBody {
+  const updatedWorkflowWoUpdated: UpsertWorkflowBody = removeFields(
     workflowResponse,
     'updatedAt',
     'origin',
-    '_id',
+    'id',
     'status',
     'type'
   );
-  const augmentedStep: (StepUpdateDto | StepCreateDto)[] = [];
+  const augmentedStep: UpsertStepBody[] = [];
   for (const stepInResponse of workflowResponse.steps) {
-    expect(stepInResponse.stepUuid).to.be.ok;
-    const { stepUuid } = stepInResponse;
-    const stepOnRequestBasedOnId = findStepOnRequestBasedOnId(workflowUpdateRequest, stepUuid);
+    expect(stepInResponse.id).to.be.ok;
+    const { id } = stepInResponse;
+    const stepOnRequestBasedOnId = findStepOnRequestBasedOnId(workflowUpdateRequest, id);
     if (!stepOnRequestBasedOnId) {
       augmentedStep.push(buildStepWithoutUUid(stepInResponse));
     } else {
@@ -399,7 +390,7 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
 async function updateWorkflowAndValidate(
   id: string,
   updatedAt: string,
-  updateRequest: UpdateWorkflowDto
+  updateRequest: UpsertWorkflowBody
 ): Promise<void> {
   const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(id, updateRequest);
   const updatedWorkflowWithResponseFieldsRemoved = validateUpdatedWorkflowAndRemoveResponseFields(
@@ -459,7 +450,7 @@ async function validateWorkflowDeleted(workflowId: string): Promise<void> {
 }
 
 async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
-  const workflowRetrieved = await getWorkflowRest(workflowCreated._id);
+  const workflowRetrieved = await getWorkflowRest(workflowCreated.id);
   expect(workflowRetrieved).to.deep.equal(workflowCreated);
 }
 
@@ -528,7 +519,7 @@ async function deleteWorkflowAndValidateDeletion(_id: string): Promise<void> {
 }
 
 function extractIDs(workflowSummaries: WorkflowListResponseDto[]) {
-  return workflowSummaries.map((workflow) => workflow._id);
+  return workflowSummaries.map((workflow) => workflow.id);
 }
 
 function buildIdSet(
@@ -606,12 +597,18 @@ function generateUUID(): string {
   // Construct the UUID using the random hex values
   return `${randomHex()}${randomHex()}-${randomHex()}-${randomHex()}-${randomHex()}-${randomHex()}${randomHex()}${randomHex()}`;
 }
-function addValueToExistingStep(steps: (StepCreateDto | StepUpdateDto)[]): StepDto {
-  const stepToUpdate = steps[0];
-  stepToUpdate.name = `Updated Step Name- ${generateUUID()}`;
-  stepToUpdate.controlValues = { test: `test-${generateUUID()}` };
 
-  return stepToUpdate;
+function addValueToExistingStep(steps: UpsertStepBody[]): UpdateStepBody {
+  const stepToUpdate = steps[0];
+
+  if (isStepUpdateBody(stepToUpdate)) {
+    stepToUpdate.name = `Updated Step Name- ${generateUUID()}`;
+    stepToUpdate.controlValues = { test: `test-${generateUUID()}` };
+
+    return stepToUpdate;
+  }
+
+  throw new Error('Step to update is not a StepUpdateDto');
 }
 
 function buildInAppStepWithValues() {
@@ -621,11 +618,20 @@ function buildInAppStepWithValues() {
   return stepDto;
 }
 
-function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type', 'status') as UpdateWorkflowDto;
+function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpsertWorkflowBody {
+  const workflowWithoutResponseFields = removeFields(workflowCreated, 'updatedAt', 'id', 'origin', 'type', 'status');
+  const steps: UpsertStepBody[] = workflowWithoutResponseFields.steps.map((step) => {
+    const { stepId, ...rest } = step;
+
+    return {
+      ...rest,
+    } satisfies UpsertStepBody;
+  });
+
+  return { ...workflowWithoutResponseFields, steps };
 }
 
-function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
+function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpsertWorkflowBody {
   const updateDto = convertResponseToUpdateDto(workflowCreated);
   const updatedStep = addValueToExistingStep(updateDto.steps);
   const newStep = buildInAppStepWithValues();
@@ -636,6 +642,7 @@ function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateW
     steps: [updatedStep, newStep],
   };
 }
+
 function createStep(): StepCreateDto {
   return {
     name: 'someStep',
@@ -649,16 +656,16 @@ function createStep(): StepCreateDto {
   };
 }
 
-function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
+function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpsertWorkflowDto {
   const steps = [createStep()];
   const updateRequest = removeFields(
     workflowCreated,
     'updatedAt',
-    '_id',
+    'id',
     'origin',
     'status',
     'type'
-  ) as UpdateWorkflowDto;
+  ) as UpsertWorkflowDto;
 
   return {
     ...updateRequest,
