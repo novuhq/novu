@@ -1,8 +1,9 @@
 import { css } from '@novu/novui/css';
 import { DiscoverStepOutput } from '@novu/framework';
-import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout/WorkflowsPanelLayout';
+import { WorkflowsPanelLayout } from '../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from '../../studio/components/workflows/step-editor/WorkflowStepEditorControlsPanel';
+import { getSimplifiedErrorObject } from '../../studio/utils';
 
 export const WorkflowsStepEditor = ({
   source,
@@ -41,6 +42,7 @@ export const WorkflowsStepEditor = ({
         <WorkflowStepEditorControlsPanel
           source={source}
           step={step}
+          errors={getSimplifiedErrorObject(error)?.data}
           workflow={workflow}
           onChange={onControlsChange}
           defaultControls={defaultControls}
