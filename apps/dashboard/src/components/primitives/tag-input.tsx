@@ -13,6 +13,7 @@ type TagInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   value: string[];
   suggestions: string[];
   onChange: (tags: string[]) => void;
+  showAddButton?: boolean;
 };
 
 const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
@@ -116,6 +117,5 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
     </Popover>
   );
 });
-TagInput.displayName = 'TagInput';
 
 export { TagInput };
