@@ -78,8 +78,7 @@ export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[])
 function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
   return {
     id: encodeBase62(step._templateId),
-    // todo - tmp solution uncomment once pr 6689 is merged, remove any cast
-    // stepId: step.stepId || 'Missing Step Id',
+    stepId: step.stepId || 'Missing Step Id',
     name: step.name || 'Missing Name',
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),

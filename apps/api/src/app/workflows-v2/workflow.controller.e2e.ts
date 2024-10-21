@@ -268,7 +268,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'id')
+    removeFields(step, 'id', 'stepId')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
     removeFields(createWorkflowDto, '__source')
@@ -359,6 +359,18 @@ function findStepOnRequestBasedOnId(workflowUpdateRequest: UpsertWorkflowBody, s
   return undefined;
 }
 
+/*
+ * There's a side effect on the backend where the stepId gets updated based on the step name.
+ * We need to make a design decision on the client side, should we allow users to update the stepId separately.
+ */
+function updateStepId(step: StepResponseDto): StepResponseDto {
+  if (step.stepId) {
+    return { ...step, stepId: slugifyName(step.name) };
+  }
+
+  return step;
+}
+
 function validateUpdatedWorkflowAndRemoveResponseFields(
   workflowResponse: WorkflowResponseDto,
   workflowUpdateRequest: UpsertWorkflowBody
@@ -397,8 +409,12 @@ async function updateWorkflowAndValidate(
     updatedWorkflow,
     updateRequest
   );
+  const expectedUpdateRequest = {
+    ...updateRequest,
+    steps: updateRequest.steps.map(updateStepId),
+  };
   expect(updatedWorkflowWithResponseFieldsRemoved, 'workflow after update does not match as expected').to.deep.equal(
-    updateRequest
+    expectedUpdateRequest
   );
   expect(convertToDate(updatedWorkflow.updatedAt)).to.be.greaterThan(convertToDate(updatedAt));
 }

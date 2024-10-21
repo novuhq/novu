@@ -93,3 +93,12 @@ export type DeepPartial<T> = T extends object
       [P in keyof T]?: DeepPartial<T[P]>;
     }
   : T;
+
+/**
+ * Recursively make all properties of type `T` required.
+ */
+export type DeepRequired<T> = T extends object
+  ? {
+      [P in keyof T]-?: DeepRequired<T[P]>;
+    }
+  : T;

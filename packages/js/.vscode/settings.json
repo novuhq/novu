@@ -3,6 +3,5 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit",
     "source.fixAll.eslint": "explicit"
-  },
-  "editor.formatOnSave": true
+  }
 }

@@ -163,8 +163,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
         createdWorkflow.steps.findIndex((stepItem) => stepItem.id === createdWorkflow.steps[1].id)
       );
       const variableStepKeyFoundInCreatedWorkflow = createdWorkflowPreviousSteps.find(
-        // todo change step.id to step.stepId once we merge pr 6689, encodeBase62 wont be needed
-        (step) => step.id === encodeBase62(variableStepKey)
+        (step) => step.stepId === variableStepKey
       );
       const isValidVariableStepKey = !!variableStepKeyFoundInCreatedWorkflow;
       expect(isValidVariableStepKey).to.be.true;
