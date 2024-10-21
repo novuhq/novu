@@ -25,12 +25,15 @@ import {
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
+  DEFAULT_WORKFLOW_PREFERENCES,
   StepCreateDto,
   StepDto,
+  StepTypeEnum,
   StepUpdateDto,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
   WorkflowResponseDto,
+  WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { UpsertWorkflowCommand } from './upsert-workflow.command';
@@ -38,6 +41,44 @@ import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/st
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
+
+const workflowResponseDto: WorkflowResponseDto = {
+  id: 'my-workflow-FtfjFHJ9j11gGfds', // `slug` + `-{base62(ObjectId)}`
+  slug: 'my-workflow', // previously, this was `workflow.triggers[0].identifier`
+  name: 'My Workflow',
+  description: 'My Workflow Description',
+  active: true,
+  type: WorkflowTypeEnum.BRIDGE,
+  origin: WorkflowOriginEnum.NOVU_CLOUD,
+  steps: [
+    {
+      id: 'my-step-FtfjFHJ9j11gGfds', // `slug` + `-{base62(ObjectId)}`
+      slug: 'my-step', // previously, this was `step.stepId`
+      name: 'My Step',
+      type: StepTypeEnum.IN_APP,
+      controlSchema: {
+        // previously, this was `step.template.controls.schema`
+        type: 'object',
+        properties: {
+          body: {
+            type: 'string',
+          },
+        },
+        required: ['body'],
+      },
+      controlValues: {
+        body: 'Hello, world!',
+      },
+    },
+  ],
+  updatedAt: '2024-04-01T00:00:00.000Z',
+  createdAt: '2024-04-01T00:00:00.000Z',
+  status: WorkflowStatusEnum.ACTIVE,
+  preferences: {
+    user: null,
+    default: DEFAULT_WORKFLOW_PREFERENCES,
+  },
+};
 
 function buildUpsertControlValuesCommand(
   command: UpsertWorkflowCommand,

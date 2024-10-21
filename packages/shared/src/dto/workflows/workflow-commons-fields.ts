@@ -8,16 +8,6 @@ export class ControlsSchema {
   schema: JSONSchema;
 }
 
-export type StepResponseDto = StepDto & {
-  stepUuid: string;
-};
-
-export type StepUpdateDto = StepDto & {
-  stepUuid: string;
-};
-
-export type StepCreateDto = StepDto;
-
 export type ListWorkflowResponse = {
   workflows: WorkflowListResponseDto[];
   totalCount: number;
@@ -25,7 +15,7 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'status' | 'type' | 'origin'
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | 'id' | 'status' | 'type' | 'origin'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
@@ -40,7 +30,7 @@ export class StepDto {
   type: StepTypeEnum;
 
   @IsObject()
-  controls: ControlsSchema;
+  controlSchema: JSONSchema;
 
   @IsObject()
   controlValues: Record<string, unknown>;
@@ -49,7 +39,11 @@ export class StepDto {
 export class WorkflowCommonsFields {
   @IsString()
   @IsDefined()
-  _id: string;
+  id: string;
+
+  @IsString()
+  @IsDefined()
+  slug: string;
 
   @IsOptional()
   @IsArray()
@@ -65,13 +59,27 @@ export class WorkflowCommonsFields {
   name: string;
 
   @IsString()
-  @IsDefined()
-  workflowId: string;
-
-  @IsString()
   @IsOptional()
   description?: string;
 }
+
+export class StepResponseDto extends StepDto {
+  @IsString()
+  @IsDefined()
+  id: string;
+
+  @IsString()
+  @IsDefined()
+  slug: string;
+}
+
+export class StepUpdateDto extends StepDto {
+  @IsString()
+  @IsDefined()
+  slug: string;
+}
+
+export class StepCreateDto extends StepDto {}
 
 export type PreferencesResponseDto = {
   user: WorkflowPreferences | null;
