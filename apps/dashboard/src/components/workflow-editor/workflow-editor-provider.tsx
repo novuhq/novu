@@ -1,13 +1,11 @@
-import { ReactNode, useMemo, useCallback, useRef } from 'react';
+import { ReactNode, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 // eslint-disable-next-line
 // @ts-ignore
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { toast } from 'sonner';
 import { RiProgress1Line } from 'react-icons/ri';
-import type { StepCreateDto } from '@novu/shared';
 
 import { WorkflowEditorContext } from './workflow-editor-context';
 import { StepTypeEnum } from '@/utils/enums';
@@ -16,7 +14,8 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
 import { formSchema } from './schema';
 import { useFetchWorkflow, useUpdateWorkflow, useFormAutoSave } from '@/hooks';
-import { SmallToast } from '../primitives/sonner';
+import { Step } from '@/utils/types';
+import { smallToast } from '../primitives/sonner-helpers';
 
 const STEP_NAME_BY_TYPE: Record<StepTypeEnum, string> = {
   email: 'Email Step',
@@ -30,7 +29,7 @@ const STEP_NAME_BY_TYPE: Record<StepTypeEnum, string> = {
   custom: 'Custom Step',
 };
 
-const createStep = (type: StepTypeEnum): Pick<StepCreateDto, 'name' | 'type'> => ({
+const createStep = (type: StepTypeEnum): Step => ({
   name: STEP_NAME_BY_TYPE[type],
   type,
 });
@@ -47,15 +46,21 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
     name: 'steps',
   });
 
-  const { workflow } = useFetchWorkflow({
+  const { workflow, error } = useFetchWorkflow({
     workflowId,
-    onSuccess: (data) => {
-      reset({ ...data, steps: data.steps.map((step) => ({ ...step })) });
-    },
-    onError: () => {
-      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' }));
-    },
   });
+
+  useLayoutEffect(() => {
+    if (error) {
+      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' }));
+    }
+
+    if (!workflow) {
+      return;
+    }
+
+    reset({ ...workflow, steps: workflow.steps.map((step) => ({ ...step })) });
+  }, [workflow, error, navigate, reset, currentEnvironment]);
 
   const { updateWorkflow } = useUpdateWorkflow({
     onSuccess: (data) => {
@@ -64,23 +69,23 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
         return;
       }
 
-      const id = toast(
-        <SmallToast>
-          <RiProgress1Line className="size-6" />
-          <span className="text-sm">Saved</span>
-        </SmallToast>,
-        {
-          duration: 5000,
+      const id = smallToast({
+        children: (
+          <>
+            <RiProgress1Line className="size-6" />
+            <span className="text-sm">Saved</span>
+          </>
+        ),
+        options: {
           position: 'bottom-left',
-          unstyled: true,
           classNames: {
             toast: 'ml-10',
           },
           onAutoClose: () => {
             changesSavedToastIdRef.current = undefined;
           },
-        }
-      );
+        },
+      });
       changesSavedToastIdRef.current = id;
     },
   });
