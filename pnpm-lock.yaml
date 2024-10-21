@@ -718,9 +718,6 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
-      faker:
-        specifier: ^6.6.6
-        version: 6.6.6
       lucide-react:
         specifier: ^0.439.0
         version: 0.439.0(react@18.3.1)
