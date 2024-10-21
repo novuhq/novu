@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { randomBytes } from 'crypto';
-import { channelStepSchemas } from '@novu/framework';
 import { slugifyName } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
@@ -229,6 +228,11 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
+  for (const step of workflowResponseDto.steps) {
+    expect(step.stepUuid, JSON.stringify(res, null, 2)).to.be.ok;
+    expect(step.slug, JSON.stringify(res, null, 2)).to.be.ok;
+  }
+  expect(workflowResponseDto.steps, JSON.stringify(res, null, 2)).to.be.ok;
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
     '_id',
@@ -240,7 +244,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'stepUuid', 'slug')
+    removeFields(step, 'stepUuid', 'slug', 'controls')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
     removeFields(createWorkflowDto, '__source'),
@@ -300,9 +304,6 @@ function buildStepWithoutUUid(stepInResponse: StepResponseDto) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
-      controls: {
-        schema: channelStepSchemas[stepInResponse.type].output,
-      },
       name: stepInResponse.name,
       type: stepInResponse.type,
     };
@@ -338,18 +339,24 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
     'status',
     'type'
   );
-  const augmentedStep: (StepUpdateDto | StepCreateDto)[] = [];
+  const augmentedSteps: (StepUpdateDto | StepCreateDto)[] = [];
+
   for (const stepInResponse of workflowResponse.steps) {
+    const responseStep = removeFields(stepInResponse, 'controls');
     expect(stepInResponse.stepUuid).to.be.ok;
-    const { stepUuid } = stepInResponse;
+
+    const { stepUuid } = responseStep;
     const stepOnRequestBasedOnId = findStepOnRequestBasedOnId(workflowUpdateRequest, stepUuid);
+    let augmentedStep: StepUpdateDto | StepCreateDto;
     if (!stepOnRequestBasedOnId) {
-      augmentedStep.push(buildStepWithoutUUid(stepInResponse));
+      augmentedStep = buildStepWithoutUUid(responseStep);
     } else {
-      augmentedStep.push({ ...stepInResponse });
+      augmentedStep = { ...responseStep };
     }
+    augmentedSteps.push(augmentedStep);
   }
-  updatedWorkflowWoUpdated.steps = [...augmentedStep];
+
+  updatedWorkflowWoUpdated.steps = [...augmentedSteps];
 
   return updatedWorkflowWoUpdated;
 }
