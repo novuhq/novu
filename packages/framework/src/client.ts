@@ -4,7 +4,6 @@ import ora from 'ora';
 
 import { ChannelStepEnum, FRAMEWORK_VERSION, PostActionEnum, SDK_VERSION } from './constants';
 import {
-  StepControlCompilationFailedError,
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
   ExecutionProviderOutputInvalidError,
@@ -14,6 +13,7 @@ import {
   ExecutionStateResultInvalidError,
   ProviderExecutionFailedError,
   ProviderNotFoundError,
+  StepControlCompilationFailedError,
   StepNotFoundError,
   WorkflowAlreadyExistsError,
   WorkflowNotFoundError,
