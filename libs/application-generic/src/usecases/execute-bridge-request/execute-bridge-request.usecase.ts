@@ -131,11 +131,13 @@ export class ExecuteBridgeRequest {
         afterResponse:
           command.afterResponse !== undefined ? [command.afterResponse] : [],
       },
-      /*
-       * Reject self-signed and invalid certificates in Production environments but allow them in Development
-       * as it's common for developers to use self-signed certificates in local environments.
-       */
-      rejectUnauthorized: environment.name.toLowerCase() === 'production',
+      https: {
+        /*
+         * Reject self-signed and invalid certificates in Production environments but allow them in Development
+         * as it's common for developers to use self-signed certificates in local environments.
+         */
+        rejectUnauthorized: environment.name.toLowerCase() === 'production',
+      },
     };
 
     const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(
