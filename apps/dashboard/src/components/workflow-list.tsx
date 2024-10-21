@@ -175,6 +175,9 @@ export const WorkflowList = () => {
                             </BadgeContent>
                           </Badge>
                         )}
+                        {/**
+                         * reloadDocument is needed for v1 workflows to reload the document when the user navigates to the workflow editor
+                         */}
                         <Link to={workflowLink} reloadDocument={isV1Workflow}>
                           <TruncatedText className="cursor-pointer" text={workflow.name} />
                         </Link>
