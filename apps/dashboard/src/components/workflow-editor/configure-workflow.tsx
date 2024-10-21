@@ -29,7 +29,7 @@ export function ConfigureWorkflow() {
           <FormItem className="flex items-center justify-between gap-2.5 space-y-0 px-3 py-2">
             <div className="flex items-center gap-4">
               <div
-                className="bg-success-alpha-600 shadow-success-alpha-200 data-[active=false]:shadow-neutral-alpha-100 ml-2 h-1.5 w-1.5 rounded-full shadow-[0_0px_0px_5px_var(--success-alpha-200),0_0px_0px_9px_var(--success-alpha-100)] data-[active=false]:bg-neutral-300 data-[active=false]:shadow-[0_0px_0px_5px_var(--neutral-alpha-200),0_0px_0px_9px_var(--neutral-alpha-100)]"
+                className="bg-success-alpha-600 data-[active=false]:shadow-neutral-alpha-100 ml-2 h-1.5 w-1.5 rounded-full [--pulse-color:var(--success)] data-[active=true]:animate-[pulse-shadow_1s_ease-in-out_infinite] data-[active=false]:bg-neutral-300 data-[active=false]:shadow-[0_0px_0px_5px_var(--neutral-alpha-200),0_0px_0px_9px_var(--neutral-alpha-100)]"
                 data-active={field.value}
               />
               <FormLabel>Active Workflow</FormLabel>
