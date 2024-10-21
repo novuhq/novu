@@ -1,5 +1,5 @@
 import { ErrorCodeEnum, HttpMethodEnum, HttpStatusEnum } from '../constants';
-import { enumToPrettyString } from '../utils';
+import { enumToPrettyString } from '../utils/string.utils';
 import { BadRequestError, FrameworkError } from './base.errors';
 
 export class MethodNotAllowedError extends FrameworkError {

@@ -4,6 +4,8 @@ import { Client } from './client';
 import {
   ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
+  ProviderExecutionFailedError,
+  StepExecutionFailedError,
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
@@ -1622,6 +1624,71 @@ describe('Novu Client', () => {
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
+    });
+
+    it('should throw a StepExecutionFailedError error when step execution fails', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => {
+          throw new Error('Step execution failed');
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await expect(client.executeWorkflow(event)).rejects.toThrow(
+        new StepExecutionFailedError('send-email', PostActionEnum.EXECUTE, new Error('Step execution failed'))
+      );
+    });
+
+    it('should throw a ProviderExecutionFailed error when preview execution fails', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email(
+          'send-email',
+          async () => {
+            return {
+              body: 'Test Body',
+              subject: 'Subject',
+            };
+          },
+          {
+            providers: {
+              sendgrid: () => {
+                throw new Error('Preview execution failed');
+              },
+            },
+          }
+        );
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        payload: {},
+        inputs: {},
+        controls: {},
+      };
+
+      await expect(client.executeWorkflow(event)).rejects.toThrow(
+        new ProviderExecutionFailedError('sendgrid', PostActionEnum.EXECUTE, new Error('Preview execution failed'))
+      );
     });
 
     it('should sanitize the step output of all channel step types by default', async () => {
