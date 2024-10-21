@@ -65,8 +65,10 @@ describe('Control Schema', () => {
           const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
           const requestDto = buildDtoNoPayload(type);
           const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
-          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
           expect(previewResponseDto.result!.preview).to.exist;
+          expect(previewResponseDto.issues).to.exist;
+          console.log('previewResponseDto.issues', JSON.stringify(previewResponseDto.issues));
+
           if (type !== StepTypeEnum.EMAIL) {
             expect(previewResponseDto.result!.preview).to.deep.equal(stepTypeTo[type]);
           } else {
@@ -85,7 +87,6 @@ describe('Control Schema', () => {
           const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
           expect(previewResponseDto.result!.preview.body).to.exist;
           expect(previewResponseDto.result!.preview.body).to.equal('PREVIEW_ISSUE:REQUIRED_CONTROL_VALUE_IS_MISSING');
-          console.log('previewResponseDto', JSON.stringify(previewResponseDto, null, 2));
           const { issues } = previewResponseDto;
           expect(issues).to.exist;
           expect(issues.body).to.exist;
@@ -107,6 +108,7 @@ describe('Control Schema', () => {
     dto: GeneratePreviewRequestDto,
     description: string
   ): Promise<GeneratePreviewResponseDto> {
+    console.log('dto', JSON.stringify(dto, null, 2));
     const novuRestResult = await workflowsClient.generatePreview(workflowId, stepUuid, dto);
     if (novuRestResult.isSuccessResult()) {
       return novuRestResult.value;

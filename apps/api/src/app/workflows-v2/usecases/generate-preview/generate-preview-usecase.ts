@@ -18,6 +18,25 @@ import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-prev
 import { ExtractDefaultsUseCase } from '../get-default-values-from-schema/get-default-values-from-schema-usecase';
 import { StepIsNotFoundException } from '../../exceptions/step-is-not-found-exception';
 
+type NestedRecord = Record<string, unknown>;
+
+function getDotNotationKeys(input: NestedRecord, parentKey: string = '', keys: string[] = []): string[] {
+  for (const key in input) {
+    if (input.hasOwnProperty(key)) {
+      const newKey = parentKey ? `${parentKey}.${key}` : key; // Construct dot notation key
+
+      if (typeof input[key] === 'object' && input[key] !== null && !Array.isArray(input[key])) {
+        // Recursively flatten the object and collect keys
+        getDotNotationKeys(input[key] as NestedRecord, newKey, keys);
+      } else {
+        // Push the dot notation key to the keys array
+        keys.push(newKey);
+      }
+    }
+  }
+
+  return keys;
+}
 @Injectable()
 export class GeneratePreviewUsecase {
   constructor(
@@ -144,7 +163,9 @@ export class GeneratePreviewUsecase {
     for (const controlValueKey in dto.controlValues) {
       if (dto.controlValues.hasOwnProperty(controlValueKey)) {
         const defaultValuesForSingleControlValue = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
-        aggregatedDefaultValuesForControl[controlValueKey] = defaultValuesForSingleControlValue;
+        if (defaultValuesForSingleControlValue) {
+          aggregatedDefaultValuesForControl[controlValueKey] = defaultValuesForSingleControlValue;
+        }
         aggregatedDefaultValues = merge(defaultValuesForSingleControlValue, aggregatedDefaultValues);
       }
     }
@@ -160,7 +181,7 @@ export class GeneratePreviewUsecase {
     aggregatedDefaultValues: Record<string, unknown>,
     dto: GeneratePreviewRequestDto
   ) {
-    const defaultVariableToValueKeyMap = transformNestedRecord(valueKeyToDefaultsMap);
+    const defaultVariableToValueKeyMap = flattenJsonWithArrayValues(valueKeyToDefaultsMap);
     const missingRequiredPayloadIssues = this.findMissingKeys(aggregatedDefaultValues, dto.payloadValues || {});
 
     return this.buildPayloadIssues(missingRequiredPayloadIssues, defaultVariableToValueKeyMap);
@@ -176,8 +197,8 @@ export class GeneratePreviewUsecase {
         record[controlValueKey] = [
           {
             issueType: ControlPreviewIssueType.MISSING_VARIABLE_IN_PAYLOAD, // Set issueType to MISSING_VALUE
-            message: `Variable ${missingVariable} is missing in payload`, // Custom message for the issue
-            variableName: missingVariable,
+            message: `Variable payload.${missingVariable} is missing in payload`, // Custom message for the issue
+            variableName: `payload.${missingVariable}`,
           },
         ];
       });
@@ -187,24 +208,6 @@ export class GeneratePreviewUsecase {
   }
 }
 
-function transformNestedRecord(
-  record: Record<string, Record<string, unknown>>,
-  result: Record<string, string[]> = {}
-): Record<string, string[]> {
-  Object.keys(record).forEach((key) => {
-    const nestedRecord = record[key];
-
-    Object.keys(nestedRecord).forEach((nestedKey) => {
-      if (!result[nestedKey]) {
-        // eslint-disable-next-line no-param-reassign
-        result[nestedKey] = [];
-      }
-      result[nestedKey].push(key);
-    });
-  });
-
-  return result;
-}
 function buildResponse(
   missingValuesIssue: Record<string, ControlPreviewIssue[]>,
   missingPayloadVariablesIssue: Record<string, ControlPreviewIssue[]>,
@@ -219,4 +222,19 @@ function buildResponse(
       type: stepType as unknown as ChannelTypeEnum,
     },
   };
+}
+function flattenJsonWithArrayValues(valueKeyToDefaultsMap: Record<string, Record<string, unknown>>) {
+  const flattened = {};
+  Object.keys(valueKeyToDefaultsMap).forEach((controlValue) => {
+    const defaultPayloads = valueKeyToDefaultsMap[controlValue];
+    const defaultPlaceholders = getDotNotationKeys(defaultPayloads);
+    defaultPlaceholders.forEach((defaultPlaceholder) => {
+      if (!flattened[defaultPlaceholder]) {
+        flattened[defaultPlaceholder] = [];
+      }
+      flattened[defaultPlaceholder].push(controlValue);
+    });
+  });
+
+  return flattened;
 }
