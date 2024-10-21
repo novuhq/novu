@@ -14,9 +14,9 @@ import {
   TipTapNode,
 } from '@novu/shared';
 import { InAppOutput } from '@novu/framework';
-import { buildCreateWorkflowDto } from '../../workflows-v2/workflow.controller.e2e';
-import { createWorkflowClient, HttpError, NovuRestResult } from '../../workflows-v2/clients';
-import { mapStepTypeToOutput } from '../shared';
+import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
+import { buildCreateWorkflowDto } from './workflow.controller.e2e';
+import { mapStepTypeToOutput } from '../step-schemas/shared';
 
 describe('Control Schema', () => {
   let session: UserSession;
