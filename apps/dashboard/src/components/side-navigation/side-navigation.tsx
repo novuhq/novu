@@ -5,7 +5,6 @@ import {
   RiBarChartBoxLine,
   RiGroup2Line,
   RiKey2Line,
-  RiPaintBrushLine,
   RiRouteFill,
   RiSettings4Line,
   RiStore3Line,
@@ -128,10 +127,6 @@ export const SideNavigation = () => {
           </NavigationLink>
         </NavigationGroup>
         <NavigationGroup label="Application">
-          <NavigationLink to={LEGACY_ROUTES.BRANDING} isExternal>
-            <RiPaintBrushLine className="size-4" />
-            <span>Branding</span>
-          </NavigationLink>
           <NavigationLink to={LEGACY_ROUTES.SETTINGS} isExternal>
             <RiSettings4Line className="size-4" />
             <span>Settings</span>
