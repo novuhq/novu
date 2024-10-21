@@ -140,8 +140,8 @@ function buildPreviousStepsSchema(previousSteps: NotificationStepEntity[] | unde
 
   previousStepsProperties = (previousSteps || []).reduce(
     (acc, step) => {
-      if (step.template?._id) {
-        acc[step.template._id] = mapStepTypeToResult[step.template.type as StepType];
+      if (step.stepId && step.template?.type) {
+        acc[step.stepId] = mapStepTypeToResult[step.template.type as StepType];
       }
 
       return acc;

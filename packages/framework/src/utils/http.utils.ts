@@ -22,7 +22,7 @@ export const initApiClient = (apiKey: string, baseURL = 'https://api.novu.co') =
       } else if (checkIsResponseError(resJson)) {
         throw new PlatformError(resJson.statusCode, resJson.error, resJson.message);
       } else {
-        throw new BridgeError('Error processing API request to Novu Cloud from Bridge application.');
+        throw new BridgeError(resJson);
       }
     },
     delete: async <T = unknown>(route: string): Promise<T> => {
