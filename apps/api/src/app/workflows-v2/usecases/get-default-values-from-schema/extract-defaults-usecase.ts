@@ -1,9 +1,5 @@
 import { JSONSchemaDto } from '@novu/shared';
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-interface ExtractDefaultsCommand {
-  jsonSchemaDto: JSONSchemaDto;
-}
+import { ExtractDefaultsCommand } from './extract-defaults-command';
 
 export class ExtractDefaultsUsecase {
   /**

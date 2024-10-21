@@ -10,9 +10,8 @@ import { NovuBridgeModule } from './novu-bridge.module';
 
 @Module({
   imports: [
-    SharedModule,  return { schema: {} };
-
-  NotificationGroupsModule,
+    SharedModule,
+    NotificationGroupsModule,
     forwardRef(() => AuthModule),
     forwardRef(() => LayoutsModule),
     NovuBridgeModule,

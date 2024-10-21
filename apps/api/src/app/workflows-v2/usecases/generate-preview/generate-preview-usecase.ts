@@ -16,34 +16,16 @@ import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { GetWorkflowUseCase } from '../get-workflow/get-workflow.usecase';
 import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator-usecase';
-import { ExtractDefaultsUseCase } from '../get-default-values-from-schema/get-default-values-from-schema-usecase';
 import { StepNotFoundException } from '../../exceptions/step-not-found-exception';
+import { ExtractDefaultsUsecase } from '../get-default-values-from-schema/extract-defaults-usecase';
 
-type NestedRecord = Record<string, unknown>;
-
-function getDotNotationKeys(input: NestedRecord, parentKey: string = '', keys: string[] = []): string[] {
-  for (const key in input) {
-    if (input.hasOwnProperty(key)) {
-      const newKey = parentKey ? `${parentKey}.${key}` : key; // Construct dot notation key
-
-      if (typeof input[key] === 'object' && input[key] !== null && !Array.isArray(input[key])) {
-        // Recursively flatten the object and collect keys
-        getDotNotationKeys(input[key] as NestedRecord, newKey, keys);
-      } else {
-        // Push the dot notation key to the keys array
-        keys.push(newKey);
-      }
-    }
-  }
-
-  return keys;
-}
 @Injectable()
 export class GeneratePreviewUsecase {
   constructor(
     private legacyPreviewStepUseCase: PreviewStep,
     private getWorkflowUseCase: GetWorkflowUseCase,
-    private createMockPayloadUseCase: CreateMockPayloadUseCase
+    private createMockPayloadUseCase: CreateMockPayloadUseCase,
+    private extractDefaultsUseCase: ExtractDefaultsUsecase
   ) {}
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
@@ -68,7 +50,7 @@ export class GeneratePreviewUsecase {
   }
 
   private addMissingValuesToControlValues(command: GeneratePreviewCommand, stepControlSchema: ControlsSchema) {
-    const defaultValues = new ExtractDefaultsUseCase().execute({
+    const defaultValues = this.extractDefaultsUseCase.execute({
       jsonSchemaDto: stepControlSchema.schema as JSONSchemaDto,
     });
 
@@ -248,4 +230,23 @@ function flattenJsonWithArrayValues(valueKeyToDefaultsMap: Record<string, Record
   });
 
   return flattened;
+}
+type NestedRecord = Record<string, unknown>;
+
+function getDotNotationKeys(input: NestedRecord, parentKey: string = '', keys: string[] = []): string[] {
+  for (const key in input) {
+    if (input.hasOwnProperty(key)) {
+      const newKey = parentKey ? `${parentKey}.${key}` : key; // Construct dot notation key
+
+      if (typeof input[key] === 'object' && input[key] !== null && !Array.isArray(input[key])) {
+        // Recursively flatten the object and collect keys
+        getDotNotationKeys(input[key] as NestedRecord, newKey, keys);
+      } else {
+        // Push the dot notation key to the keys array
+        keys.push(newKey);
+      }
+    }
+  }
+
+  return keys;
 }

@@ -4,4 +4,4 @@ export * from './render-command';
 export * from './push-output-renderer-usecase';
 export * from './sms-output-renderer-usecase';
 export * from './in-app-output-renderer-usecase';
-export * from './expend-email-editor-schema-command';
+export * from './email-schema-expander-usecase';

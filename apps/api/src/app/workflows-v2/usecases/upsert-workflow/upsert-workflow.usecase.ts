@@ -5,7 +5,6 @@ import {
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
-  NotificationTemplateRepository,
   PreferencesEntity,
 } from '@novu/dal';
 import {
@@ -38,6 +37,7 @@ import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/st
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
+import { mapStepTypeToOutput } from '../../../step-schemas/shared';
 
 function buildUpsertControlValuesCommand(
   command: UpsertWorkflowCommand,
@@ -251,8 +251,8 @@ export class UpsertWorkflowUseCase {
     persistedWorkflow: NotificationTemplateEntity | undefined,
     step: StepDto | (StepDto & { stepUuid: string })
   ): NotificationStep {
-    const stepEntityToReturn = this.buildBaseStepEntity(step);
     const foundPersistedStep = this.getPersistedStepIfFound(persistedWorkflow, step);
+    const stepEntityToReturn = this.buildBaseStepEntity(step, foundPersistedStep);
     if (foundPersistedStep) {
       return {
         ...stepEntityToReturn,
@@ -265,12 +265,15 @@ export class UpsertWorkflowUseCase {
     return stepEntityToReturn;
   }
 
-  private buildBaseStepEntity(step: StepDto | (StepDto & { stepUuid: string })): NotificationStep {
+  private buildBaseStepEntity(
+    step: StepDto | StepUpdateDto,
+    foundPersistedStep?: NotificationStepEntity
+  ): NotificationStep {
     return {
       template: {
         type: step.type,
         name: step.name,
-        controls: step.controls,
+        controls: foundPersistedStep?.template?.controls || mapStepTypeToOutput[step.type],
         content: '',
       },
       stepId: slugifyName(step.name),
