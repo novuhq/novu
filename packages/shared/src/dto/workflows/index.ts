@@ -6,3 +6,4 @@ export * from './update-workflow-dto';
 export * from './workflow-commons-fields';
 export * from './workflow-response-dto';
 export * from './workflow-status-enum';
+export * from './get-list-query-params';

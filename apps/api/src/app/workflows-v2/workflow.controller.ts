@@ -19,6 +19,7 @@ import {
   DirectionEnum,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
+  GetListQueryParams,
   ListWorkflowResponse,
   UpdateWorkflowDto,
   UserSessionData,
@@ -34,7 +35,6 @@ import { ListWorkflowsUseCase } from './usecases/list-workflows/list-workflow.us
 import { ListWorkflowsCommand } from './usecases/list-workflows/list-workflows.command';
 import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflow.usecase';
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
-import { GetListQueryParams } from './params/get-list-query-params';
 import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview-usecase';
 import { GeneratePreviewCommand } from './usecases/generate-preview/generate-preview-command';
 

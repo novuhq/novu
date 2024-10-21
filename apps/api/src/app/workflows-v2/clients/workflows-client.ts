@@ -1,8 +1,8 @@
-import { GetListQueryParams } from '@novu/shared/src/dto/workflows/get-list-query-params';
 import {
   CreateWorkflowDto,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
+  GetListQueryParams,
   ListWorkflowResponse,
   UpdateWorkflowDto,
   WorkflowResponseDto,
