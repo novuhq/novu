@@ -43,9 +43,9 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
+import { WorkflowOriginEnum, WorkflowStatusEnum, WorkflowTypeEnum } from '@/utils/enums';
 import { QueryKeys } from '@/utils/query-keys';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
@@ -169,6 +169,19 @@ export const WorkflowList = () => {
                         className="cursor-pointer"
                         text={workflow.name}
                         onClick={() => {
+                          /**
+                           * Redirect to V1 legacy workflow editor if the workflow is of type REGULAR
+                           */
+                          if (workflow.type === WorkflowTypeEnum.REGULAR) {
+                            /**
+                             * React Router doesn't support nested routes, so we need to manually redirect to the legacy route
+                             */
+                            window.location.href = buildRoute(LEGACY_ROUTES.EDIT_WORKFLOW, {
+                              workflowId: workflow._id,
+                            });
+                            return;
+                          }
+
                           navigate(
                             buildRoute(ROUTES.EDIT_WORKFLOW, {
                               environmentId: currentEnvironment?._id ?? '',
