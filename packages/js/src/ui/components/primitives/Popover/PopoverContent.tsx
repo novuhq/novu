@@ -1,15 +1,16 @@
 import { JSX, onCleanup, onMount, Show, splitProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { useFocusManager } from '../../../context';
-import type { AppearanceKey } from '../../../types';
 import { cn, useStyle } from '../../../helpers';
+import type { AppearanceKey } from '../../../types';
 import { Root } from '../../elements';
+import { Motion } from '../Motion';
 import { usePopover } from './PopoverRoot';
 
 export const popoverContentVariants = () =>
   cn(
-    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background ',
-    'nt-shadow-[0_5px_15px_0_rgba(122,133,153,0.25)] nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
+    'nt-w-[400px] nt-h-[600px] nt-rounded-xl nt-bg-background',
+    'nt-shadow-popover nt-z-10 nt-cursor-default nt-flex nt-flex-col nt-overflow-hidden'
   );
 
 const PopoverContentBody = (props: PopoverContentProps) => {
@@ -28,18 +29,21 @@ const PopoverContentBody = (props: PopoverContentProps) => {
   });
 
   return (
-    <div
+    <Motion.div
       ref={setFloating}
       class={local.class ? local.class : style(local.appearanceKey || 'popoverContent', popoverContentVariants())}
       style={floatingStyles()}
       data-open={open()}
+      animate={{ opacity: [0, 1], y: [-6, 0] }}
+      transition={{ duration: 0.1, easing: 'ease-out' }}
       {...rest}
     />
   );
 };
 
-type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey };
+type PopoverContentProps = JSX.IntrinsicElements['div'] & { appearanceKey?: AppearanceKey; portal?: boolean };
 export const PopoverContent = (props: PopoverContentProps) => {
+  const [local, rest] = splitProps(props, ['portal']);
   const { open, onClose, reference, floating } = usePopover();
   const { active } = useFocusManager();
 
@@ -78,11 +82,13 @@ export const PopoverContent = (props: PopoverContentProps) => {
 
   return (
     <Show when={open()}>
-      <Portal>
-        <Root>
-          <PopoverContentBody {...props} />
-        </Root>
-      </Portal>
+      <Show when={local.portal} fallback={<PopoverContentBody {...rest} />}>
+        <Portal>
+          <Root>
+            <PopoverContentBody {...rest} />
+          </Root>
+        </Portal>
+      </Show>
     </Show>
   );
 };

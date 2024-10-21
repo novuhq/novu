@@ -1,4 +1,3 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
@@ -57,19 +56,6 @@ export class CommunityOrganizationRepository
       {
         $set: {
           name: payload.name,
-        },
-      }
-    );
-  }
-
-  async updateServiceLevel(organizationId: string, apiServiceLevel: ApiServiceLevelEnum) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          apiServiceLevel,
         },
       }
     );

@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 import { GetEventResourceUsage, GetPlatformNotificationUsage, GetSubscription } from '@novu/ee-billing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../../../app.module';
@@ -12,10 +12,28 @@ describe('GetEventResourceUsage', async () => {
   let useCase: GetEventResourceUsage;
   let session: UserSession;
   let getSubscription: GetSubscription;
-  let getPlatformNotificationUsage: GetPlatformNotificationUsage;
 
   let getSubscriptionStub: sinon.SinonStub;
-  let getPlatformNotificationUsageStub: sinon.SinonStub;
+
+  const getSubscriptionResponse: GetSubscriptionDto = {
+    apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+    isActive: true,
+    status: 'trialing',
+    hasPaymentMethod: false,
+    currentPeriodStart: new Date('2021-01-01').toISOString(),
+    currentPeriodEnd: new Date('2021-02-01').toISOString(),
+    billingInterval: 'month',
+    events: {
+      current: 50,
+      included: 100,
+    },
+    trial: {
+      start: null,
+      end: null,
+      isActive: true,
+      daysTotal: 0,
+    },
+  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -30,25 +48,11 @@ describe('GetEventResourceUsage', async () => {
 
     useCase = moduleRef.get(GetEventResourceUsage);
     getSubscription = moduleRef.get<GetSubscription>(GetSubscription);
-    getPlatformNotificationUsage = moduleRef.get(GetPlatformNotificationUsage);
-
-    getSubscriptionStub = sinon.stub(getSubscription, 'execute').resolves({
-      currentPeriodStart: new Date('2021-01-01').toISOString(),
-      currentPeriodEnd: new Date('2021-02-01').toISOString(),
-      hasPaymentMethod: true,
-      status: 'trialing',
-      trialEnd: null,
-      trialStart: null,
-      includedEvents: 100,
-    });
-    getPlatformNotificationUsageStub = sinon
-      .stub(getPlatformNotificationUsage, 'execute')
-      .resolves([{ _id: '1', notificationsCount: 50, apiServiceLevel: ApiServiceLevelEnum.BUSINESS }]);
+    getSubscriptionStub = sinon.stub(getSubscription, 'execute').resolves(getSubscriptionResponse);
   });
 
   afterEach(() => {
     getSubscriptionStub.restore();
-    getPlatformNotificationUsageStub.restore();
   });
 
   describe('within the maximum evaluation duration', () => {
@@ -71,9 +75,13 @@ describe('GetEventResourceUsage', async () => {
     });
 
     it('should return a failed evaluation when events are above the limit', async () => {
-      getPlatformNotificationUsageStub.resolves([
-        { _id: '1', notificationsCount: 100, apiServiceLevel: ApiServiceLevelEnum.BUSINESS },
-      ]);
+      getSubscriptionStub.resolves({
+        ...getSubscriptionResponse,
+        events: {
+          current: 100,
+          included: 100,
+        },
+      });
 
       const result = await useCase.execute({
         organizationId: 'organization_id',
@@ -91,48 +99,14 @@ describe('GetEventResourceUsage', async () => {
         locked: true,
       });
     });
-
-    it('should return a count of 0 notifications and free api service level when no events are recorded', async () => {
-      getPlatformNotificationUsageStub.resolves([]);
-
-      const result = await useCase.execute({
-        organizationId: 'organization_id',
-        environmentId: 'environment_id',
-        userId: 'user_id',
-      });
-
-      expect(result).to.deep.equal({
-        remaining: 100,
-        limit: 100,
-        success: true,
-        start: 1609459200000,
-        reset: 1612137600000,
-        apiServiceLevel: ApiServiceLevelEnum.FREE,
-        locked: true,
-      });
-    });
-
-    it('should fetch usage with the subscription period dates and organizationId', async () => {
-      await useCase.execute({
-        organizationId: 'organization_id',
-        environmentId: 'environment_id',
-        userId: 'user_id',
-      });
-
-      expect(getPlatformNotificationUsageStub.lastCall.args[0]).to.deep.equal({
-        organizationId: 'organization_id',
-        startDate: new Date('2021-01-01'),
-        endDate: new Date('2021-02-01'),
-      });
-    });
   });
 
   describe('fallback evaluation', () => {
     it('should return the fallback evaluation when the usage evaluation takes longer than the maximum evaluation duration', async () => {
-      getPlatformNotificationUsageStub.resolves(
+      getSubscriptionStub.resolves(
         new Promise((resolve) => {
           setTimeout(async () => {
-            resolve([{ _id: '1', notificationsCount: 50, apiServiceLevel: ApiServiceLevelEnum.BUSINESS }]);
+            resolve(getSubscriptionResponse);
           }, 1000);
         })
       );
@@ -156,13 +130,11 @@ describe('GetEventResourceUsage', async () => {
 
     it('should return the fallback evaluation when the subscription has no included events', async () => {
       getSubscriptionStub.resolves({
-        currentPeriodStart: new Date('2021-01-01').toISOString(),
-        currentPeriodEnd: new Date('2021-02-01').toISOString(),
-        hasPaymentMethod: true,
-        status: 'trialing',
-        trialEnd: null,
-        trialStart: null,
-        includedEvents: null,
+        ...getSubscriptionResponse,
+        events: {
+          current: 100,
+          included: null,
+        },
       });
 
       const result = await useCase.execute({

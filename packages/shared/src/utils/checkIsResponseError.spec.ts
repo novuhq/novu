@@ -1,3 +1,4 @@
+import { expect, describe, it } from 'vitest';
 import { checkIsResponseError } from './checkIsResponseError';
 import { IResponseError } from '../types';
 

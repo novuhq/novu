@@ -1,7 +1,7 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import { useIntegrations } from './integrations';
-import { IS_DOCKER_HOSTED } from '../config';
+import { IS_SELF_HOSTED } from '../config';
 
 export function useOnboardingExperiment() {
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
@@ -12,6 +12,6 @@ export function useOnboardingExperiment() {
   );
 
   return {
-    isOnboardingExperimentEnabled: !areIntegrationsLoading && !emailIntegrationOtherThanNovu && !IS_DOCKER_HOSTED,
+    isOnboardingExperimentEnabled: !areIntegrationsLoading && !emailIntegrationOtherThanNovu && !IS_SELF_HOSTED,
   };
 }

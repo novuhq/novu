@@ -9,6 +9,7 @@ const excludeEmpty = ({ tags, read, archived, limit, offset, after }: ListNotifi
   Object.entries({ tags, read, archived, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
+      // @ts-expect-error
       acc[key] = value;
 
       return acc;
@@ -55,8 +56,8 @@ export class NotificationsCache {
    */
   #cache: Cache<ListNotificationsResponse>;
 
-  constructor() {
-    this.#emitter = NovuEventEmitter.getInstance();
+  constructor({ emitter }: { emitter: NovuEventEmitter }) {
+    this.#emitter = emitter;
     updateEvents.forEach((event) => {
       this.#emitter.on(event, this.handleNotificationEvent());
     });

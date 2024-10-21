@@ -20,7 +20,7 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "lint:openapi": "spectral lint http://127.0.0.1:${PORT:-3000}/openapi.yaml",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
+    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit 'src/**/*.spec.ts'",
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts ",
     "test:e2e:ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true CI_EE_TEST=true CLERK_ENABLED=true mocha --grep @skip-in-ee --invert --require ts-node/register --exit --file e2e/setup.ts 'src/**/*.e2e{,-ee}.ts'",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly",
@@ -48,8 +48,11 @@
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
     "@sendgrid/mail": "^8.1.0",
-    "@sentry/hub": "^7.40.0",
-    "@sentry/node": "^7.40.0",
+    "@sentry/browser": "^8.33.1",
+    "@sentry/hub": "^7.114.0",
+    "@sentry/node": "^8.33.1",
+    "@sentry/nestjs": "^8.33.1",
+    "@sentry/profiling-node": "^8.33.1",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.14.0",
     "@upstash/ratelimit": "^0.4.4",
@@ -69,7 +72,6 @@
     "i18next": "^23.7.6",
     "ioredis": "5.3.2",
     "jsonwebtoken": "9.0.0",
-    "json-schema-defaults": "^0.4.0",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",
     "nest-raven": "10.1.0",
@@ -89,7 +91,8 @@
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "swagger-ui-express": "^4.4.0",
-    "twilio": "^4.14.1",
+    "twilio": "^4.14.1",    
+    "json-schema-to-ts": "^3.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -103,7 +106,7 @@
     "@types/chai": "^4.2.11",
     "@types/express": "4.17.17",
     "@types/mocha": "^10.0.2",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "@types/passport-github": "^1.1.5",
     "@types/passport-jwt": "^3.0.3",
     "@types/sinon": "^9.0.0",
@@ -115,7 +118,7 @@
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
-    "typescript": "4.9.5"
+    "typescript": "5.6.2"
   },
   "optionalDependencies": {
     "@novu/ee-auth": "workspace:*",

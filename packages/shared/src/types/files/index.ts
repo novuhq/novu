@@ -7,7 +7,7 @@ export enum FileExtensionEnum {
 export enum MimeTypesEnum {
   JPEG = 'image/jpeg',
   PNG = 'image/png',
-  JPG = 'image/jpeg',
+  JPG = 'image/jpg',
 }
 
 export const FILE_EXTENSION_TO_MIME_TYPE: Record<FileExtensionEnum, MimeTypesEnum> = {

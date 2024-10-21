@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+// eslint-disable-next-line no-restricted-imports
 import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
 
 const mockMonthlyBusinessSubscription = {
@@ -36,13 +37,13 @@ describe('CreateUsageRecords', () => {
   const analyticsServiceStub = {
     track: sinon.stub(),
   };
-  const upsertSubscriptionUsecase = { execute: () => Promise.resolve() };
-  const getCustomerUsecase = { execute: () => Promise.resolve() };
+  const createSubscriptionUsecase = { execute: () => Promise.resolve() };
+  const getOrCreateCustomerUsecase = { execute: () => Promise.resolve() };
   const getPlatformNotificationUsageUsecase = { execute: () => Promise.resolve() };
   let createUsageRecordStub: sinon.SinonStub;
   let getPlatformNotificationUsageStub: sinon.SinonStub;
-  let upsertSubscriptionStub: sinon.SinonStub;
-  let getCustomerStub: sinon.SinonStub;
+  let createSubscriptionStub: sinon.SinonStub;
+  let getOrCreateCustomerStub: sinon.SinonStub;
 
   beforeEach(() => {
     createUsageRecordStub = sinon.stub(stripeStub.subscriptionItems, 'createUsageRecord').resolves({
@@ -56,11 +57,10 @@ describe('CreateUsageRecords', () => {
         notificationsCount: 100,
       },
     ] as any);
-    upsertSubscriptionStub = sinon.stub(upsertSubscriptionUsecase, 'execute').resolves({
-      licensed: mockMonthlyBusinessSubscription,
-      metered: mockMonthlyBusinessSubscription,
+    createSubscriptionStub = sinon.stub(createSubscriptionUsecase, 'execute').resolves({
+      id: 'subscription_id',
     } as any);
-    getCustomerStub = sinon.stub(getCustomerUsecase, 'execute').resolves({
+    getOrCreateCustomerStub = sinon.stub(getOrCreateCustomerUsecase, 'execute').resolves({
       id: 'customer_id',
       deleted: false,
       metadata: {
@@ -74,8 +74,8 @@ describe('CreateUsageRecords', () => {
 
   afterEach(() => {
     createUsageRecordStub.reset();
-    getCustomerStub.reset();
-    upsertSubscriptionStub.reset();
+    getOrCreateCustomerStub.reset();
+    createSubscriptionStub.reset();
     getPlatformNotificationUsageStub.reset();
     analyticsServiceStub.track.reset();
   });
@@ -83,8 +83,8 @@ describe('CreateUsageRecords', () => {
   const createUseCase = () => {
     const useCase = new CreateUsageRecords(
       stripeStub,
-      getCustomerUsecase,
-      upsertSubscriptionUsecase,
+      getOrCreateCustomerUsecase,
+      createSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
       analyticsServiceStub
     );
@@ -113,12 +113,12 @@ describe('CreateUsageRecords', () => {
     ]);
   });
 
-  it('should upsert a free-tier subscription if the customer has no subscriptions', async () => {
+  it('should create a free-tier subscription if the customer has no subscriptions', async () => {
     const mockNoSubscriptionsCustomer = {
       id: 'customer_id',
       subscriptions: { data: [] },
     };
-    getCustomerStub.resolves(mockNoSubscriptionsCustomer);
+    getOrCreateCustomerStub.resolves(mockNoSubscriptionsCustomer);
     const useCase = createUseCase();
 
     await useCase.execute(
@@ -127,8 +127,8 @@ describe('CreateUsageRecords', () => {
       })
     );
 
-    expect(upsertSubscriptionStub.callCount).to.equal(1); // this is failing without the promise above
-    expect(upsertSubscriptionStub.lastCall.args).to.deep.equal([
+    expect(createSubscriptionStub.callCount).to.equal(1); // this is failing without the promise above
+    expect(createSubscriptionStub.lastCall.args).to.deep.equal([
       {
         customer: mockNoSubscriptionsCustomer,
         apiServiceLevel: ApiServiceLevelEnum.FREE,
@@ -141,7 +141,7 @@ describe('CreateUsageRecords', () => {
     const mockSubscriptionStartDate = new Date('2021-02-01T00:00:00Z');
     const mockSubscriptionCurrentPeriodStart = mockSubscriptionStartDate.getTime() / 1000;
     const mockUsageStartDate = new Date('2021-01-15T00:00:00Z');
-    getCustomerStub.resolves({
+    getOrCreateCustomerStub.resolves({
       subscriptions: {
         data: [
           {
@@ -166,7 +166,7 @@ describe('CreateUsageRecords', () => {
     const mockSubscriptionStartDate = new Date('2021-01-01T00:00:00Z');
     const mockSubscriptionCreated = mockSubscriptionStartDate.getTime() / 1000;
     const mockCurrentDate = new Date('2021-01-15T12:00:00Z');
-    getCustomerStub.resolves({
+    getOrCreateCustomerStub.resolves({
       subscriptions: {
         data: [
           {
@@ -221,7 +221,7 @@ describe('CreateUsageRecords', () => {
         ],
       },
     };
-    getCustomerStub.resolves({
+    getOrCreateCustomerStub.resolves({
       subscriptions: {
         data: [mockNoMeteredSubscription],
       },

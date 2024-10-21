@@ -1,16 +1,19 @@
 import React, { useMemo } from 'react';
-import { useRenderer } from '../context/RenderContext';
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
-import { NovuProvider, useNovu, useUnsafeNovu } from './index';
 import { Mounter } from './Mounter';
-import { Renderer } from './Renderer';
+import { useNovuUI } from '../context/NovuUIContext';
+import { useRenderer } from '../context/RendererContext';
+import { InternalNovuProvider, NovuProvider, useNovu, useUnsafeNovu } from '../hooks/NovuProvider';
+import { NovuUI } from './NovuUI';
+import { withRenderer } from './Renderer';
 
 export type InboxProps = DefaultProps | WithChildrenProps;
 
-const DefaultInbox = (props: DefaultInboxProps) => {
+const _DefaultInbox = (props: DefaultInboxProps) => {
   const { open, renderNotification, renderBell, onNotificationClick, onPrimaryActionClick, onSecondaryActionClick } =
     props;
-  const { novuUI, mountElement } = useRenderer();
+  const { novuUI } = useNovuUI();
+  const { mountElement } = useRenderer();
 
   const mount = React.useCallback(
     (element: HTMLElement) => {
@@ -35,6 +38,8 @@ const DefaultInbox = (props: DefaultInboxProps) => {
   return <Mounter mount={mount} />;
 };
 
+const DefaultInbox = withRenderer(_DefaultInbox);
+
 export const Inbox = React.memo((props: InboxProps) => {
   const { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl } = props;
   const novu = useUnsafeNovu();
@@ -44,23 +49,25 @@ export const Inbox = React.memo((props: InboxProps) => {
   }
 
   return (
-    <NovuProvider
+    <InternalNovuProvider
       applicationIdentifier={applicationIdentifier}
       subscriberId={subscriberId}
       subscriberHash={subscriberHash}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
+      userAgentType="components"
     >
       <InboxChild {...props} />
-    </NovuProvider>
+    </InternalNovuProvider>
   );
 });
 
-export const InboxChild = React.memo((props: InboxProps) => {
+const InboxChild = React.memo((props: InboxProps) => {
   const {
     localization,
     appearance,
     tabs,
+    preferencesFilter,
     routerPush,
     applicationIdentifier,
     subscriberId,
@@ -75,16 +82,27 @@ export const InboxChild = React.memo((props: InboxProps) => {
       localization,
       appearance,
       tabs,
+      preferencesFilter,
       routerPush,
       options: { applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl },
     };
-  }, [localization, appearance, tabs, applicationIdentifier, subscriberId, subscriberHash, backendUrl, socketUrl]);
+  }, [
+    localization,
+    appearance,
+    tabs,
+    preferencesFilter,
+    applicationIdentifier,
+    subscriberId,
+    subscriberHash,
+    backendUrl,
+    socketUrl,
+  ]);
 
   if (isWithChildrenProps(props)) {
     return (
-      <Renderer options={options} novu={novu}>
+      <NovuUI options={options} novu={novu}>
         {props.children}
-      </Renderer>
+      </NovuUI>
     );
   }
 
@@ -92,7 +110,7 @@ export const InboxChild = React.memo((props: InboxProps) => {
     props;
 
   return (
-    <Renderer options={options} novu={novu}>
+    <NovuUI options={options} novu={novu}>
       <DefaultInbox
         open={open}
         renderNotification={renderNotification}
@@ -101,7 +119,7 @@ export const InboxChild = React.memo((props: InboxProps) => {
         onPrimaryActionClick={onPrimaryActionClick}
         onSecondaryActionClick={onSecondaryActionClick}
       />
-    </Renderer>
+    </NovuUI>
   );
 });
 

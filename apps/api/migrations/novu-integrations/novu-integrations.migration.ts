@@ -9,7 +9,7 @@ import {
 import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
-import slugify from 'slugify';
+import { slugifyName } from '@novu/application-generic';
 import shortid from 'shortid';
 
 const organizationRepository = new OrganizationRepository();
@@ -47,11 +47,11 @@ const createNovuIntegration = async (
     providerId,
     channel,
     name,
-    identifier: `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`,
+    identifier: `${slugifyName(name)}-${shortid.generate()}`,
     active: countChannelIntegrations === 0,
   });
 
-  console.log('Created Integration' + response._id);
+  console.log(`Created Integration${response._id}`);
 };
 
 export async function createNovuIntegrations() {
@@ -78,10 +78,10 @@ export async function createNovuIntegrations() {
       await createNovuIntegration(environment, ChannelTypeEnum.SMS);
       await createNovuIntegration(environment, ChannelTypeEnum.EMAIL);
 
-      console.log('Processed environment' + environment._id);
+      console.log(`Processed environment${environment._id}`);
     }
 
-    console.log('Processed organization' + organization._id);
+    console.log(`Processed organization${organization._id}`);
   }
 
   // eslint-disable-next-line no-console

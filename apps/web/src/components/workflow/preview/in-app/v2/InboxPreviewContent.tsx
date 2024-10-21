@@ -2,6 +2,7 @@ import { Text, Title } from '@novu/novui';
 import { css, cva } from '@novu/novui/css';
 import { IconArrowDropDown, IconMoreHoriz, IconSettings } from '@novu/novui/icons';
 import { Center, Flex, HStack, Stack } from '@novu/novui/jsx';
+import { parseMarkdownIntoTokens } from '@novu/js/internal';
 import { ParsedPreviewStateType } from '../../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { SkeletonStyled } from '../Content.styles';
 import { InboxAvatar } from './InboxAvatar';
@@ -21,6 +22,31 @@ export const INBOX_TOKENS = {
   'Inbox/margin/message/avatar/txt': '0.5rem',
   'Inbox/margin/message/txt/buttons': '1rem',
 } as const;
+
+const renderText = (text?: string) => {
+  if (!text) {
+    return null;
+  }
+
+  const tokens = parseMarkdownIntoTokens(text);
+
+  return tokens.map((token, index) => {
+    if (token.type === 'bold') {
+      return (
+        <Text
+          variant="main"
+          fontWeight="strong"
+          color="typography.text.primary"
+          children={token.content}
+          as="strong"
+          key={index}
+        />
+      );
+    }
+
+    return token.content;
+  });
+};
 
 export function InboxPreviewContent({
   isPreviewLoading,
@@ -158,17 +184,13 @@ export function InboxPreviewContent({
           <Stack gap={INBOX_TOKENS['Inbox/margin/message/txt/buttons']} flexGrow={1}>
             <Stack gap="0.25rem">
               <HStack justifyContent="space-between">
-                <Text variant="main" fontWeight="strong">
-                  {parsedPreviewState.subject}
-                </Text>
+                <Text variant="main">{renderText(parsedPreviewState.subject)}</Text>
 
                 <Text variant="main" color="typography.text.secondary">
                   5 min
                 </Text>
               </HStack>
-              <Text variant="main" color="typography.text.secondary">
-                {parsedPreviewState.content}
-              </Text>
+              <Text variant="main">{renderText(parsedPreviewState.content)}</Text>
             </Stack>
 
             {/* Actions Section */}

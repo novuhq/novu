@@ -14,13 +14,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 
-import { UserSessionData, ControlVariablesLevelEnum, WorkflowTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 import { AnalyticsService, ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
-import { EnvironmentRepository, NotificationTemplateRepository, ControlVariablesRepository } from '@novu/dal';
+import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 
 import { ApiExcludeController } from '@nestjs/swagger';
 
-import { StoreControlVariables, StoreControlVariablesCommand } from './usecases/store-control-variables';
+import { StoreControlValuesCommand, StoreControlValuesUseCase } from './usecases/store-control-values';
 import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
 import { SyncCommand } from './usecases/sync';
 import { Sync } from './usecases/sync/sync.usecase';
@@ -37,11 +37,11 @@ import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
 export class BridgeController {
   constructor(
     private syncUsecase: Sync,
-    private validateBridgeUrlUsecase: GetBridgeStatus,
+    private getBridgeStatus: GetBridgeStatus,
     private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private controlVariablesRepository: ControlVariablesRepository,
-    private storeControlVariables: StoreControlVariables,
+    private controlValuesRepository: ControlValuesRepository,
+    private storeControlValuesUseCase: StoreControlValuesUseCase,
     private previewStep: PreviewStep,
     private analyticsService: AnalyticsService
   ) {}
@@ -49,20 +49,11 @@ export class BridgeController {
   @Get('/status')
   @UseGuards(UserAuthGuard)
   async health(@UserSession() user: UserSessionData) {
-    const environment = await this.environmentRepository.findOne({ _id: user.environmentId });
-    if (!environment?.echo?.url) {
-      throw new BadRequestException('Bridge URL not found');
-    }
-
-    const result = await this.validateBridgeUrlUsecase.execute(
+    const result = await this.getBridgeStatus.execute(
       GetBridgeStatusCommand.create({
-        bridgeUrl: environment.echo.url,
+        environmentId: user.environmentId,
       })
     );
-
-    if (result.status !== 'ok') {
-      throw new Error('Bridge URL is not accessible');
-    }
 
     return result;
   }
@@ -79,10 +70,8 @@ export class BridgeController {
       PreviewStepCommand.create({
         workflowId,
         stepId,
-        inputs: data.controls || data.inputs,
         controls: data.controls || data.inputs,
-        data: data.payload,
-        bridgeUrl: data.bridgeUrl,
+        payload: data.payload,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -174,13 +163,18 @@ export class BridgeController {
     if (!workflowExist) {
       throw new NotFoundException('Workflow not found');
     }
+    const step = workflowExist?.steps.find((item) => item.stepId === stepId);
 
-    const result = await this.controlVariablesRepository.findOne({
+    if (!step || !step._id) {
+      throw new NotFoundException('Step not found');
+    }
+
+    const result = await this.controlValuesRepository.findOne({
       _environmentId: user.environmentId,
       _organizationId: user.organizationId,
       _workflowId: workflowExist._id,
-      stepId,
-      level: ControlVariablesLevelEnum.STEP_CONTROLS,
+      _stepId: step._id,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
     return result;
@@ -195,11 +189,11 @@ export class BridgeController {
     @UserSession() user: UserSessionData,
     @Body() body: any
   ) {
-    return this.storeControlVariables.execute(
-      StoreControlVariablesCommand.create({
+    return this.storeControlValuesUseCase.execute(
+      StoreControlValuesCommand.create({
         stepId,
         workflowId,
-        variables: body.variables,
+        controlValues: body.variables,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -209,17 +203,22 @@ export class BridgeController {
 
   @Post('/validate')
   @ExternalApiAccessible()
-  async validateBridgeUrl(@Body() body: ValidateBridgeUrlRequestDto): Promise<ValidateBridgeUrlResponseDto> {
+  @UseGuards(UserAuthGuard)
+  async validateBridgeUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: ValidateBridgeUrlRequestDto
+  ): Promise<ValidateBridgeUrlResponseDto> {
     try {
-      const result = await this.validateBridgeUrlUsecase.execute(
+      const result = await this.getBridgeStatus.execute(
         GetBridgeStatusCommand.create({
-          bridgeUrl: body.bridgeUrl,
+          environmentId: user.environmentId,
+          statelessBridgeUrl: body.bridgeUrl,
         })
       );
 
       return { isValid: result.status === 'ok' };
     } catch (err: any) {
-      return { isValid: false };
+      return { isValid: false, error: err.message };
     }
   }
 }

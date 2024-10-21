@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.0.1",
+  "version": "2.5.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -15,8 +15,8 @@
         "default": "./dist/esm/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/index.js",
-        "default": "./dist/cjs/index.d.ts"
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
       }
     },
     "./ui": {
@@ -25,8 +25,28 @@
         "default": "./dist/esm/ui/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/ui/index.js",
-        "default": "./dist/cjs/ui/index.d.ts"
+        "types": "./dist/cjs/ui/index.d.ts",
+        "default": "./dist/cjs/ui/index.js"
+      }
+    },
+    "./themes": {
+      "import": {
+        "types": "./dist/esm/themes/index.d.mts",
+        "default": "./dist/esm/themes/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
+      }
+    },
+    "./internal": {
+      "import": {
+        "types": "./dist/esm/internal/index.d.mts",
+        "default": "./dist/esm/internal/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/internal/index.d.ts",
+        "default": "./dist/cjs/internal/index.js"
       }
     }
   },
@@ -36,7 +56,9 @@
     "dist/index.css",
     "dist/novu.min.js",
     "dist/novu.min.js.gz",
-    "ui/**/*"
+    "ui/**/*",
+    "themes/**/*",
+    "internal/**/*"
   ],
   "sideEffects": false,
   "private": false,
@@ -46,11 +68,11 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "start:server": "http-server ./dist -p 4010",
-    "build": "pnpm run clean && NODE_ENV=production tsup && pnpm run post:build",
+    "build": "pnpm run clean && NODE_ENV=production tsup",
+    "postbuild": "./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
-    "tsup:watch": "tsup --watch && pnpm run post:build",
-    "post:build": "node scripts/size-limit.mjs && pnpm run check-exports",
+    "tsup:watch": "tsup --watch",
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
@@ -71,7 +93,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.15.4",
     "@types/jest": "^29.2.3",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
@@ -97,7 +119,7 @@
     "ts-loader": "~9.4.0",
     "tsup": "^8.1.0",
     "tsup-preset-solid": "^2.2.0",
-    "typescript": "4.9.5",
+    "typescript": "5.6.2",
     "webpack": "^5.74.0",
     "webpack-bundle-analyzer": "^4.9.0",
     "webpack-cli": "^5.1.4"
@@ -111,6 +133,10 @@
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.8.11",
+    "solid-motionone": "^1.0.1",
     "tailwind-merge": "^2.4.0"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

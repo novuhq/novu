@@ -8,6 +8,8 @@ import {
   PickOptionalKeys,
   PickRequiredKeys,
   Prettify,
+  DeepPartial,
+  DeepRequired,
 } from './util.types';
 
 describe('Either', () => {
@@ -176,5 +178,46 @@ describe('Prettify', () => {
     type TestPrettify = Prettify<{ foo: string }>;
     // @ts-expect-error - foo should be a string
     const testPrettifyInvalid: TestPrettify = { foo: 123 };
+  });
+});
+
+describe('DeepPartial', () => {
+  it('should make a top-level property optional', () => {
+    type TestDeepPartial = DeepPartial<{ foo: string }>;
+    const testDeepPartialValid: TestDeepPartial = { foo: undefined };
+  });
+
+  it('should make a nested property optional', () => {
+    type TestDeepPartial = DeepPartial<{ foo: { bar: string } }>;
+    const testDeepPartialValid: TestDeepPartial = { foo: { bar: undefined } };
+  });
+});
+
+describe('DeepRequired', () => {
+  it('should make a top-level property required', () => {
+    type TestDeepRequired = DeepRequired<{ foo?: string }>;
+    const testDeepRequiredValid: TestDeepRequired = { foo: 'bar' };
+  });
+
+  it('should make a nested object property required', () => {
+    type TestDeepRequired = DeepRequired<{ foo: { bar?: string } }>;
+    const testDeepRequiredValid: TestDeepRequired = { foo: { bar: 'bar' } };
+  });
+
+  it('should make a nested array property required', () => {
+    type TestDeepRequired = DeepRequired<{ foo: { bar: (string | undefined)[] } }>;
+    const testDeepRequiredValid: TestDeepRequired = { foo: { bar: ['bar'] } };
+  });
+
+  it('should not compile when the array has incorrect properties', () => {
+    type TestDeepRequired = DeepRequired<{ foo: { bar: (string | undefined)[] } }>;
+    // @ts-expect-error - bar should be an array of strings
+    const testDeepRequiredInvalid: TestDeepRequired = { foo: { bar: [undefined] } };
+  });
+
+  it('should not compile when the object has incorrect properties', () => {
+    type TestDeepRequired = DeepRequired<{ foo: string }>;
+    // @ts-expect-error - foo should be a string
+    const testDeepRequiredInvalid: TestDeepRequired = { foo: 123 };
   });
 });

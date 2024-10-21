@@ -1,5 +1,5 @@
-import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
-import { BadRequestError, FrameworkError } from './base.errors';
+import { ErrorCodeEnum } from '../constants';
+import { BadRequestError } from './base.errors';
 
 export class ExecutionStateCorruptError extends BadRequestError {
   code = ErrorCodeEnum.EXECUTION_STATE_CORRUPT_ERROR;
@@ -91,29 +91,5 @@ export class WorkflowPayloadInvalidError extends BadRequestError {
   constructor(workflowId: string, data: unknown) {
     super(`Workflow with id: \`${workflowId}\` has invalid \`payload\`. Please provide the correct payload.`);
     this.data = data;
-  }
-}
-
-export class PlatformError extends FrameworkError {
-  /**
-   * HTTP status code.
-   */
-  public statusCode: HttpStatusEnum;
-
-  /**
-   * Additional data that can be used to provide more information about the error.
-   */
-  public data: unknown;
-
-  /**
-   * The error code, which is used to identify the error type.
-   */
-  public code: ErrorCodeEnum;
-
-  constructor(statusCode: HttpStatusEnum, code: string, message: string) {
-    super();
-    this.data = { message };
-    this.statusCode = statusCode;
-    this.code = code as ErrorCodeEnum; // TODO: Throw known error codes from Platform.
   }
 }

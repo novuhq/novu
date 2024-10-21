@@ -21,6 +21,7 @@ export interface IWorkflowDefineStep {
   type: StepType;
 
   inputs: IStepControl;
+
   controls: IStepControl;
 
   outputs: IStepOutput;
@@ -28,9 +29,4 @@ export interface IWorkflowDefineStep {
   options?: IStepDefineOptions;
 
   code: string;
-}
-
-export enum BridgeErrorCodeEnum {
-  BRIDGE_UNEXPECTED_RESPONSE = 'BRIDGE_UNEXPECTED_RESPONSE',
-  BRIDGE_ENDPOINT_NOT_FOUND = 'BRIDGE_ENDPOINT_NOT_FOUND',
 }

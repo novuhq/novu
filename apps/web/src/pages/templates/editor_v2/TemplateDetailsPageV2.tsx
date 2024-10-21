@@ -1,25 +1,60 @@
-import { css, cx } from '@novu/novui/css';
-import { IconCable, IconPlayArrow } from '@novu/novui/icons';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
-import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
-import { useTemplateController } from '../components/useTemplateController';
-import { parseUrl } from '../../../utils/routeUtils';
+import { Button, IconButton } from '@novu/novui';
+import { css } from '@novu/novui/css';
+import { IconCable, IconPlayArrow, IconSave, IconSettings } from '@novu/novui/icons';
+import { HStack } from '@novu/novui/jsx';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
+import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { OutlineButton } from '../../../studio/components/OutlineButton';
+import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
+import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-view/WorkflowFloatingMenu';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
-import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
-import { OutlineButton } from '../../../studio/components/OutlineButton';
-import { useTelemetry } from '../../../hooks/useNovuAPI';
+import { parseUrl } from '../../../utils/routeUtils';
+import { useTemplateController } from '../components/useTemplateController';
+import { CloudWorkflowSettingsSidePanel } from './CloudWorkflowSettingsSidePanel';
+import { useWorkflowDetailPageForm } from './useWorkflowDetailPageForm';
+import { WorkflowSettingsPanelTab } from '../../../studio/components/workflows/preferences';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const track = useTelemetry();
-
-  const { template: workflow } = useTemplateController(templateId);
-
-  const title = workflow?.name || '';
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const { template: workflow } = useTemplateController(templateId);
+  const areWorkflowPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_PREFERENCES_ENABLED);
+
+  const { submitWorkflow, isSubmitting, hasChanges, workflowName, isValid } = useWorkflowDetailPageForm({
+    templateId,
+    workflow,
+  });
+
+  const [isPanelOpen, setPanelOpen] = useState<boolean>(searchParams.has('settings'));
+
+  const togglePanel = useCallback(() => {
+    setPanelOpen((prev) => {
+      const newSearchParams = new URLSearchParams(searchParams);
+
+      if (prev) {
+        newSearchParams.delete('settings');
+      } else {
+        newSearchParams.set('settings', WorkflowSettingsPanelTab.GENERAL);
+      }
+
+      navigate({
+        pathname: location.pathname,
+        search: newSearchParams.toString(),
+      });
+
+      return !prev;
+    });
+  }, [location.pathname, navigate, searchParams]);
+
+  const title = workflowName || workflow?.name || '';
 
   const workflowBackgroundWrapperClass = css({
     mx: '0',
@@ -38,54 +73,63 @@ export const TemplateDetailsPageV2 = () => {
   }, []);
 
   return (
-    <WorkflowsPageTemplate
-      className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
-      icon={<IconCable size="32" />}
-      title={title}
-      actions={
-        <>
-          <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
-            Test workflow
-          </OutlineButton>
-        </>
-      }
-    >
-      <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
-        <WorkflowNodes
-          steps={
-            workflow?.steps?.map((item) => {
-              return {
-                stepId: item.stepId,
-                type: item.template?.type,
-              };
-            }) || []
-          }
-          onStepClick={(step) => {
-            navigate(
-              parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
-                templateId: workflow?._id as string,
-                stepId: step.stepId,
-              })
-            );
-          }}
-          onTriggerClick={() => {
-            navigate(
-              parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
-                templateId: workflow?._id as string,
-              })
-            );
-          }}
+    <form name="workflow-form" noValidate onSubmit={submitWorkflow} className={css({ height: 'full' })}>
+      <WorkflowsPageTemplate
+        className={css({ p: 0, paddingBlockStart: 0, overflowY: 'auto' })}
+        icon={<IconCable size="32" />}
+        title={title}
+        actions={
+          <HStack gap="75">
+            {areWorkflowPreferencesEnabled && (
+              <Button type={'submit'} disabled={!hasChanges || !isValid} Icon={IconSave} loading={isSubmitting}>
+                Save
+              </Button>
+            )}
+            <OutlineButton Icon={IconPlayArrow} onClick={handleTestClick}>
+              Test workflow
+            </OutlineButton>
+            {areWorkflowPreferencesEnabled && <IconButton Icon={IconSettings} onClick={togglePanel} />}
+          </HStack>
+        }
+      >
+        <WorkflowBackgroundWrapper className={workflowBackgroundWrapperClass}>
+          <WorkflowNodes
+            steps={
+              workflow?.steps?.map((item) => {
+                return {
+                  stepId: item.stepId,
+                  type: item.template?.type,
+                };
+              }) || []
+            }
+            onStepClick={(step) => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
+                  templateId: workflow?._id as string,
+                  stepId: step.stepId,
+                })
+              );
+            }}
+            onTriggerClick={() => {
+              navigate(
+                parseUrl(ROUTES.WORKFLOWS_V2_TEST, {
+                  templateId: workflow?._id as string,
+                })
+              );
+            }}
+          />
+        </WorkflowBackgroundWrapper>
+        <WorkflowFloatingMenu
+          className={css({
+            zIndex: 'docked',
+            position: 'fixed',
+            // TODO: need to talk with Nik about how to position this
+            top: '[182px]',
+            right: '50',
+          })}
         />
-      </WorkflowBackgroundWrapper>
-      <WorkflowFloatingMenu
-        className={css({
-          zIndex: 'docked',
-          position: 'fixed',
-          // TODO: need to talk with Nik about how to position this
-          top: '[182px]',
-          right: '50',
-        })}
-      />
-    </WorkflowsPageTemplate>
+        {isPanelOpen && <CloudWorkflowSettingsSidePanel onClose={togglePanel} />}
+      </WorkflowsPageTemplate>
+    </form>
   );
 };

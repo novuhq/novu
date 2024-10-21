@@ -28,8 +28,6 @@ export function createCookieHandler(cookieName: string) {
   };
 }
 
-export const eeAuthTokenCookie = createCookieHandler('__session');
-
 export const novuRedirectURLCookie = createCookieHandler('nv_redirect_url');
 
 /*
@@ -37,6 +35,8 @@ export const novuRedirectURLCookie = createCookieHandler('nv_redirect_url');
  * For now we just store 1.
  */
 export const novuOnboardedCookie = createCookieHandler('nv_onboarding_step');
+
+export const hubspotCookie = createCookieHandler('hubspotutk');
 
 const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 

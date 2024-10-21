@@ -4,7 +4,7 @@ import { IMemberEntity, MemberRoleEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { errorMessage, successMessage, Title, UserAccess } from '@novu/design-system';
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_SELF_HOSTED } from '../../../config';
 import { changeMemberRole, getOrganizationMembers, removeMember, resendInviteMember } from '../../../api/organization';
 import { useAuth } from '../../../hooks/useAuth';
 import { ProductLead } from '../../../components/utils/ProductLead';
@@ -54,7 +54,7 @@ export function MembersInvitePage({ shouldHideTitle }: IMembersInviteProps) {
   }
 
   async function resendInviteMemberClick(member: IMemberEntity) {
-    if (IS_DOCKER_HOSTED && member.invite?.email) {
+    if (IS_SELF_HOSTED && member.invite?.email) {
       inviteByLink(member.invite.email);
 
       return;

@@ -47,7 +47,7 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^29.2.3",
-    "@types/node": "^20.14.10",
+    "@types/node": "^20.15.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "acorn": "^8.7.1",
@@ -64,7 +64,7 @@
     "ts-jest": "^29.0.3",
     "ts-loader": "~9.4.0",
     "tslib": "^2.3.1",
-    "typescript": "4.9.5",
+    "typescript": "5.6.2",
     "url-loader": "^4.1.1",
     "webpack": "^5.74.0",
     "webpack-bundle-analyzer": "^4.9.0",
@@ -92,5 +92,8 @@
     "socket.io-client": "4.7.2",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
+  },
+  "nx": {
+    "tags": ["package:public"]
   }
 }

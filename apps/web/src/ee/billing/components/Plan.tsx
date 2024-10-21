@@ -1,20 +1,33 @@
-import React from 'react';
 import { Center, Loader, useMantineTheme } from '@mantine/core';
-import { colors } from '@novu/design-system';
-import { PlanRow } from './PlanRow';
-import { PlanHeader } from './PlanHeader';
-import { PlanWrapper } from './PlanWrapper';
-import { planList } from '../utils/planList';
-import { PlanFooter } from './PlanFooter';
-import { FreeTrialPlanWidget } from './FreeTrialPlanWidget';
+import { colors, errorMessage, successMessage } from '@novu/design-system';
+import { useEffect, useState } from 'react';
+import { PlanSwitcher } from './PlanSwitcher';
 import { useSubscriptionContext } from './SubscriptionProvider';
+import { ActivePlanBanner } from './ActivePlanBanner';
+import { PlansRow } from './PlansRow';
+import { HighlightsRow } from './HighlightsRow';
+import { Features } from './Features';
 
 export const Plan = () => {
-  const { colorScheme } = useMantineTheme();
-  const isDark = colorScheme === 'dark';
-  const { isLoading, daysLeft } = useSubscriptionContext();
+  const theme = useMantineTheme();
+  const { isLoading, billingInterval: subscriptionBillingInterval } = useSubscriptionContext();
+  const [selectedBillingInterval, setSelectedBillingInterval] = useState<'month' | 'year'>(
+    subscriptionBillingInterval || 'month'
+  );
 
-  if (isLoading || daysLeft === null) {
+  useEffect(() => {
+    const checkoutResult = new URLSearchParams(window.location.search).get('result');
+
+    if (checkoutResult === 'success') {
+      successMessage('Payment was successful.');
+    }
+
+    if (checkoutResult === 'canceled') {
+      errorMessage('Order canceled.');
+    }
+  }, []);
+
+  if (isLoading) {
     return (
       <Center>
         <Loader color={colors.error} size={32} />
@@ -24,14 +37,15 @@ export const Plan = () => {
 
   return (
     <>
-      <FreeTrialPlanWidget isDark={isDark} />
-      <PlanWrapper isDark={isDark}>
-        <PlanHeader />
-        {planList.map((row, index) => (
-          <PlanRow {...row} key={index} />
-        ))}
-      </PlanWrapper>
-      <PlanFooter />
+      <ActivePlanBanner selectedBillingInterval={selectedBillingInterval} />
+      <PlanSwitcher
+        theme={theme}
+        selectedBillingInterval={selectedBillingInterval}
+        setSelectedBillingInterval={setSelectedBillingInterval}
+      />
+      <PlansRow theme={theme} selectedBillingInterval={selectedBillingInterval} />
+      <HighlightsRow />
+      <Features />
     </>
   );
 };

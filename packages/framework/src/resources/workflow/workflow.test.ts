@@ -1,6 +1,6 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
 import { MissingSecretKeyError } from '../../errors';
-import { workflow } from '.';
+import { workflow } from './workflow.resource';
 
 describe('workflow function', () => {
   describe('Type tests', () => {
@@ -98,7 +98,7 @@ describe('workflow function', () => {
     });
   });
 
-  it('should include preferences', async () => {
+  it('should include the defined preferences', async () => {
     const { definition } = workflow(
       'setup-workflow',
       async ({ step }) => {
@@ -110,22 +110,51 @@ describe('workflow function', () => {
       {
         preferences: {
           channels: {
-            email: { defaultValue: true, readOnly: true },
+            email: { enabled: true },
           },
         },
       }
     );
 
     expect(definition.preferences).to.deep.equal({
-      workflow: { defaultValue: true, readOnly: false },
       channels: {
-        email: { defaultValue: true, readOnly: true },
-        sms: { defaultValue: true, readOnly: false },
-        push: { defaultValue: true, readOnly: false },
-        in_app: { defaultValue: true, readOnly: false },
-        chat: { defaultValue: true, readOnly: false },
+        email: { enabled: true },
       },
     });
+  });
+
+  it('should include the defined name', async () => {
+    const { definition } = workflow(
+      'workflow-with-name',
+      async ({ step }) => {
+        await step.email('send-email', async () => ({
+          subject: 'Test Subject',
+          body: 'Test Body',
+        }));
+      },
+      {
+        name: 'My Workflow',
+      }
+    );
+
+    expect(definition.name).to.equal('My Workflow');
+  });
+
+  it('should include the defined description', async () => {
+    const { definition } = workflow(
+      'workflow-with-description',
+      async ({ step }) => {
+        await step.email('send-email', async () => ({
+          subject: 'Test Subject',
+          body: 'Test Body',
+        }));
+      },
+      {
+        description: 'My Workflow Description',
+      }
+    );
+
+    expect(definition.description).to.equal('My Workflow Description');
   });
 
   describe('trigger', () => {

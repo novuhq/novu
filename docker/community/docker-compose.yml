@@ -1,4 +1,3 @@
-version: '3.9'
 name: novu
 services:
   redis:
@@ -6,7 +5,17 @@ services:
     container_name: redis
     restart: unless-stopped
     logging:
-      driver: 'none'
+      driver: 'json-file' # Enabled json-file logging with limits for consistency
+      options:
+        max-size: '50m'
+        max-file: '5'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   mongodb:
     image: mongo
     container_name: mongodb
@@ -25,11 +34,24 @@ services:
       - mongodb:/data/db
     ports:
       - 27017:27017
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "echo 'db.runCommand({ ping: 1 }).ok' | mongosh mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@127.0.0.1:27017/admin --quiet",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   api:
-    image: 'ghcr.io/novuhq/novu/api:0.24.0'
+    image: 'ghcr.io/novuhq/novu/api:2.0.0'
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     container_name: api
     restart: unless-stopped
     logging:
@@ -63,14 +85,16 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       API_CONTEXT_PATH: ${API_CONTEXT_PATH}
-      IS_MULTI_TENANCY_ENABLED: ${IS_MULTI_TENANCY_ENABLED}
     ports:
       - '3000:3000'
+
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:0.24.0'
+    image: 'ghcr.io/novuhq/novu/worker:2.0.0'
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     container_name: worker
     restart: unless-stopped
     logging:
@@ -99,12 +123,14 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
-      IS_MULTI_TENANCY_ENABLED: ${IS_MULTI_TENANCY_ENABLED}
+
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:0.24.0'
+    image: 'ghcr.io/novuhq/novu/ws:2.0.0'
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     container_name: ws
     restart: unless-stopped
     logging:
@@ -126,8 +152,9 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
       - '3002:3002'
+
   web:
-    image: 'ghcr.io/novuhq/novu/web:0.24.0'
+    image: 'ghcr.io/novuhq/novu/web:2.0.0'
     depends_on:
       - api
       - worker
@@ -142,47 +169,16 @@ services:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
       REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_DOCKER_HOSTED_ENV: 'true'
+      REACT_APP_IS_SELF_HOSTED: 'true'
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-      IS_MULTI_TENANCY_ENABLED: ${IS_MULTI_TENANCY_ENABLED}
     ports:
       - 4200:4200
-  widget:
-    image: 'ghcr.io/novuhq/novu/widget:0.24.0'
-    depends_on:
-      - api
-      - worker
-      - web
-    container_name: widget
-    restart: unless-stopped
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '50m'
-        max-file: '5'
-    environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
-    ports:
-      - 4500:4500
-  embed:
-    depends_on:
-      - widget
-    image: 'ghcr.io/novuhq/novu/embed:0.24.0'
-    container_name: embed
-    restart: unless-stopped
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '50m'
-        max-file: '5'
-    environment:
-      WIDGET_URL: ${WIDGET_URL}
-      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
-      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
-    ports:
-      - 4701:4701
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:4200 || exit 1'] 
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 volumes:
   mongodb: ~

@@ -27,11 +27,10 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
-    actor: Schema.Types.String,
     type: Schema.Types.String,
     preferences: {
-      workflow: {
-        defaultValue: {
+      all: {
+        enabled: {
           type: Schema.Types.Boolean,
           default: true,
         },
@@ -42,53 +41,33 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       },
       channels: {
         [ChannelTypeEnum.EMAIL]: {
-          defaultValue: {
+          enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
         [ChannelTypeEnum.SMS]: {
-          defaultValue: {
+          enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
         [ChannelTypeEnum.IN_APP]: {
-          defaultValue: {
+          enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
         [ChannelTypeEnum.CHAT]: {
-          defaultValue: {
+          enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
         [ChannelTypeEnum.PUSH]: {
-          defaultValue: {
+          enabled: {
             type: Schema.Types.Boolean,
             default: true,
-          },
-          readOnly: {
-            type: Schema.Types.Boolean,
-            default: false,
           },
         },
       },

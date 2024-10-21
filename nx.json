@@ -1,58 +1,29 @@
 {
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true
+    },
+    "test": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
+    "@nx/eslint:lint": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
+    }
+  },
   "extends": "@nrwl/workspace/presets/npm.json",
-  "npmScope": "novuhq",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "test",
-          "lint",
-          "package",
-          "prepare"
-        ],
-        "canTrackAnalytics": false,
-        "accessToken": "ZTQ3Yzc3MjEtM2M2ZS00MzRlLWI0OWItZjhmOWVhNWQ1MTM0fHJlYWQ="
+        "canTrackAnalytics": false
       }
     }
   },
-  "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "inputs": [
-          "!{projectRoot}/enterprise/**/*"
-        ],
-        "projects": "dependencies"
-      }
-    ],
-    "prepare": [
-      {
-        "target": "prepare",
-        "projects": "dependencies"
-      }
-    ],
-    "package": [
-      {
-        "target": "package",
-        "projects": "dependencies"
-      }
-    ]
-  },
-  "affected": {
-    "defaultBase": "main"
-  },
-  "targetDefaults": {
-    "build-ee": {
-      "dependsOn": [
-        "^build-ee"
-      ]
-    },
-    "build": {
-      "dependsOn": [
-        "^build"
-      ]
-    }
-  }
+  "nxCloudAccessToken": "ZTQ3Yzc3MjEtM2M2ZS00MzRlLWI0OWItZjhmOWVhNWQ1MTM0fHJlYWQ=",
+  "useInferencePlugins": false,
+  "defaultBase": "main"
 }

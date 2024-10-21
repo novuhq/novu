@@ -59,6 +59,7 @@ export enum ActionTypeEnum {
 export type Session = {
   token: string;
   totalUnreadCount: number;
+  removeNovuBranding: boolean;
 };
 
 export type MessageButton = {
@@ -178,4 +179,8 @@ export type NovuOptions = {
   backendUrl?: string;
   socketUrl?: string;
   useCache?: boolean;
+  /**
+   * @internal Should be used internally
+   */
+  __userAgent?: string;
 };

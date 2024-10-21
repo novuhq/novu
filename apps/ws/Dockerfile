@@ -2,7 +2,7 @@ FROM node:20-alpine3.19
 
 ENV NX_DAEMON=false
 
-RUN npm install -g pnpm@9.1.4 --loglevel notice
+RUN npm install -g pnpm@9.11.0 --loglevel notice
 RUN npm i pm2 -g
 RUN apk --no-cache add g++ make py3-pip
 
@@ -25,7 +25,7 @@ COPY --chown=1000:1000 packages/node ./packages/node
 COPY --chown=1000:1000 packages/framework ./packages/framework
 COPY --chown=1000:1000 packages/providers ./packages/providers
 
-COPY --chown=1000:1000 ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
+COPY --chown=1000:1000 ["tsconfig.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
     if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi

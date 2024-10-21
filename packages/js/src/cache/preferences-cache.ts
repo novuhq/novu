@@ -3,18 +3,32 @@ import type { Cache } from './types';
 import { NovuEventEmitter, PreferenceEvents } from '../event-emitter';
 import { PreferenceLevel } from '../types';
 import { Preference } from '../preferences/preference';
+import { ListPreferencesArgs } from '../preferences/types';
 
 // these events should update the preferences in the cache
 const updateEvents: PreferenceEvents[] = ['preference.update.pending', 'preference.update.resolved'];
 
-const DEFAULT_KEY = 'default';
+const excludeEmpty = ({ tags }: ListPreferencesArgs) =>
+  Object.entries({ tags }).reduce((acc, [key, value]) => {
+    if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
+      return acc;
+    }
+    // @ts-expect-error
+    acc[key] = value;
+
+    return acc;
+  }, {});
+
+const getCacheKey = ({ tags }: ListPreferencesArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags }));
+};
 
 export class PreferencesCache {
   #emitter: NovuEventEmitter;
   #cache: Cache<Preference[]>;
 
-  constructor() {
-    this.#emitter = NovuEventEmitter.getInstance();
+  constructor({ emitterInstance }: { emitterInstance: NovuEventEmitter }) {
+    this.#emitter = emitterInstance;
     updateEvents.forEach((event) => {
       this.#emitter.on(event, this.handlePreferenceEvent);
     });
@@ -62,12 +76,18 @@ export class PreferencesCache {
     });
   };
 
-  set(data: Preference[]): void {
-    this.#cache.set(DEFAULT_KEY, data);
+  has(args: ListPreferencesArgs): boolean {
+    return this.#cache.get(getCacheKey(args)) !== undefined;
   }
 
-  getAll(): Preference[] | undefined {
-    return this.#cache.get(DEFAULT_KEY);
+  set(args: ListPreferencesArgs, data: Preference[]): void {
+    this.#cache.set(getCacheKey(args), data);
+  }
+
+  getAll(args: ListPreferencesArgs): Preference[] | undefined {
+    if (this.has(args)) {
+      return this.#cache.get(getCacheKey(args));
+    }
   }
 
   clearAll(): void {

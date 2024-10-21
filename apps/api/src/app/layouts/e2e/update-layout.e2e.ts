@@ -105,12 +105,9 @@ describe('Layout update - /layouts (PATCH)', async () => {
       isDefault: updatedIsDefault,
     });
 
-    expect(updateResponse.statusCode).to.eql(409);
-    expect(updateResponse.body).to.eql({
-      error: 'Conflict',
-      message: `One default layout is required`,
-      statusCode: 409,
-    });
+    expect(updateResponse.body.error).to.eql('Conflict');
+    expect(updateResponse.body.message).to.eql('One default layout is required');
+    expect(updateResponse.body.statusCode).to.eql(409);
   });
 
   it('should throw error for an update of layout identifier that already exists in the environment', async function () {
@@ -122,12 +119,11 @@ describe('Layout update - /layouts (PATCH)', async () => {
     const updateResponse = await session.testAgent.patch(url).send({
       identifier: updatedLayoutIdentifier,
     });
-    expect(updateResponse.statusCode).to.eql(409);
-    expect(updateResponse.body).to.eql({
-      error: 'Conflict',
-      message: `Layout with identifier: ${updatedLayoutIdentifier} already exists under environment ${session.environment._id}`,
-      statusCode: 409,
-    });
+    expect(updateResponse.body.message).to.eq(
+      `Layout with identifier: ${updatedLayoutIdentifier} already exists under environment ${session.environment._id}`
+    );
+    expect(updateResponse.body.error).to.eq('Conflict');
+    expect(updateResponse.body.statusCode).to.eq(409);
   });
 
   it('if the layout updated is assigned as default it should set as non default the existing default layout', async () => {

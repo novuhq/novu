@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import type { WorkflowPreferencesPartial } from '@novu/shared';
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
 import type { JsonSchema, Schema } from './schema.types';
 import type { StepOptions } from './step.types';
@@ -50,18 +50,6 @@ export type DiscoverStepOutput = {
   options: StepOptions;
 };
 
-export type ChannelPreference = {
-  defaultValue: boolean;
-  readOnly: boolean;
-};
-
-export type DiscoverWorkflowOutputPreferences = {
-  workflow: ChannelPreference;
-  channels: {
-    [key in (typeof ChannelTypeEnum)[keyof typeof ChannelTypeEnum]]: ChannelPreference;
-  };
-};
-
 export type DiscoverWorkflowOutput = {
   workflowId: string;
   execute: Execute<Record<string, unknown>, Record<string, unknown>>;
@@ -86,8 +74,10 @@ export type DiscoverWorkflowOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
-  preferences: DiscoverWorkflowOutputPreferences;
+  preferences: WorkflowPreferencesPartial;
   tags: string[];
+  name?: string;
+  description?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

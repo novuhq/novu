@@ -22,6 +22,7 @@ export class InboxService {
     this.#httpClient = new HttpClient(options);
     this.#httpClient.updateHeaders({
       'Novu-API-Version': NOVU_API_VERSION,
+      'Novu-User-Agent': options.userAgent || '@novu/js',
     });
   }
 
@@ -141,8 +142,15 @@ export class InboxService {
     });
   }
 
-  fetchPreferences(): Promise<PreferencesResponse[]> {
-    return this.#httpClient.get(`${INBOX_ROUTE}/preferences`);
+  fetchPreferences(tags?: string[]): Promise<PreferencesResponse[]> {
+    const queryParams = new URLSearchParams();
+    if (tags) {
+      tags.forEach((tag) => queryParams.append('tags[]', tag));
+    }
+
+    const query = queryParams.size ? `?${queryParams.toString()}` : '';
+
+    return this.#httpClient.get(`${INBOX_ROUTE}/preferences${query}`);
   }
 
   updateGlobalPreferences(channelPreferences: ChannelPreference): Promise<PreferencesResponse> {

@@ -26,7 +26,7 @@ export const StudioStepEditorPage = () => {
   const step = workflow?.steps.find((item) => item.stepId === stepId);
 
   return (
-    <WorkflowsPageTemplate title={step?.stepId} icon={<StepIcon type={step?.type} size="32" />}>
+    <WorkflowsPageTemplate title={step?.stepId || ''} icon={<StepIcon type={step?.type} size="32" />}>
       <WorkflowsStepEditor
         source="studio"
         step={step}

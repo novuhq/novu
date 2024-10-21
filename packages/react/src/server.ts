@@ -6,10 +6,11 @@ export * from './utils/types';
  * when we implement the SSR components in @novu/js/ui
  */
 export function Inbox() {}
+export function InboxContent() {}
 export function Notifications() {}
 export function Preferences() {}
 export function Bell() {}
 
-//Hooks
+// Hooks
 export { NovuProvider } from './index';
 export * from './hooks';

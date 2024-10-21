@@ -1,6 +1,7 @@
+import { Inbox } from '@novu/nextjs';
+import { dark } from '@novu/nextjs/themes';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
-import { Inbox } from '@novu/react';
 
 export default function Home() {
   return (
@@ -13,6 +14,9 @@ export default function Home() {
           dynamic: {
             '6697c185607852e9104daf33': 'My workflow in other language', // key is workflow id
           },
+        }}
+        appearance={{
+          baseTheme: dark,
         }}
       />
     </>

@@ -9,6 +9,11 @@ import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { EnvironmentRepository } from '../environment';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface FindByIdQuery {
+  id: string;
+  environmentId: string;
+}
 
 export class NotificationTemplateRepository extends BaseRepository<
   NotificationTemplateDBModel,
@@ -35,12 +40,14 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findById(id: string, environmentId: string) {
-    const requestQuery: NotificationTemplateQuery = {
-      _id: id,
-      _environmentId: environmentId,
-    };
+    return this.findByIdQuery({ id, environmentId });
+  }
 
-    const item = await this.MongooseModel.findOne(requestQuery)
+  async findByIdQuery(query: FindByIdQuery) {
+    const item = await this.MongooseModel.findOne({
+      _id: query.id,
+      _environmentId: query.environmentId,
+    })
       .populate('steps.template')
       .populate('steps.variants.template');
 
@@ -207,12 +214,30 @@ export class NotificationTemplateRepository extends BaseRepository<
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
-  async getActiveList(organizationId: string, environmentId: string, active?: boolean) {
+  async filterActive({
+    organizationId,
+    environmentId,
+    tags,
+    critical,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    tags?: string[];
+    critical?: boolean;
+  }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-      active,
+      active: true,
     };
+
+    if (tags && tags?.length > 0) {
+      requestQuery.tags = { $in: tags };
+    }
+
+    if (critical !== undefined) {
+      requestQuery.critical = { $eq: critical };
+    }
 
     const items = await this.MongooseModel.find(requestQuery)
       .populate('steps.template', { type: 1 })
@@ -241,6 +266,34 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   public static getBlueprintOrganizationId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
+  }
+
+  async estimatedDocumentCount(): Promise<any> {
+    return this.notificationTemplate.estimatedDocumentCount();
+  }
+
+  async getTotalSteps(): Promise<number> {
+    const res = await this.notificationTemplate.aggregate<{ totalSteps: number }>([
+      {
+        $group: {
+          _id: null,
+          totalSteps: {
+            $sum: {
+              $cond: {
+                if: { $isArray: '$steps' },
+                then: { $size: '$steps' },
+                else: 0,
+              },
+            },
+          },
+        },
+      },
+    ]);
+    if (res.length > 0) {
+      return res[0].totalSteps;
+    } else {
+      return 0;
+    }
   }
 }
 

@@ -10,17 +10,12 @@ type ChannelRowProps = {
   channelIcon?: () => JSX.Element;
   workflowId?: string;
   onChange: ({ channel, enabled, workflowId }: { workflowId?: string; channel: ChannelType; enabled: boolean }) => void;
-  isCritical?: boolean;
 };
 
 export const ChannelRow = (props: ChannelRowProps) => {
   const style = useStyle();
 
   const updatePreference = async (enabled: boolean) => {
-    if (props.isCritical) {
-      return;
-    }
-
     props.onChange({ channel: props.channel, enabled, workflowId: props.workflowId });
   };
 
@@ -32,9 +27,8 @@ export const ChannelRow = (props: ChannelRowProps) => {
     <div
       class={style(
         'channelContainer',
-        'nt-flex nt-justify-between nt-items-center nt-h-11 data-[disabled=true]:nt-text-foreground-alpha-600'
+        'nt-flex nt-justify-between nt-items-center nt-h-11 nt-gap-2 data-[disabled=true]:nt-text-foreground-alpha-600'
       )}
-      data-disabled={props.isCritical}
     >
       <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2')}>
         <div>
@@ -43,7 +37,7 @@ export const ChannelRow = (props: ChannelRowProps) => {
         <span class={style('channelLabel', 'nt-text-base nt-font-semibold')}>{getLabel(props.channel)}</span>
       </div>
       <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
-        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} disabled={props.isCritical} />
+        <Switch checked={props.enabled} onChange={(checked) => onChange(checked)} />
       </div>
     </div>
   );

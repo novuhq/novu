@@ -4,7 +4,7 @@ import { Tooltip } from '@novu/design-system';
 import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { IS_EE_AUTH_ENABLED, IS_DOCKER_HOSTED } from '../../../../config';
+import { IS_EE_AUTH_ENABLED, IS_SELF_HOSTED } from '../../../../config';
 import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
@@ -14,17 +14,13 @@ import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
 import { UserProfileButton } from '../../../../ee/clerk';
 import { BridgeMenuItems } from './BridgeMenuItems';
-import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { WorkflowHeaderBackButton } from './WorkflowHeaderBackButton';
 
 export function HeaderNav() {
   const { currentUser } = useAuth();
-  const { bridgeURL } = useStudioState();
 
-  const isSelfHosted = IS_DOCKER_HOSTED;
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
-
-  const shouldShowNewNovuExperience = isV2ExperienceEnabled && bridgeURL;
+  const isSelfHosted = IS_SELF_HOSTED;
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   useBootIntercom();
 
@@ -43,9 +39,11 @@ export function HeaderNav() {
     >
       {/* TODO: Change position: right to space-between for breadcrumbs */}
       <HStack justifyContent="space-between" width="full" display="flex">
-        <HStack gap="100">{shouldShowNewNovuExperience && <WorkflowHeaderBackButton />}</HStack>
+        <HStack gap="100">
+          <WorkflowHeaderBackButton />
+        </HStack>
         <HStack flexWrap={'nowrap'} justifyContent="flex-end" gap={'100'}>
-          {shouldShowNewNovuExperience && <BridgeMenuItems />}
+          {isV2Enabled && <BridgeMenuItems />}
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeLabel}>
               <div>

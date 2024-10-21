@@ -11,7 +11,7 @@ import {
 
 import { useIntegrations } from '../../hooks';
 import type { IIntegratedProvider, IntegrationEntity } from './types';
-import { IS_DOCKER_HOSTED } from '../../config';
+import { IS_SELF_HOSTED } from '../../config';
 
 /*
  * temporary patch before migration script
@@ -34,7 +34,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 function initializeProvidersByIntegration(integrations: IntegrationEntity[]): IIntegratedProvider[] {
   return integrations
     .filter((integrationItem) => {
-      if (!IS_DOCKER_HOSTED) {
+      if (!IS_SELF_HOSTED) {
         return true;
       }
 
@@ -86,6 +86,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         identifier: integrationItem?.identifier,
         primary: integrationItem?.primary ?? false,
         conditions: integrationItem?.conditions ?? [],
+        removeNovuBranding: integrationItem?.removeNovuBranding ?? false,
       };
     });
 }

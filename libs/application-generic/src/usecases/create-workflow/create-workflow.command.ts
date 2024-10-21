@@ -13,12 +13,13 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  IMessageAction,
-  IPreferenceChannels,
   FilterParts,
+  IMessageAction,
+  INotificationGroup,
+  IPreferenceChannels,
   IWorkflowStepMetadata,
   NotificationTemplateCustomData,
-  INotificationGroup,
+  WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
 
@@ -28,14 +29,14 @@ import { EnvironmentWithUserCommand } from '../../commands';
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsDefined()
-  notificationGroupId: string;
+  notificationGroupId?: string;
 
   @IsOptional()
   notificationGroup?: INotificationGroup;
 
   @IsOptional()
   @IsArray()
-  tags: string[];
+  tags?: string[];
 
   @IsDefined()
   @IsString()
@@ -43,7 +44,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
 
   @IsDefined()
   @IsArray()
@@ -54,7 +55,8 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   active: boolean;
 
   @IsBoolean()
-  draft: boolean;
+  @IsOptional()
+  draft?: boolean;
 
   @IsBoolean()
   critical: boolean;
@@ -90,6 +92,18 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   type: WorkflowTypeEnum;
+
+  origin: WorkflowOriginEnum;
+
+  /**
+   * Optional identifier for the workflow trigger.
+   * This allows overriding the default trigger identifier generation strategy in the use case.
+   * If provided, the use case will use this value instead of generating one.
+   * If not provided, the use case will generate a trigger identifier based on its internal logic.
+   */
+  @IsOptional()
+  @IsString()
+  triggerIdentifier?: string;
 }
 
 export class ChannelCTACommand {

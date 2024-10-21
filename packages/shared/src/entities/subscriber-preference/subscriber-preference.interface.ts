@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, PreferenceOverrideSourceEnum } from '../../types';
+import { ChannelTypeEnum, PreferenceOverrideSourceEnum, PreferencesTypeEnum } from '../../types';
 import { INotificationTrigger } from '../notification-template';
 
 export interface IPreferenceChannels {
@@ -17,6 +17,7 @@ export interface IPreferenceOverride {
 export interface ISubscriberPreferenceResponse {
   template: ITemplateConfiguration;
   preference: IPreferenceResponse;
+  type: PreferencesTypeEnum;
 }
 
 export interface ISubscriberWorkflowPreferenceResponse extends IPreferenceResponse {

@@ -2,11 +2,11 @@ import styled from '@emotion/styled';
 import { ActionIcon, FileButton, Group, Indicator, Stack, useMantineColorScheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { colors, Edit, Sidebar, Table, Text, Title, Tooltip, Trash, Upload, When } from '@novu/design-system';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Outlet } from 'react-router-dom';
-import { useAuth, useEnvironment } from '../../../hooks';
-import { useFetchLocales, useFetchTranslationGroup, useUploadTranslations } from '../hooks';
+import { useEnvironment } from '../../../hooks';
+import { useFetchLocales, useFetchTranslationGroup, useUploadTranslations, useGetDefaultLocale } from '../hooks';
 import { useEditTranslationFileContext } from '../context/useEditTranslationFileContext';
 import {
   ArrowForward,
@@ -46,7 +46,6 @@ export const EditTranslationsSidebar = ({
   identifier: string;
 }) => {
   const { group, isLoading } = useFetchTranslationGroup(identifier);
-  const { currentOrganization } = useAuth();
   const { locales } = useFetchLocales();
   const resetRef = useRef<() => void>(null);
   const { setGroupIdentifier } = useEditTranslationFileContext();
@@ -63,6 +62,7 @@ export const EditTranslationsSidebar = ({
   const { readonly } = useEnvironment();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
+  const { defaultLocale } = useGetDefaultLocale();
 
   const handleFileChange = async (files: File[]) => {
     setLanguageFiles(files);
@@ -77,7 +77,7 @@ export const EditTranslationsSidebar = ({
       const isValidLanguage = locales?.find((locale) => locale.langIso === detectedLanguage);
       updatedFiles.push({
         name: file.name,
-        locale: isValidLanguage ? detectedLanguage : currentOrganization?.defaultLocale || '',
+        locale: isValidLanguage ? detectedLanguage : defaultLocale || '',
         content: fileContent,
         isValidJsonFile,
       });

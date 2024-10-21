@@ -10,7 +10,7 @@ import {
   smsProviders,
 } from '@novu/shared';
 
-import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../config';
+import { CONTEXT_PATH, IS_SELF_HOSTED } from '../config';
 import { IIntegratedProvider } from '../pages/integrations/types';
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
@@ -23,7 +23,7 @@ const mapStructure = (listProv): IIntegratedProvider[] =>
 
 let initialEmailProviders = emailProviders;
 let initialSmsProviders = smsProviders;
-if (IS_DOCKER_HOSTED) {
+if (IS_SELF_HOSTED) {
   initialEmailProviders = emailProviders.filter((provider) => provider.id !== EmailProviderIdEnum.Novu);
   initialSmsProviders = smsProviders.filter((provider) => provider.id !== SmsProviderIdEnum.Novu);
 }

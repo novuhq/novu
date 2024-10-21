@@ -1,35 +1,26 @@
-import * as Popover from '@radix-ui/react-popover';
-import { BellIcon, Cross2Icon } from '@radix-ui/react-icons';
-import { Inbox, Bell, Notifications } from '@novu/react';
 import { novuConfig } from '@/utils/config';
-import styles from './custom-popover.module.css';
+import { Bell, Inbox, InboxContent } from '@novu/react';
+import { BellIcon } from '@radix-ui/react-icons';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-export default function Home() {
+export default function CustomPopoverPage() {
   return (
     <Inbox {...novuConfig}>
-      <Popover.Root>
-        <Popover.Trigger asChild>
-          <button>
-            <Bell
-              renderBell={(unreadCount) => (
-                <div>
-                  <span>{unreadCount}</span>
-                  <BellIcon />
-                </div>
-              )}
-            ></Bell>
-          </button>
-        </Popover.Trigger>
-        <Popover.Portal>
-          <Popover.Content className={styles.PopoverContent} sideOffset={5}>
-            <Notifications />
-            <Popover.Close className={styles.PopoverClose} aria-label="Close">
-              <Cross2Icon />
-            </Popover.Close>
-            <Popover.Arrow className={styles.PopoverArrow} />
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
+      <Popover>
+        <PopoverTrigger>
+          <Bell
+            renderBell={(unreadCount) => (
+              <div>
+                <span>{unreadCount}</span>
+                <BellIcon />
+              </div>
+            )}
+          />
+        </PopoverTrigger>
+        <PopoverContent className="h-[500px] w-[400px] overflow-auto p-0">
+          <InboxContent />
+        </PopoverContent>
+      </Popover>
     </Inbox>
   );
 }

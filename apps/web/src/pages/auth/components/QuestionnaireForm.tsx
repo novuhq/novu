@@ -32,7 +32,7 @@ export function QuestionnaireForm() {
   const queryClient = useQueryClient();
   const { initializeWebContainer } = useContainer();
   const { isSupported } = useWebContainerSupported();
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const isPlaygroundOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PLAYGROUND_ONBOARDING_ENABLED);
 
   useEffectOnce(() => {
@@ -126,13 +126,13 @@ export function QuestionnaireForm() {
           navigate(ROUTES.DASHBOARD_ONBOARDING);
         }
       } else {
-        navigate(ROUTES.WORKFLOWS);
+        navigate(ROUTES.GET_STARTED);
       }
 
       return;
     }
 
-    navigate(`${ROUTES.GET_STARTED}`);
+    navigate(ROUTES.GET_STARTED);
   };
 
   /**

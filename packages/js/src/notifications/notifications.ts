@@ -1,3 +1,5 @@
+import { InboxService } from '../api';
+import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
 import { ActionTypeEnum, NotificationFilter, Result } from '../types';
 import {
@@ -38,9 +40,22 @@ export class Notifications extends BaseModule {
 
   readonly cache: NotificationsCache;
 
-  constructor({ useCache }: { useCache: boolean }) {
-    super();
-    this.cache = new NotificationsCache();
+  constructor({
+    useCache,
+    inboxServiceInstance,
+    eventEmitterInstance,
+  }: {
+    useCache: boolean;
+    inboxServiceInstance: InboxService;
+    eventEmitterInstance: NovuEventEmitter;
+  }) {
+    super({
+      eventEmitterInstance,
+      inboxServiceInstance,
+    });
+    this.cache = new NotificationsCache({
+      emitter: eventEmitterInstance,
+    });
     this.#useCache = useCache;
   }
 
@@ -48,7 +63,8 @@ export class Notifications extends BaseModule {
     return this.callWithSession(async () => {
       const args = { limit, ...restOptions };
       try {
-        let data: ListNotificationsResponse | undefined = this.#useCache ? this.cache.getAll(args) : undefined;
+        const shouldUseCache = 'useCache' in args ? args.useCache : this.#useCache;
+        let data: ListNotificationsResponse | undefined = shouldUseCache ? this.cache.getAll(args) : undefined;
         this._emitter.emit('notifications.list.pending', { args, data });
 
         if (!data) {
@@ -60,10 +76,10 @@ export class Notifications extends BaseModule {
           data = {
             hasMore: response.hasMore,
             filter: response.filter,
-            notifications: response.data.map((el) => new Notification(el)),
+            notifications: response.data.map((el) => new Notification(el, this._emitter, this._inboxService)),
           };
 
-          if (this.#useCache) {
+          if (shouldUseCache) {
             this.cache.set(args, data);
             data = this.cache.getAll(args);
           }

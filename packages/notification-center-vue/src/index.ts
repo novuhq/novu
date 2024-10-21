@@ -1,5 +1,6 @@
 import type { App } from 'vue';
 import FloatingVue from '@novu/floating-vue';
+// eslint-disable-next-line no-restricted-imports
 import '@novu/floating-vue/dist/style.css';
 import { NotificationCenterContentWebComponent } from '@novu/notification-center';
 

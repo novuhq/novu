@@ -78,7 +78,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
           result = await validateBridgeUrl({ bridgeUrl: url });
         }
         if (!result.isValid) {
-          throw new Error('The provided URL is not the Novu Endpoint URL');
+          throw new Error(result.error);
         }
       }
 

@@ -106,6 +106,7 @@ nx-cloud.env
 
 # NX Build System
 .nx/cache
+.nx/workspace-data
 
 # EE Symlinked folders - we need these for the EE build
 # @TODO - find a way to remove the symlinks without breaking the build

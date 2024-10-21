@@ -51,7 +51,7 @@ export type JsonSchemaFormProps<TFormData = any> = JsxStyleProps &
 /**
  * Specialized form editor for data passed as JSON.
  */
-export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TFormData>) {
+export function JsonSchemaForm<TFormData = {}>(props: JsonSchemaFormProps<TFormData>) {
   const [cssProps, { className, variables, ...formProps }] = splitCssProps(props);
 
   const isAutocompleteEnabled = Boolean(variables && variables.length > 0);
@@ -73,18 +73,22 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
         css(cssProps),
         className
       )}
+      // @ts-expect-error
       uiSchema={UI_SCHEMA}
       widgets={isAutocompleteEnabled ? WIDGETS : LEGACY_WIDGETS}
+      // @ts-expect-error
       validator={validator}
       liveValidate
       autoComplete={'false'}
       formContext={{ variables }}
       idSeparator={JSON_SCHEMA_FORM_ID_DELIMITER}
       templates={{
+        // @ts-expect-error
         ArrayFieldTitleTemplate,
         ArrayFieldTemplate,
         ArrayFieldItemTemplate,
         ObjectFieldTemplate,
+        // @ts-expect-error
         ButtonTemplates: { MoveDownButton, AddButton, RemoveButton, MoveUpButton },
       }}
       {...formProps}

@@ -1,22 +1,10 @@
-import { WorkflowChannelPreferences } from '@novu/shared';
+import type { WorkflowPreferences } from '@novu/shared';
+import { PreferencesTypeEnum } from '@novu/shared';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { SubscriberId } from '../subscriber';
-import { UserId } from '../user';
-import { ChangePropsValueType } from '../../types';
-
-export enum PreferencesTypeEnum {
-  SUBSCRIBER_GLOBAL = 'SUBSCRIBER_GLOBAL',
-  SUBSCRIBER_WORKFLOW = 'SUBSCRIBER_WORKFLOW',
-  USER_WORKFLOW = 'USER_WORKFLOW',
-  WORKFLOW_RESOURCE = 'WORKFLOW_RESOURCE',
-}
-
-export enum PreferencesActorEnum {
-  USER = 'USER',
-  SUBSCRIBER = 'SUBSCRIBER',
-  WORKFLOW = 'WORKFLOW',
-}
+import type { UserId } from '../user';
+import type { ChangePropsValueType } from '../../types';
 
 export type PreferencesDBModel = ChangePropsValueType<
   PreferencesEntity,
@@ -36,9 +24,7 @@ export class PreferencesEntity {
 
   _templateId?: string;
 
-  actor: PreferencesActorEnum;
-
   type: PreferencesTypeEnum;
 
-  preferences: WorkflowChannelPreferences;
+  preferences: WorkflowPreferences;
 }

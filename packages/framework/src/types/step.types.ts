@@ -1,6 +1,6 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas';
 import { actionStepSchemas } from '../schemas/steps/actions';
+import { digestRegularOutputSchema, digestTimedOutputSchema } from '../schemas/steps/actions/digest.schema';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import type { Providers } from './provider.types';
 import type { FromSchema, FromSchemaUnvalidated, Schema } from './schema.types';
@@ -179,6 +179,12 @@ export type ChannelStep<
      * The providers for the step. Used to override the behaviour of the providers for the step.
      */
     providers?: Prettify<Providers<T_StepType, T_Controls, T_Outputs>>;
+    /**
+     * A flag to disable output sanitization for the step.
+     *
+     * @default false
+     */
+    disableOutputSanitization?: boolean;
   }
 ) => StepOutput<T_Result>;
 

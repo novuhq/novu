@@ -35,8 +35,15 @@ export class IntegrationEntity {
   deletedBy: string;
 
   conditions?: StepFilter[];
+
+  removeNovuBranding?: boolean;
 }
 
 export type ICredentialsEntity = ICredentials;
 
 export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;
+
+export type ProviderCount = {
+  providerId: string;
+  count: number;
+};

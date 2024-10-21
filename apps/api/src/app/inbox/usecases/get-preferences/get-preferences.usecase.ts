@@ -43,8 +43,12 @@ export class GetPreferences {
     };
 
     const workflowList =
-      (await this.notificationTemplateRepository.getActiveList(command.organizationId, command.environmentId, true)) ||
-      [];
+      (await this.notificationTemplateRepository.filterActive({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        tags: command.tags,
+        critical: false,
+      })) || [];
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
       _organization: command.organizationId,
@@ -71,13 +75,24 @@ export class GetPreferences {
             id: workflow._id,
             identifier: workflow.triggers[0].identifier,
             name: workflow.name,
-            critical: workflow.critical,
+            /*
+             * V1 Preferences define `critial` flag on the workflow level.
+             * V2 Preferences define `critical` flag on the template returned via Preferences.
+             * This pattern safely returns false when:
+             * 1. Workflow V1 with no critical flag set
+             * 2. Workflow V2 with no critical flag set
+             * 3. Workflow V1 with critical flag set to false
+             * 4. Workflow V2 with critical flag set to false
+             */
+            critical: workflow.critical || workflowPreference.template.critical || false,
             tags: workflow.tags,
           },
         } satisfies InboxPreference;
       })
     );
 
-    return [updatedGlobalPreference, ...workflowPreferences];
+    const nonCriticalWorkflows = workflowPreferences.filter((preference) => preference.workflow.critical === false);
+
+    return [updatedGlobalPreference, ...nonCriticalWorkflows];
   }
 }

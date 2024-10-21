@@ -9,7 +9,6 @@ import { type AuthContextValue } from '../../../components/providers/AuthProvide
 import { DEFAULT_AUTH_CONTEXT_VALUE } from '../../../components/providers/constants';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
-import { useGetDefaultLocale } from '../../translations/hooks/useGetDefaultLocale';
 
 const asyncNoop = async () => {};
 
@@ -19,7 +18,6 @@ EnterpriseAuthContext.displayName = 'EnterpriseAuthProvider';
 
 export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { signOut, orgId } = useAuth();
-  const { defaultLocale } = useGetDefaultLocale();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
   // TODO @ChmaraX: Can we use setActive from useSession, useSignIn, or useSignUp to avoid loading the list?
@@ -112,8 +110,8 @@ export const EnterpriseAuthProvider = ({ children }: { children: React.ReactNode
 
   const currentUser = useMemo(() => (clerkUser ? toUserEntity(clerkUser) : undefined), [clerkUser]);
   const currentOrganization = useMemo(
-    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization, defaultLocale) : undefined),
-    [clerkOrganization, defaultLocale]
+    () => (clerkOrganization ? toOrganizationEntity(clerkOrganization) : undefined),
+    [clerkOrganization]
   );
 
   // refetch queries on organization switch
@@ -179,10 +177,7 @@ const toUserEntity = (clerkUser: UserResource): IUserEntity => {
   };
 };
 
-const toOrganizationEntity = (
-  clerkOrganization: OrganizationResource,
-  defaultLocale: string | undefined
-): IOrganizationEntity => {
+const toOrganizationEntity = (clerkOrganization: OrganizationResource): IOrganizationEntity => {
   /*
    * When mapping to IOrganizationEntity, we have 2 cases:
    *  - user exists and has signed in
@@ -202,7 +197,6 @@ const toOrganizationEntity = (
     name: clerkOrganization.name,
     createdAt: clerkOrganization.createdAt.toISOString(),
     updatedAt: clerkOrganization.updatedAt.toISOString(),
-    defaultLocale,
     domain: clerkOrganization.publicMetadata.domain,
     productUseCases: clerkOrganization.publicMetadata.productUseCases,
     language: clerkOrganization.publicMetadata.language,

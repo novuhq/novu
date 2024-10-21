@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+
+    --foreground-0: 210 10% 100%;
+    --foreground-50: 210 10% 96%;
+    --foreground-100: 210 30% 96%;
+    --foreground-200: 220 18% 90%;
+    --foreground-300: 219 15% 82%;
+    --foreground-400: 220 11% 64%;
+    --foreground-500: 221 8% 48%;
+    --foreground-600: 222 11% 36%;
+    --foreground-700: 221 16% 20%;
+    --foreground-800: 227 17% 16%;
+    --foreground-900: 226 21% 12%;
+    --foreground-950: 222 32% 8%;
+
+    --primary: 346 73% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --neutral-0: 210 10% 100%;
+    --neutral-50: 0 0% 98%;
+    --neutral-100: 210 30% 96%;
+    --neutral-200: 220 18% 90%;
+    --neutral-300: 219 15% 82%;
+    --neutral-400: 220 11% 64%;
+    --neutral-500: 221 8% 48%;
+    --neutral-600: 222 11% 36%;
+    --neutral-700: 221 16% 20%;
+    --neutral-800: 227 17% 16%;
+    --neutral-900: 226 21% 12%;
+    --neutral-950: 222 32% 8%;
+    --neutral: 0 0 0%;
+    --neutral-foreground: 0 0% 100%;
+
+    /* Neutral scale in alpha that looks the same on white background */
+    --neutral-alpha-50: 0 0% 69% / 0.05;
+    --neutral-alpha-100: 210 30% 61% / 0.1;
+    --neutral-alpha-200: 220 18% 50% / 0.2;
+    --neutral-alpha-300: 218 23% 40% / 0.3;
+    --neutral-alpha-400: 220 100% 10% / 0.4;
+    --neutral-alpha-500: 240 100% 2% / 0.5;
+    --neutral-alpha-600: 0 0% 0% / 0.6;
+    --neutral-alpha-700: 0 0% 0% / 0.7;
+    --neutral-alpha-800: 0 0% 0% / 0.8;
+    --neutral-alpha-900: 231 100% 3% / 0.9;
+    --neutral-alpha-950: 219 88% 3% / 0.95;
+
+    --accent: 0 0% 96.1%;
+
+    --destructive: 355 96% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 148 72% 44%;
+
+    --warning: 20 100% 64%;
+
+    --feature: 256 88% 64%;
+
+    --information: 228 100% 60%;
+
+    --highlighted: 330 96% 64%;
+
+    --stable: 172 72% 48%;
+
+    --alert: 42, 92%, 54%, 1;
+
+    --verified: 200 100% 64%;
+
+    --input: 220 18% 90%;
+    --ring: 222 32% 8%;
+
+    --radius: 0.5rem;
+  }
+}
+@layer base {
+  * {
+    @apply border-neutral-alpha-200;
+  }
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  body {
+    @apply bg-background text-foreground-950;
+  }
+
+  body, html{
+    height: 100%;
+    scroll-behavior: smooth;
+}
+}

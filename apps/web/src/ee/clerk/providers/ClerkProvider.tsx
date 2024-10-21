@@ -190,7 +190,7 @@ const CLERK_MODAL_ELEMENT = {
     width: '100%',
   },
   scrollBox: {
-    backgroundColor: 'var(--nv-colors-surface-panel-subsection)',
+    backgroundColor: 'surface.page',
     padding: '0',
   },
   pageScrollBox: {
