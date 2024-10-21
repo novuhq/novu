@@ -11,6 +11,7 @@ import * as z from 'zod';
 import { RiInformation2Line } from 'react-icons/ri';
 
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../primitives/tooltip';
+import { CopyButton } from '../primitives/copy-button';
 
 export function ConfigureWorkflow() {
   const { control } = useFormContext<z.infer<typeof formSchema>>();
@@ -26,9 +27,9 @@ export function ConfigureWorkflow() {
         name="active"
         render={({ field }) => (
           <FormItem className="flex items-center justify-between gap-2.5 space-y-0 px-3 py-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <div
-                className="bg-success-alpha-600 shadow-success-alpha-200 data-[active=false]:shadow-neutral-alpha-100 h-1.5 w-1.5 rounded-full shadow-[0_0px_0px_2px_var(--success-alpha-200),0_0px_0px_4px_var(--success-alpha-100)] data-[active=false]:bg-neutral-300 data-[active=false]:shadow-[0_0px_0px_2px_var(--neutral-alpha-200),0_0px_0px_4px_var(--neutral-alpha-100)]"
+                className="bg-success-alpha-600 shadow-success-alpha-200 data-[active=false]:shadow-neutral-alpha-100 ml-2 h-1.5 w-1.5 rounded-full shadow-[0_0px_0px_5px_var(--success-alpha-200),0_0px_0px_9px_var(--success-alpha-100)] data-[active=false]:bg-neutral-300 data-[active=false]:shadow-[0_0px_0px_5px_var(--neutral-alpha-200),0_0px_0px_9px_var(--neutral-alpha-100)]"
                 data-active={field.value}
               />
               <FormLabel>Active Workflow</FormLabel>
@@ -63,8 +64,12 @@ export function ConfigureWorkflow() {
             <FormItem>
               <FormLabel>Workflow Identifier</FormLabel>
               <FormControl>
-                <InputField>
+                <InputField className="flex overflow-hidden pr-0">
                   <Input placeholder="Untitled" {...field} />
+                  <CopyButton
+                    content={field.value}
+                    className="rounded-md rounded-s-none border-b-0 border-r-0 border-t-0 text-neutral-400"
+                  />
                 </InputField>
               </FormControl>
               <FormMessage />
@@ -93,7 +98,7 @@ export function ConfigureWorkflow() {
                 <FormLabel>Add tags</FormLabel>
               </div>
               <FormControl className="text-xs text-neutral-600">
-                <TagInput {...field} value={field.value ?? []} />
+                <TagInput {...field} value={field.value ?? []} showAddButton />
               </FormControl>
             </FormItem>
           )}
