@@ -9,6 +9,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
 import { Button } from '@/components/primitives/button';
+import { Toaster } from '@/components/primitives/sonner';
 import { WorkflowEditor, WorkflowEditorProvider } from '@/components/workflow-editor';
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { formSchema } from '@/components/workflow-editor/schema';
