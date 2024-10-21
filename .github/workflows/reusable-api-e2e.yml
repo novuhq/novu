@@ -41,9 +41,9 @@ jobs:
         id: secret-check
         run: |
           if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "::set-output name=has_token::true"
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=has_token::false"
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
           fi
 
   # This workflow contains a single job called "build"
