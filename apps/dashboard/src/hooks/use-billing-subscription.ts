@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
 import type { GetSubscriptionDto } from '@novu/shared';
-import { useAuth } from '@/context';
 import { getBillingSubscription } from '@/api/billing';
 import { QueryKeys } from '@/utils/query-keys';
+import { useAuth } from '@/context/auth/hooks';
 
 const today = new Date();
 

@@ -18,8 +18,8 @@ import { OrganizationDropdown } from './organization-dropdown';
 import { FreeTrialCard } from './free-trial-card';
 import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 import { SubscribersStayTunedModal } from './subscribers-stay-tuned-modal';
-import { useTelemetry } from '@/hooks';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { useTelemetry } from '@/hooks/use-telemetry';
 
 const linkVariants = cva(
   `flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer`,

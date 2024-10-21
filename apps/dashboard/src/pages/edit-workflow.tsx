@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { WorkflowEditor, WorkflowEditorProvider } from '@/components/workflow-editor';
 import { EditWorkflowLayout } from '@/components/edit-workflow-layout';
 import { ArrowRight, RouteFill } from '@/components/icons';
 import {
@@ -12,6 +11,8 @@ import {
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
 import { Button } from '@/components/primitives/button';
+import { WorkflowEditor } from '@/components/workflow-editor/workflow-editor';
+import { WorkflowEditorProvider } from '@/components/workflow-editor/workflow-editor-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
