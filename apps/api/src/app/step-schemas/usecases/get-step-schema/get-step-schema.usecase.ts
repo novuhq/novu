@@ -43,7 +43,7 @@ export class GetStepSchema {
     if (!workflow) {
       throw new BadRequestException({
         message: 'No workflow found',
-        workflowId: encodeBase62(command.workflowId),
+        workflowId: command.workflowId,
       });
     }
 
@@ -52,8 +52,8 @@ export class GetStepSchema {
     if (!currentStep) {
       throw new BadRequestException({
         message: 'No step found',
-        stepId: encodeBase62(command.stepId),
-        workflowId: encodeBase62(command.workflowId),
+        stepId: command.stepId,
+        workflowId: command.workflowId,
       });
     }
 

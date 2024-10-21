@@ -38,7 +38,6 @@ import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflo
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 import { GetListQueryParams } from './params/get-list-query-params';
 import { ParseSlugIdPipe } from './pipes/parse-slug-Id.pipe';
-import { ParseRequestWorkflowPipe } from './pipes/parse-request-workflow.pipe';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -72,11 +71,11 @@ export class WorkflowController {
   async update(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId,
-    @Body(new ParseRequestWorkflowPipe()) upsertWorkflowDto: UpdateWorkflowDto
+    @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
-        workflowDto: upsertWorkflowDto,
+        workflowDto: updateWorkflowDto,
         user,
         identifierOrInternalId,
       })

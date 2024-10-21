@@ -2,7 +2,7 @@ import { IsArray, IsBoolean, IsDefined, IsObject, IsOptional, IsString } from 'c
 
 import { JSONSchema } from 'json-schema-to-ts';
 import { WorkflowResponseDto } from './workflow-response-dto';
-import { Base62Id, StepTypeEnum, WorkflowPreferences } from '../../types';
+import { Slug, StepTypeEnum, WorkflowPreferences } from '../../types';
 
 export type IdentifierOrInternalId = string;
 
@@ -11,7 +11,8 @@ export class ControlsSchema {
 }
 
 export type StepResponseDto = StepDto & {
-  id: Base62Id;
+  _id: string;
+  slug: Slug;
   stepId: string;
 };
 
@@ -28,7 +29,7 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | 'id' | 'status' | 'type' | 'origin'
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'slug' | 'status' | 'type' | 'origin'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };

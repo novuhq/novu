@@ -95,8 +95,8 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
       const { data } = (
         await getStepSchema({
           session,
-          workflowId: createdWorkflow.id,
-          stepId: createdWorkflow.steps[0].id,
+          workflowId: createdWorkflow._id,
+          stepId: createdWorkflow.steps[0]._id,
         })
       ).body;
 
@@ -136,8 +136,8 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
       const { data } = (
         await getStepSchema({
           session,
-          workflowId: createdWorkflow.id,
-          stepId: createdWorkflow.steps[0].id,
+          workflowId: createdWorkflow._id,
+          stepId: createdWorkflow.steps[0]._id,
         })
       ).body;
 
@@ -149,8 +149,8 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
         await getStepSchema({
           session,
           stepType: StepTypeEnum.IN_APP,
-          workflowId: createdWorkflow.id,
-          stepId: createdWorkflow.steps[1].id,
+          workflowId: createdWorkflow._id,
+          stepId: createdWorkflow.steps[1]._id,
         })
       ).body;
 
@@ -160,7 +160,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
       const variableStepKey = variableStepKeys[0];
       const createdWorkflowPreviousSteps = createdWorkflow.steps.slice(
         0,
-        createdWorkflow.steps.findIndex((stepItem) => stepItem.id === createdWorkflow.steps[1].id)
+        createdWorkflow.steps.findIndex((stepItem) => stepItem._id === createdWorkflow.steps[1]._id)
       );
       const variableStepKeyFoundInCreatedWorkflow = createdWorkflowPreviousSteps.find(
         (step) => step.stepId === variableStepKey
@@ -188,28 +188,28 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
     });
 
     it('should get error for invalid step id', async function () {
-      const invalidStepUuid = `${createdWorkflow.id}`;
+      const invalidStepUuid = `${createdWorkflow._id}`;
 
       const response = await getStepSchema({
         session,
-        workflowId: createdWorkflow.id,
+        workflowId: createdWorkflow._id,
         stepId: invalidStepUuid,
       });
 
       expect(response.status).to.equal(400);
       expect(response.body.message).to.equal('No step found');
       expect(response.body.stepId).to.equal(invalidStepUuid);
-      expect(response.body.workflowId).to.equal(createdWorkflow.id);
+      expect(response.body.workflowId).to.equal(createdWorkflow._id);
       expect(response.body.statusCode).to.equal(400);
     });
 
     it('should get error for invalid workflow id', async function () {
-      const invalidWorkflowId = createdWorkflow.steps[0].id;
+      const invalidWorkflowId = createdWorkflow.steps[0]._id;
 
       const response = await getStepSchema({
         session,
         workflowId: invalidWorkflowId,
-        stepId: createdWorkflow.steps[0].id,
+        stepId: createdWorkflow.steps[0]._id,
       });
 
       expect(response.status).to.equal(400);

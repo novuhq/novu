@@ -4,6 +4,10 @@ import { isStepCreateBody, isStepUpdateBody, UpsertStepBody, UpsertWorkflowBody,
 
 import { parseSlugId } from './parse-slug-Id.pipe';
 
+/**
+ * @deprecated This pipe is currently not needed and will be refactored
+ * once support for step requests in the API "v2/workflows/:id/steps/:id" is added.
+ */
 @Injectable()
 export class ParseRequestWorkflowPipe implements PipeTransform<UpsertWorkflowBody> {
   transform(value: UpsertWorkflowBody, metadata: ArgumentMetadata) {
@@ -22,11 +26,11 @@ function decodeSteps(value: UpsertWorkflowBody) {
     }
 
     if (isStepUpdateBody(step)) {
-      const { id, ...rest } = step as UpdateStepBody;
+      const { _id, ...rest } = step as UpdateStepBody;
 
       return {
         ...rest,
-        _id: parseSlugId(id),
+        _id: parseSlugId(_id),
       };
     }
 

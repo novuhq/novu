@@ -28,3 +28,5 @@ export type DeepPartial<T> = T extends object
   : T;
 
 export type Base62Id = string;
+
+export type Slug = `${string}${Base62Id}`;

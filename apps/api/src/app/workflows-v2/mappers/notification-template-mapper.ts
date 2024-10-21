@@ -12,7 +12,7 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { GetPreferencesResponseDto } from '@novu/application-generic';
+import { GetPreferencesResponseDto, slugifyName } from '@novu/application-generic';
 import { BadRequestException } from '@nestjs/common';
 import { encodeBase62 } from '../../shared/helpers';
 
@@ -25,15 +25,17 @@ export function toResponseWorkflowDto(
     user: preferences?.source[PreferencesTypeEnum.USER_WORKFLOW] || null,
     default: preferences?.source[PreferencesTypeEnum.WORKFLOW_RESOURCE] || DEFAULT_WORKFLOW_PREFERENCES,
   };
+  const workflowName = template.name || 'Missing Name';
 
   return {
-    id: encodeBase62(template._id),
+    _id: template._id,
+    slug: `${slugifyName(workflowName)}_${encodeBase62(template._id)}`,
+    workflowId: template.triggers[0].identifier,
+    name: workflowName,
     tags: template.tags,
     active: template.active,
     preferences: preferencesDto,
     steps: getSteps(template, stepIdToControlValuesMap),
-    name: template.name,
-    workflowId: template.triggers[0].identifier,
     description: template.description,
     origin: template.origin || WorkflowOriginEnum.EXTERNAL,
     type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
@@ -58,11 +60,14 @@ function getSteps(template: NotificationTemplateEntity, controlValuesMap: { [p: 
 }
 
 function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowListResponseDto {
+  const workflowName = template.name || 'Missing Name';
+
   return {
+    _id: template._id,
+    slug: `${slugifyName(workflowName)}_${encodeBase62(template._id)}`,
+    name: workflowName,
     origin: template.origin || WorkflowOriginEnum.EXTERNAL,
     type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
-    id: encodeBase62(template._id),
-    name: template.name,
     tags: template.tags,
     updatedAt: template.updatedAt || 'Missing Updated At',
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
@@ -76,14 +81,17 @@ export function toWorkflowsMinifiedDtos(templates: NotificationTemplateEntity[])
 }
 
 function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
+  const stepName = step.name || 'Missing Name';
+
   return {
-    id: encodeBase62(step._templateId),
+    _id: step._templateId,
+    slug: `${slugifyName(stepName)}_${encodeBase62(step._templateId)}`,
+    name: stepName,
     stepId: step.stepId || 'Missing Step Id',
-    name: step.name || 'Missing Name',
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),
     controlValues: step.controlVariables || {},
-  } as any;
+  } satisfies StepResponseDto;
 }
 
 function convertControls(step: NotificationStepEntity): ControlsSchema {
