@@ -11,12 +11,12 @@ import {
 } from '@novu/shared';
 import { merge } from 'lodash/fp';
 import { difference, isArray, isObject, reduce } from 'lodash';
-import { StepNotFoundError } from '@novu/framework/src/errors/errors';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow/get-workflow.usecase';
+import { GetWorkflowUseCase } from '../get-workflow/get-workflow.usecase';
 import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator-usecase';
 import { ExtractDefaultsUseCase } from '../get-default-values-from-schema/get-default-values-from-schema-usecase';
+import { StepIsNotFoundException } from '../../exceptions/step-is-not-found-exception';
 
 @Injectable()
 export class GeneratePreviewUsecase {
@@ -26,41 +26,43 @@ export class GeneratePreviewUsecase {
   ) {}
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
-    const { augmentedPayload, issues } = this.addMissingValuesToPayload(command);
-    const { workflowId, stepId, stepType, stepControlSchema } =
-      await this.getWorkflowUserIdentifierFromWorkflowObject(command);
-    const { augmantedControlValues, issuesMissingValues } = this.addMissingValuesToControlValues(
-      command,
-      stepControlSchema
-    );
-    console.log('augmantedControlValues', augmantedControlValues);
-    console.log('augmentedPayload', augmentedPayload);
+    const payloadHydrationInfo = this.payloadHydrationLogic(command);
+    const workflowInfo = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
+    const controlValuesResult = this.addMissingValuesToControlValues(command, workflowInfo.stepControlSchema);
     const executeOutput = await this.executePreviewUsecase(
-      workflowId,
-      stepId,
-      augmentedPayload,
-      augmantedControlValues,
+      workflowInfo.workflowId,
+      workflowInfo.stepId,
+      payloadHydrationInfo.augmentedPayload,
+      controlValuesResult.augmentedControlValues,
       command
     );
 
-    return buildResponse(issuesMissingValues, issues, executeOutput, stepType);
+    return buildResponse(
+      controlValuesResult.issuesMissingValues,
+      payloadHydrationInfo.issues,
+      executeOutput,
+      workflowInfo.stepType
+    );
   }
 
   private addMissingValuesToControlValues(command: GeneratePreviewCommand, stepControlSchema: ControlsSchema) {
     const defaultValues = new ExtractDefaultsUseCase().execute({
       jsonSchemaDto: stepControlSchema.schema as JSONSchemaDto,
     });
+
+    return {
+      augmentedControlValues: merge(defaultValues, command.generatePreviewRequestDto.controlValues),
+      issuesMissingValues: this.buildMissingControlValuesIssuesList(defaultValues, command),
+    };
+  }
+
+  private buildMissingControlValuesIssuesList(defaultValues: Record<string, any>, command: GeneratePreviewCommand) {
     const missingRequiredControlValues = this.findMissingKeys(
       defaultValues,
       command.generatePreviewRequestDto.controlValues || {}
     );
-    const issuesMissingValues = this.buildControlPreviewIssues(
-      missingRequiredControlValues,
-      ControlPreviewIssueType.MISSING_VALUE
-    );
-    const augmantedControlValues = merge(defaultValues, command.generatePreviewRequestDto.controlValues);
 
-    return { augmantedControlValues, issuesMissingValues };
+    return this.buildControlPreviewIssues(missingRequiredControlValues, ControlPreviewIssueType.MISSING_VALUE);
   }
 
   private buildControlPreviewIssues(
@@ -83,25 +85,17 @@ export class GeneratePreviewUsecase {
     return record;
   }
   private findMissingKeys(requiredRecord: Record<string, unknown>, actualRecord: Record<string, unknown>) {
-    // Collect keys from both records
     const requiredKeys = this.collectKeys(requiredRecord);
     const actualKeys = this.collectKeys(actualRecord);
 
-    // Find keys in record1 that are not in record2
-    const requiredKeysMissing = difference(requiredKeys, actualKeys);
-
-    // Find keys in record2 that are not in record1
-    const missingInRecord1 = difference(actualKeys, requiredKeys);
-
-    return requiredKeysMissing;
+    return difference(requiredKeys, actualKeys);
   }
   private collectKeys(obj, prefix = '') {
     return reduce(
       obj,
       (result, value, key) => {
-        const newKey = prefix ? `${prefix}.${key}` : key; // Create a new key with a prefix for nesting
+        const newKey = prefix ? `${prefix}.${key}` : key;
         if (isObject(value) && !isArray(value)) {
-          // If the value is an object (and not an array), recurse into it
           result.push(...this.collectKeys(value, newKey));
         } else {
           // Otherwise, just add the key
@@ -120,8 +114,6 @@ export class GeneratePreviewUsecase {
     updatedControlValues: Record<string, unknown>,
     command: GeneratePreviewCommand
   ) {
-    console.log('hydratedPayload', hydratedPayload);
-
     return await this.legacyPreviewStepUseCase.execute(
       PreviewStepCommand.create({
         payload: hydratedPayload,
@@ -143,13 +135,13 @@ export class GeneratePreviewUsecase {
     const { workflowId, steps } = workflowResponseDto;
     const step = steps.find((stepDto) => stepDto.stepUuid === command.stepUuid);
     if (!step) {
-      throw new StepNotFoundError(command.stepUuid);
+      throw new StepIsNotFoundException(command.stepUuid);
     }
 
     return { workflowId, stepId: step.slug, stepType: step.type, stepControlSchema: step.controls };
   }
 
-  private addMissingValuesToPayload(command: GeneratePreviewCommand) {
+  private payloadHydrationLogic(command: GeneratePreviewCommand) {
     const dto = command.generatePreviewRequestDto;
 
     let aggregatedDefaultValues = {};
@@ -191,25 +183,4 @@ function buildResponse(
       type: stepType as unknown as ChannelTypeEnum,
     },
   };
-}
-function mergeJsonObjects(
-  primary: Record<string, unknown>,
-  secondary: Record<string, unknown>
-): Record<string, unknown> {
-  const merged: Record<string, unknown> = { ...primary };
-
-  for (const key in secondary) {
-    if (!(key in merged)) {
-      merged[key] = secondary[key];
-    } else if (
-      typeof merged[key] === 'object' &&
-      merged[key] !== null &&
-      typeof secondary[key] === 'object' &&
-      secondary[key] !== null
-    ) {
-      merged[key] = mergeJsonObjects(merged[key] as Record<string, unknown>, secondary[key] as Record<string, unknown>);
-    }
-  }
-
-  return merged;
 }
