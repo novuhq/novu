@@ -162,7 +162,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
         createdWorkflow.steps.findIndex((stepItem) => stepItem.stepUuid === createdWorkflow.steps[1].stepUuid)
       );
       const variableStepKeyFoundInCreatedWorkflow = createdWorkflowPreviousSteps.find(
-        (step) => step.stepUuid === variableStepKey
+        (step) => step.stepId === variableStepKey
       );
       const isValidVariableStepKey = !!variableStepKeyFoundInCreatedWorkflow;
       expect(isValidVariableStepKey).to.be.true;
