@@ -11,7 +11,8 @@ type CopyButtonProps = {
 export const CopyButton: React.FC<CopyButtonProps> = ({ content, className }) => {
   const [isCopied, setIsCopied] = useState(false);
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     try {
       await navigator.clipboard.writeText(content);
       setIsCopied(true);
