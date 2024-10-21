@@ -9,7 +9,6 @@ import {
   useReactFlow,
   ViewportHelperFunctionOptions,
 } from '@xyflow/react';
-import type { StepDto } from '@novu/shared';
 import '@xyflow/react/dist/style.css';
 import {
   AddNode,
@@ -27,6 +26,7 @@ import {
 import { AddNodeEdgeType, AddNodeEdge } from './edges';
 import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { StepTypeEnum } from '@/utils/enums';
+import { Step } from '@/utils/types';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -51,7 +51,7 @@ const panOnDrag = [1, 2];
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
 const mapStepToNode = (
-  step: StepDto,
+  step: Step,
   previousPosition: { x: number; y: number },
   addStepIndex: number
 ): Node<NodeData, keyof typeof nodeTypes> => {
@@ -72,7 +72,7 @@ const mapStepToNode = (
   };
 };
 
-const WorkflowCanvasChild = ({ steps }: { steps: StepDto[] }) => {
+const WorkflowCanvasChild = ({ steps }: { steps: Step[] }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
 
@@ -168,7 +168,7 @@ const WorkflowCanvasChild = ({ steps }: { steps: StepDto[] }) => {
   );
 };
 
-export const WorkflowCanvas = ({ steps }: { steps: StepDto[] }) => {
+export const WorkflowCanvas = ({ steps }: { steps: Step[] }) => {
   return (
     <ReactFlowProvider>
       <WorkflowCanvasChild steps={steps} />

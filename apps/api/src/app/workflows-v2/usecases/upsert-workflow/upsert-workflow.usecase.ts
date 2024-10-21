@@ -5,7 +5,6 @@ import {
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
-  NotificationTemplateRepository,
   PreferencesEntity,
 } from '@novu/dal';
 import {

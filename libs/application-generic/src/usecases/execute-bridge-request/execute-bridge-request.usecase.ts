@@ -25,7 +25,7 @@ import {
   HttpHeaderKeysEnum,
   HttpQueryKeysEnum,
   GetActionEnum,
-  ErrorCodeEnum,
+  isFrameworkError,
 } from '@novu/framework';
 import { EnvironmentRepository } from '@novu/dal';
 import { HttpRequestHeaderKeysEnum, WorkflowOriginEnum } from '@novu/shared';
@@ -131,11 +131,13 @@ export class ExecuteBridgeRequest {
         afterResponse:
           command.afterResponse !== undefined ? [command.afterResponse] : [],
       },
-      /*
-       * Reject self-signed and invalid certificates in Production environments but allow them in Development
-       * as it's common for developers to use self-signed certificates in local environments.
-       */
-      rejectUnauthorized: environment.name.toLowerCase() === 'production',
+      https: {
+        /*
+         * Reject self-signed and invalid certificates in Production environments but allow them in Development
+         * as it's common for developers to use self-signed certificates in local environments.
+         */
+        rejectUnauthorized: environment.name.toLowerCase() === 'production',
+      },
     };
 
     const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(
@@ -258,11 +260,8 @@ export class ExecuteBridgeRequest {
         body = {};
       }
 
-      if (
-        error instanceof HTTPError &&
-        Object.values(ErrorCodeEnum).includes(body.code as ErrorCodeEnum)
-      ) {
-        // Handle known Bridge errors. Propagate the error code and message.
+      if (error instanceof HTTPError && isFrameworkError(body)) {
+        // Handle known Framework errors. Propagate the error code and message.
         throw new HttpException(body, error.response.statusCode);
       }
 
