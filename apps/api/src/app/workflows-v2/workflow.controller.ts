@@ -20,7 +20,7 @@ import {
   DirectionEnum,
   IdentifierOrInternalId,
   ListWorkflowResponse,
-  UpsertWorkflowDto,
+  UpdateWorkflowDto,
   UserSessionData,
   WorkflowResponseDto,
 } from '@novu/shared';
@@ -72,7 +72,7 @@ export class WorkflowController {
   async update(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId,
-    @Body(new ParseRequestWorkflowPipe()) upsertWorkflowDto: UpsertWorkflowDto
+    @Body(new ParseRequestWorkflowPipe()) upsertWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({

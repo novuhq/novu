@@ -13,7 +13,7 @@ import {
   UpdateStepBody,
   UpsertStepBody,
   UpsertWorkflowBody,
-  UpsertWorkflowDto,
+  UpdateWorkflowDto,
   WorkflowCommonsFields,
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
@@ -656,7 +656,7 @@ function createStep(): StepCreateDto {
   };
 }
 
-function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpsertWorkflowDto {
+function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
   const updateRequest = removeFields(
     workflowCreated,
@@ -665,7 +665,7 @@ function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpsertWorkflo
     'origin',
     'status',
     'type'
-  ) as UpsertWorkflowDto;
+  ) as UpdateWorkflowDto;
 
   return {
     ...updateRequest,
