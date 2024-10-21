@@ -3,7 +3,7 @@ import {
   DigestOutput,
   DigestRegularOutput,
   DigestTimedOutput,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   if (isTimedDigestOutput(outputs)) {

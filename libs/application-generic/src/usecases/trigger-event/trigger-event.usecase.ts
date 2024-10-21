@@ -20,7 +20,7 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 
-import { GetActionEnum, PostActionEnum } from '@novu/framework';
+import { GetActionEnum, PostActionEnum } from '@novu/framework/internal';
 import { TriggerEventCommand } from './trigger-event.command';
 import {
   ProcessSubscriber,

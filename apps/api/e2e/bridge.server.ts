@@ -1,8 +1,7 @@
 import http from 'http';
 import express from 'express';
-// FIXME: subpath import not working with `workspace:` protocol. Currently we need to drill into the module instead of using the ES export.
-import { serve } from '../../../packages/framework/dist/servers/express';
-import { Client, Workflow } from '@novu/framework';
+import { serve, Client } from '@novu/framework/express';
+import { type Workflow } from '@novu/framework/internal';
 
 export type ServerStartOptions = {
   workflows: Array<Workflow>;

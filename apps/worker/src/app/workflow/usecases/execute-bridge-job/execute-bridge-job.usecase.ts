@@ -17,7 +17,7 @@ import {
   WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { Event, State, PostActionEnum, ExecuteOutput } from '@novu/framework';
+import { Event, State, PostActionEnum, ExecuteOutput } from '@novu/framework/internal';
 
 import {
   CreateExecutionDetails,

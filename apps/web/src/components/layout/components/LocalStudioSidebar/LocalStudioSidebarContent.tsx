@@ -5,7 +5,7 @@ import { FC } from 'react';
 import { token } from '@novu/novui/tokens';
 import { css, cx } from '@novu/novui/css';
 import { WithLoadingSkeleton } from '@novu/novui';
-import type { DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import { NavMenu } from '../../../nav/NavMenu';
 import { NavMenuSection } from '../../../nav/NavMenuSection';
 import { LocalStudioSidebarOrganizationDisplay } from './LocalStudioSidebarOrganizationDisplay';

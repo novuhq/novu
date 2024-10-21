@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import type { DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   buildBridgeHTTPClient,
   type StepPreviewParams,

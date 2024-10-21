@@ -33,7 +33,7 @@ import {
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 import { IPushOptions } from '@novu/stateless';
-import { PushOutput } from '@novu/framework';
+import { PushOutput } from '@novu/framework/internal';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';

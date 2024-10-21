@@ -1,6 +1,6 @@
 import { IMessageTemplate, INotificationTemplateStep, StepType } from '@novu/shared';
 import { IStepControl } from '@novu/application-generic';
-import { JsonSchema } from '@novu/framework';
+import { JsonSchema } from '@novu/framework/internal';
 
 export type Steps = INotificationTemplateStep & IMessageTemplate;
 

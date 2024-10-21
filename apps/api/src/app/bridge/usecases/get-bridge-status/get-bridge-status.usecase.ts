@@ -1,5 +1,5 @@
 import { Logger, Injectable } from '@nestjs/common';
-import { HealthCheck, GetActionEnum } from '@novu/framework';
+import { HealthCheck, GetActionEnum } from '@novu/framework/internal';
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from '@novu/application-generic';
 import { WorkflowOriginEnum } from '@novu/shared';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';

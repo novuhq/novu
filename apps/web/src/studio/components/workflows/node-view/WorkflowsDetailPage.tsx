@@ -6,7 +6,7 @@ import { HStack, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import type { DiscoverWorkflowOutput } from '@novu/framework';
+import type { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 import { useTelemetry } from '../../../../hooks/useNovuAPI';
 import { useWorkflow } from '../../../hooks/useBridgeAPI';

@@ -1,0 +1,5 @@
+{
+  "main": "../dist/cjs/servers/h3.cjs",
+  "module": "../dist/esm/servers/h3.js",
+  "types": "../dist/esm/servers/h3.d.ts"
+}

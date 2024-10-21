@@ -2,7 +2,7 @@ import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } f
 
 import { UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
-import { StepType } from '@novu/framework';
+import { type StepType } from '@novu/framework/internal';
 
 import { createGetStepSchemaCommand } from './usecases/get-step-schema/get-step-schema.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';

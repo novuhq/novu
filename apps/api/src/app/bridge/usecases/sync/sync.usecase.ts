@@ -20,7 +20,7 @@ import {
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
-import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
+import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 
 import { SyncCommand } from './sync.command';
 import { DeleteWorkflow, DeleteWorkflowCommand } from '../delete-workflow';

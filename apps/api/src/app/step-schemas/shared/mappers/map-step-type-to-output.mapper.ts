@@ -1,4 +1,4 @@
-import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework';
+import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework/internal';
 
 export const mapStepTypeToOutput = {
   [ChannelStepEnum.SMS]: channelStepSchemas[ChannelStepEnum.SMS].output,
