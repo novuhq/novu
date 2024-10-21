@@ -4,13 +4,14 @@ import {
   ControlPreviewIssue,
   ControlPreviewIssueType,
   ControlsSchema,
+  GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   JSONSchemaDto,
   StepTypeEnum,
 } from '@novu/shared';
-import { BadRequestException } from '@nestjs/common';
 import { merge } from 'lodash/fp';
 import { difference, isArray, isObject, reduce } from 'lodash';
+import { StepNotFoundError } from '@novu/framework/src/errors/errors';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { GetWorkflowUseCase } from '../../../workflows-v2/usecases/get-workflow/get-workflow.usecase';
@@ -32,6 +33,8 @@ export class GeneratePreviewUsecase {
       command,
       stepControlSchema
     );
+    console.log('augmantedControlValues', augmantedControlValues);
+    console.log('augmentedPayload', augmentedPayload);
     const executeOutput = await this.executePreviewUsecase(
       workflowId,
       stepId,
@@ -140,30 +143,37 @@ export class GeneratePreviewUsecase {
     const { workflowId, steps } = workflowResponseDto;
     const step = steps.find((stepDto) => stepDto.stepUuid === command.stepUuid);
     if (!step) {
-      throw new BadRequestException(`Step id found for ${command.stepUuid}`);
+      throw new StepNotFoundError(command.stepUuid);
     }
 
     return { workflowId, stepId: step.slug, stepType: step.type, stepControlSchema: step.controls };
   }
+
   private addMissingValuesToPayload(command: GeneratePreviewCommand) {
     const dto = command.generatePreviewRequestDto;
-    let payloadFromDto = dto.payloadValues || {};
-    const payloadDefaults = {};
+
+    let aggregatedDefaultValues = {};
     for (const controlValueKey in dto.controlValues) {
       if (dto.controlValues.hasOwnProperty(controlValueKey)) {
-        const defaultValues = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
-        payloadFromDto = merge(defaultValues, payloadDefaults);
+        const defaultValuesForSingleControlValue = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
+        aggregatedDefaultValues = merge(defaultValuesForSingleControlValue, aggregatedDefaultValues);
       }
     }
 
-    const missingRequiredControlValues = this.findMissingKeys(payloadDefaults, payloadFromDto);
-    const issues = this.buildControlPreviewIssues(
+    return {
+      augmentedPayload: merge(aggregatedDefaultValues, dto.payloadValues),
+      issues: this.buildVariableMissingIssueRecord(aggregatedDefaultValues, dto),
+    };
+  }
+
+  private buildVariableMissingIssueRecord(aggregatedDefaultValues: {}, dto: GeneratePreviewRequestDto) {
+    const missingRequiredControlValues = this.findMissingKeys(aggregatedDefaultValues, dto.payloadValues || {});
+
+    return this.buildControlPreviewIssues(
       missingRequiredControlValues,
       ControlPreviewIssueType.MISSING_VARIABLE_IN_PAYLOAD,
       true
     );
-
-    return { augmentedPayload: merge(payloadDefaults, payloadFromDto), issues };
   }
 }
 
