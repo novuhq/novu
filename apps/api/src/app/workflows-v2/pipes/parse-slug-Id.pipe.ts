@@ -27,6 +27,10 @@ function lookoutForId(value: string): string | null {
 }
 
 export function parseSlugId(value: string): InternalId {
+  if (!value) {
+    return value;
+  }
+
   const validId = lookoutForId(value);
   if (validId) {
     return validId;

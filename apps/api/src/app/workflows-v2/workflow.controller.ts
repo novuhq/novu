@@ -18,6 +18,7 @@ import { ApiTags } from '@nestjs/swagger';
 import {
   CreateWorkflowDto,
   DirectionEnum,
+  IdentifierOrInternalId,
   ListWorkflowResponse,
   UpdateWorkflowDto,
   UserSessionData,
@@ -69,14 +70,14 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async update(
     @UserSession() user: UserSessionData,
-    @Param('workflowId', ParseSlugIdPipe) workflowId: string,
+    @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: updateWorkflowDto,
         user,
-        identifierOrInternalId: workflowId,
+        identifierOrInternalId,
       })
     );
   }
@@ -85,18 +86,19 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async getWorkflow(
     @UserSession() user: UserSessionData,
-    @Param('workflowId', ParseSlugIdPipe) workflowId: string
+    @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId
   ): Promise<WorkflowResponseDto> {
-    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ identifierOrInternalId: workflowId, user }));
+    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ identifierOrInternalId, user }));
   }
 
   @Delete(':workflowId')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string) {
-    await this.deleteWorkflowUsecase.execute(
-      DeleteWorkflowCommand.create({ identifierOrInternalId: workflowId, user })
-    );
+  async removeWorkflow(
+    @UserSession() user: UserSessionData,
+    @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId
+  ) {
+    await this.deleteWorkflowUsecase.execute(DeleteWorkflowCommand.create({ identifierOrInternalId, user }));
   }
 
   @Get('')
