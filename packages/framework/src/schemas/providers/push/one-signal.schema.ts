@@ -1,4 +1,4 @@
-import { Schema } from '../../../types';
+import { Schema } from '../../../types/schema.types';
 
 /**
  * OneSignal `POST /notifications` schema

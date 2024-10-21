@@ -216,9 +216,18 @@ export class ExecuteBridgeJob {
         action: PostActionEnum.EXECUTE,
         searchParams,
         afterResponse: async (response) => {
-          const body = response?.body as string | undefined;
+          const body = response?.body as string;
 
           if (response.statusCode >= 400) {
+            let rawMessage: Record<string, unknown>;
+            try {
+              rawMessage = JSON.parse(body);
+            } catch {
+              Logger.error(`Unexpected body received from Bridge: ${body}`, LOG_CONTEXT);
+              rawMessage = {
+                error: `Unexpected body received from Bridge: ${body}`,
+              };
+            }
             const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
               ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
               detail: DetailEnum.FAILED_BRIDGE_RETRY,
@@ -231,7 +240,7 @@ export class ExecuteBridgeJob {
                 statusCode: response.statusCode,
                 retryCount: response.retryCount,
                 message: response.statusMessage,
-                ...(body && body?.length > 0 ? { raw: JSON.parse(body) } : {}),
+                ...(body && body?.length > 0 ? { raw: rawMessage } : {}),
               }),
             };
 

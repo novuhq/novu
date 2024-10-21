@@ -11,6 +11,7 @@ import got, {
   HTTPError,
   MaxRedirectsError,
   OptionsOfTextResponseBody,
+  ParseError,
   ReadError,
   RequestError,
   TimeoutError,
@@ -24,7 +25,7 @@ import {
   HttpHeaderKeysEnum,
   HttpQueryKeysEnum,
   GetActionEnum,
-  ErrorCodeEnum,
+  isFrameworkError,
 } from '@novu/framework';
 import { EnvironmentRepository } from '@novu/dal';
 import { HttpRequestHeaderKeysEnum, WorkflowOriginEnum } from '@novu/shared';
@@ -130,6 +131,11 @@ export class ExecuteBridgeRequest {
         afterResponse:
           command.afterResponse !== undefined ? [command.afterResponse] : [],
       },
+      /*
+       * Reject self-signed and invalid certificates in Production environments but allow them in Development
+       * as it's common for developers to use self-signed certificates in local environments.
+       */
+      rejectUnauthorized: environment.name.toLowerCase() === 'production',
     };
 
     const request = [PostActionEnum.EXECUTE, PostActionEnum.PREVIEW].includes(
@@ -252,11 +258,8 @@ export class ExecuteBridgeRequest {
         body = {};
       }
 
-      if (
-        error instanceof HTTPError &&
-        Object.values(ErrorCodeEnum).includes(body.code as ErrorCodeEnum)
-      ) {
-        // Handle known Bridge errors. Propagate the error code and message.
+      if (error instanceof HTTPError && isFrameworkError(body)) {
+        // Handle known Framework errors. Propagate the error code and message.
         throw new HttpException(body, error.response.statusCode);
       }
 
@@ -315,6 +318,18 @@ export class ExecuteBridgeRequest {
         });
       }
 
+      if (error instanceof ParseError) {
+        Logger.error(
+          `Bridge URL response code is 2xx, but parsing body fails. \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message:
+            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
+          code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
+        });
+      }
+
       if (body.code === TUNNEL_ERROR_CODE) {
         // Handle known tunnel errors
         const tunnelBody = body as TunnelResponseError;
@@ -325,6 +340,17 @@ export class ExecuteBridgeRequest {
         throw new NotFoundException({
           message: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.message(url),
           code: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.code,
+        });
+      }
+
+      if (error.code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
+        Logger.error(
+          `Bridge URL is uing a self-signed certificate that is not allowed for production environments. \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.SELF_SIGNED_CERTIFICATE.message(url),
+          code: BRIDGE_EXECUTION_ERROR.SELF_SIGNED_CERTIFICATE.code,
         });
       }
 
