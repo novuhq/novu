@@ -354,9 +354,7 @@ function buildStepWithoutUUid(stepInResponse: StepResponseDto) {
 
 function findStepOnRequestBasedOnId(workflowUpdateRequest: UpsertWorkflowBody, stepUuid: string) {
   for (const stepInRequest of workflowUpdateRequest.steps) {
-    const test1 = isStepUpdateBody(stepInRequest);
-    const test2 = (stepInRequest as UpdateStepBody)._id === stepUuid;
-    if (test1 && test2) {
+    if (isStepUpdateBody(stepInRequest) && (stepInRequest as UpdateStepBody)._id === stepUuid) {
       return stepInRequest;
     }
   }
