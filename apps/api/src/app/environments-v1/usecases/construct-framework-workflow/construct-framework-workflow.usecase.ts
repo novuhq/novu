@@ -4,7 +4,6 @@ import {
   ChannelStep,
   DelayOutput,
   DigestOutput,
-  EmailOutput,
   Step,
   StepOptions,
   StepOutput,
@@ -35,6 +34,11 @@ export class ConstructFrameworkWorkflow {
 
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
     const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
+    if (command.controlValues) {
+      for (const step of dbWorkflow.steps) {
+        step.controlVariables = command.controlValues;
+      }
+    }
 
     return this.constructFrameworkWorkflow(dbWorkflow);
   }
@@ -62,7 +66,7 @@ export class ConstructFrameworkWorkflow {
     );
   }
 
-  private async constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
+  private constructStep(step: Step, staticStep: NotificationStepEntity): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
@@ -74,7 +78,6 @@ export class ConstructFrameworkWorkflow {
     if (!stepId) {
       throw new InternalServerErrorException(`Step id not found for step ${staticStep.stepId}`);
     }
-    console.log('staticStep::', staticStep);
     const stepControls = stepTemplate.controls;
 
     if (!stepControls) {
@@ -97,7 +100,7 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return (await new EmailOutputRendererUseCase().execute({ controlValues })) as EmailOutput;
+            return await new EmailOutputRendererUseCase().execute({ controlValues });
           },
           this.constructChannelStepOptions(staticStep)
         );

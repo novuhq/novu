@@ -62,22 +62,17 @@ export class GeneratePreviewUsecase {
       command.generatePreviewRequestDto.controlValues || {}
     );
 
-    return this.buildControlPreviewIssues(missingRequiredControlValues, ControlPreviewIssueType.MISSING_VALUE);
+    return this.buildControlPreviewIssues(missingRequiredControlValues);
   }
 
-  private buildControlPreviewIssues(
-    keys: string[],
-    issuesType: ControlPreviewIssueType,
-    isKeyVariable: boolean = false
-  ): Record<string, ControlPreviewIssue[]> {
+  private buildControlPreviewIssues(keys: string[]): Record<string, ControlPreviewIssue[]> {
     const record: Record<string, ControlPreviewIssue[]> = {};
 
     keys.forEach((key) => {
       record[key] = [
         {
-          issueType: issuesType, // Set issueType to MISSING_VALUE
-          message: `${issuesType} for key ${key}`, // Custom message for the issue
-          variableName: isKeyVariable ? key : undefined,
+          issueType: ControlPreviewIssueType.MISSING_VALUE,
+          message: `Value is missing on a required control`, // Custom message for the issue
         },
       ];
     });
@@ -145,30 +140,71 @@ export class GeneratePreviewUsecase {
     const dto = command.generatePreviewRequestDto;
 
     let aggregatedDefaultValues = {};
+    const aggregatedDefaultValuesForControl: Record<string, Record<string, unknown>> = {};
     for (const controlValueKey in dto.controlValues) {
       if (dto.controlValues.hasOwnProperty(controlValueKey)) {
         const defaultValuesForSingleControlValue = new CreateMockPayloadUseCase().execute({ dto, controlValueKey });
+        aggregatedDefaultValuesForControl[controlValueKey] = defaultValuesForSingleControlValue;
         aggregatedDefaultValues = merge(defaultValuesForSingleControlValue, aggregatedDefaultValues);
       }
     }
 
     return {
       augmentedPayload: merge(aggregatedDefaultValues, dto.payloadValues),
-      issues: this.buildVariableMissingIssueRecord(aggregatedDefaultValues, dto),
+      issues: this.buildVariableMissingIssueRecord(aggregatedDefaultValuesForControl, aggregatedDefaultValues, dto),
     };
   }
 
-  private buildVariableMissingIssueRecord(aggregatedDefaultValues: {}, dto: GeneratePreviewRequestDto) {
-    const missingRequiredControlValues = this.findMissingKeys(aggregatedDefaultValues, dto.payloadValues || {});
+  private buildVariableMissingIssueRecord(
+    valueKeyToDefaultsMap: Record<string, Record<string, unknown>>,
+    aggregatedDefaultValues: Record<string, unknown>,
+    dto: GeneratePreviewRequestDto
+  ) {
+    const defaultVariableToValueKeyMap = transformNestedRecord(valueKeyToDefaultsMap);
+    const missingRequiredPayloadIssues = this.findMissingKeys(aggregatedDefaultValues, dto.payloadValues || {});
 
-    return this.buildControlPreviewIssues(
-      missingRequiredControlValues,
-      ControlPreviewIssueType.MISSING_VARIABLE_IN_PAYLOAD,
-      true
-    );
+    return this.buildPayloadIssues(missingRequiredPayloadIssues, defaultVariableToValueKeyMap);
+  }
+  private buildPayloadIssues(
+    missingVariables: string[],
+    variableToControlValueKeys: Record<string, string[]>
+  ): Record<string, ControlPreviewIssue[]> {
+    const record: Record<string, ControlPreviewIssue[]> = {};
+
+    missingVariables.forEach((missingVariable) => {
+      variableToControlValueKeys[missingVariable].forEach((controlValueKey) => {
+        record[controlValueKey] = [
+          {
+            issueType: ControlPreviewIssueType.MISSING_VARIABLE_IN_PAYLOAD, // Set issueType to MISSING_VALUE
+            message: `Variable ${missingVariable} is missing in payload`, // Custom message for the issue
+            variableName: missingVariable,
+          },
+        ];
+      });
+    });
+
+    return record;
   }
 }
 
+function transformNestedRecord(
+  record: Record<string, Record<string, unknown>>,
+  result: Record<string, string[]> = {}
+): Record<string, string[]> {
+  Object.keys(record).forEach((key) => {
+    const nestedRecord = record[key];
+
+    Object.keys(nestedRecord).forEach((nestedKey) => {
+      if (!result[nestedKey]) {
+        // eslint-disable-next-line no-param-reassign
+        result[nestedKey] = [];
+      }
+      result[nestedKey].push(key);
+    });
+  });
+
+  return result;
+}
 function buildResponse(
   missingValuesIssue: Record<string, ControlPreviewIssue[]>,
   missingPayloadVariablesIssue: Record<string, ControlPreviewIssue[]>,

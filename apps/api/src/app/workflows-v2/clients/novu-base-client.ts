@@ -23,7 +23,7 @@ export class NovuInternalServerError extends HttpError {}
 export class NovuNotImplementedError extends HttpError {}
 export class NovuBadGatewayError extends HttpError {}
 export class NovuServiceUnavailableError extends HttpError {}
-export class Novu extends HttpError {}
+export class NovuGatewayTimeoutError extends HttpError {}
 export class NovuRedirectError extends HttpError {
   redirectUrl: string;
 
@@ -43,7 +43,7 @@ const errorMap: Record<number, new (responseText: string, status: number, respon
   501: NovuNotImplementedError,
   502: NovuBadGatewayError,
   503: NovuServiceUnavailableError,
-  504: Novu,
+  504: NovuGatewayTimeoutError,
 };
 
 // Type for the fetch function
