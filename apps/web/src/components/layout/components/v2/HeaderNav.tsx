@@ -20,7 +20,6 @@ export function HeaderNav() {
   const { currentUser } = useAuth();
 
   const isSelfHosted = IS_SELF_HOSTED;
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   useBootIntercom();
 
@@ -43,7 +42,7 @@ export function HeaderNav() {
           <WorkflowHeaderBackButton />
         </HStack>
         <HStack flexWrap={'nowrap'} justifyContent="flex-end" gap={'100'}>
-          {isV2Enabled && <BridgeMenuItems />}
+          <BridgeMenuItems />
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeLabel}>
               <div>
