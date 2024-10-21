@@ -1,4 +1,4 @@
-import { providerSchemas } from '../schemas';
+import { providerSchemas } from '../schemas/providers';
 import type { FromSchemaUnvalidated } from './schema.types';
 import { Awaitable, Prettify } from './util.types';
 

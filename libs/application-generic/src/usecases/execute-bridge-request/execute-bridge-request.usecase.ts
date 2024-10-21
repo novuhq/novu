@@ -25,7 +25,7 @@ import {
   HttpHeaderKeysEnum,
   HttpQueryKeysEnum,
   GetActionEnum,
-  ErrorCodeEnum,
+  isFrameworkError,
 } from '@novu/framework';
 import { EnvironmentRepository } from '@novu/dal';
 import { HttpRequestHeaderKeysEnum, WorkflowOriginEnum } from '@novu/shared';
@@ -258,11 +258,8 @@ export class ExecuteBridgeRequest {
         body = {};
       }
 
-      if (
-        error instanceof HTTPError &&
-        Object.values(ErrorCodeEnum).includes(body.code as ErrorCodeEnum)
-      ) {
-        // Handle known Bridge errors. Propagate the error code and message.
+      if (error instanceof HTTPError && isFrameworkError(body)) {
+        // Handle known Framework errors. Propagate the error code and message.
         throw new HttpException(body, error.response.statusCode);
       }
 

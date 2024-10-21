@@ -64,6 +64,7 @@ export function ErrorPrettyRender({ error: unparsedError }) {
           {isExpanded && (
             <pre
               className={css({
+                whiteSpace: 'pre-wrap',
                 overflow: 'auto',
                 border: 'solid',
                 borderColor: 'input.border.error/40',
@@ -74,7 +75,8 @@ export function ErrorPrettyRender({ error: unparsedError }) {
                 fontFamily: 'mono',
               })}
             >
-              {JSON.stringify(error.data, null, 2)}
+              {error.data?.stack}
+              {!error.data?.stack && JSON.stringify(error.data, null, 2)}
             </pre>
           )}
         </Stack>

@@ -1,4 +1,4 @@
-import { Schema } from '../../types';
+import { Schema } from '../../types/schema.types';
 
 /**
  * A permissive schema for untyped providers to use.

@@ -1,4 +1,4 @@
-import { Schema } from '../../../types';
+import { Schema } from '../../../types/schema.types';
 
 /**
  * Twilio `POST /2010-04-01/Accounts/{AccountSid}/Messages.json` schema

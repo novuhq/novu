@@ -1,4 +1,5 @@
 export * from './base.errors';
+export * from './bridge.errors';
 export * from './execution.errors';
 export * from './handler.errors';
 export * from './platform.errors';
@@ -7,3 +8,4 @@ export * from './resource.errors';
 export * from './signature.errors';
 export * from './step.errors';
 export * from './workflow.errors';
+export { isFrameworkError } from './guard.errors';

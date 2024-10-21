@@ -24,12 +24,13 @@
     "lint:fix": "pnpm lint -- --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
-    "build": "tsup",
+    "build": "tsup && pnpm check:circulars",
     "build:watch": "tsup --watch",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
-    "devtool": "tsx ./scripts/devtool.ts"
+    "devtool": "tsx ./scripts/devtool.ts",
+    "check:circulars": "madge --circular --extensions ts --exclude ../../shared ./src"
   },
   "keywords": [
     "novu",
@@ -151,6 +152,7 @@
     "aws-lambda": "^1.0.7",
     "express": "^4.19.2",
     "h3": "^1.11.1",
+    "madge": "^8.0.0",
     "next": "^13.5.4",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",

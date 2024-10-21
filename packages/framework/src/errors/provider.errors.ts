@@ -1,4 +1,4 @@
-import { ErrorCodeEnum, ResourceEnum } from '../constants';
+import { ErrorCodeEnum, PostActionEnum, ResourceEnum } from '../constants';
 import { ResourceExecutionFailed, ResourceNotFoundError } from './resource.errors';
 
 export class ProviderNotFoundError extends ResourceNotFoundError {
@@ -12,7 +12,7 @@ export class ProviderNotFoundError extends ResourceNotFoundError {
 export class ProviderExecutionFailedError extends ResourceExecutionFailed {
   code = ErrorCodeEnum.PROVIDER_EXECUTION_FAILED_ERROR;
 
-  constructor(id: string) {
-    super(ResourceEnum.WORKFLOW, id);
+  constructor(id: string, action: PostActionEnum, cause: unknown) {
+    super(ResourceEnum.PROVIDER, id, action, cause);
   }
 }

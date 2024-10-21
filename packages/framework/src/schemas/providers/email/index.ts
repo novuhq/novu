@@ -1,5 +1,5 @@
 import { EmailProviderIdEnum } from '@novu/shared';
-import { Schema } from '../../../types';
+import { Schema } from '../../../types/schema.types';
 import { genericProviderSchemas } from '../generic.schema';
 import { mailgunProviderSchemas } from './mailgun.schema';
 import { mailjetProviderSchemas } from './mailjet.schema';
