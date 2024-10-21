@@ -16,7 +16,6 @@ import {
 import { InAppOutput } from '@novu/framework';
 import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
-import { mapStepTypeToOutput } from '../step-schemas/shared';
 
 describe('Control Schema', () => {
   let session: UserSession;
@@ -119,8 +118,6 @@ describe('Control Schema', () => {
   async function createWorkflowAndReturnId(type: StepTypeEnum) {
     const createWorkflowDto = buildCreateWorkflowDto(`${type}:${randomUUID()}`);
     createWorkflowDto.steps[0].type = type;
-    createWorkflowDto.steps[0].controls = { schema: mapStepTypeToOutput[type] };
-
     const workflowResult = await workflowsClient.createWorkflow(createWorkflowDto);
     if (!workflowResult.isSuccessResult()) {
       throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);

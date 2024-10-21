@@ -273,7 +273,7 @@ export class UpsertWorkflowUseCase {
       template: {
         type: step.type,
         name: step.name,
-        controls: foundPersistedStep?.template?.controls || mapStepTypeToOutput[step.type],
+        controls: foundPersistedStep?.template?.controls || { schema: mapStepTypeToOutput[step.type] },
         content: '',
       },
       stepId: slugifyName(step.name),

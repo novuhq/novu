@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { randomBytes } from 'crypto';
-import { channelStepSchemas, JsonSchema } from '@novu/framework';
+import { channelStepSchemas } from '@novu/framework';
 import { slugifyName } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
@@ -9,6 +9,7 @@ import {
   ListWorkflowResponse,
   StepCreateDto,
   StepDto,
+  StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
   UpdateWorkflowDto,
@@ -26,16 +27,6 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 
 const TEST_TAGS = ['test'];
 let session: UserSession;
-
-const SCHEMA_WITH_TEXT: JsonSchema = {
-  type: 'object',
-  properties: {
-    text: {
-      type: 'string',
-    },
-  },
-  required: ['text'],
-};
 
 describe('Workflow Controller E2E API Testing', () => {
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
@@ -151,7 +142,7 @@ describe('Workflow Controller E2E API Testing', () => {
     it('should not return workflows if offset is bigger than the amount of available workflows', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
-      const listWorkflowResponse = await getAllAndValidate({
+      await getAllAndValidate({
         searchQuery: uuid,
         offset: 11,
         limit: 15,
@@ -163,7 +154,7 @@ describe('Workflow Controller E2E API Testing', () => {
       const uuid = generateUUID();
 
       await create10Workflows(uuid);
-      const listWorkflowResponse = await getAllAndValidate({
+      await getAllAndValidate({
         searchQuery: uuid,
         offset: 0,
         limit: 15,
@@ -175,7 +166,7 @@ describe('Workflow Controller E2E API Testing', () => {
     it('should return results without query', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
-      const listWorkflowResponse = await getAllAndValidate({
+      await getAllAndValidate({
         searchQuery: uuid,
         offset: 0,
         limit: 15,
@@ -262,9 +253,6 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
 function buildEmailStep(): StepDto {
   return {
     controlValues: {},
-    controls: {
-      schema: channelStepSchemas.email.output,
-    },
     name: 'Email Test Step',
     type: StepTypeEnum.EMAIL,
   };
@@ -273,9 +261,6 @@ function buildEmailStep(): StepDto {
 function buildInAppStep(): StepDto {
   return {
     controlValues: {},
-    controls: {
-      schema: channelStepSchemas.in_app.output,
-    },
     name: 'In-App Test Step',
     type: StepTypeEnum.IN_APP,
   };
@@ -311,7 +296,7 @@ function isStepUpdateDto(obj: StepDto): obj is StepUpdateDto {
   return typeof obj === 'object' && obj !== null && 'stepUuid' in obj;
 }
 
-function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
+function buildStepWithoutUUid(stepInResponse: StepResponseDto) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
@@ -568,9 +553,6 @@ async function safeGet<T>(url: string): Promise<T> {
 async function safePut<T>(url: string, data: object): Promise<T> {
   return (await safeRest(url, () => session.testAgent.put(url).send(data) as unknown as Promise<ApiResponse>)) as T;
 }
-async function safePost<T>(url: string, data: object): Promise<T> {
-  return (await safeRest(url, () => session.testAgent.post(url).send(data) as unknown as Promise<ApiResponse>)) as T;
-}
 async function safeDelete<T>(url: string): Promise<void> {
   await safeRest(url, () => session.testAgent.delete(url) as unknown as Promise<ApiResponse>, 204);
 }
@@ -625,9 +607,6 @@ function createStep(): StepCreateDto {
   return {
     name: 'someStep',
     type: StepTypeEnum.SMS,
-    controls: {
-      schema: SCHEMA_WITH_TEXT,
-    },
     controlValues: {
       text: '{SOME_TEXT_VARIABLE}',
     },
