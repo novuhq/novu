@@ -272,7 +272,7 @@ export class Client {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
       const controls = await this.createStepControls(step, event);
-      const isPreview = event.action === 'preview';
+      const isPreview = event.action === PostActionEnum.PREVIEW;
 
       if (!isPreview && (await this.shouldSkip(options?.skip as typeof step.options.skip, controls))) {
         if (stepId === event.stepId) {
@@ -356,14 +356,10 @@ export class Client {
     const actionMessages = {
       [PostActionEnum.EXECUTE]: 'Executing',
       [PostActionEnum.PREVIEW]: 'Previewing',
-    };
+    } as const;
 
-    const actionMessage = (() => {
-      if (event.action === 'execute') return 'Executed';
-      if (event.action === 'preview') return 'Previewed';
+    const actionMessage = actionMessages[event.action];
 
-      return 'Invalid action';
-    })();
     const actionMessageFormatted = `${actionMessage} workflowId:`;
     // eslint-disable-next-line no-console
     console.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
@@ -401,7 +397,7 @@ export class Client {
     let executionError: Error | undefined;
     try {
       if (
-        event.action === 'execute' && // TODO: move this validation to the handler layer
+        event.action === PostActionEnum.EXECUTE && // TODO: move this validation to the handler layer
         !event.payload &&
         !event.data
       ) {
@@ -445,9 +441,12 @@ export class Client {
     const elapsedTimeInMilliseconds = elapsedSeconds * 1_000 + elapsedNanoseconds / 1_000_000;
 
     const emoji = executionError ? EMOJI.ERROR : EMOJI.SUCCESS;
-    const resultMessage =
-      // eslint-disable-next-line no-nested-ternary
-      event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
+    const resultMessages = {
+      [PostActionEnum.EXECUTE]: 'Executed',
+      [PostActionEnum.PREVIEW]: 'Previewed',
+    } as const;
+    const resultMessage = resultMessages[event.action];
+
     // eslint-disable-next-line no-console
     console.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
 
@@ -474,7 +473,7 @@ export class Client {
     workflow: DiscoverWorkflowOutput
   ): Promise<Record<string, unknown>> {
     let payload = event.payload || event.data;
-    if (event.action === 'preview') {
+    if (event.action === PostActionEnum.PREVIEW) {
       const mockResult = this.mock(workflow.payload.schema);
 
       payload = Object.assign(mockResult, payload);
@@ -493,9 +492,11 @@ export class Client {
 
   private prettyPrintExecute(event: Event, duration: number, error?: Error): void {
     const successPrefix = error ? EMOJI.ERROR : EMOJI.SUCCESS;
-    const actionMessage =
-      // eslint-disable-next-line no-nested-ternary
-      event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
+    const actionMessages = {
+      [PostActionEnum.EXECUTE]: 'Executed',
+      [PostActionEnum.PREVIEW]: 'Previewed',
+    } as const;
+    const actionMessage = actionMessages[event.action];
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
     const logMessage = `${successPrefix} ${message} workflowId: '${event.workflowId}`;
@@ -519,7 +520,7 @@ export class Client {
         const result = await acc;
         const previewProviderHandler = this.previewProvider.bind(this);
         const executeProviderHandler = this.executeProvider.bind(this);
-        const handler = event.action === 'preview' ? previewProviderHandler : executeProviderHandler;
+        const handler = event.action === PostActionEnum.PREVIEW ? previewProviderHandler : executeProviderHandler;
 
         const providerResult = await handler(event, step, provider, outputs);
 
