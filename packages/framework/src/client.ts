@@ -17,6 +17,8 @@ import {
   StepNotFoundError,
   WorkflowAlreadyExistsError,
   WorkflowNotFoundError,
+  StepExecutionFailedError,
+  isFrameworkError,
 } from './errors';
 import type {
   ActionStep,
@@ -590,9 +592,7 @@ export class Client {
         symbol: EMOJI.ERROR,
         text: `Failed to execute provider: \`${provider.type}\``,
       });
-      throw new ProviderExecutionFailedError(
-        `Failed to execute provider: '${provider.type}'.\n${(error as Error).message}`
-      );
+      throw new ProviderExecutionFailedError(provider.type, event.action, error);
     }
   }
 
@@ -629,7 +629,11 @@ export class Client {
           symbol: EMOJI.ERROR,
           text: `Failed to execute stepId: \`${step.stepId}\``,
         });
-        throw error;
+        if (isFrameworkError(error)) {
+          throw error;
+        } else {
+          throw new StepExecutionFailedError(step.stepId, event.action, error);
+        }
       }
     } else {
       const spinner = ora({ indent: 1 }).start(`Hydrating stepId: \`${step.stepId}\``);
@@ -753,7 +757,12 @@ export class Client {
         symbol: EMOJI.ERROR,
         text: `Failed to preview stepId: \`${step.stepId}\``,
       });
-      throw error;
+
+      if (isFrameworkError(error)) {
+        throw error;
+      } else {
+        throw new StepExecutionFailedError(step.stepId, event.action, error);
+      }
     }
   }
 
