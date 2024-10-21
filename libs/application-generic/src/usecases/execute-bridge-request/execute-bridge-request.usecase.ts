@@ -49,7 +49,7 @@ export const RETRYABLE_HTTP_CODES: number[] = [
   504, // Gateway Timeout
   521, // CloudFlare TCP Error
   522, // CloudFlare Web Server Connection Error
-  524, // CloudFlate Timeout Error
+  524, // CloudFlare Timeout Error
 ];
 const RETRYABLE_ERROR_CODES: string[] = [
   'EAI_AGAIN', //    DNS resolution failed, retry
