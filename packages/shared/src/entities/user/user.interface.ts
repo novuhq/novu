@@ -1,8 +1,5 @@
-import { JobTitleEnum } from '../../types';
+import { JobTitleEnum, IServicesHashes } from '../../types';
 
-export interface IServicesHashes {
-  intercom?: string;
-}
 export interface IUserEntity {
   _id: string;
   firstName?: string | null;

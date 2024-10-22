@@ -4,8 +4,9 @@ import {
   ApiServiceLevelEnum,
   IApiRateLimitAlgorithm,
   IApiRateLimitCost,
+  ApiRateLimitCategoryEnum,
+  IApiRateLimitServiceMaximum,
 } from '../../types';
-import { ApiRateLimitCategoryEnum, IApiRateLimitServiceMaximum } from '../../types/rate-limiting/service.types';
 
 /**
  * API Rate Limiting defaults applied to production environments.

@@ -19,8 +19,7 @@ import {
   brazeEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
-import { EmailProviderIdEnum } from '../provider.enum';
-import { ChannelTypeEnum } from '../../../types';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const emailProviders: IProviderConfig[] = [

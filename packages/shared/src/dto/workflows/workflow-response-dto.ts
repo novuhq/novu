@@ -1,4 +1,4 @@
-import { PreferencesResponseDto, StepResponseDto, WorkflowCommonsFields } from './workflow-commons-fields';
+import { PreferencesResponseDto, StepResponseDto, WorkflowCommonsFields } from './workflow-response.dto';
 import { WorkflowStatusEnum } from './workflow-status-enum';
 import { WorkflowOriginEnum, WorkflowTypeEnum } from '../../types';
 

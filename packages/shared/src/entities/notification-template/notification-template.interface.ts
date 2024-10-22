@@ -1,17 +1,10 @@
 import { JSONSchema } from 'json-schema-to-ts';
-
-import type {
-  BuilderFieldType,
-  BuilderGroupValues,
-  TemplateVariableTypeEnum,
-  FilterParts,
-  WorkflowTypeEnum,
-  NotificationTemplateCustomData,
-} from '../../types';
+import type { BuilderFieldType, BuilderGroupValues, CustomDataType, FilterParts, WorkflowTypeEnum } from '../../types';
 import { IMessageTemplate } from '../message-template';
+import { INotificationGroup } from '../notification-group';
+import { INotificationTrigger } from '../notification-trigger';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
-import { INotificationGroup } from '../notification-group';
 import { ControlsDto } from '../../dto';
 
 export interface INotificationTemplate {
@@ -37,7 +30,7 @@ export interface INotificationTemplate {
   payloadSchema?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData?: any;
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 }
 
 export class IGroupedBlueprint {
@@ -56,31 +49,6 @@ export enum TriggerTypeEnum {
 export interface INotificationBridgeTrigger {
   type: TriggerTypeEnum;
   identifier: string;
-}
-
-export interface INotificationTrigger {
-  type: TriggerTypeEnum;
-  identifier: string;
-  variables: INotificationTriggerVariable[];
-  subscriberVariables?: INotificationTriggerVariable[];
-  reservedVariables?: ITriggerReservedVariable[];
-}
-
-export enum TriggerContextTypeEnum {
-  TENANT = 'tenant',
-  ACTOR = 'actor',
-}
-
-export interface ITriggerReservedVariable {
-  type: TriggerContextTypeEnum;
-  variables: INotificationTriggerVariable[];
-}
-
-export interface INotificationTriggerVariable {
-  name: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value?: any;
-  type?: TemplateVariableTypeEnum;
 }
 
 export interface IStepVariant {

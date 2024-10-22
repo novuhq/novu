@@ -1,6 +1,13 @@
 import { NotificationStepDto } from './workflow.dto';
-import { IPreferenceChannels } from '../../entities/subscriber-preference';
-import { NotificationTemplateCustomData } from '../../types';
+import { CustomDataType } from '../../types';
+
+interface IPreferenceChannelsDto {
+  email?: boolean;
+  sms?: boolean;
+  in_app?: boolean;
+  chat?: boolean;
+  push?: boolean;
+}
 
 /**
  * @deprecated use CreateWorkflowDto instead
@@ -22,9 +29,9 @@ export interface ICreateWorkflowDto {
 
   critical?: boolean;
 
-  preferenceSettings?: IPreferenceChannels;
+  preferenceSettings?: IPreferenceChannelsDto;
 
   blueprintId?: string;
 
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 }

@@ -7,11 +7,8 @@ import {
   pushpadConfig,
   pushWebhookConfig,
 } from '../credentials';
-
-import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
-
-import { ChannelTypeEnum } from '../../../types';
+import { ChannelTypeEnum, PushProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const pushProviders: IProviderConfig[] = [

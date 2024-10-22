@@ -15,7 +15,8 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "vitest",
-    "watch:test": "pnpm test --watch"
+    "watch:test": "pnpm test --watch",
+    "check:circulars": "madge --circular --extensions ts ./src"
   },
   "author": "",
   "license": "ISC",
@@ -46,6 +47,7 @@
     "@types/bluebird": "^3.5.24",
     "@types/jest": "29.5.2",
     "json-schema-to-ts": "^3.0.0",
+    "madge": "^8.0.0",
     "rimraf": "^3.0.2",
     "typescript": "5.6.2",
     "vitest": "^2.0.5"

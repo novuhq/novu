@@ -32,9 +32,7 @@ import {
   eazySmsConfig,
   mobishastraConfig,
 } from '../credentials';
-import { ChatProviderIdEnum, SmsProviderIdEnum } from '../provider.enum';
-
-import { ChannelTypeEnum } from '../../../types';
+import { ChannelTypeEnum, SmsProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const smsProviders: IProviderConfig[] = [

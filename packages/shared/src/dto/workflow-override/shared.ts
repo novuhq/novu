@@ -1,7 +1,7 @@
-import { IPreferenceChannels } from '../../entities/subscriber-preference';
+import { IPreferenceChannelsDto } from '../notification-templates';
 
 export interface IWorkflowOverrideRequestDto {
   active?: boolean;
 
-  preferenceSettings?: IPreferenceChannels;
+  preferenceSettings?: IPreferenceChannelsDto;
 }
