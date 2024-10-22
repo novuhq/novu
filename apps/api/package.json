@@ -69,7 +69,6 @@
     "date-fns": "^2.29.2",
     "dotenv": "^16.4.5",
     "envalid": "^8.0.0",
-    "faker": "^6.6.6",
     "handlebars": "^4.7.7",
     "helmet": "^6.0.1",
     "i18next": "^23.7.6",
