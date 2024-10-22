@@ -36,7 +36,7 @@ export function parseSlugId(value: string): InternalId {
     return validId;
   }
 
-  const encodedValue = value.slice(-16);
+  const encodedValue = value.slice(-ENCODED_ID_LENGTH);
   let decodedValue: string;
   try {
     decodedValue = decodeBase62(encodedValue);

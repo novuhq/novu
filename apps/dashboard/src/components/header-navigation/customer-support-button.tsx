@@ -1,5 +1,5 @@
+import { useBootIntercom } from '@/hooks/use-boot-intercom';
 import { RiCustomerService2Line } from 'react-icons/ri';
-import { useBootIntercom } from '@/hooks';
 
 export const CustomerSupportButton = () => {
   useBootIntercom();

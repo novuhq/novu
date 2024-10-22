@@ -437,9 +437,6 @@ importers:
       axios:
         specifier: ^1.6.8
         version: 1.6.8
-      base-x:
-        specifier: ^5.0.0
-        version: 5.0.0
       bcrypt:
         specifier: ^5.0.0
         version: 5.0.1(encoding@0.1.13)
@@ -703,6 +700,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      cmdk:
+        specifier: 1.0.0
+        version: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -3317,118 +3317,6 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
-  packages/cli:
-    dependencies:
-      '@novu/ntfr-client':
-        specifier: ^0.0.4
-        version: 0.0.4
-      '@novu/shared':
-        specifier: workspace:*
-        version: link:../shared
-      '@segment/analytics-node':
-        specifier: ^1.1.4
-        version: 1.1.4(encoding@0.1.13)
-      '@types/cross-spawn':
-        specifier: 6.0.0
-        version: 6.0.0
-      async-sema:
-        specifier: 3.0.1
-        version: 3.0.1
-      axios:
-        specifier: ^1.6.8
-        version: 1.6.8
-      chalk:
-        specifier: 4.1.2
-        version: 4.1.2
-      commander:
-        specifier: ^9.0.0
-        version: 9.5.0
-      configstore:
-        specifier: ^5.0.0
-        version: 5.0.1
-      cross-spawn:
-        specifier: 7.0.3
-        version: 7.0.3
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.5
-      fast-glob:
-        specifier: 3.3.1
-        version: 3.3.1
-      get-port:
-        specifier: ^5.1.1
-        version: 5.1.1
-      gradient-string:
-        specifier: ^2.0.0
-        version: 2.0.2
-      inquirer:
-        specifier: ^8.2.0
-        version: 8.2.5
-      jwt-decode:
-        specifier: ^3.1.2
-        version: 3.1.2
-      open:
-        specifier: ^8.4.0
-        version: 8.4.2
-      ora:
-        specifier: ^5.4.1
-        version: 5.4.1
-      picocolors:
-        specifier: ^1.0.0
-        version: 1.0.0
-      prompts:
-        specifier: 2.4.2
-        version: 2.4.2
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
-      validate-npm-package-name:
-        specifier: 3.0.0
-        version: 3.0.0
-      ws:
-        specifier: ^8.11.0
-        version: 8.16.0
-    devDependencies:
-      '@types/configstore':
-        specifier: ^5.0.1
-        version: 5.0.1
-      '@types/gradient-string':
-        specifier: ^1.1.6
-        version: 1.1.6
-      '@types/inquirer':
-        specifier: ^8.2.0
-        version: 8.2.6
-      '@types/mocha':
-        specifier: ^10.0.8
-        version: 10.0.8
-      '@types/prompts':
-        specifier: 2.4.2
-        version: 2.4.2
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
-      '@types/validate-npm-package-name':
-        specifier: 3.0.0
-        version: 3.0.0
-      '@types/ws':
-        specifier: ^8.5.3
-        version: 8.5.8
-      ncp:
-        specifier: ^2.0.0
-        version: 2.0.0
-      nodemon:
-        specifier: ^3.0.1
-        version: 3.0.1
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.1(@swc/core@1.7.26(@swc/helpers@0.5.12))(@types/node@22.7.4)(typescript@5.6.2)
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
-      vitest:
-        specifier: ^1.2.1
-        version: 1.2.1(@edge-runtime/vm@4.0.2)(@types/node@22.7.4)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
-
   packages/client:
     dependencies:
       '@novu/shared':
@@ -4060,6 +3948,118 @@ importers:
       webpack-cli:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.9.0)(webpack@5.78.0)
+
+  packages/novu:
+    dependencies:
+      '@novu/ntfr-client':
+        specifier: ^0.0.4
+        version: 0.0.4
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@segment/analytics-node':
+        specifier: ^1.1.4
+        version: 1.1.4(encoding@0.1.13)
+      '@types/cross-spawn':
+        specifier: 6.0.0
+        version: 6.0.0
+      async-sema:
+        specifier: 3.0.1
+        version: 3.0.1
+      axios:
+        specifier: ^1.6.8
+        version: 1.7.7
+      chalk:
+        specifier: 4.1.2
+        version: 4.1.2
+      commander:
+        specifier: ^9.0.0
+        version: 9.5.0
+      configstore:
+        specifier: ^5.0.0
+        version: 5.0.1
+      cross-spawn:
+        specifier: 7.0.3
+        version: 7.0.3
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
+      fast-glob:
+        specifier: 3.3.1
+        version: 3.3.1
+      get-port:
+        specifier: ^5.1.1
+        version: 5.1.1
+      gradient-string:
+        specifier: ^2.0.0
+        version: 2.0.2
+      inquirer:
+        specifier: ^8.2.0
+        version: 8.2.6
+      jwt-decode:
+        specifier: ^3.1.2
+        version: 3.1.2
+      open:
+        specifier: ^8.4.0
+        version: 8.4.2
+      ora:
+        specifier: ^5.4.1
+        version: 5.4.1
+      picocolors:
+        specifier: ^1.0.0
+        version: 1.1.0
+      prompts:
+        specifier: 2.4.2
+        version: 2.4.2
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+      validate-npm-package-name:
+        specifier: 3.0.0
+        version: 3.0.0
+      ws:
+        specifier: ^8.11.0
+        version: 8.18.0
+    devDependencies:
+      '@types/configstore':
+        specifier: ^5.0.1
+        version: 5.0.1
+      '@types/gradient-string':
+        specifier: ^1.1.6
+        version: 1.1.6
+      '@types/inquirer':
+        specifier: ^8.2.0
+        version: 8.2.10
+      '@types/mocha':
+        specifier: ^10.0.8
+        version: 10.0.8
+      '@types/prompts':
+        specifier: 2.4.2
+        version: 2.4.2
+      '@types/uuid':
+        specifier: ^8.3.4
+        version: 8.3.4
+      '@types/validate-npm-package-name':
+        specifier: 3.0.0
+        version: 3.0.0
+      '@types/ws':
+        specifier: ^8.5.3
+        version: 8.5.8
+      ncp:
+        specifier: ^2.0.0
+        version: 2.0.0
+      nodemon:
+        specifier: ^3.0.1
+        version: 3.0.1
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.12))(@types/node@22.7.4)(typescript@5.6.2)
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^1.2.1
+        version: 1.2.1(@edge-runtime/vm@4.0.2)(@types/node@22.7.4)(jsdom@25.0.0)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
 
   packages/providers:
     dependencies:
@@ -16288,9 +16288,6 @@ packages:
   '@types/inquirer@8.2.10':
     resolution: {integrity: sha512-IdD5NmHyVjWM8SHWo/kPBgtzXatwPkfwzyP3fN1jF2g9BWt5WO+8hL2F4o2GKIYsU40PpqeevuUWvkS/roXJkA==}
 
-  '@types/inquirer@8.2.6':
-    resolution: {integrity: sha512-3uT88kxg8lNzY8ay2ZjP44DKcRaTGztqeIvN2zHvhzIBH/uAPaL75aBtdNRKbA7xXoMbBt5kX0M00VKAnfOYlA==}
-
   '@types/ioredis@4.28.10':
     resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
 
@@ -18531,9 +18528,6 @@ packages:
   base-64@1.0.0:
     resolution: {integrity: sha512-kwDPIFCGx0NZHog36dj+tHiwP4QMzsZ3AgMViUBKI0+V5n4U0ufTCUMhnQ04diaRI8EX/QcPfql7zlhZ7j4zgg==}
 
-  base-x@5.0.0:
-    resolution: {integrity: sha512-sMW3VGSX1QWVFA6l8U62MLKz29rRfpTlYdCqLdpLo1/Yd4zZwSbnUaDfciIAowAqvq7YFnWq9hrhdg1KYgc1lQ==}
-
   base64-arraybuffer@1.0.2:
     resolution: {integrity: sha512-I3yl4r9QB5ZRY3XuJVEPfc2XhZO6YweFPI+UovAzn+8/hb3oJ6lnysaFcjVpkCPfVWFUDvoZ8kmVDP7WyRtYtQ==}
     engines: {node: '>= 0.6.0'}
@@ -19305,6 +19299,12 @@ packages:
   cmd-shim@5.0.0:
     resolution: {integrity: sha512-qkCtZ59BidfEwHltnJwkyVZn+XQojdAySM1D1gSeh11Z4pW1Kpolkyo53L5noc0nrxmIvyFwTmJRo4xs7FFLPw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
+
+  cmdk@1.0.0:
+    resolution: {integrity: sha512-gDzVf0a09TvoJ5jnuPvygTB77+XdOSwEmJ88L6XPFPlv7T3RxbP9jgenfylrAMD0+Le1aO0nVjQUzl2g+vjz5Q==}
+    peerDependencies:
+      react: ^18.0.0
+      react-dom: ^18.0.0
 
   co@4.6.0:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
@@ -23511,10 +23511,6 @@ packages:
 
   inline-style-parser@0.2.3:
     resolution: {integrity: sha512-qlD8YNDqyTKTyuITrDOffsl6Tdhv+UC4hcdAVuQsK4IMQ99nSgd1MIA/Q+jQYoh9r3hVUXhYh7urSRmXPkW04g==}
-
-  inquirer@8.2.5:
-    resolution: {integrity: sha512-QAgPDQMEgrDssk1XiwwHoOGYF9BAbUcc1+j+FhEvaOt8/cKRqyLn0U5qA6F74fGhTMGxf92pOvPBeh29jQJDTQ==}
-    engines: {node: '>=12.0.0'}
 
   inquirer@8.2.6:
     resolution: {integrity: sha512-M1WuAmb7pn9zdFRtQYk26ZBoY043Sse0wVDdk4Bppr+JOXyQYybdtvK+l9wUibhtjdjvtoiNy8tk+EgsYIUqKg==}
@@ -31989,9 +31985,6 @@ packages:
   tiny-warning@1.0.3:
     resolution: {integrity: sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==}
 
-  tinybench@2.6.0:
-    resolution: {integrity: sha512-N8hW3PG/3aOoZAN5V/NSAEDz0ZixDSSt5b/a05iqtpgfLWMSVuCo7w0k2vVvEjdrIoeGqZzweX2WlyioNIHchA==}
-
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
@@ -33801,11 +33794,6 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     hasBin: true
 
-  why-is-node-running@2.2.2:
-    resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}
-    engines: {node: '>=8'}
-    hasBin: true
-
   why-is-node-running@2.3.0:
     resolution: {integrity: sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==}
     engines: {node: '>=8'}
@@ -34433,7 +34421,7 @@ snapshots:
       ci-info: 3.9.0
       debug: 4.3.6(supports-color@8.1.1)
       dlv: 1.1.3
-      dset: 3.1.3
+      dset: 3.1.4
       is-docker: 3.0.0
       is-wsl: 3.1.0
       which-pm-runs: 1.1.0
@@ -34648,8 +34636,8 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -34850,8 +34838,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -35077,11 +35065,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/client-sso-oidc@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -35120,7 +35108,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.7.0
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso-oidc@3.637.0(@aws-sdk/client-sts@3.637.0)':
@@ -35505,11 +35492,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sts@3.575.0':
+  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -35548,6 +35535,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.7.0
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.637.0':
@@ -35777,7 +35765,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -36088,7 +36076,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -36609,7 +36597,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -36618,7 +36606,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.614.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.609.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -43589,7 +43577,7 @@ snapshots:
   '@graphql-tools/utils@10.0.6(graphql@16.9.0)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.9.0)
-      dset: 3.1.3
+      dset: 3.1.4
       graphql: 16.9.0
       tslib: 2.7.0
     optional: true
@@ -45874,7 +45862,7 @@ snapshots:
       node-fetch: 3.3.2
       partysocket: 0.0.17
       proxy-agent: 6.3.0
-      ws: 8.16.0
+      ws: 8.18.0
       zod: 3.22.3
     transitivePeerDependencies:
       - bufferutil
@@ -48551,7 +48539,7 @@ snapshots:
       debug: 4.3.6(supports-color@8.1.1)
       eventemitter2: 6.4.7
       extrareqp2: 1.0.0(debug@4.3.6)
-      ws: 7.5.9
+      ws: 7.5.10
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -50277,7 +50265,7 @@ snapshots:
     dependencies:
       '@lukeed/uuid': 2.0.1
       '@segment/analytics-generic-utils': 1.1.0
-      dset: 3.1.3
+      dset: 3.1.4
       tslib: 2.7.0
 
   '@segment/analytics-core@1.8.0':
@@ -50349,7 +50337,7 @@ snapshots:
       '@segment/analytics-generic-utils': 1.1.0
       buffer: 6.0.3
       node-fetch: 2.7.0(encoding@0.1.13)
-      tslib: 2.6.2
+      tslib: 2.7.0
     transitivePeerDependencies:
       - encoding
 
@@ -53634,7 +53622,7 @@ snapshots:
 
   '@storybook/components@8.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@radix-ui/react-dialog': 1.0.5(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@radix-ui/react-dialog': 1.1.2(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-slot': 1.1.0(@types/react@18.3.3)(react@18.3.1)
       '@storybook/client-logger': 8.1.1
       '@storybook/csf': 0.1.7
@@ -55679,11 +55667,6 @@ snapshots:
       '@types/cheerio': 0.22.35
 
   '@types/inquirer@8.2.10':
-    dependencies:
-      '@types/through': 0.0.30
-      rxjs: 7.8.1
-
-  '@types/inquirer@8.2.6':
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.8.1
@@ -59401,8 +59384,6 @@ snapshots:
 
   base-64@1.0.0: {}
 
-  base-x@5.0.0: {}
-
   base64-arraybuffer@1.0.2: {}
 
   base64-js@1.5.1: {}
@@ -60371,6 +60352,16 @@ snapshots:
   cmd-shim@5.0.0:
     dependencies:
       mkdirp-infer-owner: 2.0.0
+
+  cmdk@1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@radix-ui/react-dialog': 1.0.5(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@radix-ui/react-primitive': 1.0.3(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
 
   co@4.6.0: {}
 
@@ -64075,7 +64066,7 @@ snapshots:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
 
   fast-glob@3.3.2:
     dependencies:
@@ -66175,24 +66166,6 @@ snapshots:
   inline-style-parser@0.1.1: {}
 
   inline-style-parser@0.2.3: {}
-
-  inquirer@8.2.5:
-    dependencies:
-      ansi-escapes: 4.3.2
-      chalk: 4.1.2
-      cli-cursor: 3.1.0
-      cli-width: 3.0.0
-      external-editor: 3.1.0
-      figures: 3.2.0
-      lodash: 4.17.21
-      mute-stream: 0.0.8
-      ora: 5.4.1
-      run-async: 2.4.1
-      rxjs: 7.8.1
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      through: 2.3.8
-      wrap-ansi: 7.0.0
 
   inquirer@8.2.6:
     dependencies:
@@ -71330,12 +71303,12 @@ snapshots:
 
   nodemon@3.0.1:
     dependencies:
-      chokidar: 3.5.3
+      chokidar: 3.6.0
       debug: 3.2.7(supports-color@5.5.0)
       ignore-by-default: 1.0.1
       minimatch: 3.1.2
       pstree.remy: 1.1.8
-      semver: 7.5.4
+      semver: 7.6.3
       simple-update-notifier: 2.0.0
       supports-color: 5.5.0
       touch: 3.1.0
@@ -78244,8 +78217,6 @@ snapshots:
 
   tiny-warning@1.0.3: {}
 
-  tinybench@2.6.0: {}
-
   tinybench@2.9.0: {}
 
   tinycolor2@1.6.0: {}
@@ -80297,19 +80268,19 @@ snapshots:
       acorn-walk: 8.3.2
       cac: 6.7.14
       chai: 4.4.1
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       execa: 8.0.1
       local-pkg: 0.5.0
-      magic-string: 0.30.10
+      magic-string: 0.30.11
       pathe: 1.1.2
-      picocolors: 1.0.1
+      picocolors: 1.1.0
       std-env: 3.7.0
       strip-literal: 1.3.0
-      tinybench: 2.6.0
+      tinybench: 2.9.0
       tinypool: 0.8.2
       vite: 5.4.2(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
       vite-node: 1.2.1(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
-      why-is-node-running: 2.2.2
+      why-is-node-running: 2.3.0
     optionalDependencies:
       '@edge-runtime/vm': 4.0.2
       '@types/node': 20.16.5
@@ -80334,19 +80305,19 @@ snapshots:
       acorn-walk: 8.3.2
       cac: 6.7.14
       chai: 4.4.1
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       execa: 8.0.1
       local-pkg: 0.5.0
-      magic-string: 0.30.10
+      magic-string: 0.30.11
       pathe: 1.1.2
-      picocolors: 1.0.1
+      picocolors: 1.1.0
       std-env: 3.7.0
       strip-literal: 1.3.0
-      tinybench: 2.6.0
+      tinybench: 2.9.0
       tinypool: 0.8.2
       vite: 5.4.2(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.38))(terser@5.31.6)
       vite-node: 1.2.1(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.38))(terser@5.31.6)
-      why-is-node-running: 2.2.2
+      why-is-node-running: 2.3.0
     optionalDependencies:
       '@edge-runtime/vm': 4.0.2
       '@types/node': 20.16.5
@@ -80371,19 +80342,19 @@ snapshots:
       acorn-walk: 8.3.2
       cac: 6.7.14
       chai: 4.4.1
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       execa: 8.0.1
       local-pkg: 0.5.0
-      magic-string: 0.30.10
+      magic-string: 0.30.11
       pathe: 1.1.2
-      picocolors: 1.0.1
+      picocolors: 1.1.0
       std-env: 3.7.0
       strip-literal: 1.3.0
-      tinybench: 2.6.0
+      tinybench: 2.9.0
       tinypool: 0.8.2
       vite: 5.4.2(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
       vite-node: 1.2.1(@types/node@20.16.5)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
-      why-is-node-running: 2.2.2
+      why-is-node-running: 2.3.0
     optionalDependencies:
       '@edge-runtime/vm': 4.0.2
       '@types/node': 20.16.5
@@ -80408,19 +80379,19 @@ snapshots:
       acorn-walk: 8.3.2
       cac: 6.7.14
       chai: 4.4.1
-      debug: 4.3.5
+      debug: 4.3.6(supports-color@8.1.1)
       execa: 8.0.1
       local-pkg: 0.5.0
-      magic-string: 0.30.10
+      magic-string: 0.30.11
       pathe: 1.1.2
-      picocolors: 1.0.1
+      picocolors: 1.1.0
       std-env: 3.7.0
       strip-literal: 1.3.0
-      tinybench: 2.6.0
+      tinybench: 2.9.0
       tinypool: 0.8.2
       vite: 5.4.2(@types/node@22.7.4)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
       vite-node: 1.2.1(@types/node@22.7.4)(less@4.2.0)(lightningcss@1.26.0)(sass@1.77.8)(sugarss@4.0.1(postcss@8.4.47))(terser@5.31.6)
-      why-is-node-running: 2.2.2
+      why-is-node-running: 2.3.0
     optionalDependencies:
       '@edge-runtime/vm': 4.0.2
       '@types/node': 22.7.4
@@ -81275,11 +81246,6 @@ snapshots:
   which@3.0.0:
     dependencies:
       isexe: 2.0.0
-
-  why-is-node-running@2.2.2:
-    dependencies:
-      siginfo: 2.0.0
-      stackback: 0.0.2
 
   why-is-node-running@2.3.0:
     dependencies:

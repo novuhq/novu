@@ -2,8 +2,8 @@ import { ReactNode } from 'react';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { IntercomProvider } from 'react-use-intercom';
-import { HeaderNavigation } from './header-navigation';
 import { INTERCOM_APP_ID } from '@/config';
+import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 
 export const EditWorkflowLayout = ({
   children,
