@@ -47,6 +47,7 @@ export const RETRYABLE_HTTP_CODES: number[] = [
   500, // Internal Server Error
   503, // Service Unavailable
   504, // Gateway Timeout
+  // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
   521, // CloudFlare web server is down
   522, // CloudFlare connection timed out
   524, // CloudFlare a timeout occurred
