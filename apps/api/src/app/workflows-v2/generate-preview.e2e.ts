@@ -40,7 +40,6 @@ describe('Generate Preview', () => {
           const { stepUuid, workflowId } = await createWorkflowAndReturnId(type);
           const requestDto = buildDtoWithPayload(type);
           const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
-          console.log('previewResponseDto', JSON.stringify(previewResponseDto));
           expect(previewResponseDto.result!.preview).to.exist;
           const expectedRenderedResult = buildInAppControlValues();
           expectedRenderedResult.subject = buildInAppControlValues().subject!.replace(
@@ -66,7 +65,6 @@ describe('Generate Preview', () => {
           const previewResponseDto = await generatePreview(workflowId, stepUuid, requestDto, description);
           expect(previewResponseDto.result!.preview).to.exist;
           expect(previewResponseDto.issues).to.exist;
-          console.log('previewResponseDto.issues', JSON.stringify(previewResponseDto.issues));
 
           if (type !== StepTypeEnum.EMAIL) {
             expect(previewResponseDto.result!.preview).to.deep.equal(stepTypeTo[type]);
@@ -107,7 +105,6 @@ describe('Generate Preview', () => {
     dto: GeneratePreviewRequestDto,
     description: string
   ): Promise<GeneratePreviewResponseDto> {
-    console.log('dto', JSON.stringify(dto, null, 2));
     const novuRestResult = await workflowsClient.generatePreview(workflowId, stepUuid, dto);
     if (novuRestResult.isSuccessResult()) {
       return novuRestResult.value;
