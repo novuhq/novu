@@ -244,7 +244,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'type'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'stepUuid', 'slug', 'controls','stepId')
+    removeFields(step, 'stepUuid', 'slug', 'controls', 'stepId')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
     removeFields(createWorkflowDto, '__source'),
