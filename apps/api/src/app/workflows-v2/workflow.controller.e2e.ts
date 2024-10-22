@@ -274,7 +274,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
   expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
   for (const step of workflowResponseDto.steps) {
-    expect(step.stepUuid, JSON.stringify(res, null, 2)).to.be.ok;
+    expect(step._id, JSON.stringify(res, null, 2)).to.be.ok;
     expect(step.slug, JSON.stringify(res, null, 2)).to.be.ok;
   }
   expect(workflowResponseDto.steps, JSON.stringify(res, null, 2)).to.be.ok;
