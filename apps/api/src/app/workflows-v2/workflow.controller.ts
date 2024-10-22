@@ -24,7 +24,7 @@ import {
   UserSessionData,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
+import { UserAuthGuard, UserSession } from '@novu/application-generic';
 
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
@@ -92,7 +92,6 @@ export class WorkflowController {
   }
 
   @Delete(':workflowId')
-  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeWorkflow(
     @UserSession() user: UserSessionData,
