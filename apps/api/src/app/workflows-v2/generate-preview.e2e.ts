@@ -120,7 +120,7 @@ describe('Generate Preview', () => {
       throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);
     }
 
-    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[0].stepUuid };
+    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[0]._id };
   }
 });
 
