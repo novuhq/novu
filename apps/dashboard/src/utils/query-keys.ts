@@ -4,4 +4,5 @@ export const QueryKeys = Object.freeze({
   bridgeHealthCheck: 'bridgeHealthCheck',
   fetchWorkflow: 'fetchWorkflow',
   fetchWorkflows: 'fetchWorkflows',
+  fetchTags: 'fetchTags',
 });

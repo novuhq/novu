@@ -1,6 +1,6 @@
 import { createWorkflow } from '@/api/workflows';
 import { Button } from '@/components/primitives/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from '@/components/primitives/form/form';
 import { Input, InputField } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -16,6 +16,7 @@ import {
 import { TagInput } from '@/components/primitives/tag-input';
 import { Textarea } from '@/components/primitives/textarea';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useTagsQuery } from '@/hooks/use-tags-query';
 import { QueryKeys } from '@/utils/query-keys';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/shared';
@@ -54,6 +55,8 @@ export const CreateWorkflowButton = (props: CreateWorkflowButtonProps) => {
       setIsOpen(false);
     },
   });
+  const tagsQuery = useTagsQuery();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { description: '', identifier: '', name: '', tags: [] },
@@ -147,7 +150,7 @@ export const CreateWorkflowButton = (props: CreateWorkflowButtonProps) => {
                       <FormLabel hint="(max. 8)">Add tags</FormLabel>
                     </div>
                     <FormControl>
-                      <TagInput {...field} />
+                      <TagInput suggestions={tagsQuery.data?.data.map((tag) => tag.name) || []} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

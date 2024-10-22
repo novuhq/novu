@@ -49,8 +49,8 @@
       "path": "libs/novui",
     },
     {
-      "name": "📦 @novu/cli",
-      "path": "packages/cli",
+      "name": "📦 novu",
+      "path": "packages/novu",
     },
     {
       "name": "📦 @novu/client",

@@ -41,6 +41,7 @@
     "@xyflow/react": "^12.3.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "cmdk": "1.0.0",
     "date-fns": "^4.1.0",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.439.0",

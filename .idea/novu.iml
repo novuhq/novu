@@ -17,7 +17,7 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/node/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/web/storybook-static" />
       <excludeFolder url="file://$MODULE_DIR$/providers/emailjs/build" />
-      <excludeFolder url="file://$MODULE_DIR$/packages/cli/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/novu/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/stateless/build" />
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/dist" />
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/.rpt2_cache" />
