@@ -47,9 +47,9 @@ export const RETRYABLE_HTTP_CODES: number[] = [
   500, // Internal Server Error
   503, // Service Unavailable
   504, // Gateway Timeout
-  521, // CloudFlare TCP Error
-  522, // CloudFlare Web Server Connection Error
-  524, // CloudFlare Timeout Error
+  521, // CloudFlare web server is down
+  522, // CloudFlare connection timed out
+  524, // CloudFlare a timeout occurred
 ];
 const RETRYABLE_ERROR_CODES: string[] = [
   'EAI_AGAIN', //    DNS resolution failed, retry
