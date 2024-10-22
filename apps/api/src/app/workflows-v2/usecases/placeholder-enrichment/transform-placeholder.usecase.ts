@@ -13,7 +13,7 @@ export class TransformPlaceholderMapUseCase {
       let current = obj;
 
       keys.forEach((key, index) => {
-        if (!current[key]) {
+        if (!current.hasOwnProperty(key)) {
           current[key] = index === keys.length - 1 ? value : {};
         }
         current = current[key];
@@ -23,11 +23,15 @@ export class TransformPlaceholderMapUseCase {
     this.processFor(command.input, setNestedValue, defaultPayload);
 
     for (const key in command.input.show) {
-      setNestedValue(defaultPayload, key, 'true');
+      if (command.input.show.hasOwnProperty(key)) {
+        setNestedValue(defaultPayload, key, 'true');
+      }
     }
 
     for (const key in command.input.regular) {
-      setNestedValue(defaultPayload, key, `{{${key}}}`);
+      if (command.input.regular.hasOwnProperty(key)) {
+        setNestedValue(defaultPayload, key, `{{${key}}}`);
+      }
     }
 
     return defaultPayload;
@@ -39,15 +43,17 @@ export class TransformPlaceholderMapUseCase {
     defaultPayload: Record<string, any>
   ) {
     for (const key in input.for) {
-      const items = input.for[key];
-      const finalValue = [{}, {}];
-      setNestedValue(defaultPayload, key, finalValue);
-      items.forEach((item) => {
-        const extractedKey = item.replace('item.', '');
-        const valueFunc = (suffix) => `{#${item}#}-${suffix}`;
-        setNestedValue(finalValue[0], extractedKey, valueFunc('1'));
-        setNestedValue(finalValue[1], extractedKey, valueFunc('2'));
-      });
+      if (input.for.hasOwnProperty(key)) {
+        const items = input.for[key];
+        const finalValue = [{}, {}];
+        setNestedValue(defaultPayload, key, finalValue);
+        items.forEach((item) => {
+          const extractedKey = item.replace('item.', '');
+          const valueFunc = (suffix) => `{#${item}#}-${suffix}`;
+          setNestedValue(finalValue[0], extractedKey, valueFunc('1'));
+          setNestedValue(finalValue[1], extractedKey, valueFunc('2'));
+        });
+      }
     }
   }
 }
