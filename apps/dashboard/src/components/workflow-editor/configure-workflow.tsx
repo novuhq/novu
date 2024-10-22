@@ -84,7 +84,7 @@ export function ConfigureWorkflow() {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Untitled" {...field} />
+                <Textarea placeholder="Description of what this workflow does" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
