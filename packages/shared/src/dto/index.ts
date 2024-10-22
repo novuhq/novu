@@ -14,3 +14,4 @@ export * from './widget';
 export * from './session';
 export * from './controls';
 export * from './subscription';
+export * from './step-schemas';
