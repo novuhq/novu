@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { UserSession } from '@novu/testing';
 import { StepTypeEnum, WorkflowResponseDto } from '@novu/shared';
+import { encodeBase62 } from '../../shared/helpers';
 
 describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&stepType=:stepType (GET)', async () => {
   let session: UserSession;
@@ -95,7 +96,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
         await getStepSchema({
           session,
           workflowId: createdWorkflow._id,
-          stepId: createdWorkflow.steps[0].stepUuid,
+          stepId: createdWorkflow.steps[0]._id,
         })
       ).body;
 
@@ -136,7 +137,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
         await getStepSchema({
           session,
           workflowId: createdWorkflow._id,
-          stepId: createdWorkflow.steps[0].stepUuid,
+          stepId: createdWorkflow.steps[0]._id,
         })
       ).body;
 
@@ -149,7 +150,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
           session,
           stepType: StepTypeEnum.IN_APP,
           workflowId: createdWorkflow._id,
-          stepId: createdWorkflow.steps[1].stepUuid,
+          stepId: createdWorkflow.steps[1]._id,
         })
       ).body;
 
@@ -159,7 +160,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
       const variableStepKey = variableStepKeys[0];
       const createdWorkflowPreviousSteps = createdWorkflow.steps.slice(
         0,
-        createdWorkflow.steps.findIndex((stepItem) => stepItem.stepUuid === createdWorkflow.steps[1].stepUuid)
+        createdWorkflow.steps.findIndex((stepItem) => stepItem._id === createdWorkflow.steps[1]._id)
       );
       const variableStepKeyFoundInCreatedWorkflow = createdWorkflowPreviousSteps.find(
         (step) => step.stepId === variableStepKey
@@ -187,7 +188,7 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
     });
 
     it('should get error for invalid step id', async function () {
-      const invalidStepUuid = `${createdWorkflow.steps[0].stepUuid}0`;
+      const invalidStepUuid = `${createdWorkflow._id}`;
 
       const response = await getStepSchema({
         session,
@@ -203,12 +204,12 @@ describe('Get Step Schema - /step-schemas?workflowId=:workflowId&stepId=:stepId&
     });
 
     it('should get error for invalid workflow id', async function () {
-      const invalidWorkflowId = createdWorkflow.steps[0].stepUuid;
+      const invalidWorkflowId = createdWorkflow.steps[0]._id;
 
       const response = await getStepSchema({
         session,
         workflowId: invalidWorkflowId,
-        stepId: createdWorkflow.steps[0].stepUuid,
+        stepId: createdWorkflow.steps[0]._id,
       });
 
       expect(response.status).to.equal(400);

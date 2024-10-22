@@ -286,14 +286,14 @@ export class UpsertWorkflowUseCase {
     }
 
     for (const persistedStep of persistedWorkflow.steps) {
-      if (this.isStepUpdateDto(stepUpdateRequest) && persistedStep._templateId === stepUpdateRequest.stepUuid) {
+      if (this.isStepUpdateDto(stepUpdateRequest) && persistedStep._templateId === stepUpdateRequest._id) {
         return persistedStep;
       }
     }
   }
 
-  private isStepUpdateDto(obj: StepDto): obj is StepUpdateDto {
-    return typeof obj === 'object' && obj !== null && 'stepUuid' in obj;
+  private isStepUpdateDto(obj: StepUpdateDto | StepCreateDto): obj is StepUpdateDto {
+    return typeof obj === 'object' && obj !== null && !!(obj as StepUpdateDto)._id;
   }
 
   private async getNotificationGroup(environmentId: string): Promise<string | undefined> {

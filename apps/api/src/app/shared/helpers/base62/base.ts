@@ -1,11 +1,16 @@
-// base-x encoding / decoding
-// Copyright (c) 2018 base-x contributors
-// Copyright (c) 2014-2018 The Bitcoin Core developers (base58.cpp)
-// Distributed under the MIT software license, see the accompanying
-// file LICENSE or http://www.opensource.org/licenses/mit-license.php.
-// "version": "5.0.0",
+/* eslint-disable */
+/* cspell:disable */
 
-function base(ALPHABET) {
+/*
+ * base-x encoding / decoding
+ * Copyright (c) 2018 base-x contributors
+ * Copyright (c) 2014-2018 The Bitcoin Core developers (base58.cpp)
+ * Distributed under the MIT software license, see the accompanying
+ * file LICENSE or http://www.opensource.org/licenses/mit-license.php.
+ * "version": "5.0.0",
+ */
+
+export function base(ALPHABET) {
   if (ALPHABET.length >= 255) {
     throw new TypeError('Alphabet too long');
   }
@@ -17,7 +22,7 @@ function base(ALPHABET) {
     const x = ALPHABET.charAt(i);
     const xc = x.charCodeAt(0);
     if (BASE_MAP[xc] !== 255) {
-      throw new TypeError(x + ' is ambiguous');
+      throw new TypeError(`${x} is ambiguous`);
     }
     BASE_MAP[xc] = i;
   }
@@ -26,7 +31,6 @@ function base(ALPHABET) {
   const FACTOR = Math.log(BASE) / Math.log(256); // log(BASE) / log(256), rounded up
   const iFACTOR = Math.log(256) / Math.log(BASE); // log(256) / log(BASE), rounded up
   function encode(source) {
-    // eslint-disable-next-line no-empty
     if (source instanceof Uint8Array) {
     } else if (ArrayBuffer.isView(source)) {
       source = new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
@@ -77,6 +81,7 @@ function base(ALPHABET) {
     for (; it2 < size; ++it2) {
       str += ALPHABET.charAt(b58[it2]);
     }
+
     return str;
   }
   function decodeUnsafe(source) {
@@ -127,6 +132,7 @@ function base(ALPHABET) {
     while (it4 !== size) {
       vch[j++] = b256[it4++];
     }
+
     return vch;
   }
   function decode(string) {
@@ -134,28 +140,11 @@ function base(ALPHABET) {
     if (buffer) {
       return buffer;
     }
-    throw new Error('Non-base' + BASE + ' character');
+    throw new Error(`Non-base${BASE} character`);
   }
+
   return {
     encode,
     decode,
   };
-}
-
-/**
- * Base62 alphabet
- * Modifying this alphabet is prohibited as it would invalidate existing encoded data
- */
-const BASE62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const { encode, decode } = base(BASE62);
-const ENCODING = 'hex' satisfies BufferEncoding;
-
-export function encodeBase62(value: string): string {
-  const buffer = Buffer.from(value, ENCODING);
-  return encode(buffer);
-}
-
-export function decodeBase62(encoded: string): string {
-  const uint8Array = decode(encoded);
-  return Buffer.from(uint8Array).toString(ENCODING);
 }
