@@ -134,7 +134,7 @@ export class GeneratePreviewUsecase {
       user: command.user,
     });
     const { workflowId, steps } = workflowResponseDto;
-    const step = steps.find((stepDto) => stepDto.stepUuid === command.stepUuid);
+    const step = steps.find((stepDto) => stepDto._id === command.stepUuid);
     if (!step) {
       throw new StepNotFoundException(command.stepUuid);
     }

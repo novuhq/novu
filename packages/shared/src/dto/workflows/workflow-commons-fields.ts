@@ -14,7 +14,6 @@ export type StepResponseDto = StepDto & {
   _id: string;
   slug: Slug;
   stepId: string;
-  slug: string;
   controls: ControlsSchema;
 };
 
