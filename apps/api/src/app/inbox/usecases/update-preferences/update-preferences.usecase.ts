@@ -6,8 +6,7 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   UpsertPreferences,
-  UpsertSubscriberWorkflowPreferencesCommand,
-  UpsertSubscriberGlobalPreferencesCommand,
+  UpsertPreferencesCommand,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -19,7 +18,12 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { IPreferenceChannels, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
+import {
+  IPreferenceChannels,
+  PreferencesTypeEnum,
+  WorkflowPreferences,
+  WorkflowPreferencesPartial,
+} from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
@@ -36,7 +40,7 @@ export class UpdatePreferences {
     private analyticsService: AnalyticsService,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
-    private upsertPreferences: UpsertPreferences
+    private upsertPreferencesUsecase: UpsertPreferences
   ) {}
 
   async execute(command: UpdatePreferencesCommand): Promise<InboxPreference> {
@@ -252,19 +256,21 @@ export class UpdatePreferences {
     };
 
     if (item.templateId) {
-      return await this.upsertPreferences.upsertSubscriberWorkflowPreferences(
-        UpsertSubscriberWorkflowPreferencesCommand.create({
+      return await this.upsertPreferencesUsecase.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          preferences,
           environmentId: item.environmentId,
           organizationId: item.organizationId,
           _subscriberId: item._subscriberId,
           templateId: item.templateId,
-          preferences,
         })
       );
     }
 
-    return await this.upsertPreferences.upsertSubscriberGlobalPreferences(
-      UpsertSubscriberGlobalPreferencesCommand.create({
+    return await this.upsertPreferencesUsecase.execute(
+      UpsertPreferencesCommand.create({
+        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
         preferences,
         environmentId: item.environmentId,
         organizationId: item.organizationId,

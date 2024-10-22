@@ -17,9 +17,15 @@ import {
   UpdateWorkflow,
   UpdateWorkflowCommand,
   UpsertPreferences,
-  UpsertWorkflowPreferencesCommand,
+  UpsertPreferencesCommand,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  PreferencesTypeEnum,
+  WorkflowCreationSourceEnum,
+  WorkflowOriginEnum,
+  WorkflowTypeEnum,
+} from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
 
 import { SyncCommand } from './sync.command';
@@ -37,7 +43,7 @@ export class Sync {
     private environmentRepository: EnvironmentRepository,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private analyticsService: AnalyticsService,
-    private upsertPreferences: UpsertPreferences,
+    private upsertPreferencesUsecase: UpsertPreferences,
     private getFeatureFlag: GetFeatureFlag
   ) {}
   async execute(command: SyncCommand): Promise<CreateBridgeResponseDto> {
@@ -181,8 +187,9 @@ export class Sync {
         );
 
         if (isWorkflowPreferencesEnabled) {
-          await this.upsertPreferences.upsertWorkflowPreferences(
-            UpsertWorkflowPreferencesCommand.create({
+          await this.upsertPreferencesUsecase.execute(
+            UpsertPreferencesCommand.create({
+              type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
               environmentId: savedWorkflow._environmentId,
               organizationId: savedWorkflow._organizationId,
               templateId: savedWorkflow._id,

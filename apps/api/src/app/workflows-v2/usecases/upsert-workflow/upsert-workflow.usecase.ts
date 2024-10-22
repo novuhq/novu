@@ -20,10 +20,11 @@ import {
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   UpsertPreferences,
-  UpsertUserWorkflowPreferencesCommand,
+  UpsertPreferencesCommand,
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
+  PreferencesTypeEnum,
   StepCreateDto,
   StepDto,
   StepUpdateDto,
@@ -142,13 +143,14 @@ export class UpsertWorkflowUseCase {
   }
 
   private async upsertPreferences(workflow, command: UpsertWorkflowCommand): Promise<PreferencesEntity> {
-    return await this.upsertPreferencesUsecase.upsertUserWorkflowPreferences(
-      UpsertUserWorkflowPreferencesCommand.create({
+    return await this.upsertPreferencesUsecase.execute(
+      UpsertPreferencesCommand.create({
+        type: PreferencesTypeEnum.USER_WORKFLOW,
         environmentId: workflow._environmentId,
         organizationId: workflow._organizationId,
         userId: command.user._id,
         templateId: workflow._id,
-        preferences: command.workflowDto.preferences?.user,
+        preferences: command.workflowDto.preferences?.user || null,
       })
     );
   }
