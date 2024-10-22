@@ -15,13 +15,13 @@ export class CreateMockPayloadUseCase {
   ) {}
 
   public execute(command: AddKeysToPayloadBasedOnHydrationStrategyCommand): Record<string, unknown> {
-    const { dto, controlValueKey } = command;
+    const { controlValues, controlValueKey } = command;
 
-    if (!dto.controlValues) {
+    if (!controlValues) {
       return {};
     }
 
-    const controlValue = dto.controlValues[controlValueKey];
+    const controlValue = controlValues[controlValueKey];
     if (typeof controlValue === 'object') {
       return this.buildPayloadForEmailEditor(controlValue);
     }

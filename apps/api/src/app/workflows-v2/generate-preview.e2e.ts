@@ -17,7 +17,7 @@ import { InAppOutput } from '@novu/framework';
 import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
 
-describe('Control Schema', () => {
+describe('Generate Preview', () => {
   let session: UserSession;
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
 

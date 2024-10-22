@@ -250,3 +250,33 @@ function getDotNotationKeys(input: NestedRecord, parentKey: string = '', keys: s
 
   return keys;
 }
+function flattenJson(obj, parentKey = '', result = {}) {
+  // eslint-disable-next-line guard-for-in
+  for (const key in obj) {
+    // Construct the new key using dot notation
+    const newKey = parentKey ? `${parentKey}.${key}` : key;
+
+    // Check if the value is an object (and not null or an array)
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      // Recursively flatten the object
+      flattenJson(obj[key], newKey, result);
+    } else if (Array.isArray(obj[key])) {
+      // Handle arrays by flattening each item
+      obj[key].forEach((item, index) => {
+        const arrayKey = `${newKey}[${index}]`;
+        if (typeof item === 'object' && item !== null) {
+          flattenJson(item, arrayKey, result);
+        } else {
+          // eslint-disable-next-line no-param-reassign
+          result[arrayKey] = item;
+        }
+      });
+    } else {
+      // Assign the value to the result with the new key
+      // eslint-disable-next-line no-param-reassign
+      result[newKey] = obj[key];
+    }
+  }
+
+  return result;
+}
