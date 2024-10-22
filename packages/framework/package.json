@@ -105,8 +105,7 @@
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
     "next": ">=12.0.0",
-    "zod": ">=3.0.0",
-    "zod-to-json-schema": ">=3.0.0"
+    "zod": ">=3.0.0"
   },
   "peerDependenciesMeta": {
     "@nestjs/common": {
@@ -135,9 +134,6 @@
     },
     "zod": {
       "optional": true
-    },
-    "zod-to-json-schema": {
-      "optional": true
     }
   },
   "devDependencies": {
@@ -160,8 +156,7 @@
     "tsx": "4.16.2",
     "typescript": "5.6.2",
     "vitest": "^1.2.1",
-    "zod": "^3.23.0",
-    "zod-to-json-schema": "^3.23.0"
+    "zod": "^3.23.0"
   },
   "dependencies": {
     "@novu/shared": "workspace:*",
@@ -174,7 +169,8 @@
     "json-schema-to-ts": "^3.0.0",
     "liquidjs": "^10.13.1",
     "ora": "^5.4.1",
-    "sanitize-html": "^2.13.0"
+    "sanitize-html": "^2.13.0",
+    "zod-to-json-schema": "^3.23.0"
   },
   "nx": {
     "tags": ["package:public"]
