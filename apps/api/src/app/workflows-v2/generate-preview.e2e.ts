@@ -17,7 +17,7 @@ import { InAppOutput } from '@novu/framework';
 import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
 
-describe('Generate Preview', () => {
+describe('Control Schema', () => {
   let session: UserSession;
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
 
@@ -232,7 +232,7 @@ function buildInAppControlValues(): InAppOutput {
       label: 'Secondary Action',
       redirect: {
         target: RedirectTargetEnum.BLANK,
-        url: '{{payload.secondaryUrl}}',
+        url: 'https://www.example.com/secondary-action',
       },
     },
     data: {
