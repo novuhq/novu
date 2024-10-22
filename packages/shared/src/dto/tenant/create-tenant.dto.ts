@@ -1,7 +1,7 @@
-import { TenantCustomData } from '../../types';
+import { CustomDataType } from '../../types';
 
 export interface IConstructTenantDto {
-  data?: TenantCustomData;
+  data?: CustomDataType;
 }
 
 export interface ICreateTenantDto extends IConstructTenantDto {

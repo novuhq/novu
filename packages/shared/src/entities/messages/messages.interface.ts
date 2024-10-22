@@ -1,9 +1,11 @@
 import { ChannelTypeEnum, IEmailBlock } from '../../types';
 import { IActor } from '../actor';
-import { IMessageCTADto } from '../../dto';
+import { IMessageActionDto, IMessageCTADto } from '../../dto';
 import { INotificationTemplate } from '../notification-template';
 
 export interface IMessageCTA extends IMessageCTADto {}
+
+export interface IMessageAction extends IMessageActionDto {}
 
 export interface IMessage {
   _id: string;

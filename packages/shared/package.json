@@ -10,6 +10,7 @@
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.json -w --preserveWatchOutput",
+    "postbuild": "npm run check:circulars",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
     "lint": "eslint src",

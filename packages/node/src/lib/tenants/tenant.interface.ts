@@ -1,4 +1,4 @@
-import { TenantIdentifier, TenantCustomData } from '@novu/shared';
+import { TenantIdentifier, CustomDataType } from '@novu/shared';
 
 export interface ITenants {
   create(tenantIdentifier: TenantIdentifier, data: ITenantPayload);
@@ -10,13 +10,13 @@ export interface ITenants {
 
 export interface ITenantPayload {
   name: string;
-  data?: TenantCustomData;
+  data?: CustomDataType;
 }
 
 export interface ITenantUpdatePayload {
   identifier?: TenantIdentifier;
   name?: string;
-  data?: TenantCustomData;
+  data?: CustomDataType;
 }
 
 export interface ITenantPaginationPayload {

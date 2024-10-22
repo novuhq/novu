@@ -1,7 +1,4 @@
-import type {
-  IPreferenceChannels,
-  NotificationTemplateCustomData,
-} from '@novu/shared';
+import type { IPreferenceChannels, CustomDataType } from '@novu/shared';
 
 export interface IUnseenCountQuery {
   feedIdentifier?: string | string[];
@@ -36,7 +33,7 @@ export interface IUserPreferenceSettings {
     name: string;
     critical: boolean;
     tags?: string[];
-    data?: NotificationTemplateCustomData;
+    data?: CustomDataType;
   };
   preference: PreferenceSettingsType;
 }

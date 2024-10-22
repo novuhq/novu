@@ -1,6 +1,6 @@
 import { EnvironmentId, OrganizationId, CustomDataType, TenantId } from '../../types';
 
-export interface ITenantEntity {
+export interface ITenantDto {
   _id?: TenantId;
 
   identifier: string;

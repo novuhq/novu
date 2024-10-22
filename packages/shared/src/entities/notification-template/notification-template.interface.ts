@@ -2,7 +2,7 @@ import { JSONSchema } from 'json-schema-to-ts';
 import type { BuilderFieldType, BuilderGroupValues, CustomDataType, FilterParts, WorkflowTypeEnum } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { INotificationGroup } from '../notification-group';
-import { INotificationTrigger } from '../notification-trigger';
+import { INotificationTrigger, TriggerTypeEnum } from '../notification-trigger';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
 import { ControlsDto } from '../../dto';
@@ -40,10 +40,6 @@ export class IGroupedBlueprint {
 
 export interface IBlueprint extends INotificationTemplate {
   notificationGroup: INotificationGroup;
-}
-
-export enum TriggerTypeEnum {
-  EVENT = 'event',
 }
 
 export interface INotificationBridgeTrigger {

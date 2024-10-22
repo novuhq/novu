@@ -2,7 +2,7 @@ import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator
 import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserCommand, IStepControl } from '@novu/application-generic';
-import { IPreferenceChannels, NotificationTemplateCustomData, StepType } from '@novu/shared';
+import { IPreferenceChannels, CustomDataType, StepType } from '@novu/shared';
 
 import { IStepOutput, IWorkflowDefineStep } from '../../shared';
 
@@ -19,7 +19,7 @@ interface IWorkflowDefineOptions {
 
   preferenceSettings?: IPreferenceChannels;
 
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 
   payloadSchema?: Record<string, unknown>;
 
@@ -40,7 +40,7 @@ export class WorkflowDefineOptions implements IWorkflowDefineOptions {
 
   preferenceSettings?: IPreferenceChannels;
 
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 }
 
 interface IStepDefineOptions {
