@@ -14,7 +14,6 @@ import {
 } from '@novu/shared';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetPreferencesResponseDto } from '@novu/application-generic';
-import { BadRequestException } from '@nestjs/common';
 import { encodeBase62 } from '../../shared/helpers';
 
 export function toResponseWorkflowDto(
@@ -98,9 +97,9 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
 function convertControls(step: NotificationStepEntity): ControlsSchema {
   if (step.template?.controls) {
     return { schema: step.template.controls.schema };
-  } else {
-    throw new BadRequestException('Step controls must be defined.');
   }
+
+  return { schema: {} }; // This is not a usecase, it's only here to be backwards compatible with V1 Notification Entities
 }
 
 function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | undefined {

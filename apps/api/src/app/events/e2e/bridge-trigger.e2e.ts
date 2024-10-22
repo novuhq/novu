@@ -20,7 +20,7 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { workflow, channelStepSchemas } from '@novu/framework';
+import { workflow } from '@novu/framework';
 
 import { DetailEnum } from '@novu/application-generic';
 import { BridgeServer } from '../../../../e2e/bridge.server';
@@ -1493,9 +1493,6 @@ describe('Novu-Hosted Bridge Trigger', () => {
         {
           type: StepTypeEnum.IN_APP,
           name: 'Test Step 1',
-          controls: {
-            schema: channelStepSchemas.in_app.output,
-          },
           controlValues: {
             body: 'Test Body',
           },
@@ -1503,9 +1500,6 @@ describe('Novu-Hosted Bridge Trigger', () => {
         {
           type: StepTypeEnum.IN_APP,
           name: 'Test Step 2',
-          controls: {
-            schema: channelStepSchemas.in_app.output,
-          },
           controlValues: {
             body: 'Test Body',
           },

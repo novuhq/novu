@@ -23,7 +23,7 @@ import {
   SmsNode,
   TriggerNode,
 } from './nodes';
-import { AddNodeEdgeType, AddNodeEdge } from './edges';
+import { AddNodeEdge, AddNodeEdgeType } from './edges';
 import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { StepTypeEnum } from '@/utils/enums';
 import { Step } from '@/utils/types';

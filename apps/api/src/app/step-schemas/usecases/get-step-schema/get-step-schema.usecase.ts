@@ -14,7 +14,7 @@ import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
 import { encodeBase62 } from '../../../shared/helpers';
 
 @Injectable()
-export class GetStepSchema {
+export class GetStepSchemaUseCase {
   constructor(private readonly notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetStepSchemaCommand): Promise<StepSchemaDto> {

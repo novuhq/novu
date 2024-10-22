@@ -1,12 +1,12 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 
-import { UserSessionData } from '@novu/shared';
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { StepType } from '@novu/framework';
 
+import { UserSessionData } from '@novu/shared';
 import { createGetStepSchemaCommand } from './usecases/get-step-schema/get-step-schema.command';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { GetStepSchema } from './usecases/get-step-schema/get-step-schema.usecase';
+import { GetStepSchemaUseCase } from './usecases/get-step-schema/get-step-schema.usecase';
 import { StepSchemaDto } from './dtos/step-schema.dto';
 import { ParseSlugIdPipe } from '../workflows-v2/pipes/parse-slug-Id.pipe';
 
@@ -14,7 +14,7 @@ import { ParseSlugIdPipe } from '../workflows-v2/pipes/parse-slug-Id.pipe';
 @UserAuthentication()
 @UseInterceptors(ClassSerializerInterceptor)
 export class StepSchemasController {
-  constructor(private getStepDefaultSchemaUsecase: GetStepSchema) {}
+  constructor(private getStepDefaultSchemaUsecase: GetStepSchemaUseCase) {}
 
   @Get()
   @ExternalApiAccessible()
