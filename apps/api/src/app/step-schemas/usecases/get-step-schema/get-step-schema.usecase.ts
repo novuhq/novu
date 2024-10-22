@@ -18,14 +18,13 @@ export class GetStepSchemaUseCase {
 
   async execute(command: GetStepSchemaCommand): Promise<StepSchemaDto> {
     if (isGetByStepType(command)) {
-      return { controls: buildControlsSchema({ stepType: command.stepType }), variables: buildVariablesSchema() };
+      return { variables: buildVariablesSchema() };
     }
 
     if (isGetByStepId(command)) {
-      const { currentStep, previousSteps } = await this.findSteps(command);
+      const { previousSteps } = await this.findSteps(command);
 
       return {
-        controls: buildControlsSchema({ controlsSchema: currentStep.template?.controls?.schema }),
         variables: buildVariablesSchema(previousSteps),
       };
     }
