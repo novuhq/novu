@@ -47,7 +47,9 @@ export class CollectPlaceholdersFromTipTapSchemaUsecase {
     } else if (node.type === 'show' && node.attr && node.attr.when) {
       this.handleShowTraversal(node, placeholders);
     } else if (node.type === 'text' && node.text) {
-      const regularPlaceholders = extractPlaceholders(node.text).filter((x) => !x.startsWith('item'));
+      const regularPlaceholders = extractPlaceholders(node.text).filter(
+        (placeholder) => !placeholder.startsWith('item')
+      );
       for (const regularPlaceholder of regularPlaceholders) {
         placeholders.regular[regularPlaceholder] = [];
       }
