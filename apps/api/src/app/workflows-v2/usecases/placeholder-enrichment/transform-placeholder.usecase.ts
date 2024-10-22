@@ -49,6 +49,7 @@ export class TransformPlaceholderMapUseCase {
         setNestedValue(defaultPayload, key, finalValue);
         items.forEach((item) => {
           const extractedKey = item.replace('item.', '');
+          // TODO: extract to const @sokratis
           const valueFunc = (suffix) => `{#${item}#}-${suffix}`;
           setNestedValue(finalValue[0], extractedKey, valueFunc('1'));
           setNestedValue(finalValue[1], extractedKey, valueFunc('2'));
