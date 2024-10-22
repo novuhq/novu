@@ -222,7 +222,7 @@ function buildInAppControlValues(): InAppOutput {
     body: 'Hello, World! {{payload.placeholder.body}}',
     avatar: 'https://www.example.com/avatar.png',
     primaryAction: {
-      label: 'Primary Action',
+      label: '{{payload.secondaryUrl}}',
       redirect: {
         target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/primary-action',

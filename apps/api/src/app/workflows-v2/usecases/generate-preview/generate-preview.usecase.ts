@@ -153,9 +153,18 @@ export class GeneratePreviewUsecase {
 
     let aggregatedDefaultValues = {};
     const aggregatedDefaultValuesForControl: Record<string, Record<string, unknown>> = {};
-    for (const controlValueKey in dto.controlValues) {
-      if (dto.controlValues.hasOwnProperty(controlValueKey)) {
-        const defaultValuesForSingleControlValue = this.createMockPayloadUseCase.execute({ dto, controlValueKey });
+    const flattenedValues = flattenJson(dto.controlValues);
+    console.log('flattenedValues', flattenedValues);
+    for (const controlValueKey in flattenedValues) {
+      if (flattenedValues.hasOwnProperty(controlValueKey)) {
+        console.log('controlValueKey', controlValueKey);
+
+        const defaultValuesForSingleControlValue = this.createMockPayloadUseCase.execute({
+          controlValues: flattenedValues,
+          controlValueKey,
+        });
+        console.log('defaultValuesForSingleControlValue', defaultValuesForSingleControlValue);
+
         if (defaultValuesForSingleControlValue) {
           aggregatedDefaultValuesForControl[controlValueKey] = defaultValuesForSingleControlValue;
         }
