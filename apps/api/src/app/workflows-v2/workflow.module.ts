@@ -19,11 +19,11 @@ import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflo
 import { GetWorkflowByIdsUseCase } from './usecases/get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetStepSchemaUseCase } from '../step-schemas/usecases/get-step-schema/get-step-schema.usecase';
 import { BridgeModule } from '../bridge';
-import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview-usecase';
-import { CreateMockPayloadUseCase } from './usecases/placeholder-enrichment/payload-preview-value-generator-usecase';
-import { ExtractDefaultsUsecase } from './usecases/get-default-values-from-schema/extract-defaults-usecase';
+import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview.usecase';
+import { CreateMockPayloadUseCase } from './usecases/placeholder-enrichment/payload-preview-value-generator.usecase';
+import { ExtractDefaultsUsecase } from './usecases/get-default-values-from-schema/extract-defaults.usecase';
 import { CollectPlaceholdersFromTipTapSchemaUsecase } from './usecases/placeholder-enrichment/collect-placeholders-from-tip-tap-schema.usecase';
-import { TransformPlaceholderMapUseCase } from './usecases/placeholder-enrichment/transform-placeholder-usecase';
+import { TransformPlaceholderMapUseCase } from './usecases/placeholder-enrichment/transform-placeholder.usecase';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],

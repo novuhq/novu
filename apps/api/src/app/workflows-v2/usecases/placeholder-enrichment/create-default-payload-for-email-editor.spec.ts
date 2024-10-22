@@ -4,7 +4,7 @@ import {
   CollectPlaceholdersFromTipTapSchemaUsecase,
   PlaceholderMap,
 } from './collect-placeholders-from-tip-tap-schema.usecase';
-import { TransformPlaceholderMapUseCase } from './transform-placeholder-usecase';
+import { TransformPlaceholderMapUseCase } from './transform-placeholder.usecase';
 
 describe('default paylaod creator for email editor', () => {
   it('should collect placeholders from multiple for nodes, show nodes, and regular placeholders', () => {

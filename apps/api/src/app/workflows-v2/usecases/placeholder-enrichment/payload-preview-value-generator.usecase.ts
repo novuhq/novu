@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TipTapNode } from '@novu/shared';
-import { TransformPlaceholderMapUseCase } from './transform-placeholder-usecase';
+import { TransformPlaceholderMapUseCase } from './transform-placeholder.usecase';
 import {
   CollectPlaceholdersFromTipTapSchemaUsecase,
   extractPlaceholders,

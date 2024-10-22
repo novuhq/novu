@@ -15,9 +15,9 @@ import { difference, isArray, isObject, reduce } from 'lodash';
 import { GeneratePreviewCommand } from './generate-preview-command';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { GetWorkflowUseCase } from '../get-workflow/get-workflow.usecase';
-import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator-usecase';
+import { CreateMockPayloadUseCase } from '../placeholder-enrichment/payload-preview-value-generator.usecase';
 import { StepNotFoundException } from '../../exceptions/step-not-found-exception';
-import { ExtractDefaultsUsecase } from '../get-default-values-from-schema/extract-defaults-usecase';
+import { ExtractDefaultsUsecase } from '../get-default-values-from-schema/extract-defaults.usecase';
 
 @Injectable()
 export class GeneratePreviewUsecase {

@@ -3,7 +3,7 @@ import { render } from '@maily-to/render';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { RenderCommand } from './render-command';
-import { ExpandEmailEditorSchemaUsecase } from './email-schema-expander-usecase';
+import { ExpandEmailEditorSchemaUsecase } from './email-schema-expander.usecase';
 
 @Injectable()
 export class EmailOutputRendererUsecase {
