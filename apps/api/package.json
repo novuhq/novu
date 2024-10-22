@@ -20,7 +20,7 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "lint:openapi": "spectral lint http://127.0.0.1:${PORT:-3000}/openapi.yaml",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit 'src/app/workflows-v2/pipes/parse-slug-Id.pipe spec.ts'",
+    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit 'src/**/*.spec.ts'",
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts ",
     "test:e2e:ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test E2E_RUNNER=true CI_EE_TEST=true CLERK_ENABLED=true mocha --grep @skip-in-ee --invert --require ts-node/register --exit --file e2e/setup.ts 'src/**/*.e2e{,-ee}.ts'",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly",
