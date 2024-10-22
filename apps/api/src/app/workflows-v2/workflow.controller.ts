@@ -70,14 +70,14 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async update(
     @UserSession() user: UserSessionData,
-    @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId,
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     return await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         workflowDto: updateWorkflowDto,
         user,
-        identifierOrInternalId,
+        identifierOrInternalId: workflowId,
       })
     );
   }
@@ -86,9 +86,9 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async getWorkflow(
     @UserSession() user: UserSessionData,
-    @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId
   ): Promise<WorkflowResponseDto> {
-    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ identifierOrInternalId, user }));
+    return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ identifierOrInternalId: workflowId, user }));
   }
 
   @Delete(':workflowId')
@@ -96,9 +96,11 @@ export class WorkflowController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeWorkflow(
     @UserSession() user: UserSessionData,
-    @Param('workflowId', ParseSlugIdPipe) identifierOrInternalId: IdentifierOrInternalId
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId
   ) {
-    await this.deleteWorkflowUsecase.execute(DeleteWorkflowCommand.create({ identifierOrInternalId, user }));
+    await this.deleteWorkflowUsecase.execute(
+      DeleteWorkflowCommand.create({ identifierOrInternalId: workflowId, user })
+    );
   }
 
   @Get('')
