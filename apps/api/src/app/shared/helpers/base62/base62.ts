@@ -1,3 +1,6 @@
+import { base } from './base';
+import { BASE62_ALPHABET } from './base62-alphabet.const';
+
 const { encode, decode } = base(BASE62_ALPHABET);
 const ENCODING = 'hex' satisfies BufferEncoding;
 

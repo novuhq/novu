@@ -10,7 +10,7 @@
  * "version": "5.0.0",
  */
 
-function base(ALPHABET) {
+export function base(ALPHABET) {
   if (ALPHABET.length >= 255) {
     throw new TypeError('Alphabet too long');
   }
