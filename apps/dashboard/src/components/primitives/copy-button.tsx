@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiCheckLine, RiFileCopyLine } from 'react-icons/ri';
+import { RiFileCopyLine } from 'react-icons/ri';
 import { Button } from './button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
@@ -33,7 +33,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ content, className }) =>
             onClick={copyToClipboard}
             aria-label="Copy to clipboard"
           >
-            {isCopied ? <RiCheckLine className="h-4 w-4" /> : <RiFileCopyLine className="h-4 w-4" />}
+            <RiFileCopyLine className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>

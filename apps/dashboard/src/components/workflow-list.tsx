@@ -29,7 +29,7 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
+import { WorkflowOriginEnum, WorkflowStatusEnum, WorkflowTypeEnum } from '@/utils/enums';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 import type { ListWorkflowResponse } from '@novu/shared';

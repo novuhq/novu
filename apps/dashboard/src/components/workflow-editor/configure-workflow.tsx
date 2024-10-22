@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { RouteFill } from '../icons';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form';
+
 import { Input, InputField } from '../primitives/input';
 import { Switch } from '../primitives/switch';
 import { Textarea } from '../primitives/textarea';
@@ -12,6 +12,7 @@ import { RiInformation2Line } from 'react-icons/ri';
 
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../primitives/tooltip';
 import { CopyButton } from '../primitives/copy-button';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../primitives/form/form';
 
 export function ConfigureWorkflow() {
   const { control } = useFormContext<z.infer<typeof formSchema>>();
@@ -98,7 +99,7 @@ export function ConfigureWorkflow() {
                 <FormLabel>Add tags</FormLabel>
               </div>
               <FormControl className="text-xs text-neutral-600">
-                <TagInput {...field} value={field.value ?? []} showAddButton />
+                <TagInput {...field} value={field.value ?? []} suggestions={[]} />
               </FormControl>
             </FormItem>
           )}
