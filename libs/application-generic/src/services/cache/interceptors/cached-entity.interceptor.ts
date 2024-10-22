@@ -1,4 +1,4 @@
-import { Inject, Logger } from '@nestjs/common';
+import { ConflictException, Inject, Logger } from '@nestjs/common';
 import { DistributedLockService } from '../../distributed-lock';
 import { CacheService, CachingConfig } from '../cache.service';
 
@@ -89,7 +89,9 @@ export function CachedEntity<T_Output = any>({
             `Failed to acquire lock for key: ${cacheKey} in "method: ${methodName}"`,
             LOG_CONTEXT,
           );
-          throw new Error(`Failed to acquire lock for key: ${cacheKey}`);
+          throw new ConflictException(
+            `Failed to acquire cache lock. Please try again later.`,
+          );
         }
       }
 

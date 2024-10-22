@@ -13,7 +13,7 @@ export const buildBridgeEndpointUrl = (
 
 /*
  * Creates a bridge subdomain based on the apiKey provided. This function is used in several
- * places, including packages/cli/src/commands/init/templates/index.ts when generating the
+ * places, including packages/novu/src/commands/init/templates/index.ts when generating the
  * subdomain in the bridge application. Developers should take care to keep changes
  * in sync.
  */

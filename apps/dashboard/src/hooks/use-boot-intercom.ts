@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 // @ts-ignore
 import { useIntercom } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../config';
-import { useAuth } from '@/context';
+import { useAuth } from '@/context/auth/hooks';
 
 export function useBootIntercom() {
   const { currentOrganization, currentUser } = useAuth();

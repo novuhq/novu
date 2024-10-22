@@ -2,9 +2,9 @@ import { ReactNode } from 'react';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { IntercomProvider } from 'react-use-intercom';
-import { SideNavigation } from './side-navigation';
-import { HeaderNavigation } from './header-navigation';
 import { INTERCOM_APP_ID } from '@/config';
+import { SideNavigation } from '@/components/side-navigation/side-navigation';
+import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 
 export const DashboardLayout = ({
   children,

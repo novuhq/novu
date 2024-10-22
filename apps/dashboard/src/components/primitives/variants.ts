@@ -115,3 +115,7 @@ export const stepVariants = cva(
     },
   }
 );
+
+export const inputVariants = cva(
+  'file:text-foreground placeholder:text-foreground-400 flex h-full w-full bg-transparent text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none disabled:cursor-not-allowed'
+);
