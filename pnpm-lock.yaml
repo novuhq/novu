@@ -470,9 +470,6 @@ importers:
       envalid:
         specifier: ^8.0.0
         version: 8.0.0
-      faker:
-        specifier: ^6.6.6
-        version: 6.6.6
       handlebars:
         specifier: ^4.7.7
         version: 4.7.7
