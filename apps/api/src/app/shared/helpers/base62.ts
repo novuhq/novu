@@ -4,6 +4,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or http://www.opensource.org/licenses/mit-license.php.
 // "version": "5.0.0",
+// cspell:disable
 
 function base(ALPHABET) {
   if (ALPHABET.length >= 255) {

@@ -29,4 +29,9 @@ export type DeepPartial<T> = T extends object
 
 export type Base62Id = string;
 
-export type Slug = `${string}${Base62Id}`;
+export enum ShortIsPrefixEnum {
+  WORKFLOW = 'wf_',
+  STEP = 'stp_',
+}
+
+export type Slug = `${ShortIsPrefixEnum}${Base62Id}`;

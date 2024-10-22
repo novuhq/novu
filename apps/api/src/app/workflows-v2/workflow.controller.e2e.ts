@@ -18,6 +18,7 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
   WorkflowResponseDto,
+  ShortIsPrefixEnum,
 } from '@novu/shared';
 import { randomBytes } from 'crypto';
 import { channelStepSchemas, JsonSchema } from '@novu/framework';
@@ -139,7 +140,7 @@ describe('Workflow Controller E2E API Testing', () => {
       const internalId = workflowCreated._id;
       await updateWorkflowAndValidate(internalId, workflowCreated.updatedAt, updateDtoWithValues, internalId);
 
-      const slugPrefixAndEncodedInternalId = `workflow-name-wf_${encodeBase62(internalId)}`;
+      const slugPrefixAndEncodedInternalId = `workflow-name-${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(internalId)}`;
       await updateWorkflowAndValidate(
         slugPrefixAndEncodedInternalId,
         workflowCreated.updatedAt,
@@ -230,7 +231,7 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(workflowRetrievedByInternalId._id).to.equal(internalId);
 
       const base62InternalId = encodeBase62(internalId);
-      const slugPrefixAndEncodedInternalId = `my-workflow-wf_${base62InternalId}`;
+      const slugPrefixAndEncodedInternalId = `my-workflow-${ShortIsPrefixEnum.WORKFLOW}${base62InternalId}`;
       const workflowRetrievedBySlugPrefixAndEncodedInternalId = await getWorkflowRest(slugPrefixAndEncodedInternalId);
       expect(workflowRetrievedBySlugPrefixAndEncodedInternalId._id).to.equal(internalId);
 
@@ -370,7 +371,7 @@ function updateStepId(step: StepResponseDto): StepResponseDto {
   return {
     ...step,
     ...(step._id && step.name ? { stepId: slugifyName(step.name) } : {}),
-    ...(step.name && step._id ? { slug: `${slugifyName(step.name)}_${encodeBase62(step._id)}` } : {}),
+    ...(step.name && step._id ? { slug: `${ShortIsPrefixEnum.STEP}${encodeBase62(step._id)}` } : {}),
   };
 }
 
@@ -415,7 +416,7 @@ async function updateWorkflowAndValidate(
   );
   const expectedUpdateRequest = {
     ...updateRequest,
-    slug: `${slugifyName(updateRequest.name)}_${encodeBase62(workflowInternalId || workflowRequestId)}`,
+    slug: `${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(workflowInternalId || workflowRequestId)}`,
     steps: updateRequest.steps.map(updateStepId),
   };
   expect(updatedWorkflowWithResponseFieldsRemoved, 'workflow after update does not match as expected').to.deep.equal(
