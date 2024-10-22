@@ -23,46 +23,7 @@ export const EmailStepControlSchema: JSONSchema = {
   properties: {
     emailEditor: {
       type: 'object',
-      properties: {
-        type: {
-          type: 'string',
-        },
-        content: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              type: {
-                type: 'string',
-              },
-              content: {
-                type: 'array',
-                items: {
-                  $ref: '#/properties/emailEditor/properties/content/items',
-                },
-              },
-              text: {
-                type: 'string',
-              },
-              attr: {
-                type: 'object',
-                additionalProperties: true,
-              },
-            },
-            required: ['type'],
-            additionalProperties: false,
-          },
-        },
-        text: {
-          type: 'string',
-        },
-        attr: {
-          type: 'object',
-          additionalProperties: true,
-        },
-      },
-      required: ['type'],
-      additionalProperties: false,
+      additionalProperties: true, // Allows any properties in emailEditor
     },
     subject: {
       type: 'string',
