@@ -14,6 +14,4 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   preferences: PreferencesResponseDto;
 
   status: WorkflowStatusEnum;
-
-  type: WorkflowTypeEnum;
 }
