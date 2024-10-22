@@ -98,4 +98,36 @@ describe('GetPlatformNotificationUsage', () => {
 
     expect(result).to.include.deep.members(expectedResult.splice(0, 1));
   });
+
+  it(`should return the usage for the given single organization`, async () => {
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+    const useCase = createUseCase();
+    const notificationsCount = 110;
+    const mockNotificationDate = new Date('2021-01-05');
+
+    await notificationRepo.insertMany(
+      new Array(notificationsCount).fill({
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        createdAt: mockNotificationDate,
+      })
+    );
+
+    const result = await useCase.execute(
+      GetPlatformNotificationUsageCommand.create({
+        startDate: new Date('2021-01-01'),
+        endDate: new Date('2021-01-31'),
+        organizationId: session.organization._id,
+      })
+    );
+
+    expect(result).to.deep.equal([
+      {
+        _id: session.organization._id.toString(),
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        notificationsCount,
+      },
+    ]);
+  });
 });

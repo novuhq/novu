@@ -12,6 +12,7 @@ import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 import { ChangeModule } from './app/change/change.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
+import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
 import { EnvironmentsModule } from './app/environments/environments.module';
 import { EventsModule } from './app/events/events.module';
 import { ExecutionDetailsModule } from './app/execution-details/execution-details.module';
@@ -76,7 +77,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   InboundParseModule,
   SharedModule,
   HealthModule,
-  EnvironmentsModule,
+  EnvironmentsModuleV1,
   ExecutionDetailsModule,
   WorkflowModuleV1,
   EventsModule,
@@ -107,6 +108,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   PreferencesModule,
   WorkflowModule,
   GracefulShutdownConfigModule.forRootAsync(),
+  EnvironmentsModule,
 ];
 
 const enterpriseModules = enterpriseImports();

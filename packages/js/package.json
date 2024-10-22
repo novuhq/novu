@@ -1,6 +1,6 @@
 {
   "name": "@novu/js",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
@@ -15,8 +15,8 @@
         "default": "./dist/esm/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/index.js",
-        "default": "./dist/cjs/index.d.ts"
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
       }
     },
     "./ui": {
@@ -25,8 +25,8 @@
         "default": "./dist/esm/ui/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/ui/index.js",
-        "default": "./dist/cjs/ui/index.d.ts"
+        "types": "./dist/cjs/ui/index.d.ts",
+        "default": "./dist/cjs/ui/index.js"
       }
     },
     "./themes": {
@@ -35,8 +35,8 @@
         "default": "./dist/esm/themes/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/themes/index.js",
-        "default": "./dist/cjs/themes/index.d.ts"
+        "types": "./dist/cjs/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
       }
     },
     "./internal": {
@@ -45,8 +45,8 @@
         "default": "./dist/esm/internal/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/internal/index.js",
-        "default": "./dist/cjs/internal/index.d.ts"
+        "types": "./dist/cjs/internal/index.d.ts",
+        "default": "./dist/cjs/internal/index.js"
       }
     }
   },
@@ -68,11 +68,11 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "start:server": "http-server ./dist -p 4010",
-    "build": "pnpm run clean && NODE_ENV=production tsup && pnpm run post:build",
+    "build": "pnpm run clean && NODE_ENV=production tsup",
+    "postbuild": "./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
-    "tsup:watch": "tsup --watch && pnpm run post:build",
-    "post:build": "node scripts/size-limit.mjs && pnpm run check-exports",
+    "tsup:watch": "tsup --watch",
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",

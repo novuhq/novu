@@ -1,0 +1,97 @@
+{
+  "name": "novu",
+  "version": "2.1.0",
+  "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
+  "main": "src/index.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novuhq/novu.git"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates",
+    "build:prod": "pnpm prebuild && pnpm build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "precommit": "lint-staged",
+    "start": "pnpm start:dev",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix",
+    "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon init",
+    "start:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon",
+    "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon dev --dashboard-url http://localhost:4200",
+    "start:init:mode": "cross-env NODE_ENV=dev nodemon init",
+    "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj nodemon sync",
+    "start:test": "cross-env NODE_ENV=test PORT=1336 nodemon init",
+    "start:debug": "cross-env nodemon --config nodemon-debug.json",
+    "start:prod": "cross-env node dist/src/index.js",
+    "print:project-path": "echo \"$PWD\" | sed 's|.*/novu/||'"
+  },
+  "keywords": [
+    "novu",
+    "cli",
+    "novu-cli",
+    "cloud",
+    "sync",
+    "studio"
+  ],
+  "author": "Novu Team <engineering@novu.co>",
+  "license": "ISC",
+  "bin": {
+    "novu": "./dist/src/index.js"
+  },
+  "devDependencies": {
+    "@types/configstore": "^5.0.1",
+    "@types/gradient-string": "^1.1.6",
+    "@types/validate-npm-package-name": "3.0.0",
+    "@types/inquirer": "^8.2.0",
+    "@types/mocha": "10.0.2",
+    "@types/prompts": "2.4.2",
+    "@types/uuid": "^8.3.4",
+    "@types/ws": "^8.5.3",
+    "ncp": "^2.0.0",
+    "nodemon": "^3.0.1",
+    "ts-node": "~10.9.1",
+    "typescript": "5.6.2",
+    "vitest": "^1.2.1"
+  },
+  "dependencies": {
+    "@novu/ntfr-client": "^0.0.4",
+    "@novu/shared": "workspace:*",
+    "@segment/analytics-node": "^1.1.4",
+    "axios": "^1.6.8",
+    "chalk": "4.1.2",
+    "commander": "^9.0.0",
+    "configstore": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "get-port": "^5.1.1",
+    "gradient-string": "^2.0.0",
+    "inquirer": "^8.2.0",
+    "jwt-decode": "^3.1.2",
+    "open": "^8.4.0",
+    "ora": "^5.4.1",
+    "uuid": "^9.0.0",
+    "ws": "^8.11.0",
+    "picocolors": "^1.0.0",
+    "validate-npm-package-name": "3.0.0",
+    "prompts": "2.4.2",
+    "@types/cross-spawn": "6.0.0",
+    "cross-spawn": "7.0.3",
+    "fast-glob": "3.3.1",
+    "async-sema": "3.0.1"
+  },
+  "nx": {
+    "tags": ["package:public"]
+  }
+}

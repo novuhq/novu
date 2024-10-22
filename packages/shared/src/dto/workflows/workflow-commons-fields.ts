@@ -10,6 +10,7 @@ export class ControlsSchema {
 
 export type StepResponseDto = StepDto & {
   stepUuid: string;
+  stepId: string;
 };
 
 export type StepUpdateDto = StepDto & {
@@ -39,8 +40,8 @@ export class StepDto {
   @IsDefined()
   type: StepTypeEnum;
 
-  @IsOptional()
-  controls?: ControlsSchema;
+  @IsObject()
+  controls: ControlsSchema;
 
   @IsObject()
   controlValues: Record<string, unknown>;
@@ -63,6 +64,10 @@ export class WorkflowCommonsFields {
   @IsString()
   @IsDefined()
   name: string;
+
+  @IsString()
+  @IsDefined()
+  workflowId: string;
 
   @IsString()
   @IsOptional()

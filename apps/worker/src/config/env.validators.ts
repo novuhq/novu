@@ -1,4 +1,4 @@
-import { json, port, str, num, ValidatorSpec, makeValidator, bool, CleanedEnv, cleanEnv } from 'envalid';
+import { json, port, str, num, ValidatorSpec, makeValidator, bool, CleanedEnv, cleanEnv, url } from 'envalid';
 import {
   DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
   DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
@@ -60,6 +60,7 @@ export const envValidators = {
   NOTIFICATION_RETENTION_DAYS: num({ default: DEFAULT_NOTIFICATION_RETENTION_DAYS }),
   MESSAGE_GENERIC_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS }),
   MESSAGE_IN_APP_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS }),
+  API_ROOT_URL: url(),
 
   // Feature Flags
   ...Object.keys(FeatureFlagsKeysEnum).reduce(

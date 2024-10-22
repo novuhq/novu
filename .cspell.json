@@ -309,6 +309,7 @@
     "mailin",
     "Mailjet",
     "mailparser",
+    "Maily",
     "Maizzle",
     "mansagroup",
     "mantine",
@@ -685,7 +686,11 @@
     "xkeysib",
     "zulip",
     "zwnj",
-    "motionone"
+    "motionone",
+    "xyflow",
+    "Sonner",
+    "sonner",
+    "cmdk"
   ],
   "flagWords": [],
   "patterns": [
@@ -783,6 +788,6 @@
     "apps/web/src/studio/components/workflows/step-editor/editor/files.ts",
     "apps/web/src/pages/playground/web-container-configuration/sandbox-vite/*.ts",
     "apps/api/src/app/analytics/usecases/hubspot-identify-form/hubspot-identify-form.usecase.ts",
-    "apps/dashboard/eslint.config.js",
+    "apps/dashboard/eslint.config.js"
   ]
 }

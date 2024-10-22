@@ -78,13 +78,19 @@ export function buildCredentialsKeyPart(
   const identifier = getIdentifier(key, keyConfig);
 
   if (identifier?.key) {
-    credentialsResult += `:${getCredentialWithContext(identifier.key, identifier.value)}`;
+    credentialsResult += `:${getCredentialWithContext(
+      identifier.key,
+      identifier.value,
+    )}`;
   }
 
   const environment = getEnvironment(keyConfig);
 
   if (environment?.key) {
-    credentialsResult += `:${getCredentialWithContext(environment.key, environment.value)}`;
+    credentialsResult += `:${getCredentialWithContext(
+      environment.key,
+      environment.value,
+    )}`;
   }
 
   return credentialsResult;

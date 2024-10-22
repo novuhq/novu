@@ -1,6 +1,6 @@
-import { ResourceEnum } from '../constants/resource.constants';
-import { toPascalCase } from '../utils';
-import { ConflictError, InternalServerError, NotFoundError } from './base.errors';
+import { HttpStatusEnum, PostActionEnum, ResourceEnum } from '../constants';
+import { toPascalCase } from '../utils/string.utils';
+import { ConflictError, NotFoundError, ServerError } from './base.errors';
 
 export abstract class ResourceConflictError extends ConflictError {
   constructor(resource: ResourceEnum, id: string) {
@@ -14,14 +14,9 @@ export abstract class ResourceNotFoundError extends NotFoundError {
   }
 }
 
-export abstract class ResourceExecutionFailed extends InternalServerError {
-  constructor(resource: ResourceEnum, id: string) {
-    super(`Failed to execute ${toPascalCase(resource)} with id: \`${id}\`. Please try again later.`);
-  }
-}
-
-export abstract class ResourcePreviewFailed extends InternalServerError {
-  constructor(resource: ResourceEnum, id: string) {
-    super(`Failed to preview ${toPascalCase(resource)} with id: \`${id}\`. Please try again later.`);
+export abstract class ResourceExecutionFailed extends ServerError {
+  statusCode = HttpStatusEnum.BAD_GATEWAY;
+  constructor(resource: ResourceEnum, id: string, action: PostActionEnum, cause: unknown) {
+    super(`Failed to ${action} ${toPascalCase(resource)} with id: \`${id}\``, { cause });
   }
 }
