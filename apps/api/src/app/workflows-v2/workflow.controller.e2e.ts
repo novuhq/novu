@@ -377,9 +377,11 @@ function findStepOnRequestBasedOnId(workflowUpdateRequest: UpsertWorkflowBody, s
  * There's a side effect on the backend where the stepId gets updated based on the step name.
  * We need to make a design decision on the client side, should we allow users to update the stepId separately.
  */
-function updateStepId(step: StepResponseDto): StepResponseDto {
+function updateStepId(step: StepResponseDto): Partial<StepResponseDto> {
+  const { controls, ...rest } = step;
+
   return {
-    ...step,
+    ...rest,
     ...(step._id && step.name ? { stepId: slugifyName(step.name) } : {}),
     ...(step.name && step._id ? { slug: `${ShortIsPrefixEnum.STEP}${encodeBase62(step._id)}` } : {}),
   };
@@ -408,7 +410,7 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
     if (!stepOnRequestBasedOnId) {
       augmentedStep = buildStepWithoutUUid(responseStep);
     } else {
-      augmentedStep = { ...responseStep };
+      augmentedStep = responseStep;
     }
     augmentedSteps.push(augmentedStep);
   }
