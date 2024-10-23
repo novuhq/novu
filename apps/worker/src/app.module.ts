@@ -1,13 +1,13 @@
 import { DynamicModule, ForwardReference, Logger, Module, Provider, Type } from '@nestjs/common';
 
-import { ProfilingModule } from '@novu/application-generic';
 import { APP_FILTER } from '@nestjs/core';
+import { GracefulShutdownConfigModule, ProfilingModule } from '@novu/application-generic';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
-import { SharedModule } from './app/shared/shared.module';
-import { HealthModule } from './app/health/health.module';
-import { WorkflowModule } from './app/workflow/workflow.module';
-import { TelemetryModule } from './app/telemetry/telemetry.module';
 import packageJson from '../package.json';
+import { HealthModule } from './app/health/health.module';
+import { SharedModule } from './app/shared/shared.module';
+import { TelemetryModule } from './app/telemetry/telemetry.module';
+import { WorkflowModule } from './app/workflow/workflow.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,
@@ -15,6 +15,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   WorkflowModule,
   TelemetryModule,
   ProfilingModule.register(packageJson.name),
+  GracefulShutdownConfigModule.forRootAsync(),
 ];
 
 const providers: Provider[] = [];
