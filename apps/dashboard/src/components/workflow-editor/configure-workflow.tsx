@@ -95,15 +95,16 @@ export function ConfigureWorkflow() {
           control={control}
           name="tags"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="group" tabIndex={-1}>
               <div className="flex items-center gap-1">
-                <FormLabel>Add tags</FormLabel>
+                <FormLabel>Tags</FormLabel>
               </div>
               <FormControl className="text-xs text-neutral-600">
                 <TagInput
                   {...field}
                   value={field.value ?? []}
                   suggestions={tagsQuery.data?.data.map((tag) => tag.name) || []}
+                  showAddButton
                 />
               </FormControl>
             </FormItem>
