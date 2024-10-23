@@ -1,0 +1,12 @@
+# Base Dockerfile to be published on GHCR
+FROM node:20-alpine3.19
+RUN apk add --no-cache g++ make py3-pip
+ENV NX_DAEMON=false
+
+# Install global dependencies
+RUN npm --no-update-notifier --no-fund --global install pm2 pnpm@9.11.0 && \
+    pnpm --version
+
+# Set non-root user
+USER 1000
+WORKDIR /usr/src/app
