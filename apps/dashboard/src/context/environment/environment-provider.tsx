@@ -1,12 +1,12 @@
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { IEnvironment } from '@novu/shared';
-import { useFetchEnvironments } from './hooks';
-import { useAuth } from '../auth';
-import { EnvironmentContext } from './environment-context';
 import { getEnvironmentId, saveEnvironmentId } from '@/utils/environment';
 import { BaseEnvironmentEnum } from '@/utils/types';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { useAuth } from '@/context/auth/hooks';
+import { useFetchEnvironments } from '@/context/environment/hooks';
+import { EnvironmentContext } from '@/context/environment/environment-context';
 
 function selectEnvironment(environments: IEnvironment[], selectedEnvironmentId?: string | null) {
   let environment: IEnvironment | undefined;

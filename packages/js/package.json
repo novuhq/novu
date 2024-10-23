@@ -15,8 +15,8 @@
         "default": "./dist/esm/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/index.js",
-        "default": "./dist/cjs/index.d.ts"
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
       }
     },
     "./ui": {
@@ -25,8 +25,8 @@
         "default": "./dist/esm/ui/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/ui/index.js",
-        "default": "./dist/cjs/ui/index.d.ts"
+        "types": "./dist/cjs/ui/index.d.ts",
+        "default": "./dist/cjs/ui/index.js"
       }
     },
     "./themes": {
@@ -35,8 +35,8 @@
         "default": "./dist/esm/themes/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/themes/index.js",
-        "default": "./dist/cjs/themes/index.d.ts"
+        "types": "./dist/cjs/themes/index.d.ts",
+        "default": "./dist/cjs/themes/index.js"
       }
     },
     "./internal": {
@@ -45,8 +45,8 @@
         "default": "./dist/esm/internal/index.mjs"
       },
       "require": {
-        "types": "./dist/cjs/internal/index.js",
-        "default": "./dist/cjs/internal/index.d.ts"
+        "types": "./dist/cjs/internal/index.d.ts",
+        "default": "./dist/cjs/internal/index.js"
       }
     }
   },
@@ -91,7 +91,7 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.15.4",
+    "@arethetypeswrong/cli": "^0.16.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^20.15.0",
     "autoprefixer": "^10.4.0",

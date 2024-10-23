@@ -1,3 +1,5 @@
+import { isNativeError } from 'node:util/types';
+
 import { HttpStatusEnum } from '../constants';
 import { ErrorCodeEnum } from '../constants/error.constants';
 
@@ -33,8 +35,27 @@ export abstract class UnauthorizedError extends FrameworkError {
   statusCode = HttpStatusEnum.UNAUTHORIZED;
 }
 
-export abstract class InternalServerError extends FrameworkError {
-  statusCode = HttpStatusEnum.INTERNAL_SERVER_ERROR;
+export abstract class ServerError extends FrameworkError {
+  data: {
+    /**
+     * The stack trace of the error.
+     */
+    stack: string;
+  };
+
+  constructor(message: string, { cause }: Partial<{ cause: unknown }> = {}) {
+    if (isNativeError(cause)) {
+      super(`${message}: ${cause.message}`);
+      this.data = {
+        stack: cause.stack ?? message,
+      };
+    } else {
+      super(`${message}: ${JSON.stringify(cause, null, 2)}`);
+      this.data = {
+        stack: message,
+      };
+    }
+  }
 }
 
 export abstract class ConflictError extends FrameworkError {

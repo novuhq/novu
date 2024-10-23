@@ -4,13 +4,14 @@ import {
   NotFoundException,
   BadRequestException,
   HttpException,
-  GatewayTimeoutException,
+  RequestTimeoutException,
 } from '@nestjs/common';
 import got, {
   CacheError,
   HTTPError,
   MaxRedirectsError,
   OptionsOfTextResponseBody,
+  ParseError,
   ReadError,
   RequestError,
   TimeoutError,
@@ -24,8 +25,8 @@ import {
   HttpHeaderKeysEnum,
   HttpQueryKeysEnum,
   GetActionEnum,
-  ErrorCodeEnum,
-} from '@novu/framework';
+  isFrameworkError,
+} from '@novu/framework/internal';
 import { EnvironmentRepository } from '@novu/dal';
 import { HttpRequestHeaderKeysEnum, WorkflowOriginEnum } from '@novu/shared';
 import {
@@ -38,10 +39,18 @@ import {
 } from '../get-decrypted-secret-key';
 import { BRIDGE_EXECUTION_ERROR } from '../../utils';
 
-export const DEFAULT_TIMEOUT = 15_000; // 15 seconds
+export const DEFAULT_TIMEOUT = 5_000; // 5 seconds
 export const DEFAULT_RETRIES_LIMIT = 3;
 export const RETRYABLE_HTTP_CODES: number[] = [
-  408, 413, 429, 500, 502, 503, 504, 521, 522, 524,
+  408, // Request Timeout
+  429, // Too Many Requests
+  500, // Internal Server Error
+  503, // Service Unavailable
+  504, // Gateway Timeout
+  // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
+  521, // CloudFlare web server is down
+  522, // CloudFlare connection timed out
+  524, // CloudFlare a timeout occurred
 ];
 const RETRYABLE_ERROR_CODES: string[] = [
   'EAI_AGAIN', //    DNS resolution failed, retry
@@ -129,6 +138,13 @@ export class ExecuteBridgeRequest {
       hooks: {
         afterResponse:
           command.afterResponse !== undefined ? [command.afterResponse] : [],
+      },
+      https: {
+        /*
+         * Reject self-signed and invalid certificates in Production environments but allow them in Development
+         * as it's common for developers to use self-signed certificates in local environments.
+         */
+        rejectUnauthorized: environment.name.toLowerCase() === 'production',
       },
     };
 
@@ -252,17 +268,14 @@ export class ExecuteBridgeRequest {
         body = {};
       }
 
-      if (
-        error instanceof HTTPError &&
-        Object.values(ErrorCodeEnum).includes(body.code as ErrorCodeEnum)
-      ) {
-        // Handle known Bridge errors. Propagate the error code and message.
+      if (error instanceof HTTPError && isFrameworkError(body)) {
+        // Handle known Framework errors. Propagate the error code and message.
         throw new HttpException(body, error.response.statusCode);
       }
 
       if (error instanceof TimeoutError) {
         Logger.error(`Bridge request timeout for \`${url}\``, LOG_CONTEXT);
-        throw new GatewayTimeoutException({
+        throw new RequestTimeoutException({
           message: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.code,
         });
@@ -315,6 +328,18 @@ export class ExecuteBridgeRequest {
         });
       }
 
+      if (error instanceof ParseError) {
+        Logger.error(
+          `Bridge URL response code is 2xx, but parsing body fails. \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message:
+            BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.message(url),
+          code: BRIDGE_EXECUTION_ERROR.MAXIMUM_REDIRECTS_EXCEEDED.code,
+        });
+      }
+
       if (body.code === TUNNEL_ERROR_CODE) {
         // Handle known tunnel errors
         const tunnelBody = body as TunnelResponseError;
@@ -325,6 +350,17 @@ export class ExecuteBridgeRequest {
         throw new NotFoundException({
           message: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.message(url),
           code: BRIDGE_EXECUTION_ERROR.TUNNEL_NOT_FOUND.code,
+        });
+      }
+
+      if (error.code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
+        Logger.error(
+          `Bridge URL is uing a self-signed certificate that is not allowed for production environments. \`${url}\``,
+          LOG_CONTEXT,
+        );
+        throw new BadRequestException({
+          message: BRIDGE_EXECUTION_ERROR.SELF_SIGNED_CERTIFICATE.message(url),
+          code: BRIDGE_EXECUTION_ERROR.SELF_SIGNED_CERTIFICATE.code,
         });
       }
 

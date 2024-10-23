@@ -2,18 +2,23 @@ import { IsArray, IsBoolean, IsDefined, IsObject, IsOptional, IsString } from 'c
 
 import { JSONSchema } from 'json-schema-to-ts';
 import { WorkflowResponseDto } from './workflow-response-dto';
-import { StepTypeEnum, WorkflowPreferences } from '../../types';
+import { Slug, StepTypeEnum, WorkflowPreferences } from '../../types';
+
+export type IdentifierOrInternalId = string;
 
 export class ControlsSchema {
   schema: JSONSchema;
 }
 
 export type StepResponseDto = StepDto & {
-  stepUuid: string;
+  _id: string;
+  slug: Slug;
+  stepId: string;
+  controls: ControlsSchema;
 };
 
 export type StepUpdateDto = StepDto & {
-  stepUuid: string;
+  _id: string;
 };
 
 export type StepCreateDto = StepDto;
@@ -25,7 +30,7 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'status' | 'type' | 'origin'
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'slug' | 'status' | 'origin'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
@@ -40,17 +45,10 @@ export class StepDto {
   type: StepTypeEnum;
 
   @IsObject()
-  controls: ControlsSchema;
-
-  @IsObject()
   controlValues: Record<string, unknown>;
 }
 
 export class WorkflowCommonsFields {
-  @IsString()
-  @IsDefined()
-  _id: string;
-
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

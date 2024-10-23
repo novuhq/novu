@@ -22,7 +22,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
-import { SmsOutput } from '@novu/framework';
+import { SmsOutput } from '@novu/framework/internal';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';

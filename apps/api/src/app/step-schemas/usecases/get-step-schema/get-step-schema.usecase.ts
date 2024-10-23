@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JSONSchema } from 'json-schema-to-ts';
 
-import { StepType } from '@novu/framework';
+import { type StepType } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateRepository } from '@novu/dal';
 
 import {
@@ -11,9 +11,10 @@ import {
 } from './get-step-schema.command';
 import { StepSchemaDto } from '../../dtos/step-schema.dto';
 import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
+import { encodeBase62 } from '../../../shared/helpers';
 
 @Injectable()
-export class GetStepSchema {
+export class GetStepSchemaUseCase {
   constructor(private readonly notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetStepSchemaCommand): Promise<StepSchemaDto> {
@@ -140,8 +141,8 @@ function buildPreviousStepsSchema(previousSteps: NotificationStepEntity[] | unde
 
   previousStepsProperties = (previousSteps || []).reduce(
     (acc, step) => {
-      if (step.template?._id) {
-        acc[step.template._id] = mapStepTypeToResult[step.template.type as StepType];
+      if (step.stepId && step.template?.type) {
+        acc[step.stepId] = mapStepTypeToResult[step.template.type as StepType];
       }
 
       return acc;

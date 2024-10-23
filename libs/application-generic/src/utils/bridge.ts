@@ -3,7 +3,7 @@ import {
   DigestOutput,
   DigestRegularOutput,
   DigestTimedOutput,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   if (isTimedDigestOutput(outputs)) {
@@ -68,6 +68,11 @@ export const BRIDGE_EXECUTION_ERROR = {
     code: 'BRIDGE_REQUEST_TIMEOUT',
     message: (url: string) => `Bridge request timeout for \`${url}\``,
   },
+  BRIDGE_PARSE_ERROR: {
+    code: 'BRIDGE_PARSE_ERROR',
+    message: (url: string) =>
+      `Bridge response for \`${url}\` is not valid JSON`,
+  },
   UNSUPPORTED_PROTOCOL: {
     code: 'UNSUPPORTED_PROTOCOL',
     message: (url: string) => `Unsupported protocol for \`${url}\``,
@@ -87,5 +92,10 @@ export const BRIDGE_EXECUTION_ERROR = {
   MAXIMUM_REDIRECTS_EXCEEDED: {
     code: 'MAXIMUM_REDIRECTS_EXCEEDED',
     message: (url: string) => `Maximum redirects exceeded for \`${url}\``,
+  },
+  SELF_SIGNED_CERTIFICATE: {
+    code: 'SELF_SIGNED_CERTIFICATE',
+    message: (url: string) =>
+      `Bridge Endpoint can't use a self signed certificate in production environments.`,
   },
 } satisfies Record<string, { code: string; message: (url: string) => string }>;

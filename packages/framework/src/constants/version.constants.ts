@@ -1,4 +1,2 @@
-import { version } from '../../package.json';
-
-export const SDK_VERSION = version;
+export { version as SDK_VERSION } from '../../package.json';
 export const FRAMEWORK_VERSION = '2024-06-26';

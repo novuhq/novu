@@ -1,10 +1,10 @@
-import { useBillingSubscription } from '@/hooks';
 import { LogoCircle } from '../icons';
 import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
 import { Progress } from '../primitives/progress';
 import { Button } from '../primitives/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, TooltipArrow } from '../primitives/tooltip';
 import { LEGACY_ROUTES } from '@/utils/routes';
+import { useBillingSubscription } from '@/hooks/use-billing-subscription';
 
 const transition = 'transition-all duration-300 ease-out';
 

@@ -2,7 +2,6 @@ import { createHmac } from 'node:crypto';
 
 import { Client } from './client';
 import {
-  ErrorCodeEnum,
   FRAMEWORK_VERSION,
   GetActionEnum,
   HttpHeaderKeysEnum,
@@ -17,8 +16,8 @@ import {
   BridgeError,
   FrameworkError,
   InvalidActionError,
+  isFrameworkError,
   MethodNotAllowedError,
-  PlatformError,
   SignatureExpiredError,
   SignatureInvalidError,
   SignatureMismatchError,
@@ -27,6 +26,7 @@ import {
 } from './errors';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { initApiClient } from './utils';
+import { isPlatformError } from './errors/guard.errors';
 
 export type ServeHandlerOptions = {
   client?: Client;
@@ -273,20 +273,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private isBridgeError(error: unknown): error is FrameworkError {
-    return Object.values(ErrorCodeEnum).includes((error as FrameworkError)?.code);
-  }
-
-  private isPlatformError(error: unknown): error is PlatformError {
-    // TODO: replace with check against known Platform error codes.
-    return (error as PlatformError)?.statusCode >= 400 && (error as PlatformError)?.statusCode < 500;
-  }
-
   private handleError(error: unknown): IActionResponse {
-    if (this.isBridgeError(error)) {
-      if (error.statusCode === HttpStatusEnum.INTERNAL_SERVER_ERROR) {
+    if (isFrameworkError(error)) {
+      if (error.statusCode >= 500) {
         /*
-         * Log bridge application exceptions to assist the Developer in debugging errors with their integration.
+         * Log bridge server errors to assist the Developer in debugging errors with their integration.
          * This path is reached when the Bridge application throws an error, ensuring they can see the error in their logs.
          */
         // eslint-disable-next-line no-console
@@ -294,13 +285,14 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       }
 
       return this.createError(error);
-    } else if (this.isPlatformError(error)) {
+    } else if (isPlatformError(error)) {
       return this.createError(error);
     } else {
+      const bridgeError = new BridgeError(error);
       // eslint-disable-next-line no-console
-      console.error(error);
+      console.error(bridgeError);
 
-      return this.createError(new BridgeError());
+      return this.createError(bridgeError);
     }
   }
 
