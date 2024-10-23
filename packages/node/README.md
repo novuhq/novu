@@ -62,9 +62,9 @@ yarn add @novu/node
 ```ts
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_SECRET_KEY);
+const novu = new Novu('<NOVU_SECRET_KEY>');
 
-await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+await novu.trigger('workflowIdentifier', {
   to: {
     subscriberId: '<USER_IDENTIFIER>',
     email: 'test@email.com',
@@ -77,6 +77,14 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
     },
   },
 });
+```
+
+## 🐳 Usage with self hosted environment
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_SECRET_KEY>', { backendUrl : '<SELF_HOST_API_URL>' });
 ```
 
 ## Providers
