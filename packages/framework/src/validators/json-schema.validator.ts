@@ -1,8 +1,8 @@
 import Ajv from 'ajv';
 import type { ErrorObject, ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import type { ValidateResult, Validator } from '../types/validator.types';
-import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
+
+import type { ValidateResult, Validator, FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types';
 import { cloneData } from '../utils/clone.utils';
 
 export class JsonSchemaValidator implements Validator<JsonSchema> {
@@ -60,10 +60,15 @@ export class JsonSchemaValidator implements Validator<JsonSchema> {
     } else {
       return {
         success: false,
-        errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => ({
-          path: err.instancePath,
-          message: err.message as string,
-        })),
+        errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => {
+          // In order to have the field name of a missing required field, we need to extract it. As the name is not part of the instancePath.
+          const requiredFieldName = err.params?.missingProperty as string;
+
+          return {
+            path: `${err.instancePath}${requiredFieldName ? `/${requiredFieldName}` : ''}`,
+            message: err.message as string,
+          };
+        }),
       };
     }
   }
