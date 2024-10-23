@@ -5,7 +5,7 @@ export * from './decorators';
 export * from './dtos';
 export * from './encryption/index';
 export * from './factories/index';
-export * from './graceful-shutdown/index';
+export * from './graceful-shutdown';
 export * from './health/index';
 export * from './instrumentation/index';
 export * from './logging/index';
