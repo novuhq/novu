@@ -4,6 +4,7 @@ import {
   PreferencesResponseDto,
   PreferencesTypeEnum,
   ShortIsPrefixEnum,
+  Slug,
   StepResponseDto,
   StepTypeEnum,
   WorkflowListResponseDto,
@@ -13,7 +14,7 @@ import {
   WorkflowTypeEnum,
 } from '@novu/shared';
 import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { GetPreferencesResponseDto } from '@novu/application-generic';
+import { GetPreferencesResponseDto, slugifyName } from '@novu/application-generic';
 import { encodeBase62 } from '../../shared/helpers';
 
 export function toResponseWorkflowDto(
@@ -29,7 +30,7 @@ export function toResponseWorkflowDto(
 
   return {
     _id: template._id,
-    slug: `${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(template._id)}`,
+    slug: buildSlug(workflowName, ShortIsPrefixEnum.WORKFLOW, template._id),
     workflowId: template.triggers[0].identifier,
     name: workflowName,
     tags: template.tags,
@@ -63,7 +64,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
 
   return {
     _id: template._id,
-    slug: `${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(template._id)}`,
+    slug: buildSlug(workflowName, ShortIsPrefixEnum.WORKFLOW, template._id),
     name: workflowName,
     origin: computeOrigin(template),
     tags: template.tags,
@@ -83,13 +84,23 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
 
   return {
     _id: step._templateId,
-    slug: `${ShortIsPrefixEnum.STEP}${encodeBase62(step._templateId)}`,
+    slug: buildSlug(stepName, ShortIsPrefixEnum.STEP, step._templateId),
     name: stepName,
     stepId: step.stepId || 'Missing Step Id',
     type: step.template?.type || StepTypeEnum.EMAIL,
     controls: convertControls(step),
     controlValues: step.controlVariables || {},
   } satisfies StepResponseDto;
+}
+
+/**
+ * Builds a slug for a step based on the step name, the short prefix and the internal ID.
+ * @returns The slug for the entity, example:  slug: "workflow-name_wf_fUm4PnsdYYttxSqf"
+ */
+function buildSlug(entityName: string, shortIsPrefix: ShortIsPrefixEnum, internalId: string): Slug {
+  const delimiter = '_';
+
+  return `${slugifyName(entityName)}${delimiter}${shortIsPrefix}${encodeBase62(internalId)}`;
 }
 
 function convertControls(step: NotificationStepEntity): ControlsSchema {
