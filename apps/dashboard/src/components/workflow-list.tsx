@@ -12,7 +12,6 @@ import {
   RiRouteFill,
 } from 'react-icons/ri';
 import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
-
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
 import { Badge, BadgeContent } from '@/components/primitives/badge';
@@ -155,7 +154,7 @@ export const WorkflowList = () => {
           ) : (
             <>
               {workflowsQuery.data.workflows.map((workflow) => {
-                const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
+                const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
                 const workflowLink = isV1Workflow
                   ? buildRoute(LEGACY_ROUTES.EDIT_WORKFLOW, {
                       workflowId: workflow._id,
