@@ -17,6 +17,8 @@ import { ControlValuesEntity, NotificationStepEntity, NotificationTemplateEntity
 import { GetPreferencesResponseDto, slugifyName } from '@novu/application-generic';
 import { encodeBase62 } from '../../shared/helpers';
 
+const SLUG_DELIMITER = '_';
+
 export function toResponseWorkflowDto(
   template: NotificationTemplateEntity,
   preferences: GetPreferencesResponseDto | undefined,
@@ -98,9 +100,7 @@ function toStepResponseDto(step: NotificationStepEntity): StepResponseDto {
  * @returns The slug for the entity, example:  slug: "workflow-name_wf_fUm4PnsdYYttxSqf"
  */
 function buildSlug(entityName: string, shortIsPrefix: ShortIsPrefixEnum, internalId: string): Slug {
-  const delimiter = '_';
-
-  return `${slugifyName(entityName)}${delimiter}${shortIsPrefix}${encodeBase62(internalId)}`;
+  return `${slugifyName(entityName)}${SLUG_DELIMITER}${shortIsPrefix}${encodeBase62(internalId)}`;
 }
 
 function convertControls(step: NotificationStepEntity): ControlsSchema {
