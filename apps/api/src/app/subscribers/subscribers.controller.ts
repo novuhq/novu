@@ -29,7 +29,6 @@ import {
   ApiRateLimitCostEnum,
   ButtonTypeEnum,
   ChatProviderIdEnum,
-  TriggerRecipientsTypeEnum,
   UserSessionData,
 } from '@novu/shared';
 import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
@@ -421,9 +420,9 @@ export class SubscribersController {
   @ApiParam({
     name: 'parameter',
     type: String,
-    enum: TriggerRecipientsTypeEnum,
+    enum: PreferenceLevelEnum,
     required: true,
-    description: 'the preferences level to be retrieved( Subscriber / Topic) ',
+    description: 'the preferences level to be retrieved (template / global) ',
   })
   @SdkGroupName('Subscribers.Preferences')
   @SdkMethodName('retrieveByLevel')
