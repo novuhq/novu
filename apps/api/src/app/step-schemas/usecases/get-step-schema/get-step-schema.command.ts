@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { ActionStepEnum, ChannelStepEnum, StepType } from '@novu/framework';
+import { ActionStepEnum, ChannelStepEnum, StepType } from '@novu/framework/internal';
 import { UserSessionData } from '@novu/shared';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 

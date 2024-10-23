@@ -11,7 +11,7 @@ import {
   IconSize,
   IconType,
 } from '@novu/novui/icons';
-import { ActionStepEnum, ChannelStepEnum, type DiscoverStepOutput } from '@novu/framework';
+import { ActionStepEnum, ChannelStepEnum, type DiscoverStepOutput } from '@novu/framework/internal';
 import { StepNode } from './StepNode';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 

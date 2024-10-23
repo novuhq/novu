@@ -165,6 +165,7 @@ describe('Workflow Controller E2E API Testing', () => {
       });
       expect(workflowSummaries).to.be.empty;
     });
+
     it('should not return workflows if offset is bigger than the amount of available workflows', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
@@ -176,6 +177,7 @@ describe('Workflow Controller E2E API Testing', () => {
         expectedArraySize: 0,
       });
     });
+
     it('should return all results within range', async () => {
       const uuid = generateUUID();
 
@@ -267,17 +269,18 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
   const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
   const workflowResponseDto: WorkflowResponseDto = res.body.data;
-  expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto._id, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
+  const errorMessageOnFailure = JSON.stringify(res, null, 2);
+  expect(workflowResponseDto, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto._id, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.updatedAt, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.createdAt, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.preferences, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.status, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.origin, errorMessageOnFailure).to.be.eq('novu-cloud');
   for (const step of workflowResponseDto.steps) {
-    expect(step._id, JSON.stringify(res, null, 2)).to.be.ok;
-    expect(step.slug, JSON.stringify(res, null, 2)).to.be.ok;
+    expect(step._id, errorMessageOnFailure).to.be.ok;
+    expect(step.slug, errorMessageOnFailure).to.be.ok;
   }
-  expect(workflowResponseDto.steps, JSON.stringify(res, null, 2)).to.be.ok;
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
     '_id',
@@ -286,8 +289,7 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'updatedAt',
     'createdAt',
     'status',
-    'slug',
-    'type'
+    'slug'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
     removeFields(step, '_id', 'slug', 'slug', 'controls', 'stepId')
@@ -396,8 +398,7 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
     'updatedAt',
     'origin',
     '_id',
-    'status',
-    'type'
+    'status'
   );
   const augmentedSteps: UpsertStepBody[] = [];
   for (const stepInResponse of workflowResponse.steps) {
@@ -574,6 +575,7 @@ async function create10Workflows(prefix: string) {
     await createWorkflowAndValidate(`${prefix}-ABC${i}`);
   }
 }
+
 function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
   const objCopy = JSON.parse(JSON.stringify(obj));
   keysToRemove.forEach((key) => {
@@ -582,6 +584,7 @@ function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
 
   return objCopy;
 }
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 interface ApiResponse {
   req: {
@@ -617,15 +620,19 @@ interface ApiResponse {
   status: number; // e.g., 400
   text: string; // e.g., "{\"message\":\"Workflow not found with id: 66e929c6667852862a1e5145\",\"error\":\"Bad Request\",\"statusCode\":400}"
 }
+
 async function safeGet<T>(url: string): Promise<T> {
   return (await safeRest(url, () => session.testAgent.get(url) as unknown as Promise<ApiResponse>)) as T;
 }
+
 async function safePut<T>(url: string, data: object): Promise<T> {
   return (await safeRest(url, () => session.testAgent.put(url).send(data) as unknown as Promise<ApiResponse>)) as T;
 }
+
 async function safeDelete<T>(url: string): Promise<void> {
   await safeRest(url, () => session.testAgent.delete(url) as unknown as Promise<ApiResponse>, 204);
 }
+
 function generateUUID(): string {
   // Generate a random 4-byte hex string
   const randomHex = () => randomBytes(2).toString('hex');
@@ -655,7 +662,7 @@ function buildInAppStepWithValues() {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpsertWorkflowBody {
-  const workflowWithoutResponseFields = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type', 'status');
+  const workflowWithoutResponseFields = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status');
   const steps: UpsertStepBody[] = workflowWithoutResponseFields.steps.map((step) => removeFields(step, 'stepId'));
 
   return { ...workflowWithoutResponseFields, steps };
@@ -685,14 +692,7 @@ function createStep(): StepCreateDto {
 
 function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
-  const updateRequest = removeFields(
-    workflowCreated,
-    'updatedAt',
-    '_id',
-    'origin',
-    'status',
-    'type'
-  ) as UpdateWorkflowDto;
+  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status') as UpdateWorkflowDto;
 
   return {
     ...updateRequest,

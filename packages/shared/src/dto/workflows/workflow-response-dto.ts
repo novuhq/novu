@@ -35,8 +35,4 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @IsEnum(WorkflowStatusEnum)
   @IsDefined()
   status: WorkflowStatusEnum;
-
-  @IsEnum(WorkflowTypeEnum)
-  @IsDefined()
-  type: WorkflowTypeEnum;
 }

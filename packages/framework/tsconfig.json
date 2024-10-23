@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "target": "ES2019",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -16,6 +16,6 @@
     "experimentalDecorators": true,
     "strict": true
   },
-  "include": ["./src/**/*", "./package.json", "scripts/devtool.ts"],
+  "include": ["./src/**/*", "scripts/devtool.ts"],
   "exclude": ["node_modules"]
 }

@@ -37,8 +37,7 @@ export function toResponseWorkflowDto(
     preferences: preferencesDto,
     steps: getSteps(template, stepIdToControlValuesMap),
     description: template.description,
-    origin: template.origin || WorkflowOriginEnum.EXTERNAL,
-    type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
+    origin: computeOrigin(template),
     updatedAt: template.updatedAt || 'Missing Updated At',
     createdAt: template.createdAt || 'Missing Create At',
     status: WorkflowStatusEnum.ACTIVE,
@@ -66,8 +65,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     _id: template._id,
     slug: `${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(template._id)}`,
     name: workflowName,
-    origin: template.origin || WorkflowOriginEnum.EXTERNAL,
-    type: template.type || ('MISSING-TYPE-ISSUE' as unknown as WorkflowTypeEnum),
+    origin: computeOrigin(template),
     tags: template.tags,
     updatedAt: template.updatedAt || 'Missing Updated At',
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
@@ -104,4 +102,11 @@ function convertControls(step: NotificationStepEntity): ControlsSchema {
 
 function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | undefined {
   return step.template?.type;
+}
+
+function computeOrigin(template: NotificationTemplateEntity): WorkflowOriginEnum {
+  // Required to differentiate between old V1 and new workflows in an attempt to eliminate the need for type field
+  return template?.type === WorkflowTypeEnum.REGULAR
+    ? WorkflowOriginEnum.NOVU_CLOUD_V1
+    : template.origin || WorkflowOriginEnum.EXTERNAL;
 }

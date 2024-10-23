@@ -44,7 +44,7 @@ import {
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
-import { ExecuteOutput } from '@novu/framework';
+import { ExecuteOutput } from '@novu/framework/internal';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageDelay } from './send-message-delay.usecase';

@@ -14,7 +14,7 @@ import {
   IWorkflowStepMetadata,
   StepTypeEnum,
 } from '@novu/shared';
-import { DigestOutput, ExecuteOutput } from '@novu/framework';
+import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,

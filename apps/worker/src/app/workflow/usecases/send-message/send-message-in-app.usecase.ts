@@ -26,7 +26,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
-import { InAppOutput } from '@novu/framework';
+import { InAppOutput } from '@novu/framework/internal';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
