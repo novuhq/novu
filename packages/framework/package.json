@@ -1,7 +1,7 @@
 {
   "name": "@novu/framework",
   "version": "2.3.0",
-  "description": "The Code-First Notifications Workflow SDK.",
+  "description": "The Code-First Notifications Workflow SDK. TEST",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
   "module": "./dist/esm/index.js",
