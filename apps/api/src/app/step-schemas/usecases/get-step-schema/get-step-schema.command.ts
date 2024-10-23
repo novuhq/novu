@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { ActionStepEnum, ChannelStepEnum, StepType } from '@novu/framework/internal';
 import { UserSessionData } from '@novu/shared';
@@ -25,10 +26,10 @@ export type GetStepSchemaCommand = GetStepTypeSchemaCommand | GetExistingStepSch
 
 export function createGetStepSchemaCommand(
   user: UserSessionData,
-  stepType: StepType,
-  workflowId: string,
-  stepId: string
-) {
+  stepType?: StepType,
+  workflowId?: string,
+  stepId?: string
+): GetExistingStepSchemaCommand | GetStepTypeSchemaCommand {
   if (workflowId && stepId) {
     return GetExistingStepSchemaCommand.create({
       organizationId: user.organizationId,
@@ -39,10 +40,14 @@ export function createGetStepSchemaCommand(
     });
   }
 
-  return GetStepTypeSchemaCommand.create({
-    organizationId: user.organizationId,
-    environmentId: user.environmentId,
-    userId: user._id,
-    stepType,
-  });
+  if (stepType) {
+    return GetStepTypeSchemaCommand.create({
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      userId: user._id,
+      stepType,
+    });
+  }
+
+  throw new BadRequestException('Invalid command, either workflowId and stepId or stepType is required');
 }

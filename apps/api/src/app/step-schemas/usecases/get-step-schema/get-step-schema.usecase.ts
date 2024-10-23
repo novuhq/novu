@@ -11,6 +11,7 @@ import {
 } from './get-step-schema.command';
 import { StepSchemaDto } from '../../dtos/step-schema.dto';
 import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
+import { encodeBase62 } from '../../../shared/helpers';
 
 @Injectable()
 export class GetStepSchemaUseCase {

@@ -39,19 +39,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const environmentIdFromHeader =
       (req.headers[HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()] as string) || '';
 
-    let currentEnvironmentId = '';
-
-    const environments = await this.environmentRepository.findOrganizationEnvironments(session.organizationId);
-    const environmentIds = environments.map((env) => env._id);
-    const developmentEnvironmentId = environments.find((env) => env.name === 'Development')?._id || '';
-
-    currentEnvironmentId = developmentEnvironmentId;
-
-    if (environmentIds.includes(environmentIdFromHeader)) {
-      currentEnvironmentId = environmentIdFromHeader;
-    }
-
     // eslint-disable-next-line no-param-reassign
-    session.environmentId = currentEnvironmentId;
+    session.environmentId = environmentIdFromHeader;
   }
 }
