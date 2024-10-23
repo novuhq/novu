@@ -1,77 +1,95 @@
 /* eslint-disable no-param-reassign */
 import { TipTapNode } from '@novu/shared';
-import { ExpendEmailEditorSchemaCommand } from './expend-email-editor-schema-command';
+import { ExpendEmailEditorSchemaCommand, TipTapSchema } from './expend-email-editor-schema-command';
 
 // Rename the class to ExpendEmailEditorSchemaUseCase
 export class ExpandEmailEditorSchemaUsecase {
   execute(command: ExpendEmailEditorSchemaCommand): TipTapNode {
-    return this.expendSchema(command.schema);
+    const schema = JSON.parse(command.schema);
+    const tiptapSchema: TipTapNode = TipTapSchema.parse(schema);
+    augmentNode(tiptapSchema);
+
+    return tiptapSchema;
+  }
+}
+
+function hasEach(node: TipTapNode): node is TipTapNode & { attr: { each: string } } {
+  return !!(node.attr && 'each' in node.attr);
+}
+
+function hasShow(node: TipTapNode): node is TipTapNode & { attr: { show: string } } {
+  return !!(node.attr && 'show' in node.attr);
+}
+
+function augmentNode(node: TipTapNode): TipTapNode {
+  if (hasEach(node)) {
+    return expendedForEach(node);
+  }
+  if (hasShow(node)) {
+    return expendedShow(node);
+  }
+  if (node.content) {
+    node.content = node.content.map(augmentNode);
   }
 
-  private expendSchema(schema: TipTapNode): TipTapNode {
-    // todo: try to avoid !
-    const content = schema.content!.map(this.processNodeRecursive.bind(this)).filter(Boolean) as TipTapNode[];
+  return node;
+}
 
-    return { ...schema, content };
+function enrichContent(templateContent: TipTapNode[], value: { [p: string]: string }) {
+  return undefined;
+}
+
+function expendedForEach(node: TipTapNode & { attr: { each: string } }): TipTapNode {
+  const { each } = node.attr;
+  const templateContent = node.content || [];
+  const expandedContent: TipTapNode[] = [];
+  const jsonArrOfValues: [{ [key: string]: string }] = JSON.parse(each);
+  for (const value of jsonArrOfValues) {
+    expandedContent.push({ type: node.type, content: replacePlaceholders(templateContent, value) });
   }
 
-  private processItemNode(node: TipTapNode, item: any): TipTapNode {
-    if (node.type === 'text' && typeof node.text === 'string') {
-      const regex = /{#item\.(\w+)#}/g;
-      node.text = node.text.replace(regex, (_, key: string) => {
-        const propertyName = key;
+  return { ...node, content: expandedContent };
+}
+function expendedShow(node: TipTapNode & { attr: { show: string } }): TipTapNode {}
+type PayloadObject = {
+  [key: string]: string | boolean | number | PayloadObject;
+};
 
-        return item[propertyName] !== undefined ? item[propertyName] : _;
-      });
+function replacePlaceholders(nodes: TipTapNode[], payload: PayloadObject): TipTapNode[] {
+  return nodes.map((node) => {
+    const newNode: TipTapNode = { ...node };
+
+    if (newNode.text) {
+      newNode.text = replaceTextPlaceholders(newNode.text, payload);
     }
 
-    if (node.content) {
-      node.content = node.content.map((innerNode) => this.processItemNode(innerNode, item));
+    if (newNode.content) {
+      newNode.content = replacePlaceholders(newNode.content, payload);
     }
 
-    return node;
-  }
+    return newNode;
+  });
+}
 
-  private processNodeRecursive(node: TipTapNode): TipTapNode | null {
-    if (node.type === 'show') {
-      const whenValue = node.attr?.when;
-      if (whenValue !== 'true') {
-        return null;
-      }
+function getValueFromPayload(key: string, payload: PayloadObject): string | undefined {
+  const keys = key.split('.');
+  let value: any = payload;
+
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      return undefined;
     }
-
-    if (this.hasEachAttr(node)) {
-      return { type: 'section', content: this.handleFor(node) };
-    }
-
-    return this.processNodeContent(node);
   }
 
-  private processNodeContent(node: TipTapNode): TipTapNode | null {
-    if (node.content) {
-      node.content = node.content.map(this.processNodeRecursive.bind(this)).filter(Boolean) as TipTapNode[];
-    }
+  return String(value);
+}
 
-    return node;
-  }
+function replaceTextPlaceholders(text: string, payload: PayloadObject): string {
+  return text.replace(/{%item\.(\w+(\.\w+)*)%}/g, (match, key) => {
+    const value = getValueFromPayload(key, payload);
 
-  private hasEachAttr(node: TipTapNode): node is TipTapNode & { attr: { each: any } } {
-    return node.attr !== undefined && node.attr.each !== undefined;
-  }
-
-  private handleFor(node: TipTapNode & { attr: { each: any } }): TipTapNode[] {
-    const items = node.attr.each;
-    const newContent: TipTapNode[] = [];
-
-    const itemsParsed = JSON.parse(items.replace(/'/g, '"'));
-    for (const item of itemsParsed) {
-      const newNode = { ...node };
-      newNode.content = newNode.content?.map((innerNode) => this.processItemNode(innerNode, item)) || [];
-      if (newNode.content) {
-        newContent.push(...newNode.content);
-      }
-    }
-
-    return newContent;
-  }
+    return value !== undefined ? value : match;
+  });
 }

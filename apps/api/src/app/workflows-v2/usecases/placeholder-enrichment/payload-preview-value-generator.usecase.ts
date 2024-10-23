@@ -22,13 +22,22 @@ export class CreateMockPayloadUseCase {
     }
 
     const controlValue = controlValues[controlValueKey];
-    if (typeof controlValue === 'object') {
-      return this.buildPayloadForEmailEditor(controlValue);
+    const controlValueAsObject = this.safeJsonParse(controlValue);
+    if (controlValueAsObject) {
+      return this.buildPayloadForEmailEditor(controlValueAsObject);
     }
 
     return this.buildPayloadForRegularText(controlValue);
   }
-
+  private safeJsonParse(jsonString: string): object | undefined {
+    try {
+      // Attempt to parse the JSON string
+      return JSON.parse(jsonString);
+    } catch {
+      // Return undefined if parsing fails
+      return undefined;
+    }
+  }
   private buildPayloadForEmailEditor(controlValue: unknown): Record<string, unknown> {
     const collectPlaceholderMappings = this.collectPlaceholdersFromTipTapSchemaUsecase.execute({
       node: controlValue as TipTapNode,

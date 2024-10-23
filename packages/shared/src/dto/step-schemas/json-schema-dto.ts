@@ -71,4 +71,11 @@ export interface JSONSchemaDto {
   readOnly?: boolean | undefined;
   writeOnly?: boolean | undefined;
   examples?: JSONSchemaType | undefined;
+
+  // Custom extensions property
+  extensions?:
+    | {
+        [key: string]: unknown; // Allows for any additional properties
+      }
+    | undefined;
 }

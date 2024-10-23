@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { JSONSchema } from 'json-schema-to-ts';
+import { JSONSchemaDto } from './json-schema-dto';
 
 export interface TipTapNode {
   type: string;
@@ -9,7 +9,7 @@ export interface TipTapNode {
 }
 
 export interface EmailStepControlSchemaDto {
-  emailEditor: TipTapNode;
+  emailEditor: string;
   subject: string;
 }
 
@@ -18,12 +18,14 @@ export enum CustomComponentsEnum {
   TEXT_AREA = 'TEXT_FIELD',
 }
 
-export const EmailStepControlSchema: JSONSchema = {
+export const EmailStepControlSchema: JSONSchemaDto = {
   type: 'object',
   properties: {
     emailEditor: {
-      type: 'object',
-      additionalProperties: true, // Allows any properties in emailEditor
+      type: 'string',
+      extensions: {
+        'x-novu-component-type': CustomComponentsEnum.EMAIL_EDITOR,
+      },
     },
     subject: {
       type: 'string',
