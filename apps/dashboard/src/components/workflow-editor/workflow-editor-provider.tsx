@@ -1,20 +1,21 @@
-import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { ReactNode, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm, useFieldArray } from 'react-hook-form';
 // eslint-disable-next-line
 // @ts-ignore
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RiProgress1Line } from 'react-icons/ri';
 import * as z from 'zod';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchWorkflow, useFormAutoSave, useUpdateWorkflow } from '@/hooks';
-import { StepTypeEnum } from '@/utils/enums';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { Step } from '@/utils/types';
-import { Form } from '../primitives/form/form';
-import { smallToast } from '../primitives/sonner-helpers';
-import { formSchema } from './schema';
+import { RiProgress1Line } from 'react-icons/ri';
+
 import { WorkflowEditorContext } from './workflow-editor-context';
+import { StepTypeEnum } from '@/utils/enums';
+import { Form } from '../primitives/form/form';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useEnvironment } from '@/context/environment/hooks';
+import { formSchema } from './schema';
+import { useFetchWorkflow, useUpdateWorkflow, useFormAutoSave } from '@/hooks';
+import { Step } from '@/utils/types';
+import { smallToast } from '../primitives/sonner-helpers';
 
 const STEP_NAME_BY_TYPE: Record<StepTypeEnum, string> = {
   email: 'Email Step',
