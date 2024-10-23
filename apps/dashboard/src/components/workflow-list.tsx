@@ -1,3 +1,16 @@
+import type { ListWorkflowResponse } from '@novu/shared';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { FaCode } from 'react-icons/fa6';
+import {
+  RiBookMarkedLine,
+  RiDeleteBin2Line,
+  RiGitPullRequestFill,
+  RiMore2Fill,
+  RiPauseCircleLine,
+  RiPlayCircleLine,
+  RiPulseFill,
+  RiRouteFill,
+} from 'react-icons/ri';
 import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
@@ -32,24 +45,12 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
-import type { ListWorkflowResponse } from '@novu/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FaCode } from 'react-icons/fa6';
-import {
-  RiBookMarkedLine,
-  RiDeleteBin2Line,
-  RiGitPullRequestFill,
-  RiMore2Fill,
-  RiPauseCircleLine,
-  RiPlayCircleLine,
-  RiPulseFill,
-  RiRouteFill,
-} from 'react-icons/ri';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+
   const hrefFromOffset = (offset: number) => {
     return `${location.pathname}?${createSearchParams({
       ...searchParams,
