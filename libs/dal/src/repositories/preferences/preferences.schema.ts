@@ -32,42 +32,35 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
       all: {
         enabled: {
           type: Schema.Types.Boolean,
-          default: true,
         },
         readOnly: {
           type: Schema.Types.Boolean,
-          default: false,
         },
       },
       channels: {
         [ChannelTypeEnum.EMAIL]: {
           enabled: {
             type: Schema.Types.Boolean,
-            default: true,
           },
         },
         [ChannelTypeEnum.SMS]: {
           enabled: {
             type: Schema.Types.Boolean,
-            default: true,
           },
         },
         [ChannelTypeEnum.IN_APP]: {
           enabled: {
             type: Schema.Types.Boolean,
-            default: true,
           },
         },
         [ChannelTypeEnum.CHAT]: {
           enabled: {
             type: Schema.Types.Boolean,
-            default: true,
           },
         },
         [ChannelTypeEnum.PUSH]: {
           enabled: {
             type: Schema.Types.Boolean,
-            default: true,
           },
         },
       },
