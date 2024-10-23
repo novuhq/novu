@@ -4,11 +4,11 @@
  *
  * Example:
  *
- * import { serve, Client, type Workflow } from '@novu/framework/express';
+ * import { NovuModule, Client, type Workflow } from '@novu/framework/nest';
  *
  * instead of
  *
- * import { serve } from '@novu/framework/express';
+ * import { NovuModule } from '@novu/framework/nest';
  * import { Client, type Workflow } from '@novu/framework';
  */
 export * from '../index';
