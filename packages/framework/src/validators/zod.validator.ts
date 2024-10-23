@@ -1,5 +1,4 @@
 import { ZodSchema } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema } from '../types/schema.types';
 import type { ValidateResult, Validator } from '../types/validator.types';
@@ -30,6 +29,9 @@ export class ZodValidator implements Validator<ZodSchema> {
 
   transformToJsonSchema(schema: ZodSchema): JsonSchema {
     try {
+      // eslint-disable-next-line global-require
+      const { zodToJsonSchema } = require('zod-to-json-schema') as typeof import('zod-to-json-schema');
+
       // @ts-expect-error - zod-to-json-schema is not using JSONSchema7
       return zodToJsonSchema(schema);
     } catch (error) {
