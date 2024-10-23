@@ -11,7 +11,7 @@ import {
   RiPulseFill,
   RiRouteFill,
 } from 'react-icons/ri';
-import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
@@ -43,7 +43,7 @@ import { WorkflowStatus } from '@/components/workflow-status';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
-import { WorkflowOriginEnum, WorkflowStatusEnum, WorkflowTypeEnum } from '@/utils/enums';
+import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 
@@ -51,7 +51,7 @@ export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
+
   const hrefFromOffset = (offset: number) => {
     return `${location.pathname}?${createSearchParams({
       ...searchParams,
@@ -155,7 +155,7 @@ export const WorkflowList = () => {
           ) : (
             <>
               {workflowsQuery.data.workflows.map((workflow) => {
-                const isV1Workflow = workflow.type === WorkflowTypeEnum.REGULAR;
+                const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
                 const workflowLink = isV1Workflow
                   ? buildRoute(LEGACY_ROUTES.EDIT_WORKFLOW, {
                       workflowId: workflow._id,
