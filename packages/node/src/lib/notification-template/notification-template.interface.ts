@@ -1,7 +1,7 @@
 import {
   INotificationTemplateStep,
   IPreferenceChannels,
-  NotificationTemplateCustomData,
+  CustomDataType,
 } from '@novu/shared';
 
 export interface INotificationTemplates {
@@ -23,5 +23,5 @@ export interface INotificationTemplatePayload {
   draft?: boolean;
   critical?: boolean;
   preferenceSettings?: IPreferenceChannels;
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 }

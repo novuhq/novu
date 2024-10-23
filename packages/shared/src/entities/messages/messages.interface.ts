@@ -1,6 +1,11 @@
-import { ActorTypeEnum, ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock, UrlTarget } from '../../types';
+import { ChannelTypeEnum, IEmailBlock } from '../../types';
+import { IActor } from '../actor';
+import { IMessageActionDto, IMessageCTADto } from '../../dto';
 import { INotificationTemplate } from '../notification-template';
-import { ButtonTypeEnum } from './action.enum';
+
+export interface IMessageCTA extends IMessageCTADto {}
+
+export interface IMessageAction extends IMessageActionDto {}
 
 export interface IMessage {
   _id: string;
@@ -26,40 +31,4 @@ export interface IMessage {
   actor?: IActor;
   avatar?: string;
   subject?: string;
-}
-
-export interface IMessageCTA {
-  type: ChannelCTATypeEnum;
-  data: {
-    url?: string;
-    target?: UrlTarget;
-  };
-  action?: IMessageAction;
-}
-
-export interface IMessageAction {
-  status?: MessageActionStatusEnum;
-  buttons?: IMessageButton[];
-  result: {
-    payload?: Record<string, unknown>;
-    type?: ButtonTypeEnum;
-  };
-}
-
-export interface IMessageButton {
-  type: ButtonTypeEnum;
-  content: string;
-  resultContent?: string;
-  url?: string;
-  target?: UrlTarget;
-}
-
-export enum MessageActionStatusEnum {
-  PENDING = 'pending',
-  DONE = 'done',
-}
-
-export interface IActor {
-  type: ActorTypeEnum;
-  data: string | null;
 }

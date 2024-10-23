@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '../../types';
 import { ISubscriberResponseDto } from '../subscriber';
-import { IActor, IMessageCTA } from '../../entities/messages';
+import { IActorDto, IMessageCTADto } from '../message-template';
 
 export interface INotificationDto {
   _id: string;
@@ -17,7 +17,7 @@ export interface INotificationDto {
   expireAt: string;
   lastSeenDate?: string;
   lastReadDate?: string;
-  actor?: IActor;
+  actor?: IActorDto;
   subscriber?: ISubscriberResponseDto;
   transactionId: string;
   templateIdentifier: string;
@@ -28,7 +28,7 @@ export interface INotificationDto {
   seen: boolean;
   deleted: boolean;
   deviceTokens?: string[];
-  cta: IMessageCTA;
+  cta: IMessageCTADto;
   status: 'sent' | 'error' | 'warning';
   payload: Record<string, unknown>;
   overrides: Record<string, unknown>;

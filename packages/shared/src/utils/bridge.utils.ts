@@ -1,5 +1,6 @@
-import { ButtonTypeEnum, IMessage, IMessageCTA } from '../entities/messages';
-import { ChannelCTATypeEnum, Redirect, WorkflowTypeEnum } from '../types';
+import { IMessage } from '../entities/messages';
+import { IMessageCTADto } from '../dto';
+import { ButtonTypeEnum, ChannelCTATypeEnum, Redirect, WorkflowTypeEnum } from '../types';
 
 export const isBridgeWorkflow = (workflowType?: WorkflowTypeEnum): boolean => {
   return workflowType === WorkflowTypeEnum.BRIDGE || workflowType === WorkflowTypeEnum.ECHO;
@@ -66,7 +67,7 @@ export const inAppMessageFromBridgeOutputs = (outputs?: InAppOutput) => {
           : []),
       ],
     },
-  } satisfies IMessageCTA;
+  } satisfies IMessageCTADto;
 
   return {
     subject: outputs?.subject,

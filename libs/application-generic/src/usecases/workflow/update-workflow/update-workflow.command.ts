@@ -11,7 +11,7 @@ import {
 
 import {
   IPreferenceChannels,
-  NotificationTemplateCustomData,
+  CustomDataType,
   WorkflowTypeEnum,
 } from '@novu/shared';
 
@@ -70,7 +70,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   };
 
   @IsOptional()
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 
   @IsOptional()
   inputs?: IStepControl;

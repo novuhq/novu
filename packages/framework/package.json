@@ -39,7 +39,7 @@
     "build:watch": "tsup --watch",
     "postbuild": "./scripts/copy-package-json.sh && pnpm run check:exports && pnpm check:circulars",
     "check:exports": "attw --pack .",
-    "check:circulars": "madge --circular --extensions ts --exclude ../../shared ./src",
+    "check:circulars": "madge --circular --extensions ts ./src",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",

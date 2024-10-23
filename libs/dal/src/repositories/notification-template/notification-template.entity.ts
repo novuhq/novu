@@ -14,7 +14,7 @@ import {
   IStepVariant,
   ITriggerReservedVariable,
   IWorkflowStepMetadata,
-  NotificationTemplateCustomData,
+  CustomDataType,
   TriggerTypeEnum,
   WorkflowOriginEnum,
   WorkflowTypeEnum,
@@ -73,7 +73,7 @@ export class NotificationTemplateEntity implements INotificationTemplate {
 
   blueprintId?: string;
 
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 
   type?: WorkflowTypeEnum;
 

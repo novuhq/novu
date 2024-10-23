@@ -18,7 +18,7 @@ import {
   INotificationGroup,
   IPreferenceChannels,
   IWorkflowStepMetadata,
-  NotificationTemplateCustomData,
+  CustomDataType,
   WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
@@ -72,7 +72,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   __source?: string;
 
   @IsOptional()
-  data?: NotificationTemplateCustomData;
+  data?: CustomDataType;
 
   @IsOptional()
   inputs?: {

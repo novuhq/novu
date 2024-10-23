@@ -1,9 +1,6 @@
 import { novuInAppConfig } from '../credentials';
-
-import { InAppProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
-
-import { ChannelTypeEnum } from '../../../types';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const inAppProviders: IProviderConfig[] = [

@@ -1,4 +1,4 @@
-import { IGetWorkflowOverrideResponseDto } from '@novu/shared';
+import { IWorkflowOverrideResponseDto } from '@novu/shared';
 import { OverrideResponseDto } from './shared';
 
-export class GetWorkflowOverrideResponseDto extends OverrideResponseDto implements IGetWorkflowOverrideResponseDto {}
+export class GetWorkflowOverrideResponseDto extends OverrideResponseDto implements IWorkflowOverrideResponseDto {}
