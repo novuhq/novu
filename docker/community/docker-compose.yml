@@ -123,6 +123,7 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
+      IS_WORKFLOW_PREFERENCES_ENABLED: ${IS_WORKFLOW_PREFERENCES_ENABLED}
 
   ws:
     image: 'ghcr.io/novuhq/novu/ws:2.0.0'
@@ -174,7 +175,7 @@ services:
     ports:
       - 4200:4200
     healthcheck:
-      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:4200 || exit 1'] 
+      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:4200 || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
