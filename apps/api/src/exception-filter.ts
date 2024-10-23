@@ -1,8 +1,9 @@
 import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
-import { PinoLogger } from '@novu/application-generic';
+import { CommandValidationException, PinoLogger } from '@novu/application-generic';
 import { randomUUID } from 'node:crypto';
 import { captureException } from '@sentry/node';
+import { ZodError } from 'zod';
 
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly logger: PinoLogger) {}
@@ -71,6 +72,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private getResponseMetadata(exception: unknown): { status: number; message: string | object | Object } {
     let status: number;
     let message: string | object;
+
+    if (exception instanceof ZodError) {
+      return handleZod(exception);
+    }
+    if (exception instanceof CommandValidationException) {
+      return handleCommandValidation(exception);
+    }
+
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       message = exception.getResponse();
@@ -83,6 +92,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: `Internal server error, contact support and provide them with the errorId`,
     };
   }
+
   private getUuid(exception: unknown) {
     if (process.env.SENTRY_DSN) {
       try {
@@ -101,7 +111,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
  */
 export class ErrorDto {
   statusCode: number;
-
   timestamp: string;
 
   /**
@@ -110,6 +119,24 @@ export class ErrorDto {
   errorId?: string;
 
   path: string;
-
   message: string | object;
+}
+
+function handleZod(exception: ZodError<any>) {
+  const status = HttpStatus.BAD_REQUEST; // Set appropriate status for ZodError
+  const message = {
+    errors: exception.errors.map((err) => ({
+      message: err.message,
+      path: err.path,
+    })),
+  };
+
+  return { status, message };
+}
+
+function handleCommandValidation(exception: CommandValidationException) {
+  const { mappedErrors } = exception;
+  const { message } = exception;
+
+  return { message: { message, cause: mappedErrors }, status: HttpStatus.BAD_REQUEST };
 }
