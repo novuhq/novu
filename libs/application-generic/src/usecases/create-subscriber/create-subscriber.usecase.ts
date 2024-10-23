@@ -43,6 +43,11 @@ export class CreateSubscriber {
 
       if (command.channels?.length) {
         await this.updateCredentials(command);
+        // fetch subscriber again as channel credentials are updated
+        subscriber = await this.fetchSubscriber({
+          _environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+        });
       }
     } else {
       subscriber = await this.updateSubscriber.execute(

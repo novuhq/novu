@@ -4,6 +4,7 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   InvalidateCacheService,
   buildSubscriberKey,
+  CachedEntity,
 } from '../../services/cache';
 import { subscriberNeedUpdate } from '../../utils/subscriber';
 
@@ -28,10 +29,10 @@ export class UpdateSubscriber {
   ): Promise<SubscriberEntity> {
     const foundSubscriber = command.subscriber
       ? command.subscriber
-      : await this.subscriberRepository.findBySubscriberId(
-          command.environmentId,
-          command.subscriberId,
-        );
+      : await this.fetchSubscriber({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        });
 
     if (!foundSubscriber) {
       throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
@@ -94,6 +95,16 @@ export class UpdateSubscriber {
       },
     );
 
+    // fetch subscriber again as channel credentials are updated
+    if (command.channels?.length) {
+      const updatedSubscriber = await this.fetchSubscriber({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      });
+
+      return updatedSubscriber;
+    }
+
     return {
       ...foundSubscriber,
       ...updatePayload,
@@ -119,5 +130,26 @@ export class UpdateSubscriber {
         }),
       );
     }
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(
+      _environmentId,
+      subscriberId,
+      true,
+    );
   }
 }
