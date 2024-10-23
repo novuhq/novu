@@ -7,6 +7,9 @@ services:
     network_mode: bridge
     environment:
       - SERVICES=s3
+      - DEBUG=1  # Enable detailed logs for troubleshooting
+      - AWS_DEFAULT_REGION=us-east-1  # Set a default region for AWS commands
+      - DATA_DIR=/tmp/localstack/data  # Persist service state (useful for debugging or development)
     ports:
       - "${DOCKER_LOCALSTACK_PORT:-4566}:4566"
     volumes:
@@ -16,3 +19,5 @@ services:
       test: "bash -c 'AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://127.0.0.1:4566 s3 ls'"
       retries: 5
       interval: 10s
+      start_period: 20s  # Ensure the container has some time to fully start before the first health check
+      timeout: 5s
