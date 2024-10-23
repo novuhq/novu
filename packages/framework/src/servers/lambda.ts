@@ -8,11 +8,11 @@ import { type SupportedFrameworkName, type Either } from '../types';
  *
  * Example:
  *
- * import { serve, Client, type Workflow } from '@novu/framework/express';
+ * import { serve, Client, type Workflow } from '@novu/framework/lambda';
  *
  * instead of
  *
- * import { serve } from '@novu/framework/express';
+ * import { serve } from '@novu/framework/lambda';
  * import { Client, type Workflow } from '@novu/framework';
  */
 export * from '../index';
