@@ -1,4 +1,4 @@
-import JSONSchemaFaker from 'json-schema-faker';
+import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
