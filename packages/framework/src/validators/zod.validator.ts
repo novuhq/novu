@@ -30,7 +30,7 @@ export class ZodValidator implements Validator<ZodSchema> {
   transformToJsonSchema(schema: ZodSchema): JsonSchema {
     try {
       // eslint-disable-next-line global-require
-      const zodToJsonSchema = require('zod-to-json-schema') as typeof import('zod-to-json-schema').default;
+      const { zodToJsonSchema } = require('zod-to-json-schema') as typeof import('zod-to-json-schema');
 
       // @ts-expect-error - zod-to-json-schema is not using JSONSchema7
       return zodToJsonSchema(schema);
