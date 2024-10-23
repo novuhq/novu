@@ -17,7 +17,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../pri
 export function ConfigureWorkflow() {
   const { control } = useFormContext<z.infer<typeof formSchema>>();
   return (
-    <aside className="text-foreground-950 flex h-full w-[300px] max-w-[350px] flex-col border-l pb-5 pt-3.5 [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-neutral-600">
+    <aside className="text-foreground-950 flex h-full w-[300px] max-w-[350px] flex-col border-l pb-5 pt-3.5 [&_input]:text-xs [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-xs [&_textarea]:text-neutral-600">
       <div className="flex items-center gap-2.5 px-3 pb-3.5 text-sm font-medium">
         <RouteFill />
         <span>Configure workflow</span>
@@ -30,7 +30,7 @@ export function ConfigureWorkflow() {
           <FormItem className="flex items-center justify-between gap-2.5 space-y-0 px-3 py-2">
             <div className="flex items-center gap-4">
               <div
-                className="bg-success-alpha-600 data-[active=false]:shadow-neutral-alpha-100 ml-2 h-1.5 w-1.5 rounded-full [--pulse-color:var(--success)] data-[active=true]:animate-[pulse-shadow_1s_ease-in-out_infinite] data-[active=false]:bg-neutral-300 data-[active=false]:shadow-[0_0px_0px_5px_var(--neutral-alpha-200),0_0px_0px_9px_var(--neutral-alpha-100)]"
+                className="bg-success/60 data-[active=false]:shadow-neutral-alpha-100 ml-2 h-1.5 w-1.5 rounded-full [--pulse-color:var(--success)] data-[active=true]:animate-[pulse-shadow_1s_ease-in-out_infinite] data-[active=false]:bg-neutral-300 data-[active=false]:shadow-[0_0px_0px_5px_var(--neutral-alpha-200),0_0px_0px_9px_var(--neutral-alpha-100)]"
                 data-active={field.value}
               />
               <FormLabel>Active Workflow</FormLabel>
