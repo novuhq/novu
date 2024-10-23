@@ -1,47 +1,54 @@
-FROM node:20-alpine3.19
+FROM ghcr.io/novuhq/novu/base:1.0.0 AS dev
+ARG PACKAGE_PATH
 
-ENV NX_DAEMON=false
+# Combine COPY commands into a single layer
+COPY --chown=1000:1000 ./meta ./deps ./pkg ./
 
-RUN npm install -g pnpm@9.11.0 --loglevel notice
-RUN npm i pm2 -g
-RUN apk --no-cache add g++ make py3-pip
+# Combine secret handling and package installation
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 \
+    export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then \
+        echo 'Building with Enterprise Edition of Novu' && \
+        rm -f .npmrc && cp .npmrc-cloud .npmrc ; \
+    fi && \
+    pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..." --frozen-lockfile --unsafe-perm --reporter=silent
 
-USER 1000
+# Build the ws
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 \
+    export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    NODE_ENV=production NX_DAEMON=false pnpm build:ws
+
+# Copy environment file after build
+WORKDIR /usr/src/app/apps/ws
+RUN cp src/.example.env dist/.env
+
 WORKDIR /usr/src/app
 
-COPY --chown=1000:1000 .npmrc .
-COPY --chown=1000:1000 .npmrc-cloud .
+# ------- ASSETS BUILD ----------
+FROM dev AS assets
 
-COPY --chown=1000:1000 package.json .
+# Remove all unnecessary dependencies for production
+RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
-COPY --chown=1000:1000 apps/ws ./apps/ws
-COPY --chown=1000:1000 libs/dal ./libs/dal
-COPY --chown=1000:1000 packages/shared ./packages/shared
-COPY --chown=1000:1000 libs/testing ./libs/testing
-COPY --chown=1000:1000 libs/application-generic ./libs/application-generic
-COPY --chown=1000:1000 packages/client ./packages/client
-COPY --chown=1000:1000 packages/stateless ./packages/stateless
-COPY --chown=1000:1000 packages/node ./packages/node
-COPY --chown=1000:1000 packages/framework ./packages/framework
-COPY --chown=1000:1000 packages/providers ./packages/providers
+# ------- PRODUCTION BUILD ----------
+FROM ghcr.io/novuhq/novu/base:1.0.0 AS prod
+ARG PACKAGE_PATH
 
-COPY --chown=1000:1000 ["tsconfig.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
+ENV CI=true
+ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi
+WORKDIR /usr/src/app
 
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    pnpm install --verbose && \
-    pnpm build:ws
+# Separate COPY commands for local files and build artifacts
+COPY --chown=1000:1000 ./meta ./
+COPY --chown=1000:1000 --from=assets /usr/src/app .
 
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
+# Install only production dependencies
+RUN --mount=type=cache,id=pnpm-store-ws,target=/root/.pnpm-store \
+    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 \
+    export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    pnpm install --filter "{${PACKAGE_PATH}}..." --frozen-lockfile --unsafe-perm --reporter=silent --prod
 
+# Final command to run the application
 WORKDIR /usr/src/app/apps/ws
-
-RUN cp src/.example.env dist/.env
-RUN cp src/.env.test dist/.env.test
-RUN cp src/.env.development dist/.env.development
-RUN cp src/.env.production dist/.env.production
-
-CMD [ "pm2-runtime", "dist/main.js" ]
+CMD [ "pm2-runtime", "start", "dist/main.js" ]
