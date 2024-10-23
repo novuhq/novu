@@ -44,7 +44,7 @@ import {
   EnvironmentEntity,
 } from '@novu/dal';
 import { Novu } from '@novu/node';
-import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework';
+import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 
 import {
   ParseEventRequestBroadcastCommand,

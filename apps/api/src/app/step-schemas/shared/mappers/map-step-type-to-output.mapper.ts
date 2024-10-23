@@ -1,4 +1,4 @@
-import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework';
+import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework/internal';
 import { EmailStepControlSchema } from '@novu/shared';
 
 export const mapStepTypeToOutput = {

@@ -1,5 +1,4 @@
 import { ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, UserAuthGuard, UserSession } from '@novu/application-generic';
 import {
   Body,
   Controller,
@@ -20,11 +19,14 @@ import {
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   GetListQueryParams,
+  IdentifierOrInternalId,
   ListWorkflowResponse,
   UpdateWorkflowDto,
   UserSessionData,
   WorkflowResponseDto,
 } from '@novu/shared';
+import { UserAuthGuard, UserSession } from '@novu/application-generic';
+
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
@@ -37,6 +39,7 @@ import { DeleteWorkflowUseCase } from './usecases/delete-workflow/delete-workflo
 import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflow.command';
 import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview.usecase';
 import { GeneratePreviewCommand } from './usecases/generate-preview/generate-preview-command';
+import { ParseSlugIdPipe } from './pipes/parse-slug-Id.pipe';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -70,7 +73,7 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async update(
     @UserSession() user: UserSessionData,
-    @Param('workflowId') workflowId: string,
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId,
     @Body() updateWorkflowDto: UpdateWorkflowDto
   ): Promise<WorkflowResponseDto> {
     return await this.upsertWorkflowUseCase.execute(
@@ -86,15 +89,17 @@ export class WorkflowController {
   @UseGuards(UserAuthGuard)
   async getWorkflow(
     @UserSession() user: UserSessionData,
-    @Param('workflowId') workflowId: string
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId
   ): Promise<WorkflowResponseDto> {
     return this.getWorkflowUseCase.execute(GetWorkflowCommand.create({ identifierOrInternalId: workflowId, user }));
   }
 
   @Delete(':workflowId')
-  @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeWorkflow(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string) {
+  async removeWorkflow(
+    @UserSession() user: UserSessionData,
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId
+  ) {
     await this.deleteWorkflowUsecase.execute(
       DeleteWorkflowCommand.create({ identifierOrInternalId: workflowId, user })
     );

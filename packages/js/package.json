@@ -91,7 +91,7 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.15.4",
+    "@arethetypeswrong/cli": "^0.16.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^20.15.0",
     "autoprefixer": "^10.4.0",

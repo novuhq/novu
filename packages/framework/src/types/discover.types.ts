@@ -53,6 +53,7 @@ export type DiscoverStepOutput = {
 export type DiscoverWorkflowOutput = {
   workflowId: string;
   execute: Execute<Record<string, unknown>, Record<string, unknown>>;
+  /** @deprecated use top-level properties instead */
   options: WorkflowOptions<Schema, Schema>;
   code: string;
   steps: Array<DiscoverStepOutput>;
