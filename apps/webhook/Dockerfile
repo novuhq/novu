@@ -1,66 +1,46 @@
-FROM node:20-alpine3.19 AS dev_base
-RUN apk add g++ make py3-pip
-ENV NX_DAEMON=false
-
-RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@9.11.0
-RUN pnpm --version
-
-USER 1000
-WORKDIR /usr/src/app
-
-# ------- DEV BUILD ----------
-FROM dev_base AS dev
+FROM ghcr.io/novuhq/novu/base:1.0.0 AS dev
 ARG PACKAGE_PATH
 
+# Combine COPY commands into a single layer
+COPY --chown=1000:1000 ./meta ./deps ./pkg ./
 
-COPY --chown=1000:1000 ./meta .
-COPY --chown=1000:1000 ./deps .
-COPY --chown=1000:1000 ./pkg .
+# Install dependencies and build the webhook
+RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
+    pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..." \
+    --frozen-lockfile --unsafe-perm --reporter=silent && \
+    NODE_ENV=production pnpm build:webhook
 
-RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
- pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
- --frozen-lockfile\
- --unsafe-perm\
- --reporter=silent
-
-RUN NODE_ENV=production pnpm build:webhook
-
+# Copy environment file after build
 WORKDIR /usr/src/app/apps/webhook
-
 RUN cp src/.example.env dist/.env
-RUN cp src/.env.test dist/.env.test
-RUN cp src/.env.development dist/.env.development
-RUN cp src/.env.production dist/.env.production
 
 WORKDIR /usr/src/app
 
 # ------- ASSETS BUILD ----------
 FROM dev AS assets
 
-WORKDIR /usr/src/app
-
-# Remove all dependencies so later we can only install prod dependencies without devDependencies
+# Remove unnecessary dependencies for production
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
-FROM dev_base AS prod
+FROM ghcr.io/novuhq/novu/base:1.0.0 AS prod
 ARG PACKAGE_PATH
 
 ENV CI=true
 
 WORKDIR /usr/src/app
 
-COPY --chown=1000:1000 ./meta .
+# Separate COPY command for local files
+COPY --chown=1000:1000 ./meta ./
 
-# Get the build artifacts that only include dist folders
+# Copy build artifacts from the assets stage
 COPY --chown=1000:1000 --from=assets /usr/src/app .
 
-RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
- pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..."\
- --frozen-lockfile\
- --unsafe-perm\
- --reporter=silent
+# Install only production dependencies
+RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store \
+    pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..." \
+    --frozen-lockfile --unsafe-perm --prod --reporter=silent
 
+# Final command to run the application
 WORKDIR /usr/src/app/apps/webhook
 CMD [ "pm2-runtime", "dist/main.js" ]
