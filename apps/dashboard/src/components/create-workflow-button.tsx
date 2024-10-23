@@ -17,6 +17,7 @@ import { TagInput } from '@/components/primitives/tag-input';
 import { Textarea } from '@/components/primitives/textarea';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTagsQuery } from '@/hooks/use-tags-query';
+import { handleValidationIssues } from '@/utils/handleValidationIssues';
 import { QueryKeys } from '@/utils/query-keys';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/shared';
@@ -45,6 +46,12 @@ export const CreateWorkflowButton = (props: CreateWorkflowButtonProps) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
   const [isOpen, setIsOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { description: '', identifier: '', name: '', tags: [] },
+  });
+
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (data: CreateWorkflowDto) => createWorkflow(data),
     onSuccess: (result) => {
@@ -56,11 +63,6 @@ export const CreateWorkflowButton = (props: CreateWorkflowButtonProps) => {
     },
   });
   const tagsQuery = useTagsQuery();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { description: '', identifier: '', name: '', tags: [] },
-  });
 
   return (
     <Sheet

@@ -1,21 +1,20 @@
-import { ReactNode, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useForm, useFieldArray } from 'react-hook-form';
-// eslint-disable-next-line
-// @ts-ignore
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { RiProgress1Line } from 'react-icons/ri';
+import { useNavigate, useParams } from 'react-router-dom';
+import * as z from 'zod';
 
-import { WorkflowEditorContext } from './workflow-editor-context';
-import { StepTypeEnum } from '@/utils/enums';
-import { Form } from '../primitives/form/form';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { api } from '@/api/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-import { formSchema } from './schema';
-import { useFetchWorkflow, useUpdateWorkflow, useFormAutoSave } from '@/hooks';
+import { useFormAutoSave, useUpdateWorkflow } from '@/hooks';
+import { StepTypeEnum } from '@/utils/enums';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
+import { Form } from '../primitives/form/form';
 import { smallToast } from '../primitives/sonner-helpers';
+import { formSchema } from './schema';
+import { WorkflowEditorContext } from './workflow-editor-context';
 
 const STEP_NAME_BY_TYPE: Record<StepTypeEnum, string> = {
   email: 'Email Step',
@@ -46,21 +45,19 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
     name: 'steps',
   });
 
-  const { workflow, error } = useFetchWorkflow({
-    workflowId,
-  });
+  const { data, error } = api.fetchWorkflow.useQuery({ workflowId });
 
   useLayoutEffect(() => {
     if (error) {
       navigate(buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' }));
     }
 
-    if (!workflow) {
+    if (!data) {
       return;
     }
 
-    reset({ ...workflow, steps: workflow.steps.map((step) => ({ ...step })) });
-  }, [workflow, error, navigate, reset, currentEnvironment]);
+    reset({ ...data, steps: data.data.steps.map((step) => ({ ...step })) });
+  }, [data, error, navigate, reset, currentEnvironment]);
 
   const { updateWorkflow } = useUpdateWorkflow({
     onSuccess: (data) => {
@@ -92,12 +89,12 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
 
   useFormAutoSave({
     form,
-    onSubmit: async (data: z.infer<typeof formSchema>) => {
-      if (!workflow) {
+    onSubmit: async (values: z.infer<typeof formSchema>) => {
+      if (!data) {
         return;
       }
 
-      updateWorkflow({ id: workflow._id, workflow: { ...workflow, ...data } as any });
+      updateWorkflow({ id: data.data._id, workflow: { ...data, ...values } as any });
     },
   });
 

@@ -14,9 +14,9 @@ import { Button } from '@/components/primitives/button';
 import { WorkflowEditor } from '@/components/workflow-editor/workflow-editor';
 import { WorkflowEditorProvider } from '@/components/workflow-editor/workflow-editor-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Toaster } from '@/components/primitives/sonner';
+import { api } from '@/api/hooks';
 
 export const EditWorkflowPage = () => {
   return (
@@ -34,9 +34,7 @@ const StartItems = () => {
   const { workflowId } = useParams<{ workflowId?: string }>();
   const navigate = useNavigate();
   const workflowsRoute = buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' });
-  const { workflow } = useFetchWorkflow({
-    workflowId,
-  });
+  const { data } = api.fetchWorkflow.useQuery({ workflowId });
 
   const breadcrumbs = [
     { label: currentEnvironment?.name, href: workflowsRoute },
@@ -68,7 +66,7 @@ const StartItems = () => {
           <BreadcrumbItem>
             <BreadcrumbPage>
               <RouteFill />
-              {workflow?.name}
+              {data?.data.name}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

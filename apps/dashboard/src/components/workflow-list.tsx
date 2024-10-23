@@ -1,5 +1,4 @@
-import type { ListWorkflowResponse } from '@novu/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData } from '@tanstack/react-query';
 import { FaCode } from 'react-icons/fa6';
 import {
   RiBookMarkedLine,
@@ -13,7 +12,7 @@ import {
 } from 'react-icons/ri';
 import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { getV2 } from '@/api/api.client';
+import { api } from '@/api/hooks';
 import { DefaultPagination } from '@/components/default-pagination';
 import { Badge, BadgeContent } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -44,7 +43,6 @@ import { WorkflowSteps } from '@/components/workflow-steps';
 import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
 import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
-import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 export const WorkflowList = () => {
@@ -67,12 +65,9 @@ export const WorkflowList = () => {
 
   const offset = parseInt(searchParams.get('offset') || '0');
   const limit = parseInt(searchParams.get('limit') || '12');
-  const workflowsQuery = useQuery({
-    queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, { limit, offset }],
-    queryFn: async () => {
-      const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?limit=${limit}&offset=${offset}`);
-      return data;
-    },
+  const workflowsQuery = api.fetchWorkflows.useQuery({
+    limit,
+    offset,
     placeholderData: keepPreviousData,
   });
   const currentPage = Math.floor(offset / limit) + 1;
@@ -81,7 +76,7 @@ export const WorkflowList = () => {
     return null;
   }
 
-  if (!workflowsQuery.isPending && workflowsQuery.data.totalCount === 0) {
+  if (!workflowsQuery.isPending && workflowsQuery.data.data.totalCount === 0) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-6">
         <div className="flex flex-col items-center gap-2 text-center">
@@ -154,7 +149,7 @@ export const WorkflowList = () => {
             </>
           ) : (
             <>
-              {workflowsQuery.data.workflows.map((workflow) => (
+              {workflowsQuery.data.data.workflows.map((workflow) => (
                 <TableRow key={workflow._id} className="relative">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-1">
@@ -237,14 +232,14 @@ export const WorkflowList = () => {
             </>
           )}
         </TableBody>
-        {workflowsQuery.data && limit < workflowsQuery.data.totalCount && (
+        {workflowsQuery.data && limit < workflowsQuery.data.data.totalCount && (
           <TableFooter>
             <TableRow>
               <TableCell colSpan={5}>
                 <div className="flex items-center justify-between">
                   {workflowsQuery.data ? (
                     <span className="text-foreground-600 block text-sm font-normal">
-                      Page {currentPage} of {Math.ceil(workflowsQuery.data.totalCount / limit)}
+                      Page {currentPage} of {Math.ceil(workflowsQuery.data.data.totalCount / limit)}
                     </span>
                   ) : (
                     <Skeleton className="h-5 w-[20ch]" />
@@ -252,7 +247,7 @@ export const WorkflowList = () => {
                   {workflowsQuery.data ? (
                     <DefaultPagination
                       hrefFromOffset={hrefFromOffset}
-                      totalCount={workflowsQuery.data.totalCount}
+                      totalCount={workflowsQuery.data.data.totalCount}
                       limit={limit}
                       offset={offset}
                     />
