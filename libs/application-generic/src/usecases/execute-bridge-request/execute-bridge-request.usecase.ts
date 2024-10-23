@@ -26,7 +26,7 @@ import {
   HttpQueryKeysEnum,
   GetActionEnum,
   isFrameworkError,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 import { EnvironmentRepository } from '@novu/dal';
 import { HttpRequestHeaderKeysEnum, WorkflowOriginEnum } from '@novu/shared';
 import {

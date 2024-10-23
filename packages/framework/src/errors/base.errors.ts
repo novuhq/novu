@@ -1,6 +1,5 @@
 import { isNativeError } from 'node:util/types';
 
-import { DeepRequired } from '../types';
 import { HttpStatusEnum } from '../constants';
 import { ErrorCodeEnum } from '../constants/error.constants';
 
@@ -44,7 +43,7 @@ export abstract class ServerError extends FrameworkError {
     stack: string;
   };
 
-  constructor(...[message, { cause }]: DeepRequired<ConstructorParameters<typeof Error>>) {
+  constructor(message: string, { cause }: Partial<{ cause: unknown }> = {}) {
     if (isNativeError(cause)) {
       super(`${message}: ${cause.message}`);
       this.data = {

@@ -1,4 +1,4 @@
-import { json, port, str, num, url, ValidatorSpec, bool, cleanEnv, CleanedEnv } from 'envalid';
+import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 import {
   DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
   DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
@@ -48,11 +48,10 @@ export const envValidators = {
   MESSAGE_GENERIC_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS }),
   MESSAGE_IN_APP_RETENTION_DAYS: num({ default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS }),
   LEGACY_STAGING_DASHBOARD_URL: url({ default: undefined }),
-  API_ROOT_URL: url({ default: undefined }),
+  API_ROOT_URL: url(),
   NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER: str({ default: undefined }),
   HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID: str({ default: undefined }),
   HUBSPOT_PRIVATE_APP_ACCESS_TOKEN: str({ default: undefined }),
-
   // Feature Flags
   ...Object.keys(FeatureFlagsKeysEnum).reduce(
     (acc, key) => {

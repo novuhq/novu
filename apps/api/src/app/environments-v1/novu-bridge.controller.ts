@@ -1,7 +1,6 @@
 import { Controller, Req, Res, Inject, Get, Post, Options } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { ApiExcludeController } from '@nestjs/swagger';
-// @ts-expect-error - TODO: bundle CJS with @novu/framework
 import { NovuClient } from '@novu/framework/nest';
 import { NovuBridgeClient } from './novu-bridge-client';
 

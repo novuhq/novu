@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PostActionEnum, HttpQueryKeysEnum, Event, JobStatusEnum, ExecuteOutput } from '@novu/framework';
+import { Event, ExecuteOutput, HttpQueryKeysEnum, JobStatusEnum, PostActionEnum } from '@novu/framework/internal';
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand } from '@novu/application-generic';
-import { WorkflowOriginEnum } from '@novu/shared';
 
 import { PreviewStepCommand } from './preview-step.command';
 
@@ -10,44 +9,46 @@ export class PreviewStep {
   constructor(private executeBridgeRequest: ExecuteBridgeRequest) {}
 
   async execute(command: PreviewStepCommand): Promise<ExecuteOutput> {
-    const event = this.mapEvent(command);
+    const event = this.buildBridgeEventPayload(command);
+    const executeCommand = this.createExecuteCommand(command, event);
 
-    const response = (await this.executeBridgeRequest.execute(
-      ExecuteBridgeRequestCommand.create({
-        environmentId: command.environmentId,
-        action: PostActionEnum.PREVIEW,
-        event,
-        searchParams: {
-          [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
-          [HttpQueryKeysEnum.STEP_ID]: command.stepId,
-        },
-        // TODO: pass the origin from the command
-        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
-        retriesLimit: 1,
-      })
-    )) as ExecuteOutput;
+    const bridgeResult = await this.executeBridgeRequest.execute(executeCommand);
 
-    return response;
+    return bridgeResult as ExecuteOutput;
   }
 
-  private mapEvent(command: PreviewStepCommand): Omit<Event, 'workflowId' | 'stepId' | 'action' | 'source'> {
-    const payload = {
-      /** @deprecated - use controls instead */
-      inputs: command.controls || {},
+  private createExecuteCommand(command: PreviewStepCommand, event: Event) {
+    return ExecuteBridgeRequestCommand.create({
+      environmentId: command.environmentId,
+      action: PostActionEnum.PREVIEW,
+      event,
+      searchParams: {
+        [HttpQueryKeysEnum.WORKFLOW_ID]: command.workflowId,
+        [HttpQueryKeysEnum.STEP_ID]: command.stepId,
+      },
+      workflowOrigin: command.workflowOrigin,
+      retriesLimit: 1,
+    });
+  }
+
+  private buildBridgeEventPayload(command: PreviewStepCommand): Event {
+    return {
+      inputs: {}, // @deprecated - use controls instead
       controls: command.controls || {},
-      /** @deprecated - use payload instead */
-      data: command.payload || {},
+
+      data: {}, // @deprecated - use payload instead
       payload: command.payload || {},
       state: [
         {
           stepId: 'trigger',
-          outputs: command.payload || {},
+          outputs: {},
           state: { status: JobStatusEnum.COMPLETED },
         },
       ],
-      subscriber: {},
+      subscriber: command.subscriber || {},
+      stepId: command.stepId,
+      workflowId: command.workflowId,
+      action: PostActionEnum.PREVIEW,
     };
-
-    return payload;
   }
 }
