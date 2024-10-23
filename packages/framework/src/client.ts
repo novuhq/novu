@@ -1,4 +1,3 @@
-import { JSONSchemaFaker } from 'json-schema-faker';
 import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
@@ -39,6 +38,8 @@ import type {
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, sanitizeHtmlInObject, stringifyDataStructureWithSingleQuotes } from './utils';
 import { transformSchema, validateData } from './validators';
+
+const { JSONSchemaFaker } = require('json-schema-faker');
 
 /**
  * We want to respond with a consistent string value for preview
