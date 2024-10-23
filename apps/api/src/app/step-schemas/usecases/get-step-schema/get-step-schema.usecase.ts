@@ -13,7 +13,7 @@ import { StepSchemaDto } from '../../dtos/step-schema.dto';
 import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
 
 @Injectable()
-export class GetStepSchema {
+export class GetStepSchemaUseCase {
   constructor(private readonly notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetStepSchemaCommand): Promise<StepSchemaDto> {
