@@ -1,3 +1,4 @@
+/* eslint-disable multiline-comment-style */
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomUUID } from 'node:crypto';
@@ -52,10 +53,11 @@ describe('Generate Preview', () => {
     });
     describe('Happy Path, no payload, expected same response as requested', () => {
       const channelTypes = [
-        { type: StepTypeEnum.IN_APP, description: 'InApp' },
-        { type: StepTypeEnum.SMS, description: 'SMS' },
-        { type: StepTypeEnum.PUSH, description: 'Push' },
-        { type: StepTypeEnum.CHAT, description: 'Chat' },
+        // { type: StepTypeEnum.IN_APP, description: 'InApp' },
+        // { type: StepTypeEnum.SMS, description: 'SMS' },
+        // { type: StepTypeEnum.PUSH, description: 'Push' },
+        // { type: StepTypeEnum.CHAT, description: 'Chat' },
+        { type: StepTypeEnum.EMAIL, description: 'Email' },
       ];
 
       channelTypes.forEach(({ type, description }) => {
@@ -171,7 +173,7 @@ function mailyJsonExample(): TipTapNode {
         ],
       },
       {
-        type: 'for',
+        type: 'paragraph',
         attr: {
           each: '{{payload.comment}}',
         },

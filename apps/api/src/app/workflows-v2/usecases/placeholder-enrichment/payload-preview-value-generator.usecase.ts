@@ -33,6 +33,7 @@ export class CreateMockPayloadUseCase {
     const collectPlaceholderMappings = this.collectPlaceholdersFromTipTapSchemaUsecase.execute({
       node: controlValue as TipTapNode,
     });
+    console.log('collectPlaceholderMappings:', JSON.stringify(collectPlaceholderMappings, null, 2));
     const transformPlaceholderMap = this.transformPlaceholderMapUseCase.execute({ input: collectPlaceholderMappings });
 
     return transformPlaceholderMap.payload;

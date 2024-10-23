@@ -10,9 +10,15 @@ export class EmailOutputRendererUsecase {
   constructor(private expendEmailEditorSchemaUseCase: ExpandEmailEditorSchemaUsecase) {}
 
   async execute(renderCommand: RenderCommand): Promise<EmailRenderOutput> {
+    console.log('renderCommand', JSON.stringify(renderCommand, null, 2));
+
     const parse = EmailStepControlSchema.parse(renderCommand.controlValues);
+    console.log('renderCommandParsed', JSON.stringify(parse, null, 2));
     const schema = parse.emailEditor as TipTapNode;
+    console.log('schema', JSON.stringify(schema, null, 2));
     const expandedSchema = this.expendEmailEditorSchemaUseCase.execute({ schema });
+    console.log('expandedSchema', JSON.stringify(expandedSchema, null, 2));
+
     const html = await render(expandedSchema);
 
     return { subject: parse.subject, body: html };

@@ -42,7 +42,7 @@ export class CollectPlaceholdersFromTipTapSchemaUsecase {
   }
 
   private traverse(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
-    if (node.type === 'for' && node.attr) {
+    if (node.attr && node.attr.each) {
       this.handleForTraversal(node, placeholders);
     } else if (node.type === 'show' && node.attr && node.attr.when) {
       this.handleShowTraversal(node, placeholders);
@@ -61,7 +61,7 @@ export class CollectPlaceholdersFromTipTapSchemaUsecase {
   }
 
   private handleForTraversal(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
-    if (node.type === 'show' && node.attr && typeof node.attr.each === 'string') {
+    if (node.attr && typeof node.attr.each === 'string') {
       const mainPlaceholder = extractPlaceholders(node.attr.each);
       if (mainPlaceholder && mainPlaceholder.length === 1) {
         if (!placeholders.for[mainPlaceholder[0]]) {
