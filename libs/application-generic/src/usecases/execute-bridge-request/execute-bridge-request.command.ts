@@ -9,7 +9,7 @@ import {
   HealthCheck,
   HttpQueryKeysEnum,
   PostActionEnum,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 import { WorkflowOriginEnum } from '@novu/shared';
 import { EnvironmentLevelCommand } from '../../commands';
 
@@ -41,11 +41,11 @@ export type ExecuteBridgeRequestDto<T extends PostActionEnum | GetActionEnum> =
   T extends GetActionEnum.DISCOVER
     ? DiscoverOutput
     : T extends GetActionEnum.HEALTH_CHECK
-      ? HealthCheck
-      : T extends GetActionEnum.CODE
-        ? CodeResult
-        : T extends PostActionEnum.EXECUTE
-          ? ExecuteOutput
-          : T extends PostActionEnum.PREVIEW
-            ? ExecuteOutput
-            : never;
+    ? HealthCheck
+    : T extends GetActionEnum.CODE
+    ? CodeResult
+    : T extends PostActionEnum.EXECUTE
+    ? ExecuteOutput
+    : T extends PostActionEnum.PREVIEW
+    ? ExecuteOutput
+    : never;

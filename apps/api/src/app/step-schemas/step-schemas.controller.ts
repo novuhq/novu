@@ -1,7 +1,7 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 
 import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
-import { StepType } from '@novu/framework';
+import { type StepType } from '@novu/framework/internal';
 
 import { UserSessionData } from '@novu/shared';
 import { createGetStepSchemaCommand } from './usecases/get-step-schema/get-step-schema.command';
