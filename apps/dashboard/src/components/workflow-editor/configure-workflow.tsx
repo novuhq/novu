@@ -1,20 +1,21 @@
 import { useFormContext } from 'react-hook-form';
 import { RouteFill } from '../icons';
-
 import { Input, InputField } from '../primitives/input';
-import { Switch } from '../primitives/switch';
-import { Textarea } from '../primitives/textarea';
-import { TagInput } from '../primitives/tag-input';
-import { Separator } from '../primitives/separator';
-import { formSchema } from './schema';
+import { RiArrowRightSLine, RiSettingsLine } from 'react-icons/ri';
 import * as z from 'zod';
-import { RiInformation2Line } from 'react-icons/ri';
-
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../primitives/tooltip';
+import { Separator } from '../primitives/separator';
+import { TagInput } from '../primitives/tag-input';
+import { Textarea } from '../primitives/textarea';
+import { formSchema } from './schema';
+import { useTagsQuery } from '@/hooks/use-tags-query';
+import { Button } from '../primitives/button';
 import { CopyButton } from '../primitives/copy-button';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '../primitives/form/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
+import { Switch } from '../primitives/switch';
 
 export function ConfigureWorkflow() {
+  const tagsQuery = useTagsQuery();
+
   const { control } = useFormContext<z.infer<typeof formSchema>>();
   return (
     <aside className="text-foreground-950 flex h-full w-[300px] max-w-[350px] flex-col border-l pb-5 pt-3.5 [&_input]:text-xs [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-xs [&_textarea]:text-neutral-600">
@@ -99,39 +100,23 @@ export function ConfigureWorkflow() {
                 <FormLabel>Add tags</FormLabel>
               </div>
               <FormControl className="text-xs text-neutral-600">
-                <TagInput {...field} value={field.value ?? []} suggestions={[]} />
+                <TagInput
+                  {...field}
+                  value={field.value ?? []}
+                  suggestions={tagsQuery.data?.data.map((tag) => tag.name) || []}
+                />
               </FormControl>
             </FormItem>
           )}
         />
       </div>
       <Separator />
-      <FormField
-        control={control}
-        name="preferences.default.all.readOnly"
-        render={({ field }) => (
-          <FormItem className="flex items-center justify-between gap-2.5 space-y-0 px-3 py-4">
-            <div className="flex items-center gap-1">
-              <FormLabel>Mark as critical</FormLabel>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <RiInformation2Line className="text-foreground-400 cursor-pointer" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="w-72">
-                    <span>Marking this workflow as critical will prevent subscribers from unsubscribing.</span>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <FormControl>
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
+      <div className="px-3 py-4">
+        <Button variant="outline" className="flex w-full justify-start gap-1.5 text-xs font-medium" type="button">
+          <RiSettingsLine className="h-4 w-4 text-neutral-600" />
+          Configure channel preferences <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+        </Button>
+      </div>
       <Separator />
     </aside>
   );
