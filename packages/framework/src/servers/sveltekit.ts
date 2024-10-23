@@ -9,11 +9,11 @@ import { getResponse } from '../utils';
  *
  * Example:
  *
- * import { serve, Client, type Workflow } from '@novu/framework/express';
+ * import { serve, Client, type Workflow } from '@novu/framework/sveltekit';
  *
  * instead of
  *
- * import { serve } from '@novu/framework/express';
+ * import { serve } from '@novu/framework/sveltekit';
  * import { Client, type Workflow } from '@novu/framework';
  */
 export * from '../index';
