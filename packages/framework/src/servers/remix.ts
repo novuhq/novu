@@ -8,11 +8,11 @@ import { getResponse } from '../utils';
  *
  * Example:
  *
- * import { serve, Client, type Workflow } from '@novu/framework/express';
+ * import { serve, Client, type Workflow } from '@novu/framework/remix';
  *
  * instead of
  *
- * import { serve } from '@novu/framework/express';
+ * import { serve } from '@novu/framework/remix';
  * import { Client, type Workflow } from '@novu/framework';
  */
 export * from '../index';
