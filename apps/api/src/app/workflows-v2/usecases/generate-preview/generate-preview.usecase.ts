@@ -141,7 +141,7 @@ export class GeneratePreviewUsecase {
 
     return {
       workflowId,
-      stepId: step.slug,
+      stepId: step.stepId,
       stepType: step.type,
       stepControlSchema: step.controls,
       origin: workflowResponseDto.origin,
