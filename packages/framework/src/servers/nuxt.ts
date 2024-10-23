@@ -9,11 +9,11 @@ import { type SupportedFrameworkName } from '../types';
  *
  * Example:
  *
- * import { serve, Client, type Workflow } from '@novu/framework/express';
+ * import { serve, Client, type Workflow } from '@novu/framework/nuxt';
  *
  * instead of
  *
- * import { serve } from '@novu/framework/express';
+ * import { serve } from '@novu/framework/nuxt';
  * import { Client, type Workflow } from '@novu/framework';
  */
 export * from '../index';
