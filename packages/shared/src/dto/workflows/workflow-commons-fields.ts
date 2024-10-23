@@ -11,6 +11,8 @@ export class ControlsSchema {
 export type StepResponseDto = StepDto & {
   stepUuid: string;
   stepId: string;
+  slug: string;
+  controls: ControlsSchema;
 };
 
 export type StepUpdateDto = StepDto & {
@@ -26,7 +28,7 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'status' | 'type' | 'origin'
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'status' | 'origin'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
@@ -39,9 +41,6 @@ export class StepDto {
   @IsString()
   @IsDefined()
   type: StepTypeEnum;
-
-  @IsObject()
-  controls: ControlsSchema;
 
   @IsObject()
   controlValues: Record<string, unknown>;

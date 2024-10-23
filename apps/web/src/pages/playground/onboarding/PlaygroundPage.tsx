@@ -3,7 +3,7 @@ import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
 
 import { css, cx } from '@novu/novui/css';
-import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework';
+import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework/internal';
 
 import { hstack } from '@novu/novui/patterns';
 import { token } from '@novu/novui/tokens';

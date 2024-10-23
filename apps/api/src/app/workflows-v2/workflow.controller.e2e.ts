@@ -1,5 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { randomBytes } from 'crypto';
+import { slugifyName } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -15,9 +17,7 @@ import {
   WorkflowListResponseDto,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { randomBytes } from 'crypto';
-import { channelStepSchemas, JsonSchema } from '@novu/framework';
-import { slugifyName } from '@novu/application-generic';
+import { createWorkflowClient } from './clients';
 
 const v2Prefix = '/v2';
 const PARTIAL_UPDATED_NAME = 'Updated';
@@ -27,23 +27,22 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const TEST_TAGS = ['test'];
 let session: UserSession;
 
-const SCHEMA_WITH_TEXT: JsonSchema = {
-  type: 'object',
-  properties: {
-    text: {
-      type: 'string',
-    },
-  },
-  required: ['text'],
-};
-
 describe('Workflow Controller E2E API Testing', () => {
+  let workflowsClient: ReturnType<typeof createWorkflowClient>;
+
   beforeEach(async () => {
     // @ts-ignore
     process.env.IS_WORKFLOW_PREFERENCES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
+    workflowsClient = createWorkflowClient(session.serverUrl, getHeaders());
   });
+  function getHeaders(): HeadersInit {
+    return {
+      Authorization: session.token, // Fixed space
+      'Novu-Environment-Id': session.environment._id,
+    };
+  }
 
   it('Smoke Testing', async () => {
     // @ts-ignore
@@ -88,7 +87,9 @@ describe('Workflow Controller E2E API Testing', () => {
       const nameSuffix = `Test Workflow${new Date().toString()}`;
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(nameSuffix);
       const updateDtoWithValues = buildUpdateDtoWithValues(workflowCreated);
-      await updateWorkflowAndValidate(workflowCreated._id, workflowCreated.updatedAt, updateDtoWithValues);
+      const updatedWorkflow: WorkflowResponseDto = await updateWorkflowRest(workflowCreated._id, updateDtoWithValues);
+      expect(updatedWorkflow.steps[0].controlValues.test).to.be.equal(updateDtoWithValues.steps[0].controlValues.test);
+      expect(updatedWorkflow.steps[1].controlValues.test).to.be.equal(updateDtoWithValues.steps[1].controlValues.test);
     });
 
     it('should keep the step id on updated ', async () => {
@@ -137,10 +138,11 @@ describe('Workflow Controller E2E API Testing', () => {
       });
       expect(workflowSummaries).to.be.empty;
     });
+
     it('should not return workflows if offset is bigger than the amount of available workflows', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
-      const listWorkflowResponse = await getAllAndValidate({
+      await getAllAndValidate({
         searchQuery: uuid,
         offset: 11,
         limit: 15,
@@ -148,11 +150,12 @@ describe('Workflow Controller E2E API Testing', () => {
         expectedArraySize: 0,
       });
     });
+
     it('should return all results within range', async () => {
       const uuid = generateUUID();
 
       await create10Workflows(uuid);
-      const listWorkflowResponse = await getAllAndValidate({
+      await getAllAndValidate({
         searchQuery: uuid,
         offset: 0,
         limit: 15,
@@ -164,7 +167,7 @@ describe('Workflow Controller E2E API Testing', () => {
     it('should return results without query', async () => {
       const uuid = generateUUID();
       await create10Workflows(uuid);
-      const listWorkflowResponse = await getAllAndValidate({
+      await getAllAndValidate({
         searchQuery: uuid,
         offset: 0,
         limit: 15,
@@ -194,6 +197,17 @@ describe('Workflow Controller E2E API Testing', () => {
       expect(idsDeduplicated.size).to.be.equal(10);
     });
   });
+  describe('Get Workflow Permutations', () => {
+    it('should return 404 if workflow does not exist', async () => {
+      const notExistingId = '123';
+      const novuRestResult = await workflowsClient.getWorkflow(notExistingId);
+      expect(novuRestResult.isSuccess).to.be.false;
+      expect(novuRestResult.error).to.be.ok;
+      expect(novuRestResult.error!.status).to.equal(404);
+      expect(novuRestResult.error!.responseText).to.contain('Workflow');
+      expect(JSON.parse(novuRestResult.error!.responseText).workflowId).to.contain(notExistingId);
+    });
+  });
 });
 
 function buildErrorMsg(createWorkflowDto: Omit<WorkflowCommonsFields, '_id'>, createdWorkflowWithoutUpdateDate) {
@@ -210,12 +224,18 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
   const createWorkflowDto: CreateWorkflowDto = buildCreateWorkflowDto(nameSuffix);
   const res = await session.testAgent.post(`${v2Prefix}/workflows`).send(createWorkflowDto);
   const workflowResponseDto: WorkflowResponseDto = res.body.data;
-  expect(workflowResponseDto, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto._id, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.updatedAt, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.createdAt, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.preferences, JSON.stringify(res, null, 2)).to.be.ok;
-  expect(workflowResponseDto.status, JSON.stringify(res, null, 2)).to.be.ok;
+  const errorMessageOnFailure = JSON.stringify(res, null, 2);
+  expect(workflowResponseDto, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto._id, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.updatedAt, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.createdAt, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.preferences, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.status, errorMessageOnFailure).to.be.ok;
+  expect(workflowResponseDto.origin, errorMessageOnFailure).to.be.eq('novu-cloud');
+  for (const step of workflowResponseDto.steps) {
+    expect(step.stepUuid, errorMessageOnFailure).to.be.ok;
+    expect(step.slug, errorMessageOnFailure).to.be.ok;
+  }
   const createdWorkflowWithoutUpdateDate = removeFields(
     workflowResponseDto,
     '_id',
@@ -223,11 +243,10 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
     'preferences',
     'updatedAt',
     'createdAt',
-    'status',
-    'type'
+    'status'
   );
   createdWorkflowWithoutUpdateDate.steps = createdWorkflowWithoutUpdateDate.steps.map((step) =>
-    removeFields(step, 'stepUuid', 'stepId')
+    removeFields(step, 'stepUuid', 'slug', 'controls', 'stepId')
   );
   expect(createdWorkflowWithoutUpdateDate).to.deep.equal(
     removeFields(createWorkflowDto, '__source'),
@@ -240,9 +259,6 @@ async function createWorkflowAndValidate(nameSuffix: string = ''): Promise<Workf
 function buildEmailStep(): StepDto {
   return {
     controlValues: {},
-    controls: {
-      schema: channelStepSchemas.email.output,
-    },
     name: 'Email Test Step',
     type: StepTypeEnum.EMAIL,
   };
@@ -251,15 +267,15 @@ function buildEmailStep(): StepDto {
 function buildInAppStep(): StepDto {
   return {
     controlValues: {},
-    controls: {
-      schema: channelStepSchemas.in_app.output,
-    },
     name: 'In-App Test Step',
     type: StepTypeEnum.IN_APP,
   };
 }
 
-function buildCreateWorkflowDto(nameSuffix: string, overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
+export function buildCreateWorkflowDto(
+  nameSuffix: string,
+  overrides: Partial<CreateWorkflowDto> = {}
+): CreateWorkflowDto {
   return {
     __source: WorkflowCreationSourceEnum.EDITOR,
     name: TEST_WORKFLOW_NAME + nameSuffix,
@@ -286,13 +302,10 @@ function isStepUpdateDto(obj: StepDto): obj is StepUpdateDto {
   return typeof obj === 'object' && obj !== null && 'stepUuid' in obj;
 }
 
-function buildStepWithoutUUid(stepInResponse: StepDto & { stepUuid: string }) {
+function buildStepWithoutUUid(stepInResponse: StepResponseDto) {
   if (!stepInResponse.controls) {
     return {
       controlValues: stepInResponse.controlValues,
-      controls: {
-        schema: channelStepSchemas[stepInResponse.type].output,
-      },
       name: stepInResponse.name,
       type: stepInResponse.type,
     };
@@ -337,21 +350,26 @@ function validateUpdatedWorkflowAndRemoveResponseFields(
     'updatedAt',
     'origin',
     '_id',
-    'status',
-    'type'
+    'status'
   );
-  const augmentedStep: (StepUpdateDto | StepCreateDto)[] = [];
+  const augmentedSteps: (StepUpdateDto | StepCreateDto)[] = [];
+
   for (const stepInResponse of workflowResponse.steps) {
+    const responseStep = removeFields(stepInResponse, 'controls');
     expect(stepInResponse.stepUuid).to.be.ok;
-    const { stepUuid } = stepInResponse;
+
+    const { stepUuid } = responseStep;
     const stepOnRequestBasedOnId = findStepOnRequestBasedOnId(workflowUpdateRequest, stepUuid);
+    let augmentedStep: StepUpdateDto | StepCreateDto;
     if (!stepOnRequestBasedOnId) {
-      augmentedStep.push(buildStepWithoutUUid(stepInResponse));
+      augmentedStep = buildStepWithoutUUid(responseStep);
     } else {
-      augmentedStep.push({ ...stepInResponse });
+      augmentedStep = { ...responseStep };
     }
+    augmentedSteps.push(augmentedStep);
   }
-  updatedWorkflowWoUpdated.steps = [...augmentedStep];
+
+  updatedWorkflowWoUpdated.steps = [...augmentedSteps];
 
   return updatedWorkflowWoUpdated;
 }
@@ -421,7 +439,7 @@ async function getWorkflowRest(
 }
 
 async function validateWorkflowDeleted(workflowId: string): Promise<void> {
-  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(400);
+  await session.testAgent.get(`${v2Prefix}/workflows/${workflowId}`).expect(404);
 }
 
 async function getWorkflowAndValidate(workflowCreated: WorkflowResponseDto) {
@@ -510,6 +528,7 @@ async function create10Workflows(prefix: string) {
     await createWorkflowAndValidate(`${prefix}-ABC${i}`);
   }
 }
+
 function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
   const objCopy = JSON.parse(JSON.stringify(obj));
   keysToRemove.forEach((key) => {
@@ -518,6 +537,7 @@ function removeFields<T>(obj: T, ...keysToRemove: (keyof T)[]): T {
 
   return objCopy;
 }
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 interface ApiResponse {
   req: {
@@ -553,18 +573,19 @@ interface ApiResponse {
   status: number; // e.g., 400
   text: string; // e.g., "{\"message\":\"Workflow not found with id: 66e929c6667852862a1e5145\",\"error\":\"Bad Request\",\"statusCode\":400}"
 }
+
 async function safeGet<T>(url: string): Promise<T> {
   return (await safeRest(url, () => session.testAgent.get(url) as unknown as Promise<ApiResponse>)) as T;
 }
+
 async function safePut<T>(url: string, data: object): Promise<T> {
   return (await safeRest(url, () => session.testAgent.put(url).send(data) as unknown as Promise<ApiResponse>)) as T;
 }
-async function safePost<T>(url: string, data: object): Promise<T> {
-  return (await safeRest(url, () => session.testAgent.post(url).send(data) as unknown as Promise<ApiResponse>)) as T;
-}
+
 async function safeDelete<T>(url: string): Promise<void> {
   await safeRest(url, () => session.testAgent.delete(url) as unknown as Promise<ApiResponse>, 204);
 }
+
 function generateUUID(): string {
   // Generate a random 4-byte hex string
   const randomHex = () => randomBytes(2).toString('hex');
@@ -588,7 +609,16 @@ function buildInAppStepWithValues() {
 }
 
 function convertResponseToUpdateDto(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
-  return removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'type', 'status') as UpdateWorkflowDto;
+  const steps = workflowCreated.steps.map((step) => removeFields(step, 'slug')) as StepUpdateDto[];
+  const workflowResponseDto = removeFields(
+    workflowCreated,
+    'updatedAt',
+    '_id',
+    'origin',
+    'status'
+  ) as UpdateWorkflowDto;
+
+  return { ...workflowResponseDto, steps };
 }
 
 function buildUpdateDtoWithValues(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
@@ -607,9 +637,6 @@ function createStep(): StepCreateDto {
   return {
     name: 'someStep',
     type: StepTypeEnum.SMS,
-    controls: {
-      schema: SCHEMA_WITH_TEXT,
-    },
     controlValues: {
       text: '{SOME_TEXT_VARIABLE}',
     },
@@ -618,14 +645,7 @@ function createStep(): StepCreateDto {
 
 function buildUpdateRequest(workflowCreated: WorkflowResponseDto): UpdateWorkflowDto {
   const steps = [createStep()];
-  const updateRequest = removeFields(
-    workflowCreated,
-    'updatedAt',
-    '_id',
-    'origin',
-    'status',
-    'type'
-  ) as UpdateWorkflowDto;
+  const updateRequest = removeFields(workflowCreated, 'updatedAt', '_id', 'origin', 'status') as UpdateWorkflowDto;
 
   return {
     ...updateRequest,

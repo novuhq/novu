@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   HttpException,
-  GatewayTimeoutException,
+  RequestTimeoutException,
 } from '@nestjs/common';
 import got, {
   CacheError,
@@ -26,7 +26,7 @@ import {
   HttpQueryKeysEnum,
   GetActionEnum,
   isFrameworkError,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 import { EnvironmentRepository } from '@novu/dal';
 import { HttpRequestHeaderKeysEnum, WorkflowOriginEnum } from '@novu/shared';
 import {
@@ -39,10 +39,18 @@ import {
 } from '../get-decrypted-secret-key';
 import { BRIDGE_EXECUTION_ERROR } from '../../utils';
 
-export const DEFAULT_TIMEOUT = 15_000; // 15 seconds
+export const DEFAULT_TIMEOUT = 5_000; // 5 seconds
 export const DEFAULT_RETRIES_LIMIT = 3;
 export const RETRYABLE_HTTP_CODES: number[] = [
-  408, 413, 429, 500, 502, 503, 504, 521, 522, 524,
+  408, // Request Timeout
+  429, // Too Many Requests
+  500, // Internal Server Error
+  503, // Service Unavailable
+  504, // Gateway Timeout
+  // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
+  521, // CloudFlare web server is down
+  522, // CloudFlare connection timed out
+  524, // CloudFlare a timeout occurred
 ];
 const RETRYABLE_ERROR_CODES: string[] = [
   'EAI_AGAIN', //    DNS resolution failed, retry
@@ -267,7 +275,7 @@ export class ExecuteBridgeRequest {
 
       if (error instanceof TimeoutError) {
         Logger.error(`Bridge request timeout for \`${url}\``, LOG_CONTEXT);
-        throw new GatewayTimeoutException({
+        throw new RequestTimeoutException({
           message: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.message(url),
           code: BRIDGE_EXECUTION_ERROR.BRIDGE_REQUEST_TIMEOUT.code,
         });
