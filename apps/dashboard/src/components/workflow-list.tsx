@@ -11,8 +11,7 @@ import {
   RiPulseFill,
   RiRouteFill,
 } from 'react-icons/ri';
-import { createSearchParams, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-
+import { createSearchParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { getV2 } from '@/api/api.client';
 import { DefaultPagination } from '@/components/default-pagination';
 import { Badge, BadgeContent } from '@/components/primitives/badge';
@@ -45,13 +44,13 @@ import { WorkflowTags } from '@/components/workflow-tags';
 import { useEnvironment } from '@/context/environment/hooks';
 import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { QueryKeys } from '@/utils/query-keys';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute, LEGACY_ROUTES, ROUTES } from '@/utils/routes';
 
 export const WorkflowList = () => {
   const { currentEnvironment } = useEnvironment();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
+
   const hrefFromOffset = (offset: number) => {
     return `${location.pathname}?${createSearchParams({
       ...searchParams,
@@ -154,86 +153,91 @@ export const WorkflowList = () => {
             </>
           ) : (
             <>
-              {workflowsQuery.data.workflows.map((workflow) => (
-                <TableRow key={workflow._id} className="relative">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-1">
-                      {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
-                        <Badge className="rounded-full px-1.5" variant="warning-light">
-                          <BadgeContent variant="warning">
-                            <FaCode className="size-3" />
-                          </BadgeContent>
-                        </Badge>
-                      )}
-                      <TruncatedText
-                        className="cursor-pointer"
-                        text={workflow.name}
-                        onClick={() => {
-                          navigate(
-                            buildRoute(ROUTES.EDIT_WORKFLOW, {
-                              environmentId: currentEnvironment?._id ?? '',
-                              workflowId: workflow._id,
-                            })
-                          );
-                        }}
-                      />
-                    </div>
-                    <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
-                  </TableCell>
-                  <TableCell>
-                    <WorkflowStatus status={workflow.status} />
-                  </TableCell>
-                  <TableCell>
-                    <WorkflowSteps steps={workflow.stepTypeOverviews} />
-                  </TableCell>
-                  <TableCell>
-                    <WorkflowTags tags={workflow.tags || []} />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 text-sm font-medium">
-                    {new Date(workflow.updatedAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </TableCell>
-                  <TableCell className="w-1">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <RiMore2Fill />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem>
-                            <RiPlayCircleLine />
-                            Trigger workflow
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={workflow.status === WorkflowStatusEnum.ERROR}>
-                            <RiGitPullRequestFill />
-                            Promote to Production
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <RiPulseFill />
-                            View activity
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem>
-                            <RiPauseCircleLine />
-                            Pause workflow
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <RiDeleteBin2Line />
-                            Delete workflow
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {workflowsQuery.data.workflows.map((workflow) => {
+                const isV1Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
+                const workflowLink = isV1Workflow
+                  ? buildRoute(LEGACY_ROUTES.EDIT_WORKFLOW, {
+                      workflowId: workflow._id,
+                    })
+                  : buildRoute(ROUTES.EDIT_WORKFLOW, {
+                      environmentId: currentEnvironment?._id ?? '',
+                      workflowId: workflow._id,
+                    });
+                return (
+                  <TableRow key={workflow._id} className="relative">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1">
+                        {workflow.origin === WorkflowOriginEnum.EXTERNAL && (
+                          <Badge className="rounded-full px-1.5" variant="warning-light">
+                            <BadgeContent variant="warning">
+                              <FaCode className="size-3" />
+                            </BadgeContent>
+                          </Badge>
+                        )}
+                        {/**
+                         * reloadDocument is needed for v1 workflows to reload the document when the user navigates to the workflow editor
+                         */}
+                        <Link to={workflowLink} reloadDocument={isV1Workflow}>
+                          <TruncatedText className="cursor-pointer" text={workflow.name} />
+                        </Link>
+                      </div>
+                      <TruncatedText className="text-foreground-400 font-code block text-xs" text={workflow._id} />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowStatus status={workflow.status} />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowSteps steps={workflow.stepTypeOverviews} />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowTags tags={workflow.tags || []} />
+                    </TableCell>
+                    <TableCell className="text-foreground-600 text-sm font-medium">
+                      {new Date(workflow.updatedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </TableCell>
+                    <TableCell className="w-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <RiMore2Fill />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <RiPlayCircleLine />
+                              Trigger workflow
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled={workflow.status === WorkflowStatusEnum.ERROR}>
+                              <RiGitPullRequestFill />
+                              Promote to Production
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <RiPulseFill />
+                              View activity
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <RiPauseCircleLine />
+                              Pause workflow
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <RiDeleteBin2Line />
+                              Delete workflow
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </>
           )}
         </TableBody>

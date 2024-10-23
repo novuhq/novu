@@ -9,7 +9,7 @@ import {
   HealthCheck,
   HttpQueryKeysEnum,
   PostActionEnum,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 import { WorkflowOriginEnum } from '@novu/shared';
 import { EnvironmentLevelCommand } from '../../commands';
 

@@ -1,12 +1,6 @@
 import http from 'http';
 import express from 'express';
-// FIXME: subpath import not working with `workspace:` protocol. Currently we need to drill into the module instead of using the ES export.
-import { serve } from '../../../packages/framework/dist/servers/express';
-import { Client, Workflow } from '@novu/framework';
-
-export type ServerStartOptions = {
-  workflows: Array<Workflow>;
-};
+import { serve, Client } from '@novu/framework/express';
 
 export class BridgeServer {
   private server: express.Express;
@@ -18,7 +12,7 @@ export class BridgeServer {
     return `http://localhost:${this.port}`;
   }
 
-  async start(options: ServerStartOptions) {
+  async start(options) {
     this.server = express();
     this.server.use(express.json());
     this.server.use(serve({ client: this.client, workflows: options.workflows }));

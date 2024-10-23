@@ -13,7 +13,7 @@ import {
   StepTypeEnum,
   TipTapNode,
 } from '@novu/shared';
-import { InAppOutput } from '@novu/framework';
+import { InAppOutput } from '@novu/framework/internal';
 import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
 
@@ -120,7 +120,7 @@ describe('Generate Preview', () => {
       throw new Error(`Failed to create workflow ${JSON.stringify(workflowResult.error)}`);
     }
 
-    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[0].stepUuid };
+    return { workflowId: workflowResult.value._id, stepUuid: workflowResult.value.steps[0]._id };
   }
 });
 

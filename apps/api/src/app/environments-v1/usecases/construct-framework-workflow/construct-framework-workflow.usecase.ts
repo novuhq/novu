@@ -1,4 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { workflow } from '@novu/framework/express';
 import {
   ActionStep,
   ChannelStep,
@@ -8,8 +9,7 @@ import {
   StepOptions,
   StepOutput,
   Workflow,
-  workflow,
-} from '@novu/framework';
+} from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';

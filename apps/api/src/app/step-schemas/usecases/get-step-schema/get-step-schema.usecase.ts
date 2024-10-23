@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JSONSchema } from 'json-schema-to-ts';
 
-import { StepType } from '@novu/framework';
+import { type StepType } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateRepository } from '@novu/dal';
 
 import {
@@ -11,6 +11,7 @@ import {
 } from './get-step-schema.command';
 import { StepSchemaDto } from '../../dtos/step-schema.dto';
 import { mapStepTypeToOutput, mapStepTypeToResult } from '../../shared';
+import { encodeBase62 } from '../../../shared/helpers';
 
 @Injectable()
 export class GetStepSchemaUseCase {

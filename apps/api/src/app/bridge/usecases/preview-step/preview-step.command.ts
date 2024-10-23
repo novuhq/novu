@@ -1,5 +1,5 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { Subscriber } from '@novu/framework';
+import { Subscriber } from '@novu/framework/internal';
 import { WorkflowOriginEnum } from '@novu/shared';
 
 export class PreviewStepCommand extends EnvironmentWithUserCommand {
