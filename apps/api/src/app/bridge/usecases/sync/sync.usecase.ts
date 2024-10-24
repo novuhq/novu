@@ -186,7 +186,7 @@ export class Sync {
               environmentId: savedWorkflow._environmentId,
               organizationId: savedWorkflow._organizationId,
               templateId: savedWorkflow._id,
-              preferences: workflow.preferences,
+              preferences: workflow.preferences || {},
             })
           );
         }
