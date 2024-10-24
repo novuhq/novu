@@ -1,5 +1,5 @@
 import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework/internal';
-import { ControlsSchema, EmailStepControlSchema } from '@novu/shared';
+import { ControlsSchema, EmailStepControlSchema, UiControlGroupEnum } from '@novu/shared';
 
 export const PERMISSIVE_EMPTY_SCHEMA = {
   type: 'object',
@@ -13,7 +13,10 @@ export const mapStepTypeToControlScema: Record<ChannelStepEnum | ActionStepEnum,
   [ChannelStepEnum.EMAIL]: { schema: EmailStepControlSchema },
   [ChannelStepEnum.PUSH]: { schema: channelStepSchemas[ChannelStepEnum.PUSH].output },
   [ChannelStepEnum.CHAT]: { schema: channelStepSchemas[ChannelStepEnum.CHAT].output },
-  [ChannelStepEnum.IN_APP]: { schema: channelStepSchemas[ChannelStepEnum.IN_APP].output },
+  [ChannelStepEnum.IN_APP]: {
+    schema: channelStepSchemas[ChannelStepEnum.IN_APP].output,
+    uiSchema: { controlGroup: UiControlGroupEnum.INBOX },
+  },
   [ActionStepEnum.DELAY]: { schema: actionStepSchemas[ActionStepEnum.DELAY].output },
   [ActionStepEnum.DIGEST]: { schema: actionStepSchemas[ActionStepEnum.DIGEST].output },
   [ActionStepEnum.CUSTOM]: { schema: PERMISSIVE_EMPTY_SCHEMA },

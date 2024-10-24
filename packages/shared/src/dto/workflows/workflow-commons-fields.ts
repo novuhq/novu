@@ -8,9 +8,9 @@ export type IdentifierOrInternalId = string;
 export enum UiControlGroupEnum {
   INBOX = 'INBOX',
 }
-class UiSchema {
-  controlGroup: UiControlGroupEnum.INBOX;
-  elements: UiElement[];
+export class UiSchema {
+  controlGroup?: UiControlGroupEnum.INBOX;
+  elements?: UiElement[];
 }
 class UiElement {
   elementTypeOverride: UiElementTypeEnum;
@@ -21,7 +21,7 @@ enum UiElementTypeEnum {
 }
 export class ControlsSchema {
   schema: JSONSchema;
-  uiSchema: UiSchema;
+  uiSchema?: UiSchema;
 }
 
 export type StepResponseDto = StepDto & {
