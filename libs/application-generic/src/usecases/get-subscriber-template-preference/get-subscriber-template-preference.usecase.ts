@@ -79,7 +79,7 @@ export class GetSubscriberTemplatePreference {
     return {
       template,
       preference: {
-        enabled: true,
+        enabled: subscriberWorkflowChannelPreferences.enabled,
         channels,
         overrides,
       },
@@ -94,7 +94,9 @@ export class GetSubscriberTemplatePreference {
     channels: IPreferenceChannels;
     critical?: boolean;
     type: PreferencesTypeEnum;
+    enabled: boolean;
   }> {
+    /** @deprecated */
     const subscriberWorkflowPreferenceV1 =
       await this.subscriberPreferenceRepository.findOne(
         {
@@ -117,6 +119,7 @@ export class GetSubscriberTemplatePreference {
     let subscriberWorkflowChannels: IPreferenceChannels;
     let subscriberPreferenceType: PreferencesTypeEnum;
     let critical: boolean | undefined;
+    let enabled: boolean;
     // Prefer the V2 preference object if it exists, otherwise fallback to V1
     if (subscriberWorkflowPreferenceV2 !== undefined) {
       subscriberWorkflowChannels =
@@ -125,17 +128,20 @@ export class GetSubscriberTemplatePreference {
         );
       subscriberPreferenceType = subscriberWorkflowPreferenceV2.type;
       critical = subscriberWorkflowPreferenceV2.preferences?.all?.readOnly;
+      enabled = true;
     } else {
       subscriberWorkflowChannels =
         subscriberWorkflowPreferenceV1?.channels ?? {};
       subscriberPreferenceType = PreferencesTypeEnum.SUBSCRIBER_WORKFLOW;
       critical = undefined;
+      enabled = subscriberWorkflowPreferenceV1.enabled;
     }
 
     return {
       channels: subscriberWorkflowChannels,
       critical,
       type: subscriberPreferenceType,
+      enabled,
     };
   }
 

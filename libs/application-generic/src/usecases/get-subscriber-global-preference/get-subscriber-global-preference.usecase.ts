@@ -34,14 +34,14 @@ export class GetSubscriberGlobalPreference {
     );
 
     const channelsWithDefaults = this.buildDefaultPreferences(
-      subscriberGlobalPreference,
+      subscriberGlobalPreference.channels,
     );
 
     const channels = filteredPreference(channelsWithDefaults, activeChannels);
 
     return {
       preference: {
-        enabled: true,
+        enabled: subscriberGlobalPreference.enabled,
         channels,
       },
     };
@@ -50,7 +50,12 @@ export class GetSubscriberGlobalPreference {
   private async getSubscriberGlobalPreference(
     command: GetSubscriberGlobalPreferenceCommand,
     subscriberId: string,
-  ): Promise<IPreferenceChannels> {
+  ): Promise<{
+    channels: IPreferenceChannels;
+    enabled: boolean;
+  }> {
+    let subscriberGlobalChannels: IPreferenceChannels;
+    let enabled: boolean;
     /** @deprecated */
     const subscriberGlobalPreferenceV1 =
       await this.subscriberPreferenceRepository.findOne({
@@ -66,12 +71,19 @@ export class GetSubscriberGlobalPreference {
         subscriberId,
       });
 
-    const subscriberGlobalPreference =
-      subscriberGlobalPreferenceV2 ??
-      subscriberGlobalPreferenceV1?.channels ??
-      {};
+    // Prefer the V2 preference object if it exists, otherwise fallback to V1
+    if (subscriberGlobalPreferenceV2 !== undefined) {
+      subscriberGlobalChannels = subscriberGlobalPreferenceV2;
+      enabled = true;
+    } else {
+      subscriberGlobalChannels = subscriberGlobalPreferenceV1?.channels ?? {};
+      enabled = subscriberGlobalPreferenceV1.enabled;
+    }
 
-    return subscriberGlobalPreference;
+    return {
+      channels: subscriberGlobalChannels,
+      enabled,
+    };
   }
 
   private async getActiveChannels(
