@@ -37,7 +37,7 @@
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "build": "NODE_ENV=production tsup",
     "build:watch": "tsup --watch",
-    "postbuild": "./scripts/copy-package-json.sh && pnpm run check:exports && pnpm check:circulars",
+    "postbuild": "pnpm run check:exports && pnpm check:circulars",
     "check:exports": "attw --pack .",
     "check:circulars": "madge --circular --extensions ts --exclude ../../shared ./src",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
