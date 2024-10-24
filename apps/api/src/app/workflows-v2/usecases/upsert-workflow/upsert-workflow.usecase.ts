@@ -37,7 +37,7 @@ import { StepUpsertMechanismFailedMissingIdException } from '../../exceptions/st
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
 import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
-import { mapStepTypeToOutput } from '../../../step-schemas/shared';
+import { mapStepTypeToControlScema } from '../../../step-schemas/shared';
 
 function buildUpsertControlValuesCommand(
   command: UpsertWorkflowCommand,
@@ -273,7 +273,7 @@ export class UpsertWorkflowUseCase {
       template: {
         type: step.type,
         name: step.name,
-        controls: foundPersistedStep?.template?.controls || { schema: mapStepTypeToOutput[step.type] },
+        controls: foundPersistedStep?.template?.controls || mapStepTypeToControlScema[step.type],
         content: '',
       },
       stepId: slugifyName(step.name),
