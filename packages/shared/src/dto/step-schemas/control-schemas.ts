@@ -4,8 +4,9 @@ import { JSONSchemaDto } from './json-schema-dto';
 export interface TipTapNode {
   type: string;
   content?: TipTapNode[];
+  marks?: unknown;
   text?: string;
-  attr?: Record<string, unknown>;
+  attrs?: Record<string, unknown>;
 }
 
 export interface EmailStepControlSchemaDto {
@@ -23,9 +24,6 @@ export const EmailStepControlSchema: JSONSchemaDto = {
   properties: {
     emailEditor: {
       type: 'string',
-      extensions: {
-        'x-novu-component-type': CustomComponentsEnum.EMAIL_EDITOR,
-      },
     },
     subject: {
       type: 'string',

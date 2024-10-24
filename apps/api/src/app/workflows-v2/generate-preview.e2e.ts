@@ -18,6 +18,9 @@ import { InAppOutput } from '@novu/framework/internal';
 import { createWorkflowClient, HttpError, NovuRestResult } from './clients';
 import { buildCreateWorkflowDto } from './workflow.controller.e2e';
 
+const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
+const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
+const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
 describe('Generate Preview', () => {
   let session: UserSession;
   let workflowsClient: ReturnType<typeof createWorkflowClient>;
@@ -155,56 +158,208 @@ function buildDtoWithMissingControlValues(stepTypeEnum: StepTypeEnum): GenerateP
   };
 }
 
-const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
+const HEADING_PLACEHOLDER = '{{payload.replacement.subject}}';
 
-const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
-const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
 function mailyJsonExample(): TipTapNode {
   return {
     type: 'doc',
     content: [
       {
-        type: 'paragraph',
+        type: 'heading',
+        attrs: {
+          textAlign: 'left',
+          level: 1,
+        },
         content: [
           {
             type: 'text',
-            text: '{{payload.intro}} Wow, this editor instance exports its content as JSON.',
+            text: 'some heading with ',
+          },
+          {
+            type: 'variable',
+            attrs: {
+              id: 'payload.comments',
+              label: null,
+              fallback: 'some value',
+            },
+          },
+          {
+            type: 'text',
+            text: ' ',
           },
         ],
       },
       {
         type: 'paragraph',
-        attr: {
-          each: '{{payload.comment}}',
+        attrs: {
+          textAlign: 'left',
+        },
+      },
+      {
+        type: 'paragraph',
+        attrs: {
+          textAlign: 'left',
+        },
+      },
+      {
+        type: 'heading',
+        attrs: {
+          textAlign: 'left',
+          level: 1,
         },
         content: [
           {
-            type: 'h1',
+            type: 'text',
+            text: 'should show',
+          },
+        ],
+      },
+      {
+        type: 'paragraph',
+        attrs: {
+          textAlign: 'left',
+        },
+      },
+      {
+        type: 'paragraph',
+        attrs: {
+          textAlign: 'left',
+        },
+      },
+      {
+        type: 'columns',
+        attrs: {
+          width: '100%',
+        },
+        content: [
+          {
+            type: 'column',
+            attrs: {
+              columnId: '40c7cc43-b952-4339-afcc-836fbb8ad2b1',
+              width: 50,
+              verticalAlign: 'top',
+              borderRadius: 0,
+              backgroundColor: 'transparent',
+              borderWidth: 0,
+              borderColor: 'transparent',
+              paddingTop: 0,
+              paddingRight: 0,
+              paddingBottom: 0,
+              paddingLeft: 0,
+            },
             content: [
               {
-                type: 'text',
-                text: FOR_ITEM_VALUE_PLACEHOLDER,
+                type: 'for',
+                attrs: {
+                  each: 'items',
+                  isUpdatingKey: false,
+                },
+                content: [
+                  {
+                    type: 'bulletList',
+                    content: [
+                      {
+                        type: 'listItem',
+                        attrs: {
+                          color: null,
+                        },
+                        content: [
+                          {
+                            type: 'paragraph',
+                            attrs: {
+                              textAlign: 'left',
+                            },
+                            content: [
+                              {
+                                type: 'payloadValue',
+                                attrs: {
+                                  id: 'body1',
+                                  label: null,
+                                },
+                              },
+                              {
+                                type: 'text',
+                                text: ' ',
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'column',
+            attrs: {
+              columnId: '4c8a75e4-12bf-4b53-aed9-2511f6f34092',
+              width: 50,
+              verticalAlign: 'top',
+              borderRadius: 0,
+              backgroundColor: 'transparent',
+              borderWidth: 0,
+              borderColor: 'transparent',
+              paddingTop: 0,
+              paddingRight: 0,
+              paddingBottom: 0,
+              paddingLeft: 0,
+            },
+            content: [
+              {
+                type: 'for',
+                attrs: {
+                  each: 'items',
+                  isUpdatingKey: false,
+                },
+                content: [
+                  {
+                    type: 'orderedList',
+                    attrs: {
+                      start: 1,
+                    },
+                    content: [
+                      {
+                        type: 'listItem',
+                        attrs: {
+                          color: null,
+                        },
+                        content: [
+                          {
+                            type: 'paragraph',
+                            attrs: {
+                              textAlign: 'left',
+                            },
+                            content: [
+                              {
+                                type: 'payloadValue',
+                                attrs: {
+                                  id: 'body2',
+                                  label: null,
+                                },
+                              },
+                              {
+                                type: 'text',
+                                text: ' ',
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
               },
             ],
           },
         ],
       },
       {
-        type: 'show',
-        attr: {
-          when: '{{payload.isPremiumPlan}}',
+        type: 'paragraph',
+        attrs: {
+          textAlign: 'left',
         },
-        content: [
-          {
-            type: 'h1',
-            content: [
-              {
-                type: 'text',
-                text: TEST_SHOW_VALUE,
-              },
-            ],
-          },
-        ],
       },
     ],
   };

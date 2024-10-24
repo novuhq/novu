@@ -30,7 +30,6 @@ export class GeneratePreviewUsecase {
 
   async execute(command: GeneratePreviewCommand): Promise<GeneratePreviewResponseDto> {
     const payloadHydrationInfo = this.payloadHydrationLogic(command);
-    console.log('payloadHydrationInfo', JSON.stringify(payloadHydrationInfo, null, 2));
     const workflowInfo = await this.getWorkflowUserIdentifierFromWorkflowObject(command);
     const controlValuesResult = this.addMissingValuesToControlValues(command, workflowInfo.stepControlSchema);
     const executeOutput = await this.executePreviewUsecase(

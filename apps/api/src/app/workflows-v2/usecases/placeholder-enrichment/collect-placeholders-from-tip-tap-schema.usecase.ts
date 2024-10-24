@@ -42,9 +42,9 @@ export class CollectPlaceholdersFromTipTapSchemaUsecase {
   }
 
   private traverse(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
-    if (node.attr && node.attr.each) {
+    if (node.attrs && node.attrs.each) {
       this.handleForTraversal(node, placeholders);
-    } else if (node.type === 'show' && node.attr && node.attr.when) {
+    } else if (node.type === 'show' && node.attrs && node.attrs.when) {
       this.handleShowTraversal(node, placeholders);
     } else if (node.type === 'text' && node.text) {
       const regularPlaceholders = extractPlaceholders(node.text).filter(
@@ -61,8 +61,8 @@ export class CollectPlaceholdersFromTipTapSchemaUsecase {
   }
 
   private handleForTraversal(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
-    if (node.attr && typeof node.attr.each === 'string') {
-      const mainPlaceholder = extractPlaceholders(node.attr.each);
+    if (node.attrs && typeof node.attrs.each === 'string') {
+      const mainPlaceholder = extractPlaceholders(node.attrs.each);
       if (mainPlaceholder && mainPlaceholder.length === 1) {
         if (!placeholders.for[mainPlaceholder[0]]) {
           placeholders.for[mainPlaceholder[0]] = [];
@@ -87,8 +87,8 @@ export class CollectPlaceholdersFromTipTapSchemaUsecase {
   }
 
   private handleShowTraversal(node: TipTapNode, placeholders: Required<PlaceholderMap>) {
-    if (node.type === 'show' && node.attr && typeof node.attr.when === 'string') {
-      const nestedPlaceholders = extractPlaceholders(node.attr.when);
+    if (node.type === 'show' && node.attrs && typeof node.attrs.when === 'string') {
+      const nestedPlaceholders = extractPlaceholders(node.attrs.when);
       placeholders.show[nestedPlaceholders[0]] = [];
     }
   }
