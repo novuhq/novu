@@ -3,6 +3,7 @@ export const QueryKeys = Object.freeze({
   billingSubscription: 'billingSubscription',
   bridgeHealthCheck: 'bridgeHealthCheck',
   fetchWorkflow: 'fetchWorkflow',
+  fetchWorkflowTestData: 'fetchWorkflowTestData',
   fetchWorkflows: 'fetchWorkflows',
   fetchTags: 'fetchTags',
 });

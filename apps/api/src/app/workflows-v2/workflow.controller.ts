@@ -24,6 +24,7 @@ import {
   UpdateWorkflowDto,
   UserSessionData,
   WorkflowResponseDto,
+  WorkflowTestDataResponseDto,
 } from '@novu/shared';
 import { UserAuthGuard, UserSession } from '@novu/application-generic';
 
@@ -40,6 +41,8 @@ import { DeleteWorkflowCommand } from './usecases/delete-workflow/delete-workflo
 import { GeneratePreviewUsecase } from './usecases/generate-preview/generate-preview.usecase';
 import { GeneratePreviewCommand } from './usecases/generate-preview/generate-preview-command';
 import { ParseSlugIdPipe } from './pipes/parse-slug-Id.pipe';
+import { WorkflowTestDataUseCase } from './usecases/test-data/test-data.usecase';
+import { WorkflowTestDataCommand } from './usecases/test-data/test-data.command';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -52,7 +55,8 @@ export class WorkflowController {
     private getWorkflowUseCase: GetWorkflowUseCase,
     private listWorkflowsUseCase: ListWorkflowsUseCase,
     private deleteWorkflowUsecase: DeleteWorkflowUseCase,
-    private generatePreviewUseCase: GeneratePreviewUsecase
+    private generatePreviewUseCase: GeneratePreviewUsecase,
+    private workflowTestDataUseCase: WorkflowTestDataUseCase
   ) {}
 
   @Post('')
@@ -133,6 +137,17 @@ export class WorkflowController {
   ): Promise<GeneratePreviewResponseDto> {
     return await this.generatePreviewUseCase.execute(
       GeneratePreviewCommand.create({ user, workflowId, stepUuid, generatePreviewRequestDto })
+    );
+  }
+
+  @Get('/:workflowId/test-data')
+  @UseGuards(UserAuthGuard)
+  async getWorkflowTestData(
+    @UserSession() user: UserSessionData,
+    @Param('workflowId', ParseSlugIdPipe) workflowId: IdentifierOrInternalId
+  ): Promise<WorkflowTestDataResponseDto> {
+    return this.workflowTestDataUseCase.execute(
+      WorkflowTestDataCommand.create({ identifierOrInternalId: workflowId, user })
     );
   }
 }

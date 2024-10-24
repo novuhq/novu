@@ -5,17 +5,17 @@ import { useForm, useFieldArray } from 'react-hook-form';
 // @ts-ignore
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { RiProgress1Line } from 'react-icons/ri';
 
 import { WorkflowEditorContext } from './workflow-editor-context';
 import { StepTypeEnum } from '@/utils/enums';
 import { Form } from '../primitives/form/form';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
-import { formSchema } from './schema';
+import { workflowSchema } from './schema';
 import { useFetchWorkflow, useUpdateWorkflow, useFormAutoSave } from '@/hooks';
 import { Step } from '@/utils/types';
-import { smallToast } from '../primitives/sonner-helpers';
+import { showToast } from '../primitives/sonner-helpers';
+import { ToastIcon } from '../primitives/sonner';
 
 const STEP_NAME_BY_TYPE: Record<StepTypeEnum, string> = {
   email: 'Email Step',
@@ -39,7 +39,7 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
   const { currentEnvironment } = useEnvironment();
   const { workflowId } = useParams<{ workflowId?: string }>();
   const navigate = useNavigate();
-  const form = useForm<z.infer<typeof formSchema>>({ mode: 'onSubmit', resolver: zodResolver(formSchema) });
+  const form = useForm<z.infer<typeof workflowSchema>>({ mode: 'onSubmit', resolver: zodResolver(workflowSchema) });
   const { reset } = form;
   const steps = useFieldArray({
     control: form.control,
@@ -69,10 +69,10 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
         return;
       }
 
-      const id = smallToast({
-        children: (
+      const id = showToast({
+        children: () => (
           <>
-            <RiProgress1Line className="size-6" />
+            <ToastIcon />
             <span className="text-sm">Saved</span>
           </>
         ),
@@ -92,7 +92,7 @@ export const WorkflowEditorProvider = ({ children }: { children: ReactNode }) =>
 
   useFormAutoSave({
     form,
-    onSubmit: async (data: z.infer<typeof formSchema>) => {
+    onSubmit: async (data: z.infer<typeof workflowSchema>) => {
       if (!workflow) {
         return;
       }
