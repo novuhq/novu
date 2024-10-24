@@ -385,7 +385,9 @@ function updateStepId(step: StepResponseDto): Partial<StepResponseDto> {
   return {
     ...rest,
     ...(step._id && step.name ? { stepId: slugifyName(step.name) } : {}),
-    ...(step.name && step._id ? { slug: `${ShortIsPrefixEnum.STEP}${encodeBase62(step._id)}` } : {}),
+    ...(step.name && step._id
+      ? { slug: `${slugifyName(step.name)}_${ShortIsPrefixEnum.STEP}${encodeBase62(step._id)}` }
+      : {}),
   };
 }
 
@@ -434,7 +436,9 @@ async function updateWorkflowAndValidate(
   );
   const expectedUpdateRequest = {
     ...updateRequest,
-    slug: `${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(workflowInternalId || workflowRequestId)}`,
+    slug: `${slugifyName(updateRequest.name)}_${ShortIsPrefixEnum.WORKFLOW}${encodeBase62(
+      workflowInternalId || workflowRequestId
+    )}`,
     steps: updateRequest.steps.map(updateStepId),
   };
   expect(updatedWorkflowWithResponseFieldsRemoved, 'workflow after update does not match as expected').to.deep.equal(
