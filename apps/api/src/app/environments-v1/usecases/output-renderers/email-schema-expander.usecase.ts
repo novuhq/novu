@@ -59,6 +59,7 @@ function prettyPrint(obj) {
 }
 
 function augmentNode(node: TipTapNode): TipTapNode {
+  console.log(`augmentNode: ${prettyPrint(node)}`);
   if (hasShow(node)) {
     return expendedShow(node);
   }
