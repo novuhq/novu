@@ -76,7 +76,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^5.0.2",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.13",
     "@types/node": "^20.15.0",
     "colors": "1.4.0",
     "concurrently": "^5.3.0",

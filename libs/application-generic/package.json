@@ -103,7 +103,7 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@nestjs/passport": "10.0.3",
     "@types/got": "^9.6.12",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.13",
     "@types/newrelic": "^9",
     "@types/sanitize-html": "^2.11.0",
     "@types/sinon": "^9.0.0",

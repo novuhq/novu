@@ -51,7 +51,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.13",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^20.15.0",
