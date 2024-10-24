@@ -1,12 +1,23 @@
 import { ActionStepEnum, actionStepSchemas, ChannelStepEnum, channelStepSchemas } from '@novu/framework/internal';
-import { EmailStepControlSchema } from '@novu/shared';
+import { ControlsSchema, EmailStepControlSchema, UiControlGroupEnum } from '@novu/shared';
 
-export const mapStepTypeToOutput = {
-  [ChannelStepEnum.SMS]: channelStepSchemas[ChannelStepEnum.SMS].output,
-  [ChannelStepEnum.EMAIL]: EmailStepControlSchema,
-  [ChannelStepEnum.PUSH]: channelStepSchemas[ChannelStepEnum.PUSH].output,
-  [ChannelStepEnum.CHAT]: channelStepSchemas[ChannelStepEnum.CHAT].output,
-  [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].output,
-  [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].output,
-  [ActionStepEnum.DIGEST]: actionStepSchemas[ActionStepEnum.DIGEST].output,
+export const PERMISSIVE_EMPTY_SCHEMA = {
+  type: 'object',
+  properties: {},
+  required: [],
+  additionalProperties: true,
+} as const;
+
+export const mapStepTypeToControlScema: Record<ChannelStepEnum | ActionStepEnum, ControlsSchema> = {
+  [ChannelStepEnum.SMS]: { schema: channelStepSchemas[ChannelStepEnum.SMS].output },
+  [ChannelStepEnum.EMAIL]: { schema: EmailStepControlSchema },
+  [ChannelStepEnum.PUSH]: { schema: channelStepSchemas[ChannelStepEnum.PUSH].output },
+  [ChannelStepEnum.CHAT]: { schema: channelStepSchemas[ChannelStepEnum.CHAT].output },
+  [ChannelStepEnum.IN_APP]: {
+    schema: channelStepSchemas[ChannelStepEnum.IN_APP].output,
+    uiSchema: { controlGroup: UiControlGroupEnum.INBOX },
+  },
+  [ActionStepEnum.DELAY]: { schema: actionStepSchemas[ActionStepEnum.DELAY].output },
+  [ActionStepEnum.DIGEST]: { schema: actionStepSchemas[ActionStepEnum.DIGEST].output },
+  [ActionStepEnum.CUSTOM]: { schema: PERMISSIVE_EMPTY_SCHEMA },
 };

@@ -5,9 +5,23 @@ import { WorkflowResponseDto } from './workflow-response-dto';
 import { Slug, StepTypeEnum, WorkflowPreferences } from '../../types';
 
 export type IdentifierOrInternalId = string;
+export enum UiControlGroupEnum {
+  INBOX = 'INBOX',
+}
+export class UiSchema {
+  controlGroup?: UiControlGroupEnum.INBOX;
+  elements?: UiElement[];
+}
+class UiElement {
+  elementTypeOverride: UiElementTypeEnum;
+}
 
+enum UiElementTypeEnum {
+  EMAIL_EDITOR = 'EMAIL_EDITOR',
+}
 export class ControlsSchema {
   schema: JSONSchema;
+  uiSchema?: UiSchema;
 }
 
 export type StepResponseDto = StepDto & {
