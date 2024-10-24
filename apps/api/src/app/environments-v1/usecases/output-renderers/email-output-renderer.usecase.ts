@@ -3,8 +3,8 @@ import { EmailRenderOutput, TipTapNode } from '@novu/shared';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { RenderCommand } from './render-command';
-import { ExpandEmailEditorSchemaUsecase, TipTapSchema } from './email-schema-expander.usecase';
 import { MasterPayload } from '../construct-framework-workflow';
+import { ExpandEmailEditorSchemaUsecase, TipTapSchema } from './email-schema-expander.usecase';
 
 export class EmailOutputRendererCommand extends RenderCommand {
   masterPayload: MasterPayload;
@@ -104,6 +104,7 @@ function transformContent(content: TipTapNode[], masterPayload: MasterPayload) {
       content[index] = {
         type: 'for',
         attrs: { each: getResolvedValueForPlaceholder(masterPayload, node, itemPointerToDefaultRecord) },
+        content: node.content,
       };
     } else if (node.attrs && node.attrs.show) {
       node.attrs.show = getResolvedValueShowPlaceholder(masterPayload, node);

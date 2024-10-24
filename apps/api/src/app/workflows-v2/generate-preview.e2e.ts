@@ -165,171 +165,47 @@ function mailyJsonExample(): TipTapNode {
     type: 'doc',
     content: [
       {
-        type: 'heading',
+        type: 'for',
         attrs: {
-          textAlign: 'left',
-          level: 1,
+          each: 'items',
+          isUpdatingKey: false,
         },
         content: [
           {
-            type: 'text',
-            text: 'some heading with ',
-          },
-          {
-            type: 'variable',
+            type: 'orderedList',
             attrs: {
-              id: 'payload.name',
-              label: null,
-              fallback: 'some value',
-            },
-          },
-          {
-            type: 'text',
-            text: ' ',
-          },
-        ],
-      },
-      {
-        type: 'section',
-        attrs: {
-          show: 'payload.ispayingcustomer',
-          textAlign: 'left',
-          level: 1,
-        },
-        content: [
-          {
-            type: 'text',
-            text: 'should show',
-          },
-        ],
-      },
-      {
-        type: 'columns',
-        attrs: {
-          width: '100%',
-        },
-        content: [
-          {
-            type: 'column',
-            attrs: {
-              columnId: '40c7cc43-b952-4339-afcc-836fbb8ad2b1',
-              width: 50,
-              verticalAlign: 'top',
-              borderRadius: 0,
-              backgroundColor: 'transparent',
-              borderWidth: 0,
-              borderColor: 'transparent',
-              paddingTop: 0,
-              paddingRight: 0,
-              paddingBottom: 0,
-              paddingLeft: 0,
+              start: 1,
             },
             content: [
               {
-                type: 'for',
+                type: 'listItem',
                 attrs: {
-                  each: 'items',
-                  isUpdatingKey: false,
+                  color: null,
                 },
                 content: [
                   {
-                    type: 'bulletList',
-                    content: [
-                      {
-                        type: 'listItem',
-                        attrs: {
-                          color: null,
-                        },
-                        content: [
-                          {
-                            type: 'paragraph',
-                            attrs: {
-                              textAlign: 'left',
-                            },
-                            content: [
-                              {
-                                type: 'payloadValue',
-                                attrs: {
-                                  id: 'body1',
-                                  label: null,
-                                },
-                              },
-                              {
-                                type: 'text',
-                                text: ' ',
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            type: 'column',
-            attrs: {
-              columnId: '4c8a75e4-12bf-4b53-aed9-2511f6f34092',
-              width: 50,
-              verticalAlign: 'top',
-              borderRadius: 0,
-              backgroundColor: 'transparent',
-              borderWidth: 0,
-              borderColor: 'transparent',
-              paddingTop: 0,
-              paddingRight: 0,
-              paddingBottom: 0,
-              paddingLeft: 0,
-            },
-            content: [
-              {
-                type: 'for',
-                attrs: {
-                  each: 'items',
-                  isUpdatingKey: false,
-                },
-                content: [
-                  {
-                    type: 'orderedList',
+                    type: 'paragraph',
                     attrs: {
-                      start: 1,
+                      textAlign: 'left',
                     },
                     content: [
                       {
-                        type: 'listItem',
+                        type: 'payloadValue',
                         attrs: {
-                          color: null,
+                          id: 'body2',
+                          label: null,
                         },
-                        content: [
-                          {
-                            type: 'paragraph',
-                            attrs: {
-                              textAlign: 'left',
-                            },
-                            content: [
-                              {
-                                type: 'payloadValue',
-                                attrs: {
-                                  id: 'body2',
-                                  label: null,
-                                },
-                              },
-                              {
-                                type: 'payloadValue',
-                                attrs: {
-                                  id: 'body3',
-                                  label: null,
-                                },
-                              },
-                              {
-                                type: 'text',
-                                text: ' ',
-                              },
-                            ],
-                          },
-                        ],
+                      },
+                      {
+                        type: 'payloadValue',
+                        attrs: {
+                          id: 'body3',
+                          label: null,
+                        },
+                      },
+                      {
+                        type: 'text',
+                        text: ' ',
                       },
                     ],
                   },

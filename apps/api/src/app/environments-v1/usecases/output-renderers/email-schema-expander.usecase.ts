@@ -13,7 +13,7 @@ export const TipTapSchema = z.object({
 // Rename the class to ExpendEmailEditorSchemaUseCase
 export class ExpandEmailEditorSchemaUsecase {
   execute(command: ExpendEmailEditorSchemaCommand): TipTapNode {
-    augmentNode(command.schema);
+    const tipTapNodeaugments = augmentNode(command.schema);
 
     return command.schema;
   }
@@ -32,7 +32,6 @@ function prettyPrint(obj) {
 }
 
 function augmentNode(node: TipTapNode): TipTapNode {
-  console.log(`augmentNode: ${prettyPrint(node)}`);
   if (hasShow(node)) {
     return expendedShow(node);
   }
@@ -87,7 +86,7 @@ function getEachAsJsonObject(node: TipTapNode & { attrs: { each: string } }) {
 
 function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTapNode[] {
   const eachObject = node.attrs.each;
-  console.log(`expendedForEach:node ${prettyPrint(node)}`);
+  node.attrs.each = {};
   if (!Array.isArray(eachObject) || eachObject.length === 0) {
     return [];
   }
@@ -134,6 +133,8 @@ function replacePlaceholders(nodes: TipTapNode[], payload: PayloadObject): TipTa
     if (isNodeAVariable(newNode)) {
       newNode.text = getValueByPath(payload, newNode.attrs.id);
       newNode.type = 'text';
+      // @ts-ignore
+      newNode.attrs = {};
     } else if (newNode.content) {
       newNode.content = replacePlaceholders(newNode.content, payload);
     }
