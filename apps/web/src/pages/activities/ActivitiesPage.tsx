@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
 
 import { Select, Input, Button } from '@novu/design-system';
 import { Flex } from '@mantine/core';
-import { useTemplates, useDebounce } from '../../hooks';
+import { useTemplates } from '../../hooks';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -49,10 +50,11 @@ export function ActivitiesPage() {
     () => getActivityList(page, filters),
     { keepPreviousData: true }
   );
+  const { search } = useLocation();
 
-  function onFiltersChange(formData: Partial<IFiltersForm>) {
+  const onFiltersChange = useCallback((formData: Partial<IFiltersForm>) => {
     setFilters((old) => ({ ...old, ...formData }));
-  }
+  }, []);
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -89,6 +91,15 @@ export function ActivitiesPage() {
     reset(initialFormState);
     onFiltersChange(initialFormState);
   };
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(search);
+    const transactionId = searchParams.get('transactionId');
+    if (transactionId) {
+      setValue('transactionId', transactionId);
+      onFiltersChange({ transactionId });
+    }
+  }, [search, onFiltersChange, setValue]);
 
   return (
     <PageContainer title="Activity Feed">

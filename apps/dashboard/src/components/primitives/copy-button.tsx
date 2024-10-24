@@ -1,14 +1,25 @@
 import { useState } from 'react';
-import { RiFileCopyLine } from 'react-icons/ri';
-import { Button } from './button';
+import { RiCheckLine, RiFileCopyLine } from 'react-icons/ri';
+import { Button, ButtonProps } from './button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
+import { cn } from '@/utils/ui';
 
 type CopyButtonProps = {
   content: string;
+  value?: string;
   className?: string;
+  variant?: ButtonProps['variant'];
+  size?: ButtonProps['size'];
 };
 
-export const CopyButton: React.FC<CopyButtonProps> = ({ content, className }) => {
+export const CopyButton: React.FC<CopyButtonProps> = ({
+  value,
+  content,
+  className,
+  variant = 'outline',
+  size = 'icon',
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
   const copyToClipboard = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -24,16 +35,19 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ content, className }) =>
 
   return (
     <TooltipProvider>
-      <Tooltip>
+      <Tooltip open={isHovered}>
         <TooltipTrigger asChild>
           <Button
-            variant="outline"
-            size="icon"
-            className={className}
+            variant={variant}
+            size={size}
+            className={cn('flex items-center gap-1', className)}
             onClick={copyToClipboard}
             aria-label="Copy to clipboard"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            <RiFileCopyLine className="h-4 w-4" />
+            {isCopied ? <RiCheckLine className="size-4" /> : <RiFileCopyLine className="size-4" />}
+            {value && <span>{value}</span>}
           </Button>
         </TooltipTrigger>
         <TooltipContent>

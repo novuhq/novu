@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { Separator } from '../primitives/separator';
 import { TagInput } from '../primitives/tag-input';
 import { Textarea } from '../primitives/textarea';
-import { formSchema } from './schema';
+import { workflowSchema } from './schema';
 import { useTagsQuery } from '@/hooks/use-tags-query';
 import { Button } from '../primitives/button';
 import { CopyButton } from '../primitives/copy-button';
@@ -16,7 +16,7 @@ import { Switch } from '../primitives/switch';
 export function ConfigureWorkflow() {
   const tagsQuery = useTagsQuery();
 
-  const { control } = useFormContext<z.infer<typeof formSchema>>();
+  const { control } = useFormContext<z.infer<typeof workflowSchema>>();
   return (
     <aside className="text-foreground-950 flex h-full w-[300px] max-w-[350px] flex-col border-l pb-5 pt-3.5 [&_input]:text-xs [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-xs [&_textarea]:text-neutral-600">
       <div className="flex items-center gap-2.5 px-3 pb-3.5 text-sm font-medium">

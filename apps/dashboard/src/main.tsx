@@ -7,6 +7,7 @@ import { WorkflowsPage, SignInPage, SignUpPage, OrganizationListPage } from '@/p
 import './index.css';
 import { ROUTES } from './utils/routes';
 import { EditWorkflowPage } from './pages/edit-workflow';
+import { TestWorkflowPage } from './pages/test-workflow';
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.EDIT_WORKFLOW,
                 element: <EditWorkflowPage />,
+              },
+              {
+                path: ROUTES.TEST_WORKFLOW,
+                element: <TestWorkflowPage />,
               },
               {
                 path: '*',

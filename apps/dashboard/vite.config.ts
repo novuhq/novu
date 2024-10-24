@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import tailwindcss from 'tailwindcss';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { legacyHandler } from './legacy-handler';
@@ -26,6 +27,11 @@ export default defineConfig({
       },
     },
   ],
+  css: {
+    postcss: {
+      plugins: [tailwindcss()],
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
