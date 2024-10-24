@@ -17,7 +17,6 @@ export class EmailOutputRendererUsecase {
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
     const emailControlValues = EmailStepControlSchema.parse(renderCommand.controlValues);
     const hydratedBody = this.hydrateBody(emailControlValues.emailEditor, renderCommand.masterPayload);
-    console.log(`hydratedBody: ${JSON.stringify(hydratedBody, null, 2)}`);
     const expandedSchema = this.expendEmailEditorSchemaUseCase.execute({ schema: hydratedBody });
     console.log(`expandedSchema: ${JSON.stringify(expandedSchema, null, 2)}`);
 
@@ -104,7 +103,7 @@ function transformContent(content: TipTapNode[], masterPayload: MasterPayload) {
       const itemPointerToDefaultRecord = collectAllItemPlaceholders(node);
       content[index] = {
         type: 'for',
-        attrs: { id: getResolvedValueForPlaceholder(masterPayload, node, itemPointerToDefaultRecord) },
+        attrs: { each: getResolvedValueForPlaceholder(masterPayload, node, itemPointerToDefaultRecord) },
       };
     } else if (node.attrs && node.attrs.show) {
       node.attrs.show = getResolvedValueShowPlaceholder(masterPayload, node);

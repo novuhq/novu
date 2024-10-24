@@ -20,25 +20,37 @@ export class ExpandEmailEditorSchemaUsecase {
 }
 
 function hasEach(node: TipTapNode): node is TipTapNode & { attrs: { each: unknown } } {
-  return !!(node.attrs && 'each' in node.attrs && typeof node.attrs.each === 'object');
+  return !!(node.attrs && 'each' in node.attrs);
 }
 
 function hasShow(node: TipTapNode): node is TipTapNode & { attrs: { show: string } } {
   return !!(node.attrs && 'show' in node.attrs);
 }
 
+function prettyPrint(obj) {
+  return JSON.stringify(obj, null, 2); // Pretty print with 2 spaces for indentation
+}
+
 function augmentNode(node: TipTapNode): TipTapNode {
+  console.log(`augmentNode: ${prettyPrint(node)}`);
   if (hasShow(node)) {
     return expendedShow(node);
   }
+
   if (hasEach(node)) {
-    return expendedForEach(node);
-  }
-  if (node.content) {
-    node.content = node.content.map(augmentNode).filter((innerNode) => innerNode);
+    const newContent = expendedForEach(node);
+
+    return { ...node, content: newContent };
   }
 
-  return removeEmptyContentNodes(node);
+  if (node.content) {
+    node.content = node.content.map((innerNode) => {
+      return augmentNode(innerNode);
+    });
+  }
+  const cleanedNode = removeEmptyContentNodes(node);
+
+  return cleanedNode;
 }
 
 function removeEmptyContentNodes(node: TipTapNode): TipTapNode {
@@ -73,10 +85,11 @@ function getEachAsJsonObject(node: TipTapNode & { attrs: { each: string } }) {
   return JSON.parse(correctedJsonString);
 }
 
-function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTapNode {
+function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTapNode[] {
   const eachObject = node.attrs.each;
+  console.log(`expendedForEach:node ${prettyPrint(node)}`);
   if (!Array.isArray(eachObject) || eachObject.length === 0) {
-    return node;
+    return [];
   }
 
   const templateContent = node.content || [];
@@ -89,9 +102,8 @@ function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTa
     expandedContent.push(...hydratedContent);
   }
 
-  return { ...node, content: expandedContent, attrs: {} };
+  return expandedContent;
 }
-
 function expendedShow(node: TipTapNode & { attrs: { show: string } }): TipTapNode {
   const { show } = node.attrs;
   const conditionalContent = node.content || [];

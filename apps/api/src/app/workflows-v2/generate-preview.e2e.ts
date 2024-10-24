@@ -178,7 +178,7 @@ function mailyJsonExample(): TipTapNode {
           {
             type: 'variable',
             attrs: {
-              id: 'payload.comments',
+              id: 'payload.name',
               label: null,
               fallback: 'some value',
             },
@@ -190,20 +190,9 @@ function mailyJsonExample(): TipTapNode {
         ],
       },
       {
-        type: 'paragraph',
+        type: 'section',
         attrs: {
-          textAlign: 'left',
-        },
-      },
-      {
-        type: 'paragraph',
-        attrs: {
-          textAlign: 'left',
-        },
-      },
-      {
-        type: 'heading',
-        attrs: {
+          show: 'payload.ispayingcustomer',
           textAlign: 'left',
           level: 1,
         },
@@ -213,18 +202,6 @@ function mailyJsonExample(): TipTapNode {
             text: 'should show',
           },
         ],
-      },
-      {
-        type: 'paragraph',
-        attrs: {
-          textAlign: 'left',
-        },
-      },
-      {
-        type: 'paragraph',
-        attrs: {
-          textAlign: 'left',
-        },
       },
       {
         type: 'columns',
@@ -361,12 +338,6 @@ function mailyJsonExample(): TipTapNode {
             ],
           },
         ],
-      },
-      {
-        type: 'paragraph',
-        attrs: {
-          textAlign: 'left',
-        },
       },
     ],
   };
