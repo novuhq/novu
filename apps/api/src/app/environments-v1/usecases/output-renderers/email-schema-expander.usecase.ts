@@ -10,10 +10,37 @@ export const TipTapSchema = z.object({
   attrs: z.record(z.unknown()).optional(),
 });
 
+function removeFor(node: TipTapNode, parentNode?: TipTapNode) {
+  if (node.type && node.type === 'for') {
+    const expandedContents = node.content;
+    if (parentNode && parentNode.content) {
+      insertArrayAt(parentNode.content, parentNode.content.indexOf(node), expandedContents);
+      parentNode.content.splice(parentNode.content.indexOf(node), 1);
+    }
+  }
+
+  if (node.content) {
+    node.content.forEach((innerNode) => {
+      removeFor(innerNode, node);
+    });
+  }
+}
+function insertArrayAt(array, index, newArray) {
+  // Check if the index is within the bounds of the original array
+  if (index < 0 || index > array.length) {
+    throw new Error('Index out of bounds');
+  }
+
+  // Use splice to insert the new array elements at the specified index
+  array.splice(index, 0, ...newArray);
+}
 // Rename the class to ExpendEmailEditorSchemaUseCase
 export class ExpandEmailEditorSchemaUsecase {
   execute(command: ExpendEmailEditorSchemaCommand): TipTapNode {
-    const tipTapNodeaugments = augmentNode(command.schema);
+    augmentNode(command.schema);
+    console.log(`expandedSchema: ${prettyPrint(command.schema)}`);
+    removeFor(command.schema, undefined);
+    console.log(`expandedSchema:nofor ${prettyPrint(command.schema)}`);
 
     return command.schema;
   }
@@ -37,9 +64,7 @@ function augmentNode(node: TipTapNode): TipTapNode {
   }
 
   if (hasEach(node)) {
-    const newContent = expendedForEach(node);
-
-    return { ...node, content: newContent };
+    return { ...node, content: expendedForEach(node) };
   }
 
   if (node.content) {
@@ -47,9 +72,8 @@ function augmentNode(node: TipTapNode): TipTapNode {
       return augmentNode(innerNode);
     });
   }
-  const cleanedNode = removeEmptyContentNodes(node);
 
-  return cleanedNode;
+  return removeEmptyContentNodes(node);
 }
 
 function removeEmptyContentNodes(node: TipTapNode): TipTapNode {
@@ -134,7 +158,7 @@ function replacePlaceholders(nodes: TipTapNode[], payload: PayloadObject): TipTa
       newNode.text = getValueByPath(payload, newNode.attrs.id);
       newNode.type = 'text';
       // @ts-ignore
-      newNode.attrs = {};
+      delete newNode.attrs;
     } else if (newNode.content) {
       newNode.content = replacePlaceholders(newNode.content, payload);
     }

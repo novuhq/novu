@@ -2,6 +2,7 @@
 import { EmailRenderOutput, TipTapNode } from '@novu/shared';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
+import { render } from '@maily-to/render';
 import { RenderCommand } from './render-command';
 import { MasterPayload } from '../construct-framework-workflow';
 import { ExpandEmailEditorSchemaUsecase, TipTapSchema } from './email-schema-expander.usecase';
@@ -17,10 +18,15 @@ export class EmailOutputRendererUsecase {
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
     const emailControlValues = EmailStepControlSchema.parse(renderCommand.controlValues);
     const hydratedBody = this.hydrateBody(emailControlValues.emailEditor, renderCommand.masterPayload);
+    console.log(`hydratedBody: ${JSON.stringify(hydratedBody, null, 2)}`);
     const expandedSchema = this.expendEmailEditorSchemaUseCase.execute({ schema: hydratedBody });
     console.log(`expandedSchema: ${JSON.stringify(expandedSchema, null, 2)}`);
 
-    return { subject: emailControlValues.subject, body: 'html' };
+    // @ts-ignore
+    const body = await render(expandedSchema);
+    console.log(`body: ${body}`);
+
+    return { subject: emailControlValues.subject, body };
   }
 
   private hydrateBody(emailEditor: string, masterPayload: MasterPayload): TipTapNode {
