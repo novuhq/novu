@@ -1,19 +1,19 @@
+import 'newrelic';
 import './config/env.config';
 import './instrument';
-import 'newrelic';
 
-import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import bodyParser from 'body-parser';
+import helmet from 'helmet';
 
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
+import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { AppModule } from './app.module';
-import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
+import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
 const passport = require('passport');
@@ -107,8 +107,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   } else {
     await app.listen(process.env.PORT);
   }
-
-  app.enableShutdownHooks();
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 

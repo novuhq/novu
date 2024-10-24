@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "docker:build": "BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN -f ./Dockerfile -t novu-ws ./../.. --load $DOCKER_BUILD_ARGUMENTS",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/ws/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/ws - -t novu-ws --load $DOCKER_BUILD_ARGUMENTS",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "pnpm start:dev",
     "start:dev": "nest start --watch",

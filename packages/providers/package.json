@@ -80,7 +80,6 @@
     "@types/nodemailer": "^6.4.4",
     "@types/sparkpost": "^2.1.5",
     "@types/uuid": "^8.3.4",
-    "axios": "^1.6.8",
     "codecov": "^3.5.0",
     "cspell": "~6.19.2",
     "nock": "^13.1.3",
