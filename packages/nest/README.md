@@ -1,3 +1,6 @@
+> [!WARNING]  
+> `@novu/nest` package is no longer maintained and will be deprecated in the future. Please use [@novu/node](https://www.npmjs.com/package/@novu/node) directly. Read [this](https://docs.novu.co/quickstart/nestjs) guide to use [@novu/framework](https://www.npmjs.com/package/@novu/framework) with [NestJS](https://nestjs.com/)
+
 # NestJS Module Wrapper
 
 A NestJS module wrapper for [@novu/node](https://github.com/novuhq/novu)
@@ -5,6 +8,7 @@ A NestJS module wrapper for [@novu/node](https://github.com/novuhq/novu)
 ## Usage
 
 Initializing module with templates and providers:
+
 ```javascript
     import { NovuModule } from "@novu/nest";
 
