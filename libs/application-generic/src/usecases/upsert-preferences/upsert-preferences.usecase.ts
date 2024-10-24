@@ -14,11 +14,17 @@ export class UpsertPreferences {
   public async upsertWorkflowPreferences(
     command: UpsertWorkflowPreferencesCommand,
   ) {
+    /*
+     * Only Workflow Preferences need to be built with default values to ensure
+     * there is always a value to fall back to during preference merging.
+     */
+    const builtPreferences = buildWorkflowPreferences(command.preferences);
+
     return this.upsert({
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      preferences: command.preferences,
+      preferences: builtPreferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     });
   }
@@ -70,18 +76,11 @@ export class UpsertPreferences {
       return this.deletePreferences(command, foundId);
     }
 
-    const builtPreferences = buildWorkflowPreferences(command.preferences);
-
-    const builtCommand = {
-      ...command,
-      preferences: builtPreferences,
-    };
-
     if (foundId) {
-      return this.updatePreferences(foundId, builtCommand);
+      return this.updatePreferences(foundId, command);
     }
 
-    return this.createPreferences(builtCommand);
+    return this.createPreferences(command);
   }
 
   private async createPreferences(
