@@ -8,7 +8,7 @@ import { PreferenceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AnalyticsEventsEnum } from '../../utils';
-import { GetPreferences } from './get-preferences.usecase';
+import { GetInboxPreferences } from './get-inbox-preferences.usecase';
 
 const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
 const mockedWorkflow = {
@@ -73,8 +73,8 @@ const mockedWorkflows: any = [
   },
 ];
 
-describe('GetPreferences', () => {
-  let getPreferences: GetPreferences;
+describe('GetInboxPreferences', () => {
+  let getInboxPreferences: GetInboxPreferences;
   let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
   let getSubscriberWorkflowMock: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
@@ -88,7 +88,7 @@ describe('GetPreferences', () => {
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
     notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
 
-    getPreferences = new GetPreferences(
+    getInboxPreferences = new GetInboxPreferences(
       subscriberRepositoryMock as any,
       notificationTemplateRepositoryMock as any,
       getSubscriberWorkflowMock as any,
@@ -111,7 +111,7 @@ describe('GetPreferences', () => {
     subscriberRepositoryMock.findOne.resolves(undefined);
 
     try {
-      await getPreferences.execute(command);
+      await getInboxPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
       expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} not found`);
@@ -130,7 +130,7 @@ describe('GetPreferences', () => {
     notificationTemplateRepositoryMock.filterActive.resolves(mockedWorkflows);
     getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
 
-    const result = await getPreferences.execute(command);
+    const result = await getInboxPreferences.execute(command);
 
     expect(subscriberRepositoryMock.findBySubscriberId.calledOnce).to.be.true;
     expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([
@@ -227,7 +227,7 @@ describe('GetPreferences', () => {
     notificationTemplateRepositoryMock.filterActive.resolves(workflowsWithTags);
     getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
 
-    const result = await getPreferences.execute(command);
+    const result = await getInboxPreferences.execute(command);
 
     expect(subscriberRepositoryMock.findBySubscriberId.calledOnce).to.be.true;
     expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([

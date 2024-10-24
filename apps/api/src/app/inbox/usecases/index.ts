@@ -1,6 +1,6 @@
 import { GetSubscriberGlobalPreference, GetSubscriberTemplatePreference } from '@novu/application-generic';
 import { GetNotifications } from './get-notifications/get-notifications.usecase';
-import { GetPreferences } from './get-preferences/get-preferences.usecase';
+import { GetInboxPreferences } from './get-inbox-preferences/get-inbox-preferences.usecase';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as/mark-many-notifications-as.usecase';
 import { MarkNotificationAs } from './mark-notification-as/mark-notification-as.usecase';
 import { NotificationsCount } from './notifications-count/notifications-count.usecase';
@@ -17,7 +17,7 @@ export const USE_CASES = [
   MarkNotificationAs,
   UpdateNotificationAction,
   UpdateAllNotifications,
-  GetPreferences,
+  GetInboxPreferences,
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   UpdatePreferences,
