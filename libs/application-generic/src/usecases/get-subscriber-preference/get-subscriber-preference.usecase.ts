@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
   SubscriberRepository,
@@ -28,6 +28,11 @@ export class GetSubscriberPreference {
       command.environmentId,
       command.subscriberId,
     );
+    if (!subscriber) {
+      throw new NotFoundException(
+        `Subscriber with id: ${command.subscriberId} not found`,
+      );
+    }
 
     const templateList = await this.notificationTemplateRepository.filterActive(
       {
@@ -45,7 +50,7 @@ export class GetSubscriberPreference {
       },
     );
 
-    return await Promise.all(
+    const subscriberWorkflowPreferences = await Promise.all(
       templateList.map(async (template) =>
         this.getSubscriberTemplatePreferenceUsecase.execute(
           GetSubscriberTemplatePreferenceCommand.create({
@@ -58,5 +63,11 @@ export class GetSubscriberPreference {
         ),
       ),
     );
+
+    const nonCriticalWorkflowPreferences = subscriberWorkflowPreferences.filter(
+      (preference) => preference.template.critical === false,
+    );
+
+    return nonCriticalWorkflowPreferences;
   }
 }
