@@ -6,11 +6,13 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 
-import { IPreferenceChannels } from '@novu/shared';
+import { IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { GetPreferences } from '../get-preferences';
+import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
+import { filteredPreference } from '../get-subscriber-template-preference/get-subscriber-template-preference.usecase';
 
 @Injectable()
 export class GetSubscriberGlobalPreference {
@@ -18,43 +20,82 @@ export class GetSubscriberGlobalPreference {
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private subscriberRepository: SubscriberRepository,
     private getPreferences: GetPreferences,
+    private getSubscriberPreference: GetSubscriberPreference,
   ) {}
 
   async execute(command: GetSubscriberGlobalPreferenceCommand) {
-    const subscriber =
-      command.subscriber ??
-      (await this.fetchSubscriber({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }));
+    const subscriber = await this.getSubscriber(command);
 
-    if (!subscriber) {
-      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
-    }
+    const activeChannels = await this.getActiveChannels(command);
 
-    const subscriberPreference =
-      await this.subscriberPreferenceRepository.findOne({
-        _environmentId: command.environmentId,
-        _subscriberId: subscriber._id,
-        level: PreferenceLevelEnum.GLOBAL,
-      });
-
-    const subscriberChannelPreference =
-      (await this.getPreferences.getPreferenceChannels({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: subscriber._id,
-      })) || subscriberPreference?.channels;
-    const channels = this.updatePreferenceStateWithDefault(
-      subscriberChannelPreference ?? {},
+    const subscriberGlobalPreference = await this.getSubscriberGlobalPreference(
+      command,
+      subscriber._id,
     );
+
+    const channelsWithDefaults = this.buildDefaultPreferences(
+      subscriberGlobalPreference,
+    );
+
+    const channels = filteredPreference(channelsWithDefaults, activeChannels);
 
     return {
       preference: {
-        enabled: subscriberPreference?.enabled ?? true,
+        enabled: true,
         channels,
       },
     };
+  }
+
+  private async getSubscriberGlobalPreference(
+    command: GetSubscriberGlobalPreferenceCommand,
+    subscriberId: string,
+  ): Promise<IPreferenceChannels> {
+    /** @deprecated */
+    const subscriberGlobalPreferenceV1 =
+      await this.subscriberPreferenceRepository.findOne({
+        _environmentId: command.environmentId,
+        _subscriberId: subscriberId,
+        level: PreferenceLevelEnum.GLOBAL,
+      });
+
+    const subscriberGlobalPreferenceV2 =
+      await this.getPreferences.getPreferenceChannels({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId,
+      });
+
+    const subscriberGlobalPreference =
+      subscriberGlobalPreferenceV2 ??
+      subscriberGlobalPreferenceV1?.channels ??
+      {};
+
+    return subscriberGlobalPreference;
+  }
+
+  private async getActiveChannels(
+    command: GetSubscriberGlobalPreferenceCommand,
+  ): Promise<ChannelTypeEnum[]> {
+    const subscriberWorkflowPreferences =
+      await this.getSubscriberPreference.execute(
+        GetSubscriberGlobalPreferenceCommand.create({
+          environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+          organizationId: command.organizationId,
+        }),
+      );
+
+    const activeChannels = new Set<ChannelTypeEnum>();
+    subscriberWorkflowPreferences.forEach((subscriberWorkflowPreference) => {
+      Object.keys(subscriberWorkflowPreference.preference.channels).forEach(
+        (channel) => {
+          activeChannels.add(channel as ChannelTypeEnum);
+        },
+      );
+    });
+
+    return Array.from(activeChannels);
   }
 
   @CachedEntity({
@@ -64,20 +105,22 @@ export class GetSubscriberGlobalPreference {
         subscriberId: command.subscriberId,
       }),
   })
-  private async fetchSubscriber({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(
-      _environmentId,
-      subscriberId,
+  private async getSubscriber(
+    command: GetSubscriberGlobalPreferenceCommand,
+  ): Promise<SubscriberEntity | null> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      command.subscriberId,
     );
+
+    if (!subscriber) {
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+    }
+
+    return subscriber;
   }
   // adds default state for missing channels
-  private updatePreferenceStateWithDefault(preference: IPreferenceChannels) {
+  private buildDefaultPreferences(preference: IPreferenceChannels) {
     const defaultPreference: IPreferenceChannels = {
       email: true,
       sms: true,
