@@ -1,5 +1,7 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useFormContext } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import * as z from 'zod';
 import { EditWorkflowLayout } from '@/components/edit-workflow-layout';
 import { ArrowRight, RouteFill } from '@/components/icons';
 import {
@@ -11,32 +13,33 @@ import {
   BreadcrumbSeparator,
 } from '@/components/primitives/breadcrumb';
 import { Button } from '@/components/primitives/button';
+import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
+import { formSchema } from '@/components/workflow-editor/schema';
 import { WorkflowEditor } from '@/components/workflow-editor/workflow-editor';
 import { WorkflowEditorProvider } from '@/components/workflow-editor/workflow-editor-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Toaster } from '@/components/primitives/sonner';
 
 export const EditWorkflowPage = () => {
   return (
-    <EditWorkflowLayout headerStartItems={<StartItems />}>
-      <WorkflowEditorProvider>
-        <WorkflowEditor />
-        <Toaster />
-      </WorkflowEditorProvider>
-    </EditWorkflowLayout>
+    <WorkflowEditorProvider>
+      <EditWorkflowLayout headerStartItems={<StartItems />}>
+        <div className="flex h-full flex-1 flex-nowrap">
+          <WorkflowEditor />
+          <ConfigureWorkflow />
+          <Toaster />
+        </div>
+      </EditWorkflowLayout>
+    </WorkflowEditorProvider>
   );
 };
 
 const StartItems = () => {
   const { currentEnvironment } = useEnvironment();
-  const { workflowId } = useParams<{ workflowId?: string }>();
   const navigate = useNavigate();
   const workflowsRoute = buildRoute(ROUTES.WORKFLOWS, { environmentId: currentEnvironment?._id ?? '' });
-  const { workflow } = useFetchWorkflow({
-    workflowId,
-  });
+  const { getValues } = useFormContext<z.infer<typeof formSchema>>();
 
   const breadcrumbs = [
     { label: currentEnvironment?.name, href: workflowsRoute },
@@ -58,7 +61,7 @@ const StartItems = () => {
       <Breadcrumb>
         <BreadcrumbList>
           {breadcrumbs.map(({ label, href }) => (
-            <React.Fragment key={href}>
+            <React.Fragment key={`${href}_${label}`}>
               <BreadcrumbItem>
                 <BreadcrumbLink to={href}>{label}</BreadcrumbLink>
               </BreadcrumbItem>
@@ -68,7 +71,7 @@ const StartItems = () => {
           <BreadcrumbItem>
             <BreadcrumbPage>
               <RouteFill />
-              {workflow?.name}
+              {getValues('name')}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
