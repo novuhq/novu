@@ -10,7 +10,6 @@ import {
   UpsertSubscriberGlobalPreferencesCommand,
 } from '@novu/application-generic';
 import {
-  ChannelTypeEnum,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferenceLevelEnum,
@@ -24,8 +23,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
-
-const PREFERENCE_DEFAULT_VALUE = true;
+import { GetInboxPreferences } from '../get-inbox-preferences/get-inbox-preferences.usecase';
 
 @Injectable()
 export class UpdatePreferences {
@@ -62,26 +60,15 @@ export class UpdatePreferences {
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);
     } else {
-      await this.updateUserPreference(command, subscriber, userPreference);
+      await this.updateUserPreference(command, subscriber);
     }
 
     return await this.findPreference(command, subscriber);
   }
 
   private async createUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
-    const channelObj = {
-      chat: command.chat,
-      email: command.email,
-      in_app: command.in_app,
-      push: command.push,
-      sms: command.sms,
-    } as Record<ChannelTypeEnum, boolean>;
+    const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
-    const channelPreferences = Object.values(ChannelTypeEnum).reduce((acc, key) => {
-      acc[key] = channelObj[key] !== undefined ? channelObj[key] : PREFERENCE_DEFAULT_VALUE;
-
-      return acc;
-    }, {} as IPreferenceChannels);
     /*
      * Backwards compatible storage of new Preferences DTO.
      *
@@ -102,39 +89,20 @@ export class UpdatePreferences {
       _subscriber: subscriber._id,
       _workflowId: command.workflowId,
       level: command.level,
-      channels: channelObj,
+      channels: channelPreferences,
     });
 
     const query = this.commonQuery(command, subscriber);
     await this.subscriberPreferenceRepository.create({
       ...query,
       enabled: true,
-      channels: channelObj,
+      channels: channelPreferences,
     });
   }
 
-  private async updateUserPreference(
-    command: UpdatePreferencesCommand,
-    subscriber: SubscriberEntity,
-    userPreference: SubscriberPreferenceEntity
-  ): Promise<void> {
-    const channelObj = {
-      chat: command.chat,
-      email: command.email,
-      in_app: command.in_app,
-      push: command.push,
-      sms: command.sms,
-    } as Record<ChannelTypeEnum, boolean>;
+  private async updateUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
+    const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
-    const channelPreferences = Object.values(ChannelTypeEnum).reduce((acc, key) => {
-      acc[key] = channelObj[key];
-
-      if (acc[key] === undefined) {
-        acc[key] = userPreference.channels[key] === undefined ? PREFERENCE_DEFAULT_VALUE : userPreference.channels[key];
-      }
-
-      return acc;
-    }, {} as IPreferenceChannels);
     /*
      * Backwards compatible storage of new Preferences DTO.
      *
@@ -155,11 +123,11 @@ export class UpdatePreferences {
       _subscriber: subscriber._id,
       _workflowId: command.workflowId,
       level: command.level,
-      channels: channelObj,
+      channels: channelPreferences,
     });
 
     const updateFields = {};
-    for (const [key, value] of Object.entries(channelObj)) {
+    for (const [key, value] of Object.entries(channelPreferences)) {
       if (value !== undefined) {
         updateFields[`channels.${key}`] = value;
       }
@@ -169,6 +137,16 @@ export class UpdatePreferences {
     await this.subscriberPreferenceRepository.update(query, {
       $set: updateFields,
     });
+  }
+
+  private buildPreferenceChannels(command: UpdatePreferencesCommand): IPreferenceChannels {
+    return {
+      ...(command.chat !== undefined && { chat: command.chat }),
+      ...(command.email !== undefined && { email: command.email }),
+      ...(command.in_app !== undefined && { in_app: command.in_app }),
+      ...(command.push !== undefined && { push: command.push }),
+      ...(command.sms !== undefined && { sms: command.sms }),
+    };
   }
 
   private async findPreference(
@@ -238,10 +216,6 @@ export class UpdatePreferences {
     templateId?: string;
   }) {
     const preferences: WorkflowPreferencesPartial = {
-      all: {
-        enabled: PREFERENCE_DEFAULT_VALUE,
-        readOnly: false,
-      },
       channels: Object.entries(item.channels).reduce(
         (outputChannels, [channel, enabled]) => ({
           ...outputChannels,
