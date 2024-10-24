@@ -32,6 +32,20 @@ export class UpsertPreferences {
   public async upsertSubscriberGlobalPreferences(
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
+    await this.deleteSubscriberChannelPreferences(command);
+
+    return this.upsert({
+      _subscriberId: command._subscriberId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      preferences: command.preferences,
+      type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+    });
+  }
+
+  private async deleteSubscriberChannelPreferences(
+    command: UpsertSubscriberGlobalPreferencesCommand,
+  ) {
     const channelTypes = Object.keys(command.preferences?.channels || {});
 
     const preferenceUnsetPayload = channelTypes.reduce((acc, channelType) => {
@@ -53,14 +67,6 @@ export class UpsertPreferences {
         $unset: preferenceUnsetPayload,
       },
     );
-
-    return this.upsert({
-      _subscriberId: command._subscriberId,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      preferences: command.preferences,
-      type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    });
   }
 
   public async upsertSubscriberWorkflowPreferences(
