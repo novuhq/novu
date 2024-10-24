@@ -39,6 +39,10 @@ import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, sanitizeHtmlInObject, stringifyDataStructureWithSingleQuotes } from './utils';
 import { transformSchema, validateData } from './validators';
 
+/*
+ * JSONSchemaFaker needs to be imported as CJS to avoid HMR and Webpack issues when importing @novu/framework
+ * in Next.js. See https://github.com/json-schema-faker/json-schema-faker/issues/796#issuecomment-2433335751
+ */
 const { JSONSchemaFaker } = require('json-schema-faker');
 
 /**
