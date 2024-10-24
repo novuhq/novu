@@ -4,7 +4,7 @@ import { EnvironmentCommand } from '../../commands';
 
 export class UpsertPreferencesCommand extends EnvironmentCommand {
   @IsDefined()
-  readonly preferences: WorkflowPreferencesPartial;
+  readonly preferences: WorkflowPreferencesPartial | null;
 
   _subscriberId?: string;
 

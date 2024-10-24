@@ -16,11 +16,11 @@ import {
   GetPreferences,
   GetPreferencesCommand,
   UpsertPreferences,
-  UpsertUserWorkflowPreferencesCommand,
+  UpsertPreferencesCommand,
   UserAuthGuard,
   UserSession,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PreferencesTypeEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
@@ -29,7 +29,7 @@ import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 @ApiExcludeController()
 export class PreferencesController {
   constructor(
-    private upsertPreferences: UpsertPreferences,
+    private upsertPreferencesUsecase: UpsertPreferences,
     private getPreferences: GetPreferences,
     private getFeatureFlag: GetFeatureFlag
   ) {}
@@ -53,13 +53,14 @@ export class PreferencesController {
   async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
     await this.verifyPreferencesApiAvailability(user);
 
-    return this.upsertPreferences.upsertUserWorkflowPreferences(
-      UpsertUserWorkflowPreferencesCommand.create({
+    return this.upsertPreferencesUsecase.execute(
+      UpsertPreferencesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         preferences: data.preferences,
         templateId: data.workflowId,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
       })
     );
   }
@@ -69,13 +70,14 @@ export class PreferencesController {
   async delete(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
     await this.verifyPreferencesApiAvailability(user);
 
-    return this.upsertPreferences.upsertUserWorkflowPreferences(
-      UpsertUserWorkflowPreferencesCommand.create({
+    return this.upsertPreferencesUsecase.execute(
+      UpsertPreferencesCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         templateId: workflowId,
         preferences: null,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
       })
     );
   }

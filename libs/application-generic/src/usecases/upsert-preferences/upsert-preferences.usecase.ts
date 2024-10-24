@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { buildWorkflowPreferences, PreferencesTypeEnum } from '@novu/shared';
 import { UpsertPreferencesCommand } from './upsert-preferences.command';
@@ -11,7 +11,57 @@ import { UpsertUserWorkflowPreferencesCommand } from './upsert-user-workflow-pre
 export class UpsertPreferences {
   constructor(private preferencesRepository: PreferencesRepository) {}
 
-  public async upsertWorkflowPreferences(
+  execute(command: UpsertPreferencesCommand) {
+    if (command.type === PreferencesTypeEnum.WORKFLOW_RESOURCE) {
+      return this.upsertWorkflowPreferences(
+        UpsertWorkflowPreferencesCommand.create({
+          templateId: command.templateId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          preferences: command.preferences,
+        }),
+      );
+    }
+
+    if (command.type === PreferencesTypeEnum.SUBSCRIBER_GLOBAL) {
+      return this.upsertSubscriberGlobalPreferences(
+        UpsertSubscriberGlobalPreferencesCommand.create({
+          _subscriberId: command._subscriberId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          preferences: command.preferences,
+        }),
+      );
+    }
+
+    if (command.type === PreferencesTypeEnum.SUBSCRIBER_WORKFLOW) {
+      return this.upsertSubscriberWorkflowPreferences(
+        UpsertSubscriberWorkflowPreferencesCommand.create({
+          _subscriberId: command._subscriberId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          preferences: command.preferences,
+          templateId: command.templateId,
+        }),
+      );
+    }
+
+    if (command.type === PreferencesTypeEnum.USER_WORKFLOW) {
+      return this.upsertUserWorkflowPreferences(
+        UpsertUserWorkflowPreferencesCommand.create({
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          preferences: command.preferences,
+          templateId: command.templateId,
+        }),
+      );
+    }
+
+    throw new NotFoundException(`Invalid preferences type: ${command.type}`);
+  }
+
+  private async upsertWorkflowPreferences(
     command: UpsertWorkflowPreferencesCommand,
   ) {
     return this.upsert({
@@ -23,7 +73,7 @@ export class UpsertPreferences {
     });
   }
 
-  public async upsertSubscriberGlobalPreferences(
+  private async upsertSubscriberGlobalPreferences(
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
     return this.upsert({
@@ -35,7 +85,7 @@ export class UpsertPreferences {
     });
   }
 
-  public async upsertSubscriberWorkflowPreferences(
+  private async upsertSubscriberWorkflowPreferences(
     command: UpsertSubscriberWorkflowPreferencesCommand,
   ) {
     return this.upsert({
@@ -48,7 +98,7 @@ export class UpsertPreferences {
     });
   }
 
-  public async upsertUserWorkflowPreferences(
+  private async upsertUserWorkflowPreferences(
     command: UpsertUserWorkflowPreferencesCommand,
   ) {
     return this.upsert({

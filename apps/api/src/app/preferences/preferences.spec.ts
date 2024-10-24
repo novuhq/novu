@@ -1,12 +1,5 @@
 import { Test } from '@nestjs/testing';
-import {
-  GetPreferences,
-  UpsertPreferences,
-  UpsertSubscriberGlobalPreferencesCommand,
-  UpsertSubscriberWorkflowPreferencesCommand,
-  UpsertUserWorkflowPreferencesCommand,
-  UpsertWorkflowPreferencesCommand,
-} from '@novu/application-generic';
+import { GetPreferences, UpsertPreferences, UpsertPreferencesCommand } from '@novu/application-generic';
 import { PreferencesRepository, SubscriberRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, PreferencesTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -39,8 +32,9 @@ describe('Preferences', function () {
 
   describe('Upsert preferences', function () {
     it('should create workflow preferences', async function () {
-      const workflowPreferences = await upsertPreferences.upsertWorkflowPreferences(
-        UpsertWorkflowPreferencesCommand.create({
+      const workflowPreferences = await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
           preferences: {
             all: {
               enabled: false,
@@ -79,8 +73,9 @@ describe('Preferences', function () {
     });
 
     it('should create user workflow preferences', async function () {
-      const userPreferences = await upsertPreferences.upsertUserWorkflowPreferences(
-        UpsertUserWorkflowPreferencesCommand.create({
+      const userPreferences = await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.USER_WORKFLOW,
           preferences: {
             all: {
               enabled: false,
@@ -120,8 +115,9 @@ describe('Preferences', function () {
     });
 
     it('should create global subscriber preferences', async function () {
-      const subscriberGlobalPreferences = await upsertPreferences.upsertSubscriberGlobalPreferences(
-        UpsertSubscriberGlobalPreferencesCommand.create({
+      const subscriberGlobalPreferences = await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
           preferences: {
             all: {
               enabled: false,
@@ -160,8 +156,9 @@ describe('Preferences', function () {
     });
 
     it('should create subscriber workflow preferences', async function () {
-      const subscriberWorkflowPreferences = await upsertPreferences.upsertSubscriberWorkflowPreferences(
-        UpsertSubscriberWorkflowPreferencesCommand.create({
+      const subscriberWorkflowPreferences = await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           preferences: {
             all: {
               enabled: false,
@@ -201,8 +198,9 @@ describe('Preferences', function () {
     });
 
     it('should update preferences', async function () {
-      let workflowPreferences = await upsertPreferences.upsertWorkflowPreferences(
-        UpsertWorkflowPreferencesCommand.create({
+      let workflowPreferences = await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
           preferences: {
             all: {
               enabled: false,
@@ -239,8 +237,9 @@ describe('Preferences', function () {
       expect(workflowPreferences._subscriberId).to.be.undefined;
       expect(workflowPreferences.type).to.equal(PreferencesTypeEnum.WORKFLOW_RESOURCE);
 
-      workflowPreferences = await upsertPreferences.upsertWorkflowPreferences(
-        UpsertWorkflowPreferencesCommand.create({
+      workflowPreferences = await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
           preferences: {
             all: {
               enabled: false,
@@ -277,8 +276,9 @@ describe('Preferences', function () {
   describe('Get preferences', function () {
     it('should merge preferences when get preferences', async function () {
       // Workflow preferences
-      await upsertPreferences.upsertWorkflowPreferences(
-        UpsertWorkflowPreferencesCommand.create({
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
           preferences: {
             all: {
               enabled: false,
@@ -370,8 +370,9 @@ describe('Preferences', function () {
       });
 
       // User Workflow preferences
-      await upsertPreferences.upsertUserWorkflowPreferences(
-        UpsertUserWorkflowPreferencesCommand.create({
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.USER_WORKFLOW,
           preferences: {
             all: {
               enabled: false,
@@ -486,8 +487,9 @@ describe('Preferences', function () {
       });
 
       // Subscriber global preferences
-      await upsertPreferences.upsertSubscriberGlobalPreferences(
-        UpsertSubscriberGlobalPreferencesCommand.create({
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
           preferences: {
             all: {
               enabled: false,
@@ -624,8 +626,9 @@ describe('Preferences', function () {
       });
 
       // Subscriber Workflow preferences
-      await upsertPreferences.upsertSubscriberWorkflowPreferences(
-        UpsertSubscriberWorkflowPreferencesCommand.create({
+      await upsertPreferences.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           preferences: {
             all: {
               enabled: false,
@@ -790,8 +793,9 @@ describe('Preferences', function () {
     it('should get preferences', async function () {
       const useCase: UpsertPreferences = session.testServer?.getService(UpsertPreferences);
 
-      await useCase.upsertWorkflowPreferences(
-        UpsertWorkflowPreferencesCommand.create({
+      await useCase.execute(
+        UpsertPreferencesCommand.create({
+          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
           preferences: {
             all: {
               enabled: false,
