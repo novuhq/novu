@@ -10,18 +10,25 @@ export const TipTapSchema = z.object({
   attrs: z.record(z.unknown()).optional(),
 });
 
-function removeFor(node: TipTapNode, parentNode?: TipTapNode) {
-  if (node.type && node.type === 'for') {
-    const expandedContents = node.content;
-    if (parentNode && parentNode.content) {
-      insertArrayAt(parentNode.content, parentNode.content.indexOf(node), expandedContents);
-      parentNode.content.splice(parentNode.content.indexOf(node), 1);
-    }
+function removeForNodeAndUpgradeContent(node: TipTapNode, expandedContents: TipTapNode[], parentNode?: TipTapNode) {
+  if (parentNode && parentNode.content) {
+    insertArrayAt(parentNode.content, parentNode.content.indexOf(node), expandedContents);
+    parentNode.content.splice(parentNode.content.indexOf(node), 1);
   }
+}
 
+function traverseAndAugment(node: TipTapNode, parentNode?: TipTapNode) {
+  if (hasEach(node)) {
+    const newContent = expendedForEach(node);
+    removeForNodeAndUpgradeContent(node, newContent, parentNode);
+
+    return;
+  } else if (hasShow(node)) {
+    hideShowIfNeeded(node, parentNode);
+  }
   if (node.content) {
     node.content.forEach((innerNode) => {
-      removeFor(innerNode, node);
+      traverseAndAugment(innerNode, node);
     });
   }
 }
@@ -37,9 +44,8 @@ function insertArrayAt(array, index, newArray) {
 // Rename the class to ExpendEmailEditorSchemaUseCase
 export class ExpandEmailEditorSchemaUsecase {
   execute(command: ExpendEmailEditorSchemaCommand): TipTapNode {
-    augmentNode(command.schema);
     console.log(`expandedSchema: ${prettyPrint(command.schema)}`);
-    removeFor(command.schema, undefined);
+    traverseAndAugment(command.schema, undefined);
     console.log(`expandedSchema:nofor ${prettyPrint(command.schema)}`);
 
     return command.schema;
@@ -58,63 +64,12 @@ function prettyPrint(obj) {
   return JSON.stringify(obj, null, 2); // Pretty print with 2 spaces for indentation
 }
 
-function augmentNode(node: TipTapNode): TipTapNode {
-  console.log(`augmentNode: ${prettyPrint(node)}`);
-  if (hasShow(node)) {
-    return expendedShow(node);
-  }
-
-  if (hasEach(node)) {
-    return { ...node, content: expendedForEach(node) };
-  }
-
-  if (node.content) {
-    node.content = node.content.map((innerNode) => {
-      return augmentNode(innerNode);
-    });
-  }
-
-  return removeEmptyContentNodes(node);
-}
-
-function removeEmptyContentNodes(node: TipTapNode): TipTapNode {
-  const nodes = node.content;
-  if (!nodes) {
-    return node;
-  }
-  const tipTapNodes = nodes
-    .map((innerNode) => {
-      let newNode: TipTapNode = { ...innerNode };
-
-      if (newNode.content) {
-        newNode = removeEmptyContentNodes(newNode);
-      }
-
-      return newNode;
-    })
-    .filter((innerNode) => (innerNode.content && innerNode.content?.length > 0) || node.text !== undefined);
-
-  return { ...node, content: tipTapNodes };
-}
-
 type PayloadObject = {
   [key: string]: string | boolean | number | PayloadObject;
 };
 
-function getEachAsJsonObject(node: TipTapNode & { attrs: { each: string } }) {
-  const { each } = node.attrs;
-
-  const correctedJsonString: string = each.replace(/'/g, '"').replace(/(\w+):/g, '"$1":');
-
-  return JSON.parse(correctedJsonString);
-}
-
 function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTapNode[] {
   const eachObject = node.attrs.each;
-  node.attrs.each = {};
-  if (!Array.isArray(eachObject) || eachObject.length === 0) {
-    return [];
-  }
 
   const templateContent = node.content || [];
 
@@ -128,18 +83,21 @@ function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTa
 
   return expandedContent;
 }
-function expendedShow(node: TipTapNode & { attrs: { show: string } }): TipTapNode {
-  const { show } = node.attrs;
-  const conditionalContent = node.content || [];
 
-  let finalContent: TipTapNode[];
-  if (stringToBoolean(show)) {
-    finalContent = conditionalContent;
-  } else {
-    finalContent = [];
+function removeNodeFromParent(node: TipTapNode & { attrs: { show: string } }, parentNode?: TipTapNode) {
+  if (parentNode && parentNode.content) {
+    parentNode.content.splice(parentNode.content.indexOf(node), 1);
   }
+}
 
-  return { ...node, content: finalContent };
+function hideShowIfNeeded(node: TipTapNode & { attrs: { show: string } }, parentNode?: TipTapNode): void {
+  const { show } = node.attrs;
+  if (!stringToBoolean(show)) {
+    removeNodeFromParent(node, parentNode);
+  } else {
+    // @ts-ignore
+    delete node.attrs.show;
+  }
 }
 
 function stringToBoolean(value: string): boolean {
