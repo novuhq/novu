@@ -10,10 +10,10 @@ import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal'
 import { PreferenceLevelEnum } from '@novu/shared';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
-import { GetPreferencesCommand } from './get-preferences.command';
+import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 
 @Injectable()
-export class GetPreferences {
+export class GetInboxPreferences {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -22,7 +22,7 @@ export class GetPreferences {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: GetPreferencesCommand): Promise<InboxPreference[]> {
+  async execute(command: GetInboxPreferencesCommand): Promise<InboxPreference[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
