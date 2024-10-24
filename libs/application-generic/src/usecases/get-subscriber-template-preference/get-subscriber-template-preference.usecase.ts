@@ -223,22 +223,6 @@ export class GetSubscriberTemplatePreference {
     return channels as unknown as ChannelTypeEnum[];
   }
 
-  private async getSubscriber(
-    command: GetSubscriberTemplatePreferenceCommand,
-  ): Promise<SubscriberEntity> {
-    if (command.subscriber) {
-      return command.subscriber;
-    }
-
-    const subscriber = await this.fetchSubscriber(command);
-
-    if (!subscriber) {
-      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
-    }
-
-    return subscriber;
-  }
-
   @CachedEntity({
     builder: (command: GetSubscriberTemplatePreferenceCommand) =>
       buildSubscriberKey({
@@ -246,13 +230,23 @@ export class GetSubscriberTemplatePreference {
         subscriberId: command.subscriberId,
       }),
   })
-  private async fetchSubscriber(
+  private async getSubscriber(
     command: GetSubscriberTemplatePreferenceCommand,
   ): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(
+    if (command.subscriber) {
+      return command.subscriber;
+    }
+
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
       command.subscriberId,
     );
+
+    if (!subscriber) {
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+    }
+
+    return subscriber;
   }
 }
 
