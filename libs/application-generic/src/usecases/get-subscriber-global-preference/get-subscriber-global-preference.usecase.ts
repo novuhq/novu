@@ -77,7 +77,7 @@ export class GetSubscriberGlobalPreference {
       enabled = true;
     } else {
       subscriberGlobalChannels = subscriberGlobalPreferenceV1?.channels ?? {};
-      enabled = subscriberGlobalPreferenceV1?.enabled;
+      enabled = subscriberGlobalPreferenceV1?.enabled ?? true;
     }
 
     return {

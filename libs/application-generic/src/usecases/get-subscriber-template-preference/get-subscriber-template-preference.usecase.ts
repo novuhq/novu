@@ -134,7 +134,7 @@ export class GetSubscriberTemplatePreference {
         subscriberWorkflowPreferenceV1?.channels ?? {};
       subscriberPreferenceType = PreferencesTypeEnum.SUBSCRIBER_WORKFLOW;
       critical = undefined;
-      enabled = subscriberWorkflowPreferenceV1.enabled;
+      enabled = subscriberWorkflowPreferenceV1?.enabled ?? true;
     }
 
     return {
