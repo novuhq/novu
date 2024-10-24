@@ -1,18 +1,10 @@
-import { defineConfig } from 'tsup';
-import { type SupportedFrameworkName } from './src';
-
-const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', 'sveltekit', 'remix', 'lambda', 'nest'];
+import { type Options, defineConfig } from 'tsup';
 
 const baseConfig: Options = {
-  entry: ['src/index.ts', 'src/internal/index.ts', ...frameworks.map((framework) => `src/servers/${framework}.ts`)],
-  sourcemap: false,
+  entry: ['./src/**/*.{ts,tsx,js,jsx}', '!./src/**/*.test.{ts,tsx}'],
   clean: true,
-  treeshake: true,
   dts: true,
-  minify: true,
-  minifyWhitespace: true,
-  minifyIdentifiers: true,
-  minifySyntax: true,
+  shims: true,
 };
 
 export default defineConfig([
