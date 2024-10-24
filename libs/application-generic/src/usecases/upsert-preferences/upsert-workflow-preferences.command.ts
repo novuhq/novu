@@ -1,11 +1,8 @@
-import { IsNotEmpty, IsOptional } from 'class-validator';
-import { WorkflowPreferencesPartial } from '@novu/shared';
-import { EnvironmentCommand } from '../../commands';
+import { IsMongoId, IsNotEmpty } from 'class-validator';
+import { UpsertPreferencesBaseCommand } from './upsert-preferences.command';
 
-export class UpsertWorkflowPreferencesCommand extends EnvironmentCommand {
-  @IsOptional()
-  readonly preferences?: WorkflowPreferencesPartial | null;
-
+export class UpsertWorkflowPreferencesCommand extends UpsertPreferencesBaseCommand {
   @IsNotEmpty()
-  templateId: string;
+  @IsMongoId()
+  readonly templateId: string;
 }

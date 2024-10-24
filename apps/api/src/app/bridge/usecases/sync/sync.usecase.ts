@@ -19,7 +19,13 @@ import {
   UpsertPreferences,
   UpsertWorkflowPreferencesCommand,
 } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  WorkflowCreationSourceEnum,
+  WorkflowOriginEnum,
+  WorkflowTypeEnum,
+  WorkflowPreferencesPartial,
+} from '@novu/shared';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 
 import { SyncCommand } from './sync.command';
@@ -186,7 +192,7 @@ export class Sync {
               environmentId: savedWorkflow._environmentId,
               organizationId: savedWorkflow._organizationId,
               templateId: savedWorkflow._id,
-              preferences: workflow.preferences,
+              preferences: this.getWorkflowPreferences(workflow),
             })
           );
         }
@@ -321,6 +327,10 @@ export class Sync {
     }
 
     return notificationGroupId;
+  }
+
+  private getWorkflowPreferences(workflow: DiscoverWorkflowOutput): WorkflowPreferencesPartial {
+    return workflow.preferences || {};
   }
 
   private getWorkflowName(workflow: DiscoverWorkflowOutput): string {

@@ -1,7 +1,7 @@
 import { IsArray, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
-export class GetPreferencesCommand extends EnvironmentWithSubscriber {
+export class GetInboxPreferencesCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

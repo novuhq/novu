@@ -1,5 +1,6 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { StepTypeEnum } from '@novu/shared';
 
 describe('Get all preferences - /inbox/preferences (GET)', function () {
   let session: UserSession;
@@ -9,22 +10,28 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     await session.initialize();
   });
 
-  it('should always get the global preferences even if workflow preferences are not present', async function () {
+  it('should return no global preferences if workflow preferences are not present', async function () {
     const response = await session.testAgent
       .get('/v1/inbox/preferences')
       .set('Authorization', `Bearer ${session.subscriberToken}`);
 
     const globalPreference = response.body.data[0];
 
-    expect(globalPreference.channels.email).to.equal(true);
-    expect(globalPreference.channels.in_app).to.equal(true);
+    expect(globalPreference.channels.email).to.equal(undefined);
+    expect(globalPreference.channels.in_app).to.equal(undefined);
     expect(globalPreference.level).to.equal('global');
     expect(response.body.data.length).to.equal(1);
   });
 
-  it('should get both global and workflow preferences if workflow is present', async function () {
+  it('should get both global preferences for active channels and workflow preferences if workflow is present', async function () {
     await session.createTemplate({
       noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          content: 'Test notification content',
+        },
+      ],
     });
 
     const response = await session.testAgent
@@ -34,13 +41,13 @@ describe('Get all preferences - /inbox/preferences (GET)', function () {
     const globalPreference = response.body.data[0];
 
     expect(globalPreference.channels.email).to.equal(true);
-    expect(globalPreference.channels.in_app).to.equal(true);
+    expect(globalPreference.channels.in_app).to.equal(undefined);
     expect(globalPreference.level).to.equal('global');
 
     const workflowPreference = response.body.data[1];
 
     expect(workflowPreference.channels.email).to.equal(true);
-    expect(workflowPreference.channels.in_app).to.equal(true);
+    expect(workflowPreference.channels.in_app).to.equal(undefined);
     expect(workflowPreference.level).to.equal('template');
   });
 

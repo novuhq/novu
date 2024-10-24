@@ -47,7 +47,7 @@ const mockedGlobalPreference: any = {
 };
 
 const mockedWorkflow: any = {
-  _id: 'workflow-1',
+  _id: '6447aff3d89122e250412c28',
   name: 'test-workflow',
   critical: false,
   triggers: [{ identifier: 'test-trigger' }],
@@ -162,10 +162,6 @@ describe('UpdatePreferences', () => {
         _workflowId: undefined,
         channels: {
           chat: true,
-          email: undefined,
-          sms: undefined,
-          in_app: undefined,
-          push: undefined,
         },
       },
     ]);
@@ -210,10 +206,6 @@ describe('UpdatePreferences', () => {
         _workflowId: undefined,
         channels: {
           chat: true,
-          email: undefined,
-          sms: undefined,
-          in_app: undefined,
-          push: undefined,
         },
       },
     ]);
@@ -230,7 +222,7 @@ describe('UpdatePreferences', () => {
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
       level: PreferenceLevelEnum.TEMPLATE,
-      workflowId: 'workflow-1',
+      workflowId: '6447aff3d89122e250412c28',
       chat: true,
       email: false,
     };
@@ -272,9 +264,6 @@ describe('UpdatePreferences', () => {
         channels: {
           chat: true,
           email: false,
-          in_app: undefined,
-          push: undefined,
-          sms: undefined,
         },
       },
     ]);

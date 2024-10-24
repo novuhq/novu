@@ -24,11 +24,13 @@ import {
 } from '@novu/application-generic';
 import {
   CreateWorkflowDto,
+  DEFAULT_WORKFLOW_PREFERENCES,
   StepCreateDto,
   StepDto,
   StepUpdateDto,
   WorkflowCreationSourceEnum,
   WorkflowOriginEnum,
+  WorkflowPreferences,
   WorkflowResponseDto,
   WorkflowTypeEnum,
 } from '@novu/shared';
@@ -131,7 +133,7 @@ export class UpsertWorkflowUseCase {
     return await this.getPersistedPreferences(workflow);
   }
 
-  private async getPersistedPreferences(workflow) {
+  private async getPersistedPreferences(workflow: NotificationTemplateEntity) {
     return await this.getPreferencesUseCase.safeExecute(
       GetPreferencesCommand.create({
         environmentId: workflow._environmentId,
@@ -141,14 +143,24 @@ export class UpsertWorkflowUseCase {
     );
   }
 
-  private async upsertPreferences(workflow, command: UpsertWorkflowCommand): Promise<PreferencesEntity> {
+  private async upsertPreferences(
+    workflow: NotificationTemplateEntity,
+    command: UpsertWorkflowCommand
+  ): Promise<PreferencesEntity> {
+    let preferences: WorkflowPreferences | null;
+    if (command.workflowDto.preferences?.user !== undefined) {
+      preferences = command.workflowDto.preferences.user;
+    } else {
+      preferences = DEFAULT_WORKFLOW_PREFERENCES;
+    }
+
     return await this.upsertPreferencesUsecase.upsertUserWorkflowPreferences(
       UpsertUserWorkflowPreferencesCommand.create({
         environmentId: workflow._environmentId,
         organizationId: workflow._organizationId,
         userId: command.user._id,
         templateId: workflow._id,
-        preferences: command.workflowDto.preferences?.user,
+        preferences,
       })
     );
   }

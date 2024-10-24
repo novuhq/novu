@@ -14,11 +14,17 @@ export class UpsertPreferences {
   public async upsertWorkflowPreferences(
     command: UpsertWorkflowPreferencesCommand,
   ) {
+    /*
+     * Only Workflow Preferences need to be built with default values to ensure
+     * there is always a value to fall back to during preference merging.
+     */
+    const builtPreferences = buildWorkflowPreferences(command.preferences);
+
     return this.upsert({
       templateId: command.templateId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-      preferences: command.preferences,
+      preferences: builtPreferences,
       type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     });
   }
@@ -26,6 +32,8 @@ export class UpsertPreferences {
   public async upsertSubscriberGlobalPreferences(
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
+    await this.deleteSubscriberChannelPreferences(command);
+
     return this.upsert({
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
@@ -33,6 +41,32 @@ export class UpsertPreferences {
       preferences: command.preferences,
       type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     });
+  }
+
+  private async deleteSubscriberChannelPreferences(
+    command: UpsertSubscriberGlobalPreferencesCommand,
+  ) {
+    const channelTypes = Object.keys(command.preferences?.channels || {});
+
+    const preferenceUnsetPayload = channelTypes.reduce((acc, channelType) => {
+      acc[`preferences.channels.${channelType}`] = '';
+
+      return acc;
+    }, {});
+
+    await this.preferencesRepository.update(
+      {
+        _organizationId: command.organizationId,
+        _subscriberId: command._subscriberId,
+        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        $or: channelTypes.map((channelType) => ({
+          [`preferences.channels.${channelType}`]: { $exists: true },
+        })),
+      },
+      {
+        $unset: preferenceUnsetPayload,
+      },
+    );
   }
 
   public async upsertSubscriberWorkflowPreferences(
@@ -70,18 +104,11 @@ export class UpsertPreferences {
       return this.deletePreferences(command, foundId);
     }
 
-    const builtPreferences = buildWorkflowPreferences(command.preferences);
-
-    const builtCommand = {
-      ...command,
-      preferences: builtPreferences,
-    };
-
     if (foundId) {
-      return this.updatePreferences(foundId, builtCommand);
+      return this.updatePreferences(foundId, command);
     }
 
-    return this.createPreferences(builtCommand);
+    return this.createPreferences(command);
   }
 
   private async createPreferences(
