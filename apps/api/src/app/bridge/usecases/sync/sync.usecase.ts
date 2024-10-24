@@ -186,7 +186,7 @@ export class Sync {
               environmentId: savedWorkflow._environmentId,
               organizationId: savedWorkflow._organizationId,
               templateId: savedWorkflow._id,
-              preferences: workflow.preferences || {},
+              preferences: this.getWorkflowPreferences(workflow),
             })
           );
         }
@@ -321,6 +321,10 @@ export class Sync {
     }
 
     return notificationGroupId;
+  }
+
+  private getWorkflowPreferences(workflow: DiscoverWorkflowOutput): WorkflowPreferences {
+    return workflow.preferences || {};
   }
 
   private getWorkflowName(workflow: DiscoverWorkflowOutput): string {
