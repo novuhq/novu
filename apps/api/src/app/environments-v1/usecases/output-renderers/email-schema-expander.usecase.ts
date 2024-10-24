@@ -8,26 +8,24 @@ export const TipTapSchema = z
     type: z.string(),
     content: z.array(z.lazy(() => TipTapSchema)).optional(),
     text: z.string().optional(),
-    attr: z.record(z.unknown()).optional(),
+    attrs: z.record(z.unknown()).optional(),
   })
   .strict();
 
 // Rename the class to ExpendEmailEditorSchemaUseCase
 export class ExpandEmailEditorSchemaUsecase {
   execute(command: ExpendEmailEditorSchemaCommand): TipTapNode {
-    const schema = JSON.parse(command.schema);
-    const tiptapSchema: TipTapNode = TipTapSchema.parse(schema);
-    augmentNode(tiptapSchema);
+    augmentNode(command.schema);
 
-    return tiptapSchema;
+    return command.schema;
   }
 }
 
-function hasEach(node: TipTapNode): node is TipTapNode & { attr: { each: string } } {
-  return !!(node.attrs && 'each' in node.attrs);
+function hasEach(node: TipTapNode): node is TipTapNode & { attrs: { each: unknown } } {
+  return !!(node.attrs && 'each' in node.attrs && typeof node.attrs.each === 'object');
 }
 
-function hasShow(node: TipTapNode): node is TipTapNode & { attr: { show: string } } {
+function hasShow(node: TipTapNode): node is TipTapNode & { attrs: { show: string } } {
   return !!(node.attrs && 'show' in node.attrs);
 }
 
@@ -39,7 +37,7 @@ function augmentNode(node: TipTapNode): TipTapNode {
     return expendedForEach(node);
   }
   if (node.content) {
-    node.content = node.content.map(augmentNode);
+    node.content = node.content.map(augmentNode).filter((innerNode) => innerNode);
   }
 
   return removeEmptyContentNodes(node);
@@ -77,8 +75,8 @@ function getEachAsJsonObject(node: TipTapNode & { attrs: { each: string } }) {
   return JSON.parse(correctedJsonString);
 }
 
-function expendedForEach(node: TipTapNode & { attr: { each: string } }): TipTapNode {
-  const eachObject = getEachAsJsonObject(node);
+function expendedForEach(node: TipTapNode & { attrs: { each: unknown } }): TipTapNode {
+  const eachObject = node.attrs.each;
   if (!Array.isArray(eachObject) || eachObject.length === 0) {
     return node;
   }
@@ -115,48 +113,32 @@ function stringToBoolean(value: string): boolean {
   return value.toLowerCase() === 'true';
 }
 
+function isNodeAVariable(newNode: TipTapNode): newNode is TipTapNode & { attrs: { id: string } } {
+  return newNode.type === 'payloadValue' && newNode.attrs?.id !== undefined;
+}
+
 function replacePlaceholders(nodes: TipTapNode[], payload: PayloadObject): TipTapNode[] {
   return nodes.map((node) => {
     const newNode: TipTapNode = { ...node };
 
-    if (newNode.text) {
-      newNode.text = replaceTextPlaceholders(newNode.text, payload);
-    }
-
-    if (newNode.content) {
+    if (isNodeAVariable(newNode)) {
+      newNode.text = getValueByPath(payload, newNode.attrs.id);
+      newNode.type = 'text';
+    } else if (newNode.content) {
       newNode.content = replacePlaceholders(newNode.content, payload);
     }
 
     return newNode;
   });
 }
+function getValueByPath(obj: Record<string, any>, path: string): any {
+  const keys = path.split('.');
 
-function getValueFromPayload(key: string, payload: PayloadObject): string | undefined {
-  const keys = key.split('.');
-  let value: any = payload;
-
-  for (const innerKey of keys) {
-    if (value && typeof value === 'object' && innerKey in value) {
-      value = value[innerKey];
-    } else {
-      return undefined;
+  return keys.reduce((currentObj, key) => {
+    if (currentObj && typeof currentObj === 'object' && key in currentObj) {
+      return currentObj[key];
     }
-  }
 
-  return String(value);
-}
-
-function replaceTextPlaceholders(text: string, payload: PayloadObject): string {
-  console.log('DEBUG: Input text:', text);
-  console.log('DEBUG: Payload object:', payload);
-
-  return text.replace(/{[%#]item\.(\w+(\.\w+)*)[%#]}/g, (match, key) => {
-    console.log('DEBUG: Match found:', match);
-    console.log('DEBUG: Extracted key:', key);
-
-    const value = getValueFromPayload(key, payload);
-    console.log('DEBUG: Retrieved value from payload:', value);
-
-    return value !== undefined ? value : match;
-  });
+    return undefined;
+  }, obj);
 }

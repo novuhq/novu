@@ -21,7 +21,8 @@ import {
   SmsOutputRendererUsecase,
 } from '../output-renderers';
 
-interface MasterPayload {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface MasterPayload {
   subscriber: Record<string, unknown>;
   payload: Record<string, unknown>;
   steps: Record<string, unknown>; // step.stepId.unkown
@@ -52,8 +53,13 @@ export class ConstructFrameworkWorkflow {
     return workflow(
       newWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
+        const masterPayload: MasterPayload = { payload, subscriber, steps: {} };
         for await (const staticStep of newWorkflow.steps) {
-          const result = await this.constructStep(step, staticStep, { payload, subscriber });
+          masterPayload.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
+            step,
+            staticStep,
+            masterPayload
+          );
         }
       },
       {
@@ -109,7 +115,7 @@ export class ConstructFrameworkWorkflow {
         return step.email(
           stepId,
           async (controlValues) => {
-            return this.emailOutputRendererUseCase.execute({ controlValues });
+            return this.emailOutputRendererUseCase.execute({ controlValues, masterPayload });
           },
           this.constructChannelStepOptions(staticStep)
         );
