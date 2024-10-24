@@ -1,99 +1,79 @@
 import {
   AnalyticsService,
   GetSubscriberGlobalPreference,
-  GetSubscriberTemplatePreference,
+  GetSubscriberGlobalPreferenceCommand,
+  GetSubscriberPreference,
+  GetSubscriberPreferenceCommand,
 } from '@novu/application-generic';
-import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
-import { PreferenceLevelEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ISubscriberPreferenceResponse,
+  ITemplateConfiguration,
+  PreferenceLevelEnum,
+  PreferenceOverrideSourceEnum,
+  PreferencesTypeEnum,
+  TriggerTypeEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AnalyticsEventsEnum } from '../../utils';
 import { GetInboxPreferences } from './get-inbox-preferences.usecase';
 
-const mockedSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber', firstName: 'test', lastName: 'test' };
 const mockedWorkflow = {
   _id: '123',
   name: 'workflow',
-  triggers: [{ identifier: '123' }],
+  triggers: [{ identifier: '123', type: TriggerTypeEnum.EVENT, variables: [] }],
   critical: false,
   tags: [],
-};
-const mockedWorkflowPreference: any = {
-  template: {},
-
-  enabled: true,
-  channels: {
-    email: true,
-    in_app: true,
-    sms: false,
-    push: false,
-    chat: true,
-  },
-  overrides: {
-    email: false,
-    in_app: false,
-    sms: true,
-    push: true,
-    chat: false,
-  },
-};
-
-const mockedGlobalPreferences: any = {
-  enabled: true,
-  channels: {
-    email: true,
-    in_app: true,
-    sms: false,
-    push: false,
-    chat: true,
-  },
-};
-const mockedPreferencesResponse: any = [
-  { level: PreferenceLevelEnum.GLOBAL, ...mockedGlobalPreferences.preference },
-  {
-    level: PreferenceLevelEnum.TEMPLATE,
-    workflow: {
-      id: mockedWorkflow._id,
-      identifier: mockedWorkflow.triggers[0].identifier,
-      name: mockedWorkflow.name,
-      critical: mockedWorkflow.critical,
-      tags: mockedWorkflow.tags,
+} satisfies ITemplateConfiguration;
+const mockedWorkflowPreference = {
+  type: PreferencesTypeEnum.USER_WORKFLOW,
+  template: mockedWorkflow,
+  preference: {
+    enabled: true,
+    channels: {
+      email: true,
+      in_app: true,
+      sms: false,
+      push: false,
+      chat: true,
     },
-    ...mockedWorkflowPreference.preference,
+    overrides: [
+      {
+        channel: ChannelTypeEnum.EMAIL,
+        source: PreferenceOverrideSourceEnum.SUBSCRIBER,
+      },
+    ],
   },
-];
+} satisfies ISubscriberPreferenceResponse;
 
-const mockedWorkflows: any = [
-  {
-    _id: '123',
-    name: 'workflow',
-    triggers: [{ identifier: '123' }],
-    critical: false,
-    tags: [],
+const mockedGlobalPreferences = {
+  enabled: true,
+  channels: {
+    email: true,
+    in_app: true,
+    sms: false,
+    push: false,
+    chat: true,
   },
-];
+};
 
 describe('GetInboxPreferences', () => {
   let getInboxPreferences: GetInboxPreferences;
-  let subscriberRepositoryMock: sinon.SinonStubbedInstance<SubscriberRepository>;
-  let getSubscriberWorkflowMock: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
+
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let getSubscriberGlobalPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberGlobalPreference>;
-  let notificationTemplateRepositoryMock: sinon.SinonStubbedInstance<NotificationTemplateRepository>;
+  let getSubscriberPreferenceMock: sinon.SinonStubbedInstance<GetSubscriberPreference>;
 
   beforeEach(() => {
-    subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
-    getSubscriberWorkflowMock = sinon.createStubInstance(GetSubscriberTemplatePreference);
+    getSubscriberPreferenceMock = sinon.createStubInstance(GetSubscriberPreference);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     getSubscriberGlobalPreferenceMock = sinon.createStubInstance(GetSubscriberGlobalPreference);
-    notificationTemplateRepositoryMock = sinon.createStubInstance(NotificationTemplateRepository);
 
     getInboxPreferences = new GetInboxPreferences(
-      subscriberRepositoryMock as any,
-      notificationTemplateRepositoryMock as any,
-      getSubscriberWorkflowMock as any,
       getSubscriberGlobalPreferenceMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      getSubscriberPreferenceMock as any
     );
   });
 
@@ -105,16 +85,18 @@ describe('GetInboxPreferences', () => {
     const command = {
       environmentId: 'env-1',
       organizationId: 'org-1',
-      subscriberId: 'not-found',
+      subscriberId: 'bad-subscriber-id',
     };
 
-    subscriberRepositoryMock.findOne.resolves(undefined);
+    getSubscriberGlobalPreferenceMock.execute.rejects(
+      new Error(`Subscriber with id ${command.subscriberId} not found`)
+    );
 
     try {
       await getInboxPreferences.execute(command);
     } catch (error) {
       expect(error).to.be.instanceOf(Error);
-      expect(error.message).to.equal(`Subscriber with id: ${command.subscriberId} not found`);
+      expect(error.message).to.equal(`Subscriber with id ${command.subscriberId} not found`);
     }
   });
 
@@ -125,39 +107,30 @@ describe('GetInboxPreferences', () => {
       subscriberId: 'test-mockSubscriber',
     };
 
-    subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    getSubscriberGlobalPreferenceMock.execute.resolves(mockedGlobalPreferences);
-    notificationTemplateRepositoryMock.filterActive.resolves(mockedWorkflows);
-    getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
+    getSubscriberGlobalPreferenceMock.execute.resolves({
+      preference: mockedGlobalPreferences,
+    });
+    getSubscriberPreferenceMock.execute.resolves([mockedWorkflowPreference]);
 
     const result = await getInboxPreferences.execute(command);
 
-    expect(subscriberRepositoryMock.findBySubscriberId.calledOnce).to.be.true;
-    expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([
-      command.environmentId,
-      command.subscriberId,
-    ]);
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args).to.deep.equal([command]);
-    expect(notificationTemplateRepositoryMock.filterActive.calledOnce).to.be.true;
-    expect(notificationTemplateRepositoryMock.filterActive.firstCall.args).to.deep.equal([
-      {
+    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
+      GetSubscriberGlobalPreferenceCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-        tags: undefined,
-        critical: false,
-      },
-    ]);
-    expect(getSubscriberWorkflowMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberWorkflowMock.execute.firstCall.args).to.deep.equal([
-      {
-        organizationId: command.organizationId,
         subscriberId: command.subscriberId,
+      })
+    );
+
+    expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
+    expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
+      GetSubscriberPreferenceCommand.create({
         environmentId: command.environmentId,
-        template: mockedWorkflow,
-        subscriber: mockedSubscriber,
-      },
-    ]);
+        subscriberId: command.subscriberId,
+        organizationId: command.organizationId,
+      })
+    );
 
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
     expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
@@ -170,51 +143,50 @@ describe('GetInboxPreferences', () => {
       },
     ]);
 
-    expect(result).to.deep.equal(mockedPreferencesResponse);
+    expect(result).to.deep.equal([
+      {
+        level: PreferenceLevelEnum.GLOBAL,
+        ...mockedGlobalPreferences,
+      },
+      {
+        ...mockedWorkflowPreference.preference,
+        level: PreferenceLevelEnum.TEMPLATE,
+        workflow: {
+          id: mockedWorkflow._id,
+          identifier: mockedWorkflow.triggers[0].identifier,
+          name: mockedWorkflow.name,
+          critical: mockedWorkflow.critical,
+          tags: mockedWorkflow.tags,
+        },
+      },
+    ]);
   });
 
   it('it should return subscriber preferences filtered by tags', async () => {
-    const workflowsWithTags: any = [
+    const workflowsWithTags = [
       {
-        _id: '111',
-        name: 'workflow',
-        triggers: [{ identifier: '111' }],
-        critical: false,
-        tags: ['newsletter'],
-      },
-      {
-        _id: '222',
-        name: 'workflow',
-        triggers: [{ identifier: '222' }],
-        critical: false,
-        tags: ['security'],
-      },
-    ];
-    const response: any = [
-      { level: PreferenceLevelEnum.GLOBAL, ...mockedGlobalPreferences.preference },
-      {
-        level: PreferenceLevelEnum.TEMPLATE,
-        workflow: {
-          id: workflowsWithTags[0]._id,
-          identifier: workflowsWithTags[0].triggers[0].identifier,
-          name: workflowsWithTags[0].name,
-          critical: workflowsWithTags[0].critical,
-          tags: workflowsWithTags[0].tags,
+        template: {
+          _id: '111',
+          name: 'workflow',
+          triggers: [{ identifier: '111', type: TriggerTypeEnum.EVENT, variables: [] }],
+          critical: false,
+          tags: ['newsletter'],
         },
-        ...mockedWorkflowPreference.preference,
+        preference: mockedWorkflowPreference.preference,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
       },
       {
-        level: PreferenceLevelEnum.TEMPLATE,
-        workflow: {
-          id: workflowsWithTags[1]._id,
-          identifier: workflowsWithTags[1].triggers[0].identifier,
-          name: workflowsWithTags[1].name,
-          critical: workflowsWithTags[1].critical,
-          tags: workflowsWithTags[1].tags,
+        template: {
+          _id: '222',
+          name: 'workflow',
+          triggers: [{ identifier: '222', type: TriggerTypeEnum.EVENT, variables: [] }],
+          critical: false,
+          tags: ['security'],
         },
-        ...mockedWorkflowPreference.preference,
+        preference: mockedWorkflowPreference.preference,
+        type: PreferencesTypeEnum.USER_WORKFLOW,
       },
-    ];
+    ] satisfies ISubscriberPreferenceResponse[];
     const command = {
       environmentId: 'env-1',
       organizationId: 'org-1',
@@ -222,54 +194,30 @@ describe('GetInboxPreferences', () => {
       tags: ['newsletter', 'security'],
     };
 
-    subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
-    getSubscriberGlobalPreferenceMock.execute.resolves(mockedGlobalPreferences);
-    notificationTemplateRepositoryMock.filterActive.resolves(workflowsWithTags);
-    getSubscriberWorkflowMock.execute.resolves(mockedWorkflowPreference);
+    getSubscriberGlobalPreferenceMock.execute.resolves({
+      preference: mockedGlobalPreferences,
+    });
+    getSubscriberPreferenceMock.execute.resolves(workflowsWithTags);
 
     const result = await getInboxPreferences.execute(command);
 
-    expect(subscriberRepositoryMock.findBySubscriberId.calledOnce).to.be.true;
-    expect(subscriberRepositoryMock.findBySubscriberId.firstCall.args).to.deep.equal([
-      command.environmentId,
-      command.subscriberId,
-    ]);
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args).to.deep.equal([
-      {
+    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
+      GetSubscriberGlobalPreferenceCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
-      },
-    ]);
-    expect(notificationTemplateRepositoryMock.filterActive.calledOnce).to.be.true;
-    expect(notificationTemplateRepositoryMock.filterActive.firstCall.args).to.deep.equal([
-      {
-        organizationId: command.organizationId,
+      })
+    );
+
+    expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
+    expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
+      GetSubscriberPreferenceCommand.create({
         environmentId: command.environmentId,
-        tags: command.tags,
-        critical: false,
-      },
-    ]);
-    expect(getSubscriberWorkflowMock.execute.calledTwice).to.be.true;
-    expect(getSubscriberWorkflowMock.execute.firstCall.args).to.deep.equal([
-      {
-        organizationId: command.organizationId,
         subscriberId: command.subscriberId,
-        environmentId: command.environmentId,
-        template: workflowsWithTags[0],
-        subscriber: mockedSubscriber,
-      },
-    ]);
-    expect(getSubscriberWorkflowMock.execute.secondCall.args).to.deep.equal([
-      {
         organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        environmentId: command.environmentId,
-        template: workflowsWithTags[1],
-        subscriber: mockedSubscriber,
-      },
-    ]);
+      })
+    );
 
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;
     expect(analyticsServiceMock.mixpanelTrack.firstCall.args).to.deep.equal([
@@ -282,6 +230,30 @@ describe('GetInboxPreferences', () => {
       },
     ]);
 
-    expect(result).to.deep.equal(response);
+    expect(result).to.deep.equal([
+      { level: PreferenceLevelEnum.GLOBAL, ...mockedGlobalPreferences },
+      {
+        level: PreferenceLevelEnum.TEMPLATE,
+        workflow: {
+          id: workflowsWithTags[0].template._id,
+          identifier: workflowsWithTags[0].template.triggers[0].identifier,
+          name: workflowsWithTags[0].template.name,
+          critical: workflowsWithTags[0].template.critical,
+          tags: workflowsWithTags[0].template.tags,
+        },
+        ...mockedWorkflowPreference.preference,
+      },
+      {
+        level: PreferenceLevelEnum.TEMPLATE,
+        workflow: {
+          id: workflowsWithTags[1].template._id,
+          identifier: workflowsWithTags[1].template.triggers[0].identifier,
+          name: workflowsWithTags[1].template.name,
+          critical: workflowsWithTags[1].template.critical,
+          tags: workflowsWithTags[1].template.tags,
+        },
+        ...mockedWorkflowPreference.preference,
+      },
+    ]);
   });
 });
