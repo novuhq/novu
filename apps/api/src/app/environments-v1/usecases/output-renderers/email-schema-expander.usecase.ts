@@ -3,14 +3,12 @@ import { TipTapNode } from '@novu/shared';
 import { z } from 'zod';
 import { ExpendEmailEditorSchemaCommand } from './expend-email-editor-schema-command';
 
-export const TipTapSchema = z
-  .object({
-    type: z.string(),
-    content: z.array(z.lazy(() => TipTapSchema)).optional(),
-    text: z.string().optional(),
-    attrs: z.record(z.unknown()).optional(),
-  })
-  .strict();
+export const TipTapSchema = z.object({
+  type: z.string().optional(),
+  content: z.array(z.lazy(() => TipTapSchema)).optional(),
+  text: z.string().optional(),
+  attrs: z.record(z.unknown()).optional(),
+});
 
 // Rename the class to ExpendEmailEditorSchemaUseCase
 export class ExpandEmailEditorSchemaUsecase {

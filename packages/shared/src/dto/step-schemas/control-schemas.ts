@@ -2,7 +2,7 @@
 import { JSONSchemaDto } from './json-schema-dto';
 
 export interface TipTapNode {
-  type: string;
+  type?: string;
   content?: TipTapNode[];
   marks?: unknown;
   text?: string;

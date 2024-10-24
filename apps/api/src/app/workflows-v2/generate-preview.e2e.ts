@@ -340,6 +340,13 @@ function mailyJsonExample(): TipTapNode {
                                 },
                               },
                               {
+                                type: 'payloadValue',
+                                attrs: {
+                                  id: 'body3',
+                                  label: null,
+                                },
+                              },
+                              {
                                 type: 'text',
                                 text: ' ',
                               },

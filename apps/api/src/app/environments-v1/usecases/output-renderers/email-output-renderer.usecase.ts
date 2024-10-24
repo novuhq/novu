@@ -24,8 +24,8 @@ export class EmailOutputRendererUsecase {
     return { subject: emailControlValues.subject, body: 'html' };
   }
 
-  private hydrateBody(emailEditor: string, masterPayload: MasterPayload) {
-    const body: TipTapNode = TipTapSchema.parse(emailEditor);
+  private hydrateBody(emailEditor: string, masterPayload: MasterPayload): TipTapNode {
+    const body: TipTapNode = TipTapSchema.parse(JSON.parse(emailEditor));
     if (body.content) {
       transformContent(body.content, masterPayload);
     }
@@ -103,8 +103,8 @@ function transformContent(content: TipTapNode[], masterPayload: MasterPayload) {
     if (node.type === 'for') {
       const itemPointerToDefaultRecord = collectAllItemPlaceholders(node);
       content[index] = {
-        type: 'text',
-        text: getResolvedValueForPlaceholder(masterPayload, node, itemPointerToDefaultRecord),
+        type: 'for',
+        attrs: { id: getResolvedValueForPlaceholder(masterPayload, node, itemPointerToDefaultRecord) },
       };
     } else if (node.attrs && node.attrs.show) {
       node.attrs.show = getResolvedValueShowPlaceholder(masterPayload, node);

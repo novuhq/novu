@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { TipTapNode } from '@novu/shared';
 import { TransformPlaceholderMapUseCase } from './transform-placeholder.usecase';
 import {
   CollectPlaceholdersFromTipTapSchemaUsecase,
@@ -22,10 +21,6 @@ export class CreateMockPayloadUseCase {
     }
 
     const controlValue = controlValues[controlValueKey];
-    const controlValueAsObject = this.safeJsonParse(controlValue);
-    if (controlValueAsObject) {
-      return this.buildPayloadForEmailEditor(controlValueAsObject);
-    }
 
     return this.buildPayloadForRegularText(controlValue);
   }
@@ -37,14 +32,6 @@ export class CreateMockPayloadUseCase {
       // Return undefined if parsing fails
       return undefined;
     }
-  }
-  private buildPayloadForEmailEditor(controlValue: unknown): Record<string, unknown> {
-    const collectPlaceholderMappings = this.collectPlaceholdersFromTipTapSchemaUsecase.execute({
-      node: controlValue as TipTapNode,
-    });
-    const transformPlaceholderMap = this.transformPlaceholderMapUseCase.execute({ input: collectPlaceholderMappings });
-
-    return transformPlaceholderMap.payload;
   }
 
   private buildPayloadForRegularText(controlValue: unknown) {
