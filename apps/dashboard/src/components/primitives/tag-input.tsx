@@ -7,16 +7,17 @@ import { CommandGroup, CommandInput, CommandItem, CommandList } from '@/componen
 import { cn } from '@/utils/ui';
 import { Command } from 'cmdk';
 import { forwardRef, useEffect, useState } from 'react';
-import { RiCloseFill } from 'react-icons/ri';
+import { RiAddFill, RiCloseFill } from 'react-icons/ri';
 
 type TagInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   value: string[];
   suggestions: string[];
   onChange: (tags: string[]) => void;
+  showAddButton?: boolean;
 };
 
 const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
-  const { className, suggestions, value, onChange, ...rest } = props;
+  const { className, suggestions, value, onChange, showAddButton, ...rest } = props;
   const [tags, setTags] = useState<string[]>(value);
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -50,20 +51,22 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
       <Command>
         <div className="flex flex-col gap-2">
           <PopoverAnchor asChild>
-            <CommandInput
-              ref={ref}
-              autoComplete="off"
-              value={inputValue}
-              className={cn(inputVariants(), 'flex-grow', className)}
-              placeholder="Type a tag and press Enter"
-              onValueChange={(value) => {
-                setInputValue(value);
-                setIsOpen(true);
-              }}
-              onFocusCapture={() => setIsOpen(true)}
-              onBlurCapture={() => setIsOpen(false)}
-              {...rest}
-            />
+            <div className={cn({ 'hidden group-focus-within:block': showAddButton })}>
+              <CommandInput
+                ref={ref}
+                autoComplete="off"
+                value={inputValue}
+                className={cn(inputVariants(), 'flex-grow', className)}
+                placeholder="Type a tag and press Enter"
+                onValueChange={(value) => {
+                  setInputValue(value);
+                  setIsOpen(true);
+                }}
+                onFocusCapture={() => setIsOpen(true)}
+                onBlurCapture={() => setIsOpen(false)}
+                {...rest}
+              />
+            </div>
           </PopoverAnchor>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, index) => (
@@ -75,6 +78,19 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 </button>
               </Badge>
             ))}
+
+            {showAddButton && (
+              <Badge
+                variant="outline"
+                kind="tag"
+                className="flex px-1.5 py-3 focus:hidden active:hidden group-focus-within:hidden"
+              >
+                <button type="button">
+                  <RiAddFill />
+                  <span className="sr-only">Add tag</span>
+                </button>
+              </Badge>
+            )}
           </div>
         </div>
         <PopoverContent
@@ -116,6 +132,5 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
     </Popover>
   );
 });
-TagInput.displayName = 'TagInput';
 
 export { TagInput };
