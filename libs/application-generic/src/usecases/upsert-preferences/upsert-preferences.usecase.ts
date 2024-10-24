@@ -32,6 +32,28 @@ export class UpsertPreferences {
   public async upsertSubscriberGlobalPreferences(
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
+    const channelTypes = Object.keys(command.preferences?.channels || {});
+
+    const preferenceUnsetPayload = channelTypes.reduce((acc, channelType) => {
+      acc[`preferences.channels.${channelType}`] = '';
+
+      return acc;
+    }, {});
+
+    await this.preferencesRepository.update(
+      {
+        _organizationId: command.organizationId,
+        _subscriberId: command._subscriberId,
+        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        $or: channelTypes.map((channelType) => ({
+          [`preferences.channels.${channelType}`]: { $exists: true },
+        })),
+      },
+      {
+        $unset: preferenceUnsetPayload,
+      },
+    );
+
     return this.upsert({
       _subscriberId: command._subscriberId,
       environmentId: command.environmentId,
