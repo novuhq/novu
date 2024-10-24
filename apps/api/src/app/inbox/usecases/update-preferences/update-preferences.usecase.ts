@@ -23,7 +23,6 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AnalyticsEventsEnum } from '../../utils';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
-import { GetInboxPreferences } from '../get-inbox-preferences/get-inbox-preferences.usecase';
 
 @Injectable()
 export class UpdatePreferences {
@@ -69,14 +68,7 @@ export class UpdatePreferences {
   private async createUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
     const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
-    /*
-     * Backwards compatible storage of new Preferences DTO.
-     *
-     * Currently, this is a side-effect due to the way that Preferences are stored
-     * and resolved with overrides in cascading order, necessitating a lookup against
-     * the old preferences structure before we can store the new Preferences DTO.
-     */
-    await this.storePreferences({
+    await this.storePreferencesV2({
       channels: channelPreferences,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -103,14 +95,7 @@ export class UpdatePreferences {
   private async updateUserPreference(command: UpdatePreferencesCommand, subscriber: SubscriberEntity): Promise<void> {
     const channelPreferences: IPreferenceChannels = this.buildPreferenceChannels(command);
 
-    /*
-     * Backwards compatible storage of new Preferences DTO.
-     *
-     * Currently, this is a side-effect due to the way that Preferences are stored
-     * and resolved with overrides in cascading order, necessitating a lookup against
-     * the old preferences structure before we can store the new Preferences DTO.
-     */
-    await this.storePreferences({
+    await this.storePreferencesV2({
       channels: channelPreferences,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -208,13 +193,16 @@ export class UpdatePreferences {
     };
   }
 
-  private async storePreferences(item: {
+  /**
+   * Strangler pattern to migrate to V2 preferences.
+   */
+  private async storePreferencesV2(item: {
     channels: IPreferenceChannels;
     organizationId: string;
     _subscriberId: string;
     environmentId: string;
     templateId?: string;
-  }) {
+  }): Promise<void> {
     const preferences: WorkflowPreferencesPartial = {
       channels: Object.entries(item.channels).reduce(
         (outputChannels, [channel, enabled]) => ({
@@ -226,7 +214,7 @@ export class UpdatePreferences {
     };
 
     if (item.templateId) {
-      return await this.upsertPreferences.upsertSubscriberWorkflowPreferences(
+      await this.upsertPreferences.upsertSubscriberWorkflowPreferences(
         UpsertSubscriberWorkflowPreferencesCommand.create({
           environmentId: item.environmentId,
           organizationId: item.organizationId,
@@ -237,7 +225,7 @@ export class UpdatePreferences {
       );
     }
 
-    return await this.upsertPreferences.upsertSubscriberGlobalPreferences(
+    await this.upsertPreferences.upsertSubscriberGlobalPreferences(
       UpsertSubscriberGlobalPreferencesCommand.create({
         preferences,
         environmentId: item.environmentId,
