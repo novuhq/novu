@@ -1,82 +1,159 @@
-name: Release Prod
+name: Release App
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - prod
+    inputs:
+      environment:
+        description: 'Target environment (prod, dev)'
+        required: true
+        default: 'dev'
 
 jobs:
   pre-release:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.setenv.outputs.envValue }}
+      name: ${{ steps.setenvname.outputs.envName }}
     steps:
+      - uses: actions/checkout@v4
+      - name: Set environment name
+        id: setenvname
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            echo "envName=Prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "envName=Dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check branch and set environment
+        id: setenv
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            echo "envValue=prod" >> "$GITHUB_OUTPUT"
+          else
+             echo "envValue=dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check output values
+        run: |
+          echo "Environment Name: ${{ steps.setenvname.outputs.envName }}"
+          echo "Environment Value: ${{ steps.setenv.outputs.envValue }}"
+          if [ -z "${{ steps.setenvname.outputs.envName }}" ] || [ -z "${{ steps.setenv.outputs.envValue }}" ]; then
+            echo "One of the required output values has not been set. Failing..."
+            exit 1
+          else
+            echo "All output values have been set successfully."
+          fi
+
 
       - name: Start Deployment Notification
-        uses: actions/slack@master
+        uses: slackapi/slack-github-action@v1.26.0
         with:
-          channel: '#eng-feed-deployments'
-          message: 'Release has started'
+          payload: |
+            {
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has started for ${{ steps.setenvname.outputs.envName }}.>*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has started for ${{ steps.setenvname.outputs.envName }}.>*)"
+                  }
+                }
+              ]
+            }
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
-  release-api:
-    needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
-
+# Unique deploy process
   release-embed:
+    uses: ./.github/workflows/cloud-deploy-embed.yml
     needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-embed.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
 
+# Unique deploy process
   release-web:
+    uses: ./.github/workflows/cloud-deploy-web.yml
     needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-web.yml
+    secrets: inherit
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
+# Unique deploy process
   release-web-components:
+    uses: ./.github/workflows/cloud-deploy-web-components.yml
     needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-web-components.yml
+    secrets: inherit
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
-  release-webhook:
-    needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-webhook.yml
-
+# Unique deploy process
   release-widget:
+    uses: ./.github/workflows/cloud-deploy-widget.yml
     needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-widget.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
 
-  release-worker:
-    needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-worker.yml
+  release-services:
+    needs: [ pre-release ]
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    strategy:
+      matrix:
+        service:
+          - name: 'api'
+            test_port: '1341'
+          - name: 'inbound-mail'
+            test_port: '1342'
+          - name: 'webhook'
+            test_port: '1343'
+          - name: 'worker'
+            test_port: '1344'
+          - name: 'ws'
+            test_port: '1345'
+    uses: ./.github/workflows/cloud-deploy-services.yml
+    secrets: inherit
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
+      service: ${{ matrix.service.name }}
+      package_name: novu/${{ matrix.service.name }}
+      project_path: apps/${{ matrix.service.name }}
+      test_port: ${{ matrix.service.test_port }}
+      local_tag: novu-${{ matrix.service.name }}
 
-  release-ws:
-    needs: [pre-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-ws.yml
-
-  post-release:
-    if: ${{ always() }}
+  post-release-failure:
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
     needs: [
-      release-api,
+      release-services,
       release-embed,
       release-web,
-      release-web-components,
-      release-webhook,
       release-widget,
-      release-worker,
-      release-ws
+      release-web-components,
     ]
     runs-on: ubuntu-latest
     steps:
@@ -86,20 +163,56 @@ jobs:
           url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
           method: 'POST'
 
-      - name: Start Deployment Notification
-        if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
-        uses: actions/slack@master
+      - name: Failed Deployment Notification
+        uses: slackapi/slack-github-action@v1.26.0
         with:
-          channel: '#eng-feed-deployments'
-          message: 'Release has failed'
+          payload: |
+            {
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has failed.>*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release has failed.>*"
+                  }
+                }
+              ]
+            }
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
 
-      - name: Start Deployment Notification
-        if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
-        uses: actions/slack@master
+  post-release-success:
+    if: ${{ always() && (needs.release-services.result == 'success' && needs.release-embed.result == 'success' && needs.release-web.result == 'success' && needs.release-widget.result == 'success' && needs.release-web-components.result == 'success') }}
+    needs: [
+      release-services,
+      release-embed,
+      release-web,
+      release-widget,
+      release-web-components,
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API Documentation
+        uses: fjogeleit/http-request-action@v1
         with:
-          channel: '#eng-feed-deployments'
-          message: 'Release has finished'
+          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
+          method: 'POST'
+      - name: Success Deployment Notification
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release was successful.>*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Release was successful.>*"
+                  }
+                }
+              ]
+            }
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}

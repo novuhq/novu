@@ -19,6 +19,9 @@ on:
       sentry_project:
         required: false
         type: string
+      New_Relic_GUID:
+        required: false
+        type: string
       deploy_sentry_release:
         required: false
         default: false
@@ -118,3 +121,24 @@ jobs:
           environment: prod
           ignore_empty: true
           ignore_missing: true
+
+      - name: Set New Relic Region
+        if: ${{ inputs.New_Relic_GUID }}
+        id: set_region
+        run: |
+          if [[ "${{ env.aws_region }}" == *"us"* ]]; then
+            echo "New_Relic_Region=US" >> ${GITHUB_ENV}
+          else
+            echo "New_Relic_Region=EU" >> ${GITHUB_ENV}
+          fi
+        shell: bash
+
+      - name: New Relic Application Deployment Marker
+        if: ${{ inputs.New_Relic_GUID }}
+        uses: newrelic/deployment-marker-action@v2.3.0
+        with:
+          region: ${{ env.New_Relic_Region }}
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: ${{ inputs.New_Relic_GUID }}
+          version: "v${{ steps.package-version.outputs.current-version }}"
+          user: "${{ github.actor }}"
