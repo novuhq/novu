@@ -1,5 +1,5 @@
-import { defineConfig } from 'tsup';
-import { type SupportedFrameworkName } from './src';
+import { type Options, defineConfig } from 'tsup';
+import { type SupportedFrameworkName } from './src/internal';
 
 const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', 'sveltekit', 'remix', 'lambda', 'nest'];
 
@@ -9,10 +9,8 @@ const baseConfig: Options = {
   clean: true,
   treeshake: true,
   dts: true,
-  minify: true,
-  minifyWhitespace: true,
-  minifyIdentifiers: true,
-  minifySyntax: true,
+  bundle: false,
+  external: ['json-schema-faker'],
 };
 
 export default defineConfig([
