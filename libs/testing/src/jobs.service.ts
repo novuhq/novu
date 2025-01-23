@@ -61,11 +61,9 @@ export class JobsService {
     unfinishedJobs?: number;
   }) {
     let runningJobs = 0;
-    let totalCount = 0;
+    unfinishedJobs = Math.max(unfinishedJobs, 0);
 
-    const workflowMatch = templateId
-      ? { _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId }
-      : {};
+    const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const typeMatch = delay
       ? {
           type: {
@@ -75,16 +73,18 @@ export class JobsService {
       : {};
 
     do {
-      totalCount = (await this.getQueueMetric()).totalCount;
-      runningJobs = await this.jobRepository.count({
-        _organizationId: organizationId,
-        ...typeMatch,
-        ...workflowMatch,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+      runningJobs = Math.max(
+        await this.jobRepository.count({
+          _organizationId: organizationId,
+          ...typeMatch,
+          ...workflowMatch,
+          status: {
+            $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+          },
+        }),
+        0
+      );
+    } while (runningJobs > unfinishedJobs);
 
     return {
       getDelayedTimestamp: async () => {
