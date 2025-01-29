@@ -41,15 +41,7 @@ export class JobsService {
     }
   }
 
-  public async awaitParsingEvents() {
-    let totalCount = 0;
-
-    do {
-      totalCount = (await this.getQueueMetric()).totalCount;
-    } while (totalCount > 0);
-  }
-
-  public async awaitRunningJobs({
+  public async waitForJobCompletion({
     templateId,
     organizationId,
     delay,
@@ -72,7 +64,12 @@ export class JobsService {
         }
       : {};
 
+    let totalCount = 0;
+
     do {
+      // Wait until Bull queues are empty
+      totalCount = (await this.getQueueMetric()).totalCount;
+      // Wait until there are no pending, queued or running jobs in Mongo
       runningJobs = Math.max(
         await this.jobRepository.count({
           _organizationId: organizationId,
@@ -84,28 +81,12 @@ export class JobsService {
         }),
         0
       );
-    } while (runningJobs > safeUnfinishedJobs);
+    } while (totalCount > 0 || runningJobs > safeUnfinishedJobs);
+  }
 
-    return {
-      getDelayedTimestamp: async () => {
-        const delayedJobs = await this.standardQueue.getDelayed();
-
-        if (delayedJobs.length === 1) {
-          return delayedJobs[0].delay;
-        } else if (delayedJobs.length > 1) {
-          throw new Error('There are more than one delayed jobs');
-        } else if (delayedJobs.length === 0) {
-          throw new Error('There are no delayed jobs');
-        }
-      },
-      runDelayedImmediately: async () => {
-        const delayedJobs = await this.standardQueue.getDelayed();
-
-        await delayedJobs.forEach(async (job) => {
-          job.changeDelay(1);
-        });
-      },
-    };
+  public async runAllDelayedJobsImmediately() {
+    const delayedJobs = await this.standardQueue.getDelayed();
+    await delayedJobs.forEach(async (job) => job.promote());
   }
 
   private async getQueueMetric() {

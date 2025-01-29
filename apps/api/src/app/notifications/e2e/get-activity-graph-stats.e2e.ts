@@ -50,7 +50,7 @@ describe('Get activity feed graph stats - /notifications/graph/stats (GET) #novu
       payload: { firstName: 'Test' },
     });
 
-    await session.awaitRunningJobs(template._id);
+    await session.waitForJobCompletion(template._id);
     const body = await novuClient.notifications.stats.graph();
 
     const stats = body.result;

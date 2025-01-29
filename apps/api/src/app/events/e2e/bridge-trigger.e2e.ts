@@ -59,7 +59,7 @@ contexts.forEach((context: Context) => {
       await bridgeServer.stop();
     });
 
-    it.only(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
+    it(`should trigger the bridge workflow with sync [${context.name}]`, async () => {
       const workflowId = `hello-world-${`${context.name}`}`;
       const newWorkflow = workflow(
         workflowId,
@@ -142,7 +142,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -202,7 +202,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowIdSkipByStatic, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executedMessageByStatic = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -266,7 +266,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowIdSkipByVariable, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executedMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -318,7 +318,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.awaitRunningJobs(undefined);
+      await session.waitForJobCompletion(undefined);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -340,7 +340,7 @@ contexts.forEach((context: Context) => {
       await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 4 }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executionDetailsInvalidType = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
@@ -399,7 +399,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messagesAfterInApp = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -478,7 +478,7 @@ contexts.forEach((context: Context) => {
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'John' }, bridge);
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'Bela' }, bridge);
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -559,7 +559,7 @@ contexts.forEach((context: Context) => {
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
 
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -595,7 +595,7 @@ contexts.forEach((context: Context) => {
       }
 
       const result = await triggerEvent(session, exceedMaxTierDurationWorkflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
@@ -649,9 +649,9 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'payload_name' }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -714,7 +714,7 @@ contexts.forEach((context: Context) => {
 
       const controls = { steps: { [stepId]: { name: 'stored_control_name' } } };
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge, controls);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -740,7 +740,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -776,7 +776,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -813,7 +813,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -850,7 +850,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -901,7 +901,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -936,7 +936,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1000,7 +1000,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1053,7 +1053,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1115,7 +1115,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1166,7 +1166,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       const sentMessages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -1231,7 +1231,7 @@ contexts.forEach((context: Context) => {
           });
 
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1286,7 +1286,7 @@ contexts.forEach((context: Context) => {
           });
 
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1361,7 +1361,7 @@ contexts.forEach((context: Context) => {
             in_app: true,
           });
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1426,7 +1426,7 @@ contexts.forEach((context: Context) => {
           });
 
         await triggerEvent(session, workflowId, subscriber._id, {}, bridge);
-        await session.awaitRunningJobs();
+        await session.waitForJobCompletion();
 
         const sentMessages = await messageRepository.find({
           _environmentId: session.environment._id,
@@ -1510,7 +1510,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { userName: 'John Doe' }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       // Verify inApp message was skipped
       const inAppMessages = await messageRepository.find({
@@ -1589,7 +1589,7 @@ contexts.forEach((context: Context) => {
       }
 
       await triggerEvent(session, workflowId, subscriber.subscriberId, { userName: 'Jane Doe' }, bridge);
-      await session.awaitRunningJobs();
+      await session.waitForJobCompletion();
 
       // Verify inApp message was not skipped
       const inAppMessages = await messageRepository.find({
@@ -1657,7 +1657,7 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     const responseData = response.body.data as WorkflowResponseDto;
 
     await triggerEvent(session, responseData.workflowId, subscriber._id, {});
-    await session.awaitRunningJobs();
+    await session.waitForJobCompletion();
 
     const sentMessages = await messageRepository.find({
       _environmentId: session.environment._id,

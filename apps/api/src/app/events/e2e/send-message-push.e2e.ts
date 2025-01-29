@@ -62,7 +62,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
     it('should not create any message if subscriber has no configured channel', async () => {
       await triggerEvent(template);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -88,7 +88,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
 
       await triggerEvent(template);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -121,7 +121,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
 
       await triggerEvent(template);
 
-      await session.awaitRunningJobs(template._id);
+      await session.waitForJobCompletion(template._id);
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,

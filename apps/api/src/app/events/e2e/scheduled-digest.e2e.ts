@@ -76,10 +76,8 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
 
     await Promise.all(events.map((event) => triggerEvent(event)));
 
-    const handler = await session.awaitRunningJobs(template?._id, false, 1);
-
-    await handler.runDelayedImmediately();
-    await session.awaitRunningJobs(template?._id);
+    await session.runAllDelayedJobsImmediately();
+    await session.waitForJobCompletion(template?._id);
 
     const jobs = await jobRepository.find({
       _environmentId: session.environment._id,
