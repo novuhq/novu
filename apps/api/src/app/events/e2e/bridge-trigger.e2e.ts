@@ -128,7 +128,9 @@ contexts.forEach((context: Context) => {
         }
       );
 
+      console.time('CHECKPOINT:> Starting mock bridge server');
       await bridgeServer.start({ workflows: [newWorkflow] });
+      console.timeEnd('CHECKPOINT:> Starting mock bridge server');
 
       if (context.isStateful) {
         await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
@@ -141,8 +143,13 @@ contexts.forEach((context: Context) => {
         }
       }
 
+      console.time('CHECKPOINT:> Starting triggering event');
       await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'test_name' }, bridge);
+      console.timeEnd('CHECKPOINT:> Starting triggering event');
+
+      console.time('CHECKPOINT:> Starting waiting for job completion');
       await session.waitForJobCompletion();
+      console.timeEnd('CHECKPOINT:> Starting waiting for job completion');
 
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
