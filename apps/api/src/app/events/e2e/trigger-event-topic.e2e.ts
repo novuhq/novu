@@ -446,7 +446,7 @@ describe('Topic Trigger Event #novu-v2', () => {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 5,
+              amount: 1,
               digestKey: 'id',
               type: DigestTypeEnum.REGULAR,
             },
