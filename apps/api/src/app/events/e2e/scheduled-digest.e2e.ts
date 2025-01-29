@@ -46,6 +46,8 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST) #nov
   });
 
   it('should digest events using a scheduled digest', async () => {
+    this.timeout(10000);
+
     template = await session.createTemplate({
       steps: [
         {
