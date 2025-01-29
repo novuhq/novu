@@ -61,7 +61,7 @@ export class JobsService {
     unfinishedJobs?: number;
   }) {
     let runningJobs = 0;
-    unfinishedJobs = Math.max(unfinishedJobs, 0);
+    const safeUnfinishedJobs = Math.max(unfinishedJobs, 0);
 
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const typeMatch = delay
@@ -84,7 +84,7 @@ export class JobsService {
         }),
         0
       );
-    } while (runningJobs > unfinishedJobs);
+    } while (runningJobs > safeUnfinishedJobs);
 
     return {
       getDelayedTimestamp: async () => {
