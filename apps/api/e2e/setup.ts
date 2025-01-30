@@ -19,8 +19,6 @@ before(async () => {
   /**
    * disable truncating for better error messages - https://www.chaijs.com/guide/styles/#configtruncatethreshold
    */
-
-  global.console.log = () => {};
   chai.config.truncateThreshold = 0;
   await dropDatabase();
   await testServer.create((await bootstrap()).app);
