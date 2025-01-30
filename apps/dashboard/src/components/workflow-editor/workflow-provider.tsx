@@ -85,8 +85,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
         showSuccessToast(toastId);
       }
     },
-    onError: () => {
-      showErrorToast(toastId);
+    onError: (error) => {
+      showErrorToast(toastId, error);
     },
   });
 
@@ -103,8 +103,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
         showSuccessToast(toastId);
       }
     },
-    onError: () => {
-      showErrorToast(toastId);
+    onError: (error) => {
+      showErrorToast(toastId, error);
     },
   });
 

@@ -59,6 +59,7 @@ import {
   GetWorkflowByIdsUseCase,
 } from '../workflow';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { ResourceValidatorService } from '../../services/resource-validator.service';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -79,6 +80,7 @@ export class CreateWorkflow {
     @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
+    private resourceValidatorService: ResourceValidatorService,
   ) {}
 
   @InstrumentUsecase()
@@ -189,6 +191,10 @@ export class CreateWorkflow {
   }
 
   private validatePayload(command: CreateWorkflowCommand) {
+    if (command.steps) {
+      this.resourceValidatorService.validateStepsCount(command.steps);
+    }
+
     const variants = command.steps
       ? command.steps?.flatMap((step) => step.variants || [])
       : [];
