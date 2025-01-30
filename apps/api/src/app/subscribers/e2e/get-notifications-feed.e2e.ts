@@ -80,19 +80,9 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     const partialPayload = { foo: { bar: 123 } };
     const payload = { ...partialPayload, baz: 'baz' };
 
-<<<<<<< HEAD
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
-    await session.awaitRunningJobs(template._id);
-
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId, payload });
-    await session.awaitRunningJobs(template._id);
-=======
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
     await session.waitForJobCompletion(template._id);
-
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId, payload });
-    await session.waitForJobCompletion(template._id);
->>>>>>> 78067c2f95 (fix(api): Clean up job service testing helpers)
 
     const payloadQueryValue = Buffer.from(JSON.stringify(partialPayload)).toString('base64');
     const { data } = (
