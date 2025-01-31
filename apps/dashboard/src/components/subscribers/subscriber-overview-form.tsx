@@ -48,7 +48,7 @@ export default function SubscriberOverviewForm({
 }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { patchSubscriber } = usePatchSubscriber({
-    onSuccess: () => {
+    onSuccess: (data) => {
       showToast({
         children: () => (
           <>
@@ -61,6 +61,8 @@ export default function SubscriberOverviewForm({
         ),
         options: toastOptions,
       });
+
+      form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
     },
     onError: () => {
       showToast({
