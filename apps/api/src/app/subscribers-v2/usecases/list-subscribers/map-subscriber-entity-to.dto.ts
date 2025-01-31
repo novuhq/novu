@@ -19,5 +19,7 @@ export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): Subscrib
     isOnline: subscriber.isOnline,
     topics: subscriber.topics,
     channels: subscriber.channels,
+    locale: subscriber.locale,
+    timezone: subscriber.timezone,
   };
 }

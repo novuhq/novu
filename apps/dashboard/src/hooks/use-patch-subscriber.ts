@@ -21,10 +21,6 @@ export const usePatchSubscriber = (
         queryKey: [QueryKeys.fetchSubscribers],
       });
 
-      await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchSubscriber],
-      });
-
       options?.onSuccess?.(data, variables, ctx);
     },
   });

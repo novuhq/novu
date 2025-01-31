@@ -20,6 +20,7 @@ import { showSuccessToast } from '../primitives/sonner-helpers';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { CopyButton } from '../primitives/copy-button';
 import { SubscriberOverviewSkeleton } from './subscriber-overview-skeleton';
+import { LocaleSelect } from './locale-select';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -214,7 +215,7 @@ export default function SubscriberOverviewForm({
                   <FormItem className="w-1/4">
                     <FormLabel>Locale</FormLabel>
                     <FormControl>
-                      <TimezoneSelect {...field} value={field.value} onValueChange={field.onChange} />
+                      <LocaleSelect {...field} value={field.value} onValueChange={field.onChange} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -237,7 +238,9 @@ export default function SubscriberOverviewForm({
               name="data"
               render={({ field, fieldState }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Custom data (JSON)</FormLabel>
+                  <FormLabel tooltip="Store additional user info as key-value pairs, like address, height, or nationality, in the data field.">
+                    Custom data (JSON)
+                  </FormLabel>
                   <FormControl>
                     <InputRoot hasError={!!fieldState.error} className="h-32 p-1 py-2">
                       <Editor

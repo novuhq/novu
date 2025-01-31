@@ -93,6 +93,11 @@ export type SubscriberResponseDto = {
    * Additional custom data for the subscriber
    */
   data?: { [k: string]: any } | null | undefined;
+
+  /**
+   * Timezone of the subscriber
+   */
+  timezone?: string | undefined;
 };
 
 /** @internal */
