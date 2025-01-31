@@ -25,17 +25,13 @@ import { ExternalToast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { CompactButton } from '../primitives/button-compact';
 import { CopyButton } from '../primitives/copy-button';
+import { getSubscriberTitle } from './utils';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
   classNames: {
     toast: 'mb-4 right-0',
   },
-};
-
-const getSubscriberTitle = (subscriber: SubscriberResponseDto) => {
-  const fullName = `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
-  return fullName || subscriber.email || subscriber.phone || subscriber.subscriberId;
 };
 
 type SubscriberRowProps = {

@@ -14,16 +14,28 @@ import { SubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
-import { showSuccessToast } from '../primitives/sonner-helpers';
+import { showToast } from '../primitives/sonner-helpers';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { CopyButton } from '../primitives/copy-button';
 import { SubscriberOverviewSkeleton } from './subscriber-overview-skeleton';
 import { LocaleSelect } from './locale-select';
+import { useState } from 'react';
+import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
+import { ToastIcon } from '../primitives/sonner';
+import { getSubscriberTitle } from './utils';
+import { ConfirmationModal } from '../confirmation-modal';
+import { ExternalToast } from 'sonner';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
+const toastOptions: ExternalToast = {
+  position: 'bottom-right',
+  classNames: {
+    toast: 'mb-4 right-0',
+  },
+};
 
 export default function SubscriberOverviewForm({
   subscriberId,
@@ -34,12 +46,70 @@ export default function SubscriberOverviewForm({
   subscriber?: SubscriberResponseDto;
   isFetching: boolean;
 }) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: () => {
-      showSuccessToast('Subscriber updated successfully');
+      showToast({
+        children: () => (
+          <>
+            <ToastIcon variant="success" />
+            <span className="text-sm">
+              Updated subscriber{' '}
+              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}.
+            </span>
+          </>
+        ),
+        options: toastOptions,
+      });
+    },
+    onError: () => {
+      showToast({
+        children: () => (
+          <>
+            <ToastIcon variant="error" />
+            <span className="text-sm">
+              Failed to update subscriber{' '}
+              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}..
+            </span>
+          </>
+        ),
+        options: toastOptions,
+      });
     },
   });
 
+  const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
+    onSuccess: () => {
+      showToast({
+        children: () => (
+          <>
+            <ToastIcon variant="success" />
+            <span className="text-sm">
+              Deleted subscriber{' '}
+              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}.
+            </span>
+          </>
+        ),
+        options: toastOptions,
+      });
+    },
+    onError: () => {
+      showToast({
+        children: () => (
+          <>
+            <ToastIcon variant="error" />
+            <span className="text-sm">
+              Failed to delete subscriber{' '}
+              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}..
+            </span>
+          </>
+        ),
+        options: toastOptions,
+      });
+    },
+  });
+
+  const navigate = useNavigate();
   /**
    * Needed to forcefully reset the form when switching subscriber
    * Without this, the form will keep the previous subscriber's data for undefined fields of current one
@@ -282,7 +352,13 @@ export default function SubscriberOverviewForm({
           <div className="mt-auto">
             <Separator />
             <div className="flex justify-between gap-3 p-3">
-              <Button type="submit" variant="primary" mode="ghost" leadingIcon={RiDeleteBin2Line}>
+              <Button
+                type="submit"
+                variant="primary"
+                mode="ghost"
+                leadingIcon={RiDeleteBin2Line}
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
                 Delete subscriber
               </Button>
               <Button
@@ -296,6 +372,25 @@ export default function SubscriberOverviewForm({
           </div>
         </form>
       </Form>
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={async () => {
+          if (!subscriberDetails) return;
+          await deleteSubscriber({ subscriberId: subscriberDetails?.subscriberId });
+          setIsDeleteModalOpen(false);
+          navigate('../', { relative: 'path' });
+        }}
+        title={`Delete subscriber`}
+        description={
+          <span>
+            Are you sure you want to delete subscriber{' '}
+            <span className="font-bold">{getSubscriberTitle(subscriberDetails!)}</span>? This action cannot be undone.
+          </span>
+        }
+        confirmButtonText="Delete subscriber"
+        isLoading={isDeleteSubscriberPending}
+      />
     </div>
   );
 }
