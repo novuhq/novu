@@ -76,14 +76,7 @@ export default function SubscriberOverviewForm({
   return (
     <div className="flex h-full flex-col items-stretch">
       <Form {...form}>
-        <form
-          autoComplete="off"
-          noValidate
-          onSubmit={form.handleSubmit(onSubmit, (err) => {
-            console.log({ err });
-          })}
-          className="flex h-full flex-col"
-        >
+        <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
             <div className="flex items-center gap-3">
               <Tooltip>
