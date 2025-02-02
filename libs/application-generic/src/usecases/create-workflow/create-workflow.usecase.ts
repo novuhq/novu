@@ -90,6 +90,10 @@ export class CreateWorkflow {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
     this.validatePayload(command);
+    await this.resourceValidatorService.validateWorkflowLimit(
+      command.environmentId,
+    );
+
     let storedWorkflow: WorkflowInternalResponseDto;
     await this.notificationTemplateRepository.withTransaction(async () => {
       const triggerIdentifier = this.generateTriggerIdentifier(command);
@@ -192,7 +196,10 @@ export class CreateWorkflow {
 
   private validatePayload(command: CreateWorkflowCommand) {
     if (command.steps) {
-      this.resourceValidatorService.validateStepsCount(command.steps);
+      this.resourceValidatorService.validateStepsCount(
+        command.environmentId,
+        command.steps,
+      );
     }
 
     const variants = command.steps

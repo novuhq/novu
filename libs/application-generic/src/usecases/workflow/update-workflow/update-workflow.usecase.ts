@@ -415,7 +415,10 @@ export class UpdateWorkflow {
 
   private validatePayload(command: UpdateWorkflowCommand) {
     if (command.steps) {
-      this.resourceValidatorService.validateStepsCount(command.steps);
+      this.resourceValidatorService.validateStepsCount(
+        command.environmentId,
+        command.steps,
+      );
     }
 
     const variants = command.steps
