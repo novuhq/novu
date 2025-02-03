@@ -3,7 +3,7 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { injectDocumentComponents } from './injection';
-import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
+import { overloadDocumentForSdkGeneration, removeEndpointsWithoutApiKey } from './open.api.manipulation.component';
 import metadata from '../../../../metadata';
 import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 
@@ -18,112 +18,124 @@ export const BEARER_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   scheme: 'bearer',
   bearerFormat: 'JWT',
 };
-const options = new DocumentBuilder()
-  .setTitle('Novu API')
-  .setDescription('Novu REST API. Please see https://docs.novu.co/api-reference for more details.')
-  .setVersion('1.0')
-  .setContact('Novu Support', 'https://discord.gg/novu', 'support@novu.co')
-  .setExternalDoc('Novu Documentation', 'https://docs.novu.co')
-  .setTermsOfService('https://novu.co/terms')
-  .setLicense('MIT', 'https://opensource.org/license/mit')
-  .addServer('https://api.novu.co')
-  .addServer('https://eu.api.novu.co')
-  .addSecurity(API_KEY_SWAGGER_SECURITY_NAME, API_KEY_SECURITY_DEFINITIONS)
-  .addSecurity(BEARER_SWAGGER_SECURITY_NAME, BEARER_SECURITY_DEFINITIONS)
-  .addSecurityRequirements(API_KEY_SWAGGER_SECURITY_NAME)
-  .addSecurityRequirements(BEARER_SWAGGER_SECURITY_NAME)
-  .addTag(
-    'Events',
-    `Events represent a change in state of a subscriber. They are used to trigger workflows, and enable you to send notifications to subscribers based on their actions.`,
-    { url: 'https://docs.novu.co/workflows' }
-  )
-  .addTag(
-    'Subscribers',
-    `A subscriber in Novu represents someone who should receive a message. A subscriber’s profile information contains important attributes about the subscriber that will be used in messages (name, email). The subscriber object can contain other key-value pairs that can be used to further personalize your messages.`,
-    { url: 'https://docs.novu.co/subscribers/subscribers' }
-  )
-  .addTag(
-    'Topics',
-    `Topics are a way to group subscribers together so that they can be notified of events at once. A topic is identified by a custom key. This can be helpful for things like sending out marketing emails or notifying users of new features. Topics can also be used to send notifications to the subscribers who have been grouped together based on their interests, location, activities and much more.`,
-    { url: 'https://docs.novu.co/subscribers/topics' }
-  )
-  .addTag(
-    'Notification',
-    'A notification conveys information from source to recipient, triggered by a workflow acting as a message blueprint. Notifications can be individual or bundled as digest for user-friendliness.',
-    { url: 'https://docs.novu.co/getting-started/introduction' }
-  )
-  .addTag(
-    'Integrations',
-    `With the help of the Integration Store, you can easily integrate your favorite delivery provider. During the runtime of the API, the Integrations Store is responsible for storing the configurations of all the providers.`,
-    { url: 'https://docs.novu.co/channels-and-providers/integration-store' }
-  )
-  .addTag(
-    'Layouts',
-    `Novu allows the creation of layouts - a specific HTML design or structure to wrap content of email notifications. Layouts can be manipulated and assigned to new or existing workflows within the Novu platform, allowing users to create, manage, and assign these layouts to workflows, so they can be reused to structure the appearance of notifications sent through the platform.`,
-    { url: 'https://docs.novu.co/content-creation-design/layouts' }
-  )
-  .addTag(
-    'Workflows',
-    `All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system.`,
-    { url: 'https://docs.novu.co/workflows' }
-  )
-  .addTag(
-    'Notification Templates',
-    `Deprecated. Use Workflows (/workflows) instead, which provide the same functionality under a new name.`
-  )
-  .addTag('Workflow groups', `Workflow groups are used to organize workflows into logical groups.`)
-  .addTag(
-    'Changes',
-    `Changes represent a change in state of an environment. They are analagous to a pending pull request in git, enabling you to test changes before they are applied to your environment and atomically apply them when you are ready.`,
-    { url: 'https://docs.novu.co/platform/environments#promoting-pending-changes-to-production' }
-  )
-  .addTag(
-    'Environments',
-    `Novu uses the concept of environments to ensure logical separation of your data and configuration. This means that subscribers, and preferences created in one environment are never accessible to another.`,
-    { url: 'https://docs.novu.co/platform/environments' }
-  )
-  .addTag(
-    'Inbound Parse',
-    `Inbound Webhook is a feature that allows processing of incoming emails for a domain or subdomain. The feature parses the contents of the email and POSTs the information to a specified URL in a multipart/form-data format.`,
-    { url: 'https://docs.novu.co/platform/inbound-parse-webhook' }
-  )
-  .addTag(
-    'Feeds',
-    `Novu provides a notification activity feed that monitors every outgoing message associated with its relevant metadata. This can be used to monitor activity and discover potential issues with a specific provider or a channel type.`,
-    { url: 'https://docs.novu.co/activity-feed' }
-  )
-  .addTag(
-    'Tenants',
-    `A tenant represents a group of users. As a developer, when your apps have organizations, they are referred to as tenants. Tenants in Novu provides the ability to tailor specific notification experiences to users of different groups or organizations.`,
-    { url: 'https://docs.novu.co/tenants' }
-  )
-  .addTag(
-    'Messages',
-    `A message in Novu represents a notification delivered to a recipient on a particular channel. Messages contain information about the request that triggered its delivery, a view of the data sent to the recipient, and a timeline of its lifecycle events. Learn more about messages.`,
-    { url: 'https://docs.novu.co/workflows/messages' }
-  )
-  .addTag(
-    'Organizations',
-    `An organization serves as a separate entity within your Novu account. Each organization you create has its own separate integration store, workflows, subscribers, and API keys. This separation of resources allows you to manage multi-tenant environments and separate domains within a single account.`,
-    { url: 'https://docs.novu.co/platform/organizations' }
-  )
-  .addTag(
-    'Execution Details',
-    `Execution details are used to track the execution of a workflow. They provided detailed information on the execution of a workflow, including the status of each step, the input and output of each step, and the overall status of the execution.`,
-    { url: 'https://docs.novu.co/activity-feed' }
-  );
 
-if (process.env.NOVU_ENTERPRISE === 'true') {
-  options.addTag(
-    'Translations',
-    `Translations are used to localize your messages for different languages and regions. Novu provides a way to create and manage translations for your messages. You can create translations for your messages in different languages and regions, and assign them to your subscribers based on their preferences.`,
-    { url: 'https://docs.novu.co/content-creation-design/translations' }
-  );
+function buildBaseOptions() {
+  const options = new DocumentBuilder()
+    .setTitle('Novu API')
+    .setDescription('Novu REST API. Please see https://docs.novu.co/api-reference for more details.')
+    .setVersion('1.0')
+    .setContact('Novu Support', 'https://discord.gg/novu', 'support@novu.co')
+    .setExternalDoc('Novu Documentation', 'https://docs.novu.co')
+    .setTermsOfService('https://novu.co/terms')
+    .setLicense('MIT', 'https://opensource.org/license/mit')
+    .addServer('https://api.novu.co')
+    .addServer('https://eu.api.novu.co')
+    .addSecurity(API_KEY_SWAGGER_SECURITY_NAME, API_KEY_SECURITY_DEFINITIONS)
+    .addSecurityRequirements(API_KEY_SWAGGER_SECURITY_NAME)
+    .addTag(
+      'Events',
+      `Events represent a change in state of a subscriber. They are used to trigger workflows, and enable you to send notifications to subscribers based on their actions.`,
+      { url: 'https://docs.novu.co/workflows' }
+    )
+    .addTag(
+      'Subscribers',
+      `A subscriber in Novu represents someone who should receive a message. A subscriber’s profile information contains important attributes about the subscriber that will be used in messages (name, email). The subscriber object can contain other key-value pairs that can be used to further personalize your messages.`,
+      { url: 'https://docs.novu.co/subscribers/subscribers' }
+    )
+    .addTag(
+      'Topics',
+      `Topics are a way to group subscribers together so that they can be notified of events at once. A topic is identified by a custom key. This can be helpful for things like sending out marketing emails or notifying users of new features. Topics can also be used to send notifications to the subscribers who have been grouped together based on their interests, location, activities and much more.`,
+      { url: 'https://docs.novu.co/subscribers/topics' }
+    )
+    .addTag(
+      'Notification',
+      'A notification conveys information from source to recipient, triggered by a workflow acting as a message blueprint. Notifications can be individual or bundled as digest for user-friendliness.',
+      { url: 'https://docs.novu.co/getting-started/introduction' }
+    )
+    .addTag(
+      'Integrations',
+      `With the help of the Integration Store, you can easily integrate your favorite delivery provider. During the runtime of the API, the Integrations Store is responsible for storing the configurations of all the providers.`,
+      { url: 'https://docs.novu.co/channels-and-providers/integration-store' }
+    )
+    .addTag(
+      'Layouts',
+      `Novu allows the creation of layouts - a specific HTML design or structure to wrap content of email notifications. Layouts can be manipulated and assigned to new or existing workflows within the Novu platform, allowing users to create, manage, and assign these layouts to workflows, so they can be reused to structure the appearance of notifications sent through the platform.`,
+      { url: 'https://docs.novu.co/content-creation-design/layouts' }
+    )
+    .addTag(
+      'Workflows',
+      `All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system.`,
+      { url: 'https://docs.novu.co/workflows' }
+    )
+    .addTag(
+      'Notification Templates',
+      `Deprecated. Use Workflows (/workflows) instead, which provide the same functionality under a new name.`
+    )
+    .addTag('Workflow groups', `Workflow groups are used to organize workflows into logical groups.`)
+    .addTag(
+      'Changes',
+      `Changes represent a change in state of an environment. They are analagous to a pending pull request in git, enabling you to test changes before they are applied to your environment and atomically apply them when you are ready.`,
+      { url: 'https://docs.novu.co/platform/environments#promoting-pending-changes-to-production' }
+    )
+    .addTag(
+      'Environments',
+      `Novu uses the concept of environments to ensure logical separation of your data and configuration. This means that subscribers, and preferences created in one environment are never accessible to another.`,
+      { url: 'https://docs.novu.co/platform/environments' }
+    )
+    .addTag(
+      'Inbound Parse',
+      `Inbound Webhook is a feature that allows processing of incoming emails for a domain or subdomain. The feature parses the contents of the email and POSTs the information to a specified URL in a multipart/form-data format.`,
+      { url: 'https://docs.novu.co/platform/inbound-parse-webhook' }
+    )
+    .addTag(
+      'Feeds',
+      `Novu provides a notification activity feed that monitors every outgoing message associated with its relevant metadata. This can be used to monitor activity and discover potential issues with a specific provider or a channel type.`,
+      { url: 'https://docs.novu.co/activity-feed' }
+    )
+    .addTag(
+      'Tenants',
+      `A tenant represents a group of users. As a developer, when your apps have organizations, they are referred to as tenants. Tenants in Novu provides the ability to tailor specific notification experiences to users of different groups or organizations.`,
+      { url: 'https://docs.novu.co/tenants' }
+    )
+    .addTag(
+      'Messages',
+      `A message in Novu represents a notification delivered to a recipient on a particular channel. Messages contain information about the request that triggered its delivery, a view of the data sent to the recipient, and a timeline of its lifecycle events. Learn more about messages.`,
+      { url: 'https://docs.novu.co/workflows/messages' }
+    )
+    .addTag(
+      'Organizations',
+      `An organization serves as a separate entity within your Novu account. Each organization you create has its own separate integration store, workflows, subscribers, and API keys. This separation of resources allows you to manage multi-tenant environments and separate domains within a single account.`,
+      { url: 'https://docs.novu.co/platform/organizations' }
+    )
+    .addTag(
+      'Execution Details',
+      `Execution details are used to track the execution of a workflow. They provided detailed information on the execution of a workflow, including the status of each step, the input and output of each step, and the overall status of the execution.`,
+      { url: 'https://docs.novu.co/activity-feed' }
+    );
+  return options;
 }
-export const setupSwagger = async (app: INestApplication) => {
-  await SwaggerModule.loadPluginMetadata(metadata);
+
+function buildOpenApiBaseDocument(internalSdkGeneration: boolean | undefined) {
+  const options = buildBaseOptions();
+  if (internalSdkGeneration) {
+    options.addSecurity(BEARER_SWAGGER_SECURITY_NAME, BEARER_SECURITY_DEFINITIONS);
+    options.addSecurityRequirements(BEARER_SWAGGER_SECURITY_NAME);
+  }
+  if (process.env.NOVU_ENTERPRISE === 'true') {
+    options.addTag(
+      'Translations',
+      `Translations are used to localize your messages for different languages and regions. Novu provides a way to create and manage translations for your messages. You can create translations for your messages in different languages and regions, and assign them to your subscribers based on their preferences.`,
+      { url: 'https://docs.novu.co/content-creation-design/translations' }
+    );
+  }
+
+  const config = options.build();
+  return config;
+}
+
+function buildFullDocumentWithPath(app: INestApplication<any>, baseDocument: Omit<OpenAPIObject, 'paths'>) {
   const document = injectDocumentComponents(
-    SwaggerModule.createDocument(app, options.build(), {
+    SwaggerModule.createDocument(app, baseDocument, {
       operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
       deepScanRoutes: true,
       ignoreGlobalPrefix: false,
@@ -131,7 +143,10 @@ export const setupSwagger = async (app: INestApplication) => {
       extraModels: [],
     })
   );
+  return document;
+}
 
+function publishDeprecatedDocument(app: INestApplication<any>, document: OpenAPIObject) {
   SwaggerModule.setup('api', app, {
     ...document,
     info: {
@@ -139,15 +154,26 @@ export const setupSwagger = async (app: INestApplication) => {
       title: `DEPRECATED: ${document.info.title}. Use /openapi.{json,yaml} instead.`,
     },
   });
+}
+
+function publishLegacyOpenApiDoc(app: INestApplication<any>, document: OpenAPIObject) {
   SwaggerModule.setup('openapi', app, removeEndpointsWithoutApiKey(document), {
     jsonDocumentUrl: 'openapi.json',
     yamlDocumentUrl: 'openapi.yaml',
     explorer: process.env.NODE_ENV !== 'production',
   });
-  return sdkSetup(app, document);
+}
+
+export const setupSwagger = async (app: INestApplication, internalSdkGeneration?: boolean) => {
+  await SwaggerModule.loadPluginMetadata(metadata);
+  const baseDocument = buildOpenApiBaseDocument(internalSdkGeneration);
+  const document = buildFullDocumentWithPath(app, baseDocument);
+  publishDeprecatedDocument(app, document);
+  publishLegacyOpenApiDoc(app, document);
+  return publishSdkSpecificDocumentAndReturnDocument(app, document, internalSdkGeneration);
 };
-function sdkSetup(app: INestApplication, document: OpenAPIObject) {
-  // eslint-disable-next-line no-param-reassign
+
+function overloadNamingGuidelines(document: OpenAPIObject) {
   document['x-speakeasy-name-override'] = [
     { operationId: '^.*get.*', methodNameOverride: 'retrieve' },
     { operationId: '^.*retrieve.*', methodNameOverride: 'retrieve' },
@@ -157,7 +183,9 @@ function sdkSetup(app: INestApplication, document: OpenAPIObject) {
     { operationId: '^.*delete.*', methodNameOverride: 'delete' },
     { operationId: '^.*remove.*', methodNameOverride: 'delete' },
   ];
-  // eslint-disable-next-line no-param-reassign
+}
+
+function overloadGlobalSdkRetrySettings(document: OpenAPIObject) {
   document['x-speakeasy-retries'] = {
     strategy: 'backoff',
     backoff: {
@@ -169,13 +197,20 @@ function sdkSetup(app: INestApplication, document: OpenAPIObject) {
     statusCodes: [408, 409, 429, '5XX'],
     retryConnectionErrors: true,
   };
+}
 
-  const sdkDocument = transformDocument(document);
-  const sdkInternalDocument = transformDocument(document, false);
+function publishSdkSpecificDocumentAndReturnDocument(
+  app: INestApplication,
+  document: OpenAPIObject,
+  internalSdkGeneration?: boolean
+) {
+  overloadNamingGuidelines(document);
+  overloadGlobalSdkRetrySettings(document);
+  let sdkDocument: OpenAPIObject = overloadDocumentForSdkGeneration(document, internalSdkGeneration);
   SwaggerModule.setup('openapi.sdk', app, sdkDocument, {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',
     explorer: process.env.NODE_ENV !== 'production',
   });
-  return sdkInternalDocument;
+  return sdkDocument;
 }

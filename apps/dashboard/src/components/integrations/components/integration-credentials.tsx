@@ -13,6 +13,7 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
+  removeNovuBranding?: boolean;
 };
 
 type CredentialsSectionProps = {

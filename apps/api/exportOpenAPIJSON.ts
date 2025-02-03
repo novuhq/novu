@@ -3,7 +3,8 @@ import { bootstrap } from './src/bootstrap'; // Adjust the path according to you
 
 async function exportOpenAPIJSON() {
   try {
-    const { app, document } = await bootstrap();
+    process.env.LOCAL_SWAGGER_GENERATION = 'true';
+    const { app, document } = await bootstrap({ internalSdkGeneration: true });
 
     // Write the Swagger document to a file
     writeFileSync('./dist/swagger-spec.json', JSON.stringify(document, null, 2));

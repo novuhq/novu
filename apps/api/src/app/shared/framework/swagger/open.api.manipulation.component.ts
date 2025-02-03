@@ -1,5 +1,6 @@
 import Nimma from 'nimma';
 import { OpenAPIObject } from '@nestjs/swagger';
+import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 
 const jpath = '$.paths..responses["200","201"].content["application/json"]';
 
@@ -48,10 +49,10 @@ export function removeEndpointsWithoutApiKey<T>(openApiDocument: T): T {
       const operation = operations[method];
       if (operation.security) {
         const hasApiKey = operation.security.some((sec: { [key: string]: string[] }) =>
-          Object.keys(sec).includes('api-key')
+          Object.keys(sec).includes(API_KEY_SWAGGER_SECURITY_NAME)
         );
         operation.security = operation.security.filter((sec: { [key: string]: string[] }) =>
-          Object.keys(sec).includes('api-key')
+          Object.keys(sec).includes(API_KEY_SWAGGER_SECURITY_NAME)
         );
         if (!hasApiKey) {
           delete operations[method];
@@ -65,14 +66,25 @@ export function removeEndpointsWithoutApiKey<T>(openApiDocument: T): T {
 
   return parsedDocument;
 }
-export function transformDocument(inputDocument: OpenAPIObject, shouldRemoveBearer: boolean = true) {
+
+function unwrapDataAttribute(inputDocument: OpenAPIObject) {
   Nimma.query(inputDocument, {
     [jpath]: liftDataProperty,
   });
+}
 
-  const openAPIObject = shouldRemoveBearer
-    ? (removeEndpointsWithoutApiKey(inputDocument) as OpenAPIObject)
-    : inputDocument;
+function filterBearerOnlyIfExternal(isForInternalSdk: boolean, inputDocument: OpenAPIObject) {
+  let openAPIObject: OpenAPIObject;
+  if (isForInternalSdk) {
+    return inputDocument;
+  } else {
+    return removeEndpointsWithoutApiKey(inputDocument) as OpenAPIObject;
+  }
+}
+
+export function overloadDocumentForSdkGeneration(inputDocument: OpenAPIObject, isForInternalSdk: boolean = false) {
+  unwrapDataAttribute(inputDocument);
+  const openAPIObject = filterBearerOnlyIfExternal(isForInternalSdk, inputDocument);
 
   return addIdempotencyKeyHeader(openAPIObject) as OpenAPIObject;
 }

@@ -98,6 +98,12 @@ export class ComputeJobWaitDurationService {
     Logger.verbose('Converting to milliseconds');
 
     let delay = 1000 * amount;
+    if (unit === DigestUnitEnum.MONTHS) {
+      delay *= 60 * 60 * 24 * 30;
+    }
+    if (unit === DigestUnitEnum.WEEKS) {
+      delay *= 60 * 60 * 24 * 7;
+    }
     if (unit === DigestUnitEnum.DAYS) {
       delay *= 60 * 60 * 24;
     }

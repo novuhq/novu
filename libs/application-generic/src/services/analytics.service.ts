@@ -1,5 +1,5 @@
-import { Analytics } from '@segment/analytics-node';
 import { Logger } from '@nestjs/common';
+import { Analytics } from '@segment/analytics-node';
 import Mixpanel from 'mixpanel';
 
 import { IOrganizationEntity } from '@novu/shared';
@@ -82,7 +82,11 @@ export class AnalyticsService {
     });
   }
 
-  upsertUser(user: IUser, distinctId: string) {
+  upsertUser(
+    user: IUser,
+    distinctId: string,
+    traits: Record<string, string | string[]> = {},
+  ) {
     if (!this.segmentEnabled) {
       return;
     }
@@ -103,6 +107,7 @@ export class AnalyticsService {
         // For segment auto mapping
         created: this.convertToIsoDate(user.createdAt),
         githubProfile: githubToken?.username,
+        ...traits,
       },
     });
   }

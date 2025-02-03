@@ -505,6 +505,7 @@ export class SubscribersV1Controller {
     summary: 'Update subscriber preference',
   })
   @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('updateLegacy')
   async updateSubscriberPreference(
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,

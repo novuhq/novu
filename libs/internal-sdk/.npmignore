@@ -7,7 +7,7 @@
 !/**/*.json
 !/**/*.map
 
-/.eslintrc.js
+/eslint.config.mjs
 /cjs
 /.tshy
 /.tshy-*

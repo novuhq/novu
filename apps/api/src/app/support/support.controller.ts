@@ -1,4 +1,5 @@
-import { Body, Controller, Post, UseGuards, Request, Response, RawBodyRequest } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { UserAuthGuard, UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { CreateSupportThreadDto } from './dto/create-thread.dto';
@@ -7,7 +8,6 @@ import { PlainCardRequestDto } from './dto/plain-card.dto';
 import { PlainCardsCommand } from './usecases/plain-cards.command';
 import { CreateSupportThreadUsecase, PlainCardsUsecase } from './usecases';
 import { PlainCardsGuard } from './guards/plain-cards.guard';
-import { ApiExcludeController } from '@nestjs/swagger';
 
 @Controller('/support')
 @ApiExcludeController()

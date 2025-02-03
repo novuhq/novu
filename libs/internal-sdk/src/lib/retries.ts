@@ -158,7 +158,6 @@ async function retryBackoff(
   const start = Date.now();
   let x = 0;
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       const res = await fn();

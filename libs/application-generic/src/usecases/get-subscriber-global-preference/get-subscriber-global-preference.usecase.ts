@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
 import { IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
-import { ApiException } from '../../utils/exceptions';
 import { GetPreferences } from '../get-preferences';
 import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { filteredPreference } from '../get-subscriber-template-preference/get-subscriber-template-preference.usecase';
@@ -111,7 +110,9 @@ export class GetSubscriberGlobalPreference {
     );
 
     if (!subscriber) {
-      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+      throw new NotFoundException(
+        `Subscriber ${command.subscriberId} not found`,
+      );
     }
 
     return subscriber;

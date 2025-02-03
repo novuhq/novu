@@ -20,8 +20,10 @@ import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase'
 import { GetSubscriberCommand } from './usecases/get-subscriber/get-subscriber.command';
 import { PatchSubscriber } from './usecases/patch-subscriber/patch-subscriber.usecase';
 import { PatchSubscriberCommand } from './usecases/patch-subscriber/patch-subscriber.command';
+import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
+import { GetSubscriberPreferencesCommand } from './usecases/get-subscriber-preferences/get-subscriber-preferences.command';
 import { ListSubscribersQueryDto } from './dtos/list-subscribers-query.dto';
-import { ListSubscribersResponseDto } from './dtos';
+import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
@@ -29,6 +31,10 @@ import { SubscriberResponseDto } from '../subscribers/dtos';
 import { RemoveSubscriberCommand } from './usecases/remove-subscriber/remove-subscriber.command';
 import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
 import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
+import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.dto';
+import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
+import { UpdateSubscriberPreferencesCommand } from './usecases/update-subscriber-preferences/update-subscriber-preferences.command';
+import { UpdateSubscriberPreferences } from './usecases/update-subscriber-preferences/update-subscriber-preferences.usecase';
 
 @Controller({ path: '/subscribers', version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
@@ -40,7 +46,9 @@ export class SubscribersController {
     private listSubscribersUsecase: ListSubscribersUseCase,
     private getSubscriberUsecase: GetSubscriber,
     private patchSubscriberUsecase: PatchSubscriber,
-    private removeSubscriberUsecase: RemoveSubscriber
+    private removeSubscriberUsecase: RemoveSubscriber,
+    private getSubscriberPreferencesUsecase: GetSubscriberPreferences,
+    private updateSubscriberPreferencesUsecase: UpdateSubscriberPreferences
   ) {}
 
   @Get('')
@@ -133,6 +141,55 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
+      })
+    );
+  }
+
+  @Get('/:subscriberId/preferences')
+  @UserAuthentication()
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Get subscriber preferences',
+    description: 'Get subscriber global and workflow specific preferences',
+  })
+  @ApiResponse(GetSubscriberPreferencesDto)
+  @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('retrieve')
+  async getSubscriberPreferences(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<GetSubscriberPreferencesDto> {
+    return await this.getSubscriberPreferencesUsecase.execute(
+      GetSubscriberPreferencesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+      })
+    );
+  }
+
+  @Patch('/:subscriberId/preferences')
+  @UserAuthentication()
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Update subscriber global or workflow specific preferences',
+    description: 'Update subscriber global or workflow specific preferences',
+  })
+  @ApiResponse(GetSubscriberPreferencesDto)
+  @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('update')
+  async updateSubscriberPreferences(
+    @UserSession() user: UserSessionData,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: PatchSubscriberPreferencesDto
+  ): Promise<GetSubscriberPreferencesDto> {
+    return await this.updateSubscriberPreferencesUsecase.execute(
+      UpdateSubscriberPreferencesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        workflowId: body.workflowId,
+        channels: body.channels,
       })
     );
   }
