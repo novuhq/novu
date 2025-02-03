@@ -30,7 +30,7 @@ type IntegrationFormData = {
 
 type IntegrationConfigurationProps = {
   provider: IProviderConfig;
-  integration: IIntegration;
+  integration?: IIntegration;
   onSubmit: (data: IntegrationFormData) => void;
   mode: 'create' | 'update';
   isChannelSupportPrimary?: boolean;
@@ -166,7 +166,7 @@ export function IntegrationConfiguration({
 
             {/* TODO: This is a temporary solution to show the guide only for in-app channel, 
               we need to replace it with dedicated view per integration channel */}
-            {integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
+            {integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
               <InlineToast
                 variant={'tip'}
                 className="mt-3"
