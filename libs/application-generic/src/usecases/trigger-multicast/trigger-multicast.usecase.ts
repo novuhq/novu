@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import _ from 'lodash';
 import {
   TopicEntity,
@@ -14,7 +14,6 @@ import {
   TriggerRecipientSubscriber,
 } from '@novu/shared';
 
-import { PinoLogger } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 import { ApiException } from '../../utils/exceptions';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';

@@ -5,7 +5,6 @@ import { addBreadcrumb } from '@sentry/node';
 
 import {
   MessageRepository,
-  NotificationStepEntity,
   SubscriberRepository,
   EnvironmentRepository,
   IntegrationEntity,
@@ -110,7 +109,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step.template) throw new PlatformException('Email channel template not found');
 
     const { subscriber } = command.compileContext;
-    const email = command.payload.email || subscriber.email;
+    const { email } = subscriber;
 
     addBreadcrumb({
       message: 'Sending Email',
