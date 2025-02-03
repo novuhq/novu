@@ -81,6 +81,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
           primary: data.primary,
           credentials: data.credentials,
           check: data.check,
+          removeNovuBranding: data.removeNovuBranding,
         },
       });
 

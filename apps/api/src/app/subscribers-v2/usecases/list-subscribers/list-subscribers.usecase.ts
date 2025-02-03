@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
 import { ListSubscribersCommand } from './list-subscribers.command';
-import { ListSubscribersResponseDto } from '../../dtos';
+import { ListSubscribersResponseDto } from '../../dtos/list-subscribers-response.dto';
 import { DirectionEnum } from '../../../shared/dtos/base-responses';
 import { mapSubscriberEntityToDto } from './map-subscriber-entity-to.dto';
 
