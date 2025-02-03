@@ -17,7 +17,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
 import { showToast } from '../primitives/sonner-helpers';
-import { SubscriberResponseDto } from '@novu/api/models/components';
 import { CopyButton } from '../primitives/copy-button';
 import { SubscriberOverviewSkeleton } from './subscriber-overview-skeleton';
 import { LocaleSelect } from './locale-select';
@@ -27,6 +26,7 @@ import { ToastIcon } from '../primitives/sonner';
 import { getSubscriberTitle } from './utils';
 import { ConfirmationModal } from '../confirmation-modal';
 import { ExternalToast } from 'sonner';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 const basicSetup = { lineNumbers: true, defaultKeymap: true };
@@ -37,16 +37,10 @@ const toastOptions: ExternalToast = {
   },
 };
 
-export function SubscriberOverviewForm({
-  subscriberId,
-  subscriber,
-  isFetching,
-}: {
-  subscriberId: string;
-  subscriber?: SubscriberResponseDto;
-  isFetching: boolean;
-}) {
+export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { data: subscriber, isFetching } = useFetchSubscriber({ subscriberId });
+
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
       showToast({
@@ -124,7 +118,7 @@ export function SubscriberOverviewForm({
     shouldFocusError: false,
   });
 
-  if (isFetching) {
+  if (isFetching || !subscriberDetails) {
     return <SubscriberOverviewSkeleton />;
   }
 
@@ -378,8 +372,7 @@ export function SubscriberOverviewForm({
         open={isDeleteModalOpen}
         onOpenChange={setIsDeleteModalOpen}
         onConfirm={async () => {
-          if (!subscriberDetails) return;
-          await deleteSubscriber({ subscriberId: subscriberDetails?.subscriberId });
+          await deleteSubscriber({ subscriberId: subscriberDetails.subscriberId });
           setIsDeleteModalOpen(false);
           navigate('../', { relative: 'path' });
         }}

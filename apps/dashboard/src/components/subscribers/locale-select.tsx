@@ -28,7 +28,7 @@ export function LocaleSelect({
       required={required}
       defaultValue={defaultOption}
     >
-      <SelectTrigger className="group p-1.5 shadow-sm last:[&>svg]:hidden">
+      <SelectTrigger className="group p-1.5 shadow-sm">
         <SelectValue
           placeholder={
             <div className="flex w-full items-center gap-1">
