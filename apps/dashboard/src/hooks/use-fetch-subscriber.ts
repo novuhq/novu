@@ -12,7 +12,7 @@ type Props = {
   options?: Omit<UseQueryOptions<SubscriberResponse, Error>, 'queryKey' | 'queryFn'>;
 };
 
-export default function useFetchSubscriber({ subscriberId, options = {} }: Props) {
+export function useFetchSubscriber({ subscriberId, options = {} }: Props) {
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
 

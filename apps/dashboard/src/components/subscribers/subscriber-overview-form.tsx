@@ -37,7 +37,7 @@ const toastOptions: ExternalToast = {
   },
 };
 
-export default function SubscriberOverviewForm({
+export function SubscriberOverviewForm({
   subscriberId,
   subscriber,
   isFetching,

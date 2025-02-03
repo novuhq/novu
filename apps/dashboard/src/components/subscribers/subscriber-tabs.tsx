@@ -1,12 +1,12 @@
 import { Preferences } from '@/components/subscribers/preferences/preferences';
-import useFetchSubscriber from '@/hooks/use-fetch-subscriber';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { RiCloseLine, RiGroup2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { CompactButton } from '../primitives/button-compact';
 import { Separator } from '../primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import TruncatedText from '../truncated-text';
-import SubscriberOverviewForm from './subscriber-overview-form';
+import { SubscriberOverviewForm } from './subscriber-overview-form';
 
 const tabTriggerClasses =
   ' hover:data-[state=inactive]:text-foreground-950 h-11 data-[state=active]:border-b data-[state=active]:border-primary-base data-[state=active]:border-b-2 py-3 rounded-none [&>span]:h-5 px-0';
@@ -53,11 +53,7 @@ export default function SubscriberTabs({ subscriberId }: { subscriberId: string 
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
-        <SubscriberOverviewForm
-          subscriberId={subscriberId}
-          subscriber={isFetching ? undefined : data}
-          isFetching={isFetching}
-        />
+        <SubscriberOverviewForm subscriberId={subscriberId} isFetching={isFetching} />
       </TabsContent>
       <TabsContent value="credentials" className="h-full w-full overflow-y-auto">
         <h2>Credentials</h2>
