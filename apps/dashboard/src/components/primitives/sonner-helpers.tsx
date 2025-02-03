@@ -18,23 +18,23 @@ export const showToast = ({
   });
 };
 
-export const showSuccessToast = (message: string, position: 'bottom-center' | 'top-center' = 'bottom-center') => {
+export const showSuccessToast = (message: string, title?: string, options: ExternalToast = {}) => {
   showToast({
+    title,
     children: () => (
       <>
         <ToastIcon variant="success" />
         <span className="text-sm">{message}</span>
       </>
     ),
-    options: { position },
+    options: {
+      position: 'bottom-center',
+      ...options,
+    },
   });
 };
 
-export const showErrorToast = (
-  message: string,
-  title?: string,
-  position: 'bottom-center' | 'top-center' | 'bottom-right' = 'bottom-right'
-) => {
+export const showErrorToast = (message: string, title?: string, options: ExternalToast = {}) => {
   showToast({
     title,
     children: () => (
@@ -43,6 +43,9 @@ export const showErrorToast = (
         <span className="text-sm">{message}</span>
       </>
     ),
-    options: { position },
+    options: {
+      position: 'bottom-center',
+      ...options,
+    },
   });
 };
