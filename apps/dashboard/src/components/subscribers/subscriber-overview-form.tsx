@@ -16,13 +16,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
-import { showToast } from '../primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { CopyButton } from '../primitives/copy-button';
 import { SubscriberOverviewSkeleton } from './subscriber-overview-skeleton';
 import { LocaleSelect } from './locale-select';
 import { useState } from 'react';
 import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
-import { ToastIcon } from '../primitives/sonner';
 import { getSubscriberTitle } from './utils';
 import { ConfirmationModal } from '../confirmation-modal';
 import { ExternalToast } from 'sonner';
@@ -43,65 +42,28 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
 
   const { patchSubscriber } = usePatchSubscriber({
     onSuccess: (data) => {
-      showToast({
-        children: () => (
-          <>
-            <ToastIcon variant="success" />
-            <span className="text-sm">
-              Updated subscriber{' '}
-              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}.
-            </span>
-          </>
-        ),
-        options: toastOptions,
-      });
-
+      showSuccessToast(
+        `Updated subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
+        undefined,
+        toastOptions
+      );
       form.reset({ ...data, data: JSON.stringify(data.data, null, 2) });
     },
     onError: () => {
-      showToast({
-        children: () => (
-          <>
-            <ToastIcon variant="error" />
-            <span className="text-sm">
-              Failed to update subscriber{' '}
-              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}..
-            </span>
-          </>
-        ),
-        options: toastOptions,
-      });
+      showErrorToast('Failed to update subscriber', undefined, toastOptions);
     },
   });
 
   const { deleteSubscriber, isPending: isDeleteSubscriberPending } = useDeleteSubscriber({
     onSuccess: () => {
-      showToast({
-        children: () => (
-          <>
-            <ToastIcon variant="success" />
-            <span className="text-sm">
-              Deleted subscriber{' '}
-              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}.
-            </span>
-          </>
-        ),
-        options: toastOptions,
-      });
+      showSuccessToast(
+        `Deleted subscriber: ${subscriberDetails && getSubscriberTitle(subscriberDetails)}`,
+        undefined,
+        toastOptions
+      );
     },
     onError: () => {
-      showToast({
-        children: () => (
-          <>
-            <ToastIcon variant="error" />
-            <span className="text-sm">
-              Failed to delete subscriber{' '}
-              {subscriberDetails && <span className="font-bold">{getSubscriberTitle(subscriberDetails)}</span>}..
-            </span>
-          </>
-        ),
-        options: toastOptions,
-      });
+      showErrorToast('Failed to delete subscriber', undefined, toastOptions);
     },
   });
 
