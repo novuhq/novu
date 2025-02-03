@@ -1,16 +1,8 @@
-import { DirectionEnum } from '@novu/shared';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { ISubscriber } from '@novu/shared';
+import { IsOptional, IsString } from 'class-validator';
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
 
-export class ListSubscribersCommand extends CursorBasedPaginatedCommand {
-  @IsEnum(DirectionEnum)
-  @IsOptional()
-  orderDirection: DirectionEnum = DirectionEnum.DESC;
-
-  @IsEnum(['updatedAt', 'createdAt'])
-  @IsOptional()
-  orderBy: 'updatedAt' | 'createdAt' = 'createdAt';
-
+export class ListSubscribersCommand extends CursorBasedPaginatedCommand<ISubscriber, 'updatedAt' | '_id'> {
   @IsString()
   @IsOptional()
   email?: string;

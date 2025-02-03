@@ -1,34 +1,35 @@
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import { UserSession } from '@novu/testing';
-import { IGetSubscriberResponseDto } from '@novu/shared';
+import { SubscriberResponseDto } from '@novu/api/models/components';
+import { Novu } from '@novu/api';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const v2Prefix = '/v2';
 let session: UserSession;
 
 describe('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
-  let subscriber: IGetSubscriberResponseDto;
+  let subscriber: SubscriberResponseDto;
+  let novuClient: Novu;
 
   beforeEach(async () => {
     const uuid = randomBytes(4).toString('hex');
     session = new UserSession();
     await session.initialize();
     subscriber = await createSubscriberAndValidate(uuid);
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should fetch subscriber by subscriberId', async () => {
-    const res = await session.testAgent.get(`${v2Prefix}/subscribers/${subscriber.subscriberId}`);
+    const res = await novuClient.subscribers.retrieve(subscriber.subscriberId);
 
-    expect(res.statusCode).to.equal(200);
-
-    validateSubscriber(res.body.data, subscriber);
+    validateSubscriber(res.result, subscriber);
   });
 
   it('should return 404 if subscriberId does not exist', async () => {
     const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
-    const response = await session.testAgent.get(`${v2Prefix}/subscribers/${invalidSubscriberId}`);
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.subscribers.retrieve(invalidSubscriberId));
 
-    expect(response.statusCode).to.equal(404);
+    expect(error?.statusCode).to.equal(404);
   });
 });
 
@@ -51,7 +52,7 @@ async function createSubscriberAndValidate(id: string = '') {
   return subscriber;
 }
 
-function validateSubscriber(subscriber: IGetSubscriberResponseDto, expected: Partial<IGetSubscriberResponseDto>) {
+function validateSubscriber(subscriber: SubscriberResponseDto, expected: Partial<SubscriberResponseDto>) {
   expect(subscriber.subscriberId).to.equal(expected.subscriberId);
   expect(subscriber.firstName).to.equal(expected.firstName);
   expect(subscriber.lastName).to.equal(expected.lastName);

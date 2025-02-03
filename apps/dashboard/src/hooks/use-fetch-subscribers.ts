@@ -25,7 +25,7 @@ export function useFetchSubscribers(
     email = '',
     phone = '',
     orderDirection = DirectionEnum.DESC,
-    orderBy = 'createdAt',
+    orderBy = '_id',
     name = '',
     subscriberId = '',
     limit = 10,

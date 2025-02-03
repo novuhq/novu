@@ -177,10 +177,8 @@ export const WorkflowsPage = () => {
                           navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <RiFileAddLine />
-                          Blank Workflow
-                        </div>
+                        <RiFileAddLine />
+                        Blank Workflow
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem

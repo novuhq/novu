@@ -1,19 +1,22 @@
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import { UserSession } from '@novu/testing';
-import { IGetSubscriberResponseDto } from '@novu/shared';
+import { Novu } from '@novu/api';
+import { SubscriberResponseDto } from '../../subscribers/dtos';
+import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-const v2Prefix = '/v2';
 let session: UserSession;
 
 describe('Update Subscriber - /subscribers/:subscriberId (PATCH) #novu-v2', () => {
-  let subscriber: IGetSubscriberResponseDto;
+  let subscriber: SubscriberResponseDto;
+  let novuClient: Novu;
 
   beforeEach(async () => {
     const uuid = randomBytes(4).toString('hex');
     session = new UserSession();
     await session.initialize();
     subscriber = await createSubscriberAndValidate(uuid);
+    novuClient = initNovuClassSdk(session);
   });
 
   it('should update the fields of the subscriber', async () => {
@@ -22,10 +25,9 @@ describe('Update Subscriber - /subscribers/:subscriberId (PATCH) #novu-v2', () =
       lastName: 'Updated Last Name',
     };
 
-    const res = await session.testAgent.patch(`${v2Prefix}/subscribers/${subscriber.subscriberId}`).send(payload);
+    const res = await novuClient.subscribers.patch(payload, subscriber.subscriberId);
 
-    expect(res.statusCode).to.equal(200);
-    const updatedSubscriber = res.body.data;
+    const updatedSubscriber = res.result;
 
     expect(subscriber.firstName).to.not.equal(updatedSubscriber.firstName);
     expect(updatedSubscriber.firstName).to.equal(payload.firstName);
@@ -44,16 +46,15 @@ describe('Update Subscriber - /subscribers/:subscriberId (PATCH) #novu-v2', () =
     };
 
     const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
-    const response = await session.testAgent.patch(`${v2Prefix}/subscribers/${invalidSubscriberId}`).send(payload);
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.subscribers.patch(payload, invalidSubscriberId));
 
-    expect(response.statusCode).to.equal(404);
+    expect(error?.statusCode).to.equal(404);
   });
 
   it('should return the original subscriber if no fields are updated', async () => {
-    const res = await session.testAgent.patch(`${v2Prefix}/subscribers/${subscriber.subscriberId}`).send({});
+    const res = await novuClient.subscribers.patch({}, subscriber.subscriberId);
 
-    expect(res.statusCode).to.equal(200);
-    const updatedSubscriber = res.body.data;
+    const updatedSubscriber = res.result;
 
     expect(subscriber.firstName).to.equal(updatedSubscriber.firstName);
     expect(subscriber.lastName).to.equal(updatedSubscriber.lastName);

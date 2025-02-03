@@ -43,7 +43,7 @@ describe('Check if a subscriber belongs to a topic - /topics/:topicKey/subscribe
   });
 
   it('should check the requested subscriber belongs to a topic successfully in the database for that user', async () => {
-    const getResponse = await novuClient.topics.subscribers.retrieve(externalSubscriberId, topicKey);
+    const getResponse = await novuClient.topics.subscribers.retrieve(topicKey, externalSubscriberId);
 
     const topicSubscriber = getResponse.result;
 

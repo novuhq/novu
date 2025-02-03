@@ -20,7 +20,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
   if ((operator === 'between' || operator === 'notBetween') && (type === 'select' || type === 'text')) {
     const editors = ['from', 'to'].map((key, i) => {
       return (
-        <InputRoot key={key} className="w-28" hasError={!!error && !valueAsArray[i]}>
+        <InputRoot key={key} className="bg-bg-white w-28" hasError={!!error && !valueAsArray[i]}>
           <ControlInput
             multiline={false}
             indentWithTab={false}
@@ -48,7 +48,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
 
   return (
     <div className="flex flex-col gap-1">
-      <InputRoot className="w-40" hasError={!!error}>
+      <InputRoot className="bg-bg-white w-40" hasError={!!error}>
         <ControlInput
           multiline={false}
           indentWithTab={false}

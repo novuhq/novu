@@ -50,8 +50,8 @@ const SubscriberListTable = (props: SubscriberListTableProps) => {
           <TableHead>Phone number</TableHead>
           <TableHead
             sortable
-            sortDirection={orderBy === 'createdAt' ? orderDirection : false}
-            onSort={() => toggleSort('createdAt')}
+            sortDirection={orderBy === '_id' ? orderDirection : false}
+            onSort={() => toggleSort('_id')}
           >
             Created at
           </TableHead>
@@ -121,7 +121,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
     );
   }
 
-  if (!areFiltersApplied && !data?.subscribers.length) {
+  if (!areFiltersApplied && !data?.data.length) {
     return (
       <SubscriberListWrapper
         filterValues={filterValues}
@@ -134,7 +134,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
     );
   }
 
-  if (!data?.subscribers.length) {
+  if (!data?.data.length) {
     return (
       <SubscriberListWrapper
         filterValues={filterValues}
@@ -159,7 +159,7 @@ export const SubscriberList = (props: SubscriberListProps) => {
         orderDirection={filterValues.orderDirection}
         toggleSort={toggleSort}
       >
-        {data.subscribers.map((subscriber) => (
+        {data.data.map((subscriber) => (
           <SubscriberRow key={subscriber.subscriberId} subscriber={subscriber} />
         ))}
       </SubscriberListTable>

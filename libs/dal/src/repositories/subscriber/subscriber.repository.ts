@@ -165,7 +165,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     environmentId: string;
     organizationId: string;
     limit: number;
-    sortBy: 'updatedAt' | 'createdAt';
+    sortBy: 'updatedAt' | '_id';
     sortDirection: DirectionEnum;
     after?: string;
     before?: string;
@@ -187,7 +187,11 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         _id: id,
       });
       if (!subscriber) {
-        throw new DalException('Subscriber not found');
+        return {
+          subscribers: [],
+          next: null,
+          previous: null,
+        };
       }
     }
 

@@ -197,20 +197,6 @@ subscriberSchema.index({
 subscriberSchema.index({
   _environmentId: 1,
   _organizationId: 1,
-  createdAt: 1,
-  _id: 1,
-});
-
-subscriberSchema.index({
-  _environmentId: 1,
-  _organizationId: 1,
-  createdAt: -1,
-  _id: -1,
-});
-
-subscriberSchema.index({
-  _environmentId: 1,
-  _organizationId: 1,
   updatedAt: 1,
   _id: 1,
 });
@@ -218,8 +204,7 @@ subscriberSchema.index({
 subscriberSchema.index({
   _environmentId: 1,
   _organizationId: 1,
-  updatedAt: -1,
-  _id: -1,
+  _id: 1,
 });
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });

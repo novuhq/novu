@@ -316,7 +316,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          <SkipConditionsButton step={step} inSidebar />
+          <SkipConditionsButton origin={workflow.origin} step={step} inSidebar />
 
           {!isSupportedStep && (
             <SidebarContent>

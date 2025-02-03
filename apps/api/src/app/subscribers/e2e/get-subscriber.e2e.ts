@@ -51,7 +51,7 @@ describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
       topicKey
     );
 
-    const response = await novuClient.subscribers.retrieve(subscriberId, true);
+    const response = await novuClient.subscribers.retrieveLegacy(subscriberId, true);
 
     const subscriber = response.result;
     expect(subscriber.subscriberId).to.equal(subscriberId);

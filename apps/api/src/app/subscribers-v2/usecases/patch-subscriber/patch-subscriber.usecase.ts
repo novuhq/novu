@@ -1,46 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { CustomDataType, IGetSubscriberResponseDto } from '@novu/shared';
 import { PatchSubscriberCommand } from './patch-subscriber.command';
+import { mapSubscriberEntityToDto } from '../list-subscribers/map-subscriber-entity-to.dto';
+import { SubscriberResponseDto } from '../../../subscribers/dtos';
 
 @Injectable()
 export class PatchSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
-  async execute(command: PatchSubscriberCommand): Promise<IGetSubscriberResponseDto> {
-    const payload: Partial<SubscriberEntity> = {};
-
-    if (command.firstName !== undefined && command.firstName !== null) {
-      payload.firstName = command.firstName;
-    }
-
-    if (command.lastName !== undefined && command.lastName !== null) {
-      payload.lastName = command.lastName;
-    }
-
-    if (command.email !== undefined && command.email !== null) {
-      payload.email = command.email;
-    }
-
-    if (command.phone !== undefined && command.phone !== null) {
-      payload.phone = command.phone;
-    }
-
-    if (command.avatar !== undefined && command.avatar !== null) {
-      payload.avatar = command.avatar;
-    }
-
-    if (command.timezone !== undefined && command.timezone !== null) {
-      payload.timezone = command.timezone;
-    }
-
-    if (command.locale !== undefined && command.locale !== null) {
-      payload.locale = command.locale;
-    }
-
-    if (command.data !== undefined && command.data !== null) {
-      payload.data = command.data as CustomDataType;
-    }
+  async execute(command: PatchSubscriberCommand): Promise<SubscriberResponseDto> {
+    const nonUndefinedEntries = Object.entries(command.patchSubscriberRequestDto).filter(
+      ([_key, value]) => value !== undefined
+    );
+    const payload: Partial<SubscriberEntity> = Object.fromEntries(nonUndefinedEntries);
 
     const updatedSubscriber = await this.subscriberRepository.findOneAndUpdate(
       {
@@ -64,6 +36,9 @@ export class PatchSubscriber {
           phone: 1,
           subscriberId: 1,
           timezone: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          deleted: 1,
         },
       }
     );
@@ -72,6 +47,6 @@ export class PatchSubscriber {
       throw new NotFoundException(`Subscriber: ${command.subscriberId} was not found`);
     }
 
-    return updatedSubscriber;
+    return mapSubscriberEntityToDto(updatedSubscriber);
   }
 }

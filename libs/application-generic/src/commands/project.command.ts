@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 
-import { DirectionEnum, UserSessionData } from '@novu/shared';
+import { DirectionEnum, KeysOfT, UserSessionData } from '@novu/shared';
 
 import { BaseCommand } from './base.command';
 
@@ -99,7 +99,10 @@ export abstract class EnvironmentCommand extends BaseCommand {
   @IsNotEmpty()
   readonly organizationId: string;
 }
-export abstract class CursorBasedPaginatedCommand extends EnvironmentWithUserObjectCommand {
+export abstract class CursorBasedPaginatedCommand<
+  T,
+  K extends KeysOfT<T>,
+> extends EnvironmentWithUserObjectCommand {
   @IsDefined()
   @IsNumber()
   @Min(1)
@@ -113,4 +116,7 @@ export abstract class CursorBasedPaginatedCommand extends EnvironmentWithUserObj
   @IsString()
   @IsOptional()
   before?: string;
+
+  orderBy: K;
+  orderDirection?: DirectionEnum;
 }

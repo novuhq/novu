@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://novu.co?utm_source=github" target="_blank">
+  <a href="https://go.novu.co/github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
     <img alt="Novu Logo" src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
@@ -32,7 +32,7 @@
   <br />
   or
   <br />
-  <a href="https://dashboard-v2.novu.co?utm_campaign=github-readme" rel="dofollow"><strong>create a free account »</strong></a>
+  <a href="https://go.novu.co/github" rel="dofollow"><strong>create a free account »</strong></a>
   <br />
 
 <br/>
@@ -68,20 +68,11 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## 🚀 Getting Started
 
-There are two ways to get started:
-
-1. type the following command in your terminal.
-
-```bash
-npx novu@latest dev
-```
-
-2. [Create a free cloud account](https://dashboard-v2.novu.co?utm_campaign=github-readme)
+[Create a free account](https://dashboard-v2.novu.co?utm_campaign=github-readme) and follow the instructions on the dashboard.
 
 ## 📚 Table of contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
-- [GitOps & React Email Integration](https://github.com/novuhq/novu#-gitops)
 - [Embeddable Inbox and Preferences](https://github.com/novuhq/novu#embeddable-notification-center)
 - [Providers](https://github.com/novuhq/novu#providers)
   - [Email](https://github.com/novuhq/novu#-email)
@@ -93,40 +84,6 @@ npx novu@latest dev
 - [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
-
-## Notification workflows as code
-
-For API documentation and reference, please visit our [API Reference](https://docs.novu.co/api-reference/overview?utm_campaign=github-readme).
-
-```ts
-import { workflow, CronExpression } from '@novu/framework';
-import { z } from 'zod';
-import { render } from '@react-email/render';
-
-const commentWorkflow = workflow('comment-workflow', async (event) => {
-  const digest = await event.step.digest('digest-comments', (controls) => ({
-    cron: controls.schedule
-  }), { controlSchema: z.object({ schedule: z.nativeEnum(CronExpression) }) });
-
-  await event.step.email('digest-email', async (controls) => ({
-    subject: controls.subject,
-    body: render(<WeeklyDigestEmail { ...controls } events = { digest.events } />)
-  }), {
-    skip: () => !digest.events.length,
-    controlSchema: z.object({
-      subject: z.string().default('Hi {{subscriber.firstName}} - Acme Comments'),
-      openAiModel: z.enum(['gpt-3.5-turbo', 'gpt-4o']).default('gpt-4o'),
-      aiPrompt: z.string().default('Produce a concise comment digest'),
-    })
-  });
-}, { payloadSchema: z.object({ name: z.string(), comment: z.string() }) });
-
-await commentWorkflow.trigger({
-  payload: { name: 'John', comment: 'Are you free to give me a call?' },
-  to: 'jane@acme.com'
-});
-
-```
 
 ## Embeddable Inbox component
 

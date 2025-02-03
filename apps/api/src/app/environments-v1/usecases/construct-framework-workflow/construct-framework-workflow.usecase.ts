@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, JsonSchema, Step, StepOptions, StepOutput, Workflow } from '@novu/framework/internal';
 import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { JSONSchemaDefinition, StepTypeEnum } from '@novu/shared';
+import { JSONSchemaDefinition, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
@@ -49,12 +49,12 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructFrameworkWorkflow(newWorkflow: NotificationTemplateEntity): Workflow {
+  private constructFrameworkWorkflow(dbWorkflow: NotificationTemplateEntity): Workflow {
     return workflow(
-      newWorkflow.triggers[0].identifier,
+      dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
         const fullPayloadForRender: FullPayloadForRender = { payload, subscriber, steps: {} };
-        for await (const staticStep of newWorkflow.steps) {
+        for await (const staticStep of dbWorkflow.steps) {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
             step,
             staticStep,
@@ -246,7 +246,8 @@ export class ConstructFrameworkWorkflow {
       this.logger.error({ err: error }, 'Failed to evaluate skip rule', LOG_CONTEXT);
     }
 
-    return result;
+    // The Step Conditions in the Dashboard control the step execution, that's why we need to invert the result.
+    return !result;
   }
 }
 

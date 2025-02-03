@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDebounce } from '../hooks/use-debounce';
 
-export type SubscribersSortableColumn = 'createdAt' | 'updatedAt';
+export type SubscribersSortableColumn = '_id' | 'updatedAt';
 export interface SubscribersFilter {
   email?: string;
   phone?: string;
@@ -16,7 +16,7 @@ export interface SubscribersFilter {
   orderDirection?: DirectionEnum;
 }
 
-export const defaultSubscribersFilter: SubscribersFilter = {
+export const defaultSubscribersFilter: Required<SubscribersFilter> = {
   email: '',
   phone: '',
   name: '',
@@ -24,7 +24,7 @@ export const defaultSubscribersFilter: SubscribersFilter = {
   limit: 10,
   after: '',
   before: '',
-  orderBy: 'createdAt',
+  orderBy: '_id',
   orderDirection: DirectionEnum.DESC,
 };
 
@@ -54,10 +54,10 @@ export function useSubscribersUrlState(props: UseSubscribersUrlStateProps): Subs
       phone: searchParams.get('phone') || '',
       name: searchParams.get('name') || '',
       subscriberId: searchParams.get('subscriberId') || '',
-      limit: parseInt(searchParams.get('limit') || '10', 10),
+      limit: parseInt(searchParams.get('limit') || defaultSubscribersFilter.limit.toString(), 10),
       after: searchParams.get('after') || '',
       before: searchParams.get('before') || '',
-      orderBy: (searchParams.get('orderBy') as SubscribersSortableColumn) || 'createdAt',
+      orderBy: (searchParams.get('orderBy') as SubscribersSortableColumn) || defaultSubscribersFilter.orderBy,
       orderDirection: (searchParams.get('orderDirection') as DirectionEnum) || DirectionEnum.DESC,
     }),
     [searchParams]
