@@ -147,7 +147,7 @@ export function SubscriberOverviewForm({
   };
 
   return (
-    <div className="flex h-full flex-col items-stretch">
+    <div className="flex h-full flex-col">
       <Form {...form}>
         <form autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
           <div className="flex flex-col items-stretch gap-6 p-5">
