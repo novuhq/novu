@@ -1,11 +1,11 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AnalyticsService, ExternalApiAccessible, UserSession } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { ApiExcludeController } from '@nestjs/swagger';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { HubspotIdentifyFormUsecase } from './usecases/hubspot-identify-form/hubspot-identify-form.usecase';
 import { HubspotIdentifyFormCommand } from './usecases/hubspot-identify-form/hubspot-identify-form.command';
+import { HubspotIdentifyFormUsecase } from './usecases/hubspot-identify-form/hubspot-identify-form.usecase';
 
 @Controller({
   path: 'telemetry',
@@ -37,6 +37,16 @@ export class AnalyticsController {
   @UserAuthentication()
   @HttpCode(HttpStatus.NO_CONTENT)
   async identifyUser(@Body() body: any, @UserSession() user: UserSessionData) {
+    if (body.anonymousId) {
+      this.analyticsService.alias(body.anonymousId, user._id);
+    }
+
+    this.analyticsService.upsertUser(user, user._id, {
+      organizationType: body.organizationType,
+      companySize: body.companySize,
+      jobTitle: body.jobTitle,
+    });
+
     await this.hubspotIdentifyFormUsecase.execute(
       HubspotIdentifyFormCommand.create({
         email: user.email as string,

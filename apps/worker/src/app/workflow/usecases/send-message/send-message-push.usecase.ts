@@ -331,7 +331,7 @@ export class SendMessagePush extends SendMessageBase {
         'unexpected_push_error',
         e.message || e.name || 'Un-expect Push provider error',
         command,
-        LogCodeEnum.PUSH_ERROR
+        e
       );
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);

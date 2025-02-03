@@ -22,7 +22,7 @@ export const EditStepConditionsLayout = ({
         <Panel className="overflow-initial">
           <PanelHeader>
             <RiInputField className="text-feature size-4" />
-            <span className="text-neutral-950">Skip conditions for — {stepName}</span>
+            <span className="text-neutral-950">Step conditions for — {stepName}</span>
           </PanelHeader>
           <PanelContent className="flex flex-col gap-2 border-solid">{children}</PanelContent>
         </Panel>

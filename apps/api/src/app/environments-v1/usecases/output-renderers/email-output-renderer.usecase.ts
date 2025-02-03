@@ -209,7 +209,8 @@ export class EmailOutputRendererUsecase {
   }
 
   private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
-    const iterableArrayString = await parseLiquid(iterablePath, variables);
+    const normalizedPath = iterablePath.replace(`[${MAILY_ITERABLE_MARK}]`, '');
+    const iterableArrayString = await parseLiquid(normalizedPath, variables);
 
     try {
       const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));

@@ -5,7 +5,7 @@ import { Test } from '@nestjs/testing';
 import { RemoveSubscriber } from './remove-subscriber.usecase';
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
 import { SharedModule } from '../../../shared/shared.module';
-import { SubscribersModule } from '../../subscribers.module';
+import { SubscribersV1Module } from '../../subscribersV1.module';
 
 describe('Remove Subscriber', function () {
   let useCase: RemoveSubscriber;
@@ -13,7 +13,7 @@ describe('Remove Subscriber', function () {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, SubscribersModule],
+      imports: [SharedModule, SubscribersV1Module],
       providers: [],
     }).compile();
 

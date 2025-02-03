@@ -1,5 +1,6 @@
 import { getWorkflows } from '@/api/workflows';
 import { QueryKeys } from '@/utils/query-keys';
+import { DirectionEnum } from '@novu/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEnvironment } from '../context/environment/hooks';
 
@@ -8,7 +9,7 @@ interface UseWorkflowsParams {
   offset?: number;
   query?: string;
   orderBy?: string;
-  orderDirection?: 'asc' | 'desc';
+  orderDirection?: DirectionEnum;
 }
 
 export function useFetchWorkflows({
@@ -16,7 +17,7 @@ export function useFetchWorkflows({
   offset = 0,
   query = '',
   orderBy = '',
-  orderDirection = 'desc',
+  orderDirection = DirectionEnum.DESC,
 }: UseWorkflowsParams = {}) {
   const { currentEnvironment } = useEnvironment();
 

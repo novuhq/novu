@@ -1,7 +1,7 @@
 import { testServer } from '@novu/testing';
 import sinon from 'sinon';
 import chai from 'chai';
-import { connection, default as mongoose } from 'mongoose';
+import { default as mongoose } from 'mongoose';
 import { bootstrap } from '../src/bootstrap';
 
 async function dropDatabase() {
@@ -21,7 +21,7 @@ before(async () => {
    */
   chai.config.truncateThreshold = 0;
   await dropDatabase();
-  await testServer.create(await bootstrap());
+  await testServer.create((await bootstrap()).app);
 });
 
 after(async () => {

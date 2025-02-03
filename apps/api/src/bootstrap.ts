@@ -28,8 +28,13 @@ const extendedBodySizeRoutes = [
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
-
-export async function bootstrap(expressApp?): Promise<INestApplication> {
+class BootstrapOptions {
+  expressApp?: any;
+  internalSdkGeneration?: boolean;
+}
+export async function bootstrap(
+  bootstrapOptions?: BootstrapOptions
+): Promise<{ app: INestApplication; document: any }> {
   BullMqService.haveProInstalled();
 
   let rawBodyBuffer: undefined | ((...args) => void);
@@ -49,8 +54,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   }
 
   let app: INestApplication;
-  if (expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), nestOptions);
+  if (bootstrapOptions?.expressApp) {
+    app = await NestFactory.create(AppModule, new ExpressAdapter(bootstrapOptions?.expressApp), nestOptions);
   } else {
     app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
   }
@@ -96,19 +101,19 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  await setupSwagger(app);
+  const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
   app.useGlobalFilters(new AllExceptionsFilter(app.get(PinoLogger)));
 
-  if (expressApp) {
+  if (bootstrapOptions?.expressApp) {
     await app.init();
   } else {
-    await app.listen(process.env.PORT);
+    await app.listen(process.env.PORT || 3000);
   }
 
   app.enableShutdownHooks();
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
-  return app;
+  return { app, document };
 }

@@ -51,13 +51,13 @@ describe('Get activity stats - /notifications/stats (GET) #novu-v2', async () =>
 
   it('should retrieve last month and last week activity', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });

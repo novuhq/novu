@@ -64,7 +64,7 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     for (let i = 0; i < times; i += 1) {
       promises.push(
         novuClient.trigger({
-          name: templateToTrigger.triggers[0].identifier,
+          workflowId: templateToTrigger.triggers[0].identifier,
           to: { subscriberId: session.subscriberId },
         })
       );

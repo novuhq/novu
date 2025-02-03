@@ -39,11 +39,11 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as read', async function () {
     const { subscriberId } = session;
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 
@@ -71,11 +71,11 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should not mark all the messages as read if they are already read', async function () {
     const { subscriberId } = session;
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 
@@ -114,11 +114,11 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as unread', async function () {
     const { subscriberId } = session;
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 
@@ -157,11 +157,11 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as seen', async function () {
     const { subscriberId } = session;
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 
@@ -189,11 +189,11 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
   it('should mark all the subscriber messages as unseen', async function () {
     const { subscriberId } = session;
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 

@@ -102,6 +102,9 @@ export const EditStepConditionsForm = () => {
     const updateStepData: Partial<StepUpdateDto> = {
       controlValues: { ...step.controls.values, skip },
     };
+    if (!skip) {
+      updateStepData.controlValues!.skip = null;
+    }
 
     update(updateStepInWorkflow(workflow, step.stepId, updateStepData));
     form.reset(values);

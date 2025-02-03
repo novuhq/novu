@@ -45,9 +45,9 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
   });
 
   it('should remove messages by bulk', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 
@@ -82,9 +82,9 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
   });
 
   it('should throw an exception when message ids were not provided', async function () {
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
-    await novuClient.trigger({ name: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
+    await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.awaitRunningJobs(template._id);
 

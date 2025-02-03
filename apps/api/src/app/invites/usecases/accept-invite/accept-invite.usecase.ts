@@ -56,10 +56,10 @@ export class AcceptInvite {
 
     try {
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu({ apiKey: process.env.NOVU_API_KEY });
+        const novu = new Novu({ security: { secretKey: process.env.NOVU_API_KEY } });
 
         await novu.trigger({
-          name: process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E',
+          workflowId: process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E',
           to: [
             {
               subscriberId: inviter._id,

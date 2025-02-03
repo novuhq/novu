@@ -1,3 +1,5 @@
+import { WorkflowInternalResponseDto } from '@novu/application-generic';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   PreferencesResponseDto,
   RuntimeIssueDto,
@@ -11,8 +13,6 @@ import {
   WorkflowStatusEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { WorkflowInternalResponseDto } from '@novu/application-generic';
 import { buildSlug } from '../../shared/helpers/build-slug';
 
 export function toResponseWorkflowDto(
@@ -40,6 +40,7 @@ export function toResponseWorkflowDto(
     createdAt: workflow.createdAt || 'Missing Create At',
     status: workflow.status || WorkflowStatusEnum.ACTIVE,
     issues: workflow.issues as unknown as Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>,
+    lastTriggeredAt: workflow.lastTriggeredAt,
   };
 }
 
@@ -57,6 +58,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
     createdAt: template.createdAt || 'Missing Create At',
     status: template.status || WorkflowStatusEnum.ACTIVE,
+    lastTriggeredAt: template.lastTriggeredAt,
   };
 }
 

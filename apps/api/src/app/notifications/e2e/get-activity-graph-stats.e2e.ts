@@ -39,13 +39,13 @@ describe('Get activity feed graph stats - /notifications/graph/stats (GET) #novu
 
   it('should get the current activity feed graph stats', async function () {
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });
 
     await novuClient.trigger({
-      name: template.triggers[0].identifier,
+      workflowId: template.triggers[0].identifier,
       to: subscriberId,
       payload: { firstName: 'Test' },
     });

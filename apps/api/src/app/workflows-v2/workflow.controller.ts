@@ -54,6 +54,7 @@ import { SyncToEnvironmentCommand } from './usecases/sync-to-environment/sync-to
 import { SyncToEnvironmentUseCase } from './usecases/sync-to-environment/sync-to-environment.usecase';
 import { UpsertWorkflowCommand } from './usecases/upsert-workflow/upsert-workflow.command';
 import { UpsertWorkflowUseCase } from './usecases/upsert-workflow/upsert-workflow.usecase';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller({ path: `/workflows`, version: '2' })
@@ -192,6 +193,7 @@ export class WorkflowController {
 
   @Get('/:workflowId/steps/:stepId')
   @UseGuards(UserAuthGuard)
+  @SdkMethodName('getStepData')
   async getWorkflowStepData(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
@@ -233,6 +235,7 @@ export class WorkflowController {
   }
 
   @Get('/:workflowId/test-data')
+  @SdkMethodName('getWorkflowTestData')
   @UseGuards(UserAuthGuard)
   async getWorkflowTestData(
     @UserSession() user: UserSessionData,

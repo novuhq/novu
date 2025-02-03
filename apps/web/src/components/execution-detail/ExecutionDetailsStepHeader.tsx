@@ -85,6 +85,10 @@ const generateDetailByStepAndStatus = (status, job) => {
     return `Success! ${job.executionDetails?.at(-1)?.detail}`;
   }
 
+  if (status === JobStatusEnum.FAILED) {
+    return `Failed! ${job.executionDetails?.at(-1)?.detail}`;
+  }
+
   if (job.type === StepTypeEnum.DIGEST) {
     if (status === JobStatusEnum.SKIPPED) {
       return job.executionDetails?.at(-1)?.detail;
@@ -99,7 +103,6 @@ const generateDetailByStepAndStatus = (status, job) => {
   if (job.type === StepTypeEnum.DELAY) {
     const { digest, step: stepMetadata, payload } = job;
 
-    if (!digest.amount && !digest.unit) return `Waiting to receive execution delay from bridge endpoint`;
     if (stepMetadata?.metadata?.type === DelayTypeEnum.SCHEDULED) {
       return `Delaying execution until ${payload[stepMetadata.metadata.delayPath]}`;
     }

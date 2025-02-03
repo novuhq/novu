@@ -530,7 +530,7 @@ const buildTriggerRequestPayload = (
   attachments?: Record<string, unknown>[]
 ): TriggerEventRequestDto => {
   return {
-    name: template.triggers[0].identifier,
+    workflowId: template.triggers[0].identifier,
     to,
     payload: {
       firstName: 'Testing of User Name',
@@ -547,7 +547,7 @@ const triggerEvent = async (
   payload: Record<string, unknown> = {}
 ): Promise<void> => {
   await initNovuClassSdk(session).trigger({
-    name: template.triggers[0].identifier,
+    workflowId: template.triggers[0].identifier,
     to,
     payload,
   });

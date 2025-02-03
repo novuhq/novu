@@ -19,6 +19,7 @@ import {
   WorkflowsPage,
 } from '@/pages';
 
+import { SubscribersPage } from '@/pages/subscribers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -119,6 +120,10 @@ const router = createBrowserRouter([
                     element: <CreateWorkflowPage />,
                   },
                 ],
+              },
+              {
+                path: ROUTES.SUBSCRIBERS,
+                element: <SubscribersPage />,
               },
               {
                 path: ROUTES.API_KEYS,

@@ -7,16 +7,17 @@ import {
   TableFooter,
   TableHead,
   TableHeader,
+  TableHeadSortDirection,
   TableRow,
 } from '@/components/primitives/table';
 import { WorkflowListEmpty } from '@/components/workflow-list-empty';
 import { WorkflowRow } from '@/components/workflow-row';
-import { ListWorkflowResponse } from '@novu/shared';
+import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
 import { RiMore2Fill } from 'react-icons/ri';
 import { createSearchParams, useLocation, useSearchParams } from 'react-router-dom';
 import { ServerErrorPage } from './shared/server-error-page';
 
-export type SortableColumn = 'name' | 'updatedAt';
+export type SortableColumn = 'name' | 'updatedAt' | 'lastTriggeredAt';
 
 interface WorkflowListProps {
   data?: ListWorkflowResponse;
@@ -24,7 +25,7 @@ interface WorkflowListProps {
   isError?: boolean;
   limit?: number;
   orderBy?: SortableColumn;
-  orderDirection?: 'asc' | 'desc';
+  orderDirection?: TableHeadSortDirection;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
 }
@@ -52,7 +53,12 @@ export function WorkflowList({
   const offset = parseInt(searchParams.get('offset') || '0');
 
   const toggleSort = (column: SortableColumn) => {
-    const newDirection = column === orderBy ? (orderDirection === 'desc' ? 'asc' : 'desc') : 'desc';
+    const newDirection =
+      column === orderBy
+        ? orderDirection === DirectionEnum.DESC
+          ? DirectionEnum.ASC
+          : DirectionEnum.DESC
+        : DirectionEnum.DESC;
     searchParams.set('orderDirection', newDirection);
     searchParams.set('orderBy', column);
     setSearchParams(searchParams);
@@ -89,6 +95,14 @@ export function WorkflowList({
             >
               Last updated
             </TableHead>
+            {/*  <TableHead
+              sortable
+              sortDirection={orderBy === 'lastTriggeredAt' ? orderDirection : false}
+              onSort={() => toggleSort('lastTriggeredAt')}
+            >
+              Last triggered
+            </TableHead> */}
+
             <TableHead />
           </TableRow>
         </TableHeader>
@@ -109,6 +123,9 @@ export function WorkflowList({
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-5 w-[7ch] rounded-full" />
+                  </TableCell>
+                  <TableCell className="text-foreground-600 text-sm font-medium">
+                    <Skeleton className="h-5 w-[14ch] rounded-full" />
                   </TableCell>
                   <TableCell className="text-foreground-600 text-sm font-medium">
                     <Skeleton className="h-5 w-[14ch] rounded-full" />

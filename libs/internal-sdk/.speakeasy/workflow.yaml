@@ -1,0 +1,19 @@
+workflowVersion: 1.0.0
+speakeasyVersion: latest
+sources:
+    internal-sdk-OAS:
+        inputs:
+            - location: ../../apps/api/dist/swagger-spec.json
+        overlays:
+            - location: .speakeasy/speakeasy-modifications-overlay.yaml
+        output: sources/json-development.json
+        registry:
+            location: registry.speakeasyapi.dev/novu/novu/json-development-internal
+targets:
+    internal-sdk:
+        target: typescript
+        source: internal-sdk-OAS
+        codeSamples:
+            registry:
+                location: registry.speakeasyapi.dev/novu/novu/json-development-internal-code-samples
+            blocking: false

@@ -1,13 +1,11 @@
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { parseStepVariables } from '@/utils/parseStepVariablesToLiquidVariables';
 import { cn } from '@/utils/ui';
 import { Editor } from '@maily-to/core';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { HTMLAttributes, useMemo, useState } from 'react';
 import { ForExtension } from './extensions/for';
-import { DEFAULT_EDITOR_CONFIG, getEditorBlocks } from './maily-config';
+import { DEFAULT_EDITOR_CONFIG, DEFAULT_EDITOR_BLOCKS } from './maily-config';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -36,23 +34,13 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
   const [_, setEditor] = useState<TiptapEditor>();
 
-  const isForBlockEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_EMAIL_FOR_BLOCK_ENABLED);
-  const isShowEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ND_EMAIL_SHOW_ENABLED);
-
   return (
     <>
-      {!isShowEnabled && (
-        <style>{`
-                  button:has(.lucide-eye) {
-                    display: none;
-                  }
-                `}</style>
-      )}
       <div className={cn('mx-auto flex h-full flex-col items-start', className)} {...rest}>
         <Editor
-          key={isForBlockEnabled ? 'for-block-enabled' : 'for-block-disabled'}
+          key="for-block-enabled"
           config={DEFAULT_EDITOR_CONFIG}
-          blocks={getEditorBlocks(isForBlockEnabled)}
+          blocks={DEFAULT_EDITOR_BLOCKS}
           extensions={[ForExtension]}
           variableTriggerCharacter="{{"
           variables={({ query, editor, from }) => {

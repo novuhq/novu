@@ -1,20 +1,18 @@
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { ModuleRef } from '@nestjs/core';
 
 import {
   AnalyticsService,
-  buildHasNotificationKey,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
   GetFeatureFlag,
-  GetFeatureFlagCommand,
   Instrument,
   InstrumentUsecase,
   InvalidateCacheService,
@@ -22,14 +20,6 @@ import {
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import {
-  FeatureFlagsKeysEnum,
-  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  WorkflowOriginEnum,
-} from '@novu/shared';
 import {
   EnvironmentEntity,
   EnvironmentRepository,
@@ -44,15 +34,15 @@ import {
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
+import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum, WorkflowOriginEnum } from '@novu/shared';
 
-import { Novu } from '@novu/api';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
   ParseEventRequestBroadcastCommand,
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -183,7 +173,9 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
-    return await this.dispatchEvent(command, transactionId);
+    const result = await this.dispatchEvent(command, transactionId);
+
+    return result;
   }
 
   private async queryDiscoverWorkflow(command: ParseEventRequestCommand): Promise<DiscoverWorkflowOutput | null> {

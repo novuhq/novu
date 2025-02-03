@@ -32,7 +32,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     return (
       await novuClient.trigger({
         transactionId,
-        name: template.triggers[0].identifier,
+        workflowId: template.triggers[0].identifier,
         to,
         payload,
         overrides,

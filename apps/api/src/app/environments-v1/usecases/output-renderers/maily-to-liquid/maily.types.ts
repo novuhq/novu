@@ -22,6 +22,17 @@ export enum MailyAttrsEnum {
   HREF = 'href',
 }
 
+/**
+ * Special indicator to distinguish whether to generate an object,
+ * array of objects or array of object with nested props
+ *
+ * @see keysToObject function in src/app/workflows-v2/util/utils.ts
+ *
+ * @example
+ * simple array = {{ payload.comments[0] }} -> [""]
+ * array of objects = {{ payload.comments[0].author }} -> [{"author": "..."}]
+ * object = {{ payload.comments.author }} -> {"author": "John"}
+ */
 export const MAILY_ITERABLE_MARK = '0';
 
 export const MAILY_FIRST_CITIZEN_VARIABLE_KEY = [

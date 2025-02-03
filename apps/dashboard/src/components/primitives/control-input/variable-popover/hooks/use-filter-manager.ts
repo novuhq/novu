@@ -1,4 +1,3 @@
-import { useSortable } from '@/components/primitives/hooks/use-sortable';
 import { useCallback, useState } from 'react';
 import { FILTERS } from '../constants';
 import type { FilterWithParam } from '../types';
@@ -11,18 +10,13 @@ type UseFilterManagerProps = {
 export function useFilterManager({ initialFilters, onUpdate }: UseFilterManagerProps) {
   const [filters, setFilters] = useState<FilterWithParam[]>(initialFilters.filter((t) => t.value !== 'default'));
 
-  const handleFiltersUpdate = useCallback(
+  const handleReorder = useCallback(
     (newFilters: FilterWithParam[]) => {
       setFilters(newFilters);
       onUpdate(newFilters);
     },
     [onUpdate]
   );
-
-  const { dragOverIndex, draggingItem, handleDragStart, handleDragEnd, handleDrag } = useSortable({
-    items: filters,
-    onUpdate: handleFiltersUpdate,
-  });
 
   const handleFilterToggle = useCallback(
     (value: string) => {
@@ -95,12 +89,8 @@ export function useFilterManager({ initialFilters, onUpdate }: UseFilterManagerP
 
   return {
     filters,
-    dragOverIndex,
-    draggingItem,
-    handleDragStart,
-    handleDragEnd,
-    handleDrag,
     handleFilterToggle,
+    handleReorder,
     handleParamChange,
     getFilteredFilters,
   };

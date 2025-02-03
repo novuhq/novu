@@ -1,0 +1,2 @@
+# Ignore all JavaScript files in the `build` directory
+packages/internal-sdk

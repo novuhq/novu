@@ -1,11 +1,11 @@
-import { useEffect, useMemo } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
-import { useForm } from 'react-hook-form';
-import { Form, FormItem, FormField } from '../primitives/form/form';
-import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { CalendarIcon } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
+import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
+import { Form, FormField, FormItem } from '../primitives/form/form';
 
 export type ActivityFilters = {
   onFiltersChange: (filters: ActivityFiltersData) => void;

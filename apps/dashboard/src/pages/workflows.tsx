@@ -8,7 +8,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { StepTypeEnum } from '@novu/shared';
+import { DirectionEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -44,7 +44,7 @@ export const WorkflowsPage = () => {
   const track = useTelemetry();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams({
-    orderDirection: 'desc',
+    orderDirection: DirectionEnum.DESC,
     orderBy: 'updatedAt',
     query: '',
   });
@@ -93,7 +93,7 @@ export const WorkflowsPage = () => {
     limit,
     offset,
     orderBy: searchParams.get('orderBy') as SortableColumn,
-    orderDirection: searchParams.get('orderDirection') as 'asc' | 'desc',
+    orderDirection: searchParams.get('orderDirection') as DirectionEnum,
     query: searchParams.get('query') || '',
   });
 
@@ -177,10 +177,8 @@ export const WorkflowsPage = () => {
                           navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <RiFileAddLine />
-                          Blank Workflow
-                        </div>
+                        <RiFileAddLine />
+                        Blank Workflow
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -253,7 +251,7 @@ export const WorkflowsPage = () => {
               hasActiveFilters={!!hasActiveFilters}
               onClearFilters={clearFilters}
               orderBy={searchParams.get('orderBy') as SortableColumn}
-              orderDirection={searchParams.get('orderDirection') as 'asc' | 'desc'}
+              orderDirection={searchParams.get('orderDirection') as DirectionEnum}
               data={workflowsData}
               isLoading={isPending}
               isError={isError}

@@ -9,4 +9,5 @@ export const QueryKeys = Object.freeze({
   getApiKeys: 'getApiKeys',
   fetchIntegrations: 'fetchIntegrations',
   fetchActivity: 'fetchActivity',
+  fetchSubscribers: 'fetchSubscribers',
 });

@@ -44,6 +44,8 @@ export class SubscriberEntity {
   lastOnlineAt?: string;
 
   data?: SubscriberCustomData;
+
+  timezone?: string;
 }
 
 export type SubscriberDBModel = ChangePropsValueType<SubscriberEntity, '_environmentId' | '_organizationId'>;
