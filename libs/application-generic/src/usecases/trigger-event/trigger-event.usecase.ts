@@ -35,7 +35,7 @@ import { TriggerEventCommand } from './trigger-event.command';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
-} from '../create-subscriber';
+} from '../create-or-update-subscriber';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
