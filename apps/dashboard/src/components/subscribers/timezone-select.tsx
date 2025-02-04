@@ -32,7 +32,7 @@ export function TimezoneSelect({
       required={required}
       defaultValue={defaultOption}
     >
-      <SelectTrigger className="group overflow-hidden p-1.5 shadow-sm">
+      <SelectTrigger className="focus:ring-stroke-strong group overflow-hidden p-1.5 shadow-sm focus:ring-1">
         <SelectValue
           placeholder={
             <div className="flex w-full items-center gap-1">
