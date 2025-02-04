@@ -18,7 +18,6 @@ export const usePatchSubscriberPreferences = (
       patchSubscriberPreferences({ environment: currentEnvironment!, ...args }),
     ...options,
     onSuccess: async (data, variables, ctx) => {
-      // TODO: is this needed?
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchSubscriberPreferences],
       });
