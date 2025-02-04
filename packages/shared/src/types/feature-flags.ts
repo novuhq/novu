@@ -1,10 +1,7 @@
 /**
  * The required format for a boolean flag key.
  */
-export type IFlagKey =
-  | `IS_${Uppercase<string>}_ENABLED`
-  | `IS_${Uppercase<string>}_DISABLED`
-  | `DATE_${Uppercase<string>}`;
+export type IFlagKey = `IS_${Uppercase<string>}_ENABLED` | `IS_${Uppercase<string>}_DISABLED`;
 
 /**
  * Helper function to test that enum keys and values match correct format.
@@ -52,8 +49,12 @@ export enum FeatureFlagsKeysEnum {
   IS_SUBSCRIBERS_PAGE_ENABLED = 'IS_SUBSCRIBERS_PAGE_ENABLED',
   IS_WORKFLOW_CHECK_LIST_ENABLED = 'IS_WORKFLOW_CHECK_LIST_ENABLED',
   IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED = 'IS_TIER_DURATION_RESTRICTION_EXCLUDED_ENABLED',
+<<<<<<< HEAD
   IS_2025_Q1_TIERING_ENABLED = 'IS_2025_Q1_TIERING_ENABLED',
   IS_LEGACY_TO_2025_Q1_TIER_MIGRATION_ENABLED = 'IS_LEGACY_TO_2025_Q1_TIER_MIGRATION_ENABLED',
   DATE_WORKFLOW_LIMIT_ENFORCEMENT = 'DATE_WORKFLOW_LIMIT_ENFORCEMENT',
   IS_WORKFLOW_LIMIT_ENABLED = 'IS_WORKFLOW_LIMIT_ENABLED',
+=======
+  IS_MAX_WORKFLOW_LIMIT_ENABLED = 'IS_MAX_WORKFLOW_LIMIT_ENABLED',
+>>>>>>> 08093b60e (feat(api-service): update after pr comments)
 }

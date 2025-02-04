@@ -17,29 +17,4 @@ export class GetFeatureFlag {
       defaultValue,
     });
   }
-
-  async date(command: GetFeatureFlagCommand): Promise<Date> {
-    const value = process.env[command.key];
-    const defaultValue = prepareDateStringFeatureFlag(value, new Date());
-
-    return await this.featureFlagsService.getWithContext({
-      ...command,
-      defaultValue,
-    });
-  }
 }
-
-export const prepareDateStringFeatureFlag = (
-  value: string | undefined,
-  defaultValue: Date,
-) => {
-  if (!value) {
-    return defaultValue;
-  }
-
-  try {
-    return new Date(value);
-  } catch (error) {
-    return defaultValue;
-  }
-};

@@ -8,8 +8,8 @@ import { ApiException } from '../utils/exceptions';
 @Injectable()
 export class ResourceValidatorService {
   private readonly MAX_STEPS_PER_WORKFLOW = 10;
-  private readonly OLD_WORKFLOWS_LIMIT = 1000;
-  private readonly NEW_WORKFLOWS_LIMIT = 100;
+  private readonly MAX_WORKFLOWS_LIMIT_2024 = 1000;
+  private readonly MAX_WORKFLOWS_LIMIT_2025 = 100;
 
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -18,7 +18,7 @@ export class ResourceValidatorService {
 
   async validateStepsCount(environmentId: string, steps: NotificationStep[]) {
     const isWorkflowLimitEnabled = await this.getFeatureFlag.execute({
-      key: FeatureFlagsKeysEnum.IS_WORKFLOW_LIMIT_ENABLED,
+      key: FeatureFlagsKeysEnum.IS_MAX_WORKFLOW_LIMIT_ENABLED,
       environmentId,
       organizationId: 'system',
       userId: 'system',
@@ -39,7 +39,7 @@ export class ResourceValidatorService {
 
   async validateWorkflowLimit(environmentId: string) {
     const isWorkflowLimitEnabled = await this.getFeatureFlag.execute({
-      key: FeatureFlagsKeysEnum.IS_WORKFLOW_LIMIT_ENABLED,
+      key: FeatureFlagsKeysEnum.IS_MAX_WORKFLOW_LIMIT_ENABLED,
       environmentId,
       organizationId: 'system',
       userId: 'system',
@@ -49,40 +49,33 @@ export class ResourceValidatorService {
       return;
     }
 
-    const enforcementDate = await this.getFeatureFlag.date({
-      key: FeatureFlagsKeysEnum.DATE_WORKFLOW_LIMIT_ENFORCEMENT,
-      environmentId,
-      organizationId: 'system',
-      userId: 'system',
-    });
-
-    const enforcementTimestamp = new Date(enforcementDate).getTime();
+    const enforcementTimestamp = new Date('2025-02-04T12:00:00.000Z');
 
     const [oldWorkflowsCount, newWorkflowsCount] = await Promise.all([
       this.notificationTemplateRepository.count({
         _environmentId: environmentId,
-        createdAt: { $lt: new Date(enforcementTimestamp) },
+        createdAt: { $lt: enforcementTimestamp },
       }),
       this.notificationTemplateRepository.count({
         _environmentId: environmentId,
-        createdAt: { $gte: new Date(enforcementTimestamp) },
+        createdAt: { $gte: enforcementTimestamp },
       }),
     ]);
 
     const totalWorkflowsCount = oldWorkflowsCount + newWorkflowsCount;
-    if (totalWorkflowsCount >= this.OLD_WORKFLOWS_LIMIT) {
+    if (totalWorkflowsCount >= this.MAX_WORKFLOWS_LIMIT_2024) {
       throw new ApiException({
-        message: getErrorMessage(this.OLD_WORKFLOWS_LIMIT),
+        message: getErrorMessage(this.MAX_WORKFLOWS_LIMIT_2024),
         currentCount: totalWorkflowsCount,
-        maxWorkflows: this.OLD_WORKFLOWS_LIMIT,
+        maxWorkflows: this.MAX_WORKFLOWS_LIMIT_2024,
       });
     }
 
-    if (newWorkflowsCount >= this.NEW_WORKFLOWS_LIMIT) {
+    if (newWorkflowsCount >= this.MAX_WORKFLOWS_LIMIT_2025) {
       throw new ApiException({
-        message: getErrorMessage(this.NEW_WORKFLOWS_LIMIT),
+        message: getErrorMessage(this.MAX_WORKFLOWS_LIMIT_2025),
         currentCount: newWorkflowsCount,
-        maxWorkflows: this.NEW_WORKFLOWS_LIMIT,
+        maxWorkflows: this.MAX_WORKFLOWS_LIMIT_2025,
       });
     }
   }

@@ -62,17 +62,15 @@ export const envValidators = {
     }),
 
   // Feature Flags
-  ...Object.keys(FeatureFlagsKeysEnum)
-    .filter((key) => key.startsWith('IS_'))
-    .reduce(
-      (acc, key) => {
-        return {
-          ...acc,
-          [key as FeatureFlagsKeysEnum]: bool({ default: false }),
-        };
-      },
-      {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>
-    ),
+  ...Object.keys(FeatureFlagsKeysEnum).reduce(
+    (acc, key) => {
+      return {
+        ...acc,
+        [key as FeatureFlagsKeysEnum]: bool({ default: false }),
+      };
+    },
+    {} as Record<FeatureFlagsKeysEnum, ValidatorSpec<boolean>>
+  ),
 
   // Azure validators
   ...(processEnv.STORAGE_SERVICE === 'AZURE' && {
