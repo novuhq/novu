@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityPanel } from '@/components/activity/activity-panel';
 import { WorkflowResponseDto } from '@novu/shared';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { RiCheckboxCircleFill, RiCheckboxCircleLine } from 'react-icons/ri';
+import { RiCheckboxCircleFill } from 'react-icons/ri';
 import { useFetchActivities } from '../../../hooks/use-fetch-activities';
 import { WorkflowTriggerInboxIllustration } from '../../icons/workflow-trigger-inbox';
 import { Button } from '../../primitives/button';
