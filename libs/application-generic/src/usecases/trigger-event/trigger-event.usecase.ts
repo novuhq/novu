@@ -19,10 +19,6 @@ import {
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../../services/analytics.service';
-import {
-  buildNotificationTemplateIdentifierKey,
-  CachedEntity,
-} from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
@@ -197,16 +193,6 @@ export class TriggerEvent {
     }
   }
 
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-    options: {
-      ttl: 120, // seconds
-    },
-  })
   private buildCommand(
     environmentId: string,
     organizationId: string,

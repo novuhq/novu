@@ -64,7 +64,7 @@ export class CreateOrUpdateSubscriberUseCase {
 
   private async updateSubscriber(
     command: CreateOrUpdateSubscriberCommand,
-    existingSubscriber,
+    existingSubscriber: SubscriberEntity,
   ) {
     return await this.updateSubscriberUseCase.execute(
       this.buildUpdateSubscriberCommand(command, existingSubscriber),
