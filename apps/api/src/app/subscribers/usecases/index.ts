@@ -1,9 +1,7 @@
 import {
-  GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   UpdateSubscriber,
   CreateSubscriber,
-  GetSubscriberGlobalPreference,
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
 
@@ -21,6 +19,8 @@ import { CreateIntegration } from '../../integrations/usecases/create-integratio
 import { CheckIntegration } from '../../integrations/usecases/check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from '../../integrations/usecases/check-integration/check-integration-email.usecase';
 import { UpdatePreferences } from '../../inbox/usecases/update-preferences/update-preferences.usecase';
+import { GetSubscriberGlobalPreference } from './get-subscriber-global-preference/get-subscriber-global-preference.usecase';
+import { GetSubscriberPreference } from './get-subscriber-preference/get-subscriber-preference.usecase';
 
 export {
   SearchByExternalSubscriberIds,

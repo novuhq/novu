@@ -1,12 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MemberEntity, SubscriberEntity, UserEntity } from '@novu/dal';
-import {
-  AuthProviderEnum,
-  AuthenticateContext,
-  ISubscriberJwt,
-  UserSessionData,
-} from '@novu/shared';
-import { IAuthService } from './auth.service.interface';
+import { AuthProviderEnum, AuthenticateContext, ISubscriberJwt, UserSessionData } from '@novu/shared';
+import { IAuthService } from '@novu/application-generic';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -24,30 +19,17 @@ export class AuthService implements IAuthService {
       id: string;
     },
     distinctId: string,
-    authContext: AuthenticateContext = {},
+    authContext: AuthenticateContext = {}
   ): Promise<{ newUser: boolean; token: string }> {
-    return this.authService.authenticate(
-      authProvider,
-      accessToken,
-      refreshToken,
-      profile,
-      distinctId,
-      authContext,
-    );
+    return this.authService.authenticate(authProvider, accessToken, refreshToken, profile, distinctId, authContext);
   }
 
   refreshToken(userId: string): Promise<string> {
     return this.authService.refreshToken(userId);
   }
 
-  isAuthenticatedForOrganization(
-    userId: string,
-    organizationId: string,
-  ): Promise<boolean> {
-    return this.authService.isAuthenticatedForOrganization(
-      userId,
-      organizationId,
-    );
+  isAuthenticatedForOrganization(userId: string, organizationId: string): Promise<boolean> {
+    return this.authService.isAuthenticatedForOrganization(userId, organizationId);
   }
 
   getUserByApiKey(apiKey: string): Promise<UserSessionData> {
@@ -66,21 +48,16 @@ export class AuthService implements IAuthService {
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
-    environmentId?: string,
+    environmentId?: string
   ): Promise<string> {
-    return this.authService.getSignedToken(
-      user,
-      organizationId,
-      member,
-      environmentId,
-    );
+    return this.authService.getSignedToken(user, organizationId, member, environmentId);
   }
 
   validateUser(payload: UserSessionData): Promise<UserEntity> {
     return this.authService.validateUser(payload);
   }
 
-  validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity> {
+  validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
     return this.authService.validateSubscriber(payload);
   }
 
