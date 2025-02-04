@@ -43,6 +43,7 @@ import { DetailEnum } from '@novu/application-generic';
 import { Novu } from '@novu/api';
 import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriberpayloaddto';
 import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/models/components';
+import { it } from 'mocha';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 
@@ -2410,6 +2411,29 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages.length).to.equal(1);
       expect(messages[0].subject).to.equal('Better Variant subject');
     });
+
+    describe('Post Mortem', function () {
+      // Repeat the test 3 times
+      for (let i = 0; i < 3; i += 1) {
+        it(`should not create multiple subscribers when multiple triggers are made with the same not created subscribers (run ${i + 1})`, async function () {
+          template = await createSimpleWorkflow(session);
+
+          const subscriberId = `not-created-twice-subscriber${i}`;
+          await Promise.all([
+            simpleTrigger(novuClient, template, subscriberId),
+            simpleTrigger(novuClient, template, subscriberId),
+          ]);
+          await session.awaitRunningJobs(template._id);
+
+          const subscribers = await subscriberRepository.find({
+            _environmentId: session.environment._id,
+            subscriberId,
+          });
+
+          expect(subscribers.length).to.equal(1);
+        });
+      }
+    });
     describe('filters logic', () => {
       beforeEach(async () => {
         subscriberService = new SubscribersService(session.organization._id, session.environment._id);
@@ -3509,5 +3533,26 @@ async function createTemplate(session, channelType) {
         content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
       },
     ],
+  });
+}
+async function createSimpleWorkflow(session) {
+  return await session.createTemplate({
+    steps: [
+      {
+        type: StepTypeEnum.EMAIL,
+        content: 'Hello world {{firstName}}' as string,
+      },
+    ],
+  });
+}
+
+function simpleTrigger(novuClient: Novu, template, notCreatedTwiceSubscriber: string) {
+  return novuClient.trigger({
+    workflowId: template.triggers[0].identifier,
+    to: [notCreatedTwiceSubscriber],
+    payload: {
+      firstName: 'Testing of User Name',
+      phone: '+972541111111',
+    },
   });
 }

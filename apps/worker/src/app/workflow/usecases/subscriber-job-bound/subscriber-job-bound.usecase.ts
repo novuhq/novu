@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-  IntegrationRepository,
-  EnvironmentRepository,
-} from '@novu/dal';
+import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
@@ -22,11 +17,11 @@ import {
   CachedEntity,
   CreateNotificationJobs,
   CreateNotificationJobsCommand,
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
-  ProcessSubscriber,
-  ProcessSubscriberCommand,
 } from '@novu/application-generic';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
@@ -38,9 +33,9 @@ export class SubscriberJobBound {
   constructor(
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
-    private processSubscriber: ProcessSubscriber,
+    private createOrUpdateSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
+
     private integrationRepository: IntegrationRepository,
-    private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
@@ -104,13 +99,8 @@ export class SubscriberJobBound {
       statelessWorkflow: !!command.bridge?.url,
     });
 
-    const subscriberProcessed = await this.processSubscriber.execute(
-      ProcessSubscriberCommand.create({
-        environmentId,
-        organizationId,
-        userId,
-        subscriber,
-      })
+    const subscriberProcessed = await this.createOrUpdateSubscriberUsecase.execute(
+      this.buildCommand(environmentId, organizationId, subscriber)
     );
 
     // If no subscriber makes no sense to try to create notification
@@ -166,6 +156,25 @@ export class SubscriberJobBound {
         organizationId: command.organizationId,
       })
     );
+  }
+  private buildCommand(
+    environmentId: string,
+    organizationId: string,
+    subscriberPayload: ISubscribersDefine
+  ): CreateOrUpdateSubscriberCommand {
+    return CreateOrUpdateSubscriberCommand.create({
+      environmentId,
+      organizationId,
+      subscriberId: subscriberPayload?.subscriberId,
+      email: subscriberPayload?.email,
+      firstName: subscriberPayload?.firstName,
+      lastName: subscriberPayload?.lastName,
+      phone: subscriberPayload?.phone,
+      avatar: subscriberPayload?.avatar,
+      locale: subscriberPayload?.locale,
+      data: subscriberPayload?.data,
+      channels: subscriberPayload?.channels,
+    });
   }
 
   private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {

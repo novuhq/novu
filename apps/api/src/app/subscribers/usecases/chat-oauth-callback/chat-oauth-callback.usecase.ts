@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 
 import {
-  CreateSubscriber,
-  CreateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+  CreateOrUpdateSubscriberCommand,
   decryptCredentials,
   IChannelCredentialsCommand,
   OAuthHandlerEnum,
@@ -32,7 +32,7 @@ export class ChatOauthCallback {
     private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
-    private createSubscriberUsecase: CreateSubscriber
+    private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase
   ) {}
 
   async execute(command: ChatOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -64,7 +64,7 @@ export class ChatOauthCallback {
     webhookUrl: string
   ): Promise<void> {
     await this.createSubscriberUsecase.execute(
-      CreateSubscriberCommand.create({
+      CreateOrUpdateSubscriberCommand.create({
         organizationId,
         environmentId: command.environmentId,
         subscriberId: command?.subscriberId,
