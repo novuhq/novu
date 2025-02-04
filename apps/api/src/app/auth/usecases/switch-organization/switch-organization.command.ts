@@ -1,5 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
-import { AuthenticatedCommand } from '../../commands';
+import { AuthenticatedCommand } from '@novu/application-generic';
 
 export class SwitchOrganizationCommand extends AuthenticatedCommand {
   @IsNotEmpty()

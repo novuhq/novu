@@ -6,6 +6,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from '@/components/primitives/command';
 import { FormControl, FormItem } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
@@ -21,8 +22,9 @@ import { FilterItem } from './components/filter-item';
 import { FilterPreview } from './components/filter-preview';
 import { ReorderFiltersGroup } from './components/reorder-filters-group';
 import { useFilterManager } from './hooks/use-filter-manager';
+import { useSuggestedFilters } from './hooks/use-suggested-filters';
 import { useVariableParser } from './hooks/use-variable-parser';
-import type { FilterWithParam, VariablePopoverProps } from './types';
+import type { Filters, FilterWithParam, VariablePopoverProps } from './types';
 import { formatLiquidVariable, getDefaultSampleValue } from './utils';
 
 export function VariablePopover({ variable, onUpdate }: VariablePopoverProps) {
@@ -84,6 +86,7 @@ export function VariablePopover({ variable, onUpdate }: VariablePopoverProps) {
     onUpdate: setFilters,
   });
 
+  const suggestedFilters = useSuggestedFilters(name, filters);
   const filteredFilters = useMemo(() => getFilteredFilters(searchQuery), [getFilteredFilters, searchQuery]);
 
   const currentLiquidValue = useMemo(
@@ -173,6 +176,25 @@ export function VariablePopover({ variable, onUpdate }: VariablePopoverProps) {
 
                       <CommandList className="max-h-[300px]">
                         <CommandEmpty>No filters found</CommandEmpty>
+                        {suggestedFilters.length > 0 && !searchQuery && (
+                          <>
+                            <CommandGroup heading="Suggested">
+                              {suggestedFilters[0].filters.map((filterItem: Filters) => (
+                                <CommandItem
+                                  key={filterItem.value}
+                                  onSelect={() => {
+                                    handleFilterToggle(filterItem.value);
+                                    setSearchQuery('');
+                                    setIsCommandOpen(false);
+                                  }}
+                                >
+                                  <FilterItem filter={filterItem} />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            {suggestedFilters.length > 0 && <CommandSeparator />}
+                          </>
+                        )}
                         {filteredFilters.length > 0 && (
                           <CommandGroup>
                             {filteredFilters.map((filter) => (
