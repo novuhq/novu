@@ -116,7 +116,7 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                     e.stopPropagation();
                   }}
                 >
-                  <Avatar className="size-[3.75rem]">
+                  <Avatar className="size-[3.75rem] cursor-default">
                     <AvatarImage src={subscriber?.avatar || undefined} />
                     <AvatarFallback className="bg-neutral-alpha-100">
                       <Avatar className="size-full">
@@ -189,7 +189,11 @@ export function SubscriberOverviewForm({ subscriberId }: { subscriberId: string 
                     </Link>
                   </span>
                 </div>
-                <Input value={subscriberId} readOnly trailingNode={<CopyButton valueToCopy={subscriberId} />} />
+                <Input
+                  value={subscriberId}
+                  readOnly
+                  trailingNode={<CopyButton valueToCopy={subscriberId} className="focus:border-l" />}
+                />
               </FormItem>
             </div>
 
