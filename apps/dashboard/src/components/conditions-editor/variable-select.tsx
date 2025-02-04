@@ -3,8 +3,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
-import { VariableList } from '@/components/variable/variable-list';
-import { useVariableListKeyboardNavigation } from '../variable/use-variable-list-keyboard-navigation';
+import { VariableList, VariableListRef } from '@/components/variable/variable-list';
 
 type VariableSelectProps = {
   disabled?: boolean;
@@ -37,10 +36,7 @@ export const VariableSelect = ({
   const [filterValue, setFilterValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState(optionsProp);
-
-  const { variablesListRef, hoveredOptionIndex, next, prev, reset, focusFirst } = useVariableListKeyboardNavigation({
-    maxIndex: options.length - 1,
-  });
+  const variablesListRef = useRef<VariableListRef>(null);
 
   const hasNoInputOption = useMemo(
     () =>
@@ -67,17 +63,13 @@ export const VariableSelect = ({
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     setIsOpen(true);
     if (e.key === 'ArrowDown') {
-      next();
+      variablesListRef.current?.next();
       e.preventDefault();
     } else if (e.key === 'ArrowUp') {
-      prev();
+      variablesListRef.current?.prev();
       e.preventDefault();
     } else if (e.key === 'Enter') {
-      if (hoveredOptionIndex !== -1) {
-        e.preventDefault();
-        onSelect(filteredOptions[hoveredOptionIndex].value ?? '');
-        reset();
-      }
+      variablesListRef.current?.select();
     }
   };
 
@@ -108,6 +100,10 @@ export const VariableSelect = ({
     onChange(newInputValue);
   };
 
+  const onFocusCapture = () => {
+    variablesListRef.current?.focusFirst();
+  };
+
   return (
     <Popover open={isOpen}>
       <PopoverAnchor asChild>
@@ -119,7 +115,7 @@ export const VariableSelect = ({
               value={inputValue}
               onClick={onOpen}
               onChange={onInputChange}
-              onFocusCapture={focusFirst}
+              onFocusCapture={onFocusCapture}
               // use blur only when there are no filtered options, otherwise it closes the popover on keyboard navigation
               onBlurCapture={filteredOptions.length === 0 ? onClose : undefined}
               placeholder="Field"
@@ -143,7 +139,6 @@ export const VariableSelect = ({
         >
           <VariableList
             ref={variablesListRef}
-            hoveredOptionIndex={hoveredOptionIndex}
             options={filteredOptions}
             onSelect={onSelect}
             selectedValue={value}

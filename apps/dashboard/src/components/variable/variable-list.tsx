@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useImperativeHandle } from 'react';
 import { CheckIcon } from '@radix-ui/react-icons';
 
 import { Code2 } from '@/components/icons/code-2';
 import { cn } from '@/utils/ui';
 import TruncatedText from '@/components/truncated-text';
+import { useVariableListKeyboardNavigation } from './use-variable-list-keyboard-navigation';
 
 const KeyboardItem = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
@@ -23,12 +24,34 @@ export type VariablesListProps = {
   onSelect: (value: string) => void;
   selectedValue?: string;
   title: string;
-  hoveredOptionIndex: number;
   className?: string;
 };
 
-export const VariableList = React.forwardRef<HTMLUListElement, VariablesListProps>(
-  ({ options, onSelect, selectedValue, title, hoveredOptionIndex, className }, ref) => {
+export type VariableListRef = {
+  next: () => void;
+  prev: () => void;
+  select: () => void;
+  focusFirst: () => void;
+};
+
+export const VariableList = React.forwardRef<VariableListRef, VariablesListProps>(
+  ({ options, onSelect, selectedValue, title, className }, ref) => {
+    const { variablesListRef, hoveredOptionIndex, next, prev, reset, focusFirst } = useVariableListKeyboardNavigation({
+      maxIndex: options.length - 1,
+    });
+
+    useImperativeHandle(ref, () => ({
+      next,
+      prev,
+      select: () => {
+        if (hoveredOptionIndex !== -1) {
+          onSelect(options[hoveredOptionIndex].value ?? '');
+          reset();
+        }
+      },
+      focusFirst,
+    }));
+
     return (
       <div className={cn('bg-background flex flex-col', className)}>
         <header className="flex items-center justify-between gap-1 rounded-t-md border-b border-neutral-100 bg-neutral-50 p-1">
@@ -36,7 +59,7 @@ export const VariableList = React.forwardRef<HTMLUListElement, VariablesListProp
           <KeyboardItem>{`{`}</KeyboardItem>
         </header>
         <ul
-          ref={ref}
+          ref={variablesListRef}
           // relative is to set offset parent and is important to make the scroll and navigation work
           className="relative flex max-h-[200px] flex-col gap-0.5 overflow-y-auto overflow-x-hidden p-1"
         >

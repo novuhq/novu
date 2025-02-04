@@ -48,7 +48,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     }: {
       query: string;
       editor: TiptapEditor;
-      from: 'content-variable' | 'bubble-variable' | 'for-variable';
+      from: 'content-variable' | 'bubble-variable' | 'repeat-variable';
     }) => {
       const queryWithoutSuffix = query.replace(/}+$/, '');
       const filteredVariables: { name: string; required: boolean }[] = [];
@@ -76,7 +76,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         });
       }
 
-      if (from === 'for-variable') {
+      if (from === 'repeat-variable') {
         filteredVariables.push(...arrays, ...namespaces);
         if (namespaces.some((namespace) => queryWithoutSuffix.includes(namespace.name))) {
           filteredVariables.push({ name: queryWithoutSuffix, required: false });
